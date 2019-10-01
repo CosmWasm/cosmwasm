@@ -23,9 +23,39 @@ a few elements.
 We explain [how to create entry points](./EntryPoints.md) in general for
 rust-wasm tooling, as well as [document the required API for CosmWasm contracts](./API.md)
 
+## Implementing the Smart Contract
 
+**TODO** Explain what is needed
 
-## Compiling the Smart Contract
+**TODO** Link to sample implementation
 
-## Testing the Smart Contract
+## Testing the Smart Contract (rust)
 
+For quick unit tests and useful error messages, it is often helpful to compile
+the code using native build system and then test all code except for the `extern "C"`
+functions (which should just be small wrappers around the real logic).
+
+If you have non-trivial logic in the contract, please write tests using rust's
+standard tooling. If you run `cargo test`, it will compile into native code
+using the `debug` profile, and you get the normal test environment you know
+and love. Notably, you can add plenty of requirements to `[dev-dependencies]`
+in `Cargo.toml` and they will be available for your testing joy. As long
+as they are only used in `#[cfg(test)]` blocks, they will never make it into
+the (release) Wasm builds and have no overhead on the production artifact.
+
+**TODO** Add some tests to sample and link them here
+
+## Testing the Smart Contract (wasm)
+
+You may also want to ensure the compiled contract interacts with the environment
+properly. To do so, you will want to create a canonical release build of
+the `<contract>.wasm` file and then write tests in go with a some tooling
+in the cosmwasm/cosmos-sdk repo (**TODO**)
+
+## Benchmarking
+
+You may want to compare how long the contract takes to run inside the Wasm VM
+compared to in native rust code, especially for computationally intensive code,
+like hashing or signature verification. 
+
+**TODO** add instructions and maybe some Dockerfile tooling
