@@ -16,6 +16,15 @@ You can follow more instructions on how to [configure a library for wasm](./Buil
 
 ## API entry points
 
+Web Assembly contracts are basically black boxes. The have no default entry points,
+and no access to the outside world by default. To make them useful, we need to add
+a few elements. 
+
+We explain [how to create entry points](./EntryPoints.md) in general for
+rust-wasm tooling, as well as [document the required API for CosmWasm contracts](./API.md)
+
+
+
 ## Compiling the Smart Contract
 
 ## Testing the Smart Contract
