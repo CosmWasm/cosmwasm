@@ -24,7 +24,6 @@ struct RegenSendMsg {}
 
 pub fn init<T: Storage>(mut store: T, params: InitParams) -> Result<Vec<CosmosMsg>, Error> {
     let msg: RegenInitMsg = from_str(params.msg.get())?;
-
     store.set_state(to_vec(&RegenState {
         verifier: msg.verifier,
         beneficiary: msg.beneficiary,
@@ -56,5 +55,62 @@ pub fn send<T:Storage>(mut store: T, params: SendParams) -> Result<Vec<CosmosMsg
         }])
     } else {
         bail!("Unauthorized")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::storage::{Storage, MockStorage};
+    use serde_json::value::RawValue;
+
+    fn to_raw(msg: &RegenInitMsg) -> Result<Box<RawValue>, Error> {
+        let json = serde_json::to_string(msg)?;
+        let raw = RawValue::from_string(json)?;
+        Ok(raw)
+    }
+
+    #[test]
+    fn proper_initialization() {
+        let mut store = MockStorage::new();
+        let raw = to_raw(&RegenInitMsg{
+            verifier: String::from("verifies"),
+            beneficiary: String::from("benefits"),
+        }).unwrap();
+        let params = InitParams {
+            contract_address: String::from("contract"),
+            sender: String::from("creator"),
+            msg: &raw,
+            sent_funds: 1000,
+        };
+        let res = init(&mut store, params).unwrap();
+        assert_eq!(0, res.len());
+
+        // it worked, let's check the state
+        let data = (&mut store).get_state();
+        let state: RegenState = match data {
+            Some(v) => from_slice(&v).unwrap(),
+            _ => panic!("no data stored"),
+        };
+        assert_eq!(state.payout, 1000);
+        assert_eq!(state.verifier, String::from("verifies"));
+        assert_eq!(state.beneficiary, String::from("benefits"));
+        assert_eq!(state.funder, String::from("creator"));
+    }
+
+    #[test]
+    fn fails_on_bad_init() {
+        let mut store = MockStorage::new();
+        let bad_msg = RawValue::from_string(String::from("[]")).unwrap();
+        let params = InitParams {
+            contract_address: String::from("contract"),
+            sender: String::from("creator"),
+            msg: &bad_msg,
+            sent_funds: 1000,
+        };
+        let res = init(&mut store, params);
+        if let Ok(_) = res {
+            assert!(false);
+        }
     }
 }
