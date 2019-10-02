@@ -13,6 +13,7 @@ use std::os::raw::{c_char, c_void};
 
 mod contract;
 use contract::{init, send};
+mod storage;
 
 #[derive(Serialize, Deserialize)]
 pub struct SendParams<'a> {
@@ -51,27 +52,6 @@ enum ContractResult {
     Error(String),
 }
 
-extern "C" {
-    fn c_read() -> *mut c_char;
-    fn c_write(string: *mut c_char);
-}
-
-pub fn get_state() -> std::vec::Vec<u8> {
-    let state: std::vec::Vec<u8>;
-
-    unsafe {
-        state = CStr::from_ptr(c_read()).to_bytes().to_vec();
-    }
-
-    state
-}
-
-pub fn set_state(state: Vec<u8>) {
-    unsafe {
-        c_write(CString::new(state).unwrap().into_raw());
-    }
-}
-
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut c_void {
     let mut buffer = Vec::with_capacity(size);
@@ -105,6 +85,7 @@ fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
 }
 
 #[no_mangle]
+#[cfg(target_arch = "wasm32")]
 pub extern "C" fn init_wrapper(params_ptr: *mut c_char) -> *mut c_char {
     let params: std::vec::Vec<u8>;
 
@@ -119,7 +100,8 @@ pub extern "C" fn init_wrapper(params_ptr: *mut c_char) -> *mut c_char {
     };
 
     // Catches and formats errors from the logic
-    let res = match init(params) {
+    let mut store = storage::ExternalStorage{};
+    let res = match init(&mut store, params) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };
@@ -140,6 +122,7 @@ pub extern "C" fn init_wrapper(params_ptr: *mut c_char) -> *mut c_char {
 }
 
 #[no_mangle]
+#[cfg(target_arch = "wasm32")]
 pub extern "C" fn send_wrapper(params_ptr: *mut c_char) -> *mut c_char {
     let params: std::vec::Vec<u8>;
 
@@ -154,7 +137,8 @@ pub extern "C" fn send_wrapper(params_ptr: *mut c_char) -> *mut c_char {
     };
 
     // Catches and formats errors from the logic
-    let res = match send(params) {
+    let mut store = storage::ExternalStorage{};
+    let res = match send(&mut store, params) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };

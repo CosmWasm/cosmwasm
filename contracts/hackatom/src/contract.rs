@@ -1,4 +1,5 @@
-use crate::{get_state, set_state, CosmosMsg, InitParams, SendAmount, SendParams};
+use crate::{CosmosMsg, InitParams, SendAmount, SendParams};
+use crate::storage::Storage;
 
 use failure::{bail, Error};
 use serde::{Deserialize, Serialize};
@@ -21,10 +22,10 @@ struct RegenState {
 #[derive(Serialize, Deserialize)]
 struct RegenSendMsg {}
 
-pub fn init(params: InitParams) -> Result<Vec<CosmosMsg>, Error> {
+pub fn init<T: Storage>(mut store: T, params: InitParams) -> Result<Vec<CosmosMsg>, Error> {
     let msg: RegenInitMsg = from_str(params.msg.get())?;
 
-    set_state(to_vec(&RegenState {
+    store.set_state(to_vec(&RegenState {
         verifier: msg.verifier,
         beneficiary: msg.beneficiary,
         payout: params.sent_funds,
@@ -34,11 +35,15 @@ pub fn init(params: InitParams) -> Result<Vec<CosmosMsg>, Error> {
     Ok(Vec::new())
 }
 
-pub fn send(params: SendParams) -> Result<Vec<CosmosMsg>, Error> {
-    let mut state: RegenState = from_slice(&get_state())?;
+pub fn send<T:Storage>(mut store: T, params: SendParams) -> Result<Vec<CosmosMsg>, Error> {
+    let data = store.get_state();
+    let mut state: RegenState = match data {
+        Some(v) => from_slice(&v)?,
+        None => { bail!("Not initialized") }
+    };
     let funds = state.payout + params.sent_funds;
     state.payout = 0;
-    set_state(to_vec(&state)?);
+    store.set_state(to_vec(&state)?);
 
     if params.sender == state.verifier {
         Ok(vec![CosmosMsg::SendTx {
