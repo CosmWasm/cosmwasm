@@ -92,7 +92,16 @@ wasm-gc contract.wasm
 du -h contract.wasm
 ```
 
-A bit smaller, huh?
+A bit smaller, huh? If you have plenty of dependencies and this is still too big,
+you can do a bit of investigation of where the size comes from, and maybe
+change your dependencies:
+
+```shell script
+cargo install twiggy
+twiggy top contract.wasm | head -20
+twiggy garbage contract.wasm
+twiggy dominators contract.wasm | less
+```
 
 **TODO**: pack up these tools in a fixed Dockerfile so we have a
 consistent setup to help with reproducible builds. 
