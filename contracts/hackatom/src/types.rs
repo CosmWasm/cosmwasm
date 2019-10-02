@@ -1,12 +1,9 @@
 use serde::{Deserialize, Serialize};
-use serde_json::value::RawValue;
 
 #[derive(Serialize, Deserialize)]
-pub struct SendParams<'a> {
+pub struct SendParams {
     pub contract_address: String,
     pub sender: String,
-    #[serde(borrow)]
-    pub msg: &'a RawValue,
     pub sent_funds: u64,
 }
 
@@ -36,10 +33,8 @@ pub enum ContractResult {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct InitParams<'a> {
+pub struct InitParams {
     pub contract_address: String,
     pub sender: String,
-    #[serde(borrow)]
-    pub msg: &'a RawValue,
     pub sent_funds: u64,
 }

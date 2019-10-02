@@ -3,7 +3,7 @@ use crate::storage::Storage;
 
 use failure::{bail, Error};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_slice, from_str, to_vec};
+use serde_json::{from_slice, to_vec};
 
 #[derive(Serialize, Deserialize)]
 struct RegenInitMsg {
@@ -22,8 +22,8 @@ struct RegenState {
 #[derive(Serialize, Deserialize)]
 struct RegenSendMsg {}
 
-pub fn init<T: Storage>(mut store: T, params: InitParams) -> Result<Vec<CosmosMsg>, Error> {
-    let msg: RegenInitMsg = from_str(params.msg.get())?;
+pub fn init<T: Storage>(mut store: T, params: InitParams, msg: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
+    let msg: RegenInitMsg = from_slice(&msg)?;
     store.set_state(to_vec(&RegenState {
         verifier: msg.verifier,
         beneficiary: msg.beneficiary,
@@ -34,7 +34,7 @@ pub fn init<T: Storage>(mut store: T, params: InitParams) -> Result<Vec<CosmosMs
     Ok(Vec::new())
 }
 
-pub fn send<T:Storage>(mut store: T, params: SendParams) -> Result<Vec<CosmosMsg>, Error> {
+pub fn send<T:Storage>(mut store: T, params: SendParams, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
     let data = store.get_state();
     let mut state: RegenState = match data {
         Some(v) => from_slice(&v)?,
@@ -62,28 +62,20 @@ pub fn send<T:Storage>(mut store: T, params: SendParams) -> Result<Vec<CosmosMsg
 mod tests {
     use super::*;
     use crate::storage::{Storage, MockStorage};
-    use serde_json::value::RawValue;
-
-    fn to_raw(msg: &RegenInitMsg) -> Result<Box<RawValue>, Error> {
-        let json = serde_json::to_string(msg)?;
-        let raw = RawValue::from_string(json)?;
-        Ok(raw)
-    }
 
     #[test]
     fn proper_initialization() {
         let mut store = MockStorage::new();
-        let raw = to_raw(&RegenInitMsg{
+        let msg = serde_json::to_vec(&RegenInitMsg{
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         }).unwrap();
         let params = InitParams {
             contract_address: String::from("contract"),
             sender: String::from("creator"),
-            msg: &raw,
             sent_funds: 1000,
         };
-        let res = init(&mut store, params).unwrap();
+        let res = init(&mut store, params, msg).unwrap();
         assert_eq!(0, res.len());
 
         // it worked, let's check the state
@@ -101,14 +93,13 @@ mod tests {
     #[test]
     fn fails_on_bad_init() {
         let mut store = MockStorage::new();
-        let bad_msg = RawValue::from_string(String::from("[]")).unwrap();
+        let bad_msg = b"{}".to_vec();
         let params = InitParams {
             contract_address: String::from("contract"),
             sender: String::from("creator"),
-            msg: &bad_msg,
             sent_funds: 1000,
         };
-        let res = init(&mut store, params);
+        let res = init(&mut store, params, bad_msg);
         if let Ok(_) = res {
             assert!(false);
         }
