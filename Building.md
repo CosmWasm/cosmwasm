@@ -103,5 +103,14 @@ twiggy garbage contract.wasm
 twiggy dominators contract.wasm | less
 ```
 
+Look at the imports and exports:
+
+```shell script
+cargo install wasm-nm
+wasm-nm -e contract.wasm
+wasm-nm -i contract.wasm
+```
+
+
 **TODO**: pack up these tools in a fixed Dockerfile so we have a
 consistent setup to help with reproducible builds. 
