@@ -1,4 +1,4 @@
-use crate::{CosmosMsg, InitParams, SendAmount, SendParams};
+use crate::types::{CosmosMsg, InitParams, SendAmount, SendParams};
 use crate::storage::Storage;
 
 use failure::{bail, Error};
