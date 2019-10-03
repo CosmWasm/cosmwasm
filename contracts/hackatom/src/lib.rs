@@ -1,6 +1,7 @@
 pub mod contract;
 pub mod types;
 pub mod imports;
+pub mod mock;
 
 /** Below we expose wasm exports **/
 #[cfg(target_arch = "wasm32")]

@@ -7,9 +7,10 @@ use wasmer_runtime::{compile_with, Ctx, Func, func, imports};
 use wasmer_runtime_core::{Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 
-//use hackatom::imports::{MockStorage};
+use hackatom::mock::{MockStorage};
 use hackatom::types::{mock_params, coin};
 use hackatom::contract::{RegenInitMsg};
+use hackatom::imports::Storage;
 
 #[test]
 fn test_coin() {
@@ -33,8 +34,6 @@ fn run_contract() {
     let wasm = fs::read(wasm_file).unwrap();
     assert!(wasm.len() > 100000);
 
-//    let mut store = MockStorage::new();
-
     // TODO: set up proper callback for read and write here
     let import_object = imports! {
         "env" => {
@@ -46,6 +45,11 @@ fn run_contract() {
     // create the instance
     let module = compile_with(&wasm, &CraneliftCompiler::new()).unwrap();
     let mut instance = module.instantiate (&import_object).unwrap();
+
+    // TODO: better way of keeping state
+    unsafe {
+        STORAGE = Some(MockStorage::new());
+    }
 
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
@@ -111,12 +115,26 @@ fn write_memory(ctx: &Ctx, offset: i32, data: &[u8]) {
     }
 }
 
+static mut STORAGE: Option<MockStorage> = None;
+// TODO: this is so ugly, no clear idea how to make that callback to alloc in do_read
+// There is support on Ctx for call_with_table_index: https://github.com/wasmerio/wasmer/pull/803
+// But I cannot figure out how to get the table index for the function (allocate)
+// Just guess it is 1???
+//static mut INSTANCE: Option<Box<Instance> = None;
 
 fn do_read(ctx: &mut Ctx, _dbref: i32, key: i32) -> i32 {
-    15
+    let key = read_memory(ctx, key);
+    let value = unsafe { STORAGE.as_ref().unwrap().get(&key) };
+    match value {
+        Some(_) => panic!("not implemented"),
+        None => 0,
+    }
 }
 
 fn do_write(ctx: &mut Ctx, _dbref: i32, key: i32, value: i32) {
+    let key = read_memory(ctx, key);
+    let value = read_memory(ctx, value);
+    unsafe { STORAGE.as_mut().unwrap().set(&key, &value); }
 }
 
 //fn do_read(ctx: &mut Ctx, store: &mut MockStorage, key: i32) -> i32 {

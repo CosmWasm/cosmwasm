@@ -64,7 +64,7 @@ pub fn send<T: Storage>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::imports::MockStorage;
+    use crate::mock::MockStorage;
     use crate::types::{coin, mock_params};
 
     #[test]
