@@ -1,5 +1,13 @@
 use serde::{Deserialize, Serialize};
 
+// Buffer refers to some heap allocated data in wasm
+// a pointer to this can be returned
+#[repr(C)]
+pub struct Buffer {
+    pub offset: usize,
+    pub len: usize,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Params {
     pub block: BlockInfo,

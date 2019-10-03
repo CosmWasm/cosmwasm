@@ -9,7 +9,7 @@ use wasmer_runtime_core::{Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 
 use hackatom::mock::{MockStorage};
-use hackatom::types::{mock_params, coin};
+use hackatom::types::{Buffer, coin, mock_params};
 use hackatom::contract::{RegenInitMsg};
 use hackatom::imports::Storage;
 
@@ -63,10 +63,36 @@ fn run_contract() {
     let module = compile_with(&wasm, &CraneliftCompiler::new()).unwrap();
     let mut instance = module.instantiate (&import_object).unwrap();
 
-    // TODO: better way of keeping state
+    // TODO: better way of keeping state (use the above closures)
     unsafe {
         STORAGE = Some(MockStorage::new());
     }
+
+    // what does alloc return
+    let alloc: Func<(i32), (i32)> = instance.func("allocate").unwrap();
+    let offset = alloc.call(5789).unwrap();
+    println!("alloc {:?}", offset);
+
+    // let's check if we can get and pass arguments
+    let create: Func<(), (i32)> = instance.func("create_buffer").unwrap();
+    let offset = create.call().unwrap();
+    let buf_ptr = (offset / 4) as usize;  // convert from u8 to i32
+    let memory = &instance.context().memory(0).view::<i32>();
+    println!("buf_ptr {:?}", buf_ptr);
+    println!("offset {:?}", offset);
+    // TODO: add helpers to read in the buffer contents if we need them
+    let buf_offset = memory[buf_ptr].get();
+    let buf_len = memory[buf_ptr+1].get();
+    assert_eq!(buf_offset, 12345);
+    assert_eq!(buf_len, 100);
+
+    // let's try to modify it for fun
+    memory[buf_ptr].set(9876543);
+
+    // and they can read it as well...
+    let free: Func<(i32), (i32)> = instance.func("free_buffer").unwrap();
+    let freed_offset = free.call(offset).unwrap();
+    assert_eq!(freed_offset, 9876543);
 
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
@@ -86,8 +112,8 @@ fn run_contract() {
     let msg_offset = allocate(&mut instance, &json_msg);
 
     // call the instance
-    let alloc: Func<(i32, i32, i32), (i32)> = instance.func("init_wrapper").unwrap();
-    let res_offset = alloc.call(15, param_offset, msg_offset).unwrap();
+    let init: Func<(i32, i32, i32), (i32)> = instance.func("init_wrapper").unwrap();
+    let res_offset = init.call(15, param_offset, msg_offset).unwrap();
     assert!(res_offset > 1000);
 
     // read the return value

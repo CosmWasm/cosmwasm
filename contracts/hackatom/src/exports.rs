@@ -9,7 +9,38 @@ use std::os::raw::{c_char, c_void};
 use std::vec::Vec;
 
 use crate::imports::ExternalStorage;
-use crate::types::{ContractResult, CosmosMsg, Params};
+use crate::types::{Buffer, ContractResult, CosmosMsg, Params};
+
+#[no_mangle]
+extern "C" fn create_buffer() -> *mut c_void {
+    let buf = Box::new(Buffer{
+        offset: 12345,
+        len: 100,
+    });
+    Box::into_raw(buf) as *mut c_void
+
+
+//    let mut buf = vec![0; 512].into_boxed_slice();
+//    let data = buf.as_mut_ptr();
+//    let len = buf.len();
+//    std::mem::forget(buf);
+//    Buffer { data, len }
+}
+
+#[no_mangle]
+extern "C" fn free_buffer(ptr: *mut c_void) -> i32 {
+    let buf = unsafe { Box::from_raw(ptr as *mut Buffer) };
+    buf.offset as i32
+    // this should free the buf when it goes out of scope...
+
+
+//    let mut buf = vec![0; 512].into_boxed_slice();
+//    let data = buf.as_mut_ptr();
+//    let len = buf.len();
+//    std::mem::forget(buf);
+//    Buffer { data, len }
+}
+
 
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut c_void {
