@@ -1,4 +1,4 @@
-use crate::types::{CosmosMsg, InitParams, SendAmount, SendParams};
+use crate::types::{CosmosMsg, Params, SendAmount};
 use crate::imports::Storage;
 
 use failure::{bail, Error};
@@ -24,7 +24,7 @@ struct RegenSendMsg {}
 
 static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage>(store: &mut T, params: InitParams, msg: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
+pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
     let msg: RegenInitMsg = from_slice(&msg)?;
     store.set(CONFIG_KEY, &to_vec(&RegenState {
         verifier: msg.verifier,
@@ -36,7 +36,7 @@ pub fn init<T: Storage>(store: &mut T, params: InitParams, msg: Vec<u8>) -> Resu
     Ok(Vec::new())
 }
 
-pub fn send<T:Storage>(store: &mut T, params: SendParams, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
+pub fn send<T:Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
     let data = store.get(CONFIG_KEY);
     let mut state: RegenState = match data {
         Some(v) => from_slice(&v)?,
@@ -72,7 +72,7 @@ mod tests {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         }).unwrap();
-        let params = InitParams {
+        let params = Params {
             contract_address: String::from("contract"),
             sender: String::from("creator"),
             sent_funds: 1000,
@@ -81,11 +81,8 @@ mod tests {
         assert_eq!(0, res.len());
 
         // it worked, let's check the state
-        let data = store.get(CONFIG_KEY);
-        let state: RegenState = match data {
-            Some(v) => from_slice(&v).unwrap(),
-            _ => panic!("no data stored"),
-        };
+        let data = store.get(CONFIG_KEY).expect("no data stored");
+        let state: RegenState = from_slice(&data).unwrap();
         assert_eq!(state.payout, 1000);
         assert_eq!(state.verifier, String::from("verifies"));
         assert_eq!(state.beneficiary, String::from("benefits"));
@@ -96,7 +93,7 @@ mod tests {
     fn fails_on_bad_init() {
         let mut store = MockStorage::new();
         let bad_msg = b"{}".to_vec();
-        let params = InitParams {
+        let params = Params {
             contract_address: String::from("contract"),
             sender: String::from("creator"),
             sent_funds: 1000,
@@ -105,5 +102,55 @@ mod tests {
         if let Ok(_) = res {
             assert!(false);
         }
+    }
+
+    #[test]
+    fn proper_send() {
+        let mut store = MockStorage::new();
+
+        // initialize the store
+        let init_msg = serde_json::to_vec(&RegenInitMsg{
+            verifier: String::from("verifies"),
+            beneficiary: String::from("benefits"),
+        }).unwrap();
+        let init_params = Params {
+            contract_address: String::from("contract"),
+            sender: String::from("creator"),
+            sent_funds: 1000,
+        };
+        let init_res = init(&mut store, init_params, init_msg).unwrap();
+        assert_eq!(0, init_res.len());
+
+        // beneficiary can release it
+        let send_params = Params {
+            contract_address: String::from("contract"),
+            sender: String::from("verifies"),
+            sent_funds: 15,
+        };
+        let send_res = send(&mut store, send_params, Vec::new()).unwrap();
+        assert_eq!(1, send_res.len());
+        let msg = send_res.get(0).expect("no message");
+        match &msg {
+            CosmosMsg::SendTx{from_address, to_address, amount} => {
+                assert_eq!("contract", from_address);
+                assert_eq!("benefits", to_address);
+                assert_eq!(1, amount.len());
+                match amount.get(0) {
+                    Some(coin) => {
+                        assert_eq!(coin.denom, "earth");
+                        assert_eq!(coin.amount, "1015");
+                    },
+                    None => panic!("No coin"),
+                }
+            },
+        }
+
+        // it worked, let's check the state
+        let data = store.get(CONFIG_KEY).expect("no data stored");
+        let state: RegenState = from_slice(&data).unwrap();
+        assert_eq!(state.payout, 0);
+        assert_eq!(state.verifier, String::from("verifies"));
+        assert_eq!(state.beneficiary, String::from("benefits"));
+        assert_eq!(state.funder, String::from("creator"));
     }
 }

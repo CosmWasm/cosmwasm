@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize)]
-pub struct SendParams {
+pub struct Params {
     pub contract_address: String,
     pub sender: String,
     pub sent_funds: u64,
@@ -30,11 +30,4 @@ pub enum ContractResult {
     Msgs(Vec<CosmosMsg>),
     #[serde(rename = "error")]
     Error(String),
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct InitParams {
-    pub contract_address: String,
-    pub sender: String,
-    pub sent_funds: u64,
 }
