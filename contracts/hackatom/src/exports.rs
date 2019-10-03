@@ -8,7 +8,7 @@ use std::mem;
 use std::os::raw::{c_char, c_void};
 use std::vec::Vec;
 
-use crate::imports::{ExternalStorage};
+use crate::imports::ExternalStorage;
 use crate::types::{ContractResult, CosmosMsg, Params};
 
 #[no_mangle]
@@ -27,7 +27,12 @@ pub extern "C" fn deallocate(pointer: *mut c_void, capacity: usize) {
 }
 
 // init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn init(init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn init(
+    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    dbref: i32,
+    params_ptr: *mut c_char,
+    msg_ptr: *mut c_char,
+) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -66,7 +71,12 @@ pub fn init(init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Ve
 }
 
 // send should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn send(send_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn send(
+    send_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    dbref: i32,
+    params_ptr: *mut c_char,
+    msg_ptr: *mut c_char,
+) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -109,4 +119,3 @@ fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
         .unwrap()
         .into_raw()
 }
-

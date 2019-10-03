@@ -6,16 +6,16 @@ pub trait Storage {
 }
 
 #[cfg(target_arch = "wasm32")]
-pub use wasm::{ExternalStorage};
+pub use wasm::ExternalStorage;
 
 #[cfg(test)]
-pub use mock::{MockStorage};
+pub use mock::MockStorage;
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::*;
-    use std::os::raw::{c_char};
-    use std::ffi::{CString, CStr};
+    use std::ffi::{CStr, CString};
+    use std::os::raw::c_char;
 
     extern "C" {
         // both take an opaque database ref that can be used by the environment to determine which
@@ -30,7 +30,7 @@ mod wasm {
 
     impl ExternalStorage {
         pub fn new(dbref: i32) -> ExternalStorage {
-            ExternalStorage{dbref}
+            ExternalStorage { dbref }
         }
     }
 
@@ -63,12 +63,14 @@ mod mock {
     use std::collections::HashMap;
 
     pub struct MockStorage {
-        data: HashMap<Vec<u8>, Vec<u8>>
+        data: HashMap<Vec<u8>, Vec<u8>>,
     }
 
     impl MockStorage {
         pub fn new() -> MockStorage {
-            MockStorage { data: HashMap::new() }
+            MockStorage {
+                data: HashMap::new(),
+            }
         }
     }
 

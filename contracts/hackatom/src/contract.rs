@@ -1,7 +1,7 @@
-use crate::types::{CosmosMsg, Params};
 use crate::imports::Storage;
+use crate::types::{CosmosMsg, Params};
 
-use failure::{bail, Error, format_err};
+use failure::{bail, format_err, Error};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_slice, to_vec};
 
@@ -23,18 +23,31 @@ struct RegenSendMsg {}
 
 static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
+pub fn init<T: Storage>(
+    store: &mut T,
+    params: Params,
+    msg: Vec<u8>,
+) -> Result<Vec<CosmosMsg>, Error> {
     let msg: RegenInitMsg = from_slice(&msg)?;
-    store.set(CONFIG_KEY, &to_vec(&RegenState {
-        verifier: msg.verifier,
-        beneficiary: msg.beneficiary,
-        funder: params.message.signer,
-    })?);
+    store.set(
+        CONFIG_KEY,
+        &to_vec(&RegenState {
+            verifier: msg.verifier,
+            beneficiary: msg.beneficiary,
+            funder: params.message.signer,
+        })?,
+    );
     Ok(Vec::new())
 }
 
-pub fn send<T:Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
-    let data = store.get(CONFIG_KEY).ok_or(format_err!("not initialized"))?;
+pub fn send<T: Storage>(
+    store: &mut T,
+    params: Params,
+    _: Vec<u8>,
+) -> Result<Vec<CosmosMsg>, Error> {
+    let data = store
+        .get(CONFIG_KEY)
+        .ok_or(format_err!("not initialized"))?;
     let state: RegenState = from_slice(&data)?;
 
     if params.message.signer == state.verifier {
@@ -51,16 +64,17 @@ pub fn send<T:Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Vec<
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::imports::{MockStorage};
-    use crate::types::{mock_params, coin};
+    use crate::imports::MockStorage;
+    use crate::types::{coin, mock_params};
 
     #[test]
     fn proper_initialization() {
         let mut store = MockStorage::new();
-        let msg = serde_json::to_vec(&RegenInitMsg{
+        let msg = serde_json::to_vec(&RegenInitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
-        }).unwrap();
+        })
+        .unwrap();
         let params = mock_params("creator", &coin("1000", "earth"), &[]);
         let res = init(&mut store, params, msg).unwrap();
         assert_eq!(0, res.len());
@@ -87,10 +101,11 @@ mod tests {
         let mut store = MockStorage::new();
 
         // initialize the store
-        let init_msg = serde_json::to_vec(&RegenInitMsg{
+        let init_msg = serde_json::to_vec(&RegenInitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
-        }).unwrap();
+        })
+        .unwrap();
         let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
         let init_res = init(&mut store, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.len());
@@ -101,14 +116,18 @@ mod tests {
         assert_eq!(1, send_res.len());
         let msg = send_res.get(0).expect("no message");
         match &msg {
-            CosmosMsg::SendTx{from_address, to_address, amount} => {
+            CosmosMsg::SendTx {
+                from_address,
+                to_address,
+                amount,
+            } => {
                 assert_eq!("cosmos2contract", from_address);
                 assert_eq!("benefits", to_address);
                 assert_eq!(1, amount.len());
                 let coin = amount.get(0).expect("No coin");
                 assert_eq!(coin.denom, "earth");
                 assert_eq!(coin.amount, "1015");
-            },
+            }
         }
 
         // it worked, let's check the state
@@ -124,10 +143,11 @@ mod tests {
         let mut store = MockStorage::new();
 
         // initialize the store
-        let init_msg = serde_json::to_vec(&RegenInitMsg{
+        let init_msg = serde_json::to_vec(&RegenInitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
-        }).unwrap();
+        })
+        .unwrap();
         let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
         let init_res = init(&mut store, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.len());

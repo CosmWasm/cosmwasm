@@ -55,20 +55,20 @@ pub enum ContractResult {
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
 pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) -> Params {
-    Params{
-        block: BlockInfo{
+    Params {
+        block: BlockInfo {
             block_height: 12345,
             block_time: "2020-01-08T12:34:56Z".to_string(),
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        message: MessageInfo{
+        message: MessageInfo {
             signer: signer.to_string(),
             sent_funds: sent.to_vec(),
         },
-        contract: ContractInfo{
+        contract: ContractInfo {
             address: "cosmos2contract".to_string(),
-            balance: balance.to_vec()
-        }
+            balance: balance.to_vec(),
+        },
     }
 }
 
