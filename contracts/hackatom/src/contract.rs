@@ -1,5 +1,5 @@
 use crate::types::{CosmosMsg, InitParams, SendAmount, SendParams};
-use crate::storage::Storage;
+use crate::imports::Storage;
 
 use failure::{bail, Error};
 use serde::{Deserialize, Serialize};
@@ -61,7 +61,7 @@ pub fn send<T:Storage>(mut store: T, params: SendParams, _: Vec<u8>) -> Result<V
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::storage::{Storage, MockStorage};
+    use crate::imports::{Storage, MockStorage};
 
     #[test]
     fn proper_initialization() {

@@ -7,8 +7,9 @@ use std::ffi::{CStr, CString};
 use std::os::raw::{c_char};
 use std::vec::Vec;
 
-use crate::{contract, storage};
-use crate::types::{ContractResult, InitParams, SendParams};
+use crate::{contract};
+use crate::imports::{ExternalStorage};
+use crate::types::{ContractResult, CosmosMsg, InitParams, SendParams};
 
 fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
     let error: Error = error.into();
@@ -17,8 +18,7 @@ fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
         .into_raw()
 }
 
-#[no_mangle]
-pub extern "C" fn init_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -34,8 +34,9 @@ pub extern "C" fn init_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) ->
     };
 
     // Catches and formats errors from the logic
-    let mut store = storage::ExternalStorage{};
-    let res = match contract::init(&mut store, params, msg) {
+    let store = ExternalStorage{};
+    let init_res = init_fn(store, params, msg);
+    let res = match init_res {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };
@@ -55,8 +56,7 @@ pub extern "C" fn init_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) ->
     res.into_raw()
 }
 
-#[no_mangle]
-pub extern "C" fn send_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn send(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -72,8 +72,8 @@ pub extern "C" fn send_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) ->
     };
 
     // Catches and formats errors from the logic
-    let mut store = storage::ExternalStorage{};
-    let res = match contract::send(&mut store, params, msg) {
+    let store = ExternalStorage{};
+    let res = match contract::send(store, params, msg) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };

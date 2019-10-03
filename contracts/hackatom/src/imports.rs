@@ -18,7 +18,7 @@ extern "C" {
 pub struct ExternalStorage {}
 
 #[cfg(target_arch = "wasm32")]
-impl Storage for &mut ExternalStorage {
+impl Storage for ExternalStorage {
     fn get_state(&self) -> Option<Vec<u8>> {
         use std::ffi::{CStr};
         unsafe {
