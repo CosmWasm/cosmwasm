@@ -6,20 +6,20 @@ use serde::{Deserialize, Serialize};
 use serde_json::{from_slice, to_vec};
 
 #[derive(Serialize, Deserialize)]
-struct RegenInitMsg {
-    verifier: String,
-    beneficiary: String,
+pub struct RegenInitMsg {
+    pub verifier: String,
+    pub beneficiary: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct RegenState {
-    verifier: String,
-    beneficiary: String,
-    funder: String,
+pub struct RegenState {
+    pub verifier: String,
+    pub beneficiary: String,
+    pub funder: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct RegenSendMsg {}
+pub struct RegenSendMsg {}
 
 static CONFIG_KEY: &[u8] = b"config";
 

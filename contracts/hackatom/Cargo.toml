@@ -24,5 +24,9 @@ overflow-checks = true
 [dependencies]
 serde_json = { version = "1.0.39" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
-#heapless = "0.4.0"
 failure = "0.1.5"
+
+[dev-dependencies]
+wasmer-runtime = "0.8.0"
+wasmer-runtime-core = "0.8.0"
+wasmer-clif-backend = "0.8.0"
