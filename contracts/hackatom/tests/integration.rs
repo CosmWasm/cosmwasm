@@ -2,6 +2,7 @@ extern crate hackatom;
 
 use std::fs;
 use std::str::from_utf8;
+use std::ffi::c_void;
 
 use wasmer_runtime::{compile_with, Ctx, Func, func, imports};
 use wasmer_runtime_core::{Instance};
@@ -35,7 +36,23 @@ fn run_contract() {
     assert!(wasm.len() > 100000);
 
     // TODO: set up proper callback for read and write here
+    // TODO: figure out passing state
     let import_object = imports! {
+        || {
+            let mut state = Box::new(MockStorage::new());
+            state.set(b"foo", b"bar");
+            fn destroy(ptr: *mut c_void) {
+                 println!("destroy");
+                 println!("{:?}", ptr);
+                 unsafe {
+                     Box::from_raw(ptr as *mut MockStorage);
+                 }
+             }
+             let ptr = Box::into_raw(state) as *mut c_void;
+             println!("init");
+             println!("{:?}", ptr);
+             (ptr, destroy)
+         },
         "env" => {
             "c_read" => func!(do_read),
             "c_write" => func!(do_write),
@@ -132,6 +149,14 @@ fn do_read(ctx: &mut Ctx, _dbref: i32, key: i32) -> i32 {
 }
 
 fn do_write(ctx: &mut Ctx, _dbref: i32, key: i32, value: i32) {
+    println!("write");
+    println!("{:?}", ctx.data);
+    let b = unsafe { Box::from_raw(ctx.data as *mut MockStorage) };
+    let x = b.get(b"foo").unwrap();
+    println!("loaded: {:?}", x);
+    // we do this to avoid cleanup
+    let _ = Box::into_raw(b);
+
     let key = read_memory(ctx, key);
     let value = read_memory(ctx, value);
     unsafe { STORAGE.as_mut().unwrap().set(&key, &value); }
