@@ -42,11 +42,11 @@ pub fn send<T:Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Vec<
         Some(v) => from_slice(&v)?,
         None => { bail!("Not initialized") }
     };
-    let funds = state.payout + params.sent_funds;
-    state.payout = 0;
-    store.set(CONFIG_KEY, &to_vec(&state)?);
 
     if params.sender == state.verifier {
+        let funds = state.payout + params.sent_funds;
+        state.payout = 0;
+        store.set(CONFIG_KEY, &to_vec(&state)?);
         Ok(vec![CosmosMsg::SendTx {
             from_address: params.contract_address,
             to_address: state.beneficiary,
@@ -153,4 +153,40 @@ mod tests {
         assert_eq!(state.beneficiary, String::from("benefits"));
         assert_eq!(state.funder, String::from("creator"));
     }
+
+    #[test]
+    fn failed_send() {
+        let mut store = MockStorage::new();
+
+        // initialize the store
+        let init_msg = serde_json::to_vec(&RegenInitMsg{
+            verifier: String::from("verifies"),
+            beneficiary: String::from("benefits"),
+        }).unwrap();
+        let init_params = Params {
+            contract_address: String::from("contract"),
+            sender: String::from("creator"),
+            sent_funds: 1000,
+        };
+        let init_res = init(&mut store, init_params, init_msg).unwrap();
+        assert_eq!(0, init_res.len());
+
+        // beneficiary can release it
+        let send_params = Params {
+            contract_address: String::from("contract"),
+            sender: String::from("benefits"),
+            sent_funds: 0,
+        };
+        let send_res = send(&mut store, send_params, Vec::new());
+        assert!(send_res.is_err());
+
+        // state should not change
+        let data = store.get(CONFIG_KEY).expect("no data stored");
+        let state: RegenState = from_slice(&data).unwrap();
+        assert_eq!(state.payout, 1000);
+        assert_eq!(state.verifier, String::from("verifies"));
+        assert_eq!(state.beneficiary, String::from("benefits"));
+        assert_eq!(state.funder, String::from("creator"));
+    }
+
 }
