@@ -28,7 +28,7 @@ pub extern "C" fn deallocate(pointer: *mut c_void, capacity: usize) {
 }
 
 // init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn init(init_fn: &dyn Fn(&mut ExternalStorage, InitParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -44,8 +44,8 @@ pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec
     };
 
     // Catches and formats errors from the logic
-    let store = ExternalStorage::new(dbref);
-    let init_res = init_fn(store, params, msg);
+    let mut store = ExternalStorage::new(dbref);
+    let init_res = init_fn(&mut store, params, msg);
     let res = match init_res {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
@@ -67,7 +67,7 @@ pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec
 }
 
 // send should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn send(send_fn: &dyn Fn(ExternalStorage, SendParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn send(send_fn: &dyn Fn(&mut ExternalStorage, SendParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -83,8 +83,8 @@ pub fn send(send_fn: &dyn Fn(ExternalStorage, SendParams, Vec<u8>) -> Result<Vec
     };
 
     // Catches and formats errors from the logic
-    let store = ExternalStorage::new(dbref);
-    let res = match send_fn(store, params, msg) {
+    let mut store = ExternalStorage::new(dbref);
+    let res = match send_fn(&mut store, params, msg) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };

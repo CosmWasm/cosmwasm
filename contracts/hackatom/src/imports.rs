@@ -72,7 +72,7 @@ mod mock {
         }
     }
 
-    impl Storage for &mut MockStorage {
+    impl Storage for MockStorage {
         fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
             match self.data.get(key) {
                 Some(v) => Some(v.clone()),
@@ -88,9 +88,9 @@ mod mock {
     #[test]
     fn get_and_set() {
         let mut store = MockStorage::new();
-        assert_eq!(None, (&mut store).get(b"foo"));
-        (&mut store).set(b"foo", b"bar");
-        assert_eq!(Some(b"bar".to_vec()), (&mut store).get(b"foo"));
-        assert_eq!(None, (&mut store).get(b"food"));
+        assert_eq!(None, store.get(b"foo"));
+        store.set(b"foo", b"bar");
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
+        assert_eq!(None, store.get(b"food"));
     }
 }

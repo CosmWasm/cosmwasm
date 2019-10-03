@@ -24,7 +24,7 @@ struct RegenSendMsg {}
 
 static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage>(mut store: T, params: InitParams, msg: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
+pub fn init<T: Storage>(store: &mut T, params: InitParams, msg: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
     let msg: RegenInitMsg = from_slice(&msg)?;
     store.set(CONFIG_KEY, &to_vec(&RegenState {
         verifier: msg.verifier,
@@ -36,7 +36,7 @@ pub fn init<T: Storage>(mut store: T, params: InitParams, msg: Vec<u8>) -> Resul
     Ok(Vec::new())
 }
 
-pub fn send<T:Storage>(mut store: T, params: SendParams, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
+pub fn send<T:Storage>(store: &mut T, params: SendParams, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
     let data = store.get(CONFIG_KEY);
     let mut state: RegenState = match data {
         Some(v) => from_slice(&v)?,
@@ -81,7 +81,7 @@ mod tests {
         assert_eq!(0, res.len());
 
         // it worked, let's check the state
-        let data = (&mut store).get(CONFIG_KEY);
+        let data = store.get(CONFIG_KEY);
         let state: RegenState = match data {
             Some(v) => from_slice(&v).unwrap(),
             _ => panic!("no data stored"),
