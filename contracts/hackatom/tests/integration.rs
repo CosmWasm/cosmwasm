@@ -7,6 +7,7 @@ use wasmer_runtime::{compile_with, Ctx, Func, func, imports};
 use wasmer_runtime_core::{Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 
+//use hackatom::imports::{MockStorage};
 use hackatom::types::{mock_params, coin};
 use hackatom::contract::{RegenInitMsg};
 
@@ -31,6 +32,8 @@ fn run_contract() {
     let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
     let wasm = fs::read(wasm_file).unwrap();
     assert!(wasm.len() > 100000);
+
+//    let mut store = MockStorage::new();
 
     // TODO: set up proper callback for read and write here
     let import_object = imports! {
@@ -67,7 +70,7 @@ fn run_contract() {
     assert!(res_offset > 1000);
 
     // read the return value
-    let res = read_memory(instance.context(), res_offset, 11);
+    let res = read_memory(instance.context(), res_offset);
     let str_res = from_utf8(&res).unwrap();
     assert_eq!(str_res , "{\"msgs\":[]}");
 }
@@ -84,16 +87,16 @@ fn allocate(instance: &mut Instance, data: &[u8]) -> i32 {
 }
 // TODO: free_mem
 
-fn read_memory(ctx: &Ctx, offset: i32, len: i32) -> Vec<u8> {
-    let start = offset as usize;
-    let end = start + len as usize;
+fn read_memory(ctx: &Ctx, offset: i32) -> Vec<u8> {
     // TODO: there must be a faster way to copy memory
-    let memory = &ctx.memory(0).view::<u8>()[start..end];
+    let start = offset as usize;
+    let memory = &ctx.memory(0).view::<u8>()[start..];
 
-    let ulen = len as usize;
-    let mut result = vec![0; ulen];
-    for i in 0..ulen {
-        result[i] = memory[i].get();
+    let mut result = Vec::new();
+    let mut i = 0;
+    while memory[i].get() != 0 {
+        result.push(memory[i].get());
+        i+=1;
     }
     result
 }
@@ -109,9 +112,16 @@ fn write_memory(ctx: &Ctx, offset: i32, data: &[u8]) {
 }
 
 
-fn do_read(ctx: &mut Ctx, dbref: i32, key: i32) -> i32 {
+fn do_read(ctx: &mut Ctx, _dbref: i32, key: i32) -> i32 {
     15
 }
 
-fn do_write(ctx: &mut Ctx, dbref: i32, key: i32, value: i32) {
+fn do_write(ctx: &mut Ctx, _dbref: i32, key: i32, value: i32) {
 }
+
+//fn do_read(ctx: &mut Ctx, store: &mut MockStorage, key: i32) -> i32 {
+//    let key = read_memory(ctx, key, 100);
+//}
+//
+//fn do_write(ctx: &mut Ctx, store: &mut MockStorage, key: i32, value: i32) {
+//}
