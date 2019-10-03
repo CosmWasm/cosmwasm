@@ -4,12 +4,30 @@
 use failure::Error;
 use serde_json::{from_slice, to_vec};
 use std::ffi::{CStr, CString};
-use std::os::raw::{c_char};
+use std::mem;
+use std::os::raw::{c_char, c_void};
 use std::vec::Vec;
 
 use crate::imports::{ExternalStorage};
 use crate::types::{ContractResult, CosmosMsg, InitParams, SendParams};
 
+#[no_mangle]
+pub extern "C" fn allocate(size: usize) -> *mut c_void {
+    let mut buffer = Vec::with_capacity(size);
+    let pointer = buffer.as_mut_ptr();
+    mem::forget(buffer);
+
+    pointer as *mut c_void
+}
+
+#[no_mangle]
+pub extern "C" fn deallocate(pointer: *mut c_void, capacity: usize) {
+    unsafe {
+        let _ = Vec::from_raw_parts(pointer, 0, capacity);
+    }
+}
+
+// init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
@@ -48,6 +66,7 @@ pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec
     res.into_raw()
 }
 
+// send should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn send(send_fn: &dyn Fn(ExternalStorage, SendParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
