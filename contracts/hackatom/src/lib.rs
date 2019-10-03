@@ -23,5 +23,5 @@ pub extern "C" fn init_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) ->
 #[cfg(target_arch = "wasm32")]
 #[no_mangle]
 pub extern "C" fn send_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
-    api::send(params_ptr, msg_ptr)
+    api::send(&contract::send::<imports::ExternalStorage>, params_ptr, msg_ptr)
 }

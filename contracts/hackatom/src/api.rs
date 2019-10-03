@@ -7,16 +7,8 @@ use std::ffi::{CStr, CString};
 use std::os::raw::{c_char};
 use std::vec::Vec;
 
-use crate::{contract};
 use crate::imports::{ExternalStorage};
 use crate::types::{ContractResult, CosmosMsg, InitParams, SendParams};
-
-fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
-    let error: Error = error.into();
-    CString::new(to_vec(&ContractResult::Error(error.to_string())).unwrap())
-        .unwrap()
-        .into_raw()
-}
 
 pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
@@ -56,7 +48,7 @@ pub fn init(init_fn: &dyn Fn(ExternalStorage, InitParams, Vec<u8>) -> Result<Vec
     res.into_raw()
 }
 
-pub fn send(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+pub fn send(send_fn: &dyn Fn(ExternalStorage, SendParams, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
     let params: Vec<u8>;
     let msg: Vec<u8>;
 
@@ -73,7 +65,7 @@ pub fn send(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
 
     // Catches and formats errors from the logic
     let store = ExternalStorage{};
-    let res = match contract::send(store, params, msg) {
+    let res = match send_fn(store, params, msg) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };
@@ -92,3 +84,11 @@ pub fn send(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
 
     res.into_raw()
 }
+
+fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
+    let error: Error = error.into();
+    CString::new(to_vec(&ContractResult::Error(error.to_string())).unwrap())
+        .unwrap()
+        .into_raw()
+}
+
