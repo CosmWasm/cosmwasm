@@ -14,20 +14,30 @@ pub use mock::{MockStorage};
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     extern "C" {
-        fn c_read() -> *mut c_char;
-        fn c_write(string: *mut c_char);
+        // both take an opaque database ref that can be used by the environment to determine which
+        // substore to allow read/writes from
+        fn c_read(dbref: i32) -> *mut c_char;
+        fn c_write(dbref: i32, string: *mut c_char);
     }
 
     use super::*;
     use std::os::raw::{c_char};
 
-    pub struct ExternalStorage {}
+    pub struct ExternalStorage {
+        dbref: i32,
+    }
+
+    impl ExternalStorage {
+        pub fn new(dbref: i32) -> ExternalStorage {
+            ExternalStorage{dbref}
+        }
+    }
 
     impl Storage for ExternalStorage {
         fn get_state(&self) -> Option<Vec<u8>> {
             use std::ffi::{CStr};
             unsafe {
-                let ptr = c_read();
+                let ptr = c_read(self.dbref);
                 if ptr.is_null() {
                     return None;
                 }
@@ -39,7 +49,7 @@ mod wasm {
         fn set_state(&mut self, state: Vec<u8>) {
             use std::ffi::{CString};
             unsafe {
-                c_write(CString::new(state).unwrap().into_raw());
+                c_write(self.dbref, CString::new(state).unwrap().into_raw());
             }
         }
     }

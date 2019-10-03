@@ -14,13 +14,13 @@ mod wasm {
     pub use exports::{allocate, deallocate};
 
     #[no_mangle]
-    pub extern "C" fn init_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
-        exports::init(&contract::init::<imports::ExternalStorage>, params_ptr, msg_ptr)
+    pub extern "C" fn init_wrapper(dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+        exports::init(&contract::init::<imports::ExternalStorage>, dbref, params_ptr, msg_ptr)
     }
 
     #[no_mangle]
-    pub extern "C" fn send_wrapper(params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
-        exports::send(&contract::send::<imports::ExternalStorage>, params_ptr, msg_ptr)
+    pub extern "C" fn send_wrapper(dbref: i32, params_ptr: *mut c_char, msg_ptr: *mut c_char) -> *mut c_char {
+        exports::send(&contract::send::<imports::ExternalStorage>, dbref, params_ptr, msg_ptr)
     }
 }
 
