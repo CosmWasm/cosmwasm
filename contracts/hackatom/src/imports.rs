@@ -74,10 +74,7 @@ mod mock {
 
     impl Storage for MockStorage {
         fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-            match self.data.get(key) {
-                Some(v) => Some(v.clone()),
-                None => None,
-            }
+            self.data.get(key).map(|v| v.clone())
         }
 
         fn set(&mut self, key: &[u8], value: &[u8]) {

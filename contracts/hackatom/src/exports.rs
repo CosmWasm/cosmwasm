@@ -16,7 +16,6 @@ pub extern "C" fn allocate(size: usize) -> *mut c_void {
     let mut buffer = Vec::with_capacity(size);
     let pointer = buffer.as_mut_ptr();
     mem::forget(buffer);
-
     pointer as *mut c_void
 }
 

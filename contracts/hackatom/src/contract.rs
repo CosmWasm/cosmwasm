@@ -1,7 +1,7 @@
 use crate::types::{CosmosMsg, Params};
 use crate::imports::Storage;
 
-use failure::{bail, Error};
+use failure::{bail, Error, format_err};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_slice, to_vec};
 
@@ -34,11 +34,8 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<V
 }
 
 pub fn send<T:Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Vec<CosmosMsg>, Error> {
-    let data = store.get(CONFIG_KEY);
-    let state: RegenState = match data {
-        Some(v) => from_slice(&v)?,
-        None => { bail!("Not initialized") }
-    };
+    let data = store.get(CONFIG_KEY).ok_or(format_err!("not initialized"))?;
+    let state: RegenState = from_slice(&data)?;
 
     if params.message.signer == state.verifier {
         Ok(vec![CosmosMsg::SendTx {
@@ -82,9 +79,7 @@ mod tests {
         let bad_msg = b"{}".to_vec();
         let params = mock_params("creator", &coin("1000", "earth"), &[]);
         let res = init(&mut store, params, bad_msg);
-        if let Ok(_) = res {
-            assert!(false);
-        }
+        assert_eq!(true, res.is_err());
     }
 
     #[test]
@@ -110,13 +105,9 @@ mod tests {
                 assert_eq!("cosmos2contract", from_address);
                 assert_eq!("benefits", to_address);
                 assert_eq!(1, amount.len());
-                match amount.get(0) {
-                    Some(coin) => {
-                        assert_eq!(coin.denom, "earth");
-                        assert_eq!(coin.amount, "1015");
-                    },
-                    None => panic!("No coin"),
-                }
+                let coin = amount.get(0).expect("No coin");
+                assert_eq!(coin.denom, "earth");
+                assert_eq!(coin.amount, "1015");
             },
         }
 
@@ -153,5 +144,4 @@ mod tests {
         assert_eq!(state.beneficiary, String::from("benefits"));
         assert_eq!(state.funder, String::from("creator"));
     }
-
 }

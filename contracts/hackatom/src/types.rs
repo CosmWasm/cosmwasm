@@ -74,8 +74,8 @@ pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) ->
 
 // coin is a shortcut constructor for a set of one denomination of coins
 pub fn coin(amount: &str, denom: &str) -> Vec<SendAmount> {
-    [SendAmount {
+    vec![SendAmount {
         amount: amount.to_string(),
         denom: denom.to_string(),
-    }].to_vec()
+    }]
 }
