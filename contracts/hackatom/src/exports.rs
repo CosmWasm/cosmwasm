@@ -9,7 +9,7 @@ use std::os::raw::{c_char, c_void};
 use std::vec::Vec;
 
 use crate::imports::{ExternalStorage};
-use crate::types::{ContractResult, CosmosMsg, Param, Params};
+use crate::types::{ContractResult, CosmosMsg, Params};
 
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut c_void {
