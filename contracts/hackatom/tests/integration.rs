@@ -5,13 +5,8 @@ use hackatom::contract::{RegenInitMsg};
 use cosmwasm::imports::Storage;
 use cosmwasm::types::{coin, mock_params};
 
-mod memory;
-mod exports;
-mod wasmer;
-
-use crate::exports::{do_read, do_write, setup_context};
-use crate::memory::{read_memory, write_memory, allocate};
-use crate::wasmer::{Func, func, imports, wasm_instance};
+use cosmwasm_vm::{do_read, do_write, setup_context, read_memory, write_memory, allocate};
+use cosmwasm_vm::wasmer::{Func, func, imports, wasm_instance};
 
 /**
 This integration test tries to run and call the generated wasm.

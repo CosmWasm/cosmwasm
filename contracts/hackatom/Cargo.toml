@@ -28,6 +28,4 @@ serde = { version = "1.0.60", default-features = false, features = ["derive"] }
 failure = "0.1.5"
 
 [dev-dependencies]
-wasmer-runtime = "0.8.0"
-wasmer-runtime-core = "0.8.0"
-wasmer-clif-backend = "0.8.0"
+cosmwasm-vm = { path = "../../lib/vm" }
