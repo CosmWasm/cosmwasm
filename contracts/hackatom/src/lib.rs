@@ -1,7 +1,8 @@
 pub mod contract;
-pub mod types;
 pub mod imports;
+pub mod memory;
 pub mod mock;
+pub mod types;
 
 /** Below we expose wasm exports **/
 #[cfg(target_arch = "wasm32")]
@@ -11,17 +12,15 @@ mod exports;
 mod wasm {
     use super::*;
     pub use exports::{allocate, deallocate};
-    use std::os::raw::c_char;
+    use std::ffi::c_void;
 
     #[no_mangle]
     pub extern "C" fn init_wrapper(
-        dbref: i32,
-        params_ptr: *mut c_char,
-        msg_ptr: *mut c_char,
-    ) -> *mut c_char {
+        params_ptr: *mut c_void,
+        msg_ptr: *mut c_void,
+    ) -> *mut c_void {
         exports::init(
             &contract::init::<imports::ExternalStorage>,
-            dbref,
             params_ptr,
             msg_ptr,
         )
@@ -29,13 +28,11 @@ mod wasm {
 
     #[no_mangle]
     pub extern "C" fn send_wrapper(
-        dbref: i32,
-        params_ptr: *mut c_char,
-        msg_ptr: *mut c_char,
-    ) -> *mut c_char {
+        params_ptr: *mut c_void,
+        msg_ptr: *mut c_void,
+    ) -> *mut c_void {
         exports::send(
             &contract::send::<imports::ExternalStorage>,
-            dbref,
             params_ptr,
             msg_ptr,
         )

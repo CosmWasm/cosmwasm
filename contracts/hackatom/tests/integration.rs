@@ -10,7 +10,7 @@ use wasmer_runtime_core::{Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 
 use hackatom::mock::{MockStorage};
-use hackatom::types::{Buffer, coin, mock_params};
+use hackatom::types::{coin, mock_params};
 use hackatom::contract::{RegenInitMsg};
 use hackatom::imports::Storage;
 

@@ -3,74 +3,37 @@
 // #[cfg(target_arch = "wasm32")]
 use failure::Error;
 use serde_json::{from_slice, to_vec};
-use std::ffi::{CStr, CString};
 use std::mem;
-use std::os::raw::{c_char, c_void};
+use std::os::raw::c_void;
 use std::vec::Vec;
 
 use crate::imports::ExternalStorage;
-use crate::types::{Buffer, ContractResult, CosmosMsg, Params};
+use crate::memory::{alloc, consume_slice, release_buffer};
+use crate::types::{ContractResult, CosmosMsg, Params};
 
-#[no_mangle]
-extern "C" fn create_buffer() -> *mut c_void {
-    let buf = Box::new(Buffer{
-        offset: 12345,
-        len: 100,
-    });
-    Box::into_raw(buf) as *mut c_void
-
-
-//    let mut buf = vec![0; 512].into_boxed_slice();
-//    let data = buf.as_mut_ptr();
-//    let len = buf.len();
-//    std::mem::forget(buf);
-//    Buffer { data, len }
-}
-
-#[no_mangle]
-extern "C" fn free_buffer(ptr: *mut c_void) -> i32 {
-    let buf = unsafe { Box::from_raw(ptr as *mut Buffer) };
-    buf.offset as i32
-    // this should free the buf when it goes out of scope...
-
-
-//    let mut buf = vec![0; 512].into_boxed_slice();
-//    let data = buf.as_mut_ptr();
-//    let len = buf.len();
-//    std::mem::forget(buf);
-//    Buffer { data, len }
-}
-
-
+// allocate reserves the given number of bytes in wasm memory and returns a pointer
+// to a slice defining this data. This space is managed by the calling process
+// and should be accompanied by a corresponding deallocate
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut c_void {
-    let mut buffer = Vec::with_capacity(size);
-    let pointer = buffer.as_mut_ptr();
-    mem::forget(buffer);
-    pointer as *mut c_void
+    alloc(size)
 }
 
+// deallocate expects a pointer to a Slice created with allocate.
+// It will free both the Slice and the memory referenced by the slice.
 #[no_mangle]
-pub extern "C" fn deallocate(pointer: *mut c_void, capacity: usize) {
-    unsafe {
-        let _ = Vec::from_raw_parts(pointer, 0, capacity);
-    }
+pub extern "C" fn deallocate(pointer: *mut c_void) {
+    mem::drop(consume_slice(pointer));
 }
 
 // init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn init(
     init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
-    dbref: i32,
-    params_ptr: *mut c_char,
-    msg_ptr: *mut c_char,
-) -> *mut c_char {
-    let params: Vec<u8>;
-    let msg: Vec<u8>;
-
-    unsafe {
-        params = CStr::from_ptr(params_ptr).to_bytes().to_vec();
-        msg = CStr::from_ptr(msg_ptr).to_bytes().to_vec();
-    }
+    params_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
+) -> *mut c_void {
+    let params: Vec<u8> = consume_slice(params_ptr);
+    let msg: Vec<u8> = consume_slice(msg_ptr);
 
     // Catches and formats deserialization errors
     let params: Params = match from_slice(&params) {
@@ -79,7 +42,7 @@ pub fn init(
     };
 
     // Catches and formats errors from the logic
-    let mut store = ExternalStorage::new(dbref);
+    let mut store = ExternalStorage::new();
     let init_res = init_fn(&mut store, params, msg);
     let res = match init_res {
         Ok(msgs) => ContractResult::Msgs(msgs),
@@ -92,29 +55,17 @@ pub fn init(
         Err(e) => return make_error_c_string(e),
     };
 
-    // Catches and formats CString errors
-    let res = match CString::new(res) {
-        Ok(res) => res,
-        Err(e) => return make_error_c_string(e),
-    };
-
-    res.into_raw()
+    release_buffer(res)
 }
 
 // send should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn send(
     send_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
-    dbref: i32,
-    params_ptr: *mut c_char,
-    msg_ptr: *mut c_char,
-) -> *mut c_char {
-    let params: Vec<u8>;
-    let msg: Vec<u8>;
-
-    unsafe {
-        params = CStr::from_ptr(params_ptr).to_bytes().to_vec();
-        msg = CStr::from_ptr(msg_ptr).to_bytes().to_vec();
-    }
+    params_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
+) -> *mut c_void {
+    let params: Vec<u8> = consume_slice(params_ptr);
+    let msg: Vec<u8> = consume_slice(msg_ptr);
 
     // Catches and formats deserialization errors
     let params: Params = match from_slice(&params) {
@@ -123,7 +74,7 @@ pub fn send(
     };
 
     // Catches and formats errors from the logic
-    let mut store = ExternalStorage::new(dbref);
+    let mut store = ExternalStorage::new();
     let res = match send_fn(&mut store, params, msg) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
@@ -135,18 +86,11 @@ pub fn send(
         Err(e) => return make_error_c_string(e),
     };
 
-    // Catches and formats CString errors
-    let res = match CString::new(res) {
-        Ok(res) => res,
-        Err(e) => return make_error_c_string(e),
-    };
-
-    res.into_raw()
+    release_buffer(res)
 }
 
-fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_char {
+fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_void {
     let error: Error = error.into();
-    CString::new(to_vec(&ContractResult::Error(error.to_string())).unwrap())
-        .unwrap()
-        .into_raw()
+    let v = to_vec(&ContractResult::Error(error.to_string())).unwrap();
+    release_buffer(v)
 }
