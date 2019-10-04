@@ -21,7 +21,7 @@ pub struct RegenState {
 #[derive(Serialize, Deserialize)]
 pub struct RegenSendMsg {}
 
-static CONFIG_KEY: &[u8] = b"config";
+pub static CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<T: Storage>(
     store: &mut T,

@@ -11,8 +11,8 @@ pub use wasm::ExternalStorage;
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::*;
-    use std::ffi::{c_void};
     use crate::memory::{alloc, build_slice, consume_slice, Slice};
+    use std::ffi::c_void;
 
     // this is the buffer we pre-allocate in get - we should configure this somehow later
     static MAX_READ: usize = 2000;
@@ -64,4 +64,3 @@ mod wasm {
         }
     }
 }
-

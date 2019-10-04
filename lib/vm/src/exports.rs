@@ -1,10 +1,10 @@
-use std::mem;
 use std::ffi::c_void;
+use std::mem;
 
-use wasmer_runtime::{Ctx};
+use wasmer_runtime::Ctx;
 
-use cosmwasm::imports::{Storage};
-use cosmwasm::mock::{MockStorage};
+use cosmwasm::imports::Storage;
+use cosmwasm::mock::MockStorage;
 
 use crate::memory::{read_memory, write_memory};
 
@@ -26,14 +26,13 @@ pub fn do_write(ctx: &mut Ctx, key: i32, value: i32) {
     with_storage_from_context(ctx, |store| store.set(&key, &value));
 }
 
-
 /*** context data ****/
 
 pub fn setup_context() -> (*mut c_void, fn(*mut c_void)) {
     (create_unmanaged_storage(), destroy_unmanaged_storage)
 }
 
-fn create_unmanaged_storage() ->*mut c_void {
+fn create_unmanaged_storage() -> *mut c_void {
     let state = Box::new(MockStorage::new());
     Box::into_raw(state) as *mut c_void
 }
@@ -43,11 +42,8 @@ fn destroy_unmanaged_storage(ptr: *mut c_void) {
     mem::drop(b);
 }
 
-fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &mut Ctx, mut func: F) {
+pub fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &Ctx, mut func: F) {
     let mut b = unsafe { Box::from_raw(ctx.data as *mut MockStorage) };
     func(b.as_mut());
     mem::forget(b); // we do this to avoid cleanup
 }
-
-
-

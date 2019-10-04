@@ -11,3 +11,5 @@ cosmwasm = { path = "../.." }
 wasmer-runtime = "0.8.0"
 wasmer-runtime-core = "0.8.0"
 wasmer-clif-backend = "0.8.0"
+failure = "0.1.5"
+serde_json = { version = "1.0.41" }

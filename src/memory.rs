@@ -1,5 +1,5 @@
 use std::mem;
-use std::os::raw::{c_void};
+use std::os::raw::c_void;
 use std::vec::Vec;
 
 // Slice refers to some heap allocated data in wasm
@@ -9,7 +9,6 @@ pub struct Slice {
     pub offset: usize,
     pub len: usize,
 }
-
 
 // alloc is the same as external allocate, but designed to be called internally
 pub fn alloc(size: usize) -> *mut c_void {
@@ -27,7 +26,7 @@ pub fn release_buffer(mut buffer: Vec<u8>) -> *mut c_void {
     mem::forget(buffer);
 
     // return a descriptor to it
-    let slice = Box::new(Slice{
+    let slice = Box::new(Slice {
         offset: ptr as usize,
         len: size,
     });
@@ -48,7 +47,7 @@ pub fn consume_slice(ptr: *mut c_void) -> Vec<u8> {
 // the resulting data.
 // The Box must be dropped (with scope), but not the data
 pub fn build_slice(data: &[u8]) -> Box<Slice> {
-    Box::new(Slice{
+    Box::new(Slice {
         offset: data.as_ptr() as usize,
         len: data.len(),
     })
