@@ -2,7 +2,6 @@ use wasmer_runtime::{Ctx, Instance, Func};
 
 use cosmwasm::memory::Slice;
 
-
 /****** read/write to wasm memory buffer ****/
 
 // write_mem allocates memory in the instance and copies the given data in
