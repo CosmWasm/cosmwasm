@@ -1,7 +1,5 @@
 use std::fs;
-use std::mem;
 use std::str::from_utf8;
-use std::ffi::c_void;
 
 use wasmer_runtime::{compile_with, Ctx, Func, func, imports};
 use wasmer_runtime_core::{Instance};
@@ -9,16 +7,13 @@ use wasmer_clif_backend::CraneliftCompiler;
 
 use hackatom::contract::{RegenInitMsg};
 use cosmwasm::imports::Storage;
-use cosmwasm::memory::Slice;
-use cosmwasm::mock::{MockStorage};
 use cosmwasm::types::{coin, mock_params};
 
-#[test]
-fn test_coin() {
-    let c = coin("123", "tokens");
-    assert_eq!(c.len(), 1);
-    assert_eq!(c.get(0).unwrap().amount, "123");
-}
+mod memory;
+mod context;
+
+use crate::context::{create_unmanaged_storage, destroy_unmanaged_storage, with_storage_from_context};
+use crate::memory::{read_memory, write_memory, allocate};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -77,62 +72,6 @@ fn run_contract() {
     assert_eq!(str_res , "{\"msgs\":[]}");
 }
 
-/****** read/write to wasm memory buffer ****/
-
-// write_mem allocates memory in the instance and copies the given data in
-// returns the memory offset, to be passed as an argument
-// panics on any error (TODO, use result?)
-fn allocate(instance: &mut Instance, data: &[u8]) -> i32 {
-    // allocate
-    let alloc: Func<(i32), (i32)> = instance.func("allocate").unwrap();
-    let ptr = alloc.call(data.len() as i32).unwrap();
-    write_memory(instance.context(), ptr, data);
-    ptr
-}
-
-fn read_memory(ctx: &Ctx, ptr: i32) -> Vec<u8> {
-    let slice = to_slice(ctx, ptr);
-    let (start, end) = (slice.offset, slice.offset+slice.len);
-    let memory = &ctx.memory(0).view::<u8>()[start..end];
-
-    // TODO: there must be a faster way to copy memory
-    let mut result = vec![0u8; slice.len];
-    for i in 0..slice.len {
-        result[i] = memory[i].get();
-    }
-    result
-}
-
-// write_memory returns how many bytes written on success
-// negative result is how many bytes requested if too small
-fn write_memory(ctx: &Ctx, ptr: i32, data: &[u8]) -> i32 {
-    let slice = to_slice(ctx, ptr);
-    if data.len() > slice.len {
-        return -(data.len() as i32);
-    }
-    if data.len() == 0 {
-        return 0;
-    }
-
-    let (start, end) = (slice.offset, slice.offset+slice.len);
-    let memory = &ctx.memory(0).view::<u8>()[start..end];
-    // TODO: there must be a faster way to copy memory
-    for i in 0..data.len() {
-        memory[i].set(data[i])
-    }
-    data.len() as i32
-}
-
-// to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
-fn to_slice(ctx: &Ctx, ptr: i32) -> Slice {
-    let buf_ptr = (ptr / 4) as usize;  // convert from u8 to i32 offset
-    let memory = &ctx.memory(0).view::<i32>();
-    Slice {
-        offset: memory[buf_ptr].get() as usize,
-        len: memory[buf_ptr+1].get() as usize,
-    }
-}
-
 /*** mocks to stub out actually db writes as extern "C" ***/
 
 fn do_read(ctx: &mut Ctx, key_ptr: i32, val_ptr: i32) -> i32 {
@@ -152,20 +91,3 @@ fn do_write(ctx: &mut Ctx, key: i32, value: i32) {
 }
 
 
-/*** context data ****/
-
-fn create_unmanaged_storage() ->*mut c_void {
-    let state = Box::new(MockStorage::new());
-    Box::into_raw(state) as *mut c_void
-}
-
-fn destroy_unmanaged_storage(ptr: *mut c_void) {
-    let b = unsafe { Box::from_raw(ptr as *mut MockStorage) };
-    mem::drop(b);
-}
-
-fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &mut Ctx, mut func: F) {
-    let mut b = unsafe { Box::from_raw(ctx.data as *mut MockStorage) };
-    func(b.as_mut());
-    mem::forget(b); // we do this to avoid cleanup
-}

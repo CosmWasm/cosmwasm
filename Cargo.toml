@@ -7,6 +7,6 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-serde_json = { version = "1.0.39" }
-serde = { version = "1.0", default-features = false, features = ["derive"] }
+serde_json = { version = "1.0.41" }
+serde = { version = "1.0.60", default-features = false, features = ["derive"] }
 failure = "0.1.5"
