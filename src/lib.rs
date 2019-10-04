@@ -1,7 +1,7 @@
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+pub mod imports;
+pub mod memory;
+pub mod mock;
+pub mod types;
+
+#[cfg(target_arch = "wasm32")]
+pub mod exports;

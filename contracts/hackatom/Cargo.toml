@@ -20,13 +20,13 @@ panic = 'unwind'
 incremental = false
 overflow-checks = true
 
+[workspace]
 
 [dependencies]
-serde_json = { version = "1.0.39" }
-serde = { version = "1.0", default-features = false, features = ["derive"] }
+cosmwasm = { path = "../.." }
+serde_json = { version = "1.0.41" }
+serde = { version = "1.0.60", default-features = false, features = ["derive"] }
 failure = "0.1.5"
 
 [dev-dependencies]
-wasmer-runtime = "0.8.0"
-wasmer-runtime-core = "0.8.0"
-wasmer-clif-backend = "0.8.0"
+cosmwasm-vm = { path = "../../lib/vm" }

@@ -1,5 +1,5 @@
-use crate::imports::Storage;
-use crate::types::{CosmosMsg, Params};
+use cosmwasm::imports::Storage;
+use cosmwasm::types::{CosmosMsg, Params};
 
 use failure::{bail, format_err, Error};
 use serde::{Deserialize, Serialize};
@@ -64,8 +64,8 @@ pub fn send<T: Storage>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::mock::MockStorage;
-    use crate::types::{coin, mock_params};
+    use cosmwasm::mock::MockStorage;
+    use cosmwasm::types::{coin, mock_params};
 
     #[test]
     fn proper_initialization() {

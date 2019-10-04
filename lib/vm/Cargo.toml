@@ -1,15 +1,13 @@
 [package]
-name = "cosmwasm"
+name = "cosmwasm-vm"
 version = "0.1.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[workspace]
-members = [ "lib/vm" ]
-
 [dependencies]
-serde_json = { version = "1.0.41" }
-serde = { version = "1.0.60", default-features = false, features = ["derive"] }
-failure = "0.1.5"
+cosmwasm = { path = "../.." }
+wasmer-runtime = "0.8.0"
+wasmer-runtime-core = "0.8.0"
+wasmer-clif-backend = "0.8.0"
