@@ -1,8 +1,8 @@
-mod memory;
-mod exports;
-mod wasmer;
 mod calls;
+mod exports;
+mod memory;
+mod wasmer;
 
-pub use crate::memory::{read_memory, allocate};
-pub use crate::wasmer::instantiate;
 pub use crate::calls::{call_init, call_send};
+pub use crate::memory::{allocate, read_memory};
+pub use crate::wasmer::instantiate;

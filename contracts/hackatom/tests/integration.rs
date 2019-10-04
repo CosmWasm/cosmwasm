@@ -1,10 +1,10 @@
 use std::fs;
 
-use serde_json::{to_vec};
+use serde_json::to_vec;
 
-use hackatom::contract::{RegenInitMsg, RegenSendMsg};
-use cosmwasm::types::{coin, ContractResult, CosmosMsg, mock_params};
+use cosmwasm::types::{coin, mock_params, ContractResult, CosmosMsg};
 use cosmwasm_vm::{call_init, call_send, instantiate};
+use hackatom::contract::{RegenInitMsg, RegenSendMsg};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -31,14 +31,15 @@ fn succeessful_init_and_send() {
     let msg = to_vec(&RegenInitMsg {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
-    }).unwrap();
+    })
+    .unwrap();
 
     // call and check
     let res = call_init(&mut instance, &params, &msg).unwrap();
     match res {
         ContractResult::Msgs(msgs) => {
             assert_eq!(msgs.len(), 0);
-        },
+        }
         ContractResult::Error(err) => panic!("Unexpected error: {}", err),
     }
 
@@ -64,7 +65,7 @@ fn succeessful_init_and_send() {
                     assert_eq!(coin.amount, "1015");
                 }
             }
-        },
+        }
         ContractResult::Error(err) => panic!("Unexpected error: {}", err),
     }
 }

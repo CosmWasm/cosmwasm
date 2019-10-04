@@ -1,4 +1,4 @@
-use wasmer_runtime::{Ctx, Instance, Func};
+use wasmer_runtime::{Ctx, Func, Instance};
 
 use cosmwasm::memory::Slice;
 
@@ -17,7 +17,7 @@ pub fn allocate(instance: &mut Instance, data: &[u8]) -> i32 {
 
 pub fn read_memory(ctx: &Ctx, ptr: i32) -> Vec<u8> {
     let slice = to_slice(ctx, ptr);
-    let (start, end) = (slice.offset, slice.offset+slice.len);
+    let (start, end) = (slice.offset, slice.offset + slice.len);
     let memory = &ctx.memory(0).view::<u8>()[start..end];
 
     // TODO: there must be a faster way to copy memory
@@ -39,7 +39,7 @@ pub fn write_memory(ctx: &Ctx, ptr: i32, data: &[u8]) -> i32 {
         return 0;
     }
 
-    let (start, end) = (slice.offset, slice.offset+slice.len);
+    let (start, end) = (slice.offset, slice.offset + slice.len);
     let memory = &ctx.memory(0).view::<u8>()[start..end];
     // TODO: there must be a faster way to copy memory
     for i in 0..data.len() {
@@ -50,10 +50,10 @@ pub fn write_memory(ctx: &Ctx, ptr: i32, data: &[u8]) -> i32 {
 
 // to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
 fn to_slice(ctx: &Ctx, ptr: i32) -> Slice {
-    let buf_ptr = (ptr / 4) as usize;  // convert from u8 to i32 offset
+    let buf_ptr = (ptr / 4) as usize; // convert from u8 to i32 offset
     let memory = &ctx.memory(0).view::<i32>();
     Slice {
         offset: memory[buf_ptr].get() as usize,
-        len: memory[buf_ptr+1].get() as usize,
+        len: memory[buf_ptr + 1].get() as usize,
     }
 }

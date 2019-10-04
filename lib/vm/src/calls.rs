@@ -1,12 +1,16 @@
 use failure::Error;
 use serde_json::{from_slice, to_vec};
 
-use cosmwasm::types::{Params, ContractResult};
+use cosmwasm::types::{ContractResult, Params};
 
 use crate::memory::{allocate, read_memory};
 use crate::wasmer::{Func, Instance};
 
-pub fn call_init(instance: &mut Instance, params: &Params, msg: &[u8]) -> Result<ContractResult, Error> {
+pub fn call_init(
+    instance: &mut Instance,
+    params: &Params,
+    msg: &[u8],
+) -> Result<ContractResult, Error> {
     // prepare arguments
     let params = to_vec(params)?;
     let param_offset = allocate(instance, &params);
@@ -22,7 +26,11 @@ pub fn call_init(instance: &mut Instance, params: &Params, msg: &[u8]) -> Result
     Ok(res)
 }
 
-pub fn call_send(instance: &mut Instance, params: &Params, msg: &[u8]) -> Result<ContractResult, Error> {
+pub fn call_send(
+    instance: &mut Instance,
+    params: &Params,
+    msg: &[u8],
+) -> Result<ContractResult, Error> {
     // prepare arguments
     let params = to_vec(params)?;
     let param_offset = allocate(instance, &params);

@@ -10,14 +10,11 @@ pub use wasm::{init_wrapper, send_wrapper};
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::*;
-    use cosmwasm::{imports, exports};
+    use cosmwasm::{exports, imports};
     use std::ffi::c_void;
 
     #[no_mangle]
-    pub extern "C" fn init_wrapper(
-        params_ptr: *mut c_void,
-        msg_ptr: *mut c_void,
-    ) -> *mut c_void {
+    pub extern "C" fn init_wrapper(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
         exports::init(
             &contract::init::<imports::ExternalStorage>,
             params_ptr,
@@ -26,10 +23,7 @@ mod wasm {
     }
 
     #[no_mangle]
-    pub extern "C" fn send_wrapper(
-        params_ptr: *mut c_void,
-        msg_ptr: *mut c_void,
-    ) -> *mut c_void {
+    pub extern "C" fn send_wrapper(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
         exports::send(
             &contract::send::<imports::ExternalStorage>,
             params_ptr,
