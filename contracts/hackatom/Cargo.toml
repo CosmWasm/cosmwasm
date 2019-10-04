@@ -22,6 +22,7 @@ overflow-checks = true
 
 
 [dependencies]
+cosmwasm = { path = "../.." }
 serde_json = { version = "1.0.39" }
 serde = { version = "1.0", default-features = false, features = ["derive"] }
 failure = "0.1.5"

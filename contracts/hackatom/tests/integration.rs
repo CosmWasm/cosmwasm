@@ -1,5 +1,3 @@
-extern crate hackatom;
-
 use std::fs;
 use std::mem;
 use std::str::from_utf8;
@@ -10,14 +8,14 @@ use wasmer_runtime_core::{Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 
 use hackatom::contract::{RegenInitMsg};
-use hackatom::imports::Storage;
-use hackatom::memory::Slice;
-use hackatom::mock::{MockStorage};
-use hackatom::types::{coin, mock_params};
+use cosmwasm::imports::Storage;
+use cosmwasm::memory::Slice;
+use cosmwasm::mock::{MockStorage};
+use cosmwasm::types::{coin, mock_params};
 
 #[test]
 fn test_coin() {
-    let c = hackatom::types::coin("123", "tokens");
+    let c = coin("123", "tokens");
     assert_eq!(c.len(), 1);
     assert_eq!(c.get(0).unwrap().amount, "123");
 }
