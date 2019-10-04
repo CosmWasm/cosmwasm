@@ -4,16 +4,17 @@ workflows:
   test:
     jobs:
       - base
-#      - hackatom
+      - hackatom
 
-job:
+jobs:
   base:
     docker:
       - image: rust:1.37
     steps:
+      - checkout
       - run:
           name: Version information
-          command: rustc --version; cargo --version; rustup --version
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
             - v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
@@ -46,6 +47,9 @@ job:
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
+      - run:
+          name: Show targets
+          command: rustup target list --installed
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
