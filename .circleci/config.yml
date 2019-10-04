@@ -1,0 +1,64 @@
+version: 2
+workflows:
+  version: 2
+  test:
+    jobs:
+      - base
+#      - hackatom
+
+job:
+  base:
+    docker:
+      - image: rust:1.37
+    steps:
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build all targets (including workspaces)
+          command: cargo build --all --locked
+      - run:
+          name: Run all tests (including workspaces)
+          command: cargo test --all --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+  hackatom:
+    docker:
+      - image: rust:1.37
+    working_directory: ~/cosmwasm/contracts/hackatom
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown
+      - run:
+          name: Build wasm binary
+          command: cargo wasm --locked
+      - run:
+          name: Run all tests (rust unit tests, vm integration tests)
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
