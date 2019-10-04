@@ -9,10 +9,11 @@ use wasmer_runtime::{compile_with, Ctx, Func, func, imports};
 use wasmer_runtime_core::{Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 
-use hackatom::mock::{MockStorage};
-use hackatom::types::{coin, mock_params};
 use hackatom::contract::{RegenInitMsg};
 use hackatom::imports::Storage;
+use hackatom::memory::Slice;
+use hackatom::mock::{MockStorage};
+use hackatom::types::{coin, mock_params};
 
 #[test]
 fn test_coin() {
@@ -52,52 +53,24 @@ fn run_contract() {
     let module = compile_with(&wasm, &CraneliftCompiler::new()).unwrap();
     let mut instance = module.instantiate (&import_object).unwrap();
 
-    // what does alloc return
-    let alloc: Func<(i32), (i32)> = instance.func("allocate").unwrap();
-    let offset = alloc.call(5789).unwrap();
-    println!("alloc {:?}", offset);
-
-    // let's check if we can get and pass arguments
-    let create: Func<(), (i32)> = instance.func("create_buffer").unwrap();
-    let offset = create.call().unwrap();
-    let buf_ptr = (offset / 4) as usize;  // convert from u8 to i32
-    let memory = &instance.context().memory(0).view::<i32>();
-    println!("buf_ptr {:?}", buf_ptr);
-    println!("offset {:?}", offset);
-    // TODO: add helpers to read in the buffer contents if we need them
-    let buf_offset = memory[buf_ptr].get();
-    let buf_len = memory[buf_ptr+1].get();
-    assert_eq!(buf_offset, 12345);
-    assert_eq!(buf_len, 100);
-
-    // let's try to modify it for fun
-    memory[buf_ptr].set(9876543);
-
-    // and they can read it as well...
-    let free: Func<(i32), (i32)> = instance.func("free_buffer").unwrap();
-    let freed_offset = free.call(offset).unwrap();
-    assert_eq!(freed_offset, 9876543);
-
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
-    let mut json_params = serde_json::to_vec(&params).unwrap();
+    let json_params = serde_json::to_vec(&params).unwrap();
     // currently we need to 0 pad it
-    json_params.push(0);
 
     let msg = &RegenInitMsg {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     };
-    let mut json_msg = serde_json::to_vec(&msg).unwrap();
-    json_msg.push(0);
+    let json_msg = serde_json::to_vec(&msg).unwrap();
 
     // place data in the instance memory
     let param_offset = allocate(&mut instance, &json_params);
     let msg_offset = allocate(&mut instance, &json_msg);
 
     // call the instance
-    let init: Func<(i32, i32, i32), (i32)> = instance.func("init_wrapper").unwrap();
-    let res_offset = init.call(15, param_offset, msg_offset).unwrap();
+    let init: Func<(i32, i32), (i32)> = instance.func("init_wrapper").unwrap();
+    let res_offset = init.call(param_offset, msg_offset).unwrap();
     assert!(res_offset > 1000);
 
     // read the return value
@@ -106,71 +79,79 @@ fn run_contract() {
     assert_eq!(str_res , "{\"msgs\":[]}");
 }
 
+/****** read/write to wasm memory buffer ****/
+
 // write_mem allocates memory in the instance and copies the given data in
 // returns the memory offset, to be passed as an argument
 // panics on any error (TODO, use result?)
 fn allocate(instance: &mut Instance, data: &[u8]) -> i32 {
     // allocate
     let alloc: Func<(i32), (i32)> = instance.func("allocate").unwrap();
-    let offset = alloc.call(data.len() as i32).unwrap();
-    write_memory(instance.context(), offset, data);
-    offset
+    let ptr = alloc.call(data.len() as i32).unwrap();
+    write_memory(instance.context(), ptr, data);
+    ptr
 }
-// TODO: free_mem
 
-fn read_memory(ctx: &Ctx, offset: i32) -> Vec<u8> {
+fn read_memory(ctx: &Ctx, ptr: i32) -> Vec<u8> {
+    let slice = to_slice(ctx, ptr);
+    let (start, end) = (slice.offset, slice.offset+slice.len);
+    let memory = &ctx.memory(0).view::<u8>()[start..end];
+
     // TODO: there must be a faster way to copy memory
-    let start = offset as usize;
-    let memory = &ctx.memory(0).view::<u8>()[start..];
-
-    let mut result = Vec::new();
-    let mut i = 0;
-    while memory[i].get() != 0 {
-        result.push(memory[i].get());
-        i+=1;
+    let mut result = vec![0u8; slice.len];
+    for i in 0..slice.len {
+        result[i] = memory[i].get();
     }
     result
 }
 
-fn write_memory(ctx: &Ctx, offset: i32, data: &[u8]) {
-    let start = offset as usize;
-    let end = start + data.len();
-    // TODO: there must be a faster way to copy memory
+// write_memory returns how many bytes written on success
+// negative result is how many bytes requested if too small
+fn write_memory(ctx: &Ctx, ptr: i32, data: &[u8]) -> i32 {
+    let slice = to_slice(ctx, ptr);
+    if data.len() > slice.len {
+        return -(data.len() as i32);
+    }
+    if data.len() == 0 {
+        return 0;
+    }
+
+    let (start, end) = (slice.offset, slice.offset+slice.len);
     let memory = &ctx.memory(0).view::<u8>()[start..end];
+    // TODO: there must be a faster way to copy memory
     for i in 0..data.len() {
         memory[i].set(data[i])
     }
+    data.len() as i32
 }
 
-// TODO: this is so ugly, no clear idea how to make that callback to alloc in do_read
-// There is support on Ctx for call_with_table_index: https://github.com/wasmerio/wasmer/pull/803
-// But I cannot figure out how to get the table index for the function (allocate)
-// Just guess it is 1???
-//static mut INSTANCE: Option<Box<Instance> = None;
+// to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
+fn to_slice(ctx: &Ctx, ptr: i32) -> Slice {
+    let buf_ptr = (ptr / 4) as usize;  // convert from u8 to i32 offset
+    let memory = &ctx.memory(0).view::<i32>();
+    Slice {
+        offset: memory[buf_ptr].get() as usize,
+        len: memory[buf_ptr+1].get() as usize,
+    }
+}
 
-fn do_read(ctx: &mut Ctx, _dbref: i32, key: i32) -> i32 {
-    let key = read_memory(ctx, key);
+/*** mocks to stub out actually db writes as extern "C" ***/
+
+fn do_read(ctx: &mut Ctx, key_ptr: i32, val_ptr: i32) -> i32 {
+    let key = read_memory(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
     with_storage_from_context(ctx, |store| value = store.get(&key));
     match value {
-        Some(_) => panic!("not implemented"),
+        Some(buf) => write_memory(ctx, val_ptr, &buf),
         None => 0,
     }
 }
 
-fn do_write(ctx: &mut Ctx, _dbref: i32, key: i32, value: i32) {
+fn do_write(ctx: &mut Ctx, key: i32, value: i32) {
     let key = read_memory(ctx, key);
     let value = read_memory(ctx, value);
     with_storage_from_context(ctx, |store| store.set(&key, &value));
 }
-
-//fn do_read(ctx: &mut Ctx, store: &mut MockStorage, key: i32) -> i32 {
-//    let key = read_memory(ctx, key, 100);
-//}
-//
-//fn do_write(ctx: &mut Ctx, store: &mut MockStorage, key: i32, value: i32) {
-//}
-
 
 
 /*** context data ****/
