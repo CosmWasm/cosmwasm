@@ -1,6 +1,6 @@
-pub use wasmer_runtime::{Func};
+pub use wasmer_runtime::{Func, Instance};
 
-use wasmer_runtime::{compile_with, func, imports, Instance};
+use wasmer_runtime::{compile_with, func, imports};
 use wasmer_clif_backend::CraneliftCompiler;
 
 use crate::exports::{do_read, do_write, setup_context};
