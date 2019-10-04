@@ -1,5 +1,7 @@
 # CosmWasm
 
+[![CircleCI](https://circleci.com/gh/confio/cosmwasm/tree/master.svg?style=svg)](https://circleci.com/gh/confio/cosmwasm/tree/master)
+
 **Web Assembly Smart Contracts for the Cosmos SDK**
 
 This repo provides a useful functionality to build smart contracts that
