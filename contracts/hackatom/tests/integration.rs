@@ -1,6 +1,7 @@
 extern crate hackatom;
 
 use std::fs;
+use std::mem;
 use std::str::from_utf8;
 use std::ffi::c_void;
 
@@ -29,6 +30,8 @@ cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
 Then running `cargo test` will validate we can properly call into that generated data.
 **/
 
+
+
 #[test]
 fn run_contract() {
     let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
@@ -38,21 +41,7 @@ fn run_contract() {
     // TODO: set up proper callback for read and write here
     // TODO: figure out passing state
     let import_object = imports! {
-        || {
-            let mut state = Box::new(MockStorage::new());
-            state.set(b"foo", b"bar");
-            fn destroy(ptr: *mut c_void) {
-                 println!("destroy");
-                 println!("{:?}", ptr);
-                 unsafe {
-                     Box::from_raw(ptr as *mut MockStorage);
-                 }
-             }
-             let ptr = Box::into_raw(state) as *mut c_void;
-             println!("init");
-             println!("{:?}", ptr);
-             (ptr, destroy)
-         },
+        || (create_unmanaged_storage(), destroy_unmanaged_storage),
         "env" => {
             "c_read" => func!(do_read),
             "c_write" => func!(do_write),
@@ -62,11 +51,6 @@ fn run_contract() {
     // create the instance
     let module = compile_with(&wasm, &CraneliftCompiler::new()).unwrap();
     let mut instance = module.instantiate (&import_object).unwrap();
-
-    // TODO: better way of keeping state (use the above closures)
-    unsafe {
-        STORAGE = Some(MockStorage::new());
-    }
 
     // what does alloc return
     let alloc: Func<(i32), (i32)> = instance.func("allocate").unwrap();
@@ -158,7 +142,6 @@ fn write_memory(ctx: &Ctx, offset: i32, data: &[u8]) {
     }
 }
 
-static mut STORAGE: Option<MockStorage> = None;
 // TODO: this is so ugly, no clear idea how to make that callback to alloc in do_read
 // There is support on Ctx for call_with_table_index: https://github.com/wasmerio/wasmer/pull/803
 // But I cannot figure out how to get the table index for the function (allocate)
@@ -167,7 +150,8 @@ static mut STORAGE: Option<MockStorage> = None;
 
 fn do_read(ctx: &mut Ctx, _dbref: i32, key: i32) -> i32 {
     let key = read_memory(ctx, key);
-    let value = unsafe { STORAGE.as_ref().unwrap().get(&key) };
+    let mut value: Option<Vec<u8>> = None;
+    with_storage_from_context(ctx, |store| value = store.get(&key));
     match value {
         Some(_) => panic!("not implemented"),
         None => 0,
@@ -175,17 +159,9 @@ fn do_read(ctx: &mut Ctx, _dbref: i32, key: i32) -> i32 {
 }
 
 fn do_write(ctx: &mut Ctx, _dbref: i32, key: i32, value: i32) {
-    println!("write");
-    println!("{:?}", ctx.data);
-    let b = unsafe { Box::from_raw(ctx.data as *mut MockStorage) };
-    let x = b.get(b"foo").unwrap();
-    println!("loaded: {:?}", x);
-    // we do this to avoid cleanup
-    let _ = Box::into_raw(b);
-
     let key = read_memory(ctx, key);
     let value = read_memory(ctx, value);
-    unsafe { STORAGE.as_mut().unwrap().set(&key, &value); }
+    with_storage_from_context(ctx, |store| store.set(&key, &value));
 }
 
 //fn do_read(ctx: &mut Ctx, store: &mut MockStorage, key: i32) -> i32 {
@@ -194,3 +170,23 @@ fn do_write(ctx: &mut Ctx, _dbref: i32, key: i32, value: i32) {
 //
 //fn do_write(ctx: &mut Ctx, store: &mut MockStorage, key: i32, value: i32) {
 //}
+
+
+
+/*** context data ****/
+
+fn create_unmanaged_storage() ->*mut c_void {
+    let state = Box::new(MockStorage::new());
+    Box::into_raw(state) as *mut c_void
+}
+
+fn destroy_unmanaged_storage(ptr: *mut c_void) {
+    let b = unsafe { Box::from_raw(ptr as *mut MockStorage) };
+    mem::drop(b);
+}
+
+fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &mut Ctx, mut func: F) {
+    let mut b = unsafe { Box::from_raw(ctx.data as *mut MockStorage) };
+    func(b.as_mut());
+    mem::forget(b); // we do this to avoid cleanup
+}
