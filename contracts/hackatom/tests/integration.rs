@@ -1,11 +1,10 @@
 use std::fs;
-use std::str::from_utf8;
+
+use serde_json::{from_slice, to_vec};
 
 use hackatom::contract::{RegenInitMsg};
-use cosmwasm::types::{coin, mock_params};
-
-use cosmwasm_vm::{do_read, do_write, setup_context, read_memory, allocate};
-use cosmwasm_vm::wasmer::{Func, func, imports, instantiate};
+use cosmwasm::types::{coin, ContractResult, mock_params};
+use cosmwasm_vm::{allocate, Func, instantiate, read_memory};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -22,42 +21,32 @@ fn run_contract() {
     let wasm = fs::read(wasm_file).unwrap();
     assert!(wasm.len() > 100000);
 
-    // TODO: set up proper callback for read and write here
-    // TODO: figure out passing state
-    let import_object = imports! {
-        || { setup_context() },
-        "env" => {
-            "c_read" => func!(do_read),
-            "c_write" => func!(do_write),
-        },
-    };
-
     // create the instance
-    let mut instance = instantiate(&wasm, &import_object);
+    let mut instance = instantiate(&wasm);
+//    let send: Func<(i32, i32), (i32)> = instance.func("send_wrapper").unwrap();
 
     // prepare arguments
-    let params = mock_params("creator", &coin("1000", "earth"), &[]);
-    let json_params = serde_json::to_vec(&params).unwrap();
-    // currently we need to 0 pad it
-
-    let msg = &RegenInitMsg {
+    let i_params = to_vec(
+        &mock_params("creator", &coin("1000", "earth"), &[])).unwrap();
+    let i_msg = to_vec(&RegenInitMsg {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
-    };
-    let json_msg = serde_json::to_vec(&msg).unwrap();
-
-    // place data in the instance memory
-    let param_offset = allocate(&mut instance, &json_params);
-    let msg_offset = allocate(&mut instance, &json_msg);
+    }).unwrap();
 
     // call the instance
+    let param_offset = allocate(&mut instance, &i_params);
+    let msg_offset = allocate(&mut instance, &i_msg);
     let init: Func<(i32, i32), (i32)> = instance.func("init_wrapper").unwrap();
     let res_offset = init.call(param_offset, msg_offset).unwrap();
     assert!(res_offset > 1000);
 
     // read the return value
-    let res = read_memory(instance.context(), res_offset);
-    let str_res = from_utf8(&res).unwrap();
-    assert_eq!(str_res , "{\"msgs\":[]}");
+    let res: ContractResult = from_slice(&read_memory(instance.context(), res_offset)).unwrap();
+    match res {
+        ContractResult::Msgs(msgs) => {
+            assert_eq!(msgs.len(), 0);
+        },
+        ContractResult::Error(err) => panic!("Unexpected error: {}", err),
+    }
 }
 
