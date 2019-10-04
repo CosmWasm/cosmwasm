@@ -42,7 +42,7 @@ fn destroy_unmanaged_storage(ptr: *mut c_void) {
     mem::drop(b);
 }
 
-fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &mut Ctx, mut func: F) {
+pub fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &Ctx, mut func: F) {
     let mut b = unsafe { Box::from_raw(ctx.data as *mut MockStorage) };
     func(b.as_mut());
     mem::forget(b); // we do this to avoid cleanup

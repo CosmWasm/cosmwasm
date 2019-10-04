@@ -1,10 +1,11 @@
 use std::fs;
 
-use serde_json::to_vec;
+use serde_json::{from_slice, to_vec};
 
-use cosmwasm::types::{coin, mock_params, ContractResult, CosmosMsg};
-use cosmwasm_vm::{call_init, call_send, instantiate};
-use hackatom::contract::{RegenInitMsg, RegenSendMsg};
+use cosmwasm::imports::Storage;
+use cosmwasm::types::{coin, mock_params, CosmosMsg};
+use cosmwasm_vm::{call_init, call_send, instantiate, with_storage};
+use hackatom::contract::{CONFIG_KEY, RegenInitMsg, RegenSendMsg, RegenState};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -18,12 +19,10 @@ Then running `cargo test` will validate we can properly call into that generated
 // Note this is very similar in scope and size to proper_send in contracts.rs tests
 // Making it as easy to write vm external integration tests as rust unit tests
 #[test]
-fn succeessful_init_and_send() {
+fn successful_init_and_send() {
     let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
     let wasm = fs::read(wasm_file).unwrap();
     assert!(wasm.len() > 100000);
-
-    // create the instance
     let mut instance = instantiate(&wasm);
 
     // prepare arguments
@@ -36,36 +35,66 @@ fn succeessful_init_and_send() {
 
     // call and check
     let res = call_init(&mut instance, &params, &msg).unwrap();
-    match res {
-        ContractResult::Msgs(msgs) => {
-            assert_eq!(msgs.len(), 0);
-        }
-        ContractResult::Error(err) => panic!("Unexpected error: {}", err),
-    }
+    let msgs = res.unwrap();
+    assert_eq!(msgs.len(), 0);
 
     // now try to send this one
     let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
     let msg = to_vec(&RegenSendMsg {}).unwrap();
     let res = call_send(&mut instance, &params, &msg).unwrap();
-    match res {
-        ContractResult::Msgs(msgs) => {
-            assert_eq!(1, msgs.len());
-            let msg = msgs.get(0).expect("no message");
-            match &msg {
-                CosmosMsg::SendTx {
-                    from_address,
-                    to_address,
-                    amount,
-                } => {
-                    assert_eq!("cosmos2contract", from_address);
-                    assert_eq!("benefits", to_address);
-                    assert_eq!(1, amount.len());
-                    let coin = amount.get(0).expect("No coin");
-                    assert_eq!(coin.denom, "earth");
-                    assert_eq!(coin.amount, "1015");
-                }
-            }
+    let msgs = res.unwrap();
+    assert_eq!(1, msgs.len());
+    let msg = msgs.get(0).expect("no message");
+    match &msg {
+        CosmosMsg::SendTx {
+            from_address,
+            to_address,
+            amount,
+        } => {
+            assert_eq!("cosmos2contract", from_address);
+            assert_eq!("benefits", to_address);
+            assert_eq!(1, amount.len());
+            let coin = amount.get(0).expect("No coin");
+            assert_eq!(coin.denom, "earth");
+            assert_eq!(coin.amount, "1015");
         }
-        ContractResult::Error(err) => panic!("Unexpected error: {}", err),
     }
+
+    // we can check the storage as well
+    with_storage(&instance, |store| {
+        let foo = store.get(b"foo");
+        assert!(foo.is_none());
+        let data = store.get(CONFIG_KEY).expect("no data stored");
+        let state: RegenState = from_slice(&data).unwrap();
+        assert_eq!(state.verifier, String::from("verifies"));
+    });
+}
+
+#[test]
+fn failed_send() {
+    let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
+    let wasm = fs::read(wasm_file).unwrap();
+    assert!(wasm.len() > 100000);
+    let mut instance = instantiate(&wasm);
+
+    // initialize the store
+    let init_msg = serde_json::to_vec(&RegenInitMsg {
+        verifier: String::from("verifies"),
+        beneficiary: String::from("benefits"),
+    }).unwrap();
+    let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
+    let init_res = call_init(&mut instance, &init_params, &init_msg).unwrap().unwrap();
+    assert_eq!(0, init_res.len());
+
+    // beneficiary can release it
+    let send_params = mock_params("benefits", &[], &coin("1000", "earth"));
+    let send_res = call_send(&mut instance, &send_params, b"").unwrap();
+    assert!(send_res.is_err());
+
+    // state should be saved
+    with_storage(&instance, |store| {
+        let data = store.get(CONFIG_KEY).expect("no data stored");
+        let state: RegenState = from_slice(&data).unwrap();
+        assert_eq!(state.verifier, String::from("verifies"));
+    });
 }

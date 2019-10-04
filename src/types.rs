@@ -52,6 +52,23 @@ pub enum ContractResult {
     Error(String),
 }
 
+impl ContractResult {
+    // unwrap will panic on err, or give us the real data useful for tests
+    pub fn unwrap(self) -> Vec<CosmosMsg> {
+        match self {
+            ContractResult::Error(msg) => panic!("Unexpected error: {}", msg),
+            ContractResult::Msgs(msgs) => msgs,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        match self {
+            ContractResult::Error(_) => true,
+            _ => false,
+        }
+    }
+}
+
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
 pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) -> Params {
