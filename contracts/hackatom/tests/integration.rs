@@ -2,11 +2,10 @@ use std::fs;
 use std::str::from_utf8;
 
 use hackatom::contract::{RegenInitMsg};
-use cosmwasm::imports::Storage;
 use cosmwasm::types::{coin, mock_params};
 
-use cosmwasm_vm::{do_read, do_write, setup_context, read_memory, write_memory, allocate};
-use cosmwasm_vm::wasmer::{Func, func, imports, wasm_instance};
+use cosmwasm_vm::{do_read, do_write, setup_context, read_memory, allocate};
+use cosmwasm_vm::wasmer::{Func, func, imports, instantiate};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -34,7 +33,7 @@ fn run_contract() {
     };
 
     // create the instance
-    let mut instance = wasm_instance(wasm, import_object);
+    let mut instance = instantiate(&wasm, &import_object);
 
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);

@@ -20,6 +20,7 @@ panic = 'unwind'
 incremental = false
 overflow-checks = true
 
+[workspace]
 
 [dependencies]
 cosmwasm = { path = "../.." }

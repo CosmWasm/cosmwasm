@@ -188,6 +188,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-vm"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm 0.1.0",
+ "wasmer-clif-backend 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmer-runtime 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wasmer-runtime-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cranelift-bforest"
 version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -366,12 +376,10 @@ name = "hackatom"
 version = "0.1.0"
 dependencies = [
  "cosmwasm 0.1.0",
+ "cosmwasm-vm 0.1.0",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasmer-clif-backend 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasmer-runtime 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasmer-runtime-core 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
