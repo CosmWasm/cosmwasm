@@ -32,30 +32,10 @@ pub fn do_init(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
-    let params: Vec<u8> = consume_slice(params_ptr);
-    let msg: Vec<u8> = consume_slice(msg_ptr);
-
-    // Catches and formats deserialization errors
-    let params: Params = match from_slice(&params) {
-        Ok(params) => params,
-        Err(e) => return make_error_c_string(e),
-    };
-
-    // Catches and formats errors from the logic
-    let mut store = ExternalStorage::new();
-    let init_res = init_fn(&mut store, params, msg);
-    let res = match init_res {
-        Ok(msgs) => ContractResult::Msgs(msgs),
-        Err(e) => return make_error_c_string(e),
-    };
-
-    // Catches and formats serialization errors
-    let res = match to_vec(&res) {
+    match _do_init(init_fn, params_ptr, msg_ptr) {
         Ok(res) => res,
-        Err(e) => return make_error_c_string(e),
-    };
-
-    release_buffer(res)
+        Err(err) => make_error_c_string(err),
+    }
 }
 
 // do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -64,29 +44,39 @@ pub fn do_handle(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
+    match _do_handle(handle_fn, params_ptr, msg_ptr) {
+        Ok(res) => res,
+        Err(err) => make_error_c_string(err),
+    }
+}
+fn _do_init(
+    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    params_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
+) -> Result<*mut c_void, Error> {
     let params: Vec<u8> = consume_slice(params_ptr);
     let msg: Vec<u8> = consume_slice(msg_ptr);
 
-    // Catches and formats deserialization errors
-    let params: Params = match from_slice(&params) {
-        Ok(params) => params,
-        Err(e) => return make_error_c_string(e),
-    };
-
-    // Catches and formats errors from the logic
+    let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();
-    let res = match handle_fn(&mut store, params, msg) {
-        Ok(msgs) => ContractResult::Msgs(msgs),
-        Err(e) => return make_error_c_string(e),
-    };
+    let msgs = init_fn(&mut store, params, msg)?;
+    let json = to_vec(&ContractResult::Msgs(msgs))?;
+    Ok(release_buffer(json))
+}
 
-    // Catches and formats serialization errors
-    let res = match to_vec(&res) {
-        Ok(res) => res,
-        Err(e) => return make_error_c_string(e),
-    };
+fn _do_handle(
+    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    params_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
+) -> Result<*mut c_void, Error> {
+    let params: Vec<u8> = consume_slice(params_ptr);
+    let msg: Vec<u8> = consume_slice(msg_ptr);
 
-    release_buffer(res)
+    let params: Params = from_slice(&params)?;
+    let mut store = ExternalStorage::new();
+    let msgs = handle_fn(&mut store, params, msg)?;
+    let json = to_vec(&ContractResult::Msgs(msgs))?;
+    Ok(release_buffer(json))
 }
 
 fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_void {
