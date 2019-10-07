@@ -8,8 +8,8 @@ use failure::{bail, Error};
 /// A pointer to this can be returned over ffi boundaries.
 #[repr(C)]
 pub struct Slice {
-    pub offset: usize,
-    pub len: usize,
+    pub offset: u32,
+    pub len: u32,
 }
 
 /// alloc is the same as external allocate, but designed to be called internally
@@ -36,7 +36,7 @@ pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
         bail!("cannot consume null pointer");
     }
     let slice = Box::from_raw(ptr as *mut Slice);
-    let buffer = Vec::from_raw_parts(slice.offset as *mut u8, slice.len, slice.len);
+    let buffer = Vec::from_raw_parts(slice.offset as *mut u8, slice.len as usize, slice.len as usize);
     Ok(buffer)
 }
 
@@ -46,7 +46,7 @@ pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
 /// The Box must be dropped (with scope), but not the data
 pub fn build_slice(data: &[u8]) -> Box<Slice> {
     Box::new(Slice {
-        offset: data.as_ptr() as usize,
-        len: data.len(),
+        offset: data.as_ptr() as u32,
+        len: data.len() as u32,
     })
 }
