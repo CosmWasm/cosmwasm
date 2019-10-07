@@ -3,8 +3,7 @@ use std::mem;
 
 use wasmer_runtime::Ctx;
 
-use cosmwasm::imports::Storage;
-use cosmwasm::mock::MockStorage;
+use cosmwasm::mock::{MockStorage, Storage};
 
 use crate::memory::{read_memory, write_memory};
 

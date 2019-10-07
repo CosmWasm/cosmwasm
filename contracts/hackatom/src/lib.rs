@@ -9,7 +9,7 @@ pub use wasm::{init, handle};
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
-    use super::*;
+    use super::contract;
     use cosmwasm::{exports, imports};
     use std::ffi::c_void;
 

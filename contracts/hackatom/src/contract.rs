@@ -1,4 +1,4 @@
-use cosmwasm::imports::Storage;
+use cosmwasm::storage::Storage;
 use cosmwasm::types::{CosmosMsg, Params};
 
 use failure::{bail, format_err, Error};

@@ -2,7 +2,7 @@ use std::fs;
 
 use serde_json::{from_slice, to_vec};
 
-use cosmwasm::imports::Storage;
+use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_init, call_handle, instantiate, with_storage};
 use hackatom::contract::{CONFIG_KEY, RegenInitMsg, RegenHandleMsg, RegenState};
