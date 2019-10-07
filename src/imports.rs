@@ -34,31 +34,35 @@ mod wasm {
 
     impl Storage for ExternalStorage {
         fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-            unsafe {
-                let key = build_slice(key);
-                let key_ptr = &*key as *const Slice as *const c_void;
-                let value = alloc(MAX_READ);
-                let read = c_read(key_ptr, value);
-                let mut data = consume_slice(value);
-                if read < 0 {
-                    // TODO: try to read again with larger amount
-                    panic!("needed to read more data")
-                } else if read == 0 {
-                    return None;
-                } else {
-                    data.truncate(read as usize);
-                    return Some(data);
-                }
+            let key = build_slice(key);
+            let key_ptr = &*key as *const Slice as *const c_void;
+            let value = alloc(MAX_READ);
+
+            let read = unsafe { c_read(key_ptr, value) };
+            if read < 0 {
+                // TODO: try to read again with larger amount
+                panic!("needed to read more data")
+            } else if read == 0 {
+                return None;
             }
+
+            let mut data = unsafe {
+                match consume_slice(value) {
+                    Ok(v) => v,
+                    Err(_) => return None,
+                }
+            };
+            data.truncate(read as usize);
+            Some(data)
         }
 
         fn set(&mut self, key: &[u8], value: &[u8]) {
+            // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_slice)
+            let key = build_slice(key);
+            let key_ptr = &*key as *const Slice as *const c_void;
+            let mut value = build_slice(value);
+            let value_ptr = &mut *value as *mut Slice as *mut c_void;
             unsafe {
-                // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_slice)
-                let key = build_slice(key);
-                let key_ptr = &*key as *const Slice as *const c_void;
-                let mut value = build_slice(value);
-                let value_ptr = &mut *value as *mut Slice as *mut c_void;
                 c_write(key_ptr, value_ptr);
             }
         }

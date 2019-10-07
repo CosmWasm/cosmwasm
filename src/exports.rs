@@ -23,7 +23,10 @@ pub extern "C" fn allocate(size: usize) -> *mut c_void {
 // It will free both the Slice and the memory referenced by the slice.
 #[no_mangle]
 pub extern "C" fn deallocate(pointer: *mut c_void) {
-    mem::drop(consume_slice(pointer));
+    let v = unsafe {  consume_slice(pointer) };
+    if let Ok(buffer) = v {
+        mem::drop(buffer);
+    }
 }
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -54,8 +57,8 @@ fn _do_init(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = consume_slice(params_ptr);
-    let msg: Vec<u8> = consume_slice(msg_ptr);
+    let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();
@@ -69,8 +72,8 @@ fn _do_handle(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = consume_slice(params_ptr);
-    let msg: Vec<u8> = consume_slice(msg_ptr);
+    let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();
