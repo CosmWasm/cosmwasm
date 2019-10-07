@@ -19,7 +19,7 @@ pub struct RegenState {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct RegenSendMsg {}
+pub struct RegenHandleMsg {}
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
@@ -40,7 +40,7 @@ pub fn init<T: Storage>(
     Ok(Vec::new())
 }
 
-pub fn send<T: Storage>(
+pub fn handle<T: Storage>(
     store: &mut T,
     params: Params,
     _: Vec<u8>,
@@ -97,7 +97,7 @@ mod tests {
     }
 
     #[test]
-    fn proper_send() {
+    fn proper_handle() {
         let mut store = MockStorage::new();
 
         // initialize the store
@@ -111,10 +111,10 @@ mod tests {
         assert_eq!(0, init_res.len());
 
         // beneficiary can release it
-        let send_params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
-        let send_res = send(&mut store, send_params, Vec::new()).unwrap();
-        assert_eq!(1, send_res.len());
-        let msg = send_res.get(0).expect("no message");
+        let handle_params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let handle_res = handle(&mut store, handle_params, Vec::new()).unwrap();
+        assert_eq!(1, handle_res.len());
+        let msg = handle_res.get(0).expect("no message");
         match &msg {
             CosmosMsg::SendTx {
                 from_address,
@@ -139,7 +139,7 @@ mod tests {
     }
 
     #[test]
-    fn failed_send() {
+    fn failed_handle() {
         let mut store = MockStorage::new();
 
         // initialize the store
@@ -153,9 +153,9 @@ mod tests {
         assert_eq!(0, init_res.len());
 
         // beneficiary can release it
-        let send_params = mock_params("benefits", &[], &coin("1000", "earth"));
-        let send_res = send(&mut store, send_params, Vec::new());
-        assert!(send_res.is_err());
+        let handle_params = mock_params("benefits", &[], &coin("1000", "earth"));
+        let handle_res = handle(&mut store, handle_params, Vec::new());
+        assert!(handle_res.is_err());
 
         // state should not change
         let data = store.get(CONFIG_KEY).expect("no data stored");

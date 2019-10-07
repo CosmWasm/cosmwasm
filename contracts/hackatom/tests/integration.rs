@@ -4,8 +4,8 @@ use serde_json::{from_slice, to_vec};
 
 use cosmwasm::imports::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
-use cosmwasm_vm::{call_init, call_send, instantiate, with_storage};
-use hackatom::contract::{CONFIG_KEY, RegenInitMsg, RegenSendMsg, RegenState};
+use cosmwasm_vm::{call_init, call_handle, instantiate, with_storage};
+use hackatom::contract::{CONFIG_KEY, RegenInitMsg, RegenHandleMsg, RegenState};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -16,10 +16,10 @@ cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
 Then running `cargo test` will validate we can properly call into that generated data.
 **/
 
-// Note this is very similar in scope and size to proper_send in contracts.rs tests
+// Note this is very similar in scope and size to proper_handle in contracts.rs tests
 // Making it as easy to write vm external integration tests as rust unit tests
 #[test]
-fn successful_init_and_send() {
+fn successful_init_and_handle() {
     let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
     let wasm = fs::read(wasm_file).unwrap();
     assert!(wasm.len() > 100000);
@@ -38,10 +38,10 @@ fn successful_init_and_send() {
     let msgs = res.unwrap();
     assert_eq!(msgs.len(), 0);
 
-    // now try to send this one
+    // now try to handle this one
     let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
-    let msg = to_vec(&RegenSendMsg {}).unwrap();
-    let res = call_send(&mut instance, &params, &msg).unwrap();
+    let msg = to_vec(&RegenHandleMsg {}).unwrap();
+    let res = call_handle(&mut instance, &params, &msg).unwrap();
     let msgs = res.unwrap();
     assert_eq!(1, msgs.len());
     let msg = msgs.get(0).expect("no message");
@@ -71,7 +71,7 @@ fn successful_init_and_send() {
 }
 
 #[test]
-fn failed_send() {
+fn failed_handle() {
     let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
     let wasm = fs::read(wasm_file).unwrap();
     assert!(wasm.len() > 100000);
@@ -87,9 +87,9 @@ fn failed_send() {
     assert_eq!(0, init_res.len());
 
     // beneficiary can release it
-    let send_params = mock_params("benefits", &[], &coin("1000", "earth"));
-    let send_res = call_send(&mut instance, &send_params, b"").unwrap();
-    assert!(send_res.is_err());
+    let handle_params = mock_params("benefits", &[], &coin("1000", "earth"));
+    let handle_res = call_handle(&mut instance, &handle_params, b"").unwrap();
+    assert!(handle_res.is_err());
 
     // state should be saved
     with_storage(&instance, |store| {
