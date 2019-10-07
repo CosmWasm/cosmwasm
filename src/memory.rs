@@ -36,7 +36,11 @@ pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
         bail!("cannot consume null pointer");
     }
     let slice = Box::from_raw(ptr as *mut Slice);
-    let buffer = Vec::from_raw_parts(slice.offset as *mut u8, slice.len as usize, slice.len as usize);
+    let buffer = Vec::from_raw_parts(
+        slice.offset as *mut u8,
+        slice.len as usize,
+        slice.len as usize,
+    );
     Ok(buffer)
 }
 

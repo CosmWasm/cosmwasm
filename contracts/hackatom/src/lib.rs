@@ -5,7 +5,7 @@ pub mod contract;
 pub use cosmwasm::exports::{allocate, deallocate};
 
 #[cfg(target_arch = "wasm32")]
-pub use wasm::{init, handle};
+pub use wasm::{handle, init};
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {

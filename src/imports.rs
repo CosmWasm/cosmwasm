@@ -1,7 +1,7 @@
 #![cfg(target_arch = "wasm32")]
 
-use std::vec::Vec;
 use std::ffi::c_void;
+use std::vec::Vec;
 
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
 use crate::storage::Storage;

@@ -4,7 +4,6 @@
 ///! allocate and deallocate should be re-exported as is
 ///! do_init and do_wrapper should be wrapped with a extern "C" entry point
 ///! including the contract-specific init/handle function pointer.
-
 use failure::Error;
 use serde_json::{from_slice, to_vec};
 use std::mem;
@@ -27,7 +26,7 @@ pub extern "C" fn allocate(size: usize) -> *mut c_void {
 // It will free both the Slice and the memory referenced by the slice.
 #[no_mangle]
 pub extern "C" fn deallocate(pointer: *mut c_void) {
-    let v = unsafe {  consume_slice(pointer) };
+    let v = unsafe { consume_slice(pointer) };
     if let Ok(buffer) = v {
         mem::drop(buffer);
     }

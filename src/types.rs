@@ -45,7 +45,7 @@ pub enum CosmosMsg {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all="lowercase")]
+#[serde(rename_all = "lowercase")]
 pub enum ContractResult {
     Msgs(Vec<CosmosMsg>),
     Error(String),

@@ -3,8 +3,8 @@ pub use wasmer_runtime::{Func, Instance};
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime::{compile_with, func, imports};
 
-use cosmwasm::mock::MockStorage;
 use crate::exports::{do_read, do_write, setup_context, with_storage_from_context};
+use cosmwasm::mock::MockStorage;
 
 pub fn instantiate(code: &[u8]) -> Instance {
     let import_obj = imports! {

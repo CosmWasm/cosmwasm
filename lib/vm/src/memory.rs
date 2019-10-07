@@ -23,7 +23,9 @@ pub fn read_memory(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let mut result = vec![0u8; len];
 
     // TODO: there must be a faster way to copy memory
-    let buffer = WasmPtr::<u8, Array>::new(slice.offset).deref(memory, 0, slice.len).unwrap();
+    let buffer = WasmPtr::<u8, Array>::new(slice.offset)
+        .deref(memory, 0, slice.len)
+        .unwrap();
     for i in 0..len {
         result[i] = buffer[i].get();
     }
@@ -43,7 +45,11 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
 
     let memory = ctx.memory(0);
     // TODO: there must be a faster way to copy memory
-    let buffer = unsafe { WasmPtr::<u8, Array>::new(slice.offset).deref_mut(memory, 0, slice.len).unwrap() };
+    let buffer = unsafe {
+        WasmPtr::<u8, Array>::new(slice.offset)
+            .deref_mut(memory, 0, slice.len)
+            .unwrap()
+    };
     for i in 0..data.len() {
         buffer[i].set(data[i])
     }
@@ -53,8 +59,12 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
 // to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
 fn to_slice(ctx: &Ctx, ptr: u32) -> Slice {
     let memory = &ctx.memory(0);
-    let offset = WasmPtr::<u32>::new(ptr).deref(memory).map_or(0, |x| x.get());
-    let len = WasmPtr::<u32>::new(ptr+4).deref(memory).map_or(0, |x| x.get());
+    let offset = WasmPtr::<u32>::new(ptr)
+        .deref(memory)
+        .map_or(0, |x| x.get());
+    let len = WasmPtr::<u32>::new(ptr + 4)
+        .deref(memory)
+        .map_or(0, |x| x.get());
     Slice {
         offset: offset as u32,
         len: len as u32,
