@@ -15,7 +15,7 @@ pub fn call_init(
     let params = to_vec(params)?;
     let param_offset = allocate(instance, &params);
     let msg_offset = allocate(instance, msg);
-    let init: Func<(i32, i32), (i32)> = instance.func("init_wrapper")?;
+    let init: Func<(i32, i32), (i32)> = instance.func("init")?;
 
     // call function (failure cannot handle unwrap this error)
     let res_offset = init.call(param_offset, msg_offset).unwrap();
@@ -35,7 +35,7 @@ pub fn call_handle(
     let params = to_vec(params)?;
     let param_offset = allocate(instance, &params);
     let msg_offset = allocate(instance, msg);
-    let handle: Func<(i32, i32), (i32)> = instance.func("handle_wrapper")?;
+    let handle: Func<(i32, i32), (i32)> = instance.func("handle")?;
 
     // call function (failure cannot handle unwrap this error)
     let res_offset = handle.call(param_offset, msg_offset).unwrap();

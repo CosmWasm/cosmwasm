@@ -26,8 +26,8 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
     mem::drop(consume_slice(pointer));
 }
 
-// init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn init(
+// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
+pub fn do_init(
     init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
@@ -58,8 +58,8 @@ pub fn init(
     release_buffer(res)
 }
 
-// handle should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn handle(
+// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
+pub fn do_handle(
     handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
