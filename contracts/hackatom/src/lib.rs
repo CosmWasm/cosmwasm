@@ -5,7 +5,7 @@ pub mod contract;
 pub use cosmwasm::exports::{allocate, deallocate};
 
 #[cfg(target_arch = "wasm32")]
-pub use wasm::{init_wrapper, send_wrapper};
+pub use wasm::{init_wrapper, handle_wrapper};
 
 #[cfg(target_arch = "wasm32")]
 mod wasm {
@@ -23,9 +23,9 @@ mod wasm {
     }
 
     #[no_mangle]
-    pub extern "C" fn send_wrapper(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
-        exports::send(
-            &contract::send::<imports::ExternalStorage>,
+    pub extern "C" fn handle_wrapper(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
+        exports::handle(
+            &contract::handle::<imports::ExternalStorage>,
             params_ptr,
             msg_ptr,
         )

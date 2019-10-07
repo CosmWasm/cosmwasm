@@ -58,9 +58,9 @@ pub fn init(
     release_buffer(res)
 }
 
-// send should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn send(
-    send_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+// handle should be wrapped in an external "C" export, containing a contract-specific function as arg
+pub fn handle(
+    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -75,7 +75,7 @@ pub fn send(
 
     // Catches and formats errors from the logic
     let mut store = ExternalStorage::new();
-    let res = match send_fn(&mut store, params, msg) {
+    let res = match handle_fn(&mut store, params, msg) {
         Ok(msgs) => ContractResult::Msgs(msgs),
         Err(e) => return make_error_c_string(e),
     };

@@ -26,7 +26,7 @@ pub fn call_init(
     Ok(res)
 }
 
-pub fn call_send(
+pub fn call_handle(
     instance: &mut Instance,
     params: &Params,
     msg: &[u8],
@@ -35,10 +35,10 @@ pub fn call_send(
     let params = to_vec(params)?;
     let param_offset = allocate(instance, &params);
     let msg_offset = allocate(instance, msg);
-    let send: Func<(i32, i32), (i32)> = instance.func("send_wrapper")?;
+    let handle: Func<(i32, i32), (i32)> = instance.func("handle_wrapper")?;
 
     // call function (failure cannot handle unwrap this error)
-    let res_offset = send.call(param_offset, msg_offset).unwrap();
+    let res_offset = handle.call(param_offset, msg_offset).unwrap();
 
     // read return value
     let data = read_memory(instance.context(), res_offset);
