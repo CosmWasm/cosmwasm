@@ -3,6 +3,15 @@ name = "cosmwasm"
 version = "0.1.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
+description = "Wasm smart contracts for Cosmos"
+repository = "https://github.com/confio/cosmwasm"
+license = "Apache-2.0"
+readme = "README.md"
+exclude = [".circleci/*", ".gitignore"]
+
+[badges]
+circle-ci = { repository = "https://github.com/confio/cosmwasm", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

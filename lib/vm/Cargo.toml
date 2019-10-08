@@ -3,11 +3,16 @@ name = "cosmwasm-vm"
 version = "0.1.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
+description = "VM bindings to run cosmwams contracts"
+repository = "https://github.com/confio/cosmwasm/tree/master/lib/vm"
+license = "Apache-2.0"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[badges]
+circle-ci = { repository = "https://github.com/confio/cosmwasm", branch = "master" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
-cosmwasm = { path = "../.." }
+cosmwasm = { path = "../..", version = "0.1.0" }
 wasmer-runtime = "0.8.0"
 wasmer-runtime-core = "0.8.0"
 wasmer-clif-backend = "0.8.0"
