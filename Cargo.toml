@@ -10,7 +10,7 @@ readme = "README.md"
 exclude = [".circleci/*", ".gitignore"]
 
 [badges]
-circle-ci = { repository = "https://github.com/confio/cosmwasm", branch = "master" }
+circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

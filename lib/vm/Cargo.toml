@@ -8,7 +8,7 @@ repository = "https://github.com/confio/cosmwasm/tree/master/lib/vm"
 license = "Apache-2.0"
 
 [badges]
-circle-ci = { repository = "https://github.com/confio/cosmwasm", branch = "master" }
+circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
