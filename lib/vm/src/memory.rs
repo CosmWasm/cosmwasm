@@ -1,9 +1,22 @@
 use wasmer_runtime::{Ctx, Func, Instance};
 use wasmer_runtime_core::memory::ptr::{Array, WasmPtr};
-
-use cosmwasm::memory::Slice;
+use wasmer_runtime_core::types::ValueType;
 
 /****** read/write to wasm memory buffer ****/
+
+/// Slice refers to some heap allocated data in wasm.
+/// A pointer to this can be returned over ffi boundaries.
+///
+/// This is the same as cosmwasm::memory::Slice
+/// but defined here to allow wasm impl
+#[repr(C)]
+#[derive(Default, Clone, Copy)]
+pub struct Slice {
+    pub offset: u32,
+    pub len: u32,
+}
+
+unsafe impl ValueType for Slice {}
 
 // write_mem allocates memory in the instance and copies the given data in
 // returns the memory offset, to be passed as an argument
@@ -27,6 +40,8 @@ pub fn read_memory(ctx: &Ctx, ptr: u32) -> Vec<u8> {
         .deref(memory, 0, slice.len)
         .unwrap();
     for i in 0..len {
+        // result[i] = unsafe { buffer.get_unchecked(i).get() }
+        // resolved to memcpy, but only if we really start copying huge arrays
         result[i] = buffer[i].get();
     }
     result
@@ -59,14 +74,6 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
 // to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
 fn to_slice(ctx: &Ctx, ptr: u32) -> Slice {
     let memory = &ctx.memory(0);
-    let offset = WasmPtr::<u32>::new(ptr)
-        .deref(memory)
-        .map_or(0, |x| x.get());
-    let len = WasmPtr::<u32>::new(ptr + 4)
-        .deref(memory)
-        .map_or(0, |x| x.get());
-    Slice {
-        offset: offset as u32,
-        len: len as u32,
-    }
+    let wptr = WasmPtr::<Slice>::new(ptr);
+    wptr.deref(memory).map(|x| x.get()).unwrap_or_default()
 }

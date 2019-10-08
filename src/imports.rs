@@ -38,14 +38,10 @@ impl Storage for ExternalStorage {
             return None;
         }
 
-        let mut data = unsafe {
-            match consume_slice(value) {
-                Ok(v) => v,
-                Err(_) => return None,
-            }
-        };
-        data.truncate(read as usize);
-        Some(data)
+        unsafe { consume_slice(value).ok() }.map(|mut d| {
+            d.truncate(read as usize);
+            d
+        })
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {

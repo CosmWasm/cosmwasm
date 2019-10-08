@@ -1,12 +1,11 @@
 #![cfg(target_arch = "wasm32")]
 
-///! exports exposes the public wasm API
-///! allocate and deallocate should be re-exported as is
-///! do_init and do_wrapper should be wrapped with a extern "C" entry point
-///! including the contract-specific init/handle function pointer.
+//! exports exposes the public wasm API
+//! allocate and deallocate should be re-exported as is
+//! do_init and do_wrapper should be wrapped with a extern "C" entry point
+//! including the contract-specific init/handle function pointer.
 use failure::Error;
 use serde_json::{from_slice, to_vec};
-use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
@@ -26,10 +25,8 @@ pub extern "C" fn allocate(size: usize) -> *mut c_void {
 // It will free both the Slice and the memory referenced by the slice.
 #[no_mangle]
 pub extern "C" fn deallocate(pointer: *mut c_void) {
-    let v = unsafe { consume_slice(pointer) };
-    if let Ok(buffer) = v {
-        mem::drop(buffer);
-    }
+    // auto-drop slice on function end
+    let _ = unsafe { consume_slice(pointer) };
 }
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
