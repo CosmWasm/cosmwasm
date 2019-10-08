@@ -1,5 +1,6 @@
-use crate::imports::Storage;
 use std::collections::HashMap;
+
+pub use crate::storage::Storage;
 
 pub struct MockStorage {
     data: HashMap<Vec<u8>, Vec<u8>>,

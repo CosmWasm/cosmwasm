@@ -2,10 +2,10 @@ use std::fs;
 
 use serde_json::{from_slice, to_vec};
 
-use cosmwasm::imports::Storage;
+use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
-use cosmwasm_vm::{call_init, call_handle, instantiate, with_storage};
-use hackatom::contract::{CONFIG_KEY, RegenInitMsg, RegenHandleMsg, RegenState};
+use cosmwasm_vm::{call_handle, call_init, instantiate, with_storage};
+use hackatom::contract::{RegenHandleMsg, RegenInitMsg, RegenState, CONFIG_KEY};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -81,9 +81,12 @@ fn failed_handle() {
     let init_msg = serde_json::to_vec(&RegenInitMsg {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
-    }).unwrap();
+    })
+    .unwrap();
     let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
-    let init_res = call_init(&mut instance, &init_params, &init_msg).unwrap().unwrap();
+    let init_res = call_init(&mut instance, &init_params, &init_msg)
+        .unwrap()
+        .unwrap();
     assert_eq!(0, init_res.len());
 
     // beneficiary can release it

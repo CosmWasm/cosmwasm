@@ -1,9 +1,11 @@
-// api.rs includes the public wasm API
-// when included, this whole file should be wrapped by
-// #[cfg(target_arch = "wasm32")]
+#![cfg(target_arch = "wasm32")]
+
+//! exports exposes the public wasm API
+//! allocate and deallocate should be re-exported as is
+//! do_init and do_wrapper should be wrapped with a extern "C" entry point
+//! including the contract-specific init/handle function pointer.
 use failure::Error;
 use serde_json::{from_slice, to_vec};
-use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
@@ -23,7 +25,8 @@ pub extern "C" fn allocate(size: usize) -> *mut c_void {
 // It will free both the Slice and the memory referenced by the slice.
 #[no_mangle]
 pub extern "C" fn deallocate(pointer: *mut c_void) {
-    mem::drop(consume_slice(pointer));
+    // auto-drop slice on function end
+    let _ = unsafe { consume_slice(pointer) };
 }
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -54,8 +57,8 @@ fn _do_init(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = consume_slice(params_ptr);
-    let msg: Vec<u8> = consume_slice(msg_ptr);
+    let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();
@@ -69,8 +72,8 @@ fn _do_handle(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = consume_slice(params_ptr);
-    let msg: Vec<u8> = consume_slice(msg_ptr);
+    let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();

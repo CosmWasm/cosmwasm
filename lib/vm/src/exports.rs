@@ -3,14 +3,13 @@ use std::mem;
 
 use wasmer_runtime::Ctx;
 
-use cosmwasm::imports::Storage;
-use cosmwasm::mock::MockStorage;
+use cosmwasm::mock::{MockStorage, Storage};
 
 use crate::memory::{read_memory, write_memory};
 
 /*** mocks to stub out actually db writes as extern "C" ***/
 
-pub fn do_read(ctx: &mut Ctx, key_ptr: i32, val_ptr: i32) -> i32 {
+pub fn do_read(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
     let key = read_memory(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
     with_storage_from_context(ctx, |store| value = store.get(&key));
@@ -20,7 +19,7 @@ pub fn do_read(ctx: &mut Ctx, key_ptr: i32, val_ptr: i32) -> i32 {
     }
 }
 
-pub fn do_write(ctx: &mut Ctx, key: i32, value: i32) {
+pub fn do_write(ctx: &mut Ctx, key: u32, value: u32) {
     let key = read_memory(ctx, key);
     let value = read_memory(ctx, value);
     with_storage_from_context(ctx, |store| store.set(&key, &value));
@@ -38,8 +37,8 @@ fn create_unmanaged_storage() -> *mut c_void {
 }
 
 fn destroy_unmanaged_storage(ptr: *mut c_void) {
-    let b = unsafe { Box::from_raw(ptr as *mut MockStorage) };
-    mem::drop(b);
+    // auto-dropped with scope
+    let _ = unsafe { Box::from_raw(ptr as *mut MockStorage) };
 }
 
 pub fn with_storage_from_context<F: FnMut(&mut MockStorage)>(ctx: &Ctx, mut func: F) {
