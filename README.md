@@ -1,6 +1,9 @@
 # CosmWasm
 
-[![CircleCI](https://circleci.com/gh/confio/cosmwasm/tree/master.svg?style=svg)](https://circleci.com/gh/confio/cosmwasm/tree/master)
+[![CircleCI](https://circleci.com/gh/confio/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/confio/cosmwasm/tree/master) 
+[![Docs](https://docs.rs/cosmwasm/badge.svg)](https://docs.rs/cosmwasm)
+[![crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
+
 
 **Web Assembly Smart Contracts for the Cosmos SDK**
 
