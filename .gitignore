@@ -2,3 +2,4 @@ target
 **/*.rs.bk
 *.iml
 contract.wasm
+/contracts/*/pkg

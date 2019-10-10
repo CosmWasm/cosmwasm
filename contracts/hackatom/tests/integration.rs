@@ -7,6 +7,10 @@ use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_handle, call_init, instantiate, with_storage};
 use hackatom::contract::{RegenHandleMsg, RegenInitMsg, RegenState, CONFIG_KEY};
 
+
+//static WASM_FILE: &str = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
+static WASM_FILE: &str = "./pkg/hackatom_bg.wasm";
+
 /**
 This integration test tries to run and call the generated wasm.
 It depends on a release build being available already. You can create that with:
@@ -20,8 +24,7 @@ Then running `cargo test` will validate we can properly call into that generated
 // Making it as easy to write vm external integration tests as rust unit tests
 #[test]
 fn successful_init_and_handle() {
-    let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
-    let wasm = fs::read(wasm_file).unwrap();
+    let wasm = fs::read(WASM_FILE).unwrap();
     assert!(wasm.len() > 100000);
     let mut instance = instantiate(&wasm);
 
@@ -72,8 +75,7 @@ fn successful_init_and_handle() {
 
 #[test]
 fn failed_handle() {
-    let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
-    let wasm = fs::read(wasm_file).unwrap();
+    let wasm = fs::read(WASM_FILE).unwrap();
     assert!(wasm.len() > 100000);
     let mut instance = instantiate(&wasm);
 
