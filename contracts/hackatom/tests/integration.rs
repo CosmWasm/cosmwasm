@@ -9,7 +9,7 @@ use hackatom::contract::{RegenHandleMsg, RegenInitMsg, RegenState, CONFIG_KEY};
 
 
 //static WASM_FILE: &str = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
-static WASM_FILE: &str = "./pkg/hackatom_bg.wasm";
+static WASM_FILE: &str = "./pkg/hackatom_opt2.wasm";
 
 /**
 This integration test tries to run and call the generated wasm.
