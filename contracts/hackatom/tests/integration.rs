@@ -8,8 +8,11 @@ use cosmwasm_vm::{call_handle, call_init, instantiate, with_storage};
 use hackatom::contract::{RegenHandleMsg, RegenInitMsg, RegenState, CONFIG_KEY};
 
 
-//static WASM_FILE: &str = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
-static WASM_FILE: &str = "./pkg/hackatom_opt2.wasm";
+// this is generated directly from `cargo wasm` - dev mode
+static WASM_FILE: &str = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
+
+// this is generated from the optimize.sh script (or Dockerfile) and is minimized, production-ready
+//static WASM_FILE: &str = "./contract.wasm";
 
 /**
 This integration test tries to run and call the generated wasm.

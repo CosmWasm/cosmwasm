@@ -17,6 +17,7 @@ maintenance = { status = "actively-developed" }
 
 [workspace]
 members = [ "lib/vm" ]
+exclude = [ "contracts/hackatom" ]
 
 [dependencies]
 serde_json = { version = "1.0.41" }
