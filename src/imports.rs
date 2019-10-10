@@ -10,8 +10,6 @@ use crate::storage::Storage;
 static MAX_READ: usize = 2000;
 
 extern "C" {
-    // both take an opaque database ref that can be used by the environment to determine which
-    // substore to allow read/writes from
     fn c_read(key: *const c_void, value: *mut c_void) -> i32;
     fn c_write(key: *const c_void, value: *mut c_void);
 }
