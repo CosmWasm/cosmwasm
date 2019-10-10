@@ -21,11 +21,14 @@ incremental = false
 overflow-checks = true
 
 [dependencies]
-cosmwasm = { version = "0.1.0", path = "../.." }
+# TODO: it seems the docker image only works when we have absolute references...
+#cosmwasm = { version = "0.1.0", path = "../.." }
+cosmwasm = { version = "0.1.0" }
 wasm-bindgen = "0.2"
 serde_json = { version = "1.0.41" }
 serde = { version = "1.0.60", default-features = false, features = ["derive"] }
 failure = "0.1.5"
 
 [dev-dependencies]
-cosmwasm-vm = { version = "0.1.0", path = "../../lib/vm" }
+#cosmwasm-vm = { version = "0.1.0", path = "../../lib/vm" }
+cosmwasm-vm = { version = "0.1.0" }
