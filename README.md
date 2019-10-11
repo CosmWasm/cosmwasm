@@ -140,10 +140,33 @@ then load this file in the integration tests. Take a
 to see how to do this... it is often quite easy to port a unit test
 to an integration test.
 
+## Production Builds
+
+The above build process (`cargo wasm`) works well to produce wasm output for
+testing. However, it is quite large, around 1.5 MB likely, and not suitable
+for posting to the blockchain. Furthermore, it is very helpful if we have
+reproducible build step so others can prove the on-chain wasm code was generated
+from the published rust code.
+
+For that, we have a separate repo, [cosmwasm-opt](https://github.com/confio/cosmwasm-opt)
+that provides a [docker image](https://hub.docker.com/r/confio/cosmwasm-opt/tags)
+for building. For more info, look at 
+[cosmwasm-opt README](https://github.com/confio/cosmwasm-opt/blob/master/README.md#usage), 
+but the quickstart guide is:
+
+```shell script
+export CODE=/path/to/your/wasm/script
+docker run --rm -u $(id -u):$(id -g) -v "${CODE}":/code confio/cosmwasm-opt:1.38
+```
+
+It will output a highly size-optimized build as `contract.wasm` in `$CODE`.
+With our example contract, the size went down to 126kB (from 1.6MB from `cargo wasm`).
+If we didn't use serde-json, this would be much smaller still...
+
 ## Benchmarking
 
 You may want to compare how long the contract takes to run inside the Wasm VM
 compared to in native rust code, especially for computationally intensive code,
 like hashing or signature verification. 
 
-**TODO** add instructions and maybe some Dockerfile tooling
+**TODO** add instructions
