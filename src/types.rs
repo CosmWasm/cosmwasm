@@ -9,9 +9,9 @@ pub struct Params {
 
 #[derive(Serialize, Deserialize)]
 pub struct BlockInfo {
-    pub block_height: i64,
+    pub height: i64,
     // block_time is RFC3339 encoded timestamp
-    pub block_time: String,
+    pub time: String,
     pub chain_id: String,
 }
 
@@ -34,9 +34,8 @@ pub struct SendAmount {
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(tag = "type", content = "value")]
 pub enum CosmosMsg {
-    #[serde(rename = "cosmos-sdk/MsgSend")]
+    #[serde(rename = "send")]
     SendTx {
         from_address: String,
         to_address: String,
@@ -73,8 +72,8 @@ impl ContractResult {
 pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) -> Params {
     Params {
         block: BlockInfo {
-            block_height: 12345,
-            block_time: "2020-01-08T12:34:56Z".to_string(),
+            height: 12345,
+            time: "2020-01-08T12:34:56Z".to_string(),
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
