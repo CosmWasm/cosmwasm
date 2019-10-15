@@ -43,25 +43,34 @@ pub enum CosmosMsg {
     },
 }
 
+// TODO: clean this up - let's us a normal result type??? or at least normal terms
+
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ContractResult {
-    Msgs(Vec<CosmosMsg>),
-    Error(String),
+    Ok(Response),
+    Err(String),
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Response {
+    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
+    pub messages: Vec<CosmosMsg>,
+    pub log: String,
 }
 
 impl ContractResult {
     // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> Vec<CosmosMsg> {
+    pub fn unwrap(self) -> Response {
         match self {
-            ContractResult::Error(msg) => panic!("Unexpected error: {}", msg),
-            ContractResult::Msgs(msgs) => msgs,
+            ContractResult::Err(msg) => panic!("Unexpected error: {}", msg),
+            ContractResult::Ok(res) => res,
         }
     }
 
     pub fn is_err(&self) -> bool {
         match self {
-            ContractResult::Error(_) => true,
+            ContractResult::Err(_) => true,
             _ => false,
         }
     }
