@@ -52,13 +52,6 @@ pub enum ContractResult {
     Err(String),
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Response {
-    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
-    pub messages: Vec<CosmosMsg>,
-    pub log: String,
-}
-
 impl ContractResult {
     // unwrap will panic on err, or give us the real data useful for tests
     pub fn unwrap(self) -> Response {
@@ -74,6 +67,13 @@ impl ContractResult {
             _ => false,
         }
     }
+}
+
+#[derive(Serialize, Deserialize, Default)]
+pub struct Response {
+    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
+    pub messages: Vec<CosmosMsg>,
+    pub log: Option<String>,
 }
 
 // just set signer, sent funds, and balance - rest given defaults
