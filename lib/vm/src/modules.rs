@@ -7,13 +7,15 @@ use std::{
     io::{self, Write},
     path::PathBuf,
 };
-use wasmer_runtime::Module;
 
+use wasmer_runtime::Module;
 use wasmer_runtime_core::cache::Error as CacheError;
 pub use wasmer_runtime_core::{
     backend::Backend,
     cache::{Artifact, Cache, WasmHash},
 };
+
+use crate::backends::backend;
 
 /// Representation of a directory that contains compiled wasm artifacts.
 ///
@@ -88,7 +90,7 @@ impl Cache for FileSystemCache {
     type StoreError = CacheError;
 
     fn load(&self, key: WasmHash) -> Result<Module, CacheError> {
-        self.load_with_backend(key, Backend::default())
+        self.load_with_backend(key, backend())
     }
 
     fn load_with_backend(&self, key: WasmHash, backend: Backend) -> Result<Module, CacheError> {
