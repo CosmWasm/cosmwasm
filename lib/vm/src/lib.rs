@@ -2,6 +2,7 @@ mod cache;
 mod calls;
 mod exports;
 mod memory;
+mod modules;
 mod wasm_store;
 mod wasmer;
 

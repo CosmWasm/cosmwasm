@@ -20,6 +20,9 @@ failure = "0.1.5"
 serde_json = { version = "1.0.41" }
 sha2 = "0.8.0"
 hex = "0.3.1"
+memmap = "0.7"
 
 [dev-dependencies]
+# move to tempfile "3.1.0"
 tempdir = "0.3.7"
+wabt = "0.9.1"
