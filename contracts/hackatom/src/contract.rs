@@ -52,12 +52,13 @@ pub fn handle<T: Storage>(
 
     if params.message.signer == state.verifier {
         let res = Response{
-            messages: vec![CosmosMsg::SendTx {
+            messages: vec![CosmosMsg::Send {
                 from_address: params.contract.address,
                 to_address: state.beneficiary,
                 amount: params.contract.balance,
             }],
             log: Some("released funds!".to_string()),
+            data: None,
         };
         Ok(res)
     } else {

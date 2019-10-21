@@ -34,12 +34,23 @@ pub struct Coin {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum CosmosMsg {
-    #[serde(rename = "send")]
-    SendTx {
+    // this moves tokens in the underlying sdk
+    Send {
         from_address: String,
         to_address: String,
         amount: Vec<Coin>,
+    },
+    // this dispatches a call to another contract at a known address (with known ABI)
+    // msg is the json-encoded HandleMsg struct
+    Contract {
+        contract_addr: String,
+        msg: String,
+    },
+    // this should never be created here, just passed in from the user and later dispatched
+    Opaque {
+        data: String,
     },
 }
 
@@ -74,6 +85,7 @@ pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
     pub log: Option<String>,
+    pub data: Option<String>,
 }
 
 // just set signer, sent funds, and balance - rest given defaults
