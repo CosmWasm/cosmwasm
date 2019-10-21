@@ -1,3 +1,3 @@
 mod cranelift;
 
-pub use cranelift::compile;
+pub use cranelift::{backend, compile};

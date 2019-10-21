@@ -3,10 +3,10 @@ use std::path::PathBuf;
 
 use failure::{bail, Error};
 
-use crate::backends::compile;
+use crate::backends::{backend, compile};
 use crate::modules::{Cache, FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
-use crate::wasmer::{instantiate, Instance};
+use crate::wasmer::{instantiate, Instance, mod_to_instance};
 
 pub struct CosmCache {
     wasm_path: PathBuf,
@@ -53,7 +53,16 @@ impl CosmCache {
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
     pub fn get_instance(&self, id: &[u8]) -> Result<Instance, Error> {
-        // TODO: we can definitely add some caches (module on disk, instance in memory) to make this faster
+        // TODO: add in-memory instance cache
+
+        // try from the module cache
+        let hash = WasmHash::generate(&id);
+        let res = self.modules.load_with_backend(hash, backend());
+        if let Ok(module) = res {
+            return Ok(mod_to_instance(&module));
+        }
+
+        // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
         Ok(instantiate(&wasm))
     }
