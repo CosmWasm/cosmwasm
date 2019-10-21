@@ -47,13 +47,13 @@ mod test {
     use super::*;
     use tempdir::TempDir;
 
-    use crate::calls::call_init;
+    use crate::calls::{call_handle, call_init};
     use cosmwasm::types::{coin, mock_params};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     #[test]
-    fn run_cached_contract() {
+    fn init_cached_contract() {
         let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
         let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
         let id = cache.save_wasm(CONTRACT).unwrap();
@@ -67,5 +67,27 @@ mod test {
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
+    }
+
+    #[test]
+    fn run_cached_contract() {
+        let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
+        let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
+        let id = cache.save_wasm(CONTRACT).unwrap();
+        let mut instance = cache.get_instance(&id).unwrap();
+
+        // init contract
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let res = call_init(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(msgs.len(), 0);
+
+        // run contract - just sanity check - results validate in contract unit tests
+        let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let msg = b"{}";
+        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(1, msgs.len());
     }
 }
