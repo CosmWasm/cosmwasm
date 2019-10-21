@@ -43,11 +43,11 @@ pub fn load(dir: &str, id: &[u8]) -> Result<Vec<u8>, Error> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     #[test]
     fn save_and_load() {
-        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let tmp_dir = TempDir::new().unwrap();
         let path = tmp_dir.path().to_str().unwrap();
         let code = vec![12u8; 17];
         let id = save(path, &code).unwrap();
@@ -59,7 +59,7 @@ mod test {
 
     #[test]
     fn fails_on_non_existent_dir() {
-        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let tmp_dir = TempDir::new().unwrap();
         let path = tmp_dir.path().join("something");
         let code = vec![12u8; 17];
         let res = save(path.to_str().unwrap(), &code);
@@ -68,7 +68,7 @@ mod test {
 
     #[test]
     fn ensure_dir_prepares_space() {
-        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let tmp_dir = TempDir::new().unwrap();
         let path = tmp_dir.path().join("something");
         let dir = path.to_str().unwrap();
         ensure_dir(dir).unwrap();
@@ -82,7 +82,7 @@ mod test {
 
     #[test]
     fn file_already_exists() {
-        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let tmp_dir = TempDir::new().unwrap();
         let path = tmp_dir.path().to_str().unwrap();
         let code = vec![12u8; 17];
         let id = save(path, &code).unwrap();

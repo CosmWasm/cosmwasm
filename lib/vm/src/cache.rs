@@ -45,7 +45,7 @@ impl Cache {
 #[cfg(test)]
 mod test {
     use super::*;
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     use crate::calls::{call_handle, call_init};
     use cosmwasm::types::{coin, mock_params};
@@ -54,7 +54,7 @@ mod test {
 
     #[test]
     fn init_cached_contract() {
-        let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
+        let tmp_dir = TempDir::new().unwrap();
         let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
         let id = cache.save_wasm(CONTRACT).unwrap();
         let mut instance = cache.get_instance(&id).unwrap();
@@ -71,7 +71,7 @@ mod test {
 
     #[test]
     fn run_cached_contract() {
-        let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
+        let tmp_dir = TempDir::new().unwrap();
         let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
         let id = cache.save_wasm(CONTRACT).unwrap();
         let mut instance = cache.get_instance(&id).unwrap();

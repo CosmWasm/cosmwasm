@@ -23,6 +23,5 @@ hex = "0.3.1"
 memmap = "0.7"
 
 [dev-dependencies]
-# move to tempfile "3.1.0"
-tempdir = "0.3.7"
+tempfile = "3.1.0"
 wabt = "0.9.1"
