@@ -54,7 +54,7 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
     if data.len() > (slice.len as usize) {
         return -(data.len() as i32);
     }
-    if data.len() == 0 {
+    if data.is_empty() {
         return 0;
     }
 
