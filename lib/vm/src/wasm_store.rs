@@ -44,16 +44,15 @@ mod test {
     use tempdir::TempDir;
 
     #[test]
-    fn save_and_load() -> Result<(), Error> {
-        let tmp_dir = TempDir::new("comswasm_vm_test")?;
+    fn save_and_load() {
+        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
         let path = tmp_dir.path().to_str().unwrap();
         let code = vec![12u8; 17];
-        let id = save(path, &code)?;
+        let id = save(path, &code).unwrap();
         assert_eq!(id.len(), 32);
 
-        let loaded = load(path, &id)?;
+        let loaded = load(path, &id).unwrap();
         assert_eq!(code, loaded);
-        Ok(())
     }
 
     #[test]
