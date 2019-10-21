@@ -1,8 +1,9 @@
-use failure::Error;
-use sha2::{Sha256, Digest};
 use std::fs::{DirBuilder, File, OpenOptions};
-use std::path::Path;
 use std::io::{Read, Write};
+use std::path::Path;
+
+use failure::Error;
+use sha2::{Digest, Sha256};
 
 /// save stores the wasm code in the given directory and returns an ID for lookup.
 /// It will create the directory if it doesn't exist.
@@ -18,7 +19,10 @@ pub fn save(dir: &str, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     let filepath = path.join(&filename);
 
     // write data to file
-    let mut file = OpenOptions::new().write(true).create_new(true).open(filepath)?;
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(filepath)?;
     file.write_all(wasm)?;
 
     Ok(id)
