@@ -1,37 +1,33 @@
-use std::path::{Path, PathBuf};
+use std::fs::create_dir_all;
+use std::path::PathBuf;
 
 use failure::Error;
 
-use crate::wasm_store::{ensure_dir, load, save};
+use crate::wasm_store::{load, save};
 use crate::wasmer::{instantiate, Instance};
 
 pub struct Cache {
-    wasm_dir: PathBuf,
+    wasm_path: PathBuf,
 }
 
 static WASM_DIR: &str = "wasm";
 
 impl Cache {
     /// new stores the data for cache under base_dir
-    pub fn new(base_dir: &str) -> Self {
-        let wasm_dir = Path::new(base_dir).join(WASM_DIR);
-        let cache = Cache { wasm_dir };
-        ensure_dir(cache.wasm_path()).unwrap();
-        cache
-    }
-
-    fn wasm_path(&self) -> &str {
-        self.wasm_dir.to_str().unwrap()
+    pub fn new<P: Into<PathBuf>>(base_dir: P) -> Self {
+        let wasm_path = base_dir.into().join(WASM_DIR);
+        create_dir_all(&wasm_path).unwrap();
+        Cache { wasm_path }
     }
 }
 
 impl Cache {
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
-        save(self.wasm_path(), wasm)
+        save(&self.wasm_path, wasm)
     }
 
     pub fn load_wasm(&self, id: &[u8]) -> Result<Vec<u8>, Error> {
-        load(self.wasm_path(), id)
+        load(&self.wasm_path, id)
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm

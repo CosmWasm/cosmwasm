@@ -1,13 +1,13 @@
 // copied from https://github.com/wasmerio/wasmer/blob/0.8.0/lib/runtime/src/cache.rs
 // with some minor modifications
 
-use wasmer_runtime::Module;
 use memmap::Mmap;
 use std::{
     fs::{create_dir_all, File},
     io::{self, Write},
     path::PathBuf,
 };
+use wasmer_runtime::Module;
 
 use wasmer_runtime_core::cache::Error as CacheError;
 pub use wasmer_runtime_core::{
@@ -136,8 +136,8 @@ mod tests {
 
     #[test]
     fn test_file_system_cache_run() {
-        use wasmer_runtime::{compile, imports, Func};
         use wabt::wat2wasm;
+        use wasmer_runtime::{compile, imports, Func};
 
         static WAT: &'static str = r#"
             (module
