@@ -80,7 +80,6 @@ mod test {
         assert_eq!(code, loaded);
     }
 
-
     #[test]
     fn file_already_exists() {
         let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();

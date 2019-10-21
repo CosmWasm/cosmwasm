@@ -15,8 +15,10 @@ pub fn instantiate(code: &[u8]) -> Instance {
         },
     };
 
-    // TODO: add caching here!
     // TODO: add metering options here
+    // TODO: we unwrap rather than Result as:
+    //   the trait `std::marker::Send` is not implemented for `(dyn std::any::Any + 'static)`
+    // convert from wasmer error to failure error....
     let module = compile_with(code, &CraneliftCompiler::new()).unwrap();
     module.instantiate(&import_obj).unwrap()
 }
