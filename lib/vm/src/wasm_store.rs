@@ -52,9 +52,23 @@ mod test {
         Ok(())
     }
 
-    // TODO: non-existant dir
+    #[test]
+    fn fails_on_invalid_dir() {
+        let path = "/foo/bar";
+        let code = vec![12u8; 17];
+        let id = save(path, &code);
+        assert!(id.is_err());
+    }
 
-    // existant file
+    #[test]
+    fn file_already_exists() {
+        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let path = tmp_dir.path().to_str().unwrap();
+        let code = vec![12u8; 17];
+        let id = save(path, &code).unwrap();
+        assert_eq!(id.len(), 32);
 
-    // no permission to write
+        let dup = save(path, &code);
+        assert!(dup.is_err());
+    }
 }
