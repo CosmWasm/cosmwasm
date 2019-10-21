@@ -1,0 +1,60 @@
+use failure::Error;
+use sha2::{Sha256, Digest};
+use std::fs::{DirBuilder, File, OpenOptions};
+use std::path::Path;
+use std::io::{Read, Write};
+
+/// save stores the wasm code in the given directory and returns an ID for lookup.
+/// It will create the directory if it doesn't exist.
+/// If the file already exists, it will return an error.
+pub fn save(dir: &str, wasm: &[u8]) -> Result<Vec<u8>, Error> {
+    // create directory if needed
+    let path = Path::new(dir);
+    DirBuilder::new().recursive(true).create(path)?;
+
+    // calculate filename
+    let id = Sha256::digest(wasm).to_vec();
+    let filename = hex::encode(&id);
+    let filepath = path.join(&filename);
+
+    // write data to file
+    let mut file = OpenOptions::new().write(true).create_new(true).open(filepath)?;
+    file.write_all(wasm)?;
+
+    Ok(id)
+}
+
+pub fn load(dir: &str, id: &[u8]) -> Result<Vec<u8>, Error> {
+    // this requires the directory and file to exist
+    let path = Path::new(dir).join(hex::encode(id));
+    let mut file = File::open(path)?;
+
+    let mut wasm = Vec::<u8>::new();
+    let _ = file.read_to_end(&mut wasm)?;
+    Ok(wasm)
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use tempdir::TempDir;
+
+    #[test]
+    fn save_and_load() -> Result<(), Error> {
+        let tmp_dir = TempDir::new("comswasm_vm_test")?;
+        let path = tmp_dir.path().to_str().unwrap();
+        let code = vec![12u8; 17];
+        let id = save(path, &code)?;
+        assert_eq!(id.len(), 32);
+
+        let loaded = load(path, &id)?;
+        assert_eq!(code, loaded);
+        Ok(())
+    }
+
+    // TODO: non-existant dir
+
+    // existant file
+
+    // no permission to write
+}
