@@ -3,11 +3,12 @@ use std::path::PathBuf;
 
 use failure::Error;
 
-use crate::modules::FileSystemCache;
+use crate::backends::compile;
+use crate::modules::{Cache, FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save};
 use crate::wasmer::{instantiate, Instance};
 
-pub struct Cache {
+pub struct CosmCache {
     wasm_path: PathBuf,
     modules: FileSystemCache,
 }
@@ -15,26 +16,35 @@ pub struct Cache {
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
 
-impl Cache {
+impl CosmCache {
     /// new stores the data for cache under base_dir
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P) -> Self {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
         create_dir_all(&wasm_path).unwrap();
         let modules = FileSystemCache::new(base.join(MODULES_DIR)).unwrap();
-        Cache { modules, wasm_path }
+        CosmCache { modules, wasm_path }
     }
 }
 
-impl Cache {
+impl CosmCache {
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
-        // TODO: store modules
-        save(&self.wasm_path, wasm)
+        let id = save(&self.wasm_path, wasm)?;
+        // we fail if module doesn't compile - panic :(
+        let module = compile(wasm);
+        let hash = WasmHash::generate(&id);
+        let saved = self.modules.store(hash, module);
+        // ignore it (just log) if module cache not supported
+        if let Err(e) = saved {
+            println!("Cannot save module: {:?}", e);
+        }
+        Ok(id)
     }
 
     pub fn load_wasm(&self, id: &[u8]) -> Result<Vec<u8>, Error> {
         // TODO: load modules cache if present
         load(&self.wasm_path, id)
+        // TODO: verify hash matches
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
@@ -58,7 +68,7 @@ mod test {
     #[test]
     fn init_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { Cache::new(tmp_dir.path().to_str().unwrap()) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let mut instance = cache.get_instance(&id).unwrap();
 
@@ -75,7 +85,7 @@ mod test {
     #[test]
     fn run_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { Cache::new(tmp_dir.path().to_str().unwrap()) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let mut instance = cache.get_instance(&id).unwrap();
 
