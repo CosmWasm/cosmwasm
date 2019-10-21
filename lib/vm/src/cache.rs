@@ -26,7 +26,7 @@ impl Cache {
 }
 
 impl Cache {
-    pub fn save_wasm(&self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
+    pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
         save(self.wasm_path(), wasm)
     }
 
@@ -39,5 +39,33 @@ impl Cache {
         // TODO: we can definitely add some caches (module on disk, instance in memory) to make this faster
         let wasm = self.load_wasm(id)?;
         Ok(instantiate(&wasm))
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use tempdir::TempDir;
+
+    use crate::calls::call_init;
+    use cosmwasm::types::{coin, mock_params};
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    #[test]
+    fn run_cached_contract() {
+        let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
+        let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
+        let id = cache.save_wasm(CONTRACT).unwrap();
+        let mut instance = cache.get_instance(&id).unwrap();
+
+        // run contract
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+
+        // call and check
+        let res = call_init(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(msgs.len(), 0);
     }
 }
