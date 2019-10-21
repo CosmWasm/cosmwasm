@@ -1,3 +1,4 @@
+mod cache;
 mod calls;
 mod exports;
 mod memory;
