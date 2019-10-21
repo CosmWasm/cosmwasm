@@ -7,16 +7,22 @@ pub struct MockStorage {
 }
 
 impl MockStorage {
-    pub fn new() -> MockStorage {
+    pub fn new() -> Self {
         MockStorage {
             data: HashMap::new(),
         }
     }
 }
 
+impl Default for MockStorage {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Storage for MockStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.data.get(key).map(|v| v.clone())
+        self.data.get(key).cloned()
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
