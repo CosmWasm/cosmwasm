@@ -5,12 +5,16 @@ use std::path::PathBuf;
 use failure::Error;
 use sha2::{Digest, Sha256};
 
+pub fn wasm_hash(wasm: &[u8]) -> Vec<u8> {
+    Sha256::digest(wasm).to_vec()
+}
+
 /// save stores the wasm code in the given directory and returns an ID for lookup.
 /// It will create the directory if it doesn't exist.
 /// If the file already exists, it will return an error.
 pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     // calculate filename
-    let id = Sha256::digest(wasm).to_vec();
+    let id = wasm_hash(wasm);
     let filename = hex::encode(&id);
     let filepath = dir.into().join(&filename);
 

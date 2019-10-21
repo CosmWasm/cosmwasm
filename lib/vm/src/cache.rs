@@ -1,11 +1,11 @@
 use std::fs::create_dir_all;
 use std::path::PathBuf;
 
-use failure::Error;
+use failure::{bail, Error};
 
 use crate::backends::compile;
 use crate::modules::{Cache, FileSystemCache, WasmHash};
-use crate::wasm_store::{load, save};
+use crate::wasm_store::{load, save, wasm_hash};
 use crate::wasmer::{instantiate, Instance};
 
 pub struct CosmCache {
@@ -42,9 +42,13 @@ impl CosmCache {
     }
 
     pub fn load_wasm(&self, id: &[u8]) -> Result<Vec<u8>, Error> {
-        // TODO: load modules cache if present
-        load(&self.wasm_path, id)
-        // TODO: verify hash matches
+        let code = load(&self.wasm_path, id)?;
+        // verify hash matches (integrity check)
+        let hash = wasm_hash(&code);
+        if hash.ne(&id) {
+            bail!("hash doesn't match stored data")
+        }
+        Ok(code)
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
