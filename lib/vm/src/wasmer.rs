@@ -1,8 +1,8 @@
 pub use wasmer_runtime::{Func, Instance};
 
-use wasmer_clif_backend::CraneliftCompiler;
-use wasmer_runtime::{compile_with, func, imports};
+use wasmer_runtime::{func, imports};
 
+use crate::backends::compile;
 use crate::exports::{do_read, do_write, setup_context, with_storage_from_context};
 use cosmwasm::mock::MockStorage;
 
@@ -19,7 +19,7 @@ pub fn instantiate(code: &[u8]) -> Instance {
     // TODO: we unwrap rather than Result as:
     //   the trait `std::marker::Send` is not implemented for `(dyn std::any::Any + 'static)`
     // convert from wasmer error to failure error....
-    let module = compile_with(code, &CraneliftCompiler::new()).unwrap();
+    let module = compile(code);
     module.instantiate(&import_obj).unwrap()
 }
 
