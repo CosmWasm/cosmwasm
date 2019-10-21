@@ -121,7 +121,7 @@ mod tests {
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
         match &msg {
-            CosmosMsg::SendTx {
+            CosmosMsg::Send {
                 from_address,
                 to_address,
                 amount,
@@ -132,7 +132,8 @@ mod tests {
                 let coin = amount.get(0).expect("No coin");
                 assert_eq!(coin.denom, "earth");
                 assert_eq!(coin.amount, "1015");
-            }
+            },
+            _ => panic!("Unexpected message type")
         }
 
         // it worked, let's check the state

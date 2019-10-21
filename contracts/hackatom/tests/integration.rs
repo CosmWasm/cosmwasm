@@ -1,3 +1,5 @@
+#![cfg(feature = "integration")]
+
 use std::fs;
 
 use serde_json::{from_slice, to_vec};
@@ -46,7 +48,7 @@ fn successful_init_and_handle() {
     assert_eq!(1, msgs.len());
     let msg = msgs.get(0).expect("no message");
     match &msg {
-        CosmosMsg::SendTx {
+        CosmosMsg::Send {
             from_address,
             to_address,
             amount,
@@ -57,7 +59,8 @@ fn successful_init_and_handle() {
             let coin = amount.get(0).expect("No coin");
             assert_eq!(coin.denom, "earth");
             assert_eq!(coin.amount, "1015");
-        }
+        },
+        _ => panic!("Unexpected message type")
     }
 
     // we can check the storage as well
