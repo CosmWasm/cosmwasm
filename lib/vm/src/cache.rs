@@ -1,11 +1,9 @@
-use std::fs::{DirBuilder, File, OpenOptions};
-use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 
 use failure::Error;
 
 use crate::wasm_store::{ensure_dir, load, save};
-use crate::wasmer::{Instance, instantiate};
+use crate::wasmer::{instantiate, Instance};
 
 pub struct Cache {
     wasm_dir: PathBuf,
@@ -16,9 +14,10 @@ static WASM_DIR: &str = "wasm";
 impl Cache {
     /// new stores the data for cache under base_dir
     pub fn new(base_dir: &str) -> Self {
-        let  wasm_dir = Path::new(base_dir).join(WASM_DIR);
-        ensure_dir(wasm_dir.to_str().unwrap());
-        Cache{ wasm_dir }
+        let wasm_dir = Path::new(base_dir).join(WASM_DIR);
+        let cache = Cache { wasm_dir };
+        ensure_dir(cache.wasm_path()).unwrap();
+        cache
     }
 
     fn wasm_path(&self) -> &str {
