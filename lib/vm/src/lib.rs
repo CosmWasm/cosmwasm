@@ -1,6 +1,7 @@
 mod calls;
 mod exports;
 mod memory;
+mod wasm_store;
 mod wasmer;
 
 pub use crate::calls::{call_handle, call_init};

@@ -18,3 +18,8 @@ wasmer-runtime-core = "0.8.0"
 wasmer-clif-backend = "0.8.0"
 failure = "0.1.5"
 serde_json = { version = "1.0.41" }
+sha2 = "0.8.0"
+hex = "0.3.1"
+
+[dev-dependencies]
+tempdir = "0.3.7"
