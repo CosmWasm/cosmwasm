@@ -1,7 +1,5 @@
 #![cfg(feature = "integration")]
 
-use std::fs;
-
 use serde_json::{from_slice, to_vec};
 
 use cosmwasm::storage::Storage;
@@ -17,15 +15,14 @@ cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
 
 Then running `cargo test` will validate we can properly call into that generated data.
 **/
+static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
 // Note this is very similar in scope and size to proper_handle in contracts.rs tests
 // Making it as easy to write vm external integration tests as rust unit tests
 #[test]
 fn successful_init_and_handle() {
-    let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
-    let wasm = fs::read(wasm_file).unwrap();
-    assert!(wasm.len() > 100000);
-    let mut instance = instantiate(&wasm);
+    assert!(WASM.len() > 100000);
+    let mut instance = instantiate(&WASM);
 
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
@@ -59,8 +56,8 @@ fn successful_init_and_handle() {
             let coin = amount.get(0).expect("No coin");
             assert_eq!(coin.denom, "earth");
             assert_eq!(coin.amount, "1015");
-        },
-        _ => panic!("Unexpected message type")
+        }
+        _ => panic!("Unexpected message type"),
     }
 
     // we can check the storage as well
@@ -75,10 +72,7 @@ fn successful_init_and_handle() {
 
 #[test]
 fn failed_handle() {
-    let wasm_file = "./target/wasm32-unknown-unknown/release/hackatom.wasm";
-    let wasm = fs::read(wasm_file).unwrap();
-    assert!(wasm.len() > 100000);
-    let mut instance = instantiate(&wasm);
+    let mut instance = instantiate(&WASM);
 
     // initialize the store
     let init_msg = serde_json::to_vec(&InitMsg {

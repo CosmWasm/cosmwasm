@@ -23,11 +23,7 @@ pub struct HandleMsg {}
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage>(
-    store: &mut T,
-    params: Params,
-    msg: Vec<u8>,
-) -> Result<Response, Error> {
+pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Response, Error> {
     let msg: InitMsg = from_slice(&msg)?;
     store.set(
         CONFIG_KEY,
@@ -40,18 +36,14 @@ pub fn init<T: Storage>(
     Ok(Response::default())
 }
 
-pub fn handle<T: Storage>(
-    store: &mut T,
-    params: Params,
-    _: Vec<u8>,
-) -> Result<Response, Error> {
+pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Response, Error> {
     let data = store
         .get(CONFIG_KEY)
-        .ok_or(format_err!("not initialized"))?;
+        .ok_or_else(|| format_err!("not initialized"))?;
     let state: State = from_slice(&data)?;
 
     if params.message.signer == state.verifier {
-        let res = Response{
+        let res = Response {
             messages: vec![CosmosMsg::Send {
                 from_address: params.contract.address,
                 to_address: state.beneficiary,
@@ -132,8 +124,8 @@ mod tests {
                 let coin = amount.get(0).expect("No coin");
                 assert_eq!(coin.denom, "earth");
                 assert_eq!(coin.amount, "1015");
-            },
-            _ => panic!("Unexpected message type")
+            }
+            _ => panic!("Unexpected message type"),
         }
 
         // it worked, let's check the state
