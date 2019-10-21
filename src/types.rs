@@ -18,17 +18,17 @@ pub struct BlockInfo {
 #[derive(Serialize, Deserialize)]
 pub struct MessageInfo {
     pub signer: String,
-    pub sent_funds: Vec<SendAmount>,
+    pub sent_funds: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ContractInfo {
     pub address: String,
-    pub balance: Vec<SendAmount>,
+    pub balance: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct SendAmount {
+pub struct Coin {
     pub denom: String,
     pub amount: String,
 }
@@ -39,7 +39,7 @@ pub enum CosmosMsg {
     SendTx {
         from_address: String,
         to_address: String,
-        amount: Vec<SendAmount>,
+        amount: Vec<Coin>,
     },
 }
 
@@ -78,7 +78,7 @@ pub struct Response {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) -> Params {
+pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
     Params {
         block: BlockInfo {
             height: 12345,
@@ -97,8 +97,8 @@ pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) ->
 }
 
 // coin is a shortcut constructor for a set of one denomination of coins
-pub fn coin(amount: &str, denom: &str) -> Vec<SendAmount> {
-    vec![SendAmount {
+pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
+    vec![Coin {
         amount: amount.to_string(),
         denom: denom.to_string(),
     }]
