@@ -11,7 +11,7 @@ use std::vec::Vec;
 
 use crate::imports::ExternalStorage;
 use crate::memory::{alloc, consume_slice, release_buffer};
-use crate::types::{ContractResult, CosmosMsg, Params};
+use crate::types::{ContractResult, Params, Response};
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer
 // to a slice defining this data. This space is managed by the calling process
@@ -31,7 +31,7 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_init(
-    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -43,7 +43,7 @@ pub fn do_init(
 
 // do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_handle(
-    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -53,7 +53,7 @@ pub fn do_handle(
     }
 }
 fn _do_init(
-    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
@@ -62,13 +62,13 @@ fn _do_init(
 
     let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();
-    let msgs = init_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Msgs(msgs))?;
+    let res = init_fn(&mut store, params, msg)?;
+    let json = to_vec(&ContractResult::Ok(res))?;
     Ok(release_buffer(json))
 }
 
 fn _do_handle(
-    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Vec<CosmosMsg>, Error>,
+    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
@@ -77,13 +77,13 @@ fn _do_handle(
 
     let params: Params = from_slice(&params)?;
     let mut store = ExternalStorage::new();
-    let msgs = handle_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Msgs(msgs))?;
+    let res = handle_fn(&mut store, params, msg)?;
+    let json = to_vec(&ContractResult::Ok(res))?;
     Ok(release_buffer(json))
 }
 
 fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_void {
     let error: Error = error.into();
-    let v = to_vec(&ContractResult::Error(error.to_string())).unwrap();
+    let v = to_vec(&ContractResult::Err(error.to_string())).unwrap();
     release_buffer(v)
 }

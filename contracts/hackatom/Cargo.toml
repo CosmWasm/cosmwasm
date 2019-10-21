@@ -22,6 +22,12 @@ overflow-checks = true
 
 [workspace]
 
+[features]
+default = [ "integration" ]
+# this enables integration testing (takes longer)
+# for quicker tests, cargo test --no-default-features
+integration = [ ]
+
 [dependencies]
 cosmwasm = { path = "../.." }
 serde_json = { version = "1.0.41" }

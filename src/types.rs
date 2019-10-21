@@ -18,58 +18,79 @@ pub struct BlockInfo {
 #[derive(Serialize, Deserialize)]
 pub struct MessageInfo {
     pub signer: String,
-    pub sent_funds: Vec<SendAmount>,
+    pub sent_funds: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ContractInfo {
     pub address: String,
-    pub balance: Vec<SendAmount>,
+    pub balance: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct SendAmount {
+pub struct Coin {
     pub denom: String,
     pub amount: String,
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
 pub enum CosmosMsg {
-    #[serde(rename = "send")]
-    SendTx {
+    // this moves tokens in the underlying sdk
+    Send {
         from_address: String,
         to_address: String,
-        amount: Vec<SendAmount>,
+        amount: Vec<Coin>,
+    },
+    // this dispatches a call to another contract at a known address (with known ABI)
+    // msg is the json-encoded HandleMsg struct
+    Contract {
+        contract_addr: String,
+        msg: String,
+    },
+    // this should never be created here, just passed in from the user and later dispatched
+    Opaque {
+        data: String,
     },
 }
+
+// TODO: clean this up - let's us a normal result type??? or at least normal terms
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ContractResult {
-    Msgs(Vec<CosmosMsg>),
-    Error(String),
+    Ok(Response),
+    Err(String),
 }
 
 impl ContractResult {
     // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> Vec<CosmosMsg> {
+    pub fn unwrap(self) -> Response {
         match self {
-            ContractResult::Error(msg) => panic!("Unexpected error: {}", msg),
-            ContractResult::Msgs(msgs) => msgs,
+            ContractResult::Err(msg) => panic!("Unexpected error: {}", msg),
+            ContractResult::Ok(res) => res,
         }
     }
 
     pub fn is_err(&self) -> bool {
         match self {
-            ContractResult::Error(_) => true,
+            ContractResult::Err(_) => true,
             _ => false,
         }
     }
 }
 
+#[derive(Serialize, Deserialize, Default)]
+pub struct Response {
+    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
+    pub messages: Vec<CosmosMsg>,
+    pub log: Option<String>,
+    pub data: Option<String>,
+}
+
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) -> Params {
+pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
     Params {
         block: BlockInfo {
             height: 12345,
@@ -88,8 +109,8 @@ pub fn mock_params(signer: &str, sent: &[SendAmount], balance: &[SendAmount]) ->
 }
 
 // coin is a shortcut constructor for a set of one denomination of coins
-pub fn coin(amount: &str, denom: &str) -> Vec<SendAmount> {
-    vec![SendAmount {
+pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
+    vec![Coin {
         amount: amount.to_string(),
         denom: denom.to_string(),
     }]
