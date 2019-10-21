@@ -9,14 +9,10 @@ use sha2::{Digest, Sha256};
 /// It will create the directory if it doesn't exist.
 /// If the file already exists, it will return an error.
 pub fn save(dir: &str, wasm: &[u8]) -> Result<Vec<u8>, Error> {
-    // create directory if needed
-    let path = Path::new(dir);
-    DirBuilder::new().recursive(true).create(path)?;
-
     // calculate filename
     let id = Sha256::digest(wasm).to_vec();
     let filename = hex::encode(&id);
-    let filepath = path.join(&filename);
+    let filepath = Path::new(dir).join(&filename);
 
     // write data to file
     let mut file = OpenOptions::new()
@@ -26,6 +22,12 @@ pub fn save(dir: &str, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     file.write_all(wasm)?;
 
     Ok(id)
+}
+
+pub fn ensure_dir(dir: &str) -> Result<(), Error> {
+    let path = Path::new(dir);
+    DirBuilder::new().recursive(true).create(path)?;
+    Ok(())
 }
 
 pub fn load(dir: &str, id: &[u8]) -> Result<Vec<u8>, Error> {
@@ -56,12 +58,28 @@ mod test {
     }
 
     #[test]
-    fn fails_on_invalid_dir() {
-        let path = "/foo/bar";
+    fn fails_on_non_existent_dir() {
+        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let path = tmp_dir.path().join("something");
         let code = vec![12u8; 17];
-        let id = save(path, &code);
-        assert!(id.is_err());
+        let res = save(path.to_str().unwrap(), &code);
+        assert!(res.is_err());
     }
+
+    #[test]
+    fn ensure_dir_prepares_space() {
+        let tmp_dir = TempDir::new("comswasm_vm_test").unwrap();
+        let path = tmp_dir.path().join("something");
+        let dir = path.to_str().unwrap();
+        ensure_dir(dir).unwrap();
+        let code = vec![12u8; 17];
+        let id = save(dir, &code).unwrap();
+        assert_eq!(id.len(), 32);
+
+        let loaded = load(dir, &id).unwrap();
+        assert_eq!(code, loaded);
+    }
+
 
     #[test]
     fn file_already_exists() {
