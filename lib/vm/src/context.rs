@@ -1,3 +1,6 @@
+/**
+Internal details to be used by instance.rs only
+**/
 use std::ffi::c_void;
 use std::mem;
 
@@ -37,7 +40,9 @@ pub fn setup_context<T: Storage>(storage: T) -> (*mut c_void, fn(*mut c_void)) {
 }
 
 fn create_unmanaged_storage<T: Storage>(storage: T) -> *mut c_void {
-    let data = ContextData{data: Some(storage)};
+    let data = ContextData {
+        data: Some(storage),
+    };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
 }
@@ -47,8 +52,10 @@ unsafe fn get_data<T: Storage>(ptr: *mut c_void) -> Box<ContextData<T>> {
 }
 
 fn destroy_unmanaged_storage<T: Storage>(ptr: *mut c_void) {
-    // auto-dropped with scope
-    let _ = unsafe { get_data::<T>(ptr) };
+    if !ptr.is_null() {
+        // auto-dropped with scope
+        let _ = unsafe { get_data::<T>(ptr) };
+    }
 }
 
 pub fn with_storage_from_context<T: Storage, F: FnMut(&mut T)>(ctx: &Ctx, mut func: F) {
@@ -61,12 +68,15 @@ pub fn with_storage_from_context<T: Storage, F: FnMut(&mut T)>(ctx: &Ctx, mut fu
 
 pub fn take_storage<T: Storage>(ctx: &Ctx) -> Option<T> {
     let mut b = unsafe { get_data(ctx.data) };
-    b.data.take()
+    let res = b.data.take();
+    mem::forget(b); // we do this to avoid cleanup
+    res
 }
 
-pub fn leave_storage<T: Storage>(ctx: &Ctx, storage: Option<T>){
+pub fn leave_storage<T: Storage>(ctx: &Ctx, storage: Option<T>) {
     let mut b = unsafe { get_data(ctx.data) };
     // clean-up if needed
     let _ = b.data.take();
     b.data = storage;
+    mem::forget(b); // we do this to avoid cleanup
 }

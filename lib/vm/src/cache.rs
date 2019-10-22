@@ -76,7 +76,7 @@ where
         if let Some(cache) = &mut self.instances {
             let val = cache.pop(&hash);
             if let Some(inst) = val {
-                // TODO: change the bound storage to this one!
+                inst.leave_storage(Some(storage));
                 return Ok(inst);
             }
         }
@@ -92,10 +92,14 @@ where
         Ok(Instance::from_code(&wasm, storage))
     }
 
-    pub fn store_instance(&mut self, id: &[u8], instance: Instance<T>) {
+    pub fn store_instance(&mut self, id: &[u8], instance: Instance<T>) -> Option<T> {
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
+            let storage = instance.take_storage();
             cache.put(hash, instance);
+            storage
+        } else {
+            None
         }
     }
 }
@@ -163,40 +167,39 @@ mod test {
         let storage2 = MockStorage::new();
 
         // init instance 1
-        let mut instance = cache.get_instance(&id, storage1.clone()).unwrap();
+        let mut instance = cache.get_instance(&id, storage1).unwrap();
         let params = mock_params("owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        cache.store_instance(&id, instance);
+        let storage1 = cache.store_instance(&id, instance).unwrap();
 
         // init instance 2
-        let mut instance = cache.get_instance(&id, storage2.clone()).unwrap();
+        let mut instance = cache.get_instance(&id, storage2).unwrap();
         let params = mock_params("owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        cache.store_instance(&id, instance);
+        let storage2 = cache.store_instance(&id, instance).unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, storage2.clone()).unwrap();
+        let mut instance = cache.get_instance(&id, storage2).unwrap();
         let params = mock_params("bob", &coin("15", "earth"), &coin("1015", "earth"));
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
-        cache.store_instance(&id, instance);
+        let _ = cache.store_instance(&id, instance).unwrap();
 
         // run contract 1 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, storage1.clone()).unwrap();
+        let mut instance = cache.get_instance(&id, storage1).unwrap();
         let params = mock_params("sue", &coin("15", "earth"), &coin("1015", "earth"));
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
-        cache.store_instance(&id, instance);
-
+        let _ = cache.store_instance(&id, instance);
     }
 }

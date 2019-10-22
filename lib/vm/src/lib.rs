@@ -1,7 +1,7 @@
 mod backends;
 mod cache;
 mod calls;
-mod exports;
+mod context;
 mod instance;
 mod memory;
 mod modules;

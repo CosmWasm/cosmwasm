@@ -8,7 +8,9 @@ use wasmer_runtime_core::{
 };
 
 use crate::backends::compile;
-use crate::exports::{do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context};
+use crate::context::{
+    do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
+};
 use crate::memory::{read_memory, write_memory};
 use cosmwasm::storage::Storage;
 
@@ -82,6 +84,4 @@ where
     {
         self.instance.func(name)
     }
-
-
 }
