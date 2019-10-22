@@ -7,8 +7,6 @@ use cosmwasm::storage::Storage;
 
 use crate::memory::{read_memory, write_memory};
 
-/*** mocks to stub out actually db writes as extern "C" ***/
-
 pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
     let key = read_memory(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
@@ -28,7 +26,10 @@ pub fn do_write<T: Storage>(ctx: &mut Ctx, key: u32, value: u32) {
 /*** context data ****/
 
 pub fn setup_context<T: Storage>(storage: T) -> (*mut c_void, fn(*mut c_void)) {
-    (create_unmanaged_storage(storage), destroy_unmanaged_storage::<T>)
+    (
+        create_unmanaged_storage(storage),
+        destroy_unmanaged_storage::<T>,
+    )
 }
 
 fn create_unmanaged_storage<T: Storage>(storage: T) -> *mut c_void {
