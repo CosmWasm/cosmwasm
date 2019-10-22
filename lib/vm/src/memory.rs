@@ -1,4 +1,4 @@
-use wasmer_runtime::{Ctx, Func, Instance};
+use wasmer_runtime::Ctx;
 use wasmer_runtime_core::memory::ptr::{Array, WasmPtr};
 use wasmer_runtime_core::types::ValueType;
 
@@ -17,17 +17,6 @@ pub struct Slice {
 }
 
 unsafe impl ValueType for Slice {}
-
-// write_mem allocates memory in the instance and copies the given data in
-// returns the memory offset, to be passed as an argument
-// panics on any error (TODO, use result?)
-pub fn allocate(instance: &mut Instance, data: &[u8]) -> u32 {
-    // allocate
-    let alloc: Func<(u32), (u32)> = instance.func("allocate").unwrap();
-    let ptr = alloc.call(data.len() as u32).unwrap();
-    write_memory(instance.context(), ptr, data);
-    ptr
-}
 
 pub fn read_memory(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let slice = to_slice(ctx, ptr);

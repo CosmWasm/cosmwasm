@@ -20,6 +20,7 @@ failure = "0.1.5"
 sha2 = "0.8.0"
 hex = "0.3.1"
 memmap = "0.7"
+lru = "0.3.1"
 
 [dev-dependencies]
 tempfile = "3.1.0"
