@@ -1,42 +1,68 @@
-use std::path::{Path, PathBuf};
+use std::fs::create_dir_all;
+use std::path::PathBuf;
 
-use failure::Error;
+use failure::{bail, Error};
 
-use crate::wasm_store::{ensure_dir, load, save};
-use crate::wasmer::{instantiate, Instance};
+use crate::backends::{backend, compile};
+use crate::modules::{Cache, FileSystemCache, WasmHash};
+use crate::wasm_store::{load, save, wasm_hash};
+use crate::wasmer::{instantiate, mod_to_instance, Instance};
 
-pub struct Cache {
-    wasm_dir: PathBuf,
+pub struct CosmCache {
+    wasm_path: PathBuf,
+    modules: FileSystemCache,
 }
 
 static WASM_DIR: &str = "wasm";
+static MODULES_DIR: &str = "modules";
 
-impl Cache {
+impl CosmCache {
     /// new stores the data for cache under base_dir
-    pub fn new(base_dir: &str) -> Self {
-        let wasm_dir = Path::new(base_dir).join(WASM_DIR);
-        let cache = Cache { wasm_dir };
-        ensure_dir(cache.wasm_path()).unwrap();
-        cache
-    }
-
-    fn wasm_path(&self) -> &str {
-        self.wasm_dir.to_str().unwrap()
+    pub unsafe fn new<P: Into<PathBuf>>(base_dir: P) -> Self {
+        let base = base_dir.into();
+        let wasm_path = base.join(WASM_DIR);
+        create_dir_all(&wasm_path).unwrap();
+        let modules = FileSystemCache::new(base.join(MODULES_DIR)).unwrap();
+        CosmCache { modules, wasm_path }
     }
 }
 
-impl Cache {
+impl CosmCache {
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
-        save(self.wasm_path(), wasm)
+        let id = save(&self.wasm_path, wasm)?;
+        // we fail if module doesn't compile - panic :(
+        let module = compile(wasm);
+        let hash = WasmHash::generate(&id);
+        let saved = self.modules.store(hash, module);
+        // ignore it (just log) if module cache not supported
+        if let Err(e) = saved {
+            println!("Cannot save module: {:?}", e);
+        }
+        Ok(id)
     }
 
     pub fn load_wasm(&self, id: &[u8]) -> Result<Vec<u8>, Error> {
-        load(self.wasm_path(), id)
+        let code = load(&self.wasm_path, id)?;
+        // verify hash matches (integrity check)
+        let hash = wasm_hash(&code);
+        if hash.ne(&id) {
+            bail!("hash doesn't match stored data")
+        }
+        Ok(code)
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
     pub fn get_instance(&self, id: &[u8]) -> Result<Instance, Error> {
-        // TODO: we can definitely add some caches (module on disk, instance in memory) to make this faster
+        // TODO: add in-memory instance cache
+
+        // try from the module cache
+        let hash = WasmHash::generate(&id);
+        let res = self.modules.load_with_backend(hash, backend());
+        if let Ok(module) = res {
+            return Ok(mod_to_instance(&module));
+        }
+
+        // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
         Ok(instantiate(&wasm))
     }
@@ -45,7 +71,7 @@ impl Cache {
 #[cfg(test)]
 mod test {
     use super::*;
-    use tempdir::TempDir;
+    use tempfile::TempDir;
 
     use crate::calls::{call_handle, call_init};
     use cosmwasm::types::{coin, mock_params};
@@ -54,8 +80,8 @@ mod test {
 
     #[test]
     fn init_cached_contract() {
-        let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
-        let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let mut instance = cache.get_instance(&id).unwrap();
 
@@ -71,8 +97,8 @@ mod test {
 
     #[test]
     fn run_cached_contract() {
-        let tmp_dir = TempDir::new("comswasm_cache_test").unwrap();
-        let mut cache = Cache::new(tmp_dir.path().to_str().unwrap());
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let mut instance = cache.get_instance(&id).unwrap();
 

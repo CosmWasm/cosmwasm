@@ -13,6 +13,9 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install CMAKE
+          command: 'apt-get update && apt-get install -y cmake'
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:

@@ -54,8 +54,6 @@ pub enum CosmosMsg {
     },
 }
 
-// TODO: clean this up - let's us a normal result type??? or at least normal terms
-
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ContractResult {
