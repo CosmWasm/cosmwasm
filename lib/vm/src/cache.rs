@@ -180,6 +180,15 @@ mod test {
         assert_eq!(msgs.len(), 0);
         cache.store_instance(&id, instance);
 
+        // run contract 2 - just sanity check - results validate in contract unit tests
+        let mut instance = cache.get_instance(&id, storage2.clone()).unwrap();
+        let params = mock_params("bob", &coin("15", "earth"), &coin("1015", "earth"));
+        let msg = b"{}";
+        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(1, msgs.len());
+        cache.store_instance(&id, instance);
+
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, storage1.clone()).unwrap();
         let params = mock_params("sue", &coin("15", "earth"), &coin("1015", "earth"));
@@ -189,13 +198,5 @@ mod test {
         assert_eq!(1, msgs.len());
         cache.store_instance(&id, instance);
 
-        // run contract 2 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, storage2.clone()).unwrap();
-        let params = mock_params("bob", &coin("15", "earth"), &coin("1015", "earth"));
-        let msg = b"{}";
-        let res = call_handle(&mut instance, &params, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(1, msgs.len());
-        cache.store_instance(&id, instance);
     }
 }

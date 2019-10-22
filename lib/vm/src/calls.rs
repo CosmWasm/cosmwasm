@@ -5,7 +5,6 @@ use cosmwasm::storage::Storage;
 use cosmwasm::types::{ContractResult, Params};
 
 use crate::instance::{Func, Instance};
-use crate::memory::read_memory;
 
 pub fn call_init<T>(
     instance: &mut Instance<T>,
@@ -73,6 +72,6 @@ where
     let func: Func<(u32, u32), (u32)> = instance.func(name)?;
     let res_offset = func.call(param_offset, msg_offset).unwrap();
 
-    let data = read_memory(instance.context(), res_offset);
+    let data = instance.memory(res_offset);
     Ok(data)
 }

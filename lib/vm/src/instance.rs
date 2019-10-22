@@ -1,15 +1,15 @@
 pub use wasmer_runtime::Func;
 
 use std::marker::PhantomData;
-use wasmer_runtime::{func, imports, Ctx, Module};
+use wasmer_runtime::{func, imports, Module};
 use wasmer_runtime_core::{
     error::ResolveResult,
     typed_func::{Wasm, WasmTypeList},
 };
 
 use crate::backends::compile;
-use crate::exports::{do_read, do_write, setup_context, with_storage_from_context};
-use crate::memory::write_memory;
+use crate::exports::{do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context};
+use crate::memory::{read_memory, write_memory};
 use cosmwasm::storage::Storage;
 
 pub struct Instance<T>
@@ -53,8 +53,16 @@ where
         with_storage_from_context(self.instance.context(), func)
     }
 
-    pub fn context(&self) -> &Ctx {
-        self.instance.context()
+    pub fn take_storage(&self) -> Option<T> {
+        take_storage(self.instance.context())
+    }
+
+    pub fn leave_storage(&self, storage: Option<T>) {
+        leave_storage(self.instance.context(), storage);
+    }
+
+    pub fn memory(&self, ptr: u32) -> Vec<u8> {
+        read_memory(self.instance.context(), ptr)
     }
 
     // write_mem allocates memory in the instance and copies the given data in
@@ -74,4 +82,6 @@ where
     {
         self.instance.func(name)
     }
+
+
 }
