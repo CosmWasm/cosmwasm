@@ -7,18 +7,18 @@ use crate::exports::{do_read, do_write, setup_context, with_storage_from_context
 use cosmwasm::storage::Storage;
 
 pub fn instantiate<T>(code: &[u8], storage: T) -> Instance
-    where T: Storage + Send + Sync + 'static {
+    where T: Storage + Send + Sync + Clone + 'static {
     let module = compile(code);
     mod_to_instance(&module, storage)
 }
 
 pub fn mod_to_instance<T>(module: &Module, storage: T) -> Instance
-  where T: Storage + Send + Sync + 'static {
+  where T: Storage + Send + Sync + Clone + 'static {
     let import_obj = imports! {
-        move || { setup_context(storage) },
+        move || { setup_context(storage.clone()) },
         "env" => {
-            "c_read" => func!(do_read),
-            "c_write" => func!(do_write),
+            "c_read" => func!(do_read::<T>),
+            "c_write" => func!(do_write::<T>),
         },
     };
 
@@ -30,5 +30,5 @@ pub fn mod_to_instance<T>(module: &Module, storage: T) -> Instance
 }
 
 pub fn with_storage<T: Storage, F: FnMut(&mut T)>(instance: &Instance, func: F) {
-    with_storage_from_context::<T>(instance.context(), func)
+    with_storage_from_context(instance.context(), func)
 }

@@ -12,7 +12,7 @@ use crate::memory::{read_memory, write_memory};
 pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
     let key = read_memory(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
-    with_storage_from_context::<T>(ctx, |store| value = store.get(&key));
+    with_storage_from_context(ctx, |store: &mut T| value = store.get(&key));
     match value {
         Some(buf) => write_memory(ctx, val_ptr, &buf),
         None => 0,
@@ -22,7 +22,7 @@ pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
 pub fn do_write<T: Storage>(ctx: &mut Ctx, key: u32, value: u32) {
     let key = read_memory(ctx, key);
     let value = read_memory(ctx, value);
-    with_storage_from_context::<T>(ctx, |store| store.set(&key, &value));
+    with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
 }
 
 /*** context data ****/
