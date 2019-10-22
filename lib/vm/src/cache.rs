@@ -6,7 +6,7 @@ use failure::{bail, Error};
 use crate::backends::{backend, compile};
 use crate::modules::{Cache, FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
-use crate::wasmer::{instantiate, Instance, mod_to_instance};
+use crate::wasmer::{instantiate, mod_to_instance, Instance};
 
 pub struct CosmCache {
     wasm_path: PathBuf,
