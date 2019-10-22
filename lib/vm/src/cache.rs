@@ -3,6 +3,8 @@ use std::path::PathBuf;
 
 use failure::{bail, Error};
 
+use cosmwasm::storage::Storage;
+
 use crate::backends::{backend, compile};
 use crate::modules::{Cache, FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
@@ -52,19 +54,20 @@ impl CosmCache {
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
-    pub fn get_instance(&self, id: &[u8]) -> Result<Instance, Error> {
+    pub fn get_instance<T>(&self, id: &[u8], storage: T) -> Result<Instance, Error>
+        where T: Storage + Send + Sync + Clone + 'static {
         // TODO: add in-memory instance cache
 
         // try from the module cache
         let hash = WasmHash::generate(&id);
         let res = self.modules.load_with_backend(hash, backend());
         if let Ok(module) = res {
-            return Ok(mod_to_instance(&module));
+            return Ok(mod_to_instance(&module, storage));
         }
 
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
-        Ok(instantiate(&wasm))
+        Ok(instantiate(&wasm, storage))
     }
 }
 
@@ -75,6 +78,7 @@ mod test {
 
     use crate::calls::{call_handle, call_init};
     use cosmwasm::types::{coin, mock_params};
+    use cosmwasm::mock::MockStorage;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -83,7 +87,8 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let mut instance = cache.get_instance(&id).unwrap();
+        let storage = MockStorage::new();
+        let mut instance = cache.get_instance(&id, storage).unwrap();
 
         // run contract
         let params = mock_params("creator", &coin("1000", "earth"), &[]);
@@ -100,7 +105,8 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let mut instance = cache.get_instance(&id).unwrap();
+        let storage = MockStorage::new();
+        let mut instance = cache.get_instance(&id, storage).unwrap();
 
         // init contract
         let params = mock_params("creator", &coin("1000", "earth"), &[]);

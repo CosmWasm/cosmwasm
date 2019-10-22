@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 pub use crate::storage::Storage;
 
+#[derive(Clone)]
 pub struct MockStorage {
     data: HashMap<Vec<u8>, Vec<u8>>,
 }
