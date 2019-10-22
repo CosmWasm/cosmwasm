@@ -1,9 +1,9 @@
-use cosmwasm::storage::Storage;
-use cosmwasm::types::{CosmosMsg, Params, Response};
-
 use failure::{bail, format_err, Error};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_slice, to_vec};
+
+use cosmwasm::serde::{from_slice, to_vec};
+use cosmwasm::storage::Storage;
+use cosmwasm::types::{CosmosMsg, Params, Response};
 
 #[derive(Serialize, Deserialize)]
 pub struct InitMsg {
@@ -67,7 +67,7 @@ mod tests {
     #[test]
     fn proper_initialization() {
         let mut store = MockStorage::new();
-        let msg = serde_json::to_vec(&InitMsg {
+        let msg = to_vec(&InitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         })
@@ -98,7 +98,7 @@ mod tests {
         let mut store = MockStorage::new();
 
         // initialize the store
-        let init_msg = serde_json::to_vec(&InitMsg {
+        let init_msg = to_vec(&InitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         })
@@ -141,7 +141,7 @@ mod tests {
         let mut store = MockStorage::new();
 
         // initialize the store
-        let init_msg = serde_json::to_vec(&InitMsg {
+        let init_msg = to_vec(&InitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         })

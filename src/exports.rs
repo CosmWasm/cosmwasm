@@ -5,12 +5,12 @@
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
 use failure::Error;
-use serde_json::{from_slice, to_vec};
 use std::os::raw::c_void;
 use std::vec::Vec;
 
 use crate::imports::ExternalStorage;
 use crate::memory::{alloc, consume_slice, release_buffer};
+use crate::serde::{from_slice, to_vec};
 use crate::types::{ContractResult, Params, Response};
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer

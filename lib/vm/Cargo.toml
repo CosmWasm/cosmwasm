@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -12,12 +12,11 @@ circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
-cosmwasm = { path = "../..", version = "0.1.0" }
+cosmwasm = { path = "../..", version = "0.2.0" }
 wasmer-runtime = "0.8.0"
 wasmer-runtime-core = "0.8.0"
 wasmer-clif-backend = "0.8.0"
 failure = "0.1.5"
-serde_json = { version = "1.0.41" }
 sha2 = "0.8.0"
 hex = "0.3.1"
 memmap = "0.7"

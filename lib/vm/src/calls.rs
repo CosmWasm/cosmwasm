@@ -1,6 +1,6 @@
 use failure::Error;
-use serde_json::{from_slice, to_vec};
 
+use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::types::{ContractResult, Params};
 
 use crate::memory::{allocate, read_memory};

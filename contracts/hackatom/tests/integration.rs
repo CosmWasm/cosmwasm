@@ -1,10 +1,10 @@
 #![cfg(feature = "integration")]
 
-use serde_json::{from_slice, to_vec};
-
+use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_handle, call_init, instantiate, with_storage};
+
 use hackatom::contract::{HandleMsg, InitMsg, State, CONFIG_KEY};
 
 /**
@@ -75,7 +75,7 @@ fn failed_handle() {
     let mut instance = instantiate(&WASM);
 
     // initialize the store
-    let init_msg = serde_json::to_vec(&InitMsg {
+    let init_msg = to_vec(&InitMsg {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     })
