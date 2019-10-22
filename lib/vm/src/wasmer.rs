@@ -4,16 +4,18 @@ use wasmer_runtime::{func, imports, Module};
 
 use crate::backends::compile;
 use crate::exports::{do_read, do_write, setup_context, with_storage_from_context};
-use cosmwasm::mock::MockStorage;
+use cosmwasm::storage::Storage;
 
-pub fn instantiate(code: &[u8]) -> Instance {
+pub fn instantiate<T>(code: &[u8], storage: T) -> Instance
+    where T: Storage + Send + Sync + 'static {
     let module = compile(code);
-    mod_to_instance(&module)
+    mod_to_instance(&module, storage)
 }
 
-pub fn mod_to_instance(module: &Module) -> Instance {
+pub fn mod_to_instance<T>(module: &Module, storage: T) -> Instance
+  where T: Storage + Send + Sync + 'static {
     let import_obj = imports! {
-        || { setup_context() },
+        move || { setup_context(storage) },
         "env" => {
             "c_read" => func!(do_read),
             "c_write" => func!(do_write),
@@ -27,6 +29,6 @@ pub fn mod_to_instance(module: &Module) -> Instance {
     module.instantiate(&import_obj).unwrap()
 }
 
-pub fn with_storage<F: FnMut(&mut MockStorage)>(instance: &Instance, func: F) {
-    with_storage_from_context(instance.context(), func)
+pub fn with_storage<T: Storage, F: FnMut(&mut T)>(instance: &Instance, func: F) {
+    with_storage_from_context::<T>(instance.context(), func)
 }
