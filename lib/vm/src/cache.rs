@@ -2,6 +2,7 @@ use std::fs::create_dir_all;
 use std::path::PathBuf;
 
 use failure::{bail, Error};
+use lru::LruCache;
 
 use cosmwasm::storage::Storage;
 
@@ -13,6 +14,7 @@ use crate::wasmer::{instantiate, mod_to_instance, Instance};
 pub struct CosmCache {
     wasm_path: PathBuf,
     modules: FileSystemCache,
+    instances: Option<LruCache<WasmHash, Instance>>,
 }
 
 static WASM_DIR: &str = "wasm";
@@ -20,12 +22,17 @@ static MODULES_DIR: &str = "modules";
 
 impl CosmCache {
     /// new stores the data for cache under base_dir
-    pub unsafe fn new<P: Into<PathBuf>>(base_dir: P) -> Self {
+    pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Self {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
         create_dir_all(&wasm_path).unwrap();
         let modules = FileSystemCache::new(base.join(MODULES_DIR)).unwrap();
-        CosmCache { modules, wasm_path }
+        let instances = if cache_size > 0 {
+            Some(LruCache::new(cache_size))
+        } else {
+            None
+        };
+        CosmCache { modules, wasm_path, instances }
     }
 }
 
@@ -54,12 +61,21 @@ impl CosmCache {
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
-    pub fn get_instance<T>(&self, id: &[u8], storage: T) -> Result<Instance, Error>
+    pub fn get_instance<T>(&mut self, id: &[u8], storage: T) -> Result<Instance, Error>
         where T: Storage + Send + Sync + Clone + 'static {
-        // TODO: add in-memory instance cache
+
+        let hash = WasmHash::generate(&id);
+
+        // pop from lru cache if present
+        if let Some(cache) = &mut self.instances {
+            let val = cache.pop(&hash);
+            if let Some(inst) = val {
+                // TODO: change the bound storage to this one!
+                return Ok(inst);
+            }
+        }
 
         // try from the module cache
-        let hash = WasmHash::generate(&id);
         let res = self.modules.load_with_backend(hash, backend());
         if let Ok(module) = res {
             return Ok(mod_to_instance(&module, storage));
@@ -68,6 +84,13 @@ impl CosmCache {
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
         Ok(instantiate(&wasm, storage))
+    }
+
+    pub fn store_instance<T>(&mut self, id: &[u8], instance: Instance) {
+        if let Some(cache) = &mut self.instances {
+            let hash = WasmHash::generate(&id);
+            cache.put(hash, instance);
+        }
     }
 }
 
@@ -85,7 +108,7 @@ mod test {
     #[test]
     fn init_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10) };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
         let mut instance = cache.get_instance(&id, storage).unwrap();
@@ -103,7 +126,7 @@ mod test {
     #[test]
     fn run_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path().to_str().unwrap()) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10) };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
         let mut instance = cache.get_instance(&id, storage).unwrap();
