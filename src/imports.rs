@@ -14,6 +14,7 @@ extern "C" {
     fn c_write(key: *const c_void, value: *mut c_void);
 }
 
+#[derive(Clone)]
 pub struct ExternalStorage {}
 
 impl ExternalStorage {
