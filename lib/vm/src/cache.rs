@@ -86,7 +86,7 @@ impl CosmCache {
         Ok(instantiate(&wasm, storage))
     }
 
-    pub fn store_instance<T>(&mut self, id: &[u8], instance: Instance) {
+    pub fn store_instance(&mut self, id: &[u8], instance: Instance) {
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             cache.put(hash, instance);
@@ -145,4 +145,52 @@ mod test {
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
+
+    #[test]
+    fn use_multiple_cached_instances_of_same_contract() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10) };
+        let id = cache.save_wasm(CONTRACT).unwrap();
+
+        // these differentiate the two instances of the same contract
+        let storage1 = MockStorage::new();
+        let storage2 = MockStorage::new();
+
+        // init instance 1
+        let mut instance = cache.get_instance(&id, storage1.clone()).unwrap();
+        let params = mock_params("owner1", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
+        let res = call_init(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(msgs.len(), 0);
+        cache.store_instance(&id, instance);
+
+        // init instance 2
+        let mut instance = cache.get_instance(&id, storage2.clone()).unwrap();
+        let params = mock_params("owner2", &coin("500", "earth"), &[]);
+        let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
+        let res = call_init(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(msgs.len(), 0);
+        cache.store_instance(&id, instance);
+
+        // run contract 1 - just sanity check - results validate in contract unit tests
+        let mut instance = cache.get_instance(&id, storage1.clone()).unwrap();
+        let params = mock_params("sue", &coin("15", "earth"), &coin("1015", "earth"));
+        let msg = b"{}";
+        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(1, msgs.len());
+        cache.store_instance(&id, instance);
+
+        // run contract 2 - just sanity check - results validate in contract unit tests
+        let mut instance = cache.get_instance(&id, storage2.clone()).unwrap();
+        let params = mock_params("bob", &coin("15", "earth"), &coin("1015", "earth"));
+        let msg = b"{}";
+        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(1, msgs.len());
+        cache.store_instance(&id, instance);
+    }
+
 }
