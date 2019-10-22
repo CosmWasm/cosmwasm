@@ -1,6 +1,7 @@
 #![cfg(feature = "integration")]
 
 use cosmwasm::serde::{from_slice, to_vec};
+use cosmwasm::mock::MockStorage;
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_handle, call_init, instantiate, with_storage};
@@ -22,7 +23,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/ha
 #[test]
 fn successful_init_and_handle() {
     assert!(WASM.len() > 100000);
-    let mut instance = instantiate(&WASM);
+    let storage = MockStorage::new();
+    let mut instance = instantiate(&WASM, storage);
 
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
@@ -61,7 +63,7 @@ fn successful_init_and_handle() {
     }
 
     // we can check the storage as well
-    with_storage(&instance, |store| {
+    with_storage(&instance, |store: &mut MockStorage| {
         let foo = store.get(b"foo");
         assert!(foo.is_none());
         let data = store.get(CONFIG_KEY).expect("no data stored");
@@ -72,7 +74,8 @@ fn successful_init_and_handle() {
 
 #[test]
 fn failed_handle() {
-    let mut instance = instantiate(&WASM);
+    let storage = MockStorage::new();
+    let mut instance = instantiate(&WASM, storage);
 
     // initialize the store
     let init_msg = to_vec(&InitMsg {
@@ -91,7 +94,7 @@ fn failed_handle() {
     assert!(handle_res.is_err());
 
     // state should be saved
-    with_storage(&instance, |store| {
+    with_storage(&instance, |store: &mut MockStorage| {
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state.verifier, String::from("verifies"));
