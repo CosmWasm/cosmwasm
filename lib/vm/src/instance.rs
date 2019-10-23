@@ -33,7 +33,7 @@ where
 
     pub fn from_module(module: &Module, storage: T) -> Instance<T> {
         let import_obj = imports! {
-            move || { setup_context(storage.clone()) },
+            || { setup_context::<T>() },
             "env" => {
                 "c_read" => func!(do_read::<T>),
                 "c_write" => func!(do_write::<T>),
@@ -45,10 +45,12 @@ where
         //   the trait `std::marker::Send` is not implemented for `(dyn std::any::Any + 'static)`
         // convert from wasmer error to failure error....
         let instance = module.instantiate(&import_obj).unwrap();
-        Instance {
+        let res = Instance {
             instance,
             storage: PhantomData::<T>::default(),
-        }
+        };
+        res.leave_storage(Some(storage));
+        res
     }
 
     pub fn with_storage<F: FnMut(&mut T)>(&self, func: F) {
