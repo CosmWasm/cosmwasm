@@ -14,17 +14,14 @@ use crate::context::{
 use crate::memory::{read_memory, write_memory};
 use cosmwasm::storage::Storage;
 
-pub struct Instance<T>
-where
-    T: Storage + Send + Sync + Clone + 'static,
-{
+pub struct Instance<T: Storage + 'static> {
     instance: wasmer_runtime::Instance,
     storage: PhantomData<T>,
 }
 
 impl<T> Instance<T>
 where
-    T: Storage + Send + Sync + Clone + 'static,
+    T: Storage + 'static,
 {
     pub fn from_code(code: &[u8], storage: T) -> Instance<T> {
         let module = compile(code);

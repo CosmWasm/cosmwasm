@@ -40,9 +40,7 @@ pub fn setup_context<T: Storage>() -> (*mut c_void, fn(*mut c_void)) {
 }
 
 fn create_unmanaged_storage<T: Storage>() -> *mut c_void {
-    let data = ContextData::<T> {
-        data: None,
-    };
+    let data = ContextData::<T> { data: None };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
 }
