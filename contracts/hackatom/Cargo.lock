@@ -252,7 +252,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "cosmwasm 0.3.0",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -459,7 +459,7 @@ name = "hackatom"
 version = "0.3.0"
 dependencies = [
  "cosmwasm 0.3.0",
- "cosmwasm-vm 0.3.0",
+ "cosmwasm-vm 0.3.1",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.51 (registry+https://github.com/rust-lang/crates.io-index)",

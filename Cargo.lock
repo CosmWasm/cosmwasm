@@ -248,7 +248,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "cosmwasm 0.3.0",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
