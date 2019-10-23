@@ -14,10 +14,7 @@ use crate::wasm_store::{load, save, wasm_hash};
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
 
-pub struct CosmCache<T>
-where
-    T: Storage + Send + Sync + Clone + 'static,
-{
+pub struct CosmCache<T: Storage + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
     instances: Option<LruCache<WasmHash, Instance<T>>>,
@@ -25,7 +22,7 @@ where
 
 impl<T> CosmCache<T>
 where
-    T: Storage + Send + Sync + Clone + 'static,
+    T: Storage + 'static,
 {
     /// new stores the data for cache under base_dir
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Self {

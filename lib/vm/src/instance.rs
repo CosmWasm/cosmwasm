@@ -14,17 +14,14 @@ use crate::context::{
 use crate::memory::{read_memory, write_memory};
 use cosmwasm::storage::Storage;
 
-pub struct Instance<T>
-where
-    T: Storage + Send + Sync + Clone + 'static,
-{
+pub struct Instance<T: Storage + 'static> {
     instance: wasmer_runtime::Instance,
     storage: PhantomData<T>,
 }
 
 impl<T> Instance<T>
 where
-    T: Storage + Send + Sync + Clone + 'static,
+    T: Storage + 'static,
 {
     pub fn from_code(code: &[u8], storage: T) -> Instance<T> {
         let module = compile(code);
@@ -33,7 +30,7 @@ where
 
     pub fn from_module(module: &Module, storage: T) -> Instance<T> {
         let import_obj = imports! {
-            move || { setup_context(storage.clone()) },
+            || { setup_context::<T>() },
             "env" => {
                 "c_read" => func!(do_read::<T>),
                 "c_write" => func!(do_write::<T>),
@@ -45,10 +42,12 @@ where
         //   the trait `std::marker::Send` is not implemented for `(dyn std::any::Any + 'static)`
         // convert from wasmer error to failure error....
         let instance = module.instantiate(&import_obj).unwrap();
-        Instance {
+        let res = Instance {
             instance,
             storage: PhantomData::<T>::default(),
-        }
+        };
+        res.leave_storage(Some(storage));
+        res
     }
 
     pub fn with_storage<F: FnMut(&mut T)>(&self, func: F) {

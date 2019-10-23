@@ -32,17 +32,15 @@ struct ContextData<T: Storage> {
     data: Option<T>,
 }
 
-pub fn setup_context<T: Storage>(storage: T) -> (*mut c_void, fn(*mut c_void)) {
+pub fn setup_context<T: Storage>() -> (*mut c_void, fn(*mut c_void)) {
     (
-        create_unmanaged_storage(storage),
+        create_unmanaged_storage::<T>(),
         destroy_unmanaged_storage::<T>,
     )
 }
 
-fn create_unmanaged_storage<T: Storage>(storage: T) -> *mut c_void {
-    let data = ContextData {
-        data: Some(storage),
-    };
+fn create_unmanaged_storage<T: Storage>() -> *mut c_void {
+    let data = ContextData::<T> { data: None };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
 }
