@@ -1,6 +1,6 @@
 [package]
 name = "hackatom"
-version = "0.1.0"
+version = "0.3.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 
@@ -29,7 +29,7 @@ default = [ "integration" ]
 integration = [ ]
 
 [dependencies]
-cosmwasm = { path = "../..", version = "0.2.0" }
+cosmwasm = { path = "../..", version = "0.3.0" }
 serde = { version = "1.0.60", default-features = false, features = ["derive"] }
 failure = "0.1.5"
 # needed for wasm-pack build process

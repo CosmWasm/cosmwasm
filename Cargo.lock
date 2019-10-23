@@ -239,7 +239,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "cosmwasm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -248,9 +248,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
- "cosmwasm 0.2.0",
+ "cosmwasm 0.3.0",
  "failure 0.1.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lru 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
