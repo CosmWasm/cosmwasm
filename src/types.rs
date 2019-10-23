@@ -10,8 +10,8 @@ pub struct Params {
 #[derive(Serialize, Deserialize)]
 pub struct BlockInfo {
     pub height: i64,
-    // block_time is RFC3339 encoded timestamp
-    pub time: String,
+    // time is seconds since epoch begin (Jan. 1, 1970)
+    pub time: i64,
     pub chain_id: String,
 }
 
@@ -92,7 +92,7 @@ pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
     Params {
         block: BlockInfo {
             height: 12345,
-            time: "2020-01-08T12:34:56Z".to_string(),
+            time: 1571797419,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
