@@ -2,7 +2,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
-use failure::{bail, Error};
+use crate::errors::{Error};
 
 /// Slice refers to some heap allocated data in wasm.
 /// A pointer to this can be returned over ffi boundaries.
@@ -33,7 +33,7 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// Warning: only use this when you are sure the caller will never use (or free) the slice later
 pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
     if ptr.is_null() {
-        bail!("cannot consume null pointer");
+        return Err(Error::NullPointer{});
     }
     let slice = Box::from_raw(ptr as *mut Slice);
     let buffer = Vec::from_raw_parts(
