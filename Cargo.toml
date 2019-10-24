@@ -22,3 +22,6 @@ members = [ "lib/vm" ]
 serde_json = { version = "1.0.41" }
 serde = { version = "1.0.60", default-features = false, features = ["derive"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
+
+[features]
+backtraces = ["snafu/backtraces"]

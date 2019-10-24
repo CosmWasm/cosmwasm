@@ -27,6 +27,8 @@ default = [ "integration" ]
 # this enables integration testing (takes longer)
 # for quicker tests, cargo test --no-default-features
 integration = [ ]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = [ "cosmwasm/backtraces" ]
 
 [dependencies]
 cosmwasm = { path = "../..", version = "0.3.0" }

@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
+use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{Error, JsonError, Result};
+use cosmwasm::errors::{ContractErr, JsonError, Result, Unauthorized};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{CosmosMsg, Params, Response};
@@ -40,7 +40,7 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<R
 pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Response> {
     let data = store
         .get(CONFIG_KEY)
-        .ok_or_else(|| Error::ContractErr{msg: "uninitialized data".to_string()})?;
+        .context(ContractErr{msg: "uninitialized data".to_string()})?;
     let state: State = from_slice(&data).context(JsonError{})?;
 
     if params.message.signer == state.verifier {
@@ -55,7 +55,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
         };
         Ok(res)
     } else {
-        Err(Error::Unauthorized{})
+        Unauthorized{}.fail()
     }
 }
 
