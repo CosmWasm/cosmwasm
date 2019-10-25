@@ -4,10 +4,12 @@
 //! allocate and deallocate should be re-exported as is
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
-use failure::Error;
+use std::fmt::Display;
 use std::os::raw::c_void;
 use std::vec::Vec;
+use snafu::ResultExt;
 
+use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::ExternalStorage;
 use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
@@ -30,8 +32,8 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 }
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_init(
-    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
+pub fn do_init<T: Display + From<Error>>(
+    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -42,8 +44,8 @@ pub fn do_init(
 }
 
 // do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_handle(
-    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
+pub fn do_handle<T: Display + From<Error>>(
+    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -52,38 +54,37 @@ pub fn do_handle(
         Err(err) => make_error_c_string(err),
     }
 }
-fn _do_init(
-    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
+fn _do_init<T: Display + From<Error>>(
+    init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> Result<*mut c_void, Error> {
+) -> Result<*mut c_void, T> {
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let params: Params = from_slice(&params)?;
+    let params: Params = from_slice(&params).context(ParseErr{})?;
     let mut store = ExternalStorage::new();
     let res = init_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res))?;
+    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr{})?;
     Ok(release_buffer(json))
 }
 
-fn _do_handle(
-    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, Error>,
+fn _do_handle<T: Display + From<Error>>(
+    handle_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> Result<*mut c_void, Error> {
+) -> Result<*mut c_void, T> {
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let params: Params = from_slice(&params)?;
+    let params: Params = from_slice(&params).context(ParseErr{})?;
     let mut store = ExternalStorage::new();
     let res = handle_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res))?;
+    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr{})?;
     Ok(release_buffer(json))
 }
 
-fn make_error_c_string<E: Into<Error>>(error: E) -> *mut c_void {
-    let error: Error = error.into();
+fn make_error_c_string<T: Display>(error: T) -> *mut c_void {
     let v = to_vec(&ContractResult::Err(error.to_string())).unwrap();
     release_buffer(v)
 }

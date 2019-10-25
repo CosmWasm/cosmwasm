@@ -2,6 +2,7 @@
 pub mod exports;
 pub mod imports;
 
+pub mod errors;
 pub mod memory;
 pub mod mock;
 pub mod serde;

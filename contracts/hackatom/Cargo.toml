@@ -27,11 +27,13 @@ default = [ "integration" ]
 # this enables integration testing (takes longer)
 # for quicker tests, cargo test --no-default-features
 integration = [ ]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = [ "cosmwasm/backtraces" ]
 
 [dependencies]
 cosmwasm = { path = "../..", version = "0.3.0" }
 serde = { version = "1.0.60", default-features = false, features = ["derive"] }
-failure = "0.1.5"
+snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
 # needed for wasm-pack build process
 wasm-bindgen = "0.2"
 
