@@ -19,7 +19,7 @@ maintenance = { status = "actively-developed" }
 members = [ "lib/vm" ]
 
 [dependencies]
-serde-json-wasm = { git = "https://github.com/confio/serde-json-wasm.git", branch = "use-std" }
+serde-json-wasm = { git = "https://github.com/confio/serde-json-wasm.git", branch = "parse-enum-structs" }
 serde = { version = "1.0.60", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
 
