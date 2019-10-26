@@ -10,23 +10,20 @@ edition = "2018"
 crate-type = ["cdylib", "rlib"]
 
 [profile.release]
-opt-level = "s"
+opt-level = 3
 debug = false
 rpath = false
 lto = true
 debug-assertions = false
 codegen-units = 1
-panic = 'unwind'
+panic = 'abort'
 incremental = false
 overflow-checks = true
 
 [workspace]
 
 [features]
-default = [ "integration" ]
-# this enables integration testing (takes longer)
-# for quicker tests, cargo test --no-default-features
-integration = [ ]
+# for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = [ "cosmwasm/backtraces" ]
 

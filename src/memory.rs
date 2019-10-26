@@ -33,7 +33,7 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// Warning: only use this when you are sure the caller will never use (or free) the slice later
 pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
     if ptr.is_null() {
-        return NullPointer{}.fail();
+        return NullPointer {}.fail();
     }
     let slice = Box::from_raw(ptr as *mut Slice);
     let buffer = Vec::from_raw_parts(

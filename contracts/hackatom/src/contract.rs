@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{ContractErr, ParseErr, SerializeErr, Result, Unauthorized};
+use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{CosmosMsg, Params, Response};
@@ -25,23 +25,24 @@ pub struct HandleMsg {}
 pub static CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Response> {
-    let msg: InitMsg = from_slice(&msg).context(ParseErr{})?;
+    let msg: InitMsg = from_slice(&msg).context(ParseErr {})?;
     store.set(
         CONFIG_KEY,
         &to_vec(&State {
             verifier: msg.verifier,
             beneficiary: msg.beneficiary,
             funder: params.message.signer,
-        }).context(SerializeErr{})?,
+        })
+        .context(SerializeErr {})?,
     );
     Ok(Response::default())
 }
 
 pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Response> {
-    let data = store
-        .get(CONFIG_KEY)
-        .context(ContractErr{msg: "uninitialized data".to_string()})?;
-    let state: State = from_slice(&data).context(ParseErr{})?;
+    let data = store.get(CONFIG_KEY).context(ContractErr {
+        msg: "uninitialized data".to_string(),
+    })?;
+    let state: State = from_slice(&data).context(ParseErr {})?;
 
     if params.message.signer == state.verifier {
         let res = Response {
@@ -55,7 +56,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
         };
         Ok(res)
     } else {
-        Unauthorized{}.fail()
+        Unauthorized {}.fail()
     }
 }
 

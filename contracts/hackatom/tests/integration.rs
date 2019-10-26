@@ -1,7 +1,5 @@
-#![cfg(feature = "integration")]
-
-use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::mock::MockStorage;
+use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_handle, call_init, Instance};

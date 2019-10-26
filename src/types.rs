@@ -113,3 +113,35 @@ pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
         denom: denom.to_string(),
     }]
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::serde::{from_slice, to_vec};
+
+    #[test]
+    fn can_deser_error_result() {
+        let fail = ContractResult::Err("foobar".to_string());
+        let bin = to_vec(&fail).expect("encode contract result");
+        let _: ContractResult = from_slice(&bin).expect("decode contract result");
+        // need Derive Debug and PartialEq for this, removed to save space
+        //        assert_eq!(fail, back);
+    }
+
+    #[test]
+    fn can_deser_ok_result() {
+        let send = ContractResult::Ok(Response {
+            messages: vec![CosmosMsg::Send {
+                from_address: "me".to_string(),
+                to_address: "you".to_string(),
+                amount: coin("1015", "earth"),
+            }],
+            log: Some("released funds!".to_string()),
+            data: None,
+        });
+        let bin = to_vec(&send).expect("encode contract result");
+        let _: ContractResult = from_slice(&bin).expect("decode contract result");
+        // need Derive Debug and PartialEq for this, removed to save space
+        //        assert_eq!(send, back);
+    }
+}

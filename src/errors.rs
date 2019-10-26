@@ -1,4 +1,4 @@
-use snafu::{Snafu};
+use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
@@ -10,13 +10,13 @@ pub enum Error {
     },
     #[snafu(display("Parse error: {}", source))]
     ParseErr {
-        source: serde_json::error::Error,
+        source: serde_json_wasm::de::Error,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Serialize error: {}", source))]
     SerializeErr {
-        source: serde_json::error::Error,
+        source: serde_json_wasm::ser::Error,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
