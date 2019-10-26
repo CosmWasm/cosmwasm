@@ -4,10 +4,10 @@
 //! allocate and deallocate should be re-exported as is
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
+use snafu::ResultExt;
 use std::fmt::Display;
 use std::os::raw::c_void;
 use std::vec::Vec;
-use snafu::ResultExt;
 
 use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::ExternalStorage;
@@ -62,10 +62,10 @@ fn _do_init<T: Display + From<Error>>(
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let params: Params = from_slice(&params).context(ParseErr{})?;
+    let params: Params = from_slice(&params).context(ParseErr {})?;
     let mut store = ExternalStorage::new();
     let res = init_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr{})?;
+    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {})?;
     Ok(release_buffer(json))
 }
 
@@ -77,10 +77,10 @@ fn _do_handle<T: Display + From<Error>>(
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let params: Params = from_slice(&params).context(ParseErr{})?;
+    let params: Params = from_slice(&params).context(ParseErr {})?;
     let mut store = ExternalStorage::new();
     let res = handle_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr{})?;
+    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {})?;
     Ok(release_buffer(json))
 }
 

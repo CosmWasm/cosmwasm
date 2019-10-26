@@ -28,14 +28,12 @@ pub struct ContractInfo {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-#[derive(Debug, PartialEq)]
 pub struct Coin {
     pub denom: String,
     pub amount: String,
 }
 
 #[derive(Serialize, Deserialize)]
-#[derive(Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
 pub enum CosmosMsg {
     // this moves tokens in the underlying sdk
@@ -58,7 +56,6 @@ pub enum CosmosMsg {
 
 #[derive(Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
-#[derive(Debug, PartialEq)]
 pub enum ContractResult {
     Ok(Response),
     Err(String),
@@ -82,7 +79,6 @@ impl ContractResult {
 }
 
 #[derive(Serialize, Deserialize, Default)]
-#[derive(Debug, PartialEq)]
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
@@ -127,13 +123,14 @@ mod test {
     fn can_deser_error_result() {
         let fail = ContractResult::Err("foobar".to_string());
         let bin = to_vec(&fail).expect("encode contract result");
-        let back = from_slice(&bin).expect("decode contract result");
-        assert_eq!(fail, back);
+        let _: ContractResult = from_slice(&bin).expect("decode contract result");
+        // need Derive Debug and PartialEq for this, removed to save space
+        //        assert_eq!(fail, back);
     }
 
     #[test]
     fn can_deser_ok_result() {
-        let send = Response {
+        let send = ContractResult::Ok(Response {
             messages: vec![CosmosMsg::Send {
                 from_address: "me".to_string(),
                 to_address: "you".to_string(),
@@ -141,12 +138,10 @@ mod test {
             }],
             log: Some("released funds!".to_string()),
             data: None,
-        };
+        });
         let bin = to_vec(&send).expect("encode contract result");
-        use std::str::from_utf8;
-        println!("msg {}", from_utf8(&bin).unwrap());
-        let back = from_slice(&bin).expect("decode contract result");
-        assert_eq!(send, back);
+        let _: ContractResult = from_slice(&bin).expect("decode contract result");
+        // need Derive Debug and PartialEq for this, removed to save space
+        //        assert_eq!(send, back);
     }
-
 }

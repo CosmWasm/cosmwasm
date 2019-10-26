@@ -1,7 +1,5 @@
-#![cfg(feature = "integration")]
-
-use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::mock::MockStorage;
+use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_handle, call_init, Instance};
@@ -42,10 +40,6 @@ fn successful_init_and_handle() {
     // now try to handle this one
     let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
     let msg = to_vec(&HandleMsg {}).unwrap();
-    use std::str::from_utf8;
-    println!("msg {}", from_utf8(&msg).unwrap());
-    println!("params {}", from_utf8(&to_vec(&params).unwrap()).unwrap());
-    // FAILS
     let res = call_handle(&mut instance, &params, &msg).unwrap();
     let msgs = res.unwrap().messages;
     assert_eq!(1, msgs.len());
