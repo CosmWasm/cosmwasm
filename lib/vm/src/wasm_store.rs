@@ -2,8 +2,10 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-use failure::Error;
 use sha2::{Digest, Sha256};
+use snafu::ResultExt;
+
+use crate::errors::{Error, IoErr};
 
 pub fn wasm_hash(wasm: &[u8]) -> Vec<u8> {
     Sha256::digest(wasm).to_vec()
@@ -22,8 +24,9 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
-        .open(filepath)?;
-    file.write_all(wasm)?;
+        .open(filepath)
+        .context(IoErr {})?;
+    file.write_all(wasm).context(IoErr {})?;
 
     Ok(id)
 }
@@ -31,10 +34,10 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
 pub fn load<P: Into<PathBuf>>(dir: P, id: &[u8]) -> Result<Vec<u8>, Error> {
     // this requires the directory and file to exist
     let path = dir.into().join(hex::encode(id));
-    let mut file = File::open(path)?;
+    let mut file = File::open(path).context(IoErr {})?;
 
     let mut wasm = Vec::<u8>::new();
-    let _ = file.read_to_end(&mut wasm)?;
+    let _ = file.read_to_end(&mut wasm).context(IoErr {})?;
     Ok(wasm)
 }
 

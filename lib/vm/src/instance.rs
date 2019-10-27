@@ -1,16 +1,15 @@
 pub use wasmer_runtime::Func;
 
+use snafu::ResultExt;
 use std::marker::PhantomData;
 use wasmer_runtime::{func, imports, Module};
-use wasmer_runtime_core::{
-    error::ResolveResult,
-    typed_func::{Wasm, WasmTypeList},
-};
+use wasmer_runtime_core::typed_func::{Wasm, WasmTypeList};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
 };
+use crate::errors::{Error, ResolveErr, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
 use cosmwasm::storage::Storage;
 
@@ -23,12 +22,12 @@ impl<T> Instance<T>
 where
     T: Storage + 'static,
 {
-    pub fn from_code(code: &[u8], storage: T) -> Instance<T> {
-        let module = compile(code);
+    pub fn from_code(code: &[u8], storage: T) -> Result<Instance<T>, Error> {
+        let module = compile(code)?;
         Instance::from_module(&module, storage)
     }
 
-    pub fn from_module(module: &Module, storage: T) -> Instance<T> {
+    pub fn from_module(module: &Module, storage: T) -> Result<Instance<T>, Error> {
         let import_obj = imports! {
             || { setup_context::<T>() },
             "env" => {
@@ -36,18 +35,13 @@ where
                 "c_write" => func!(do_write::<T>),
             },
         };
-
-        // TODO: add metering options here
-        // TODO: we unwrap rather than Result as:
-        //   the trait `std::marker::Send` is not implemented for `(dyn std::any::Any + 'static)`
-        // convert from wasmer error to failure error....
-        let instance = module.instantiate(&import_obj).unwrap();
+        let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         let res = Instance {
             instance,
             storage: PhantomData::<T>::default(),
         };
         res.leave_storage(Some(storage));
-        res
+        Ok(res)
     }
 
     pub fn get_gas(&self) -> u64 {
@@ -77,19 +71,19 @@ where
     // write_mem allocates memory in the instance and copies the given data in
     // returns the memory offset, to be passed as an argument
     // panics on any error (TODO, use result?)
-    pub fn allocate(&mut self, data: &[u8]) -> u32 {
-        let alloc: Func<(u32), (u32)> = self.func("allocate").unwrap();
-        let ptr = alloc.call(data.len() as u32).unwrap();
+    pub fn allocate(&mut self, data: &[u8]) -> Result<u32, Error> {
+        let alloc: Func<(u32), (u32)> = self.func("allocate")?;
+        let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
-        ptr
+        Ok(ptr)
     }
 
-    pub fn func<Args, Rets>(&self, name: &str) -> ResolveResult<Func<Args, Rets, Wasm>>
+    pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>, Error>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.instance.func(name)
+        self.instance.func(name).context(ResolveErr {})
     }
 }
 
@@ -106,7 +100,7 @@ mod test {
     #[cfg(feature = "default-cranelift")]
     fn get_and_set_gas_cranelift_noop() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000);
         // this is a no-op
@@ -118,7 +112,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn get_and_set_gas_singlepass_works() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000000);
         // it is updated to whatever we set it with
@@ -130,7 +124,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -159,10 +153,9 @@ mod test {
 
     #[test]
     #[cfg(feature = "default-singlepass")]
-    #[should_panic]
     fn contract_enforces_gas_limit() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = 20_000;
         instance.set_gas(orig_gas);
 
@@ -171,6 +164,7 @@ mod test {
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         // this call will panic on out-of-gas
         // TODO: improve error handling through-out the whole stack
-        let _ = call_init(&mut instance, &params, msg);
+        let res = call_init(&mut instance, &params, msg);
+        assert!(res.is_err());
     }
 }

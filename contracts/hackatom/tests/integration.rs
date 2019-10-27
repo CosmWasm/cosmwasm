@@ -22,7 +22,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/ha
 fn successful_init_and_handle() {
     assert!(WASM.len() > 100000);
     let storage = MockStorage::new();
-    let mut instance = Instance::from_code(&WASM, storage);
+    let mut instance = Instance::from_code(&WASM, storage).unwrap();
 
     // prepare arguments
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
@@ -73,7 +73,7 @@ fn successful_init_and_handle() {
 #[test]
 fn failed_handle() {
     let storage = MockStorage::new();
-    let mut instance = Instance::from_code(&WASM, storage);
+    let mut instance = Instance::from_code(&WASM, storage).unwrap();
 
     // initialize the store
     let init_msg = to_vec(&InitMsg {

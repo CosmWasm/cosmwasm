@@ -2,6 +2,7 @@ mod backends;
 mod cache;
 mod calls;
 mod context;
+pub mod errors;
 mod instance;
 mod memory;
 mod modules;
