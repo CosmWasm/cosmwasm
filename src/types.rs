@@ -123,6 +123,7 @@ mod test {
     fn can_deser_error_result() {
         let fail = ContractResult::Err("foobar".to_string());
         let bin = to_vec(&fail).expect("encode contract result");
+        println!("error: {}", std::str::from_utf8(&bin).unwrap());
         let _: ContractResult = from_slice(&bin).expect("decode contract result");
         // need Derive Debug and PartialEq for this, removed to save space
         //        assert_eq!(fail, back);
@@ -140,6 +141,7 @@ mod test {
             data: None,
         });
         let bin = to_vec(&send).expect("encode contract result");
+        println!("ok: {}", std::str::from_utf8(&bin).unwrap());
         let _: ContractResult = from_slice(&bin).expect("decode contract result");
         // need Derive Debug and PartialEq for this, removed to save space
         //        assert_eq!(send, back);
