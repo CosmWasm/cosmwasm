@@ -149,7 +149,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 69_695);
+        assert_eq!(handle_used, 69_720);
     }
 
     #[test]
