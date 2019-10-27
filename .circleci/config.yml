@@ -6,6 +6,7 @@ workflows:
       - base
       - singlepass_vm
       - cranelift_vm
+      - hackatom
 
 jobs:
   base:
@@ -98,7 +99,8 @@ jobs:
 
   hackatom:
     docker:
-      - image: rust:1.37
+      # this will use singlepass by default, so we will need nightly
+      - image: rustlang/rust:nightly
     working_directory: ~/cosmwasm/contracts/hackatom
     steps:
       - checkout:
