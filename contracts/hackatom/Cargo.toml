@@ -25,7 +25,7 @@ overflow-checks = true
 [features]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
-backtraces = [ "cosmwasm/backtraces" ]
+backtraces = [ "cosmwasm/backtraces", "cosmwasm-vm/backtraces" ]
 
 [dependencies]
 cosmwasm = { path = "../..", version = "0.3.0" }
