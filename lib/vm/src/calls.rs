@@ -14,7 +14,7 @@ pub fn call_init<T: Storage + 'static>(
 ) -> Result<ContractResult, Error> {
     let params = to_vec(params).context(SerializeErr {})?;
     let data = call_init_raw(instance, &params, msg)?;
-    let res: ContractResult = from_slice(&data).context(ParseErr{})?;
+    let res: ContractResult = from_slice(&data).context(ParseErr {})?;
     Ok(res)
 }
 
@@ -25,7 +25,7 @@ pub fn call_handle<T: Storage + 'static>(
 ) -> Result<ContractResult, Error> {
     let params = to_vec(params).context(SerializeErr {})?;
     let data = call_handle_raw(instance, &params, msg)?;
-    let res: ContractResult = from_slice(&data).context(ParseErr{})?;
+    let res: ContractResult = from_slice(&data).context(ParseErr {})?;
     Ok(res)
 }
 
@@ -55,7 +55,7 @@ fn call_raw<T: Storage + 'static>(
     let msg_offset = instance.allocate(msg)?;
 
     let func: Func<(u32, u32), (u32)> = instance.func(name)?;
-    let res_offset = func.call(param_offset, msg_offset).context(RuntimeErr{})?;
+    let res_offset = func.call(param_offset, msg_offset).context(RuntimeErr {})?;
 
     let data = instance.memory(res_offset);
     Ok(data)

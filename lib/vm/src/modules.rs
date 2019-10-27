@@ -172,7 +172,7 @@ mod tests {
         #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
         {
             assert!(cached_result.is_err());
-            return
+            return;
         }
 
         let cached_module = cached_result.unwrap();

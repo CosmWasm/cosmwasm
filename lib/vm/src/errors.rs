@@ -1,8 +1,8 @@
-use std::io;
 use std::fmt::Debug;
+use std::io;
 
 use snafu::Snafu;
-use wasmer_runtime_core::cache::{Error as CacheError};
+use wasmer_runtime_core::cache::Error as CacheError;
 use wasmer_runtime_core::error as core_error;
 
 #[derive(Debug, Snafu)]

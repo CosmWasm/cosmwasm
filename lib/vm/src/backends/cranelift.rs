@@ -2,8 +2,8 @@
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime::{compile_with, Backend, Instance, Module};
 
+use crate::errors::{CompileErr, Error};
 use snafu::ResultExt;
-use crate::errors::{Error, CompileErr};
 
 static FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 

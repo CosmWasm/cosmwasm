@@ -24,8 +24,9 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     let mut file = OpenOptions::new()
         .write(true)
         .create_new(true)
-        .open(filepath).context(IoErr{})?;
-    file.write_all(wasm).context(IoErr{})?;
+        .open(filepath)
+        .context(IoErr {})?;
+    file.write_all(wasm).context(IoErr {})?;
 
     Ok(id)
 }
@@ -33,10 +34,10 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
 pub fn load<P: Into<PathBuf>>(dir: P, id: &[u8]) -> Result<Vec<u8>, Error> {
     // this requires the directory and file to exist
     let path = dir.into().join(hex::encode(id));
-    let mut file = File::open(path).context(IoErr{})?;
+    let mut file = File::open(path).context(IoErr {})?;
 
     let mut wasm = Vec::<u8>::new();
-    let _ = file.read_to_end(&mut wasm).context(IoErr{})?;
+    let _ = file.read_to_end(&mut wasm).context(IoErr {})?;
     Ok(wasm)
 }
 

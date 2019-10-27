@@ -1,11 +1,9 @@
 pub use wasmer_runtime::Func;
 
-use std::marker::PhantomData;
 use snafu::ResultExt;
+use std::marker::PhantomData;
 use wasmer_runtime::{func, imports, Module};
-use wasmer_runtime_core::{
-    typed_func::{Wasm, WasmTypeList},
-};
+use wasmer_runtime_core::typed_func::{Wasm, WasmTypeList};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
@@ -37,7 +35,7 @@ where
                 "c_write" => func!(do_write::<T>),
             },
         };
-        let instance = module.instantiate(&import_obj).context(WasmerErr{})?;
+        let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         let res = Instance {
             instance,
             storage: PhantomData::<T>::default(),
@@ -75,7 +73,7 @@ where
     // panics on any error (TODO, use result?)
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32, Error> {
         let alloc: Func<(u32), (u32)> = self.func("allocate")?;
-        let ptr = alloc.call(data.len() as u32).context(RuntimeErr{})?;
+        let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
         Ok(ptr)
     }
@@ -85,7 +83,7 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.instance.func(name).context(ResolveErr{})
+        self.instance.func(name).context(ResolveErr {})
     }
 }
 

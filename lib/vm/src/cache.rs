@@ -29,8 +29,8 @@ where
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Result<Self, Error> {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
-        create_dir_all(&wasm_path).context(IoErr{})?;
-        let modules = FileSystemCache::new(base.join(MODULES_DIR)).context(IoErr{})?;
+        create_dir_all(&wasm_path).context(IoErr {})?;
+        let modules = FileSystemCache::new(base.join(MODULES_DIR)).context(IoErr {})?;
         let instances = if cache_size > 0 {
             Some(LruCache::new(cache_size))
         } else {
