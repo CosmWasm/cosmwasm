@@ -7,7 +7,7 @@ use wasmer_runtime_core::{
     typed_func::{Wasm, WasmTypeList},
 };
 
-use crate::backends::compile;
+use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
 };
@@ -50,6 +50,15 @@ where
         res
     }
 
+    pub fn get_gas(&self) -> u64 {
+        get_gas(&self.instance)
+    }
+
+    pub fn set_gas(&mut self, gas: u64) {
+        set_gas(&mut self.instance, gas)
+    }
+
+
     pub fn with_storage<F: FnMut(&mut T)>(&self, func: F) {
         with_storage_from_context(self.instance.context(), func)
     }
@@ -83,4 +92,37 @@ where
     {
         self.instance.func(name)
     }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use cosmwasm::mock::MockStorage;
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    #[test]
+    #[cfg(feature = "default-cranelift")]
+    fn get_and_set_gas_cranelift_noop() {
+        let storage = MockStorage::new();
+        let mut instance = Instance::from_code(CONTRACT, storage);
+        let orig_gas = instance.get_gas();
+        assert!(orig_gas > 1000);
+        // this is a no-op
+        instance.set_gas(123456);
+        assert_eq!(orig_gas, instance.get_gas());
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn get_and_set_gas_singlepass_works() {
+        let storage = MockStorage::new();
+        let mut instance = Instance::from_code(CONTRACT, storage);
+        let orig_gas = instance.get_gas();
+        assert!(orig_gas > 1000000);
+        // it is updated to whatever we set it with
+        instance.set_gas(123456);
+        assert_eq!(123456, instance.get_gas());
+    }
+
 }

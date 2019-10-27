@@ -1,6 +1,6 @@
 #![cfg(feature = "singlepass")]
 use wasmer_middleware_common::metering;
-use wasmer_runtime::{compile_with, Backend, Module};
+use wasmer_runtime::{compile_with, Backend, Instance, Module};
 use wasmer_runtime_core::codegen::{MiddlewareChain, StreamingCompiler};
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
@@ -17,4 +17,14 @@ pub fn compile(code: &[u8]) -> Module {
 
 pub fn backend() -> Backend {
     Backend::Singlepass
+}
+
+pub fn set_gas(instance: &mut Instance, limit: u64) {
+    let used = GAS_LIMIT - limit;
+    metering::set_points_used(instance, used)
+}
+
+pub fn get_gas(instance: &Instance) -> u64 {
+    let used = metering::get_points_used(instance);
+    GAS_LIMIT - used
 }
