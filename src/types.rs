@@ -91,8 +91,8 @@ pub struct Response {
 pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
     Params {
         block: BlockInfo {
-            height: 12345,
-            time: 1571797419,
+            height: 12_345,
+            time: 1_571_797_419,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {

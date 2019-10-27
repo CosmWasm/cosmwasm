@@ -1,3 +1,8 @@
-mod cranelift;
+pub mod cranelift;
+pub mod singlepass;
 
-pub use cranelift::{backend, compile};
+#[cfg(feature = "default-cranelift")]
+pub use cranelift::{backend, compile, get_gas, set_gas};
+
+#[cfg(feature = "default-singlepass")]
+pub use singlepass::{backend, compile, get_gas, set_gas};
