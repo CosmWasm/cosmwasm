@@ -243,7 +243,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "cosmwasm"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-json-wasm 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -252,9 +252,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
- "cosmwasm 0.3.0",
+ "cosmwasm 0.4.0",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lru 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -486,10 +486,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "hackatom"
-version = "0.3.0"
+version = "0.4.0"
 dependencies = [
- "cosmwasm 0.3.0",
- "cosmwasm-vm 0.3.1",
+ "cosmwasm 0.4.0",
+ "cosmwasm-vm 0.4.0",
  "serde 1.0.101 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasm-bindgen 0.2.52 (registry+https://github.com/rust-lang/crates.io-index)",

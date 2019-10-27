@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm"
-version = "0.3.0"
+version = "0.4.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Wasm smart contracts for Cosmos"
@@ -13,10 +13,9 @@ exclude = [".circleci/*", ".gitignore"]
 circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [workspace]
 members = [ "lib/vm" ]
+exclude = [ "contracts/hackatom" ]
 
 [dependencies]
 serde-json-wasm = "0.1.0"

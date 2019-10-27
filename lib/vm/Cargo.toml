@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -10,6 +10,17 @@ license = "Apache-2.0"
 [badges]
 circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 16
+panic = 'unwind'
+incremental = true
+overflow-checks = true
 
 [features]
 default = ["default-singlepass"]
@@ -23,7 +34,7 @@ default-singlepass = ["wasmer-singlepass-backend"]
 backtraces = ["snafu/backtraces"]
 
 [dependencies]
-cosmwasm = { path = "../..", version = "0.3.0" }
+cosmwasm = { path = "../..", version = "0.4.0" }
 serde-json-wasm = "0.1.0"
 wasmer-runtime = "0.8.0"
 wasmer-runtime-core = "0.8.0"
