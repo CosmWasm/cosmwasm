@@ -4,7 +4,8 @@ workflows:
   test:
     jobs:
       - base
-      - hackatom
+      - singlepass_vm
+      - cranelift_vm
 
 jobs:
   base:
@@ -20,20 +21,81 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - v4-cargo-cache-base-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
-          command: cargo build --all --locked
+          command: cargo build --locked
       - run:
           name: Run all tests (including workspaces)
-          command: cargo test --all --locked
+          command: cargo test --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          key: v4-cargo-cache-base-{{ arch }}-{{ checksum "Cargo.lock" }}
+
+  singlepass_vm:
+    docker:
+      - image: rustlang/rust:nightly
+    steps:
+      - checkout
+      - run:
+          name: Install CMAKE
+          command: 'apt-get update && apt-get install -y cmake'
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-singlepass-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build all targets (including workspaces)
+          working_directory: ~/project/lib/vm
+          command: cargo build --locked
+      - run:
+          name: Run all tests (including workspaces)
+          working_directory: ~/project/lib/vm
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-singlepass-{{ arch }}-{{ checksum "Cargo.lock" }}
+
+  cranelift_vm:
+    docker:
+      - image: rust:1.37
+    steps:
+      - checkout
+      - run:
+          name: Install CMAKE
+          command: 'apt-get update && apt-get install -y cmake'
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-cranelift-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build all targets (including workspaces)
+          working_directory: ~/project/lib/vm
+          command: cargo build --locked --no-default-features --features cranelift,default-cranelift
+      - run:
+          name: Run all tests (including workspaces)
+          working_directory: ~/project/lib/vm
+          command: cargo test --locked --no-default-features --features cranelift,default-cranelift
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-cranelift-{{ arch }}-{{ checksum "Cargo.lock" }}
+
   hackatom:
     docker:
       - image: rust:1.37
@@ -46,7 +108,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - v4-cargo-cache-hackatom-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -68,4 +130,4 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+          key: v4-cargo-cache-hackatom-{{ arch }}-{{ checksum "Cargo.lock" }}
