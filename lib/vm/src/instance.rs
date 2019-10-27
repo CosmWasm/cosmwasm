@@ -137,18 +137,19 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert!(init_used > 30_000);
+        assert_eq!(init_used, 36_479);
 
         // run contract - just sanity check - results validate in contract unit tests
+        instance.set_gas(orig_gas);
         let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
-        let total_used = orig_gas - instance.get_gas();
-        println!("total used: {}", total_used);
-        assert!(total_used > 100_000);
+        let handle_used = orig_gas - instance.get_gas();
+        println!("handle used: {}", handle_used);
+        assert_eq!(handle_used, 69_695);
     }
 
     #[test]
