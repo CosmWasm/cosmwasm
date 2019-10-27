@@ -58,7 +58,6 @@ where
         set_gas(&mut self.instance, gas)
     }
 
-
     pub fn with_storage<F: FnMut(&mut T)>(&self, func: F) {
         with_storage_from_context(self.instance.context(), func)
     }
@@ -97,7 +96,9 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::calls::{call_handle, call_init};
     use cosmwasm::mock::MockStorage;
+    use cosmwasm::types::{coin, mock_params};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -125,4 +126,51 @@ mod test {
         assert_eq!(123456, instance.get_gas());
     }
 
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn contract_deducts_gas() {
+        let storage = MockStorage::new();
+        let mut instance = Instance::from_code(CONTRACT, storage);
+        let orig_gas = 200_000;
+        instance.set_gas(orig_gas);
+
+        // init contract
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let res = call_init(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(msgs.len(), 0);
+
+        let init_used = orig_gas - instance.get_gas();
+        println!("init used: {}", init_used);
+        assert!(init_used > 30_000);
+
+        // run contract - just sanity check - results validate in contract unit tests
+        let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let msg = b"{}";
+        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let msgs = res.unwrap().messages;
+        assert_eq!(1, msgs.len());
+
+        let total_used = orig_gas - instance.get_gas();
+        println!("total used: {}", total_used);
+        assert!(total_used > 100_000);
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    #[should_panic]
+    fn contract_enforces_gas_limit() {
+        let storage = MockStorage::new();
+        let mut instance = Instance::from_code(CONTRACT, storage);
+        let orig_gas = 20_000;
+        instance.set_gas(orig_gas);
+
+        // init contract
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        // this call will panic on out-of-gas
+        // TODO: improve error handling through-out the whole stack
+        let _ = call_init(&mut instance, &params, msg);
+    }
 }
