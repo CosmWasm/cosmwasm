@@ -24,6 +24,7 @@ default-singlepass = []
 cosmwasm = { path = "../..", version = "0.3.0" }
 wasmer-runtime = "0.8.0"
 wasmer-runtime-core = "0.8.0"
+wasmer-middleware-common = "0.8.0"
 wasmer-clif-backend = {version = "0.8.0", optional = true }
 wasmer-singlepass-backend = {version = "0.8.0", optional = true }
 failure = "0.1.5"
