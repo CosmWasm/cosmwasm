@@ -2,10 +2,13 @@
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime::{compile_with, Backend, Instance, Module};
 
+use snafu::ResultExt;
+use crate::errors::{Error, CompileErr};
+
 static FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
-pub fn compile(code: &[u8]) -> Module {
-    compile_with(code, &CraneliftCompiler::new()).unwrap()
+pub fn compile(code: &[u8]) -> Result<Module, Error> {
+    compile_with(code, &CraneliftCompiler::new()).context(CompileErr {})
 }
 
 pub fn backend() -> Backend {

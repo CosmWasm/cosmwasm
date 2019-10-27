@@ -4,15 +4,18 @@ use wasmer_runtime::{compile_with, Backend, Instance, Module};
 use wasmer_runtime_core::codegen::{MiddlewareChain, StreamingCompiler};
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
+use snafu::ResultExt;
+use crate::errors::{Error, CompileErr};
+
 static GAS_LIMIT: u64 = 10_000_000_000;
 
-pub fn compile(code: &[u8]) -> Module {
+pub fn compile(code: &[u8]) -> Result<Module, Error> {
     let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
         let mut chain = MiddlewareChain::new();
         chain.push(metering::Metering::new(GAS_LIMIT));
         chain
     });
-    compile_with(code, &c).unwrap()
+    compile_with(code, &c).context(CompileErr{})
 }
 
 pub fn backend() -> Backend {

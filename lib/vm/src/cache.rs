@@ -46,7 +46,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
         let id = save(&self.wasm_path, wasm)?;
         // we fail if module doesn't compile - panic :(
-        let module = compile(wasm);
+        let module = compile(wasm)?;
         let hash = WasmHash::generate(&id);
         self.modules.store(hash, module).convert_cache()?;
         Ok(id)
@@ -79,12 +79,12 @@ where
         // try from the module cache
         let res = self.modules.load_with_backend(hash, backend());
         if let Ok(module) = res {
-            return Ok(Instance::from_module(&module, storage));
+            return Instance::from_module(&module, storage);
         }
 
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
-        Ok(Instance::from_code(&wasm, storage))
+        Instance::from_code(&wasm, storage)
     }
 
     pub fn store_instance(&mut self, id: &[u8], instance: Instance<T>) -> Option<T> {

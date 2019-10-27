@@ -11,7 +11,7 @@ use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
 };
-use crate::errors::{Error, ResolveErr, RuntimeErr};
+use crate::errors::{Error, ResolveErr, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
 use cosmwasm::storage::Storage;
 
@@ -24,12 +24,12 @@ impl<T> Instance<T>
 where
     T: Storage + 'static,
 {
-    pub fn from_code(code: &[u8], storage: T) -> Instance<T> {
-        let module = compile(code);
+    pub fn from_code(code: &[u8], storage: T) -> Result<Instance<T>, Error> {
+        let module = compile(code)?;
         Instance::from_module(&module, storage)
     }
 
-    pub fn from_module(module: &Module, storage: T) -> Instance<T> {
+    pub fn from_module(module: &Module, storage: T) -> Result<Instance<T>, Error> {
         let import_obj = imports! {
             || { setup_context::<T>() },
             "env" => {
@@ -37,18 +37,13 @@ where
                 "c_write" => func!(do_write::<T>),
             },
         };
-
-        // TODO: add metering options here
-        // TODO: we unwrap rather than Result as:
-        //   the trait `std::marker::Send` is not implemented for `(dyn std::any::Any + 'static)`
-        // convert from wasmer error to failure error....
-        let instance = module.instantiate(&import_obj).unwrap();
+        let instance = module.instantiate(&import_obj).context(WasmerErr{})?;
         let res = Instance {
             instance,
             storage: PhantomData::<T>::default(),
         };
         res.leave_storage(Some(storage));
-        res
+        Ok(res)
     }
 
     pub fn get_gas(&self) -> u64 {

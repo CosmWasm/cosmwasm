@@ -14,6 +14,12 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Compilin wasm: {}", source))]
+    CompileErr {
+        source: core_error::CompileError,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Filesystem error: {}", source))]
     IoErr {
         source: io::Error,
@@ -49,9 +55,9 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Wasmer error: {}", msg))]
+    #[snafu(display("Wasmer error: {}", source))]
     WasmerErr {
-        msg: String,
+        source: core_error::Error,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
