@@ -102,7 +102,7 @@ mod test {
     #[cfg(feature = "default-cranelift")]
     fn get_and_set_gas_cranelift_noop() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000);
         // this is a no-op
@@ -114,7 +114,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn get_and_set_gas_singlepass_works() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000000);
         // it is updated to whatever we set it with
@@ -126,7 +126,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -155,10 +155,9 @@ mod test {
 
     #[test]
     #[cfg(feature = "default-singlepass")]
-    #[should_panic]
     fn contract_enforces_gas_limit() {
         let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage);
+        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
         let orig_gas = 20_000;
         instance.set_gas(orig_gas);
 
@@ -167,6 +166,7 @@ mod test {
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         // this call will panic on out-of-gas
         // TODO: improve error handling through-out the whole stack
-        let _ = call_init(&mut instance, &params, msg);
+        let res = call_init(&mut instance, &params, msg);
+        assert!(res.is_err());
     }
 }

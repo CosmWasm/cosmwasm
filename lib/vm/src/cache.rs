@@ -7,7 +7,7 @@ use snafu::ResultExt;
 use cosmwasm::storage::Storage;
 
 use crate::backends::{backend, compile};
-use crate::errors::{CacheExt, Error, IntegrityErr, IoErr};
+use crate::errors::{Error, IntegrityErr, IoErr};
 use crate::instance::Instance;
 use crate::modules::{Cache, FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
@@ -45,10 +45,10 @@ where
 
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
         let id = save(&self.wasm_path, wasm)?;
-        // we fail if module doesn't compile - panic :(
         let module = compile(wasm)?;
         let hash = WasmHash::generate(&id);
-        self.modules.store(hash, module).convert_cache()?;
+        // singlepass cannot store a module, just make best effort
+        let _ = self.modules.store(hash, module);
         Ok(id)
     }
 
@@ -113,7 +113,7 @@ mod test {
     #[test]
     fn init_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
         let mut instance = cache.get_instance(&id, storage).unwrap();
@@ -131,7 +131,7 @@ mod test {
     #[test]
     fn run_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
         let mut instance = cache.get_instance(&id, storage).unwrap();
@@ -154,7 +154,7 @@ mod test {
     #[test]
     fn use_multiple_cached_instances_of_same_contract() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10) };
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         // these differentiate the two instances of the same contract
