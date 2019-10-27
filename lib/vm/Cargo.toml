@@ -12,13 +12,13 @@ circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-# select which backends are enabled (multiple possible)
-# default selects which is re-exported in backends/mod.rs (only one possible)
-default = ["singlepass", "default-singlepass"]
+default = ["default-singlepass"]
+# multiple backends may be activated here (available through eg. backends::cranelift::*)
 cranelift = ["wasmer-clif-backend"]
 singlepass = ["wasmer-singlepass-backend"]
-default-cranelift = []
-default-singlepass = []
+# default selects which *one* is re-exported in backends/mod.rs (available through eg backends::*)
+default-cranelift = ["wasmer-clif-backend"]
+default-singlepass = ["wasmer-singlepass-backend"]
 
 [dependencies]
 cosmwasm = { path = "../..", version = "0.3.0" }

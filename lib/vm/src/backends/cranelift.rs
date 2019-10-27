@@ -1,4 +1,4 @@
-#![cfg(feature = "cranelift")]
+#![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime::{compile_with, Backend, Instance, Module};
 

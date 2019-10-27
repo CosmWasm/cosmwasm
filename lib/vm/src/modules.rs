@@ -167,8 +167,15 @@ mod tests {
         fs_cache.store(key, module.clone()).unwrap();
 
         // load module
-        let cached_module = fs_cache.load(key).unwrap();
+        let cached_result = fs_cache.load(key);
+        // this should fail for singlepass, work for the rest
+        #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
+        {
+            assert!(cached_result.is_err());
+            return
+        }
 
+        let cached_module = cached_result.unwrap();
         let import_object = imports! {};
         let instance = cached_module.instantiate(&import_object).unwrap();
         let add_one: Func<i32, i32> = instance.func("add_one").unwrap();

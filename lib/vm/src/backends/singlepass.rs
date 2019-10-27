@@ -1,4 +1,4 @@
-#![cfg(feature = "singlepass")]
+#![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
 use wasmer_middleware_common::metering;
 use wasmer_runtime::{compile_with, Backend, Instance, Module};
 use wasmer_runtime_core::codegen::{MiddlewareChain, StreamingCompiler};
