@@ -10,6 +10,37 @@
 This repo provides a useful functionality to build smart contracts that
 are compatible with Cosmos SDK runtime, [currently being developed](https://github.com/cosmwasm/cosmos-sdk/issues).
 
+## Overview
+
+This crate provides the bindings and all imports needed to build a smart contract.
+However, to get that contract to interact with a system needs many moving parts.
+To get oriented, here is a list of the various components of the CosmWasm ecosystem:
+
+* [cosmwasm](https://github.com/confio/cosmwasm) - This crate. All needed functionality and no more - to build a small, efficient wasm smart contract.
+
+**Building contracts:**
+
+* [cosmwasm-template](https://github.com/confio/cosmwasm-template) - A starter-pack to get you quickly building your custom contract compatible with the cosmwasm system.
+* [cosmwasm-opt](https://github.com/confio/cosmwasm-opt) - A docker image and scripts to take your rust code and produce the smallest possible wasm output. *Deterministically*
+This is designed both for preparing contracts for deployment as well as validating that a given deployed contract is based on some given rust code.,
+allow a [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945) as etherscan.
+* [serde-json-wasm](https://github.com/confio/serde-json-wasm) - A custom json library, forked from `serde-json-core`. This provides an interface similar to
+`serde-json`, but without ay floating-point instructions (non-deterministic) and producing builds
+around 40% of the code size.
+
+**Executing contracts:**
+
+* [cosmwasm-vm](https://github.com/confio/cosmwasm/tree/master/lib/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
+to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](https://github.com/confio/cosmwasm/blob/master/lib/vm/README.md).
+* [go-cosmwasm](https://github.com/confio/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
+making use of all the optimizations and caching available inside `cosmwasm-vm`.
+* [Cosmos SDK](https://github.com/cosmwasm/modules/tree/master/incubator/contract) - Currently an WIP fork targeting `cosmos/modules` 
+to provide an wasm module you can easily plug into any Cosmos-SDK based application. 
+ 
+Ongoing work is currently tracked [on this project board](https://github.com/orgs/confio/projects/1)
+for all of the internals, and [on this project board](https://github.com/cosmwasm/modules/projects/3)
+for the Cosmos-SDK integration work.
+
 ## Creating a Smart Contract
 
 You can see some examples of contracts under the `contracts` directory, 
