@@ -12,8 +12,8 @@ use std::vec::Vec;
 use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::ExternalStorage;
 use crate::memory::{alloc, consume_slice, release_buffer};
-use crate::serde::{from_slice, to_vec};
-use crate::types::{ContractResult, Params, Response};
+use crate::prost::{from_slice, to_vec};
+use crate::types::{ContractResult, Params, Response, Result as Res};
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer
 // to a slice defining this data. This space is managed by the calling process
@@ -65,7 +65,8 @@ fn _do_init<T: Display + From<Error>>(
     let params: Params = from_slice(&params).context(ParseErr {})?;
     let mut store = ExternalStorage::new();
     let res = init_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {})?;
+
+    let json = to_vec(&ContractResult{res: Some(Res::Ok(res))}).context(SerializeErr {})?;
     Ok(release_buffer(json))
 }
 
@@ -80,11 +81,11 @@ fn _do_handle<T: Display + From<Error>>(
     let params: Params = from_slice(&params).context(ParseErr {})?;
     let mut store = ExternalStorage::new();
     let res = handle_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {})?;
+    let json = to_vec(&ContractResult{res: Some(Res::Ok(res))}).context(SerializeErr {})?;
     Ok(release_buffer(json))
 }
 
 fn make_error_c_string<T: Display>(error: T) -> *mut c_void {
-    let v = to_vec(&ContractResult::Err(error.to_string())).unwrap();
+    let v = to_vec(&ContractResult{res: Some(Res::Err(error.to_string()))}).unwrap();
     release_buffer(v)
 }

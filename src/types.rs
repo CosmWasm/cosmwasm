@@ -90,7 +90,7 @@ pub struct OpaqueMsg {
 #[derive(Message, PartialEq, Clone)]
 pub struct ContractResult {
     #[prost(oneof = "Result", tags = "1, 2")]
-    pub msg: Option<Result>,
+    pub res: Option<Result>,
 }
 
 
@@ -105,14 +105,14 @@ pub enum Result {
 impl ContractResult {
     // unwrap will panic on err, or give us the real data useful for tests
     pub fn unwrap(self) -> Response {
-        match self.msg.unwrap() {
+        match self.res.unwrap() {
             Result::Err(msg) => panic!("Unexpected error: {}", msg),
             Result::Ok(res) => res,
         }
     }
 
     pub fn is_err(&self) -> bool {
-        match self.msg.as_ref().unwrap() {
+        match self.res.as_ref().unwrap() {
             Result::Err(_) => true,
             _ => false,
         }
@@ -165,7 +165,7 @@ mod test {
 
     #[test]
     fn can_deser_error_result() {
-        let fail = ContractResult{msg: Some(Result::Err("foobar".to_string()))};
+        let fail = ContractResult{res: Some(Result::Err("foobar".to_string()))};
         let bin = to_vec(&fail).expect("encode contract result");
         println!("error: {}", std::str::from_utf8(&bin).unwrap());
         let back: ContractResult = from_slice(&bin).expect("decode contract result");
@@ -175,7 +175,7 @@ mod test {
 
     #[test]
     fn can_deser_ok_result() {
-        let send = ContractResult{msg: Some(Result::Ok(Response {
+        let send = ContractResult{res: Some(Result::Ok(Response {
             messages: vec![Msg{msg: Some(CosmosMsg::Send(SendMsg {
                 from_address: "me".to_string(),
                 to_address: "you".to_string(),
