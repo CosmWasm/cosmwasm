@@ -2,12 +2,12 @@ use prost_derive::{Message};
 
 #[derive(Message, PartialEq, Clone)]
 pub struct Params {
-    #[prost(message, optional, tag="1")]
-    pub block: Option<BlockInfo>,
-    #[prost(message, optional, tag="2")]
-    pub message: Option<MessageInfo>,
-    #[prost(message, optional, tag="3")]
-    pub contract: Option<ContractInfo>,
+    #[prost(message, required, tag="1")]
+    pub block: BlockInfo,
+    #[prost(message, required, tag="2")]
+    pub message: MessageInfo,
+    #[prost(message, required, tag="3")]
+    pub contract: ContractInfo,
 }
 
 #[derive(Message, PartialEq, Clone)]
@@ -134,19 +134,19 @@ pub struct Response {
 // this is intended for use in testcode only
 pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
     Params {
-        block: Some(BlockInfo {
+        block: BlockInfo {
             height: 12_345,
             time: 1_571_797_419,
             chain_id: "cosmos-testnet-14002".to_string(),
-        }),
-        message: Some(MessageInfo {
+        },
+        message: MessageInfo {
             signer: signer.to_string(),
             sent_funds: sent.to_vec(),
-        }),
-        contract: Some(ContractInfo {
+        },
+        contract: ContractInfo {
             address: "cosmos2contract".to_string(),
             balance: balance.to_vec(),
-        }),
+        },
     }
 }
 

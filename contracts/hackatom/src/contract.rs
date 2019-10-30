@@ -36,7 +36,7 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<R
         &to_vec(&State {
             verifier: msg.verifier,
             beneficiary: msg.beneficiary,
-            funder: params.message.unwrap().signer,
+            funder: params.message.signer,
         })
         .context(SerializeErr {})?,
     );
@@ -49,13 +49,12 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     })?;
     let state: State = from_slice(&data).context(ParseErr {})?;
 
-    if params.message.unwrap().signer == state.verifier {
-        let contract = params.contract.unwrap();
+    if params.message.signer == state.verifier {
         let res = Response {
             messages: vec![Msg{msg: Some(CosmosMsg::Send(SendMsg {
-                from_address: contract.address,
+                from_address: params.contract.address,
                 to_address: state.beneficiary,
-                amount: contract.balance,
+                amount: params.contract.balance,
             }))}],
             log: Some("released funds!".to_string()),
             data: None,
