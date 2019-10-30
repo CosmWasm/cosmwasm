@@ -1,88 +1,132 @@
-use serde::{Deserialize, Serialize};
+use prost_derive::{Message};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone)]
 pub struct Params {
-    pub block: BlockInfo,
-    pub message: MessageInfo,
-    pub contract: ContractInfo,
+    #[prost(message, tag="1")]
+    pub block: Option<BlockInfo>,
+    #[prost(message, tag="2")]
+    pub message: Option<MessageInfo>,
+    #[prost(message, tag="3")]
+    pub contract: Option<ContractInfo>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone)]
 pub struct BlockInfo {
+    #[prost(int64, tag="1")]
     pub height: i64,
     // time is seconds since epoch begin (Jan. 1, 1970)
+    #[prost(int64, tag="2")]
     pub time: i64,
+    #[prost(string, tag="3")]
     pub chain_id: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone)]
 pub struct MessageInfo {
+    #[prost(string, tag="1")]
     pub signer: String,
+    #[prost(message, repeated, tag="2")]
     pub sent_funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone)]
 pub struct ContractInfo {
+    #[prost(string, tag="1")]
     pub address: String,
+    #[prost(message, repeated, tag="2")]
     pub balance: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Message, Clone)]
 pub struct Coin {
+    #[prost(string, tag="1")]
     pub denom: String,
+    #[prost(string, tag="2")]
     pub amount: String,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum CosmosMsg {
-    // this moves tokens in the underlying sdk
-    Send {
-        from_address: String,
-        to_address: String,
-        amount: Vec<Coin>,
-    },
-    // this dispatches a call to another contract at a known address (with known ABI)
-    // msg is the json-encoded HandleMsg struct
-    Contract {
-        contract_addr: String,
-        msg: String,
-    },
-    // this should never be created here, just passed in from the user and later dispatched
-    Opaque {
-        data: String,
-    },
+#[derive(Message, Clone)]
+pub struct Msg {
+    #[prost(oneof = "CosmosMsg", tags = "1, 2, 3")]
+    pub msg: Option<CosmosMsg>,
 }
 
-#[derive(Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum ContractResult {
+#[derive(prost::Oneof, Clone)]
+pub enum CosmosMsg {
+    #[prost(message, tag = "1")]
+    Send(SendMsg),
+    #[prost(message, tag = "2")]
+    Contract(ContractMsg),
+    #[prost(message, tag = "3")]
+    Opaque(OpaqueMsg),
+}
+
+// this moves tokens in the underlying sdk
+#[derive(Message, Clone)]
+pub struct SendMsg {
+    #[prost(string, tag="1")]
+    from_address: String,
+    #[prost(string, tag="2")]
+    to_address: String,
+    #[prost(message, repeated, tag="3")]
+    amount: Vec<Coin>,
+}
+// this dispatches a call to another contract at a known address (with known ABI)
+// msg is the json-encoded HandleMsg struct
+#[derive(Message, Clone)]
+pub struct ContractMsg {
+    #[prost(string, tag="1")]
+    contract_addr: String,
+    #[prost(string, tag="2")]
+    msg: String,
+}
+// this should never be created here, just passed in from the user and later dispatched
+#[derive(Message, Clone)]
+pub struct OpaqueMsg {
+    #[prost(string, tag="1")]
+    data: String,
+}
+
+#[derive(Message, Clone)]
+pub struct ContractResult {
+    #[prost(oneof = "Result", tags = "1, 2")]
+    pub msg: Option<Result>,
+}
+
+
+#[derive(prost::Oneof, Clone)]
+pub enum Result {
+    #[prost(message, tag = "1")]
     Ok(Response),
+    #[prost(message, tag = "2")]
     Err(String),
 }
 
 impl ContractResult {
     // unwrap will panic on err, or give us the real data useful for tests
     pub fn unwrap(self) -> Response {
-        match self {
-            ContractResult::Err(msg) => panic!("Unexpected error: {}", msg),
-            ContractResult::Ok(res) => res,
+        match self.msg.unwrap() {
+            Result::Err(msg) => panic!("Unexpected error: {}", msg),
+            Result::Ok(res) => res,
         }
     }
 
     pub fn is_err(&self) -> bool {
-        match self {
-            ContractResult::Err(_) => true,
+        match self.msg.as_ref().unwrap() {
+            Result::Err(_) => true,
             _ => false,
         }
     }
 }
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Message, Clone)]
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
-    pub messages: Vec<CosmosMsg>,
+    #[prost(message, repeated, tag="1")]
+    pub messages: Vec<Msg>,
+    #[prost(string, optional, tag="2")]
     pub log: Option<String>,
+    #[prost(string, optional, tag="3")]
     pub data: Option<String>,
 }
 
@@ -90,19 +134,19 @@ pub struct Response {
 // this is intended for use in testcode only
 pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
     Params {
-        block: BlockInfo {
+        block: Some(BlockInfo {
             height: 12_345,
             time: 1_571_797_419,
             chain_id: "cosmos-testnet-14002".to_string(),
-        },
-        message: MessageInfo {
+        }),
+        message: Some(MessageInfo {
             signer: signer.to_string(),
             sent_funds: sent.to_vec(),
-        },
-        contract: ContractInfo {
+        }),
+        contract: Some(ContractInfo {
             address: "cosmos2contract".to_string(),
             balance: balance.to_vec(),
-        },
+        }),
     }
 }
 
