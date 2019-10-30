@@ -21,6 +21,7 @@ To get oriented, here is a list of the various components of the CosmWasm ecosys
 **Building contracts:**
 
 * [cosmwasm-template](https://github.com/confio/cosmwasm-template) - A starter-pack to get you quickly building your custom contract compatible with the cosmwasm system.
+* [cosmwasm-examples](https://github.com/confio/cosmwasm-examples) - Some sample contracts (build with cosmwasm-template) for use and inspiration. Please submit your contract via PR.
 * [cosmwasm-opt](https://github.com/confio/cosmwasm-opt) - A docker image and scripts to take your rust code and produce the smallest possible wasm output. *Deterministically*
 This is designed both for preparing contracts for deployment as well as validating that a given deployed contract is based on some given rust code.,
 allow a [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945) as etherscan.
