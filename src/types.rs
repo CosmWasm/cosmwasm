@@ -65,26 +65,26 @@ pub enum CosmosMsg {
 #[derive(Message, PartialEq, Clone)]
 pub struct SendMsg {
     #[prost(string, tag="1")]
-    from_address: String,
+    pub from_address: String,
     #[prost(string, tag="2")]
-    to_address: String,
+    pub to_address: String,
     #[prost(message, repeated, tag="3")]
-    amount: Vec<Coin>,
+    pub amount: Vec<Coin>,
 }
 // this dispatches a call to another contract at a known address (with known ABI)
 // msg is the json-encoded HandleMsg struct
 #[derive(Message, PartialEq, Clone)]
 pub struct ContractMsg {
     #[prost(string, tag="1")]
-    contract_addr: String,
+    pub contract_addr: String,
     #[prost(string, tag="2")]
-    msg: String,
+    pub msg: String,
 }
 // this should never be created here, just passed in from the user and later dispatched
 #[derive(Message, PartialEq, Clone)]
 pub struct OpaqueMsg {
     #[prost(string, tag="1")]
-    data: String,
+    pub data: String,
 }
 
 #[derive(Message, PartialEq, Clone)]

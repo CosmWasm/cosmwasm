@@ -1,25 +1,30 @@
-use serde::{Deserialize, Serialize};
+use prost_derive::{Message};
 use snafu::{OptionExt, ResultExt};
 
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
-use cosmwasm::serde::{from_slice, to_vec};
+use cosmwasm::prost::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
-use cosmwasm::types::{CosmosMsg, Params, Response};
+use cosmwasm::types::{CosmosMsg, Msg, Params, Response, SendMsg};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone, PartialEq)]
 pub struct InitMsg {
+    #[prost(string, tag="1")]
     pub verifier: String,
+    #[prost(string, tag="2")]
     pub beneficiary: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone, PartialEq)]
 pub struct State {
+    #[prost(string, tag="1")]
     pub verifier: String,
+    #[prost(string, tag="2")]
     pub beneficiary: String,
+    #[prost(string, tag="3")]
     pub funder: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Message, Clone, PartialEq)]
 pub struct HandleMsg {}
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -31,7 +36,7 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<R
         &to_vec(&State {
             verifier: msg.verifier,
             beneficiary: msg.beneficiary,
-            funder: params.message.signer,
+            funder: params.message.unwrap().signer,
         })
         .context(SerializeErr {})?,
     );
@@ -44,13 +49,14 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     })?;
     let state: State = from_slice(&data).context(ParseErr {})?;
 
-    if params.message.signer == state.verifier {
+    if params.message.unwrap().signer == state.verifier {
+        let contract = params.contract.unwrap();
         let res = Response {
-            messages: vec![CosmosMsg::Send {
-                from_address: params.contract.address,
+            messages: vec![Msg{msg: Some(CosmosMsg::Send(SendMsg {
+                from_address: contract.address,
                 to_address: state.beneficiary,
-                amount: params.contract.balance,
-            }],
+                amount: contract.balance,
+            }))}],
             log: Some("released funds!".to_string()),
             data: None,
         };
