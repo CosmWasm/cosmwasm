@@ -1,16 +1,16 @@
 use prost_derive::{Message};
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct Params {
-    #[prost(message, tag="1")]
+    #[prost(message, optional, tag="1")]
     pub block: Option<BlockInfo>,
-    #[prost(message, tag="2")]
+    #[prost(message, optional, tag="2")]
     pub message: Option<MessageInfo>,
-    #[prost(message, tag="3")]
+    #[prost(message, optional, tag="3")]
     pub contract: Option<ContractInfo>,
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct BlockInfo {
     #[prost(int64, tag="1")]
     pub height: i64,
@@ -21,7 +21,7 @@ pub struct BlockInfo {
     pub chain_id: String,
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct MessageInfo {
     #[prost(string, tag="1")]
     pub signer: String,
@@ -29,7 +29,7 @@ pub struct MessageInfo {
     pub sent_funds: Vec<Coin>,
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct ContractInfo {
     #[prost(string, tag="1")]
     pub address: String,
@@ -37,7 +37,7 @@ pub struct ContractInfo {
     pub balance: Vec<Coin>,
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct Coin {
     #[prost(string, tag="1")]
     pub denom: String,
@@ -45,13 +45,13 @@ pub struct Coin {
     pub amount: String,
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct Msg {
     #[prost(oneof = "CosmosMsg", tags = "1, 2, 3")]
     pub msg: Option<CosmosMsg>,
 }
 
-#[derive(prost::Oneof, Clone)]
+#[derive(prost::Oneof, Clone, PartialEq)]
 pub enum CosmosMsg {
     #[prost(message, tag = "1")]
     Send(SendMsg),
@@ -62,7 +62,7 @@ pub enum CosmosMsg {
 }
 
 // this moves tokens in the underlying sdk
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct SendMsg {
     #[prost(string, tag="1")]
     from_address: String,
@@ -73,7 +73,7 @@ pub struct SendMsg {
 }
 // this dispatches a call to another contract at a known address (with known ABI)
 // msg is the json-encoded HandleMsg struct
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct ContractMsg {
     #[prost(string, tag="1")]
     contract_addr: String,
@@ -81,20 +81,20 @@ pub struct ContractMsg {
     msg: String,
 }
 // this should never be created here, just passed in from the user and later dispatched
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct OpaqueMsg {
     #[prost(string, tag="1")]
     data: String,
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct ContractResult {
     #[prost(oneof = "Result", tags = "1, 2")]
     pub msg: Option<Result>,
 }
 
 
-#[derive(prost::Oneof, Clone)]
+#[derive(prost::Oneof, Clone, PartialEq)]
 pub enum Result {
     #[prost(message, tag = "1")]
     Ok(Response),
@@ -119,7 +119,7 @@ impl ContractResult {
     }
 }
 
-#[derive(Message, Clone)]
+#[derive(Message, PartialEq, Clone)]
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     #[prost(message, repeated, tag="1")]
@@ -161,33 +161,33 @@ pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::serde::{from_slice, to_vec};
+    use crate::prost::{from_slice, to_vec};
 
     #[test]
     fn can_deser_error_result() {
-        let fail = ContractResult::Err("foobar".to_string());
+        let fail = ContractResult{msg: Some(Result::Err("foobar".to_string()))};
         let bin = to_vec(&fail).expect("encode contract result");
         println!("error: {}", std::str::from_utf8(&bin).unwrap());
-        let _: ContractResult = from_slice(&bin).expect("decode contract result");
+        let back: ContractResult = from_slice(&bin).expect("decode contract result");
         // need Derive Debug and PartialEq for this, removed to save space
-        //        assert_eq!(fail, back);
+        assert_eq!(fail, back);
     }
 
     #[test]
     fn can_deser_ok_result() {
-        let send = ContractResult::Ok(Response {
-            messages: vec![CosmosMsg::Send {
+        let send = ContractResult{msg: Some(Result::Ok(Response {
+            messages: vec![Msg{msg: Some(CosmosMsg::Send(SendMsg {
                 from_address: "me".to_string(),
                 to_address: "you".to_string(),
                 amount: coin("1015", "earth"),
-            }],
+            }))}],
             log: Some("released funds!".to_string()),
             data: None,
-        });
+        }))};
         let bin = to_vec(&send).expect("encode contract result");
         println!("ok: {}", std::str::from_utf8(&bin).unwrap());
-        let _: ContractResult = from_slice(&bin).expect("decode contract result");
+        let back: ContractResult = from_slice(&bin).expect("decode contract result");
         // need Derive Debug and PartialEq for this, removed to save space
-        //        assert_eq!(send, back);
+        assert_eq!(send, back);
     }
 }
