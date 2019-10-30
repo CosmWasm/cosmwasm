@@ -10,13 +10,13 @@ pub enum Error {
     },
     #[snafu(display("Parse error: {}", source))]
     ParseErr {
-        source: serde_json_wasm::de::Error,
+        source: prost::DecodeError,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Serialize error: {}", source))]
     SerializeErr {
-        source: serde_json_wasm::ser::Error,
+        source: prost::EncodeError,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
