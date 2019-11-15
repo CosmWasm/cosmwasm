@@ -17,7 +17,7 @@ The `cdylib` is needed for the wasm target.
 The `rlib` is needed to compile artifacts for benchmarking (and integration tests).
 
 **Note** throughout this demo I will use the name `sample` for the project. 
-Please replace it with the real name of your crate. I intentionally didn't use <name>,
+Please replace it with the real name of your crate. I intentionally didn't use `<name>`,
 so you can cut and paste for a quick demo. Just update this when making real code.
 
 ## Requirements
