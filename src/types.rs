@@ -18,13 +18,15 @@ pub struct BlockInfo {
 #[derive(Serialize, Deserialize)]
 pub struct MessageInfo {
     pub signer: String,
-    pub sent_funds: Vec<Coin>,
+    // go likes to return null for empty array, make sure we can parse it (use option)
+    pub sent_funds: Option<Vec<Coin>>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct ContractInfo {
     pub address: String,
-    pub balance: Vec<Coin>,
+    // go likes to return null for empty array, make sure we can parse it (use option)
+    pub balance: Option<Vec<Coin>>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -97,11 +99,11 @@ pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
         },
         message: MessageInfo {
             signer: signer.to_string(),
-            sent_funds: sent.to_vec(),
+            sent_funds: if sent.len() == 0 { None } else { Some(sent.to_vec()) },
         },
         contract: ContractInfo {
             address: "cosmos2contract".to_string(),
-            balance: balance.to_vec(),
+            balance: if balance.len() == 0 { None } else { Some(balance.to_vec()) },
         },
     }
 }
