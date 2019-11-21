@@ -6,20 +6,20 @@ use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{CosmosMsg, Params, Response};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InitMsg {
     pub verifier: String,
     pub beneficiary: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct State {
     pub verifier: String,
     pub beneficiary: String,
     pub funder: String,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct HandleMsg {}
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -81,9 +81,11 @@ mod tests {
         // it worked, let's check the state
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state.verifier, String::from("verifies"));
-        assert_eq!(state.beneficiary, String::from("benefits"));
-        assert_eq!(state.funder, String::from("creator"));
+        assert_eq!(state, State{
+            verifier: "verifies".to_string(),
+            beneficiary: "benefits".to_string(),
+            funder: "creator".to_string(),
+        });
     }
 
     #[test]
@@ -114,28 +116,20 @@ mod tests {
         let handle_res = handle(&mut store, handle_params, Vec::new()).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
-        match &msg {
-            CosmosMsg::Send {
-                from_address,
-                to_address,
-                amount,
-            } => {
-                assert_eq!("cosmos2contract", from_address);
-                assert_eq!("benefits", to_address);
-                assert_eq!(1, amount.len());
-                let coin = amount.get(0).expect("No coin");
-                assert_eq!(coin.denom, "earth");
-                assert_eq!(coin.amount, "1015");
-            }
-            _ => panic!("Unexpected message type"),
-        }
+        assert_eq!(msg, &CosmosMsg::Send{
+            from_address: "cosmos2contract".to_string(),
+            to_address: "benefits".to_string(),
+            amount: coin("1015", "earth"),
+        });
 
         // it worked, let's check the state
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state.verifier, String::from("verifies"));
-        assert_eq!(state.beneficiary, String::from("benefits"));
-        assert_eq!(state.funder, String::from("creator"));
+        assert_eq!(state, State{
+            verifier: "verifies".to_string(),
+            beneficiary: "benefits".to_string(),
+            funder: "creator".to_string(),
+        });
     }
 
     #[test]
@@ -160,8 +154,10 @@ mod tests {
         // state should not change
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state.verifier, String::from("verifies"));
-        assert_eq!(state.beneficiary, String::from("benefits"));
-        assert_eq!(state.funder, String::from("creator"));
+        assert_eq!(state, State{
+            verifier: "verifies".to_string(),
+            beneficiary: "benefits".to_string(),
+            funder: "creator".to_string(),
+        });
     }
 }
