@@ -121,6 +121,15 @@ mod test {
     }
 
     #[test]
+    #[should_panic]
+    fn with_context_safe_for_panic() {
+        // this should fail with the assertion, but not cause a double-free crash (issue #59)
+        let storage = MockStorage::new();
+        let instance = Instance::from_code(CONTRACT, storage).unwrap();
+        instance.with_storage(|_store| assert_eq!(1, 2));
+    }
+
+    #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
         let storage = MockStorage::new();

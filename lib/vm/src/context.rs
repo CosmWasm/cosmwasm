@@ -57,11 +57,11 @@ fn destroy_unmanaged_storage<T: Storage>(ptr: *mut c_void) {
 }
 
 pub fn with_storage_from_context<T: Storage, F: FnMut(&mut T)>(ctx: &Ctx, mut func: F) {
-    let mut b = unsafe { get_data::<T>(ctx.data) };
-    if let Some(store) = &mut b.data {
-        func(store);
+    let mut storage: Option<T> = take_storage(ctx);
+    if let Some(data) = &mut storage {
+        func(data);
     }
-    mem::forget(b); // we do this to avoid cleanup
+    leave_storage(ctx, storage);
 }
 
 pub fn take_storage<T: Storage>(ctx: &Ctx) -> Option<T> {
