@@ -118,6 +118,7 @@ mod test {
         // it is updated to whatever we set it with
         instance.set_gas(123456);
         assert_eq!(123456, instance.get_gas());
+        instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
     #[test]
