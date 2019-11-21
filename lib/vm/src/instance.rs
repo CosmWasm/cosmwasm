@@ -118,6 +118,14 @@ mod test {
         // it is updated to whatever we set it with
         instance.set_gas(123456);
         assert_eq!(123456, instance.get_gas());
+    }
+
+    #[test]
+    #[should_panic]
+    fn with_context_safe_for_panic() {
+        // this should fail with the assertion, but not cause a double-free crash (issue #59)
+        let storage = MockStorage::new();
+        let instance = Instance::from_code(CONTRACT, storage).unwrap();
         instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
