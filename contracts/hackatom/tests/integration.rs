@@ -44,21 +44,11 @@ fn successful_init_and_handle() {
     let msgs = res.unwrap().messages;
     assert_eq!(1, msgs.len());
     let msg = msgs.get(0).expect("no message");
-    match &msg {
-        CosmosMsg::Send {
-            from_address,
-            to_address,
-            amount,
-        } => {
-            assert_eq!("cosmos2contract", from_address);
-            assert_eq!("benefits", to_address);
-            assert_eq!(1, amount.len());
-            let coin = amount.get(0).expect("No coin");
-            assert_eq!(coin.denom, "earth");
-            assert_eq!(coin.amount, "1015");
-        }
-        _ => panic!("Unexpected message type"),
-    }
+    assert_eq!(msg, &CosmosMsg::Send{
+        from_address: "cosmos2contract".to_string(),
+        to_address: "benefits".to_string(),
+        amount: coin("1015", "earth"),
+    });
 
     // we can check the storage as well
     instance.with_storage(|store| {
@@ -66,7 +56,11 @@ fn successful_init_and_handle() {
         assert!(foo.is_none());
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state.verifier, String::from("verifies"));
+        assert_eq!(state, State{
+            verifier: "verifies".to_string(),
+            beneficiary: "benefits".to_string(),
+            funder: "creator".to_string(),
+        });
     });
 }
 
