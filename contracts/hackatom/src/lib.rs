@@ -33,9 +33,6 @@ mod wasm {
 
     #[no_mangle]
     pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void {
-        exports::do_query(
-            &contract::query::<imports::ExternalStorage>,
-            msg_ptr,
-        )
+        exports::do_query(&contract::query::<imports::ExternalStorage>, msg_ptr)
     }
 }

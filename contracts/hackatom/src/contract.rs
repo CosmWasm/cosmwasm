@@ -1,12 +1,10 @@
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use std::str::from_utf8;
-
-use cosmwasm::errors::{ContractErr, ParseErr, Utf8Err, Result, SerializeErr, Unauthorized};
+use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::storage::Storage;
-use cosmwasm::types::{CosmosMsg, Params, Response, Model, QueryResponse};
+use cosmwasm::storage::{perform_raw_query, Storage};
+use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InitMsg {
@@ -27,11 +25,6 @@ pub struct HandleMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum QueryMsg {
     Raw(RawQuery),
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
-pub struct RawQuery {
-    pub key: String,
 }
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -72,25 +65,11 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     }
 }
 
-
-
 pub fn query<T: Storage>(store: &mut T, msg: Vec<u8>) -> Result<QueryResponse> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr {})?;
     match msg {
-        QueryMsg::Raw(raw) => perform_raw_query(store, raw)
+        QueryMsg::Raw(raw) => perform_raw_query(store, raw),
     }
-}
-
-pub fn perform_raw_query<T: Storage>(store: &mut T, query: RawQuery) -> Result<QueryResponse> {
-    let data = store.get(query.key.as_bytes());
-    let results = match data {
-        None => vec![],
-        Some(val) => {
-            let val = from_utf8(&val).context(Utf8Err{})?.to_string();
-            vec![Model{key: query.key, val}]
-        },
-    };
-    Ok(QueryResponse{results})
 }
 
 #[cfg(test)]

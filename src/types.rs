@@ -89,6 +89,11 @@ pub struct Response {
     pub data: Option<String>,
 }
 
+// RawQuery is a default query that can easily be supported by all contracts
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct RawQuery {
+    pub key: String,
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "lowercase")]
@@ -124,7 +129,6 @@ impl QueryResult {
         }
     }
 }
-
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
