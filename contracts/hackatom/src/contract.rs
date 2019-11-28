@@ -25,7 +25,7 @@ pub struct HandleMsg {}
 pub static CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Response> {
-    let msg: InitMsg = from_slice(&msg).context(ParseErr {})?;
+    let msg: InitMsg = from_slice(&msg).context(ParseErr {kind: "InitMsg"})?;
     store.set(
         CONFIG_KEY,
         &to_vec(&State {
@@ -33,16 +33,16 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<R
             beneficiary: msg.beneficiary,
             funder: params.message.signer,
         })
-        .context(SerializeErr {})?,
+        .context(SerializeErr {kind: "State"})?,
     );
     Ok(Response::default())
 }
 
 pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Response> {
     let data = store.get(CONFIG_KEY).context(ContractErr {
-        msg: "uninitialized data".to_string(),
+        msg: "uninitialized data",
     })?;
-    let state: State = from_slice(&data).context(ParseErr {})?;
+    let state: State = from_slice(&data).context(ParseErr {kind: "State"})?;
 
     if params.message.signer == state.verifier {
         let res = Response {
