@@ -58,9 +58,9 @@ pub fn do_handle<T: Display + From<Error>>(
 // do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: Display + From<Error>>(
     query_fn: &dyn Fn(&mut ExternalStorage, Vec<u8>) -> Result<QueryResponse, T>,
-    query_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
 ) -> *mut c_void {
-    match _do_query(query_fn, query_ptr) {
+    match _do_query(query_fn, msg_ptr) {
         Ok(res) => res,
         Err(err) => make_query_error_c_string(err),
     }
@@ -102,12 +102,12 @@ fn _do_handle<T: Display + From<Error>>(
 
 fn _do_query<T: Display + From<Error>>(
     query_fn: &dyn Fn(&mut ExternalStorage, Vec<u8>) -> Result<QueryResponse, T>,
-    query_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, T> {
-    let query: Vec<u8> = unsafe { consume_slice(query_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let mut store = ExternalStorage::new();
-    let res = query_fn(&mut store, query)?;
+    let res = query_fn(&mut store, msg)?;
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {})?;
     Ok(release_buffer(json))
 }
