@@ -75,6 +75,7 @@ pub fn query<T: Storage>(store: &mut T, msg: Vec<u8>) -> Result<QueryResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::str::from_utf8;
     use cosmwasm::mock::MockStorage;
     use cosmwasm::types::{coin, mock_params};
 
@@ -98,6 +99,45 @@ mod tests {
             State {
                 verifier: "verifies".to_string(),
                 beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn proper_init_and_query() {
+        let mut store = MockStorage::new();
+        let msg = to_vec(&InitMsg {
+            verifier: String::from("foo"),
+            beneficiary: String::from("bar"),
+        })
+            .unwrap();
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let _res = init(&mut store, params, msg).unwrap();
+
+        // query for invalid key, no error, return 0 results
+        let msg = to_vec(&QueryMsg::Raw(RawQuery{
+            key: "random".to_string(),
+        })).unwrap();
+        let q_res = query(&mut store, msg).unwrap();
+        assert_eq!(q_res.results.len(), 0);
+
+        // query for state
+        let key = from_utf8(CONFIG_KEY).unwrap().to_string();
+        let msg = to_vec(&QueryMsg::Raw(RawQuery{
+            key: key.clone(),
+        })).unwrap();
+        let q_res = query(&mut store, msg).unwrap();
+        assert_eq!(q_res.results.len(), 1);
+
+        let model = &q_res.results[0];
+        assert_eq!(&model.key, &key);
+        let state: State = from_slice(model.val.as_bytes()).unwrap();
+        assert_eq!(
+            state,
+            State {
+                verifier: "foo".to_string(),
+                beneficiary: "bar".to_string(),
                 funder: "creator".to_string(),
             }
         );
