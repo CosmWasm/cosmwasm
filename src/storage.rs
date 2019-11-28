@@ -11,7 +11,7 @@ pub trait Storage {
     fn set(&mut self, key: &[u8], value: &[u8]);
 }
 
-pub fn perform_raw_query<T: Storage>(store: &mut T, query: RawQuery) -> Result<QueryResponse> {
+pub fn perform_raw_query<T: Storage>(store: &T, query: RawQuery) -> Result<QueryResponse> {
     let data = store.get(query.key.as_bytes());
     let results = match data {
         None => vec![],

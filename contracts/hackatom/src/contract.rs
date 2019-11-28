@@ -65,7 +65,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     }
 }
 
-pub fn query<T: Storage>(store: &mut T, msg: Vec<u8>) -> Result<QueryResponse> {
+pub fn query<T: Storage>(store: &T, msg: Vec<u8>) -> Result<QueryResponse> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr {})?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(store, raw),
@@ -119,7 +119,7 @@ mod tests {
         let msg = to_vec(&QueryMsg::Raw(RawQuery{
             key: "random".to_string(),
         })).unwrap();
-        let q_res = query(&mut store, msg).unwrap();
+        let q_res = query(&store, msg).unwrap();
         assert_eq!(q_res.results.len(), 0);
 
         // query for state
@@ -127,7 +127,7 @@ mod tests {
         let msg = to_vec(&QueryMsg::Raw(RawQuery{
             key: key.clone(),
         })).unwrap();
-        let q_res = query(&mut store, msg).unwrap();
+        let q_res = query(&store, msg).unwrap();
         assert_eq!(q_res.results.len(), 1);
 
         let model = &q_res.results[0];
