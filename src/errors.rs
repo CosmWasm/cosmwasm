@@ -8,20 +8,28 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Parse error: {}", source))]
+    #[snafu(display("Error parsing {}: {}", kind, source))]
     ParseErr {
         source: serde_json_wasm::de::Error,
+        kind: &'static str,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Serialize error: {}", source))]
+    #[snafu(display("Error serializing {}: {}", kind, source))]
     SerializeErr {
         source: serde_json_wasm::ser::Error,
+        kind: &'static str,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Contract error: {}", msg))]
     ContractErr {
+        msg: &'static str,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("Contract error: {}", msg))]
+    DynContractErr {
         msg: String,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
