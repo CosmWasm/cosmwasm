@@ -27,7 +27,7 @@ backtraces = [ "cosmwasm/backtraces", "cosmwasm-vm/backtraces" ]
 
 [dependencies]
 cosmwasm = { path = "../..", version = "0.4.2" }
-serde = { version = "1.0.60", default-features = false, features = ["derive"] }
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
 # needed for wasm-pack build process
 wasm-bindgen = "0.2"
