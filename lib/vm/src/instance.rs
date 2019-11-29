@@ -90,7 +90,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::calls::{call_handle, call_init};
+    use crate::calls::{call_handle, call_init, call_query};
+    use crate::testing::{ mock_instance};
     use cosmwasm::mock::MockStorage;
     use cosmwasm::types::{coin, mock_params};
 
@@ -146,7 +147,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 36_729);
+        assert_eq!(init_used, 36_731);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -158,7 +159,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 70_007);
+        assert_eq!(handle_used, 70_011);
     }
 
     #[test]

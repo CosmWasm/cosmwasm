@@ -26,6 +26,7 @@ pub struct State {
 pub struct HandleMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
 pub enum QueryMsg {
     Raw(RawQuery),
 }
