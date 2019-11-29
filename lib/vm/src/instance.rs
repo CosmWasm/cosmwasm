@@ -68,14 +68,21 @@ where
         read_memory(self.instance.context(), ptr)
     }
 
-    // write_mem allocates memory in the instance and copies the given data in
-    // returns the memory offset, to be passed as an argument
-    // panics on any error (TODO, use result?)
+    // allocate memory in the instance and copies the given data in
+    // returns the memory offset, to be later passed as an argument
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32, Error> {
         let alloc: Func<(u32), (u32)> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
         Ok(ptr)
+    }
+    // deallocate frees memory in the instance and that was either previously
+    // allocated by us, or a pointer from a return value after we copy it into rust.
+    // we need to clean up the wasm-side buffers to avoid memory leaks
+    pub fn deallocate(&mut self, ptr: u32) -> Result<(), Error> {
+        let dealloc: Func<(u32), ()> = self.func("deallocate")?;
+        dealloc.call(ptr).context(RuntimeErr {})?;
+        Ok(())
     }
 
     pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>, Error>
@@ -89,9 +96,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::*;
-    use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::MockStorage;
+    use crate::calls::{call_handle, call_init, call_query};
+    use crate::testing::mock_instance;
     use cosmwasm::types::{coin, mock_params};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -99,8 +105,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn get_and_set_gas_cranelift_noop() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000);
         // this is a no-op
@@ -111,8 +116,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn get_and_set_gas_singlepass_works() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000000);
         // it is updated to whatever we set it with
@@ -124,16 +128,14 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let storage = MockStorage::new();
-        let instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let instance = mock_instance(&CONTRACT);
         instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -146,7 +148,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 36_729);
+        assert_eq!(init_used, 36_914);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -158,14 +160,13 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 70_007);
+        assert_eq!(handle_used, 70_148);
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = 20_000;
         instance.set_gas(orig_gas);
 
@@ -176,5 +177,31 @@ mod test {
         // TODO: improve error handling through-out the whole stack
         let res = call_init(&mut instance, &params, msg);
         assert!(res.is_err());
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn query_works_with_metering() {
+        let mut instance = mock_instance(&CONTRACT);
+        let orig_gas = 200_000;
+        instance.set_gas(orig_gas);
+
+        // init contract
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
+
+        // run contract - just sanity check - results validate in contract unit tests
+        instance.set_gas(orig_gas);
+        // we need to encode the key in base64
+        let msg = r#"{"raw":{"key":"config"}}"#.as_bytes();
+        let res = call_query(&mut instance, msg).unwrap();
+        let msgs = res.unwrap().results;
+        assert_eq!(1, msgs.len());
+        assert_eq!(&msgs.get(0).unwrap().key, "config");
+
+        let query_used = orig_gas - instance.get_gas();
+        println!("query used: {}", query_used);
+        assert_eq!(query_used, 49_395);
     }
 }

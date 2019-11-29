@@ -6,9 +6,9 @@ use std::vec::Vec;
 
 use cosmwasm::mock::MockStorage;
 use cosmwasm::storage::Storage;
-use cosmwasm::types::{ContractResult, Params};
+use cosmwasm::types::{ContractResult, Params, QueryResult};
 
-use crate::calls::{call_handle, call_init};
+use crate::calls::{call_handle, call_init, call_query};
 use crate::instance::Instance;
 
 pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage> {
@@ -36,4 +36,11 @@ pub fn handle<T: Storage + 'static>(
     msg: Vec<u8>,
 ) -> ContractResult {
     call_handle(instance, &params, &msg).unwrap()
+}
+
+// query mimicks the call signature of the smart contracts.
+// thus it moves params and msg rather than take them as reference.
+// this is inefficient here, but only used in test code
+pub fn query<T: Storage + 'static>(instance: &mut Instance<T>, msg: Vec<u8>) -> QueryResult {
+    call_query(instance, &msg).unwrap()
 }

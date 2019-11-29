@@ -1,9 +1,9 @@
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
-use cosmwasm_vm::testing::{handle, init, mock_instance};
+use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use hackatom::contract::{InitMsg, State, CONFIG_KEY};
+use hackatom::contract::{CONFIG_KEY, InitMsg, raw_query, State};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -40,6 +40,34 @@ fn proper_initialization() {
             }
         );
     });
+}
+
+#[test]
+fn proper_init_and_query() {
+    let mut store = mock_instance(WASM);
+    let msg = to_vec(&InitMsg {
+        verifier: String::from("foo"),
+        beneficiary: String::from("bar"),
+    })
+    .unwrap();
+    let params = mock_params("creator", &coin("1000", "earth"), &[]);
+    let _res = init(&mut store, params, msg).unwrap();
+
+    let q_res = query(&mut store, raw_query(b"random").unwrap()).unwrap();
+    assert_eq!(q_res.results.len(), 0);
+
+    // query for state
+    let mut q_res = query(&mut store, raw_query(CONFIG_KEY).unwrap()).unwrap();
+    let model = q_res.results.pop().unwrap();
+    let state: State = from_slice(&model.val).unwrap();
+    assert_eq!(
+        state,
+        State {
+            verifier: "foo".to_string(),
+            beneficiary: "bar".to_string(),
+            funder: "creator".to_string(),
+        }
+    );
 }
 
 #[test]

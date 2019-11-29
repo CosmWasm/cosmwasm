@@ -89,6 +89,47 @@ pub struct Response {
     pub data: Option<String>,
 }
 
+// RawQuery is a default query that can easily be supported by all contracts
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+pub struct RawQuery {
+    pub key: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum QueryResult {
+    Ok(QueryResponse),
+    Err(String),
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
+pub struct QueryResponse {
+    pub results: Vec<Model>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
+pub struct Model {
+    pub key: String,
+    pub val: Vec<u8>,
+}
+
+impl QueryResult {
+    // unwrap will panic on err, or give us the real data useful for tests
+    pub fn unwrap(self) -> QueryResponse {
+        match self {
+            QueryResult::Err(msg) => panic!("Unexpected error: {}", msg),
+            QueryResult::Ok(res) => res,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        match self {
+            QueryResult::Err(_) => true,
+            _ => false,
+        }
+    }
+}
+
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
 pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {

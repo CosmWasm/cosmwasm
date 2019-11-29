@@ -1,10 +1,13 @@
+use std::str::from_utf8;
+
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
+use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
+use cosmwasm::query::perform_raw_query;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
-use cosmwasm::types::{CosmosMsg, Params, Response};
+use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InitMsg {
@@ -21,6 +24,19 @@ pub struct State {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct HandleMsg {}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[serde(rename_all = "lowercase")]
+pub enum QueryMsg {
+    Raw(RawQuery),
+}
+
+// raw_query is a helper to generate a serialized format of a raw_query
+// meant for test code and integration tests
+pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
+    let key = from_utf8(key).context(Utf8Err {})?.to_string();
+    to_vec(&QueryMsg::Raw(RawQuery { key })).context(SerializeErr { kind: "QueryMsg" })
+}
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
@@ -60,6 +76,13 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     }
 }
 
+pub fn query<T: Storage>(store: &T, msg: Vec<u8>) -> Result<QueryResponse> {
+    let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
+    match msg {
+        QueryMsg::Raw(raw) => perform_raw_query(store, raw),
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -86,6 +109,34 @@ mod tests {
             State {
                 verifier: "verifies".to_string(),
                 beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
+    }
+
+    #[test]
+    fn proper_init_and_query() {
+        let mut store = MockStorage::new();
+        let msg = to_vec(&InitMsg {
+            verifier: String::from("foo"),
+            beneficiary: String::from("bar"),
+        })
+        .unwrap();
+        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let _res = init(&mut store, params, msg).unwrap();
+
+        let q_res = query(&store, raw_query(b"random").unwrap()).unwrap();
+        assert_eq!(q_res.results.len(), 0);
+
+        // query for state
+        let mut q_res = query(&store, raw_query(CONFIG_KEY).unwrap()).unwrap();
+        let model = q_res.results.pop().unwrap();
+        let state: State = from_slice(&model.val).unwrap();
+        assert_eq!(
+            state,
+            State {
+                verifier: "foo".to_string(),
+                beneficiary: "bar".to_string(),
                 funder: "creator".to_string(),
             }
         );

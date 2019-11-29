@@ -13,7 +13,7 @@ use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::ExternalStorage;
 use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
-use crate::types::{ContractResult, Params, Response};
+use crate::types::{ContractResult, Params, QueryResponse, QueryResult, Response};
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer
 // to a slice defining this data. This space is managed by the calling process
@@ -54,6 +54,18 @@ pub fn do_handle<T: Display + From<Error>>(
         Err(err) => make_error_c_string(err),
     }
 }
+
+// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
+pub fn do_query<T: Display + From<Error>>(
+    query_fn: &dyn Fn(&ExternalStorage, Vec<u8>) -> Result<QueryResponse, T>,
+    msg_ptr: *mut c_void,
+) -> *mut c_void {
+    match _do_query(query_fn, msg_ptr) {
+        Ok(res) => res,
+        Err(err) => make_query_error_c_string(err),
+    }
+}
+
 fn _do_init<T: Display + From<Error>>(
     init_fn: &dyn Fn(&mut ExternalStorage, Params, Vec<u8>) -> Result<Response, T>,
     params_ptr: *mut c_void,
@@ -88,7 +100,26 @@ fn _do_handle<T: Display + From<Error>>(
     Ok(release_buffer(json))
 }
 
+fn _do_query<T: Display + From<Error>>(
+    query_fn: &dyn Fn(&ExternalStorage, Vec<u8>) -> Result<QueryResponse, T>,
+    msg_ptr: *mut c_void,
+) -> Result<*mut c_void, T> {
+    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
+
+    let store = ExternalStorage::new();
+    let res = query_fn(&store, msg)?;
+    let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
+        kind: "QueryResult",
+    })?;
+    Ok(release_buffer(json))
+}
+
 fn make_error_c_string<T: Display>(error: T) -> *mut c_void {
     let v = to_vec(&ContractResult::Err(error.to_string())).unwrap();
+    release_buffer(v)
+}
+
+fn make_query_error_c_string<T: Display>(error: T) -> *mut c_void {
+    let v = to_vec(&QueryResult::Err(error.to_string())).unwrap();
     release_buffer(v)
 }
