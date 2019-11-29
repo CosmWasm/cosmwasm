@@ -3,7 +3,7 @@ use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use hackatom::contract::{raw_query, InitMsg, State, CONFIG_KEY};
+use hackatom::contract::{CONFIG_KEY, InitMsg, raw_query, State};
 
 /**
 This integration test tries to run and call the generated wasm.
