@@ -78,7 +78,7 @@ mod tests {
     use super::*;
     use std::str::from_utf8;
     use cosmwasm::mock::MockStorage;
-    use cosmwasm::types::{coin, mock_params};
+    use cosmwasm::types::{coin, mock_params, Model};
 
     #[test]
     fn proper_initialization() {
@@ -124,15 +124,7 @@ mod tests {
         assert_eq!(q_res.results.len(), 0);
 
         // query for state
-        let key = from_utf8(CONFIG_KEY).unwrap().to_string();
-        let msg = to_vec(&QueryMsg::Raw(RawQuery{
-            key: key.clone(),
-        })).unwrap();
-        let q_res = query(&store, msg).unwrap();
-        assert_eq!(q_res.results.len(), 1);
-
-        let model = &q_res.results[0];
-        assert_eq!(&model.key, &key);
+        let model = raw_query(&store, CONFIG_KEY).unwrap();
         let state: State = from_slice(model.val.as_bytes()).unwrap();
         assert_eq!(
             state,
@@ -142,6 +134,19 @@ mod tests {
                 funder: "creator".to_string(),
             }
         );
+    }
+
+    // raw_query is for testing and panic's on error
+    pub fn raw_query<T: Storage>(store: &T, bkey: &[u8]) -> Option<Model> {
+        let key = from_utf8(bkey).unwrap().to_string();
+        let msg = to_vec(&QueryMsg::Raw(RawQuery{key})).unwrap();
+        let mut res = query(store, msg).unwrap();
+        let model = res.results.pop();
+        if let Some(m) = &model {
+            assert_eq!(m.key.as_bytes(), bkey);
+        }
+        model
+
     }
 
     #[test]
