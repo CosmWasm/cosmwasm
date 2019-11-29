@@ -1,7 +1,9 @@
+use std::str::from_utf8;
+
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
+use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
 use cosmwasm::query::{perform_raw_query};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
@@ -26,6 +28,13 @@ pub struct HandleMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub enum QueryMsg {
     Raw(RawQuery),
+}
+
+// raw_query is a helper to generate a serialized format of a raw_query
+// meant for test code and integration tests
+pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
+    let key = from_utf8(key).context(Utf8Err {}) ?.to_string();
+    to_vec( &QueryMsg::Raw(RawQuery{key})).context(SerializeErr {kind: "QueryMsg"})
 }
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -76,9 +85,8 @@ pub fn query<T: Storage>(store: &T, msg: Vec<u8>) -> Result<QueryResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::str::from_utf8;
     use cosmwasm::mock::MockStorage;
-    use cosmwasm::types::{coin, mock_params, Model};
+    use cosmwasm::types::{coin, mock_params};
 
     #[test]
     fn proper_initialization() {
@@ -116,15 +124,12 @@ mod tests {
         let params = mock_params("creator", &coin("1000", "earth"), &[]);
         let _res = init(&mut store, params, msg).unwrap();
 
-        // query for invalid key, no error, return 0 results
-        let msg = to_vec(&QueryMsg::Raw(RawQuery{
-            key: "random".to_string(),
-        })).unwrap();
-        let q_res = query(&store, msg).unwrap();
+        let q_res = query(&store, raw_query(b"random").unwrap()).unwrap();
         assert_eq!(q_res.results.len(), 0);
 
         // query for state
-        let model = raw_query(&store, CONFIG_KEY).unwrap();
+        let mut q_res = query(&store, raw_query(CONFIG_KEY).unwrap()).unwrap();
+        let model = q_res.results.pop().unwrap();
         let state: State = from_slice(model.val.as_bytes()).unwrap();
         assert_eq!(
             state,
@@ -134,19 +139,6 @@ mod tests {
                 funder: "creator".to_string(),
             }
         );
-    }
-
-    // raw_query is for testing and panic's on error
-    pub fn raw_query<T: Storage>(store: &T, bkey: &[u8]) -> Option<Model> {
-        let key = from_utf8(bkey).unwrap().to_string();
-        let msg = to_vec(&QueryMsg::Raw(RawQuery{key})).unwrap();
-        let mut res = query(store, msg).unwrap();
-        let model = res.results.pop();
-        if let Some(m) = &model {
-            assert_eq!(m.key.as_bytes(), bkey);
-        }
-        model
-
     }
 
     #[test]
