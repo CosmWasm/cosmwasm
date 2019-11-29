@@ -108,7 +108,7 @@ fn _do_query<T: Display + From<Error>>(
 
     let store = ExternalStorage::new();
     let res = query_fn(&store, msg)?;
-    let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {})?;
+    let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {kind: "QueryResult"})?;
     Ok(release_buffer(json))
 }
 

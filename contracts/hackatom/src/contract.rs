@@ -66,7 +66,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
 }
 
 pub fn query<T: Storage>(store: &T, msg: Vec<u8>) -> Result<QueryResponse> {
-    let msg: QueryMsg = from_slice(&msg).context(ParseErr {})?;
+    let msg: QueryMsg = from_slice(&msg).context(ParseErr {kind: "QueryMsg"})?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(store, raw),
     }
