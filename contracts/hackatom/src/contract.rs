@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use schemars::{JsonSchema};
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 

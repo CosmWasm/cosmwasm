@@ -2,9 +2,9 @@ use std::env::current_dir;
 use std::fs::{create_dir_all, write};
 use std::path::PathBuf;
 
-use schemars::{schema_for, schema::RootSchema};
+use schemars::{schema::RootSchema, schema_for};
 
-use hackatom::contract::{InitMsg, HandleMsg, QueryMsg, State};
+use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State};
 
 fn main() {
     let mut pwd = current_dir().unwrap();
@@ -24,7 +24,8 @@ fn main() {
     export_schema(&schema, &pwd, "state.json");
 }
 
-// panics if
+// panics if any error writing out the schema
+// overwrites any existing schema
 fn export_schema(schema: &RootSchema, dir: &PathBuf, name: &str) -> () {
     let path = dir.join(name);
     let json = serde_json::to_string_pretty(schema).unwrap();
