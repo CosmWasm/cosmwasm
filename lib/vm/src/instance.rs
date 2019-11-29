@@ -96,10 +96,8 @@ where
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::mock_instance;
-    use cosmwasm::mock::MockStorage;
     use cosmwasm::types::{coin, mock_params};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -107,8 +105,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn get_and_set_gas_cranelift_noop() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000);
         // this is a no-op
@@ -119,8 +116,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn get_and_set_gas_singlepass_works() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000000);
         // it is updated to whatever we set it with
@@ -132,16 +128,14 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let storage = MockStorage::new();
-        let instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let instance = mock_instance(&CONTRACT);
         instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -172,8 +166,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let storage = MockStorage::new();
-        let mut instance = Instance::from_code(CONTRACT, storage).unwrap();
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = 20_000;
         instance.set_gas(orig_gas);
 
