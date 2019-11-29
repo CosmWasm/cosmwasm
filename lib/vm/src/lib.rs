@@ -6,6 +6,7 @@ pub mod errors;
 mod instance;
 mod memory;
 mod modules;
+pub mod testing;
 mod wasm_store;
 
 pub use crate::cache::CosmCache;
