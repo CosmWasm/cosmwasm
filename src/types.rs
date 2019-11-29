@@ -110,7 +110,7 @@ pub struct QueryResponse {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
 pub struct Model {
     pub key: String,
-    pub val: String,
+    pub val: Vec<u8>,
 }
 
 impl QueryResult {

@@ -3,7 +3,7 @@ use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use hackatom::contract::{CONFIG_KEY, InitMsg, raw_query, State};
+use hackatom::contract::{raw_query, InitMsg, State, CONFIG_KEY};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -49,7 +49,7 @@ fn proper_init_and_query() {
         verifier: String::from("foo"),
         beneficiary: String::from("bar"),
     })
-        .unwrap();
+    .unwrap();
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
     let _res = init(&mut store, params, msg).unwrap();
 
@@ -59,7 +59,7 @@ fn proper_init_and_query() {
     // query for state
     let mut q_res = query(&mut store, raw_query(CONFIG_KEY).unwrap()).unwrap();
     let model = q_res.results.pop().unwrap();
-    let state: State = from_slice(model.val.as_bytes()).unwrap();
+    let state: State = from_slice(&model.val).unwrap();
     assert_eq!(
         state,
         State {
@@ -69,7 +69,6 @@ fn proper_init_and_query() {
         }
     );
 }
-
 
 #[test]
 fn fails_on_bad_init() {

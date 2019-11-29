@@ -41,9 +41,6 @@ pub fn handle<T: Storage + 'static>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<T: Storage + 'static>(
-    instance: &mut Instance<T>,
-    msg: Vec<u8>,
-) -> QueryResult {
+pub fn query<T: Storage + 'static>(instance: &mut Instance<T>, msg: Vec<u8>) -> QueryResult {
     call_query(instance, &msg).unwrap()
 }

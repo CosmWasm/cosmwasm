@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
-use cosmwasm::query::{perform_raw_query};
+use cosmwasm::query::perform_raw_query;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
@@ -33,8 +33,8 @@ pub enum QueryMsg {
 // raw_query is a helper to generate a serialized format of a raw_query
 // meant for test code and integration tests
 pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
-    let key = from_utf8(key).context(Utf8Err {}) ?.to_string();
-    to_vec( &QueryMsg::Raw(RawQuery{key})).context(SerializeErr {kind: "QueryMsg"})
+    let key = from_utf8(key).context(Utf8Err {})?.to_string();
+    to_vec(&QueryMsg::Raw(RawQuery { key })).context(SerializeErr { kind: "QueryMsg" })
 }
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -76,7 +76,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
 }
 
 pub fn query<T: Storage>(store: &T, msg: Vec<u8>) -> Result<QueryResponse> {
-    let msg: QueryMsg = from_slice(&msg).context(ParseErr {kind: "QueryMsg"})?;
+    let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(store, raw),
     }
@@ -120,7 +120,7 @@ mod tests {
             verifier: String::from("foo"),
             beneficiary: String::from("bar"),
         })
-            .unwrap();
+        .unwrap();
         let params = mock_params("creator", &coin("1000", "earth"), &[]);
         let _res = init(&mut store, params, msg).unwrap();
 
@@ -130,7 +130,7 @@ mod tests {
         // query for state
         let mut q_res = query(&store, raw_query(CONFIG_KEY).unwrap()).unwrap();
         let model = q_res.results.pop().unwrap();
-        let state: State = from_slice(model.val.as_bytes()).unwrap();
+        let state: State = from_slice(&model.val).unwrap();
         assert_eq!(
             state,
             State {
