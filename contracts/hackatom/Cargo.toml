@@ -1,6 +1,6 @@
 [package]
 name = "hackatom"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 
@@ -26,11 +26,11 @@ overflow-checks = true
 backtraces = [ "cosmwasm/backtraces", "cosmwasm-vm/backtraces" ]
 
 [dependencies]
-cosmwasm = { path = "../..", version = "0.4.2" }
+cosmwasm = { path = "../..", version = "0.5.0" }
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
 # needed for wasm-pack build process
 wasm-bindgen = "0.2"
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../lib/vm", version = "0.4.2" }
+cosmwasm-vm = { path = "../../lib/vm", version = "0.5.0" }
