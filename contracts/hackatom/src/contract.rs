@@ -2,8 +2,9 @@ use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
+use cosmwasm::query::{perform_raw_query};
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::storage::{perform_raw_query, Storage};
+use cosmwasm::storage::Storage;
 use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
