@@ -39,6 +39,8 @@ pub fn call_query<T: Storage + 'static>(
     let res_offset = func.call(msg_offset).context(RuntimeErr {})?;
     let data = instance.memory(res_offset);
     let res: QueryResult = from_slice(&data).context(ParseErr {})?;
+    // free return value in wasm (arguments were freed in wasm code)
+    instance.deallocate(res_offset)?;
     Ok(res)
 }
 
@@ -71,5 +73,7 @@ fn call_raw<T: Storage + 'static>(
     let res_offset = func.call(param_offset, msg_offset).context(RuntimeErr {})?;
 
     let data = instance.memory(res_offset);
+    // free return value in wasm (arguments were freed in wasm code)
+    instance.deallocate(res_offset)?;
     Ok(data)
 }

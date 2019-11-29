@@ -68,14 +68,21 @@ where
         read_memory(self.instance.context(), ptr)
     }
 
-    // write_mem allocates memory in the instance and copies the given data in
-    // returns the memory offset, to be passed as an argument
-    // panics on any error (TODO, use result?)
+    // allocate memory in the instance and copies the given data in
+    // returns the memory offset, to be later passed as an argument
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32, Error> {
         let alloc: Func<(u32), (u32)> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
         Ok(ptr)
+    }
+    // deallocate frees memory in the instance and that was either previously
+    // allocated by us, or a pointer from a return value after we copy it into rust.
+    // we need to clean up the wasm-side buffers to avoid memory leaks
+    pub fn deallocate(&mut self, ptr: u32) -> Result<(), Error> {
+        let dealloc: Func<(u32), ()> = self.func("deallocate")?;
+        dealloc.call(ptr).context(RuntimeErr {})?;
+        Ok(())
     }
 
     pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>, Error>
@@ -147,7 +154,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 36_731);
+        assert_eq!(init_used, 36_914);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -159,7 +166,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 70_011);
+        assert_eq!(handle_used, 70_148);
     }
 
     #[test]
@@ -202,6 +209,6 @@ mod test {
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 50_629);
+        assert_eq!(query_used, 49_395);
     }
 }
