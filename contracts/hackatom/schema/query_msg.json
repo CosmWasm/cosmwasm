@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "raw"
+      ],
+      "properties": {
+        "raw": {
+          "$ref": "#/definitions/RawQuery"
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "RawQuery": {
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

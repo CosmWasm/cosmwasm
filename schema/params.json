@@ -1,0 +1,101 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Params",
+  "type": "object",
+  "required": [
+    "block",
+    "contract",
+    "message"
+  ],
+  "properties": {
+    "block": {
+      "$ref": "#/definitions/BlockInfo"
+    },
+    "contract": {
+      "$ref": "#/definitions/ContractInfo"
+    },
+    "message": {
+      "$ref": "#/definitions/MessageInfo"
+    }
+  },
+  "definitions": {
+    "BlockInfo": {
+      "type": "object",
+      "required": [
+        "chain_id",
+        "height",
+        "time"
+      ],
+      "properties": {
+        "chain_id": {
+          "type": "string"
+        },
+        "height": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "time": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "type": "string"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "ContractInfo": {
+      "type": "object",
+      "required": [
+        "address",
+        "balance"
+      ],
+      "properties": {
+        "address": {
+          "type": "string"
+        },
+        "balance": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        }
+      }
+    },
+    "MessageInfo": {
+      "type": "object",
+      "required": [
+        "sent_funds",
+        "signer"
+      ],
+      "properties": {
+        "sent_funds": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        },
+        "signer": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
