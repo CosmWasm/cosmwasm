@@ -14,9 +14,9 @@ crate-type = ["cdylib", "rlib"]
 ```
 
 The `cdylib` is needed for the wasm target. 
-The `rlib` is needed to compile artifacts for benchmarking (and integration tests).
+The `rlib` is needed to compile artifacts for integration tests (and benchmarking).
 
-**Note** throughout this demo I will use the name `sample` for the project. 
+**Note** throughout this demo I will use the name `hackatom` for the project. 
 Please replace it with the real name of your crate. I intentionally didn't use `<name>`,
 so you can cut and paste for a quick demo. Just update this when making real code.
 
@@ -33,7 +33,7 @@ If wasm32 is not on that list, install using `rustup target add wasm32-unknown-u
 Go into the subdirectory, called `sample` from now on:
 
 To compile the code, run  `cargo build --release --target wasm32-unknown-unknown`. 
-The output will be in `target/wasm32-unknown-unknown/release/sample.wasm`
+The output will be in `target/wasm32-unknown-unknown/release/hackatom.wasm`
 
 You probably don't want to explicitly set the target every time, so you can just
 add the following to `.cargo/config`:
@@ -79,20 +79,25 @@ Otherwise, you will have a different wasm output with each compile.
 ## Shrinking the output
 
 After compiling your contract, take a look at the size of the original output:
-`du -sh  target/wasm32-unknown-unknown/release/sample.wasm`, it is likely around 1 MB.
-Most of that is unneeded and can easily be trimmed with `wasm-gc`.
+`du -sh  target/wasm32-unknown-unknown/release/hackatom.wasm`, it is likely around 1.5 MB.
+Most of that is unneeded and can easily be trimmed. The first approach is to use 
+[`wasm-pack`](https://github.com/rustwasm/wasm-pack) to build it. 
+This is designed for exporting small wasm builds and js bindings for the web, but is
+also the most actively maintained stack for trimmed wasm builds with rust.
+[`wasm-gc`](https://github.com/alexcrichton/wasm-gc), the older alternative, has
+been deprecated for this approach. (Note you must [install wasm-pack first](https://rustwasm.github.io/wasm-pack/installer/)):
 
 ```shell script
 cargo wasm
-cp target/wasm32-unknown-unknown/release/sample.wasm contact.wasm
-du -h contract.wasm
+du -h target/wasm32-unknown-unknown/release/hackatom.wasm
 
-cargo install wasm-gc
-wasm-gc contract.wasm
-du -h contract.wasm
+wasm-pack build
+du -h pkg/hackatom_bg.wasm
 ```
 
-A bit smaller, huh? If you have plenty of dependencies and this is still too big,
+A bit smaller, huh? For the sample contract, this is around 64kB, but this
+varies a lot contract-by-contract. 
+If you have plenty of dependencies and this is still too big,
 you can do a bit of investigation of where the size comes from, and maybe
 change your dependencies:
 
@@ -111,6 +116,43 @@ wasm-nm -e contract.wasm
 wasm-nm -i contract.wasm
 ```
 
+## Ultra-Compression
 
-**TODO**: pack up these tools in a fixed Dockerfile so we have a
-consistent setup to help with reproducible builds. 
+You can still get a bit smaller. Note the symbol names that were used in twiggy. Well,
+those come from inside the wasm build. You can strip out these symbols and other debug
+info, that won't be usable when running anyway. For this we use `wasm-opt` from the
+[enscripten toolchain](). This is a bunch of C++ code that needs to be compiled, and to
+simplify the whole process, as well as create reproduceable builds, we have created
+[`cosmwasm-opt`](https://github.com/confio/cosmwasm-opt), 
+which contains a `Dockerfile` that you can use to run both `wasm-pack` and `wasm-opt`.
+To make the build, just run the following in the project directory:
+
+```shell script
+docker run --rm -u $(id -u):$(id -g) -v $(pwd):/code confio/cosmwasm-opt:0.4.1
+
+du -h contract.wasm
+```
+
+Note that this always outputs the file as `contract.wasm`, not with the name of
+the project (yes, every tool chain has a different output location).
+For the hackatom sample, I now get down to 52kB, an 18% improvement. 
+This is as far as you can minimize the input, without removing actual functionality.
+
+While we cannot trim down the wasm code anymore, we can still reduce the size a bit
+for loading in blockchain transactions. We [soon plan](https://github.com/confio/go-cosmwasm/issues/20)
+to allow gzip-ed wasm in the transactions posted to the chain, which will further
+reduce gas cost of the code upload. Check out this final output:
+
+```shell script
+$ gzip -k contract.wasm
+$ du -h contract.wasm*
+52K     contract.wasm
+20K     contract.wasm.gz
+```
+
+And there you have it. We have gone from 1.5MB for the naive build, to 72kB with
+the standard minification tooling, all the way down to 20kB with very aggressive
+trimming and compression. Less than 1.5% of the original size. This is indeed something
+you can easily fit inside a transaction.
+
+
