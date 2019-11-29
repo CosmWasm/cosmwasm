@@ -62,10 +62,12 @@ fn _do_init<T: Display + From<Error>>(
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let params: Params = from_slice(&params).context(ParseErr {kind: "Params"})?;
+    let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
     let mut store = ExternalStorage::new();
     let res = init_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {kind: "ContractResult"})?;
+    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
+        kind: "ContractResult",
+    })?;
     Ok(release_buffer(json))
 }
 
@@ -77,10 +79,12 @@ fn _do_handle<T: Display + From<Error>>(
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let params: Params = from_slice(&params).context(ParseErr {kind: "Params"})?;
+    let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
     let mut store = ExternalStorage::new();
     let res = handle_fn(&mut store, params, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {kind: "ContractResult"})?;
+    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
+        kind: "ContractResult",
+    })?;
     Ok(release_buffer(json))
 }
 

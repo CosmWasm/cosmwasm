@@ -22,7 +22,7 @@ fn proper_initialization() {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     })
-        .unwrap();
+    .unwrap();
     let params = mock_params("creator", &coin("1000", "earth"), &[]);
     let res = init(&mut store, params, msg).unwrap();
     assert_eq!(0, res.messages.len());
@@ -31,11 +31,14 @@ fn proper_initialization() {
     store.with_storage(|store| {
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, State {
-            verifier: "verifies".to_string(),
-            beneficiary: "benefits".to_string(),
-            funder: "creator".to_string(),
-        });
+        assert_eq!(
+            state,
+            State {
+                verifier: "verifies".to_string(),
+                beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
     });
 }
 
@@ -57,7 +60,7 @@ fn proper_handle() {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     })
-        .unwrap();
+    .unwrap();
     let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
     let init_res = init(&mut store, init_params, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
@@ -67,21 +70,27 @@ fn proper_handle() {
     let handle_res = handle(&mut store, handle_params, Vec::new()).unwrap();
     assert_eq!(1, handle_res.messages.len());
     let msg = handle_res.messages.get(0).expect("no message");
-    assert_eq!(msg, &CosmosMsg::Send{
-        from_address: "cosmos2contract".to_string(),
-        to_address: "benefits".to_string(),
-        amount: coin("1015", "earth"),
-    });
+    assert_eq!(
+        msg,
+        &CosmosMsg::Send {
+            from_address: "cosmos2contract".to_string(),
+            to_address: "benefits".to_string(),
+            amount: coin("1015", "earth"),
+        }
+    );
 
     // it worked, let's check the state
     store.with_storage(|store| {
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, State {
-            verifier: "verifies".to_string(),
-            beneficiary: "benefits".to_string(),
-            funder: "creator".to_string(),
-        });
+        assert_eq!(
+            state,
+            State {
+                verifier: "verifies".to_string(),
+                beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
     });
 }
 
@@ -94,7 +103,7 @@ fn failed_handle() {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     })
-        .unwrap();
+    .unwrap();
     let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
     let init_res = init(&mut store, init_params, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
@@ -108,10 +117,13 @@ fn failed_handle() {
     store.with_storage(|store| {
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, State {
-            verifier: "verifies".to_string(),
-            beneficiary: "benefits".to_string(),
-            funder: "creator".to_string(),
-        });
+        assert_eq!(
+            state,
+            State {
+                verifier: "verifies".to_string(),
+                beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
     });
 }

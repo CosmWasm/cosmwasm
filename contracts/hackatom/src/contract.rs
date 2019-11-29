@@ -25,7 +25,7 @@ pub struct HandleMsg {}
 pub static CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Response> {
-    let msg: InitMsg = from_slice(&msg).context(ParseErr {kind: "InitMsg"})?;
+    let msg: InitMsg = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     store.set(
         CONFIG_KEY,
         &to_vec(&State {
@@ -33,7 +33,7 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<R
             beneficiary: msg.beneficiary,
             funder: params.message.signer,
         })
-        .context(SerializeErr {kind: "State"})?,
+        .context(SerializeErr { kind: "State" })?,
     );
     Ok(Response::default())
 }
@@ -42,7 +42,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     let data = store.get(CONFIG_KEY).context(ContractErr {
         msg: "uninitialized data",
     })?;
-    let state: State = from_slice(&data).context(ParseErr {kind: "State"})?;
+    let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
 
     if params.message.signer == state.verifier {
         let res = Response {
@@ -81,11 +81,14 @@ mod tests {
         // it worked, let's check the state
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, State{
-            verifier: "verifies".to_string(),
-            beneficiary: "benefits".to_string(),
-            funder: "creator".to_string(),
-        });
+        assert_eq!(
+            state,
+            State {
+                verifier: "verifies".to_string(),
+                beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
     }
 
     #[test]
@@ -116,20 +119,26 @@ mod tests {
         let handle_res = handle(&mut store, handle_params, Vec::new()).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
-        assert_eq!(msg, &CosmosMsg::Send{
-            from_address: "cosmos2contract".to_string(),
-            to_address: "benefits".to_string(),
-            amount: coin("1015", "earth"),
-        });
+        assert_eq!(
+            msg,
+            &CosmosMsg::Send {
+                from_address: "cosmos2contract".to_string(),
+                to_address: "benefits".to_string(),
+                amount: coin("1015", "earth"),
+            }
+        );
 
         // it worked, let's check the state
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, State{
-            verifier: "verifies".to_string(),
-            beneficiary: "benefits".to_string(),
-            funder: "creator".to_string(),
-        });
+        assert_eq!(
+            state,
+            State {
+                verifier: "verifies".to_string(),
+                beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
     }
 
     #[test]
@@ -154,10 +163,13 @@ mod tests {
         // state should not change
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, State{
-            verifier: "verifies".to_string(),
-            beneficiary: "benefits".to_string(),
-            funder: "creator".to_string(),
-        });
+        assert_eq!(
+            state,
+            State {
+                verifier: "verifies".to_string(),
+                beneficiary: "benefits".to_string(),
+                funder: "creator".to_string(),
+            }
+        );
     }
 }

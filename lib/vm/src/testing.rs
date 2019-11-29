@@ -19,14 +19,21 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage> {
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<T: Storage + 'static>(instance: &mut Instance<T>, params: Params, msg: Vec<u8>) -> ContractResult {
+pub fn init<T: Storage + 'static>(
+    instance: &mut Instance<T>,
+    params: Params,
+    msg: Vec<u8>,
+) -> ContractResult {
     call_init(instance, &params, &msg).unwrap()
 }
 
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<T: Storage + 'static>(instance: &mut Instance<T>, params: Params, msg: Vec<u8>) -> ContractResult {
+pub fn handle<T: Storage + 'static>(
+    instance: &mut Instance<T>,
+    params: Params,
+    msg: Vec<u8>,
+) -> ContractResult {
     call_handle(instance, &params, &msg).unwrap()
 }
-
