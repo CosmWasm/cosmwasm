@@ -38,7 +38,6 @@ pub fn call_query<T: Storage + 'static>(
     let func: Func<(u32), (u32)> = instance.func("query")?;
     let res_offset = func.call(msg_offset).context(RuntimeErr {})?;
     let data = instance.memory(res_offset);
-    println!("query response: {}", std::str::from_utf8(&data).unwrap());
     let res: QueryResult = from_slice(&data).context(ParseErr {})?;
     Ok(res)
 }
