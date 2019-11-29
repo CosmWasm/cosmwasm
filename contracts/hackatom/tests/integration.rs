@@ -3,6 +3,7 @@ use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::storage::Storage;
 use cosmwasm::types::{coin, mock_params, CosmosMsg};
 use cosmwasm_vm::{call_handle, call_init, Instance};
+use cosmwasm_vm::testing::{handle, init, mock_instance};
 
 use hackatom::contract::{HandleMsg, InitMsg, State, CONFIG_KEY};
 
@@ -15,6 +16,38 @@ cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
 Then running `cargo test` will validate we can properly call into that generated data.
 **/
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
+
+#[test]
+fn proper_initialization() {
+    let mut store = mock_instance(WASM);
+    let msg = to_vec(&InitMsg {
+        verifier: String::from("verifies"),
+        beneficiary: String::from("benefits"),
+    })
+        .unwrap();
+    let params = mock_params("creator", &coin("1000", "earth"), &[]);
+    let res = init(&mut store, params, msg).unwrap();
+    assert_eq!(0, res.messages.len());
+
+//    // it worked, let's check the state
+//    let data = store.get(CONFIG_KEY).expect("no data stored");
+//    let state: State = from_slice(&data).unwrap();
+//    assert_eq!(state, State{
+//        verifier: "verifies".to_string(),
+//        beneficiary: "benefits".to_string(),
+//        funder: "creator".to_string(),
+//    });
+}
+
+#[test]
+fn fails_on_bad_init() {
+    let mut store = mock_instance(WASM);
+    let bad_msg = b"{}".to_vec();
+    let params = mock_params("creator", &coin("1000", "earth"), &[]);
+    let res = init(&mut store, params, bad_msg);
+    assert_eq!(true, res.is_err());
+}
+
 
 // Note this is very similar in scope and size to proper_handle in contracts.rs tests
 // Making it as easy to write vm external integration tests as rust unit tests
