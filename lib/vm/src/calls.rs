@@ -33,15 +33,23 @@ pub fn call_query<T: Storage + 'static>(
     instance: &mut Instance<T>,
     msg: &[u8],
 ) -> Result<QueryResult, Error> {
+    let data = call_query_raw(instance, msg)?;
+    let res: QueryResult = from_slice(&data).context(ParseErr {})?;
+    Ok(res)
+}
+
+pub fn call_query_raw<T: Storage + 'static>(
+    instance: &mut Instance<T>,
+    msg: &[u8],
+) -> Result<Vec<u8>, Error> {
     // we cannot resuse the call_raw functionality as it assumes a param variable... just do it inline
     let msg_offset = instance.allocate(msg)?;
     let func: Func<(u32), (u32)> = instance.func("query")?;
     let res_offset = func.call(msg_offset).context(RuntimeErr {})?;
     let data = instance.memory(res_offset);
-    let res: QueryResult = from_slice(&data).context(ParseErr {})?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_offset)?;
-    Ok(res)
+    Ok(data)
 }
 
 pub fn call_init_raw<T: Storage + 'static>(
