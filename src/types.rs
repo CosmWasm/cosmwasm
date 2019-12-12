@@ -131,35 +131,6 @@ impl QueryResult {
     }
 }
 
-// just set signer, sent funds, and balance - rest given defaults
-// this is intended for use in testcode only
-pub fn mock_params(signer: &[u8], sent: &[Coin], balance: &[Coin]) -> Params {
-    Params {
-        block: BlockInfo {
-            height: 12_345,
-            time: 1_571_797_419,
-            chain_id: "cosmos-testnet-14002".to_string(),
-        },
-        message: MessageInfo {
-            signer: signer.to_vec(),
-            sent_funds: if sent.len() == 0 {
-                None
-            } else {
-                Some(sent.to_vec())
-            },
-        },
-        contract: ContractInfo {
-            // TODO: properly normalize this
-            address: b"cosmos2contract".to_vec(),
-            balance: if balance.len() == 0 {
-                None
-            } else {
-                Some(balance.to_vec())
-            },
-        },
-    }
-}
-
 // coin is a shortcut constructor for a set of one denomination of coins
 pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
     vec![Coin {

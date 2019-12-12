@@ -48,8 +48,8 @@ pub fn init<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, m
     store.set(
         CONFIG_KEY,
         &to_vec(&State {
-            verifier: msg.verifier,
-            beneficiary: msg.beneficiary,
+            verifier: addr.canonicalize(&msg.verifier)?,
+            beneficiary: addr.canonicalize(&msg.beneficiary)?,
             funder: params.message.signer,
         })
         .context(SerializeErr { kind: "State" })?,
@@ -57,7 +57,7 @@ pub fn init<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, m
     Ok(Response::default())
 }
 
-pub fn handle<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, _: Vec<u8>) -> Result<Response> {
+pub fn handle<T: Storage, U: Addresser>(store: &mut T, _addr: &U, params: Params, _: Vec<u8>) -> Result<Response> {
     let data = store.get(CONFIG_KEY).context(ContractErr {
         msg: "uninitialized data",
     })?;
@@ -79,7 +79,7 @@ pub fn handle<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params,
     }
 }
 
-pub fn query<T: Storage, U: Addresser>(store: &T, addr: &U, msg: Vec<u8>) -> Result<QueryResponse> {
+pub fn query<T: Storage, U: Addresser>(store: &T, _addr: &U, msg: Vec<u8>) -> Result<QueryResponse> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(store, raw),
@@ -89,19 +89,20 @@ pub fn query<T: Storage, U: Addresser>(store: &T, addr: &U, msg: Vec<u8>) -> Res
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::mock::MockStorage;
-    use cosmwasm::types::{coin, mock_params};
+    use cosmwasm::mock::{MockAddresser, MockStorage, mock_params};
+    use cosmwasm::types::{coin};
 
     #[test]
     fn proper_initialization() {
         let mut store = MockStorage::new();
+        let addr = MockAddresser::new(20);
         let msg = to_vec(&InitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         })
         .unwrap();
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
-        let res = init(&mut store, params, msg).unwrap();
+        let params = mock_params(&addr, "creator", &coin("1000", "earth"), &[]);
+        let res = init(&mut store, &addr, params, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
@@ -110,9 +111,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: "verifies".to_string(),
-                beneficiary: "benefits".to_string(),
-                funder: "creator".to_string(),
+                verifier: addr.canonicalize("verifies").unwrap(),
+                beneficiary: addr.canonicalize("benefits").unwrap(),
+                funder: addr.canonicalize("creator").unwrap(),
             }
         );
     }
@@ -120,27 +121,28 @@ mod tests {
     #[test]
     fn proper_init_and_query() {
         let mut store = MockStorage::new();
+        let addr = MockAddresser::new(20);
         let msg = to_vec(&InitMsg {
             verifier: String::from("foo"),
             beneficiary: String::from("bar"),
         })
         .unwrap();
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
-        let _res = init(&mut store, params, msg).unwrap();
+        let params = mock_params(&addr, "creator", &coin("1000", "earth"), &[]);
+        let _res = init(&mut store, &addr, params, msg).unwrap();
 
-        let q_res = query(&store, raw_query(b"random").unwrap()).unwrap();
+        let q_res = query(&store, &addr, raw_query(b"random").unwrap()).unwrap();
         assert_eq!(q_res.results.len(), 0);
 
         // query for state
-        let mut q_res = query(&store, raw_query(CONFIG_KEY).unwrap()).unwrap();
+        let mut q_res = query(&store, &addr, raw_query(CONFIG_KEY).unwrap()).unwrap();
         let model = q_res.results.pop().unwrap();
         let state: State = from_slice(&model.val).unwrap();
         assert_eq!(
             state,
             State {
-                verifier: "foo".to_string(),
-                beneficiary: "bar".to_string(),
-                funder: "creator".to_string(),
+                verifier: addr.canonicalize("foo").unwrap(),
+                beneficiary: addr.canonicalize("bar").unwrap(),
+                funder: addr.canonicalize("creator").unwrap(),
             }
         );
     }
@@ -148,15 +150,17 @@ mod tests {
     #[test]
     fn fails_on_bad_init() {
         let mut store = MockStorage::new();
+        let addr = MockAddresser::new(20);
         let bad_msg = b"{}".to_vec();
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
-        let res = init(&mut store, params, bad_msg);
+        let params = mock_params(&addr, "creator", &coin("1000", "earth"), &[]);
+        let res = init(&mut store, &addr, params, bad_msg);
         assert_eq!(true, res.is_err());
     }
 
     #[test]
     fn proper_handle() {
         let mut store = MockStorage::new();
+        let addr = MockAddresser::new(20);
 
         // initialize the store
         let init_msg = to_vec(&InitMsg {
@@ -164,20 +168,20 @@ mod tests {
             beneficiary: String::from("benefits"),
         })
         .unwrap();
-        let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
-        let init_res = init(&mut store, init_params, init_msg).unwrap();
+        let init_params = mock_params(&addr, "creator", &coin("1000", "earth"), &coin("1000", "earth"));
+        let init_res = init(&mut store, &addr, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
-        let handle_res = handle(&mut store, handle_params, Vec::new()).unwrap();
+        let handle_params = mock_params(&addr, "verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let handle_res = handle(&mut store, &addr, handle_params, Vec::new()).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
             msg,
             &CosmosMsg::Send {
-                from_address: "cosmos2contract".to_string(),
-                to_address: "benefits".to_string(),
+                from_address: addr.canonicalize("cosmos2contract").unwrap(),
+                to_address: addr.canonicalize("benefits").unwrap(),
                 amount: coin("1015", "earth"),
             }
         );
@@ -188,9 +192,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: "verifies".to_string(),
-                beneficiary: "benefits".to_string(),
-                funder: "creator".to_string(),
+                verifier: addr.canonicalize("verifies").unwrap(),
+                beneficiary: addr.canonicalize("benefits").unwrap(),
+                funder: addr.canonicalize("creator").unwrap(),
             }
         );
     }
@@ -198,6 +202,7 @@ mod tests {
     #[test]
     fn failed_handle() {
         let mut store = MockStorage::new();
+        let addr = MockAddresser::new(20);
 
         // initialize the store
         let init_msg = to_vec(&InitMsg {
@@ -205,13 +210,13 @@ mod tests {
             beneficiary: String::from("benefits"),
         })
         .unwrap();
-        let init_params = mock_params("creator", &coin("1000", "earth"), &coin("1000", "earth"));
-        let init_res = init(&mut store, init_params, init_msg).unwrap();
+        let init_params = mock_params(&addr, "creator", &coin("1000", "earth"), &coin("1000", "earth"));
+        let init_res = init(&mut store, &addr, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_params = mock_params("benefits", &[], &coin("1000", "earth"));
-        let handle_res = handle(&mut store, handle_params, Vec::new());
+        let handle_params = mock_params(&addr, "benefits", &[], &coin("1000", "earth"));
+        let handle_res = handle(&mut store, &addr, handle_params, Vec::new());
         assert!(handle_res.is_err());
 
         // state should not change
@@ -220,9 +225,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: "verifies".to_string(),
-                beneficiary: "benefits".to_string(),
-                funder: "creator".to_string(),
+                verifier: addr.canonicalize("verifies").unwrap(),
+                beneficiary: addr.canonicalize("benefits").unwrap(),
+                funder: addr.canonicalize("creator").unwrap(),
             }
         );
     }

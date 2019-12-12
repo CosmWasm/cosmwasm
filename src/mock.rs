@@ -5,6 +5,7 @@ use snafu::ResultExt;
 
 use crate::storage::{Addresser, Storage};
 use crate::errors::{ContractErr, Result, Utf8Err};
+use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
 
 #[derive(Clone)]
 pub struct MockStorage {
@@ -77,6 +78,34 @@ impl Addresser for MockAddresser {
     }
 }
 
+
+// just set signer, sent funds, and balance - rest given defaults
+// this is intended for use in testcode only
+pub fn mock_params<T: Addresser>(addr: &T, signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
+    Params {
+        block: BlockInfo {
+            height: 12_345,
+            time: 1_571_797_419,
+            chain_id: "cosmos-testnet-14002".to_string(),
+        },
+        message: MessageInfo {
+            signer: addr.canonicalize(signer).unwrap(),
+            sent_funds: if sent.len() == 0 {
+                None
+            } else {
+                Some(sent.to_vec())
+            },
+        },
+        contract: ContractInfo {
+            address: addr.canonicalize("cosmos2contract").unwrap(),
+            balance: if balance.len() == 0 {
+                None
+            } else {
+                Some(balance.to_vec())
+            },
+        },
+    }
+}
 
 #[cfg(test)]
 mod test {
