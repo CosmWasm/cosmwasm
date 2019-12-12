@@ -6,9 +6,9 @@ use std::vec::Vec;
 
 use snafu::ResultExt;
 
+use crate::errors::{ContractErr, Result, Utf8Err};
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
 use crate::traits::{Addresser, Storage};
-use crate::errors::{ContractErr, Result, Utf8Err};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -68,7 +68,6 @@ impl Storage for ExternalStorage {
     }
 }
 
-
 #[derive(Clone)]
 pub struct ExternalAddresser {}
 
@@ -86,7 +85,10 @@ impl Addresser for ExternalAddresser {
 
         let read = unsafe { canonical_address(send_ptr, canon) };
         if read < 0 {
-            return ContractErr { msg: "canonical_address returned error" }.fail();
+            return ContractErr {
+                msg: "canonical_address returned error",
+            }
+            .fail();
         }
 
         let mut out = unsafe { consume_slice(canon)? };
@@ -101,12 +103,15 @@ impl Addresser for ExternalAddresser {
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
-            return ContractErr { msg: "humanize_address returned error" }.fail();
+            return ContractErr {
+                msg: "humanize_address returned error",
+            }
+            .fail();
         }
 
         let mut out = unsafe { consume_slice(human)? };
         out.truncate(read as usize);
-        let result = from_utf8(&out).context(Utf8Err{})?.to_string();
+        let result = from_utf8(&out).context(Utf8Err {})?.to_string();
         Ok(result)
     }
 }

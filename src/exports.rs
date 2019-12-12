@@ -10,7 +10,7 @@ use std::os::raw::c_void;
 use std::vec::Vec;
 
 use crate::errors::{Error, ParseErr, SerializeErr};
-use crate::imports::{ExternalStorage, ExternalAddresser};
+use crate::imports::{ExternalAddresser, ExternalStorage};
 use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::types::{ContractResult, Params, QueryResponse, QueryResult, Response};
@@ -33,7 +33,12 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_init<T: Display + From<Error>>(
-    init_fn: &dyn Fn(&mut ExternalStorage, &ExternalAddresser, Params, Vec<u8>) -> Result<Response, T>,
+    init_fn: &dyn Fn(
+        &mut ExternalStorage,
+        &ExternalAddresser,
+        Params,
+        Vec<u8>,
+    ) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -45,7 +50,12 @@ pub fn do_init<T: Display + From<Error>>(
 
 // do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_handle<T: Display + From<Error>>(
-    handle_fn: &dyn Fn(&mut ExternalStorage, &ExternalAddresser, Params, Vec<u8>) -> Result<Response, T>,
+    handle_fn: &dyn Fn(
+        &mut ExternalStorage,
+        &ExternalAddresser,
+        Params,
+        Vec<u8>,
+    ) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -67,7 +77,12 @@ pub fn do_query<T: Display + From<Error>>(
 }
 
 fn _do_init<T: Display + From<Error>>(
-    init_fn: &dyn Fn(&mut ExternalStorage, &ExternalAddresser, Params, Vec<u8>) -> Result<Response, T>,
+    init_fn: &dyn Fn(
+        &mut ExternalStorage,
+        &ExternalAddresser,
+        Params,
+        Vec<u8>,
+    ) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, T> {
@@ -85,7 +100,12 @@ fn _do_init<T: Display + From<Error>>(
 }
 
 fn _do_handle<T: Display + From<Error>>(
-    handle_fn: &dyn Fn(&mut ExternalStorage, &ExternalAddresser, Params, Vec<u8>) -> Result<Response, T>,
+    handle_fn: &dyn Fn(
+        &mut ExternalStorage,
+        &ExternalAddresser,
+        Params,
+        Vec<u8>,
+    ) -> Result<Response, T>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, T> {

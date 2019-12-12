@@ -3,8 +3,8 @@ use std::str::from_utf8;
 
 use snafu::ResultExt;
 
-use crate::traits::{Addresser, Storage};
 use crate::errors::{ContractErr, Result, Utf8Err};
+use crate::traits::{Addresser, Storage};
 use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
 
 #[derive(Clone)]
@@ -59,7 +59,10 @@ impl Default for MockAddresser {
 impl Addresser for MockAddresser {
     fn canonicalize(&self, human: &str) -> Result<Vec<u8>> {
         if human.len() > self.canonical_length {
-            return ContractErr { msg: "human encoding too long" }.fail();
+            return ContractErr {
+                msg: "human encoding too long",
+            }
+            .fail();
         }
         let mut out = human.as_bytes().to_vec();
         let append = self.canonical_length - out.len();
@@ -73,15 +76,19 @@ impl Addresser for MockAddresser {
         // remove trailing 0's (TODO: fix this - but fine for first tests)
         let trimmed: Vec<u8> = canonical.iter().cloned().filter(|&x| x != 0).collect();
         // convert to utf8
-        let human = from_utf8(&trimmed).context(Utf8Err{})?;
+        let human = from_utf8(&trimmed).context(Utf8Err {})?;
         Ok(human.to_string())
     }
 }
 
-
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params<T: Addresser>(addr: &T, signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
+pub fn mock_params<T: Addresser>(
+    addr: &T,
+    signer: &str,
+    sent: &[Coin],
+    balance: &[Coin],
+) -> Params {
     Params {
         block: BlockInfo {
             height: 12_345,
@@ -90,7 +97,7 @@ pub fn mock_params<T: Addresser>(addr: &T, signer: &str, sent: &[Coin], balance:
         },
         message: MessageInfo {
             signer: addr.canonicalize(signer).unwrap(),
-            sent_funds: if sent.len() == 0 {
+            sent_funds: if sent.is_empty() {
                 None
             } else {
                 Some(sent.to_vec())
@@ -98,7 +105,7 @@ pub fn mock_params<T: Addresser>(addr: &T, signer: &str, sent: &[Coin], balance:
         },
         contract: ContractInfo {
             address: addr.canonicalize("cosmos2contract").unwrap(),
-            balance: if balance.len() == 0 {
+            balance: if balance.is_empty() {
                 None
             } else {
                 Some(balance.to_vec())

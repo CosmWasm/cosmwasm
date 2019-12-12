@@ -43,7 +43,12 @@ pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, msg: Vec<u8>) -> Result<Response> {
+pub fn init<T: Storage, U: Addresser>(
+    store: &mut T,
+    addr: &U,
+    params: Params,
+    msg: Vec<u8>,
+) -> Result<Response> {
     let msg: InitMsg = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     store.set(
         CONFIG_KEY,
@@ -57,7 +62,12 @@ pub fn init<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, m
     Ok(Response::default())
 }
 
-pub fn handle<T: Storage, U: Addresser>(store: &mut T, _addr: &U, params: Params, _: Vec<u8>) -> Result<Response> {
+pub fn handle<T: Storage, U: Addresser>(
+    store: &mut T,
+    _addr: &U,
+    params: Params,
+    _: Vec<u8>,
+) -> Result<Response> {
     let data = store.get(CONFIG_KEY).context(ContractErr {
         msg: "uninitialized data",
     })?;
@@ -79,7 +89,11 @@ pub fn handle<T: Storage, U: Addresser>(store: &mut T, _addr: &U, params: Params
     }
 }
 
-pub fn query<T: Storage, U: Addresser>(store: &T, _addr: &U, msg: Vec<u8>) -> Result<QueryResponse> {
+pub fn query<T: Storage, U: Addresser>(
+    store: &T,
+    _addr: &U,
+    msg: Vec<u8>,
+) -> Result<QueryResponse> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(store, raw),
@@ -89,8 +103,8 @@ pub fn query<T: Storage, U: Addresser>(store: &T, _addr: &U, msg: Vec<u8>) -> Re
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::mock::{MockAddresser, MockStorage, mock_params};
-    use cosmwasm::types::{coin};
+    use cosmwasm::mock::{mock_params, MockAddresser, MockStorage};
+    use cosmwasm::types::coin;
 
     #[test]
     fn proper_initialization() {
@@ -168,12 +182,22 @@ mod tests {
             beneficiary: String::from("benefits"),
         })
         .unwrap();
-        let init_params = mock_params(&addr, "creator", &coin("1000", "earth"), &coin("1000", "earth"));
+        let init_params = mock_params(
+            &addr,
+            "creator",
+            &coin("1000", "earth"),
+            &coin("1000", "earth"),
+        );
         let init_res = init(&mut store, &addr, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_params = mock_params(&addr, "verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let handle_params = mock_params(
+            &addr,
+            "verifies",
+            &coin("15", "earth"),
+            &coin("1015", "earth"),
+        );
         let handle_res = handle(&mut store, &addr, handle_params, Vec::new()).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
@@ -210,7 +234,12 @@ mod tests {
             beneficiary: String::from("benefits"),
         })
         .unwrap();
-        let init_params = mock_params(&addr, "creator", &coin("1000", "earth"), &coin("1000", "earth"));
+        let init_params = mock_params(
+            &addr,
+            "creator",
+            &coin("1000", "earth"),
+            &coin("1000", "earth"),
+        );
         let init_res = init(&mut store, &addr, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
