@@ -6,7 +6,7 @@ use std::mem;
 
 use wasmer_runtime::Ctx;
 
-use cosmwasm::storage::Storage;
+use cosmwasm::traits::Storage;
 
 use crate::memory::{read_memory, write_memory};
 

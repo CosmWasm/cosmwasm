@@ -5,7 +5,7 @@
 use std::vec::Vec;
 
 use cosmwasm::mock::MockStorage;
-use cosmwasm::storage::Storage;
+use cosmwasm::traits::Storage;
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};

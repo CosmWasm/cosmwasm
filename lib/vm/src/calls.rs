@@ -1,7 +1,7 @@
 use snafu::ResultExt;
 
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::storage::Storage;
+use cosmwasm::traits::Storage;
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::errors::{Error, ParseErr, RuntimeErr, SerializeErr};

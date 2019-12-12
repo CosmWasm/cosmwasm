@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm::storage::Storage;
+use cosmwasm::traits::Storage;
 
 use crate::backends::{backend, compile};
 use crate::errors::{Error, IntegrityErr, IoErr};

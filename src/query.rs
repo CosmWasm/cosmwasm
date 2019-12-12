@@ -1,5 +1,5 @@
 use crate::errors::Result;
-use crate::storage::Storage;
+use crate::traits::Storage;
 use crate::types::{Model, QueryResponse, RawQuery};
 
 pub fn perform_raw_query<T: Storage>(store: &T, query: RawQuery) -> Result<QueryResponse> {

@@ -11,7 +11,7 @@ use crate::context::{
 };
 use crate::errors::{Error, ResolveErr, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::storage::Storage;
+use cosmwasm::traits::Storage;
 
 pub struct Instance<T: Storage + 'static> {
     instance: wasmer_runtime::Instance,

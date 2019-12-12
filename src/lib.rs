@@ -7,5 +7,5 @@ pub mod memory;
 pub mod mock;
 pub mod query;
 pub mod serde;
-pub mod storage;
+pub mod traits;
 pub mod types;

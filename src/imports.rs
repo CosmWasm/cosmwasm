@@ -7,7 +7,7 @@ use std::vec::Vec;
 use snafu::ResultExt;
 
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
-use crate::storage::{Addresser, Storage};
+use crate::traits::{Addresser, Storage};
 use crate::errors::{ContractErr, Result, Utf8Err};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later

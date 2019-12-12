@@ -7,7 +7,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
 use cosmwasm::query::perform_raw_query;
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::storage::{Addresser, Storage};
+use cosmwasm::traits::{Addresser, Storage};
 use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

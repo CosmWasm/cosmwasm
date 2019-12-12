@@ -3,7 +3,7 @@ use std::str::from_utf8;
 
 use snafu::ResultExt;
 
-use crate::storage::{Addresser, Storage};
+use crate::traits::{Addresser, Storage};
 use crate::errors::{ContractErr, Result, Utf8Err};
 use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
 
