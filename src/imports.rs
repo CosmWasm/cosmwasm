@@ -7,7 +7,7 @@ use std::vec::Vec;
 use snafu::ResultExt;
 
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
-use crate::storage::Storage;
+use crate::storage::{Addresser, Storage};
 use crate::errors::{ContractErr, Result, Utf8Err};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
@@ -104,19 +104,9 @@ impl Addresser for ExternalAddresser {
             return ContractErr { msg: "humanize_address returned error" }.fail();
         }
 
-        let mut out = unsafe { consume_slice(canon)? };
+        let mut out = unsafe { consume_slice(human)? };
         out.truncate(read as usize);
-        from_utf8(&out).context(Utf8Err{})?.to_string()
-    }
-
-        fn set(&mut self, key: &[u8], value: &[u8]) {
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_slice)
-        let key = build_slice(key);
-        let key_ptr = &*key as *const Slice as *const c_void;
-        let mut value = build_slice(value);
-        let value_ptr = &mut *value as *mut Slice as *mut c_void;
-        unsafe {
-            c_write(key_ptr, value_ptr);
-        }
+        let result = from_utf8(&out).context(Utf8Err{})?.to_string();
+        Ok(result)
     }
 }

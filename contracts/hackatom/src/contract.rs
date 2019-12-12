@@ -7,20 +7,22 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
 use cosmwasm::query::perform_raw_query;
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::storage::Storage;
+use cosmwasm::storage::{Addresser, Storage};
 use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
+    // these use humanized addresses
     pub verifier: String,
     pub beneficiary: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub verifier: String,
-    pub beneficiary: String,
-    pub funder: String,
+    // these are stored as canonical addresses
+    pub verifier: Vec<u8>,
+    pub beneficiary: Vec<u8>,
+    pub funder: Vec<u8>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -41,7 +43,7 @@ pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<Response> {
+pub fn init<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, msg: Vec<u8>) -> Result<Response> {
     let msg: InitMsg = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     store.set(
         CONFIG_KEY,
@@ -55,7 +57,7 @@ pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8>) -> Result<R
     Ok(Response::default())
 }
 
-pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<Response> {
+pub fn handle<T: Storage, U: Addresser>(store: &mut T, addr: &U, params: Params, _: Vec<u8>) -> Result<Response> {
     let data = store.get(CONFIG_KEY).context(ContractErr {
         msg: "uninitialized data",
     })?;
@@ -77,7 +79,7 @@ pub fn handle<T: Storage>(store: &mut T, params: Params, _: Vec<u8>) -> Result<R
     }
 }
 
-pub fn query<T: Storage>(store: &T, msg: Vec<u8>) -> Result<QueryResponse> {
+pub fn query<T: Storage, U: Addresser>(store: &T, addr: &U, msg: Vec<u8>) -> Result<QueryResponse> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(store, raw),
