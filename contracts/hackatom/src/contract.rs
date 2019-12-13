@@ -7,7 +7,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
 use cosmwasm::query::perform_raw_query;
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::traits::{Addresser, Storage};
+use cosmwasm::traits::{Precompiles, Storage};
 use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -43,9 +43,9 @@ pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<T: Storage, U: Addresser>(
+pub fn init<T: Storage, U: Precompiles>(
     store: &mut T,
-    addr: &U,
+    precompiles: &U,
     params: Params,
     msg: Vec<u8>,
 ) -> Result<Response> {
@@ -53,8 +53,8 @@ pub fn init<T: Storage, U: Addresser>(
     store.set(
         CONFIG_KEY,
         &to_vec(&State {
-            verifier: addr.canonicalize(&msg.verifier)?,
-            beneficiary: addr.canonicalize(&msg.beneficiary)?,
+            verifier: precompiles.canonical_address(&msg.verifier)?,
+            beneficiary: precompiles.canonical_address(&msg.beneficiary)?,
             funder: params.message.signer,
         })
         .context(SerializeErr { kind: "State" })?,
@@ -62,7 +62,7 @@ pub fn init<T: Storage, U: Addresser>(
     Ok(Response::default())
 }
 
-pub fn handle<T: Storage, U: Addresser>(
+pub fn handle<T: Storage, U: Precompiles>(
     store: &mut T,
     _addr: &U,
     params: Params,
@@ -89,7 +89,7 @@ pub fn handle<T: Storage, U: Addresser>(
     }
 }
 
-pub fn query<T: Storage, U: Addresser>(
+pub fn query<T: Storage, U: Precompiles>(
     store: &T,
     _addr: &U,
     msg: Vec<u8>,
@@ -103,20 +103,20 @@ pub fn query<T: Storage, U: Addresser>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::mock::{mock_params, MockAddresser, MockStorage};
+    use cosmwasm::mock::{mock_params, MockPrecompiles, MockStorage};
     use cosmwasm::types::coin;
 
     #[test]
     fn proper_initialization() {
         let mut store = MockStorage::new();
-        let addr = MockAddresser::new(20);
+        let precompiles = MockPrecompiles::new(20);
         let msg = to_vec(&InitMsg {
             verifier: String::from("verifies"),
             beneficiary: String::from("benefits"),
         })
         .unwrap();
-        let params = mock_params(&addr, "creator", &coin("1000", "earth"), &[]);
-        let res = init(&mut store, &addr, params, msg).unwrap();
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
+        let res = init(&mut store, &precompiles, params, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
@@ -125,9 +125,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: addr.canonicalize("verifies").unwrap(),
-                beneficiary: addr.canonicalize("benefits").unwrap(),
-                funder: addr.canonicalize("creator").unwrap(),
+                verifier: precompiles.canonical_address("verifies").unwrap(),
+                beneficiary: precompiles.canonical_address("benefits").unwrap(),
+                funder: precompiles.canonical_address("creator").unwrap(),
             }
         );
     }
@@ -135,28 +135,28 @@ mod tests {
     #[test]
     fn proper_init_and_query() {
         let mut store = MockStorage::new();
-        let addr = MockAddresser::new(20);
+        let precompiles = MockPrecompiles::new(20);
         let msg = to_vec(&InitMsg {
             verifier: String::from("foo"),
             beneficiary: String::from("bar"),
         })
         .unwrap();
-        let params = mock_params(&addr, "creator", &coin("1000", "earth"), &[]);
-        let _res = init(&mut store, &addr, params, msg).unwrap();
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
+        let _res = init(&mut store, &precompiles, params, msg).unwrap();
 
-        let q_res = query(&store, &addr, raw_query(b"random").unwrap()).unwrap();
+        let q_res = query(&store, &precompiles, raw_query(b"random").unwrap()).unwrap();
         assert_eq!(q_res.results.len(), 0);
 
         // query for state
-        let mut q_res = query(&store, &addr, raw_query(CONFIG_KEY).unwrap()).unwrap();
+        let mut q_res = query(&store, &precompiles, raw_query(CONFIG_KEY).unwrap()).unwrap();
         let model = q_res.results.pop().unwrap();
         let state: State = from_slice(&model.val).unwrap();
         assert_eq!(
             state,
             State {
-                verifier: addr.canonicalize("foo").unwrap(),
-                beneficiary: addr.canonicalize("bar").unwrap(),
-                funder: addr.canonicalize("creator").unwrap(),
+                verifier: precompiles.canonical_address("foo").unwrap(),
+                beneficiary: precompiles.canonical_address("bar").unwrap(),
+                funder: precompiles.canonical_address("creator").unwrap(),
             }
         );
     }
@@ -164,17 +164,17 @@ mod tests {
     #[test]
     fn fails_on_bad_init() {
         let mut store = MockStorage::new();
-        let addr = MockAddresser::new(20);
+        let precompiles = MockPrecompiles::new(20);
         let bad_msg = b"{}".to_vec();
-        let params = mock_params(&addr, "creator", &coin("1000", "earth"), &[]);
-        let res = init(&mut store, &addr, params, bad_msg);
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
+        let res = init(&mut store, &precompiles, params, bad_msg);
         assert_eq!(true, res.is_err());
     }
 
     #[test]
     fn proper_handle() {
         let mut store = MockStorage::new();
-        let addr = MockAddresser::new(20);
+        let precompiles = MockPrecompiles::new(20);
 
         // initialize the store
         let init_msg = to_vec(&InitMsg {
@@ -183,29 +183,29 @@ mod tests {
         })
         .unwrap();
         let init_params = mock_params(
-            &addr,
+            &precompiles,
             "creator",
             &coin("1000", "earth"),
             &coin("1000", "earth"),
         );
-        let init_res = init(&mut store, &addr, init_params, init_msg).unwrap();
+        let init_res = init(&mut store, &precompiles, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
         let handle_params = mock_params(
-            &addr,
+            &precompiles,
             "verifies",
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let handle_res = handle(&mut store, &addr, handle_params, Vec::new()).unwrap();
+        let handle_res = handle(&mut store, &precompiles, handle_params, Vec::new()).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
             msg,
             &CosmosMsg::Send {
-                from_address: addr.canonicalize("cosmos2contract").unwrap(),
-                to_address: addr.canonicalize("benefits").unwrap(),
+                from_address: precompiles.canonical_address("cosmos2contract").unwrap(),
+                to_address: precompiles.canonical_address("benefits").unwrap(),
                 amount: coin("1015", "earth"),
             }
         );
@@ -216,9 +216,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: addr.canonicalize("verifies").unwrap(),
-                beneficiary: addr.canonicalize("benefits").unwrap(),
-                funder: addr.canonicalize("creator").unwrap(),
+                verifier: precompiles.canonical_address("verifies").unwrap(),
+                beneficiary: precompiles.canonical_address("benefits").unwrap(),
+                funder: precompiles.canonical_address("creator").unwrap(),
             }
         );
     }
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     fn failed_handle() {
         let mut store = MockStorage::new();
-        let addr = MockAddresser::new(20);
+        let precompiles = MockPrecompiles::new(20);
 
         // initialize the store
         let init_msg = to_vec(&InitMsg {
@@ -235,17 +235,17 @@ mod tests {
         })
         .unwrap();
         let init_params = mock_params(
-            &addr,
+            &precompiles,
             "creator",
             &coin("1000", "earth"),
             &coin("1000", "earth"),
         );
-        let init_res = init(&mut store, &addr, init_params, init_msg).unwrap();
+        let init_res = init(&mut store, &precompiles, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_params = mock_params(&addr, "benefits", &[], &coin("1000", "earth"));
-        let handle_res = handle(&mut store, &addr, handle_params, Vec::new());
+        let handle_params = mock_params(&precompiles, "benefits", &[], &coin("1000", "earth"));
+        let handle_res = handle(&mut store, &precompiles, handle_params, Vec::new());
         assert!(handle_res.is_err());
 
         // state should not change
@@ -254,9 +254,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: addr.canonicalize("verifies").unwrap(),
-                beneficiary: addr.canonicalize("benefits").unwrap(),
-                funder: addr.canonicalize("creator").unwrap(),
+                verifier: precompiles.canonical_address("verifies").unwrap(),
+                beneficiary: precompiles.canonical_address("benefits").unwrap(),
+                funder: precompiles.canonical_address("creator").unwrap(),
             }
         );
     }
