@@ -4,23 +4,24 @@
 
 use std::vec::Vec;
 
-use cosmwasm::mock::MockStorage;
-use cosmwasm::traits::Storage;
+use cosmwasm::mock::{MockStorage, MockPrecompiles};
+use cosmwasm::traits::{Precompiles, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::instance::Instance;
 
-pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage> {
+pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockPrecompiles> {
     let storage = MockStorage::new();
-    Instance::from_code(wasm, storage).unwrap()
+    let precompiles = MockPrecompiles::new(20);
+    Instance::from_code(wasm, storage, precompiles).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<T: Storage + 'static>(
-    instance: &mut Instance<T>,
+pub fn init<T: Storage + 'static, U: Precompiles + 'static>(
+    instance: &mut Instance<T, U>,
     params: Params,
     msg: Vec<u8>,
 ) -> ContractResult {
@@ -30,8 +31,8 @@ pub fn init<T: Storage + 'static>(
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<T: Storage + 'static>(
-    instance: &mut Instance<T>,
+pub fn handle<T: Storage + 'static, U: Precompiles + 'static>(
+    instance: &mut Instance<T, U>,
     params: Params,
     msg: Vec<u8>,
 ) -> ContractResult {
@@ -41,6 +42,6 @@ pub fn handle<T: Storage + 'static>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<T: Storage + 'static>(instance: &mut Instance<T>, msg: Vec<u8>) -> QueryResult {
+pub fn query<T: Storage + 'static, U: Precompiles + 'static>(instance: &mut Instance<T, U>, msg: Vec<u8>) -> QueryResult {
     call_query(instance, &msg).unwrap()
 }

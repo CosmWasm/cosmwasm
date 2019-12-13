@@ -3,7 +3,7 @@ use std::vec::Vec;
 use crate::errors::Result;
 
 // Storage is access to the contracts persistent data store
-pub trait Storage {
+pub trait Storage: Clone {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
     fn set(&mut self, key: &[u8], value: &[u8]);
 }
@@ -17,7 +17,7 @@ pub trait Storage {
 //
 // We should consider if there is a way for modules to opt-in to only a subset of these
 // Precompiles for backwards compatibility in systems that don't have them all.
-pub trait Precompiles {
+pub trait Precompiles: Copy + Clone {
     fn canonical_address(&self, human: &str) -> Result<Vec<u8>>;
     fn human_address(&self, canonical: &[u8]) -> Result<String>;
 }

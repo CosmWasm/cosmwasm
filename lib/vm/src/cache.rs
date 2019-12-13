@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm::traits::Storage;
+use cosmwasm::traits::{Precompiles, Storage};
 
 use crate::backends::{backend, compile};
 use crate::errors::{Error, IntegrityErr, IoErr};
@@ -15,15 +15,16 @@ use crate::wasm_store::{load, save, wasm_hash};
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
 
-pub struct CosmCache<T: Storage + 'static> {
+pub struct CosmCache<T: Storage + 'static, U: Precompiles + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
-    instances: Option<LruCache<WasmHash, Instance<T>>>,
+    instances: Option<LruCache<WasmHash, Instance<T, U>>>,
 }
 
-impl<T> CosmCache<T>
+impl<T, U> CosmCache<T, U>
 where
     T: Storage + 'static,
+    U: Precompiles + 'static
 {
     /// new stores the data for cache under base_dir
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Result<Self, Error> {
@@ -64,7 +65,7 @@ where
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
-    pub fn get_instance(&mut self, id: &[u8], storage: T) -> Result<Instance<T>, Error> {
+    pub fn get_instance(&mut self, id: &[u8], storage: T, precompiles: U) -> Result<Instance<T, U>, Error> {
         let hash = WasmHash::generate(&id);
 
         // pop from lru cache if present
@@ -79,15 +80,15 @@ where
         // try from the module cache
         let res = self.modules.load_with_backend(hash, backend());
         if let Ok(module) = res {
-            return Instance::from_module(&module, storage);
+            return Instance::from_module(&module, storage, precompiles);
         }
 
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
-        Instance::from_code(&wasm, storage)
+        Instance::from_code(&wasm, storage, precompiles)
     }
 
-    pub fn store_instance(&mut self, id: &[u8], instance: Instance<T>) -> Option<T> {
+    pub fn store_instance(&mut self, id: &[u8], instance: Instance<T, U>) -> Option<T> {
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let storage = instance.take_storage();
@@ -116,10 +117,10 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
-        let mut instance = cache.get_instance(&id, storage).unwrap();
+        let precompiles = MockPrecompiles::new(20);
+        let mut instance = cache.get_instance(&id, storage, precompiles).unwrap();
 
         // run contract
-        let precompiles = MockPrecompiles::new(20);
         let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
@@ -135,10 +136,10 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
-        let mut instance = cache.get_instance(&id, storage).unwrap();
+        let precompiles = MockPrecompiles::new(20);
+        let mut instance = cache.get_instance(&id, storage, precompiles).unwrap();
 
         // init contract
-        let precompiles = MockPrecompiles::new(20);
         let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
@@ -170,7 +171,7 @@ mod test {
         let precompiles = MockPrecompiles::new(20);
 
         // init instance 1
-        let mut instance = cache.get_instance(&id, storage1).unwrap();
+        let mut instance = cache.get_instance(&id, storage1, precompiles).unwrap();
         let params = mock_params(&precompiles, "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
@@ -179,7 +180,7 @@ mod test {
         let storage1 = cache.store_instance(&id, instance).unwrap();
 
         // init instance 2
-        let mut instance = cache.get_instance(&id, storage2).unwrap();
+        let mut instance = cache.get_instance(&id, storage2, precompiles).unwrap();
         let params = mock_params(&precompiles, "owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
@@ -188,7 +189,7 @@ mod test {
         let storage2 = cache.store_instance(&id, instance).unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, storage2).unwrap();
+        let mut instance = cache.get_instance(&id, storage2, precompiles).unwrap();
         let params = mock_params(
             &precompiles,
             "bob",
@@ -202,7 +203,7 @@ mod test {
         let _ = cache.store_instance(&id, instance).unwrap();
 
         // run contract 1 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, storage1).unwrap();
+        let mut instance = cache.get_instance(&id, storage1, precompiles).unwrap();
         let params = mock_params(
             &precompiles,
             "sue",

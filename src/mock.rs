@@ -39,7 +39,7 @@ impl Storage for MockStorage {
 // MockPrecompiles zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct MockPrecompiles {
     canonical_length: usize,
 }

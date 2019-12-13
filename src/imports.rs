@@ -71,7 +71,7 @@ impl Storage for ExternalStorage {
     }
 }
 
-#[derive(Clone)]
+#[derive(Copy, Clone)]
 pub struct ExternalPrecompiles {}
 
 impl ExternalPrecompiles {

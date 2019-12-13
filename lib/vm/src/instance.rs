@@ -9,35 +9,40 @@ use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
 };
-use crate::errors::{Error, ResolveErr, RuntimeErr, WasmerErr};
+use crate::errors::{Result, ResolveErr, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::traits::Storage;
+use cosmwasm::traits::{Precompiles, Storage};
 
-pub struct Instance<T: Storage + 'static> {
+pub struct Instance<T: Storage + 'static, U: Precompiles + 'static> {
     instance: wasmer_runtime::Instance,
+    precompiles: U,
     storage: PhantomData<T>,
 }
 
-impl<T> Instance<T>
+impl<T, U> Instance<T, U>
 where
     T: Storage + 'static,
+    U: Precompiles + 'static,
 {
-    pub fn from_code(code: &[u8], storage: T) -> Result<Instance<T>, Error> {
+    pub fn from_code(code: &[u8], storage: T, precompiles: U) -> Result<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, storage)
+        Instance::from_module(&module, storage, precompiles)
     }
 
-    pub fn from_module(module: &Module, storage: T) -> Result<Instance<T>, Error> {
+    pub fn from_module(module: &Module, storage: T, precompiles: U) -> Result<Self> {
+
         let import_obj = imports! {
             || { setup_context::<T>() },
             "env" => {
                 "c_read" => func!(do_read::<T>),
                 "c_write" => func!(do_write::<T>),
+//                "c_canonical_address" =>
             },
         };
         let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         let res = Instance {
             instance,
+            precompiles,
             storage: PhantomData::<T>::default(),
         };
         res.leave_storage(Some(storage));
@@ -70,7 +75,7 @@ where
 
     // allocate memory in the instance and copies the given data in
     // returns the memory offset, to be later passed as an argument
-    pub fn allocate(&mut self, data: &[u8]) -> Result<u32, Error> {
+    pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<(u32), (u32)> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
@@ -79,13 +84,13 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub fn deallocate(&mut self, ptr: u32) -> Result<(), Error> {
+    pub fn deallocate(&mut self, ptr: u32) -> Result<()> {
         let dealloc: Func<(u32), ()> = self.func("deallocate")?;
         dealloc.call(ptr).context(RuntimeErr {})?;
         Ok(())
     }
 
-    pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>, Error>
+    pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
