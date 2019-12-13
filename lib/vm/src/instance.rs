@@ -1,15 +1,17 @@
 pub use wasmer_runtime::Func;
 
-use snafu::ResultExt;
 use std::marker::PhantomData;
-use wasmer_runtime::{func, imports, Module};
+use std::str::from_utf8;
+
+use snafu::ResultExt;
+use wasmer_runtime::{func, imports, Ctx, Module};
 use wasmer_runtime_core::typed_func::{Wasm, WasmTypeList};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
 };
-use crate::errors::{Result, ResolveErr, RuntimeErr, WasmerErr};
+use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
 use cosmwasm::traits::{Precompiles, Storage};
 
@@ -30,13 +32,34 @@ where
     }
 
     pub fn from_module(module: &Module, storage: T, precompiles: U) -> Result<Self> {
-
         let import_obj = imports! {
             || { setup_context::<T>() },
             "env" => {
                 "c_read" => func!(do_read::<T>),
                 "c_write" => func!(do_write::<T>),
-//                "c_canonical_address" =>
+                "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
+                    let human = read_memory(ctx, human_ptr);
+                    // TODO: cleanup... now returns -2 on utf8 error, -1 on canonical_address error
+                    let human_str = from_utf8(&human);
+                    if human_str.is_err() {
+                        return -2;
+                    }
+                    match precompiles.canonical_address(human_str.unwrap()) {
+                        Ok(canon) => { write_memory(ctx, canonical_ptr, &canon); canon.len() as i32 },
+                        Err(_) => -1,
+                    }
+                }),
+                "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
+                    let canon = read_memory(ctx, canonical_ptr);
+                    match precompiles.human_address(&canon) {
+                        Ok(human) => {
+                            let bz = human.as_bytes();
+                            write_memory(ctx, human_ptr, bz);
+                            bz.len() as i32
+                        },
+                        Err(_) => -1,
+                    }
+                }),
             },
         };
         let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
@@ -108,7 +131,7 @@ where
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::mock_instance;
-    use cosmwasm::mock::{mock_params};
+    use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -159,7 +182,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 36_914);
+        assert_eq!(init_used, 66_190);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -176,7 +199,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 70_148);
+        assert_eq!(handle_used, 114_644);
     }
 
     #[test]
@@ -218,6 +241,6 @@ mod test {
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 49_395);
+        assert_eq!(query_used, 77_403);
     }
 }
