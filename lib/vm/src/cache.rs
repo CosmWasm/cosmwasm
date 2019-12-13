@@ -105,8 +105,8 @@ mod test {
     use tempfile::TempDir;
 
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::MockStorage;
-    use cosmwasm::types::{coin, mock_params};
+    use cosmwasm::mock::{mock_params, MockPrecompiles, MockStorage};
+    use cosmwasm::types::coin;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -119,7 +119,8 @@ mod test {
         let mut instance = cache.get_instance(&id, storage).unwrap();
 
         // run contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let precompiles = MockPrecompiles::new(20);
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
@@ -137,14 +138,20 @@ mod test {
         let mut instance = cache.get_instance(&id, storage).unwrap();
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let precompiles = MockPrecompiles::new(20);
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
 
         // run contract - just sanity check - results validate in contract unit tests
-        let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let params = mock_params(
+            &precompiles,
+            "verifies",
+            &coin("15", "earth"),
+            &coin("1015", "earth"),
+        );
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -160,10 +167,11 @@ mod test {
         // these differentiate the two instances of the same contract
         let storage1 = MockStorage::new();
         let storage2 = MockStorage::new();
+        let precompiles = MockPrecompiles::new(20);
 
         // init instance 1
         let mut instance = cache.get_instance(&id, storage1).unwrap();
-        let params = mock_params("owner1", &coin("1000", "earth"), &[]);
+        let params = mock_params(&precompiles, "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -172,7 +180,7 @@ mod test {
 
         // init instance 2
         let mut instance = cache.get_instance(&id, storage2).unwrap();
-        let params = mock_params("owner2", &coin("500", "earth"), &[]);
+        let params = mock_params(&precompiles, "owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -181,7 +189,12 @@ mod test {
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, storage2).unwrap();
-        let params = mock_params("bob", &coin("15", "earth"), &coin("1015", "earth"));
+        let params = mock_params(
+            &precompiles,
+            "bob",
+            &coin("15", "earth"),
+            &coin("1015", "earth"),
+        );
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -190,7 +203,12 @@ mod test {
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, storage1).unwrap();
-        let params = mock_params("sue", &coin("15", "earth"), &coin("1015", "earth"));
+        let params = mock_params(
+            &precompiles,
+            "sue",
+            &coin("15", "earth"),
+            &coin("1015", "earth"),
+        );
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;

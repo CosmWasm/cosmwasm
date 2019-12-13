@@ -84,7 +84,7 @@ impl Precompiles for MockPrecompiles {
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
 pub fn mock_params<T: Precompiles>(
-    addr: &T,
+    precompiles: &T,
     signer: &str,
     sent: &[Coin],
     balance: &[Coin],
@@ -96,7 +96,7 @@ pub fn mock_params<T: Precompiles>(
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            signer: addr.canonical_address(signer).unwrap(),
+            signer: precompiles.canonical_address(signer).unwrap(),
             sent_funds: if sent.is_empty() {
                 None
             } else {
@@ -104,7 +104,7 @@ pub fn mock_params<T: Precompiles>(
             },
         },
         contract: ContractInfo {
-            address: addr.canonical_address("cosmos2contract").unwrap(),
+            address: precompiles.canonical_address("cosmos2contract").unwrap(),
             balance: if balance.is_empty() {
                 None
             } else {

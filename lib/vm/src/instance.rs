@@ -98,7 +98,8 @@ where
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::mock_instance;
-    use cosmwasm::types::{coin, mock_params};
+    use cosmwasm::mock::{mock_params, MockPrecompiles};
+    use cosmwasm::types::coin;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -140,7 +141,8 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let precompiles = MockPrecompiles::new(20);
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -152,7 +154,12 @@ mod test {
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
-        let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let params = mock_params(
+            &precompiles,
+            "verifies",
+            &coin("15", "earth"),
+            &coin("1015", "earth"),
+        );
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -171,7 +178,8 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let precompiles = MockPrecompiles::new(20);
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         // this call will panic on out-of-gas
         // TODO: improve error handling through-out the whole stack
@@ -187,7 +195,8 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let precompiles = MockPrecompiles::new(20);
+        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
 
