@@ -24,7 +24,7 @@ pub struct CosmCache<T: Storage + 'static, U: Precompiles + 'static> {
 impl<T, U> CosmCache<T, U>
 where
     T: Storage + 'static,
-    U: Precompiles + 'static
+    U: Precompiles + 'static,
 {
     /// new stores the data for cache under base_dir
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Result<Self, Error> {
@@ -65,7 +65,12 @@ where
     }
 
     /// get instance returns a wasmer Instance tied to a previously saved wasm
-    pub fn get_instance(&mut self, id: &[u8], storage: T, precompiles: U) -> Result<Instance<T, U>, Error> {
+    pub fn get_instance(
+        &mut self,
+        id: &[u8],
+        storage: T,
+        precompiles: U,
+    ) -> Result<Instance<T, U>, Error> {
         let hash = WasmHash::generate(&id);
 
         // pop from lru cache if present

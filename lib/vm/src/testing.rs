@@ -4,7 +4,7 @@
 
 use std::vec::Vec;
 
-use cosmwasm::mock::{MockStorage, MockPrecompiles};
+use cosmwasm::mock::{MockPrecompiles, MockStorage};
 use cosmwasm::traits::{Precompiles, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
@@ -42,6 +42,9 @@ pub fn handle<T: Storage + 'static, U: Precompiles + 'static>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<T: Storage + 'static, U: Precompiles + 'static>(instance: &mut Instance<T, U>, msg: Vec<u8>) -> QueryResult {
+pub fn query<T: Storage + 'static, U: Precompiles + 'static>(
+    instance: &mut Instance<T, U>,
+    msg: Vec<u8>,
+) -> QueryResult {
     call_query(instance, &msg).unwrap()
 }
