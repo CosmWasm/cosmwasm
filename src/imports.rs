@@ -8,7 +8,7 @@ use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8Err};
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
-use crate::traits::{Addresser, Storage};
+use crate::traits::{Precompiles, Storage};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -16,15 +16,18 @@ static MAX_READ: usize = 2000;
 // this should be plenty for any address representation
 static ADDR_BUFFER: usize = 72;
 
+// TODO: use feature switches to enable precompile dependencies in the future,
+// so contracts that need less
 extern "C" {
+    // these are needed for storage
     fn c_read(key: *const c_void, value: *mut c_void) -> i32;
     fn c_write(key: *const c_void, value: *mut c_void);
 
     // we define two more functions that must be available...
     // they take a string and return to a preallocated buffer
     // returns negative on error, length of returned data on success
-    fn canonical_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn c_canonical_address(human: *const c_void, canonical: *mut c_void) -> i32;
+    fn c_human_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
 
 #[derive(Clone)]
@@ -69,21 +72,21 @@ impl Storage for ExternalStorage {
 }
 
 #[derive(Clone)]
-pub struct ExternalAddresser {}
+pub struct ExternalPrecompiles {}
 
-impl ExternalAddresser {
-    pub fn new() -> ExternalAddresser {
-        ExternalAddresser {}
+impl ExternalPrecompiles {
+    pub fn new() -> ExternalPrecompiles {
+        ExternalPrecompiles {}
     }
 }
 
-impl Addresser for ExternalAddresser {
-    fn canonicalize(&self, human: &str) -> Result<Vec<u8>> {
+impl Precompiles for ExternalPrecompiles {
+    fn canonical_address(&self, human: &str) -> Result<Vec<u8>> {
         let send = build_slice(human.as_bytes());
         let send_ptr = &*send as *const Slice as *const c_void;
         let canon = alloc(ADDR_BUFFER);
 
-        let read = unsafe { canonical_address(send_ptr, canon) };
+        let read = unsafe { c_canonical_address(send_ptr, canon) };
         if read < 0 {
             return ContractErr {
                 msg: "canonical_address returned error",
@@ -96,12 +99,12 @@ impl Addresser for ExternalAddresser {
         Ok(out)
     }
 
-    fn humanize(&self, canonical: &[u8]) -> Result<String> {
+    fn human_address(&self, canonical: &[u8]) -> Result<String> {
         let send = build_slice(canonical);
         let send_ptr = &*send as *const Slice as *const c_void;
         let human = alloc(ADDR_BUFFER);
 
-        let read = unsafe { humanize_address(send_ptr, human) };
+        let read = unsafe { c_human_address(send_ptr, human) };
         if read < 0 {
             return ContractErr {
                 msg: "humanize_address returned error",

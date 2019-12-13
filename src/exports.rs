@@ -10,7 +10,7 @@ use std::os::raw::c_void;
 use std::vec::Vec;
 
 use crate::errors::{Error, ParseErr, SerializeErr};
-use crate::imports::{ExternalAddresser, ExternalStorage};
+use crate::imports::{ExternalPrecompiles, ExternalStorage};
 use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::types::{ContractResult, Params, QueryResponse, QueryResult, Response};
@@ -35,7 +35,7 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 pub fn do_init<T: Display + From<Error>>(
     init_fn: &dyn Fn(
         &mut ExternalStorage,
-        &ExternalAddresser,
+        &ExternalPrecompiles,
         Params,
         Vec<u8>,
     ) -> Result<Response, T>,
@@ -52,7 +52,7 @@ pub fn do_init<T: Display + From<Error>>(
 pub fn do_handle<T: Display + From<Error>>(
     handle_fn: &dyn Fn(
         &mut ExternalStorage,
-        &ExternalAddresser,
+        &ExternalPrecompiles,
         Params,
         Vec<u8>,
     ) -> Result<Response, T>,
@@ -67,7 +67,7 @@ pub fn do_handle<T: Display + From<Error>>(
 
 // do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: Display + From<Error>>(
-    query_fn: &dyn Fn(&ExternalStorage, &ExternalAddresser, Vec<u8>) -> Result<QueryResponse, T>,
+    query_fn: &dyn Fn(&ExternalStorage, &ExternalPrecompiles, Vec<u8>) -> Result<QueryResponse, T>,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
     match _do_query(query_fn, msg_ptr) {
@@ -79,7 +79,7 @@ pub fn do_query<T: Display + From<Error>>(
 fn _do_init<T: Display + From<Error>>(
     init_fn: &dyn Fn(
         &mut ExternalStorage,
-        &ExternalAddresser,
+        &ExternalPrecompiles,
         Params,
         Vec<u8>,
     ) -> Result<Response, T>,
@@ -91,8 +91,8 @@ fn _do_init<T: Display + From<Error>>(
 
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
     let mut store = ExternalStorage::new();
-    let addr = ExternalAddresser::new();
-    let res = init_fn(&mut store, &addr, params, msg)?;
+    let precompiles = ExternalPrecompiles::new();
+    let res = init_fn(&mut store, &precompiles, params, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
         kind: "ContractResult",
     })?;
@@ -102,7 +102,7 @@ fn _do_init<T: Display + From<Error>>(
 fn _do_handle<T: Display + From<Error>>(
     handle_fn: &dyn Fn(
         &mut ExternalStorage,
-        &ExternalAddresser,
+        &ExternalPrecompiles,
         Params,
         Vec<u8>,
     ) -> Result<Response, T>,
@@ -114,8 +114,8 @@ fn _do_handle<T: Display + From<Error>>(
 
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
     let mut store = ExternalStorage::new();
-    let addr = ExternalAddresser::new();
-    let res = handle_fn(&mut store, &addr, params, msg)?;
+    let precompiles = ExternalPrecompiles::new();
+    let res = handle_fn(&mut store, &precompiles, params, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
         kind: "ContractResult",
     })?;
@@ -123,14 +123,14 @@ fn _do_handle<T: Display + From<Error>>(
 }
 
 fn _do_query<T: Display + From<Error>>(
-    query_fn: &dyn Fn(&ExternalStorage, &ExternalAddresser, Vec<u8>) -> Result<QueryResponse, T>,
+    query_fn: &dyn Fn(&ExternalStorage, &ExternalPrecompiles, Vec<u8>) -> Result<QueryResponse, T>,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, T> {
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let store = ExternalStorage::new();
-    let addr = ExternalAddresser::new();
-    let res = query_fn(&store, &addr, msg)?;
+    let precompiles = ExternalPrecompiles::new();
+    let res = query_fn(&store, &precompiles, msg)?;
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
         kind: "QueryResult",
     })?;

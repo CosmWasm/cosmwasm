@@ -4,7 +4,7 @@ use std::str::from_utf8;
 use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8Err};
-use crate::traits::{Addresser, Storage};
+use crate::traits::{Precompiles, Storage};
 use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
 
 #[derive(Clone)]
@@ -36,28 +36,28 @@ impl Storage for MockStorage {
     }
 }
 
-// MockAddresser zero pads all human addresses to make them fit the canonical_length
+// MockPrecompiles zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
 #[derive(Clone)]
-pub struct MockAddresser {
+pub struct MockPrecompiles {
     canonical_length: usize,
 }
 
-impl MockAddresser {
+impl MockPrecompiles {
     pub fn new(canonical_length: usize) -> Self {
-        MockAddresser { canonical_length }
+        MockPrecompiles { canonical_length }
     }
 }
 
-impl Default for MockAddresser {
+impl Default for MockPrecompiles {
     fn default() -> Self {
         Self::new(20)
     }
 }
 
-impl Addresser for MockAddresser {
-    fn canonicalize(&self, human: &str) -> Result<Vec<u8>> {
+impl Precompiles for MockPrecompiles {
+    fn canonical_address(&self, human: &str) -> Result<Vec<u8>> {
         if human.len() > self.canonical_length {
             return ContractErr {
                 msg: "human encoding too long",
@@ -72,7 +72,7 @@ impl Addresser for MockAddresser {
         Ok(out)
     }
 
-    fn humanize(&self, canonical: &[u8]) -> Result<String> {
+    fn human_address(&self, canonical: &[u8]) -> Result<String> {
         // remove trailing 0's (TODO: fix this - but fine for first tests)
         let trimmed: Vec<u8> = canonical.iter().cloned().filter(|&x| x != 0).collect();
         // convert to utf8
@@ -83,7 +83,7 @@ impl Addresser for MockAddresser {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params<T: Addresser>(
+pub fn mock_params<T: Precompiles>(
     addr: &T,
     signer: &str,
     sent: &[Coin],
@@ -96,7 +96,7 @@ pub fn mock_params<T: Addresser>(
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            signer: addr.canonicalize(signer).unwrap(),
+            signer: addr.canonical_address(signer).unwrap(),
             sent_funds: if sent.is_empty() {
                 None
             } else {
@@ -104,7 +104,7 @@ pub fn mock_params<T: Addresser>(
             },
         },
         contract: ContractInfo {
-            address: addr.canonicalize("cosmos2contract").unwrap(),
+            address: addr.canonical_address("cosmos2contract").unwrap(),
             balance: if balance.is_empty() {
                 None
             } else {
@@ -129,22 +129,22 @@ mod test {
 
     #[test]
     fn flip_addresses() {
-        let addr = MockAddresser::new(20);
+        let precompiles = MockPrecompiles::new(20);
         let human = "shorty";
-        let canon = addr.canonicalize(&human).unwrap();
+        let canon = precompiles.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
         assert_eq!(&canon[0..6], human.as_bytes());
         assert_eq!(&canon[6..], &[0u8; 14]);
 
-        let recovered = addr.humanize(&canon).unwrap();
+        let recovered = precompiles.human_address(&canon).unwrap();
         assert_eq!(human, &recovered);
     }
 
     #[test]
     #[should_panic]
     fn canonical_length_enforced() {
-        let addr = MockAddresser::new(10);
+        let precompiles = MockPrecompiles::new(10);
         let human = "longer-than-10";
-        let _ = addr.canonicalize(&human).unwrap();
+        let _ = precompiles.canonical_address(&human).unwrap();
     }
 }
