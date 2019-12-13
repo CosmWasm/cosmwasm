@@ -121,7 +121,7 @@ mod test {
         let mut instance = cache.get_instance(&id, storage, precompiles).unwrap();
 
         // run contract
-        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
@@ -140,7 +140,7 @@ mod test {
         let mut instance = cache.get_instance(&id, storage, precompiles).unwrap();
 
         // init contract
-        let params = mock_params(&precompiles, "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -148,7 +148,7 @@ mod test {
 
         // run contract - just sanity check - results validate in contract unit tests
         let params = mock_params(
-            &precompiles,
+            instance.api(),
             "verifies",
             &coin("15", "earth"),
             &coin("1015", "earth"),
@@ -172,7 +172,7 @@ mod test {
 
         // init instance 1
         let mut instance = cache.get_instance(&id, storage1, precompiles).unwrap();
-        let params = mock_params(&precompiles, "owner1", &coin("1000", "earth"), &[]);
+        let params = mock_params(instance.api(), "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -181,7 +181,7 @@ mod test {
 
         // init instance 2
         let mut instance = cache.get_instance(&id, storage2, precompiles).unwrap();
-        let params = mock_params(&precompiles, "owner2", &coin("500", "earth"), &[]);
+        let params = mock_params(instance.api(), "owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -191,7 +191,7 @@ mod test {
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, storage2, precompiles).unwrap();
         let params = mock_params(
-            &precompiles,
+            instance.api(),
             "bob",
             &coin("15", "earth"),
             &coin("1015", "earth"),
@@ -205,7 +205,7 @@ mod test {
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, storage1, precompiles).unwrap();
         let params = mock_params(
-            &precompiles,
+            instance.api(),
             "sue",
             &coin("15", "earth"),
             &coin("1015", "earth"),
