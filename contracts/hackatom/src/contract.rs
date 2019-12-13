@@ -64,7 +64,7 @@ pub fn init<T: Storage, U: Precompiles>(
 
 pub fn handle<T: Storage, U: Precompiles>(
     store: &mut T,
-    _addr: &U,
+    precompiles: &U,
     params: Params,
     _: Vec<u8>,
 ) -> Result<Response> {
@@ -75,12 +75,12 @@ pub fn handle<T: Storage, U: Precompiles>(
 
     if params.message.signer == state.verifier {
         let res = Response {
+            log: Some(format!("released funds to {}", precompiles.human_address(&state.beneficiary)?)),
             messages: vec![CosmosMsg::Send {
                 from_address: params.contract.address,
                 to_address: state.beneficiary,
                 amount: params.contract.balance.unwrap_or_default(),
             }],
-            log: Some("released funds!".to_string()),
             data: None,
         };
         Ok(res)
@@ -209,6 +209,7 @@ mod tests {
                 amount: coin("1015", "earth"),
             }
         );
+        assert_eq!(Some("released funds to benefits".to_string()), handle_res.log);
 
         // it worked, let's check the state
         let data = store.get(CONFIG_KEY).expect("no data stored");

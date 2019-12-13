@@ -119,6 +119,7 @@ fn proper_handle() {
             amount: coin("1015", "earth"),
         }
     );
+    assert_eq!(Some("released funds to benefits".to_string()), handle_res.log);
 
     // it worked, let's check the state
     let precompiles = store.api();
