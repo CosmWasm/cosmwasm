@@ -19,8 +19,8 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<T: Storage + 'static, U: Api + 'static>(
-    instance: &mut Instance<T, U>,
+pub fn init<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
     params: Params,
     msg: Vec<u8>,
 ) -> ContractResult {
@@ -30,8 +30,8 @@ pub fn init<T: Storage + 'static, U: Api + 'static>(
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<T: Storage + 'static, U: Api + 'static>(
-    instance: &mut Instance<T, U>,
+pub fn handle<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
     params: Params,
     msg: Vec<u8>,
 ) -> ContractResult {
@@ -41,8 +41,8 @@ pub fn handle<T: Storage + 'static, U: Api + 'static>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<T: Storage + 'static, U: Api + 'static>(
-    instance: &mut Instance<T, U>,
+pub fn query<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
     msg: Vec<u8>,
 ) -> QueryResult {
     call_query(instance, &msg).unwrap()

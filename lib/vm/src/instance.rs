@@ -179,7 +179,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66_190);
+        assert_eq!(init_used, 66_185);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -196,7 +196,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 114_644);
+        assert_eq!(handle_used, 117_769);
     }
 
     #[test]
@@ -238,6 +238,6 @@ mod test {
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 77_403);
+        assert_eq!(query_used, 77_400);
     }
 }
