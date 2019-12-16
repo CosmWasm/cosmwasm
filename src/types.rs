@@ -2,6 +2,29 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+pub struct HumanAddr(pub String);
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+pub struct CanonicalAddr(pub Vec<u8>);
+
+impl HumanAddr {
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+    pub fn as_str(&self) -> &str {
+        &self.0
+    }
+    pub fn len(&self) -> usize { self.0.len() }
+}
+
+impl CanonicalAddr {
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0
+    }
+    pub fn len(&self) -> usize { self.0.len() }
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Params {
     pub block: BlockInfo,
     pub message: MessageInfo,
@@ -18,14 +41,14 @@ pub struct BlockInfo {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
-    pub signer: Vec<u8>,
+    pub signer: CanonicalAddr,
     // go likes to return null for empty array, make sure we can parse it (use option)
     pub sent_funds: Option<Vec<Coin>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct ContractInfo {
-    pub address: Vec<u8>,
+    pub address: CanonicalAddr,
     // go likes to return null for empty array, make sure we can parse it (use option)
     pub balance: Option<Vec<Coin>>,
 }
@@ -41,14 +64,14 @@ pub struct Coin {
 pub enum CosmosMsg {
     // this moves tokens in the underlying sdk
     Send {
-        from_address: Vec<u8>,
-        to_address: Vec<u8>,
+        from_address: HumanAddr,
+        to_address: HumanAddr,
         amount: Vec<Coin>,
     },
     // this dispatches a call to another contract at a known address (with known ABI)
     // msg is the json-encoded HandleMsg struct
     Contract {
-        contract_addr: Vec<u8>,
+        contract_addr: HumanAddr,
         msg: String,
         send: Vec<Coin>,
     },
@@ -157,8 +180,8 @@ mod test {
     fn can_deser_ok_result() {
         let send = ContractResult::Ok(Response {
             messages: vec![CosmosMsg::Send {
-                from_address: b"me".to_vec(),
-                to_address: b"you".to_vec(),
+                from_address: HumanAddr("me".to_string()),
+                to_address: HumanAddr("you".to_string()),
                 amount: coin("1015", "earth"),
             }],
             log: Some("released funds!".to_string()),
