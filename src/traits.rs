@@ -1,6 +1,7 @@
 use std::vec::Vec;
 
 use crate::errors::Result;
+use crate::types::{HumanAddr, CanonicalAddr};
 
 // Extern holds all external dependencies of the contract,
 // designed to allow easy dependency injection at runtime
@@ -31,6 +32,6 @@ pub trait Storage: ReadonlyStorage {
 // We should consider if there is a way for modules to opt-in to only a subset of these
 // Api for backwards compatibility in systems that don't have them all.
 pub trait Api: Copy + Clone {
-    fn canonical_address(&self, human: &str) -> Result<Vec<u8>>;
-    fn human_address(&self, canonical: &[u8]) -> Result<String>;
+    fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr>;
+    fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
 }
