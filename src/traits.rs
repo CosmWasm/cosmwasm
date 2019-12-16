@@ -4,6 +4,7 @@ use crate::errors::Result;
 
 // Extern holds all external dependencies of the contract,
 // designed to allow easy dependency injection at runtime
+#[derive(Clone)]
 pub struct Extern<S: Storage, A: Api> {
     pub storage: S,
     pub api: A,

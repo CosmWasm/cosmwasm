@@ -4,7 +4,7 @@
 
 use std::vec::Vec;
 
-use cosmwasm::mock::{MockApi, MockStorage};
+use cosmwasm::mock::{dependencies, MockApi, MockStorage};
 use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
@@ -12,9 +12,8 @@ use crate::calls::{call_handle, call_init, call_query};
 use crate::instance::Instance;
 
 pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
-    let storage = MockStorage::new();
-    let precompiles = MockApi::new(20);
-    Instance::from_code(wasm, storage, precompiles).unwrap()
+    let deps = dependencies(20);
+    Instance::from_code(wasm, deps).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.

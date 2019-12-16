@@ -44,7 +44,7 @@ pub fn call_query_raw<T: Storage + 'static, U: Api + 'static>(
 ) -> Result<Vec<u8>, Error> {
     // we cannot resuse the call_raw functionality as it assumes a param variable... just do it inline
     let msg_offset = instance.allocate(msg)?;
-    let func: Func<(u32), (u32)> = instance.func("query")?;
+    let func: Func<u32, u32> = instance.func("query")?;
     let res_offset = func.call(msg_offset).context(RuntimeErr {})?;
     let data = instance.memory(res_offset);
     // free return value in wasm (arguments were freed in wasm code)
@@ -77,7 +77,7 @@ fn call_raw<T: Storage + 'static, U: Api + 'static>(
     let param_offset = instance.allocate(params)?;
     let msg_offset = instance.allocate(msg)?;
 
-    let func: Func<(u32, u32), (u32)> = instance.func(name)?;
+    let func: Func<(u32, u32), u32> = instance.func(name)?;
     let res_offset = func.call(param_offset, msg_offset).context(RuntimeErr {})?;
 
     let data = instance.memory(res_offset);

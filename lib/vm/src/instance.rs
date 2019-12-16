@@ -1,6 +1,5 @@
 pub use wasmer_runtime::Func;
 
-use std::marker::PhantomData;
 use std::str::from_utf8;
 
 use snafu::ResultExt;
@@ -13,30 +12,31 @@ use crate::context::{
 };
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::traits::{Api, Storage};
+use cosmwasm::traits::{Api, Extern, Storage};
 
-pub struct Instance<T: Storage + 'static, U: Api + 'static> {
+pub struct Instance<S: Storage + 'static, A: Api + 'static> {
     instance: wasmer_runtime::Instance,
-    precompiles: U,
-    storage: PhantomData<T>,
+    deps: Extern<S, A>,
 }
 
-impl<T, U> Instance<T, U>
+impl<S, A> Instance<S, A>
 where
-    T: Storage + 'static,
-    U: Api + 'static,
+    S: Storage + 'static,
+    A: Api + 'static,
 {
-    pub fn from_code(code: &[u8], storage: T, precompiles: U) -> Result<Self> {
+    pub fn from_code(code: &[u8], deps: Extern<S, A>) -> Result<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, storage, precompiles)
+        Instance::from_module(&module, deps)
     }
 
-    pub fn from_module(module: &Module, storage: T, precompiles: U) -> Result<Self> {
+    pub fn from_module(module: &Module, deps: Extern<S, A>) -> Result<Self> {
+        // copy this so it can be moved into the closures, without pulling in deps
+        let api = deps.api;
         let import_obj = imports! {
-            || { setup_context::<T>() },
+            || { setup_context::<S>() },
             "env" => {
-                "c_read" => func!(do_read::<T>),
-                "c_write" => func!(do_write::<T>),
+                "c_read" => func!(do_read::<S>),
+                "c_write" => func!(do_write::<S>),
                 "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
                     let human = read_memory(ctx, human_ptr);
                     // TODO: cleanup... now returns -2 on utf8 error, -1 on canonical_address error
@@ -44,14 +44,14 @@ where
                     if human_str.is_err() {
                         return -2;
                     }
-                    match precompiles.canonical_address(human_str.unwrap()) {
+                    match api.canonical_address(human_str.unwrap()) {
                         Ok(canon) => { write_memory(ctx, canonical_ptr, &canon); canon.len() as i32 },
                         Err(_) => -1,
                     }
                 }),
                 "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     let canon = read_memory(ctx, canonical_ptr);
-                    match precompiles.human_address(&canon) {
+                    match api.human_address(&canon) {
                         Ok(human) => {
                             let bz = human.as_bytes();
                             write_memory(ctx, human_ptr, bz);
@@ -65,10 +65,9 @@ where
         let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         let res = Instance {
             instance,
-            precompiles,
-            storage: PhantomData::<T>::default(),
+            deps: deps.clone(),
         };
-        res.leave_storage(Some(storage));
+        res.leave_storage(Some(deps.storage));
         Ok(res)
     }
 
@@ -80,15 +79,15 @@ where
         set_gas(&mut self.instance, gas)
     }
 
-    pub fn with_storage<F: FnMut(&mut T)>(&self, func: F) {
+    pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
         with_storage_from_context(self.instance.context(), func)
     }
 
-    pub fn take_storage(&self) -> Option<T> {
+    pub fn take_storage(&self) -> Option<S> {
         take_storage(self.instance.context())
     }
 
-    pub fn leave_storage(&self, storage: Option<T>) {
+    pub fn leave_storage(&self, storage: Option<S>) {
         leave_storage(self.instance.context(), storage);
     }
 
@@ -99,7 +98,7 @@ where
     // allocate memory in the instance and copies the given data in
     // returns the memory offset, to be later passed as an argument
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
-        let alloc: Func<(u32), (u32)> = self.func("allocate")?;
+        let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
         Ok(ptr)
@@ -108,7 +107,7 @@ where
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub fn deallocate(&mut self, ptr: u32) -> Result<()> {
-        let dealloc: Func<(u32), ()> = self.func("deallocate")?;
+        let dealloc: Func<u32, ()> = self.func("deallocate")?;
         dealloc.call(ptr).context(RuntimeErr {})?;
         Ok(())
     }
@@ -122,8 +121,8 @@ where
     }
 
     // this is useful for setting up mock_params among other things
-    pub fn api(&self) -> &U {
-        &self.precompiles
+    pub fn api(&self) -> &A {
+        &self.deps.api
     }
 }
 
