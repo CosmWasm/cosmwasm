@@ -1,5 +1,5 @@
-use std::str::from_utf8;
 use std::marker::PhantomData;
+use std::str::from_utf8;
 
 use snafu::ResultExt;
 pub use wasmer_runtime::Func;
@@ -68,7 +68,7 @@ where
         let res = Instance {
             instance,
             api,
-            storage: PhantomData::<S>{},
+            storage: PhantomData::<S> {},
         };
         res.leave_storage(Some(deps.storage));
         Ok(res)
@@ -171,7 +171,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -184,7 +184,7 @@ mod test {
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
         let params = mock_params(
-            instance.api(),
+            &instance.api,
             "verifies",
             &coin("15", "earth"),
             &coin("1015", "earth"),
@@ -207,7 +207,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         // this call will panic on out-of-gas
         // TODO: improve error handling through-out the whole stack
@@ -223,7 +223,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
 

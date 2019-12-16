@@ -92,7 +92,7 @@ where
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let storage = instance.take_storage();
-            let api = instance.api.clone();
+            let api = instance.api; // copy it
             cache.put(hash, instance);
             if let Some(storage) = storage {
                 return Some(Extern { storage, api });
@@ -122,7 +122,7 @@ mod test {
         let mut instance = cache.get_instance(&id, deps).unwrap();
 
         // run contract
-        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
@@ -140,7 +140,7 @@ mod test {
         let mut instance = cache.get_instance(&id, deps).unwrap();
 
         // init contract
-        let params = mock_params(instance.api(), "creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -148,7 +148,7 @@ mod test {
 
         // run contract - just sanity check - results validate in contract unit tests
         let params = mock_params(
-            instance.api(),
+            &instance.api,
             "verifies",
             &coin("15", "earth"),
             &coin("1015", "earth"),
@@ -171,7 +171,7 @@ mod test {
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1).unwrap();
-        let params = mock_params(instance.api(), "owner1", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -180,7 +180,7 @@ mod test {
 
         // init instance 2
         let mut instance = cache.get_instance(&id, deps2).unwrap();
-        let params = mock_params(instance.api(), "owner2", &coin("500", "earth"), &[]);
+        let params = mock_params(&instance.api, "owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -190,7 +190,7 @@ mod test {
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps2).unwrap();
         let params = mock_params(
-            instance.api(),
+            &instance.api,
             "bob",
             &coin("15", "earth"),
             &coin("1015", "earth"),
@@ -204,7 +204,7 @@ mod test {
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps1).unwrap();
         let params = mock_params(
-            instance.api(),
+            &instance.api,
             "sue",
             &coin("15", "earth"),
             &coin("1015", "earth"),
