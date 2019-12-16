@@ -7,7 +7,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
 use cosmwasm::query::perform_raw_query;
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::traits::{Extern, Api, Storage};
+use cosmwasm::traits::{Api, Extern, Storage};
 use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -73,7 +73,10 @@ pub fn handle<S: Storage, A: Api>(
 
     if params.message.signer == state.verifier {
         let res = Response {
-            log: Some(format!("released funds to {}", deps.api.human_address(&state.beneficiary)?)),
+            log: Some(format!(
+                "released funds to {}",
+                deps.api.human_address(&state.beneficiary)?
+            )),
             messages: vec![CosmosMsg::Send {
                 from_address: params.contract.address,
                 to_address: state.beneficiary,
@@ -87,10 +90,7 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-pub fn query<S: Storage, A: Api>(
-    deps: &Extern<S, A>,
-    msg: Vec<u8>,
-) -> Result<QueryResponse> {
+pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: Vec<u8>) -> Result<QueryResponse> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     match msg {
         QueryMsg::Raw(raw) => perform_raw_query(&deps.storage, raw),
@@ -100,7 +100,7 @@ pub fn query<S: Storage, A: Api>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::mock::{mock_params, dependencies};
+    use cosmwasm::mock::{dependencies, mock_params};
     use cosmwasm::types::coin;
 
     #[test]
@@ -202,7 +202,10 @@ mod tests {
                 amount: coin("1015", "earth"),
             }
         );
-        assert_eq!(Some("released funds to benefits".to_string()), handle_res.log);
+        assert_eq!(
+            Some("released funds to benefits".to_string()),
+            handle_res.log
+        );
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");

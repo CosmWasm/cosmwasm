@@ -27,6 +27,12 @@ where
     A: Api + 'static,
 {
     /// new stores the data for cache under base_dir
+    ///
+    /// # Safety
+    ///
+    /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
+    /// assumes the disk contents are correct, and there's no way to ensure the artifacts
+    //  stored in the cache haven't been corrupted or tampered with.
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Result<Self, Error> {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);

@@ -1,4 +1,4 @@
-use cosmwasm::mock::{mock_params};
+use cosmwasm::mock::mock_params;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{coin, CosmosMsg};
@@ -68,7 +68,7 @@ fn proper_initialization() {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     })
-        .unwrap();
+    .unwrap();
     let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
     let res = init(&mut deps, params, msg).unwrap();
     assert_eq!(0, res.messages.len());
@@ -95,7 +95,7 @@ fn proper_init_and_query() {
         verifier: String::from("foo"),
         beneficiary: String::from("bar"),
     })
-        .unwrap();
+    .unwrap();
     let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
     let _res = init(&mut deps, params, msg).unwrap();
 
@@ -134,7 +134,7 @@ fn proper_handle() {
         verifier: String::from("verifies"),
         beneficiary: String::from("benefits"),
     })
-        .unwrap();
+    .unwrap();
     let init_params = mock_params(
         &deps.api,
         "creator",
@@ -162,7 +162,10 @@ fn proper_handle() {
             amount: coin("1015", "earth"),
         }
     );
-    assert_eq!(Some("released funds to benefits".to_string()), handle_res.log);
+    assert_eq!(
+        Some("released funds to benefits".to_string()),
+        handle_res.log
+    );
 
     // it worked, let's check the state
     deps.with_storage(|store| {
