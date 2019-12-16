@@ -1,5 +1,4 @@
 use std::marker::PhantomData;
-use std::str::from_utf8;
 
 use snafu::ResultExt;
 pub use wasmer_runtime::Func;
@@ -10,7 +9,8 @@ use cosmwasm::traits::{Api, Extern, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
+    do_canonical_address, do_human_address, do_read, do_write, leave_storage, setup_context,
+    take_storage, with_storage_from_context,
 };
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
@@ -40,27 +40,10 @@ where
                 "c_read" => func!(do_read::<S>),
                 "c_write" => func!(do_write::<S>),
                 "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
-                    let human = read_memory(ctx, human_ptr);
-                    // TODO: cleanup... now returns -2 on utf8 error, -1 on canonical_address error
-                    let human_str = from_utf8(&human);
-                    if human_str.is_err() {
-                        return -2;
-                    }
-                    match api.canonical_address(human_str.unwrap()) {
-                        Ok(canon) => { write_memory(ctx, canonical_ptr, &canon); canon.len() as i32 },
-                        Err(_) => -1,
-                    }
+                    do_canonical_address(api, ctx, human_ptr, canonical_ptr)
                 }),
                 "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
-                    let canon = read_memory(ctx, canonical_ptr);
-                    match api.human_address(&canon) {
-                        Ok(human) => {
-                            let bz = human.as_bytes();
-                            write_memory(ctx, human_ptr, bz);
-                            bz.len() as i32
-                        },
-                        Err(_) => -1,
-                    }
+                    do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
             },
         };
