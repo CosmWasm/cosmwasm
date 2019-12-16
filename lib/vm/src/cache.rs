@@ -92,7 +92,7 @@ where
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let storage = instance.take_storage();
-            let api = instance.api().clone();
+            let api = instance.api.clone();
             cache.put(hash, instance);
             if let Some(storage) = storage {
                 return Some(Extern { storage, api });

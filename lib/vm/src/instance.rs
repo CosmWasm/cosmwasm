@@ -1,10 +1,12 @@
-pub use wasmer_runtime::Func;
-
 use std::str::from_utf8;
+use std::marker::PhantomData;
 
 use snafu::ResultExt;
+pub use wasmer_runtime::Func;
 use wasmer_runtime::{func, imports, Ctx, Module};
 use wasmer_runtime_core::typed_func::{Wasm, WasmTypeList};
+
+use cosmwasm::traits::{Api, Extern, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
@@ -12,11 +14,11 @@ use crate::context::{
 };
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::traits::{Api, Extern, Storage};
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static> {
     instance: wasmer_runtime::Instance,
-    deps: Extern<S, A>,
+    pub api: A,
+    storage: PhantomData<S>,
 }
 
 impl<S, A> Instance<S, A>
@@ -65,7 +67,8 @@ where
         let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         let res = Instance {
             instance,
-            deps: deps.clone(),
+            api,
+            storage: PhantomData::<S>{},
         };
         res.leave_storage(Some(deps.storage));
         Ok(res)
@@ -118,11 +121,6 @@ where
         Rets: WasmTypeList,
     {
         self.instance.func(name).context(ResolveErr {})
-    }
-
-    // this is useful for setting up mock_params among other things
-    pub fn api(&self) -> &A {
-        &self.deps.api
     }
 }
 
