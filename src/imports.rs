@@ -8,7 +8,7 @@ use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8Err};
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
-use crate::traits::{Precompiles, Storage};
+use crate::traits::{Api, Extern, Storage};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -28,6 +28,14 @@ extern "C" {
     // returns negative on error, length of returned data on success
     fn c_canonical_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn c_human_address(canonical: *const c_void, human: *mut c_void) -> i32;
+}
+
+// dependencies are all external requirements that can be injected in a real-wasm contract
+pub fn dependencies() -> Extern<ExternalStorage, ExternalApi> {
+    Extern {
+        storage: ExternalStorage::new(),
+        api: ExternalApi::new(),
+    }
 }
 
 #[derive(Clone)]
@@ -72,15 +80,15 @@ impl Storage for ExternalStorage {
 }
 
 #[derive(Copy, Clone)]
-pub struct ExternalPrecompiles {}
+pub struct ExternalApi {}
 
-impl ExternalPrecompiles {
-    pub fn new() -> ExternalPrecompiles {
-        ExternalPrecompiles {}
+impl ExternalApi {
+    pub fn new() -> ExternalApi {
+        ExternalApi {}
     }
 }
 
-impl Precompiles for ExternalPrecompiles {
+impl Api for ExternalApi {
     fn canonical_address(&self, human: &str) -> Result<Vec<u8>> {
         let send = build_slice(human.as_bytes());
         let send_ptr = &*send as *const Slice as *const c_void;

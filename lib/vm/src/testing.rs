@@ -4,23 +4,23 @@
 
 use std::vec::Vec;
 
-use cosmwasm::mock::{MockPrecompiles, MockStorage};
-use cosmwasm::traits::{Precompiles, Storage};
+use cosmwasm::mock::{MockApi, MockStorage};
+use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::instance::Instance;
 
-pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockPrecompiles> {
+pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
     let storage = MockStorage::new();
-    let precompiles = MockPrecompiles::new(20);
+    let precompiles = MockApi::new(20);
     Instance::from_code(wasm, storage, precompiles).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn init<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     params: Params,
     msg: Vec<u8>,
@@ -31,7 +31,7 @@ pub fn init<T: Storage + 'static, U: Precompiles + 'static>(
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn handle<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     params: Params,
     msg: Vec<u8>,
@@ -42,7 +42,7 @@ pub fn handle<T: Storage + 'static, U: Precompiles + 'static>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn query<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     msg: Vec<u8>,
 ) -> QueryResult {

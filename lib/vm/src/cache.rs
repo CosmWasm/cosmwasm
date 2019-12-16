@@ -4,7 +4,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm::traits::{Precompiles, Storage};
+use cosmwasm::traits::{Api, Storage};
 
 use crate::backends::{backend, compile};
 use crate::errors::{Error, IntegrityErr, IoErr};
@@ -15,7 +15,7 @@ use crate::wasm_store::{load, save, wasm_hash};
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
 
-pub struct CosmCache<T: Storage + 'static, U: Precompiles + 'static> {
+pub struct CosmCache<T: Storage + 'static, U: Api + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
     instances: Option<LruCache<WasmHash, Instance<T, U>>>,
@@ -24,7 +24,7 @@ pub struct CosmCache<T: Storage + 'static, U: Precompiles + 'static> {
 impl<T, U> CosmCache<T, U>
 where
     T: Storage + 'static,
-    U: Precompiles + 'static,
+    U: Api + 'static,
 {
     /// new stores the data for cache under base_dir
     pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Result<Self, Error> {
@@ -111,7 +111,7 @@ mod test {
     use tempfile::TempDir;
 
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::{mock_params, MockPrecompiles, MockStorage};
+    use cosmwasm::mock::{mock_params, MockApi, MockStorage};
     use cosmwasm::types::coin;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -122,7 +122,7 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
-        let precompiles = MockPrecompiles::new(20);
+        let precompiles = MockApi::new(20);
         let mut instance = cache.get_instance(&id, storage, precompiles).unwrap();
 
         // run contract
@@ -141,7 +141,7 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let storage = MockStorage::new();
-        let precompiles = MockPrecompiles::new(20);
+        let precompiles = MockApi::new(20);
         let mut instance = cache.get_instance(&id, storage, precompiles).unwrap();
 
         // init contract
@@ -173,7 +173,7 @@ mod test {
         // these differentiate the two instances of the same contract
         let storage1 = MockStorage::new();
         let storage2 = MockStorage::new();
-        let precompiles = MockPrecompiles::new(20);
+        let precompiles = MockApi::new(20);
 
         // init instance 1
         let mut instance = cache.get_instance(&id, storage1, precompiles).unwrap();

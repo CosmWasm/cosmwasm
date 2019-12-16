@@ -13,9 +13,9 @@ use crate::context::{
 };
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::traits::{Precompiles, Storage};
+use cosmwasm::traits::{Api, Storage};
 
-pub struct Instance<T: Storage + 'static, U: Precompiles + 'static> {
+pub struct Instance<T: Storage + 'static, U: Api + 'static> {
     instance: wasmer_runtime::Instance,
     precompiles: U,
     storage: PhantomData<T>,
@@ -24,7 +24,7 @@ pub struct Instance<T: Storage + 'static, U: Precompiles + 'static> {
 impl<T, U> Instance<T, U>
 where
     T: Storage + 'static,
-    U: Precompiles + 'static,
+    U: Api + 'static,
 {
     pub fn from_code(code: &[u8], storage: T, precompiles: U) -> Result<Self> {
         let module = compile(code)?;

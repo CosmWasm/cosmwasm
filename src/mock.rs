@@ -4,8 +4,16 @@ use std::str::from_utf8;
 use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8Err};
-use crate::traits::{Precompiles, Storage};
+use crate::traits::{Api, Extern, Storage};
 use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
+
+// dependencies are all external requirements that can be injected for unit tests
+pub fn dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
+    Extern {
+        storage: MockStorage::new(),
+        api: MockApi::new(canonical_length),
+    }
+}
 
 #[derive(Clone)]
 pub struct MockStorage {
@@ -40,23 +48,23 @@ impl Storage for MockStorage {
 // it trims off zeros for the reverse operation.
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
 #[derive(Copy, Clone)]
-pub struct MockPrecompiles {
+pub struct MockApi {
     canonical_length: usize,
 }
 
-impl MockPrecompiles {
+impl MockApi {
     pub fn new(canonical_length: usize) -> Self {
-        MockPrecompiles { canonical_length }
+        MockApi { canonical_length }
     }
 }
 
-impl Default for MockPrecompiles {
+impl Default for MockApi {
     fn default() -> Self {
         Self::new(20)
     }
 }
 
-impl Precompiles for MockPrecompiles {
+impl Api for MockApi {
     fn canonical_address(&self, human: &str) -> Result<Vec<u8>> {
         if human.len() > self.canonical_length {
             return ContractErr {
@@ -83,7 +91,7 @@ impl Precompiles for MockPrecompiles {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params<T: Precompiles>(
+pub fn mock_params<T: Api>(
     precompiles: &T,
     signer: &str,
     sent: &[Coin],
@@ -129,7 +137,7 @@ mod test {
 
     #[test]
     fn flip_addresses() {
-        let precompiles = MockPrecompiles::new(20);
+        let precompiles = MockApi::new(20);
         let human = "shorty";
         let canon = precompiles.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
@@ -143,7 +151,7 @@ mod test {
     #[test]
     #[should_panic]
     fn canonical_length_enforced() {
-        let precompiles = MockPrecompiles::new(10);
+        let precompiles = MockApi::new(10);
         let human = "longer-than-10";
         let _ = precompiles.canonical_address(&human).unwrap();
     }

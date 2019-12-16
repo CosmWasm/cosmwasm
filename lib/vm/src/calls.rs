@@ -1,13 +1,13 @@
 use snafu::ResultExt;
 
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::traits::{Precompiles, Storage};
+use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::errors::{Error, ParseErr, RuntimeErr, SerializeErr};
 use crate::instance::{Func, Instance};
 
-pub fn call_init<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn call_init<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     params: &Params,
     msg: &[u8],
@@ -18,7 +18,7 @@ pub fn call_init<T: Storage + 'static, U: Precompiles + 'static>(
     Ok(res)
 }
 
-pub fn call_handle<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn call_handle<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     params: &Params,
     msg: &[u8],
@@ -29,7 +29,7 @@ pub fn call_handle<T: Storage + 'static, U: Precompiles + 'static>(
     Ok(res)
 }
 
-pub fn call_query<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn call_query<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     msg: &[u8],
 ) -> Result<QueryResult, Error> {
@@ -38,7 +38,7 @@ pub fn call_query<T: Storage + 'static, U: Precompiles + 'static>(
     Ok(res)
 }
 
-pub fn call_query_raw<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn call_query_raw<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
@@ -52,7 +52,7 @@ pub fn call_query_raw<T: Storage + 'static, U: Precompiles + 'static>(
     Ok(data)
 }
 
-pub fn call_init_raw<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn call_init_raw<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     params: &[u8],
     msg: &[u8],
@@ -60,7 +60,7 @@ pub fn call_init_raw<T: Storage + 'static, U: Precompiles + 'static>(
     call_raw(instance, "init", params, msg)
 }
 
-pub fn call_handle_raw<T: Storage + 'static, U: Precompiles + 'static>(
+pub fn call_handle_raw<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     params: &[u8],
     msg: &[u8],
@@ -68,7 +68,7 @@ pub fn call_handle_raw<T: Storage + 'static, U: Precompiles + 'static>(
     call_raw(instance, "handle", params, msg)
 }
 
-fn call_raw<T: Storage + 'static, U: Precompiles + 'static>(
+fn call_raw<T: Storage + 'static, U: Api + 'static>(
     instance: &mut Instance<T, U>,
     name: &str,
     params: &[u8],
