@@ -10,6 +10,10 @@
 This repo provides a useful functionality to build smart contracts that
 are compatible with Cosmos SDK runtime, [currently being developed](https://github.com/cosmwasm/cosmos-sdk/issues).
 
+**Warning** Most likely you want to check out `v0.5.2` tag, the stable release referred to in the [documention](https://www.cosmwasm.com).
+Master branch is undergoing some breaking API changes in preparation for a `v0.6.0` release, which should
+provide a much more stable, future-proof API.
+
 ## Overview
 
 This crate provides the bindings and all imports needed to build a smart contract.
