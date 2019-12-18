@@ -18,14 +18,14 @@ pub struct BlockInfo {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
-    pub signer: String,
+    pub signer: Vec<u8>,
     // go likes to return null for empty array, make sure we can parse it (use option)
     pub sent_funds: Option<Vec<Coin>>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct ContractInfo {
-    pub address: String,
+    pub address: Vec<u8>,
     // go likes to return null for empty array, make sure we can parse it (use option)
     pub balance: Option<Vec<Coin>>,
 }
@@ -41,14 +41,14 @@ pub struct Coin {
 pub enum CosmosMsg {
     // this moves tokens in the underlying sdk
     Send {
-        from_address: String,
-        to_address: String,
+        from_address: Vec<u8>,
+        to_address: Vec<u8>,
         amount: Vec<Coin>,
     },
     // this dispatches a call to another contract at a known address (with known ABI)
     // msg is the json-encoded HandleMsg struct
     Contract {
-        contract_addr: String,
+        contract_addr: Vec<u8>,
         msg: String,
         send: Vec<Coin>,
     },
@@ -131,34 +131,6 @@ impl QueryResult {
     }
 }
 
-// just set signer, sent funds, and balance - rest given defaults
-// this is intended for use in testcode only
-pub fn mock_params(signer: &str, sent: &[Coin], balance: &[Coin]) -> Params {
-    Params {
-        block: BlockInfo {
-            height: 12_345,
-            time: 1_571_797_419,
-            chain_id: "cosmos-testnet-14002".to_string(),
-        },
-        message: MessageInfo {
-            signer: signer.to_string(),
-            sent_funds: if sent.len() == 0 {
-                None
-            } else {
-                Some(sent.to_vec())
-            },
-        },
-        contract: ContractInfo {
-            address: "cosmos2contract".to_string(),
-            balance: if balance.len() == 0 {
-                None
-            } else {
-                Some(balance.to_vec())
-            },
-        },
-    }
-}
-
 // coin is a shortcut constructor for a set of one denomination of coins
 pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
     vec![Coin {
@@ -185,8 +157,8 @@ mod test {
     fn can_deser_ok_result() {
         let send = ContractResult::Ok(Response {
             messages: vec![CosmosMsg::Send {
-                from_address: "me".to_string(),
-                to_address: "you".to_string(),
+                from_address: b"me".to_vec(),
+                to_address: b"you".to_vec(),
                 amount: coin("1015", "earth"),
             }],
             log: Some("released funds!".to_string()),

@@ -63,16 +63,18 @@ pub enum Error {
     },
 }
 
+pub type Result<T, E = Error> = core::result::Result<T, E>;
+
 pub trait CacheExt<T: Debug> {
-    fn convert_cache(self) -> Result<T, Error>;
+    fn convert_cache(self) -> Result<T>;
 }
 
 impl<T: Debug> CacheExt<T> for Result<T, CacheError> {
-    fn convert_cache(self) -> Result<T, Error> {
+    fn convert_cache(self) -> Result<T> {
         self.map_err(|err| {
             let msg = format!("{:?}", err);
             // construct like this (not just Err(Error::CacheErr)) to allow backtraces
-            let res: Result<T, Error> = CacheErr { msg }.fail();
+            let res: Result<T> = CacheErr { msg }.fail();
             res.unwrap_err()
         })
     }

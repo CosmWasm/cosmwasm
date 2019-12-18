@@ -31,6 +31,16 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// consume_slice will return the data referenced by the slice and
 /// deallocates the slice (and the vector when finished).
 /// Warning: only use this when you are sure the caller will never use (or free) the slice later
+///
+/// # Safety
+///
+/// If ptr is non-nil, it must refer to a valid slice, which was previously returned by alloc,
+/// and not yet deallocated. This call will deallocate the Slice and return an owner vector
+/// to the caller containing the referenced data.
+///
+/// Naturally, calling this function twice on the same pointer will double deallocate data
+/// and lead to a crash. Make sure to call it exactly once (either consuming the input in
+/// the wasm code OR deallocating the buffer from the caller).
 pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
     if ptr.is_null() {
         return NullPointer {}.fail();

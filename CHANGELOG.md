@@ -2,6 +2,12 @@
 
 ## HEAD
 
+[Define canonical address callbacks](https://github.com/confio/cosmwasm/issues/73)
+
+* Use `&[u8]` for addresses in params
+* Allow contracts to resolve human readable addresses (`&str`) in their json into a fixed-size binary representation
+* Provide mocks for unit testing and integration tests
+
 ## 0.5
 
 ### 0.5.2

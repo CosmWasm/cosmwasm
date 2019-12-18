@@ -3,10 +3,11 @@ Internal details to be used by instance.rs only
 **/
 use std::ffi::c_void;
 use std::mem;
+use std::str::from_utf8;
 
 use wasmer_runtime::Ctx;
 
-use cosmwasm::storage::Storage;
+use cosmwasm::traits::{Api, Storage};
 
 use crate::memory::{read_memory, write_memory};
 
@@ -24,6 +25,38 @@ pub fn do_write<T: Storage>(ctx: &mut Ctx, key: u32, value: u32) {
     let key = read_memory(ctx, key);
     let value = read_memory(ctx, value);
     with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
+}
+
+pub fn do_canonical_address<A: Api>(
+    api: A,
+    ctx: &mut Ctx,
+    human_ptr: u32,
+    canonical_ptr: u32,
+) -> i32 {
+    let human = read_memory(ctx, human_ptr);
+    let human_str = from_utf8(&human);
+    if human_str.is_err() {
+        return -2;
+    }
+    match api.canonical_address(human_str.unwrap()) {
+        Ok(canon) => {
+            write_memory(ctx, canonical_ptr, &canon);
+            canon.len() as i32
+        }
+        Err(_) => -1,
+    }
+}
+
+pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
+    let canon = read_memory(ctx, canonical_ptr);
+    match api.human_address(&canon) {
+        Ok(human) => {
+            let bz = human.as_bytes();
+            write_memory(ctx, human_ptr, bz);
+            bz.len() as i32
+        }
+        Err(_) => -1,
+    }
 }
 
 /** context data **/

@@ -4,23 +4,23 @@
 
 use std::vec::Vec;
 
-use cosmwasm::mock::MockStorage;
-use cosmwasm::storage::Storage;
+use cosmwasm::mock::{dependencies, MockApi, MockStorage};
+use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::instance::Instance;
 
-pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage> {
-    let storage = MockStorage::new();
-    Instance::from_code(wasm, storage).unwrap()
+pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
+    let deps = dependencies(20);
+    Instance::from_code(wasm, deps).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<T: Storage + 'static>(
-    instance: &mut Instance<T>,
+pub fn init<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
     params: Params,
     msg: Vec<u8>,
 ) -> ContractResult {
@@ -30,8 +30,8 @@ pub fn init<T: Storage + 'static>(
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<T: Storage + 'static>(
-    instance: &mut Instance<T>,
+pub fn handle<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
     params: Params,
     msg: Vec<u8>,
 ) -> ContractResult {
@@ -41,6 +41,9 @@ pub fn handle<T: Storage + 'static>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<T: Storage + 'static>(instance: &mut Instance<T>, msg: Vec<u8>) -> QueryResult {
+pub fn query<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
+    msg: Vec<u8>,
+) -> QueryResult {
     call_query(instance, &msg).unwrap()
 }

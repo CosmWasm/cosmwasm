@@ -1,46 +1,59 @@
-pub use wasmer_runtime::Func;
+use std::marker::PhantomData;
 
 use snafu::ResultExt;
-use std::marker::PhantomData;
-use wasmer_runtime::{func, imports, Module};
+pub use wasmer_runtime::Func;
+use wasmer_runtime::{func, imports, Ctx, Module};
 use wasmer_runtime_core::typed_func::{Wasm, WasmTypeList};
+
+use cosmwasm::traits::{Api, Extern, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_read, do_write, leave_storage, setup_context, take_storage, with_storage_from_context,
+    do_canonical_address, do_human_address, do_read, do_write, leave_storage, setup_context,
+    take_storage, with_storage_from_context,
 };
-use crate::errors::{Error, ResolveErr, RuntimeErr, WasmerErr};
+use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::storage::Storage;
 
-pub struct Instance<T: Storage + 'static> {
+pub struct Instance<S: Storage + 'static, A: Api + 'static> {
     instance: wasmer_runtime::Instance,
-    storage: PhantomData<T>,
+    pub api: A,
+    storage: PhantomData<S>,
 }
 
-impl<T> Instance<T>
+impl<S, A> Instance<S, A>
 where
-    T: Storage + 'static,
+    S: Storage + 'static,
+    A: Api + 'static,
 {
-    pub fn from_code(code: &[u8], storage: T) -> Result<Instance<T>, Error> {
+    pub fn from_code(code: &[u8], deps: Extern<S, A>) -> Result<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, storage)
+        Instance::from_module(&module, deps)
     }
 
-    pub fn from_module(module: &Module, storage: T) -> Result<Instance<T>, Error> {
+    pub fn from_module(module: &Module, deps: Extern<S, A>) -> Result<Self> {
+        // copy this so it can be moved into the closures, without pulling in deps
+        let api = deps.api;
         let import_obj = imports! {
-            || { setup_context::<T>() },
+            || { setup_context::<S>() },
             "env" => {
-                "c_read" => func!(do_read::<T>),
-                "c_write" => func!(do_write::<T>),
+                "c_read" => func!(do_read::<S>),
+                "c_write" => func!(do_write::<S>),
+                "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
+                    do_canonical_address(api, ctx, human_ptr, canonical_ptr)
+                }),
+                "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
+                    do_human_address(api, ctx, canonical_ptr, human_ptr)
+                }),
             },
         };
         let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         let res = Instance {
             instance,
-            storage: PhantomData::<T>::default(),
+            api,
+            storage: PhantomData::<S> {},
         };
-        res.leave_storage(Some(storage));
+        res.leave_storage(Some(deps.storage));
         Ok(res)
     }
 
@@ -52,15 +65,15 @@ where
         set_gas(&mut self.instance, gas)
     }
 
-    pub fn with_storage<F: FnMut(&mut T)>(&self, func: F) {
+    pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
         with_storage_from_context(self.instance.context(), func)
     }
 
-    pub fn take_storage(&self) -> Option<T> {
+    pub fn take_storage(&self) -> Option<S> {
         take_storage(self.instance.context())
     }
 
-    pub fn leave_storage(&self, storage: Option<T>) {
+    pub fn leave_storage(&self, storage: Option<S>) {
         leave_storage(self.instance.context(), storage);
     }
 
@@ -70,8 +83,8 @@ where
 
     // allocate memory in the instance and copies the given data in
     // returns the memory offset, to be later passed as an argument
-    pub fn allocate(&mut self, data: &[u8]) -> Result<u32, Error> {
-        let alloc: Func<(u32), (u32)> = self.func("allocate")?;
+    pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
+        let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_memory(self.instance.context(), ptr, data);
         Ok(ptr)
@@ -79,13 +92,13 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub fn deallocate(&mut self, ptr: u32) -> Result<(), Error> {
-        let dealloc: Func<(u32), ()> = self.func("deallocate")?;
+    pub fn deallocate(&mut self, ptr: u32) -> Result<()> {
+        let dealloc: Func<u32, ()> = self.func("deallocate")?;
         dealloc.call(ptr).context(RuntimeErr {})?;
         Ok(())
     }
 
-    pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>, Error>
+    pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
@@ -98,7 +111,8 @@ where
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::mock_instance;
-    use cosmwasm::types::{coin, mock_params};
+    use cosmwasm::mock::mock_params;
+    use cosmwasm::types::coin;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -140,7 +154,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -148,11 +162,16 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 36_914);
+        assert_eq!(init_used, 66_185);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
-        let params = mock_params("verifies", &coin("15", "earth"), &coin("1015", "earth"));
+        let params = mock_params(
+            &instance.api,
+            "verifies",
+            &coin("15", "earth"),
+            &coin("1015", "earth"),
+        );
         let msg = b"{}";
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -160,7 +179,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 70_148);
+        assert_eq!(handle_used, 117_769);
     }
 
     #[test]
@@ -171,7 +190,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         // this call will panic on out-of-gas
         // TODO: improve error handling through-out the whole stack
@@ -187,7 +206,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params("creator", &coin("1000", "earth"), &[]);
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
 
@@ -202,6 +221,6 @@ mod test {
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 49_395);
+        assert_eq!(query_used, 77_400);
     }
 }
