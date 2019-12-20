@@ -5,7 +5,6 @@ pub mod imports;
 pub mod errors;
 pub mod memory;
 pub mod mock;
-pub mod query;
 pub mod serde;
 pub mod traits;
 pub mod types;
