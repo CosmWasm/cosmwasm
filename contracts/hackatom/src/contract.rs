@@ -5,7 +5,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Params, QueryResponse, Response};
+use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Params, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -75,9 +75,9 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-pub fn query<S: Storage, A: Api>(_deps: &Extern<S, A>, msg: Vec<u8>) -> Result<QueryResponse> {
+pub fn query<S: Storage, A: Api>(_deps: &Extern<S, A>, msg: Vec<u8>) -> Result<Vec<u8>> {
     let _msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
-    Ok(QueryResponse::default())
+    Ok(vec![])
 }
 
 #[cfg(test)]
