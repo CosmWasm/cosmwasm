@@ -18,6 +18,13 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
             storage,
         }
     }
+
+    fn multilevel(prefixes: &[&[u8]], storage: &'a T) -> Self {
+        ReadonlyPrefixedStorage {
+            prefix: multi_length_prefix(prefixes),
+            storage,
+        }
+    }
 }
 
 impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> {
@@ -38,6 +45,13 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
     fn new(prefix: &[u8], storage: &'a mut T) -> Self {
         PrefixedStorage {
             prefix: length_prefix(prefix),
+            storage,
+        }
+    }
+
+    fn multilevel(prefixes: &[&[u8]], storage: &'a mut T) -> Self {
+        PrefixedStorage {
+            prefix: multi_length_prefix(prefixes),
             storage,
         }
     }
@@ -70,13 +84,32 @@ fn length_prefix(prefix: &[u8]) -> Vec<u8> {
     v
 }
 
+// prepend length and store this
+fn multi_length_prefix(prefixes: &[&[u8]]) -> Vec<u8> {
+    let mut size = prefixes.len();
+    for &p in prefixes {
+        size += p.len();
+    }
+
+    let mut v = Vec::with_capacity(size);
+    for &p in prefixes {
+        if p.len() > 255 {
+            panic!("only supports prefixes up to length 255")
+        }
+        v.push(p.len() as u8);
+        v.extend_from_slice(p);
+    }
+    v
+}
+
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::mock::MockStorage;
 
     #[test]
-    pub fn prefix_safe() {
+    fn prefix_safe() {
         let mut storage = MockStorage::new();
 
         // we use a block scope here to release the &mut before we use it in the next storage
@@ -95,5 +128,27 @@ mod test {
         // Note: explicit scoping is not required, but you must not refer to `foo` anytime after you
         // initialize a different PrefixedStorage. Uncomment this to see errors:
         //        assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
+    }
+
+    #[test]
+    fn multi_level() {
+        let mut storage = MockStorage::new();
+
+        // set with nested
+        let mut foo = PrefixedStorage::new(b"foo", &mut storage);
+        let mut bar = PrefixedStorage::new(b"bar",&mut foo);
+        bar.set(b"baz", b"winner");
+
+        // we can nest them the same encoding with one operation
+        let loader = ReadonlyPrefixedStorage::multilevel(&[b"foo", b"bar"], &storage);
+        assert_eq!(Some(b"winner".to_vec()), loader.get(b"baz"));
+
+        // set with multilevel
+        let mut foobar = PrefixedStorage::multilevel(&[b"foo", b"bar"], &mut storage);
+        foobar.set(b"second", b"time");
+
+        let a = ReadonlyPrefixedStorage::new(b"foo", &storage);
+        let b = ReadonlyPrefixedStorage::new(b"bar", &a);
+        assert_eq!(Some(b"time".to_vec()), b.get(b"second"));
     }
 }
