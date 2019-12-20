@@ -14,7 +14,7 @@ use crate::imports::{dependencies, ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::types::{ContractResult, Params, QueryResponse, QueryResult, Response};
+use crate::types::{ContractResult, Params, QueryResult, Response};
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer
 // to a slice defining this data. This space is managed by the calling process
@@ -66,7 +66,7 @@ pub fn do_handle<T: Display + From<Error>>(
 
 // do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: Display + From<Error>>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, Vec<u8>) -> Result<QueryResponse, T>,
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, Vec<u8>) -> Result<Vec<u8>, T>,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
     match _do_query(query_fn, msg_ptr) {
@@ -118,17 +118,14 @@ fn _do_handle<T: Display + From<Error>>(
 }
 
 fn _do_query<T: Display + From<Error>>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, Vec<u8>) -> Result<QueryResponse, T>,
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, Vec<u8>) -> Result<Vec<u8>, T>,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, T> {
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let deps = dependencies();
     let res = query_fn(&deps, msg)?;
-    let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
-        kind: "QueryResult",
-    })?;
-    Ok(release_buffer(json))
+    Ok(release_buffer(res))
 }
 
 fn make_error_c_string<T: Display>(error: T) -> *mut c_void {
