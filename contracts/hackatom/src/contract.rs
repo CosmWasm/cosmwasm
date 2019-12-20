@@ -63,7 +63,7 @@ pub fn handle<S: Storage, A: Api>(
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&params.contract.address)?;
         let res = Response {
-            log: Some(format!("released funds to {:?}", to_addr)),
+            log: Some(format!("released funds to {}", to_addr)),
             messages: vec![CosmosMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,

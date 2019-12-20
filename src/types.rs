@@ -1,3 +1,5 @@
+use std::fmt;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -17,11 +19,27 @@ impl HumanAddr {
     pub fn len(&self) -> usize { self.0.len() }
 }
 
+impl fmt::Display for HumanAddr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", &self.0)
+    }
+}
+
 impl CanonicalAddr {
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
     pub fn len(&self) -> usize { self.0.len() }
+}
+
+// upper-case hex
+impl fmt::Display for CanonicalAddr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for byte in &self.0 {
+            write!(f, "{:X} ", byte)?;
+        }
+        Ok(())
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
