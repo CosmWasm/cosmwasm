@@ -165,7 +165,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "cosmwasm"
 version = "0.5.2"
-source = "git+https://github.com/confio/cosmwasm?branch=address-newtypes#45cce2db4de1f4a9c930c51f46222994ba71cffc"
 dependencies = [
  "schemars 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.103 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -176,9 +175,8 @@ dependencies = [
 [[package]]
 name = "cosmwasm-vm"
 version = "0.5.2"
-source = "git+https://github.com/confio/cosmwasm?branch=address-newtypes#45cce2db4de1f4a9c930c51f46222994ba71cffc"
 dependencies = [
- "cosmwasm 0.5.2 (git+https://github.com/confio/cosmwasm?branch=address-newtypes)",
+ "cosmwasm 0.5.2",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lru 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -394,8 +392,8 @@ dependencies = [
 name = "hackatom"
 version = "0.5.2"
 dependencies = [
- "cosmwasm 0.5.2 (git+https://github.com/confio/cosmwasm?branch=address-newtypes)",
- "cosmwasm-vm 0.5.2 (git+https://github.com/confio/cosmwasm?branch=address-newtypes)",
+ "cosmwasm 0.5.2",
+ "cosmwasm-vm 0.5.2",
  "schemars 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.103 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.41 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1139,8 +1137,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum const-random 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "7b641a8c9867e341f3295564203b1c250eb8ce6cb6126e007941f78c4d2ed7fe"
 "checksum const-random-macro 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "c750ec12b83377637110d5a57f5ae08e895b06c4b16e2bdbf1a94ef717428c59"
 "checksum constant_time_eq 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "995a44c877f9212528ccc74b21a232f66ad69001e40ede5bcee2ac9ef2657120"
-"checksum cosmwasm 0.5.2 (git+https://github.com/confio/cosmwasm?branch=address-newtypes)" = "<none>"
-"checksum cosmwasm-vm 0.5.2 (git+https://github.com/confio/cosmwasm?branch=address-newtypes)" = "<none>"
 "checksum cranelift-bforest 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fff04f4ad82c9704a22e753c6268cc6a89add76f094b837cefbba1c665411451"
 "checksum cranelift-codegen 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)" = "6ff4a221ec1b95df4b1d20a99fec4fe92a28bebf3a815f2eca72b26f9a627485"
 "checksum cranelift-codegen-meta 0.44.0 (registry+https://github.com/rust-lang/crates.io-index)" = "dd47f665e2ee8f177b97d1f5ce2bd70f54d3b793abb26d92942bfaa4a381fe9f"
