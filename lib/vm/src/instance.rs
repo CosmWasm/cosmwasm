@@ -162,7 +162,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66_185);
+        assert_eq!(init_used, 66_169);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -179,7 +179,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 117_769);
+        assert_eq!(handle_used, 111_687);
     }
 
     #[test]
@@ -198,6 +198,8 @@ mod test {
         assert!(res.is_err());
     }
 
+    // we have remove query support in the contract for now, add this back later with a proper query
+    #[ignore]
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
