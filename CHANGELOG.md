@@ -8,6 +8,8 @@
 * Allow contracts to resolve human readable addresses (`&str`) in their json into a fixed-size binary representation
 * Provide mocks for unit testing and integration tests
 
+* Separate out `Storage` from `ReadOnlyStorage` as separate traits
+
 ## 0.5
 
 ### 0.5.2
