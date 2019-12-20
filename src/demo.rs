@@ -69,3 +69,33 @@ fn length_prefix(prefix: &[u8]) -> Vec<u8> {
     v.extend_from_slice(prefix);
     v
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::mock::MockStorage;
+
+    #[test]
+    pub fn prefix_safe() {
+        let mut storage = MockStorage::new();
+
+        // we use a block scope here to release the &mut before we use it in the next storage
+        {
+            let mut foo = PrefixedStorage::new(b"foo", &mut storage);
+            foo.set(b"bar", b"gotcha");
+            assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
+        }
+
+        // try readonly correctly
+        {
+            let rfoo = ReadonlyPrefixedStorage::new(b"foo", &storage);
+            assert_eq!(Some(b"gotcha".to_vec()), rfoo.get(b"bar"));
+        }
+
+        // no collisions with other prefixes
+        {
+            let fo = ReadonlyPrefixedStorage::new(b"fo", &storage);
+            assert_eq!(None, fo.get(b"obar"));
+        }
+    }
+}
