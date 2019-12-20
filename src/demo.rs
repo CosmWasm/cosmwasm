@@ -1,11 +1,11 @@
 // This is demo code that is not used by other modules,
 // but serves as a proof of concept.
 // This can be migrated to other modules when it reaches final implementation
+#![allow(dead_code)]
 
 use crate::traits::{ReadonlyStorage, Storage};
 
-
-#[derive(Clone)]
+//#[derive(Clone)]
 pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
     prefix: Vec<u8>,
     storage: &'a T,
@@ -28,7 +28,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
     }
 }
 
-#[derive(Clone)]
+//#[derive(Clone)]
 pub struct PrefixedStorage<'a, T: Storage> {
     prefix: Vec<u8>,
     storage: &'a mut T,
