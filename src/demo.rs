@@ -13,7 +13,7 @@ pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
 
 impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     fn new(prefix: &[u8], storage: &'a T) -> Self {
-        ReadonlyPrefixedStorage{
+        ReadonlyPrefixedStorage {
             prefix: length_prefix(prefix),
             storage,
         }
@@ -36,7 +36,7 @@ pub struct PrefixedStorage<'a, T: Storage> {
 
 impl<'a, T: Storage> PrefixedStorage<'a, T> {
     fn new(prefix: &[u8], storage: &'a mut T) -> Self {
-        PrefixedStorage{
+        PrefixedStorage {
             prefix: length_prefix(prefix),
             storage,
         }
@@ -80,22 +80,20 @@ mod test {
         let mut storage = MockStorage::new();
 
         // we use a block scope here to release the &mut before we use it in the next storage
-        {
-            let mut foo = PrefixedStorage::new(b"foo", &mut storage);
-            foo.set(b"bar", b"gotcha");
-            assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
-        }
+        let mut foo = PrefixedStorage::new(b"foo", &mut storage);
+        foo.set(b"bar", b"gotcha");
+        assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
 
         // try readonly correctly
-        {
-            let rfoo = ReadonlyPrefixedStorage::new(b"foo", &storage);
-            assert_eq!(Some(b"gotcha".to_vec()), rfoo.get(b"bar"));
-        }
+        let rfoo = ReadonlyPrefixedStorage::new(b"foo", &storage);
+        assert_eq!(Some(b"gotcha".to_vec()), rfoo.get(b"bar"));
 
         // no collisions with other prefixes
-        {
-            let fo = ReadonlyPrefixedStorage::new(b"fo", &storage);
-            assert_eq!(None, fo.get(b"obar"));
-        }
+        let fo = ReadonlyPrefixedStorage::new(b"fo", &storage);
+        assert_eq!(None, fo.get(b"obar"));
+
+        // Note: explicit scoping is not required, but you must not refer to `foo` anytime after you
+        // initialize a different PrefixedStorage. Uncomment this to see errors:
+        //        assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
     }
 }
