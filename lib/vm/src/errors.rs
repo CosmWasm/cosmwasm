@@ -14,7 +14,7 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Compilin wasm: {}", source))]
+    #[snafu(display("Compiling wasm: {}", source))]
     CompileErr {
         source: core_error::CompileError,
         #[cfg(feature = "backtraces")]
@@ -52,6 +52,12 @@ pub enum Error {
     #[snafu(display("Calling wasm function: {}", source))]
     RuntimeErr {
         source: core_error::RuntimeError,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("Validating Wasm: {}", msg))]
+    ValidationErr {
+        msg: &'static str,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },

@@ -5,6 +5,7 @@ mod context;
 pub mod errors;
 mod instance;
 mod memory;
+mod middleware;
 mod modules;
 pub mod testing;
 mod wasm_store;
