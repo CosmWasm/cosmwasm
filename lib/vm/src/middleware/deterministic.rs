@@ -7,11 +7,10 @@ Original source: https://github.com/spacemeshos/svm/blob/5df80288c8b9a5ab3665297
 
 use wasmer_runtime_core::{
     codegen::{Event, EventSink, FunctionMiddleware},
+    error::CompileError,
     module::ModuleInfo,
     wasmparser::Operator,
 };
-
-use crate::errors::{Error, ValidationErr};
 
 /// The `DeterministicMiddleware` has one main objective:
 /// * validation - make sure the wasm is valid and doesn't contain any non-deterministic opcodes (for example: floats)
@@ -24,7 +23,7 @@ impl DeterministicMiddleware {
 }
 
 impl FunctionMiddleware for DeterministicMiddleware {
-    type Error = crate::errors::Error;
+    type Error = CompileError;
 
     fn feed_event<'a, 'b: 'a>(
         &mut self,
@@ -44,7 +43,7 @@ impl FunctionMiddleware for DeterministicMiddleware {
 }
 
 /// we explicitly whitelist the supported opcodes
-fn parse_wasm_opcode(opcode: &Operator) -> Result<(), Error> {
+fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
     match opcode {
         Operator::Unreachable
         | Operator::Nop
@@ -155,17 +154,20 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), Error> {
         | Operator::I64Extend8S
         | Operator::I64Extend16S
         | Operator::I64Extend32S => Ok(()),
-        _ => ValidationErr{msg: "non-deterministic opcode"}.fail(),
+        _ => Err(CompileError::ValidationError{msg: "non-deterministic opcode".to_string()}),
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backends::compile;
     use wasmer_runtime::{imports, Func};
 
+    use crate::backends::compile;
+    use crate::errors::{Error};
+
     #[test]
+    #[cfg(feature = "default-singlepass")]
     fn valid_wasm_instance_sanity() {
         let input = r#"
             (module
@@ -186,6 +188,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "default-singlepass")]
     fn parser_floats_are_not_supported() {
         let input = r#"
             (module
@@ -200,10 +203,13 @@ mod tests {
 
         let failure = res.err().expect("compile should have failed");
 
-        if let Error::ValidationErr { msg } = failure {
-            assert_eq!("Codegen(\"UnsupportedOpcode\")", msg);
-        } else {
-            panic!("unexpected result: {:?}", failure)
+        if let Error::CompileErr { source } = &failure {
+            if let CompileError::InternalError { msg } = source {
+                assert_eq!("Codegen(\"ValidationError { msg: \\\"non-deterministic opcode\\\" }\")", msg.as_str());
+                return;
+            }
         }
+
+        panic!("unexpected error: {:?}", failure)
     }
 }
