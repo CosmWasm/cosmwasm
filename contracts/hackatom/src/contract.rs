@@ -101,6 +101,8 @@ pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: Vec<u8>) -> Result<Qu
 mod tests {
     use super::*;
     use cosmwasm::mock::{dependencies, mock_params};
+    // import trait to get access to read
+    use cosmwasm::traits::{ReadonlyStorage};
     use cosmwasm::types::coin;
 
     #[test]

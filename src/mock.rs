@@ -4,7 +4,7 @@ use std::str::from_utf8;
 use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8Err};
-use crate::traits::{Api, Extern, Storage};
+use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
 
 // dependencies are all external requirements that can be injected for unit tests
@@ -34,11 +34,13 @@ impl Default for MockStorage {
     }
 }
 
-impl Storage for MockStorage {
+impl ReadonlyStorage for MockStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         self.data.get(key).cloned()
     }
+}
 
+impl Storage for MockStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         self.data.insert(key.to_vec(), value.to_vec());
     }

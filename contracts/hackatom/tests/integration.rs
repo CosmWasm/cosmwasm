@@ -1,6 +1,6 @@
 use cosmwasm::mock::mock_params;
 use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::traits::{Api, Storage};
+use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, CosmosMsg};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
