@@ -1,28 +1,25 @@
-use std::str::from_utf8;
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized, Utf8Err};
-use cosmwasm::query::perform_raw_query;
+use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{CosmosMsg, Params, QueryResponse, RawQuery, Response};
+use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Params, QueryResponse, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     // these use humanized addresses
-    pub verifier: String,
-    pub beneficiary: String,
+    pub verifier: HumanAddr,
+    pub beneficiary: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     // these are stored as canonical addresses
-    pub verifier: Vec<u8>,
-    pub beneficiary: Vec<u8>,
-    pub funder: Vec<u8>,
+    pub verifier: CanonicalAddr,
+    pub beneficiary: CanonicalAddr,
+    pub funder: CanonicalAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -30,16 +27,7 @@ pub struct HandleMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-pub enum QueryMsg {
-    Raw(RawQuery),
-}
-
-// raw_query is a helper to generate a serialized format of a raw_query
-// meant for test code and integration tests
-pub fn raw_query(key: &[u8]) -> Result<Vec<u8>> {
-    let key = from_utf8(key).context(Utf8Err {})?.to_string();
-    to_vec(&QueryMsg::Raw(RawQuery { key })).context(SerializeErr { kind: "QueryMsg" })
-}
+pub enum QueryMsg {}
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
@@ -72,14 +60,13 @@ pub fn handle<S: Storage, A: Api>(
     let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
 
     if params.message.signer == state.verifier {
+        let to_addr = deps.api.human_address(&state.beneficiary)?;
+        let from_addr = deps.api.human_address(&params.contract.address)?;
         let res = Response {
-            log: Some(format!(
-                "released funds to {}",
-                deps.api.human_address(&state.beneficiary)?
-            )),
+            log: Some(format!("released funds to {:?}", to_addr)),
             messages: vec![CosmosMsg::Send {
-                from_address: params.contract.address,
-                to_address: state.beneficiary,
+                from_address: from_addr,
+                to_address: to_addr,
                 amount: params.contract.balance.unwrap_or_default(),
             }],
             data: None,
@@ -90,11 +77,9 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: Vec<u8>) -> Result<QueryResponse> {
-    let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
-    match msg {
-        QueryMsg::Raw(raw) => perform_raw_query(&deps.storage, raw),
-    }
+pub fn query<S: Storage, A: Api>(_deps: &Extern<S, A>, msg: Vec<u8>) -> Result<QueryResponse> {
+    let _msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
+    Ok(QueryResponse::default())
 }
 
 #[cfg(test)]
