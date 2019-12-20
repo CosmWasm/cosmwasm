@@ -9,3 +9,6 @@ pub mod query;
 pub mod serde;
 pub mod traits;
 pub mod types;
+
+// not exposed
+mod demo;
