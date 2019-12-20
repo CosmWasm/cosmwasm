@@ -11,3 +11,4 @@ pub mod types;
 
 // not exposed
 mod demo;
+mod checkpoint;
