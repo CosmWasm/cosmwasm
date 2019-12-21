@@ -9,6 +9,7 @@ use snafu::ResultExt;
 use crate::errors::{ContractErr, Result, Utf8Err};
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+use crate::types::{CanonicalAddr, HumanAddr};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -91,8 +92,8 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
-    fn canonical_address(&self, human: &str) -> Result<Vec<u8>> {
-        let send = build_slice(human.as_bytes());
+    fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
+        let send = build_slice(human.as_str().as_bytes());
         let send_ptr = &*send as *const Slice as *const c_void;
         let canon = alloc(ADDR_BUFFER);
 
@@ -106,11 +107,11 @@ impl Api for ExternalApi {
 
         let mut out = unsafe { consume_slice(canon)? };
         out.truncate(read as usize);
-        Ok(out)
+        Ok(CanonicalAddr(out))
     }
 
-    fn human_address(&self, canonical: &[u8]) -> Result<String> {
-        let send = build_slice(canonical);
+    fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
+        let send = build_slice(canonical.as_bytes());
         let send_ptr = &*send as *const Slice as *const c_void;
         let human = alloc(ADDR_BUFFER);
 
@@ -125,6 +126,6 @@ impl Api for ExternalApi {
         let mut out = unsafe { consume_slice(human)? };
         out.truncate(read as usize);
         let result = from_utf8(&out).context(Utf8Err {})?.to_string();
-        Ok(result)
+        Ok(HumanAddr(result))
     }
 }

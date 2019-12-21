@@ -1,11 +1,11 @@
 use cosmwasm::mock::mock_params;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
-use cosmwasm::types::{coin, CosmosMsg};
+use cosmwasm::types::{coin, CosmosMsg, HumanAddr};
 
-use cosmwasm_vm::testing::{handle, init, mock_instance, query};
+use cosmwasm_vm::testing::{handle, init, mock_instance};
 
-use hackatom::contract::{raw_query, InitMsg, State, CONFIG_KEY};
+use hackatom::contract::{InitMsg, State, CONFIG_KEY};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -33,40 +33,21 @@ To
 **/
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
-//#[test]
-//fn proper_initialization() {
-//    let mut store = mock_instance(WASM);
-//    let msg = to_vec(&InitMsg {
-//        verifier: String::from("verifies"),
-//        beneficiary: String::from("benefits"),
-//    })
-//        .unwrap();
-//    let params = mock_params(store.api(), "creator", &coin("1000", "earth"), &[]);
-//    let res = init(&mut store, params, msg).unwrap();
-//    assert_eq!(0, res.messages.len());
-//
-//    // it worked, let's check the state
-//    let precompiles = store.api();
-//    store.with_storage(|store| {
-//        let data = store.get(CONFIG_KEY).expect("no data stored");
-//        let state: State = from_slice(&data).unwrap();
-//        assert_eq!(
-//            state,
-//            State {
-//                verifier: precompiles.canonical_address("verifies").unwrap(),
-//                beneficiary: precompiles.canonical_address("benefits").unwrap(),
-//                funder: precompiles.canonical_address("creator").unwrap(),
-//            }
-//        );
-//    });
-//}
-
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM);
+    let verifier = HumanAddr(String::from("verifies"));
+    let beneficiary = HumanAddr(String::from("benefits"));
+    let creator = HumanAddr(String::from("creator"));
+    let expected_state = State {
+        verifier: deps.api.canonical_address(&verifier).unwrap(),
+        beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
+        funder: deps.api.canonical_address(&creator).unwrap(),
+    };
+
     let msg = to_vec(&InitMsg {
-        verifier: String::from("verifies"),
-        beneficiary: String::from("benefits"),
+        verifier,
+        beneficiary,
     })
     .unwrap();
     let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
@@ -77,43 +58,8 @@ fn proper_initialization() {
     deps.with_storage(|store| {
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
-        assert_eq!(
-            state,
-            State {
-                verifier: deps.api.canonical_address("verifies").unwrap(),
-                beneficiary: deps.api.canonical_address("benefits").unwrap(),
-                funder: deps.api.canonical_address("creator").unwrap(),
-            }
-        );
+        assert_eq!(state, expected_state);
     });
-}
-
-#[test]
-fn proper_init_and_query() {
-    let mut deps = mock_instance(WASM);
-    let msg = to_vec(&InitMsg {
-        verifier: String::from("foo"),
-        beneficiary: String::from("bar"),
-    })
-    .unwrap();
-    let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
-    let _res = init(&mut deps, params, msg).unwrap();
-
-    let q_res = query(&mut deps, raw_query(b"random").unwrap()).unwrap();
-    assert_eq!(q_res.results.len(), 0);
-
-    // query for state
-    let mut q_res = query(&mut deps, raw_query(CONFIG_KEY).unwrap()).unwrap();
-    let model = q_res.results.pop().unwrap();
-    let state: State = from_slice(&model.val).unwrap();
-    assert_eq!(
-        state,
-        State {
-            verifier: deps.api.canonical_address("foo").unwrap(),
-            beneficiary: deps.api.canonical_address("bar").unwrap(),
-            funder: deps.api.canonical_address("creator").unwrap(),
-        }
-    );
 }
 
 #[test]
@@ -130,9 +76,12 @@ fn proper_handle() {
     let mut deps = mock_instance(WASM);
 
     // initialize the store
+    let verifier = HumanAddr(String::from("verifies"));
+    let beneficiary = HumanAddr(String::from("benefits"));
+
     let init_msg = to_vec(&InitMsg {
-        verifier: String::from("verifies"),
-        beneficiary: String::from("benefits"),
+        verifier: verifier.clone(),
+        beneficiary: beneficiary.clone(),
     })
     .unwrap();
     let init_params = mock_params(
@@ -147,7 +96,7 @@ fn proper_handle() {
     // beneficiary can release it
     let handle_params = mock_params(
         &deps.api,
-        "verifies",
+        verifier.as_str(),
         &coin("15", "earth"),
         &coin("1015", "earth"),
     );
@@ -157,8 +106,8 @@ fn proper_handle() {
     assert_eq!(
         msg,
         &CosmosMsg::Send {
-            from_address: deps.api.canonical_address("cosmos2contract").unwrap(),
-            to_address: deps.api.canonical_address("benefits").unwrap(),
+            from_address: HumanAddr("cosmos2contract".to_string()),
+            to_address: beneficiary,
             amount: coin("1015", "earth"),
         }
     );
@@ -166,55 +115,47 @@ fn proper_handle() {
         Some("released funds to benefits".to_string()),
         handle_res.log
     );
+}
 
-    // it worked, let's check the state
+#[test]
+fn failed_handle() {
+    let mut deps = mock_instance(WASM);
+
+    // initialize the store
+    let verifier = HumanAddr(String::from("verifies"));
+    let beneficiary = HumanAddr(String::from("benefits"));
+    let creator = HumanAddr(String::from("creator"));
+
+    let init_msg = to_vec(&InitMsg {
+        verifier: verifier.clone(),
+        beneficiary: beneficiary.clone(),
+    })
+    .unwrap();
+    let init_params = mock_params(
+        &deps.api,
+        creator.as_str(),
+        &coin("1000", "earth"),
+        &coin("1000", "earth"),
+    );
+    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    // beneficiary can release it
+    let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+    let handle_res = handle(&mut deps, handle_params, Vec::new());
+    assert!(handle_res.is_err());
+
+    // state should not change
     deps.with_storage(|store| {
         let data = store.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(
             state,
             State {
-                verifier: deps.api.canonical_address("verifies").unwrap(),
-                beneficiary: deps.api.canonical_address("benefits").unwrap(),
-                funder: deps.api.canonical_address("creator").unwrap(),
+                verifier: deps.api.canonical_address(&verifier).unwrap(),
+                beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
+                funder: deps.api.canonical_address(&creator).unwrap(),
             }
         );
     });
 }
-//
-//#[test]
-//fn failed_handle() {
-//    let mut deps = dependencies(20);
-//
-//    // initialize the store
-//    let init_msg = to_vec(&InitMsg {
-//        verifier: String::from("verifies"),
-//        beneficiary: String::from("benefits"),
-//    })
-//        .unwrap();
-//    let init_params = mock_params(
-//        &deps.api,
-//        "creator",
-//        &coin("1000", "earth"),
-//        &coin("1000", "earth"),
-//    );
-//    let init_res = init(&mut deps, init_params, init_msg).unwrap();
-//    assert_eq!(0, init_res.messages.len());
-//
-//    // beneficiary can release it
-//    let handle_params = mock_params(&deps.api, "benefits", &[], &coin("1000", "earth"));
-//    let handle_res = handle(&mut deps, handle_params, Vec::new());
-//    assert!(handle_res.is_err());
-//
-//    // state should not change
-//    let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-//    let state: State = from_slice(&data).unwrap();
-//    assert_eq!(
-//        state,
-//        State {
-//            verifier: deps.api.canonical_address("verifies").unwrap(),
-//            beneficiary: deps.api.canonical_address("benefits").unwrap(),
-//            funder: deps.api.canonical_address("creator").unwrap(),
-//        }
-//    );
-//}

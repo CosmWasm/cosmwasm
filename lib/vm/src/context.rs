@@ -10,6 +10,7 @@ use wasmer_runtime::Ctx;
 use cosmwasm::traits::{Api, Storage};
 
 use crate::memory::{read_memory, write_memory};
+use cosmwasm::types::{HumanAddr, CanonicalAddr};
 
 pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
     let key = read_memory(ctx, key_ptr);
@@ -34,13 +35,13 @@ pub fn do_canonical_address<A: Api>(
     canonical_ptr: u32,
 ) -> i32 {
     let human = read_memory(ctx, human_ptr);
-    let human_str = from_utf8(&human);
-    if human_str.is_err() {
-        return -2;
-    }
-    match api.canonical_address(human_str.unwrap()) {
+    let human = match from_utf8(&human) {
+        Ok(human_str) => { HumanAddr(human_str.to_string())},
+        Err(_) => { return -2 },
+    };
+    match api.canonical_address(&human) {
         Ok(canon) => {
-            write_memory(ctx, canonical_ptr, &canon);
+            write_memory(ctx, canonical_ptr, canon.as_bytes());
             canon.len() as i32
         }
         Err(_) => -1,
@@ -49,9 +50,9 @@ pub fn do_canonical_address<A: Api>(
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
     let canon = read_memory(ctx, canonical_ptr);
-    match api.human_address(&canon) {
+    match api.human_address(&CanonicalAddr(canon)) {
         Ok(human) => {
-            let bz = human.as_bytes();
+            let bz = human.as_str().as_bytes();
             write_memory(ctx, human_ptr, bz);
             bz.len() as i32
         }

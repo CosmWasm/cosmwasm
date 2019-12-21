@@ -5,7 +5,7 @@ use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8Err};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
-use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params};
+use crate::types::{BlockInfo, Coin, ContractInfo, MessageInfo, Params, CanonicalAddr, HumanAddr};
 
 // dependencies are all external requirements that can be injected for unit tests
 pub fn dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
@@ -67,27 +67,27 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn canonical_address(&self, human: &str) -> Result<Vec<u8>> {
+    fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
         if human.len() > self.canonical_length {
             return ContractErr {
                 msg: "human encoding too long",
             }
             .fail();
         }
-        let mut out = human.as_bytes().to_vec();
+        let mut out = Vec::from(human.as_str());
         let append = self.canonical_length - out.len();
         if append > 0 {
             out.extend(vec![0u8; append]);
         }
-        Ok(out)
+        Ok(CanonicalAddr(out))
     }
 
-    fn human_address(&self, canonical: &[u8]) -> Result<String> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
         // remove trailing 0's (TODO: fix this - but fine for first tests)
-        let trimmed: Vec<u8> = canonical.iter().cloned().filter(|&x| x != 0).collect();
+        let trimmed: Vec<u8> = canonical.as_bytes().iter().cloned().filter(|&x| x != 0).collect();
         // convert to utf8
         let human = from_utf8(&trimmed).context(Utf8Err {})?;
-        Ok(human.to_string())
+        Ok(HumanAddr(human.to_string()))
     }
 }
 
@@ -106,7 +106,7 @@ pub fn mock_params<T: Api>(
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            signer: precompiles.canonical_address(signer).unwrap(),
+            signer: precompiles.canonical_address(&HumanAddr(signer.to_string())).unwrap(),
             sent_funds: if sent.is_empty() {
                 None
             } else {
@@ -114,7 +114,7 @@ pub fn mock_params<T: Api>(
             },
         },
         contract: ContractInfo {
-            address: precompiles.canonical_address("cosmos2contract").unwrap(),
+            address: precompiles.canonical_address(&HumanAddr("cosmos2contract".to_string())).unwrap(),
             balance: if balance.is_empty() {
                 None
             } else {
@@ -140,21 +140,21 @@ mod test {
     #[test]
     fn flip_addresses() {
         let precompiles = MockApi::new(20);
-        let human = "shorty";
+        let human = HumanAddr("shorty".to_string());
         let canon = precompiles.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
-        assert_eq!(&canon[0..6], human.as_bytes());
-        assert_eq!(&canon[6..], &[0u8; 14]);
+        assert_eq!(&canon.as_bytes()[0..6], human.as_str().as_bytes());
+        assert_eq!(&canon.as_bytes()[6..], &[0u8; 14]);
 
         let recovered = precompiles.human_address(&canon).unwrap();
-        assert_eq!(human, &recovered);
+        assert_eq!(human, recovered);
     }
 
     #[test]
     #[should_panic]
     fn canonical_length_enforced() {
         let precompiles = MockApi::new(10);
-        let human = "longer-than-10";
+        let human = HumanAddr("longer-than-10".to_string());
         let _ = precompiles.canonical_address(&human).unwrap();
     }
 }
