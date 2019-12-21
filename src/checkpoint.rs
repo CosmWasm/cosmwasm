@@ -3,8 +3,11 @@ use crate::errors::Result;
 use crate::mock::MockStorage;
 
 pub struct Checkpoint<'a, S: Storage> {
+    /// a backing storage that is only modified upon commit
     storage: &'a mut S,
+    /// these are local changes not flushed to backing storage
     local_state: MockStorage,
+    /// this is a list of changes to be written to backing storage upon commit
     rep_log: Vec<Op>,
 }
 
@@ -62,17 +65,61 @@ pub fn checkpoint<S: Storage, T>(storage: &mut S, tx: &dyn Fn(&mut Checkpoint<S>
 mod test {
     use super::*;
     use crate::mock::MockStorage;
+    use crate::errors::Unauthorized;
 
     #[test]
-    fn checkpoint_writes_through() {
+    fn commit_writes_through() {
         let mut base = MockStorage::new();
         base.set(b"foo", b"bar");
 
         let mut check = Checkpoint::new(&mut base);
-        assert_eq!(Some(b"bar".to_vec()), check.get(b"foo"));
+        assert_eq!( check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
         check.commit();
 
-        assert_eq!(Some(b"works".to_vec()), base.get(b"subtx"));
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
+
+    #[test]
+    fn rollback_has_no_effect() {
+        let mut base = MockStorage::new();
+        base.set(b"foo", b"bar");
+
+        let mut check = Checkpoint::new(&mut base);
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works");
+        check.rollback();
+
+        assert_eq!(base.get(b"subtx"), None);
+    }
+
+    #[test]
+    fn checkpoint_wrapper_works() {
+        let mut base = MockStorage::new();
+        base.set(b"foo", b"bar");
+
+        // writes on success
+        let res: Result<i32> = checkpoint(&mut base, &|store| {
+            // ensure we can read from the backing store
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+            // we write in the Ok case
+            store.set(b"good", b"one");
+            Ok(5)
+        });
+        assert_eq!(5, res.unwrap());
+        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
+
+        // rejects on error
+        let res: Result<i32> = checkpoint(&mut base, &|store| {
+            // ensure we can read from the backing store
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
+            // we write in the Error case
+            store.set(b"bad", b"value");
+            Unauthorized.fail()
+        });
+        assert!(res.is_err());
+        assert_eq!(base.get(b"bad"), None);
+    }
+
 }
