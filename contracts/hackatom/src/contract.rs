@@ -9,14 +9,12 @@ use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Params, QueryResponse
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
-    // these use humanized addresses
     pub verifier: HumanAddr,
     pub beneficiary: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    // these are stored as canonical addresses
     pub verifier: CanonicalAddr,
     pub beneficiary: CanonicalAddr,
     pub funder: CanonicalAddr,
