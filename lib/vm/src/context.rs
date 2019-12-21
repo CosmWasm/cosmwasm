@@ -52,7 +52,7 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
     let canon = read_memory(ctx, canonical_ptr);
     match api.human_address(&CanonicalAddr(canon)) {
         Ok(human) => {
-            let bz = human.as_bytes();
+            let bz = human.as_str().as_bytes();
             write_memory(ctx, human_ptr, bz);
             bz.len() as i32
         }

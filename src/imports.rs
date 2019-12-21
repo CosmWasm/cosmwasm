@@ -93,7 +93,7 @@ impl ExternalApi {
 
 impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
-        let send = build_slice(human.as_bytes());
+        let send = build_slice(human.as_str().as_bytes());
         let send_ptr = &*send as *const Slice as *const c_void;
         let canon = alloc(ADDR_BUFFER);
 

@@ -74,7 +74,7 @@ impl Api for MockApi {
             }
             .fail();
         }
-        let mut out = human.as_bytes().to_vec();
+        let mut out = Vec::from(human.as_str());
         let append = self.canonical_length - out.len();
         if append > 0 {
             out.extend(vec![0u8; append]);
@@ -143,7 +143,7 @@ mod test {
         let human = HumanAddr("shorty".to_string());
         let canon = precompiles.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
-        assert_eq!(&canon.as_bytes()[0..6], human.as_bytes());
+        assert_eq!(&canon.as_bytes()[0..6], human.as_str().as_bytes());
         assert_eq!(&canon.as_bytes()[6..], &[0u8; 14]);
 
         let recovered = precompiles.human_address(&canon).unwrap();
