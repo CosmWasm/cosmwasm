@@ -1,18 +1,33 @@
 use crate::traits::{Storage, ReadonlyStorage};
 use crate::errors::Result;
+use crate::mock::MockStorage;
 
 pub struct Checkpoint<'a, S: Storage> {
     storage: &'a mut S,
+    local_state: MockStorage,
+    rep_log: Vec<Op>,
+}
+
+enum Op {
+    Set{key: Vec<u8>, value: Vec<u8>},
 }
 
 impl<'a, S: Storage> Checkpoint<'a, S> {
     pub fn new(storage: &'a mut S) -> Self {
-        Checkpoint{ storage }
+        Checkpoint{
+            storage,
+            local_state: MockStorage::new(),
+            rep_log: vec![],
+        }
     }
 
     /// commit will consume the checkpoint and write all changes to the underlying store
     pub fn commit(self) {
-//        panic!("TODO");
+        for op in self.rep_log.iter() {
+            match op {
+                Op::Set{key, value} => self.storage.set(&key, &value),
+            }
+        }
     }
 
     /// rollback will consume the checkpoint and drop all changes (no really needed, going out of scope does the same, but nice for clarity)
@@ -21,21 +36,23 @@ impl<'a, S: Storage> Checkpoint<'a, S> {
 
 impl<'a, S: Storage> ReadonlyStorage for Checkpoint<'a, S> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        // TODO
-        self.storage.get(key)
+        match self.local_state.get(key) {
+            Some(val) => Some(val),
+            None => self.storage.get(key),
+        }
     }
 }
 
 impl<'a, S: Storage> Storage for Checkpoint<'a, S> {
     fn set(&mut self, key: &[u8], value: &[u8]) {
-        // TODO
-        self.storage.set(key, value)
+        self.local_state.set(key, value);
+        self.rep_log.push(Op::Set{key: key.to_vec(), value: value.to_vec()})
     }
 }
 
 
 pub fn checkpoint<S: Storage, T>(storage: &mut S, tx: &dyn Fn(&mut Checkpoint<S>) -> Result<T>) -> Result<T>  {
-    let mut c = Checkpoint{storage};
+    let mut c = Checkpoint::new(storage);
     let res = tx(&mut c)?;
     c.commit();
     Ok(res)
