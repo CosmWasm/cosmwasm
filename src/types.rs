@@ -137,24 +137,13 @@ pub struct RawQuery {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum QueryResult {
-    Ok(QueryResponse),
+    Ok(Vec<u8>),
     Err(String),
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct QueryResponse {
-    pub results: Vec<Model>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Model {
-    pub key: String,
-    pub val: Vec<u8>,
 }
 
 impl QueryResult {
     // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> QueryResponse {
+    pub fn unwrap(self) -> Vec<u8> {
         match self {
             QueryResult::Err(msg) => panic!("Unexpected error: {}", msg),
             QueryResult::Ok(res) => res,
