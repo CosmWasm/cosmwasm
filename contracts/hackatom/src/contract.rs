@@ -25,7 +25,11 @@ pub struct HandleMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-pub enum QueryMsg {}
+pub enum QueryMsg {
+    // returns a human-readable representation of the verifier
+    // use to ensure query path works in integration tests
+    Verifier{},
+}
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
@@ -75,13 +79,30 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-pub fn query<S: Storage, A: Api>(_deps: &Extern<S, A>, msg: Vec<u8>) -> Result<Vec<u8>> {
-    let _msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
-    Ok(vec![])
+pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: Vec<u8>) -> Result<Vec<u8>> {
+    let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
+    match msg {
+        QueryMsg::Verifier{} => query_verifier(deps),
+    }
+}
+
+fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+    let data = deps.storage.get(CONFIG_KEY).context(ContractErr {
+        msg: "uninitialized data",
+    })?;
+    let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
+    let addr = deps.api.human_address(&state.verifier)?;
+    // we just pass the address as raw bytes
+    // these will be base64 encoded into the json we return, and parsed on the way out.
+    // maybe we should wrap this in a struct then json encode it into a vec?
+    // other ideas?
+    Ok(addr.as_str().as_bytes().to_vec())
 }
 
 #[cfg(test)]
 mod tests {
+    use std::str::from_utf8;
+
     use super::*;
     use cosmwasm::mock::{dependencies, mock_params};
     // import trait to get access to read
@@ -115,6 +136,30 @@ mod tests {
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
+
+    #[test]
+    fn init_and_query() {
+        let mut deps = dependencies(20);
+
+        let verifier = HumanAddr(String::from("verifies"));
+        let beneficiary = HumanAddr(String::from("benefits"));
+        let creator = HumanAddr(String::from("creator"));
+        let msg = to_vec(&InitMsg {
+            verifier: verifier.clone(),
+            beneficiary,
+        })
+            .unwrap();
+        let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+        let res = init(&mut deps, params, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // now let's query
+        let qmsg = to_vec(&QueryMsg::Verifier{}).unwrap();
+        let qres = query(&deps, qmsg).unwrap();
+        let returned = from_utf8(&qres).unwrap();
+        assert_eq!(verifier.as_str(), returned);
+    }
+
 
     #[test]
     fn fails_on_bad_init() {
