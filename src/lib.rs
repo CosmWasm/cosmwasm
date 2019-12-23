@@ -2,11 +2,11 @@
 pub mod exports;
 pub mod imports;
 
-pub mod checkpoint;
 pub mod errors;
 pub mod memory;
 pub mod mock;
 pub mod serde;
+pub mod storage;
 pub mod traits;
 pub mod types;
 

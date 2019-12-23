@@ -2,7 +2,7 @@ use crate::errors::Result;
 use crate::mock::MockStorage;
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 
-pub struct Checkpoint<'a, S: Storage> {
+pub struct StorageTransaction<'a, S: Storage> {
     /// a backing storage that is only modified upon commit
     storage: &'a mut S,
     /// these are local changes not flushed to backing storage
@@ -15,9 +15,9 @@ enum Op {
     Set { key: Vec<u8>, value: Vec<u8> },
 }
 
-impl<'a, S: Storage> Checkpoint<'a, S> {
+impl<'a, S: Storage> StorageTransaction<'a, S> {
     pub fn new(storage: &'a mut S) -> Self {
-        Checkpoint {
+        StorageTransaction {
             storage,
             local_state: MockStorage::new(),
             rep_log: vec![],
@@ -37,7 +37,7 @@ impl<'a, S: Storage> Checkpoint<'a, S> {
     pub fn rollback(self) {}
 }
 
-impl<'a, S: Storage> ReadonlyStorage for Checkpoint<'a, S> {
+impl<'a, S: Storage> ReadonlyStorage for StorageTransaction<'a, S> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
             Some(val) => Some(val),
@@ -46,7 +46,7 @@ impl<'a, S: Storage> ReadonlyStorage for Checkpoint<'a, S> {
     }
 }
 
-impl<'a, S: Storage> Storage for Checkpoint<'a, S> {
+impl<'a, S: Storage> Storage for StorageTransaction<'a, S> {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         self.local_state.set(key, value);
         self.rep_log.push(Op::Set {
@@ -56,27 +56,33 @@ impl<'a, S: Storage> Storage for Checkpoint<'a, S> {
     }
 }
 
-pub fn checkpoint<S: Storage, T>(
+pub fn transactional<S: Storage, T>(
     storage: &mut S,
-    tx: &dyn Fn(&mut Checkpoint<S>) -> Result<T>,
+    tx: &dyn Fn(&mut StorageTransaction<S>) -> Result<T>,
 ) -> Result<T> {
-    let mut c = Checkpoint::new(storage);
+    let mut c = StorageTransaction::new(storage);
     let res = tx(&mut c)?;
     c.commit();
     Ok(res)
 }
 
-pub fn checkpoint_deps<S: Storage, A: Api, T>(
+pub fn transactional_deps<S: Storage, A: Api, T>(
     deps: &mut Extern<S, A>,
-    tx: &dyn Fn(&mut Extern<Checkpoint<S>, A>) -> Result<T>,
+    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A>) -> Result<T>,
 ) -> Result<T> {
-    let c = Checkpoint::new(&mut deps.storage);
-    let mut deps = Extern{storage: c, api: deps.api.clone()};
-    let res = tx(&mut deps)?;
-    deps.storage.commit();
-    Ok(res)
+    let c = StorageTransaction::new(&mut deps.storage);
+    let mut deps = Extern {
+        storage: c,
+        api: deps.api.clone(),
+    };
+    let res = tx(&mut deps);
+    if res.is_ok() {
+        deps.storage.commit();
+    } else {
+        deps.storage.rollback();
+    }
+    res
 }
-
 
 #[cfg(test)]
 mod test {
@@ -89,7 +95,7 @@ mod test {
         let mut base = MockStorage::new();
         base.set(b"foo", b"bar");
 
-        let mut check = Checkpoint::new(&mut base);
+        let mut check = StorageTransaction::new(&mut base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
         check.commit();
@@ -102,7 +108,7 @@ mod test {
         let mut base = MockStorage::new();
         base.set(b"foo", b"bar");
 
-        let mut check = Checkpoint::new(&mut base);
+        let mut check = StorageTransaction::new(&mut base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
         check.rollback();
@@ -111,12 +117,12 @@ mod test {
     }
 
     #[test]
-    fn checkpoint_wrapper_works() {
+    fn transactional_works() {
         let mut base = MockStorage::new();
         base.set(b"foo", b"bar");
 
         // writes on success
-        let res: Result<i32> = checkpoint(&mut base, &|store| {
+        let res: Result<i32> = transactional(&mut base, &|store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             // we write in the Ok case
@@ -127,7 +133,7 @@ mod test {
         assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
 
         // rejects on error
-        let res: Result<i32> = checkpoint(&mut base, &|store| {
+        let res: Result<i32> = transactional(&mut base, &|store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             assert_eq!(store.get(b"good"), Some(b"one".to_vec()));

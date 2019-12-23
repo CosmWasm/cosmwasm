@@ -104,11 +104,11 @@ mod tests {
     use std::str::from_utf8;
 
     use super::*;
-    use cosmwasm::checkpoint::checkpoint_deps;
     use cosmwasm::errors::Error;
     use cosmwasm::mock::{dependencies, mock_params};
+    use cosmwasm::storage::transactional_deps;
     // import trait to get access to read
-    use cosmwasm::traits::{ReadonlyStorage};
+    use cosmwasm::traits::ReadonlyStorage;
     use cosmwasm::types::coin;
 
     #[test]
@@ -183,18 +183,18 @@ mod tests {
             funder: deps.api.canonical_address(&creator).unwrap(),
         };
 
-
         // let's see if we can checkpoint on a contract
-        let res = checkpoint_deps(&mut deps, &|deps| {
+        let res = transactional_deps(&mut deps, &|deps| {
             let msg = to_vec(&InitMsg {
                 verifier: verifier.clone(),
                 beneficiary: beneficiary.clone(),
             })
-                .unwrap();
+            .unwrap();
             let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
 
             init(deps, params, msg)
-        }).unwrap();
+        })
+        .unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
@@ -202,7 +202,6 @@ mod tests {
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
-
 
     #[test]
     fn fails_on_bad_init() {
