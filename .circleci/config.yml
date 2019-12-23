@@ -161,8 +161,8 @@ jobs:
           command: |
             CHANGES_IN_REPO=$(git status --porcelain)
             if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' and 'git diff' for debugging now:"
-              git status && git diff
+              echo "Repository is dirty. Showing 'git status' for debugging now:"
+              git status
               exit 1
             fi
       - save_cache:
