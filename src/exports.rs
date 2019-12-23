@@ -15,6 +15,7 @@ use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Params, QueryResult, Response};
+use serde::Deserialize;
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer
 // to a slice defining this data. This space is managed by the calling process
@@ -33,12 +34,12 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 }
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_init<T: Display + From<Error>>(
+pub fn do_init<'de, T: Deserialize<'de>>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
-        Vec<u8>,
-    ) -> Result<Response, T>,
+        T,
+    ) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -49,12 +50,12 @@ pub fn do_init<T: Display + From<Error>>(
 }
 
 // do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_handle<T: Display + From<Error>>(
+pub fn do_handle<'de, T: Deserialize<'de>>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
-        Vec<u8>,
-    ) -> Result<Response, T>,
+        T,
+    ) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -65,8 +66,8 @@ pub fn do_handle<T: Display + From<Error>>(
 }
 
 // do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_query<T: Display + From<Error>>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, Vec<u8>) -> Result<Vec<u8>, T>,
+pub fn do_query<'de, T: Deserialize<'de>>(
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
     match _do_query(query_fn, msg_ptr) {
@@ -75,19 +76,31 @@ pub fn do_query<T: Display + From<Error>>(
     }
 }
 
-fn _do_init<T: Display + From<Error>>(
+fn _do_init<'de, T: Deserialize<'de>>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
-        Vec<u8>,
-    ) -> Result<Response, T>,
+        T,
+    ) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> Result<*mut c_void, T> {
+) -> Result<*mut c_void, Error> {
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
+    __do_init(init_fn, &params, &msg)
+}
 
+fn __do_init<'de, T: Deserialize<'de>>(
+    init_fn: &dyn Fn(
+        &mut Extern<ExternalStorage, ExternalApi>,
+        Params,
+        T,
+    ) -> Result<Response, Error>,
+    params: &[u8],
+    msg: &'de [u8],
+) -> Result<*mut c_void, Error> {
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
+    let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     let mut deps = dependencies();
     let res = init_fn(&mut deps, params, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
@@ -96,19 +109,21 @@ fn _do_init<T: Display + From<Error>>(
     Ok(release_buffer(json))
 }
 
-fn _do_handle<T: Display + From<Error>>(
+
+fn _do_handle<'de, T: Deserialize<'de>>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
-        Vec<u8>,
-    ) -> Result<Response, T>,
+        T,
+    ) -> Result<Response, Error>,
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> Result<*mut c_void, T> {
+) -> Result<*mut c_void, Error> {
     let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
+    let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     let mut deps = dependencies();
     let res = handle_fn(&mut deps, params, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
@@ -117,12 +132,13 @@ fn _do_handle<T: Display + From<Error>>(
     Ok(release_buffer(json))
 }
 
-fn _do_query<T: Display + From<Error>>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, Vec<u8>) -> Result<Vec<u8>, T>,
+fn _do_query<'de, T: Deserialize<'de>>(
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
     msg_ptr: *mut c_void,
-) -> Result<*mut c_void, T> {
+) -> Result<*mut c_void, Error> {
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
+    let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     let deps = dependencies();
     let res = query_fn(&deps, msg)?;
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
