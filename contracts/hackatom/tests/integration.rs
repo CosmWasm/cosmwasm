@@ -88,9 +88,9 @@ fn init_and_query() {
 
     // bad query returns parse error
     let qres = query(&mut deps, b"no json here".to_vec());
-    assert!(qres.is_err());
-    if let QueryResult::Err(msg) = qres {
-        assert!(msg.starts_with("Error parsing QueryMsg:"), msg);
+    match qres {
+        QueryResult::Err(msg) => assert!(msg.starts_with("Error parsing QueryMsg:"), msg),
+        _ => panic!("Call should fail"),
     }
 }
 
