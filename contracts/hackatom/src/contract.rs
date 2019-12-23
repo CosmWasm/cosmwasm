@@ -36,9 +36,8 @@ pub static CONFIG_KEY: &[u8] = b"config";
 pub fn init<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     params: Params,
-    msg: Vec<u8>,
+    msg: InitMsg,
 ) -> Result<Response> {
-    let msg: InitMsg = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
@@ -54,7 +53,7 @@ pub fn init<S: Storage, A: Api>(
 pub fn handle<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     params: Params,
-    _: Vec<u8>,
+    _: HandleMsg,
 ) -> Result<Response> {
     let data = deps.storage.get(CONFIG_KEY).context(ContractErr {
         msg: "uninitialized data",
@@ -79,8 +78,7 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: Vec<u8>) -> Result<Vec<u8>> {
-    let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
+pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
     match msg {
         QueryMsg::Verifier {} => query_verifier(deps),
     }
@@ -104,7 +102,6 @@ mod tests {
     use std::str::from_utf8;
 
     use super::*;
-    use cosmwasm::errors::Error;
     use cosmwasm::mock::{dependencies, mock_params};
     use cosmwasm::storage::transactional_deps;
     // import trait to get access to read
@@ -124,11 +121,10 @@ mod tests {
             funder: deps.api.canonical_address(&creator).unwrap(),
         };
 
-        let msg = to_vec(&InitMsg {
+        let msg = InitMsg {
             verifier,
             beneficiary,
-        })
-        .unwrap();
+        };
         let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
         let res = init(&mut deps, params, msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -146,28 +142,18 @@ mod tests {
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
         let creator = HumanAddr(String::from("creator"));
-        let msg = to_vec(&InitMsg {
+        let msg = InitMsg {
             verifier: verifier.clone(),
             beneficiary,
-        })
-        .unwrap();
+        };
         let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
         let res = init(&mut deps, params, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
-        let qmsg = to_vec(&QueryMsg::Verifier {}).unwrap();
-        let qres = query(&deps, qmsg).unwrap();
+        let qres = query(&deps, QueryMsg::Verifier {}).unwrap();
         let returned = from_utf8(&qres).unwrap();
         assert_eq!(verifier.as_str(), returned);
-
-        // bad query returns parse error
-        let qres = query(&deps, b"no json here".to_vec());
-        match qres {
-            Ok(_) => panic!("Call should fail"),
-            Err(Error::ParseErr { kind, .. }) => assert_eq!(kind, "QueryMsg"),
-            Err(e) => panic!("Unexpected error: {}", e),
-        }
     }
 
     #[test]
@@ -185,11 +171,10 @@ mod tests {
 
         // let's see if we can checkpoint on a contract
         let res = transactional_deps(&mut deps, &|deps| {
-            let msg = to_vec(&InitMsg {
+            let msg = InitMsg {
                 verifier: verifier.clone(),
                 beneficiary: beneficiary.clone(),
-            })
-            .unwrap();
+            };
             let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
 
             init(deps, params, msg)
@@ -204,15 +189,6 @@ mod tests {
     }
 
     #[test]
-    fn fails_on_bad_init() {
-        let mut deps = dependencies(20);
-        let bad_msg = b"{}".to_vec();
-        let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
-        let res = init(&mut deps, params, bad_msg);
-        assert_eq!(true, res.is_err());
-    }
-
-    #[test]
     fn proper_handle() {
         let mut deps = dependencies(20);
 
@@ -220,11 +196,10 @@ mod tests {
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
 
-        let init_msg = to_vec(&InitMsg {
+        let init_msg = InitMsg {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
-        })
-        .unwrap();
+        };
         let init_params = mock_params(
             &deps.api,
             "creator",
@@ -241,7 +216,7 @@ mod tests {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let handle_res = handle(&mut deps, handle_params, Vec::new()).unwrap();
+        let handle_res = handle(&mut deps, handle_params, HandleMsg {}).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
@@ -267,11 +242,10 @@ mod tests {
         let beneficiary = HumanAddr(String::from("benefits"));
         let creator = HumanAddr(String::from("creator"));
 
-        let init_msg = to_vec(&InitMsg {
+        let init_msg = InitMsg {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
-        })
-        .unwrap();
+        };
         let init_params = mock_params(
             &deps.api,
             creator.as_str(),
@@ -284,7 +258,7 @@ mod tests {
         // beneficiary can release it
         let handle_params =
             mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-        let handle_res = handle(&mut deps, handle_params, Vec::new());
+        let handle_res = handle(&mut deps, handle_params, HandleMsg {});
         assert!(handle_res.is_err());
 
         // state should not change

@@ -1,10 +1,10 @@
 // This file has some helpers for integration tests.
 // They should be imported via full path to ensure there is no confusion
 // use cosmwasm_vm::testing::X
-
-use std::vec::Vec;
+use serde::Serialize;
 
 use cosmwasm::mock::{dependencies, MockApi, MockStorage};
+use cosmwasm::serde::to_vec;
 use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
@@ -19,31 +19,43 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<S: Storage + 'static, A: Api + 'static>(
+pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize>(
     instance: &mut Instance<S, A>,
     params: Params,
-    msg: Vec<u8>,
+    msg: T,
 ) -> ContractResult {
-    call_init(instance, &params, &msg).unwrap()
+    let msg = to_vec(&msg);
+    if let Err(e) = msg {
+        return ContractResult::Err(e.to_string());
+    }
+    call_init(instance, &params, &msg.unwrap()).unwrap()
 }
 
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<S: Storage + 'static, A: Api + 'static>(
+pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize>(
     instance: &mut Instance<S, A>,
     params: Params,
-    msg: Vec<u8>,
+    msg: T,
 ) -> ContractResult {
-    call_handle(instance, &params, &msg).unwrap()
+    let msg = to_vec(&msg);
+    if let Err(e) = msg {
+        return ContractResult::Err(e.to_string());
+    }
+    call_handle(instance, &params, &msg.unwrap()).unwrap()
 }
 
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<S: Storage + 'static, A: Api + 'static>(
+pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize>(
     instance: &mut Instance<S, A>,
-    msg: Vec<u8>,
+    msg: T,
 ) -> QueryResult {
-    call_query(instance, &msg).unwrap()
+    let msg = to_vec(&msg);
+    if let Err(e) = msg {
+        return QueryResult::Err(e.to_string());
+    }
+    call_query(instance, &msg.unwrap()).unwrap()
 }
