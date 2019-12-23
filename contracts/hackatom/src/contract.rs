@@ -160,7 +160,6 @@ mod tests {
         assert_eq!(verifier.as_str(), returned);
     }
 
-
     #[test]
     fn fails_on_bad_init() {
         let mut deps = dependencies(20);
