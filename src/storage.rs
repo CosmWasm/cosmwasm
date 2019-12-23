@@ -73,7 +73,7 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
     let c = StorageTransaction::new(&mut deps.storage);
     let mut deps = Extern {
         storage: c,
-        api: deps.api.clone(),
+        api: deps.api,
     };
     let res = tx(&mut deps);
     if res.is_ok() {
@@ -127,7 +127,6 @@ mod test {
 
         assert_eq!(base.get(b"subtx"), None);
     }
-
 
     #[test]
     fn transactional_works() {

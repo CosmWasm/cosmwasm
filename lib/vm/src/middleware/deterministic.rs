@@ -16,6 +16,8 @@ use wasmer_runtime_core::{
 pub struct DeterministicMiddleware;
 
 impl DeterministicMiddleware {
+    // this is only use in singlepass, not cranelift, so don't trigger ci linting errors
+    #[allow(dead_code)]
     pub fn new() -> Self {
         Self {}
     }

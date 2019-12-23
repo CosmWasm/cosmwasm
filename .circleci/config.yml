@@ -7,11 +7,13 @@ workflows:
       - singlepass_vm
       - cranelift_vm
       - hackatom
+      - fmt
+      - clippy
 
 jobs:
   base:
     docker:
-      - image: rust:1.37
+      - image: rust:1.39
     steps:
       - checkout
       - run:
@@ -69,7 +71,7 @@ jobs:
 
   cranelift_vm:
     docker:
-      - image: rust:1.37
+      - image: rust:1.39
     steps:
       - checkout
       - run:
@@ -133,3 +135,71 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: v4-cargo-cache-hackatom-{{ arch }}-{{ checksum "Cargo.lock" }}
+
+  fmt:
+    docker:
+      - image: rust:1.39
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-fmt-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add rustfmt component
+          command: rustup component add rustfmt
+      - run:
+          name: Cargo format
+          command: cargo fmt
+      - run:
+          name: Cargo format hackatom
+          command: cd contracts/hackatom && cargo fmt
+      - run:
+          name: Ensure checked-in source code is properly formatted
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' for debugging now:"
+              git status
+              exit 1
+            fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-fmt-{{ arch }}-{{ checksum "Cargo.lock" }}
+
+  clippy:
+    docker:
+      - image: rust:1.39
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-clippy-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add clippy component
+          command: rustup component add clippy
+      - run:
+          name: Clippy linting
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Clippy linting on lib/vm (use flags for stable support)
+          command: cd lib/vm && cargo clippy --no-default-features --features default-cranelift
+      - run:
+          name: Clippy linting on hackatom
+          command: cd contracts/hackatom && cargo clippy -- -D warnings
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-clippy-{{ arch }}-{{ checksum "Cargo.lock" }}
