@@ -104,10 +104,11 @@ mod tests {
     use std::str::from_utf8;
 
     use super::*;
+    use cosmwasm::checkpoint::checkpoint_deps;
     use cosmwasm::errors::Error;
     use cosmwasm::mock::{dependencies, mock_params};
     // import trait to get access to read
-    use cosmwasm::traits::ReadonlyStorage;
+    use cosmwasm::traits::{ReadonlyStorage};
     use cosmwasm::types::coin;
 
     #[test]
@@ -168,6 +169,40 @@ mod tests {
             Err(e) => panic!("Unexpected error: {}", e),
         }
     }
+
+    #[test]
+    fn checkpointing_works_on_contract() {
+        let mut deps = dependencies(20);
+
+        let verifier = HumanAddr(String::from("verifies"));
+        let beneficiary = HumanAddr(String::from("benefits"));
+        let creator = HumanAddr(String::from("creator"));
+        let expected_state = State {
+            verifier: deps.api.canonical_address(&verifier).unwrap(),
+            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
+            funder: deps.api.canonical_address(&creator).unwrap(),
+        };
+
+
+        // let's see if we can checkpoint on a contract
+        let res = checkpoint_deps(&mut deps, &|deps| {
+            let msg = to_vec(&InitMsg {
+                verifier: verifier.clone(),
+                beneficiary: beneficiary.clone(),
+            })
+                .unwrap();
+            let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+
+            init(deps, params, msg)
+        }).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // it worked, let's check the state
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
+        let state: State = from_slice(&data).unwrap();
+        assert_eq!(state, expected_state);
+    }
+
 
     #[test]
     fn fails_on_bad_init() {

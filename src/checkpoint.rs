@@ -1,6 +1,6 @@
 use crate::errors::Result;
 use crate::mock::MockStorage;
-use crate::traits::{ReadonlyStorage, Storage};
+use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 
 pub struct Checkpoint<'a, S: Storage> {
     /// a backing storage that is only modified upon commit
@@ -65,6 +65,18 @@ pub fn checkpoint<S: Storage, T>(
     c.commit();
     Ok(res)
 }
+
+pub fn checkpoint_deps<S: Storage, A: Api, T>(
+    deps: &mut Extern<S, A>,
+    tx: &dyn Fn(&mut Extern<Checkpoint<S>, A>) -> Result<T>,
+) -> Result<T> {
+    let c = Checkpoint::new(&mut deps.storage);
+    let mut deps = Extern{storage: c, api: deps.api.clone()};
+    let res = tx(&mut deps)?;
+    deps.storage.commit();
+    Ok(res)
+}
+
 
 #[cfg(test)]
 mod test {
