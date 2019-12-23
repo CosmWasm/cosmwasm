@@ -13,7 +13,9 @@ impl HumanAddr {
     pub fn as_str(&self) -> &str {
         &self.0
     }
-    pub fn len(&self) -> usize { self.0.len() }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 impl fmt::Display for HumanAddr {
@@ -22,11 +24,25 @@ impl fmt::Display for HumanAddr {
     }
 }
 
+impl From<&str> for HumanAddr {
+    fn from(addr: &str) -> Self {
+        HumanAddr(addr.to_string())
+    }
+}
+
+impl From<&HumanAddr> for HumanAddr {
+    fn from(addr: &HumanAddr) -> Self {
+        HumanAddr(addr.0.to_string())
+    }
+}
+
 impl CanonicalAddr {
     pub fn as_bytes(&self) -> &[u8] {
         &self.0
     }
-    pub fn len(&self) -> usize { self.0.len() }
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
 }
 
 // upper-case hex
