@@ -1,11 +1,13 @@
+use std::str::from_utf8;
+
 use cosmwasm::mock::mock_params;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
-use cosmwasm::types::{coin, CosmosMsg, HumanAddr};
+use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
 
-use cosmwasm_vm::testing::{handle, init, mock_instance};
+use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use hackatom::contract::{InitMsg, State, CONFIG_KEY};
+use hackatom::contract::{InitMsg, QueryMsg, State, CONFIG_KEY};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -60,6 +62,36 @@ fn proper_initialization() {
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     });
+}
+
+#[test]
+fn init_and_query() {
+    let mut deps = mock_instance(WASM);
+
+    let verifier = HumanAddr(String::from("verifies"));
+    let beneficiary = HumanAddr(String::from("benefits"));
+    let creator = HumanAddr(String::from("creator"));
+    let msg = to_vec(&InitMsg {
+        verifier: verifier.clone(),
+        beneficiary,
+    })
+    .unwrap();
+    let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+    let res = init(&mut deps, params, msg).unwrap();
+    assert_eq!(0, res.messages.len());
+
+    // now let's query
+    let qmsg = to_vec(&QueryMsg::Verifier {}).unwrap();
+    let qres = query(&mut deps, qmsg).unwrap();
+    let returned = from_utf8(&qres).unwrap();
+    assert_eq!(verifier.as_str(), returned);
+
+    // bad query returns parse error
+    let qres = query(&mut deps, b"no json here".to_vec());
+    match qres {
+        QueryResult::Err(msg) => assert!(msg.starts_with("Error parsing QueryMsg:"), msg),
+        _ => panic!("Call should fail"),
+    }
 }
 
 #[test]

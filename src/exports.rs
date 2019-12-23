@@ -125,7 +125,10 @@ fn _do_query<T: Display + From<Error>>(
 
     let deps = dependencies();
     let res = query_fn(&deps, msg)?;
-    Ok(release_buffer(res))
+    let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
+        kind: "QueryResult",
+    })?;
+    Ok(release_buffer(json))
 }
 
 fn make_error_c_string<T: Display>(error: T) -> *mut c_void {
