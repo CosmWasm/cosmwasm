@@ -110,7 +110,7 @@ fn _do_handle<T: DeserializeOwned>(
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
-    let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
+    let msg: T = from_slice(&msg).context(ParseErr { kind: "HandleMsg" })?;
     let mut deps = dependencies();
     let res = handle_fn(&mut deps, params, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
@@ -125,7 +125,7 @@ fn _do_query<T: DeserializeOwned>(
 ) -> Result<*mut c_void, Error> {
     let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
 
-    let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
+    let msg: T = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     let deps = dependencies();
     let res = query_fn(&deps, msg)?;
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
