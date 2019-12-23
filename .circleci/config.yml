@@ -11,7 +11,7 @@ workflows:
 jobs:
   base:
     docker:
-      - image: rust:1.37
+      - image: rust:1.39
     steps:
       - checkout
       - run:
@@ -69,7 +69,7 @@ jobs:
 
   cranelift_vm:
     docker:
-      - image: rust:1.37
+      - image: rust:1.39
     steps:
       - checkout
       - run:
