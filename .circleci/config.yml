@@ -133,3 +133,37 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: v4-cargo-cache-hackatom-{{ arch }}-{{ checksum "Cargo.lock" }}
+
+  fmt:
+    docker:
+      - image: rust:1.39
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-base-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Cargo format
+          command: cargo fmt
+      - run:
+          name: Cargo format hackatom
+          command: cd contracts/hackatom && cargo fmt
+      - run:
+          name: Ensure checked-in source code is properly formatted
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git diff' for debugging now:"
+              git status && git diff
+              exit 1
+            fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-base-{{ arch }}-{{ checksum "Cargo.lock" }}
