@@ -10,7 +10,7 @@ use wasmer_runtime::Ctx;
 use cosmwasm::traits::{Api, Storage};
 
 use crate::memory::{read_memory, write_memory};
-use cosmwasm::types::{HumanAddr, CanonicalAddr};
+use cosmwasm::types::{CanonicalAddr, HumanAddr};
 
 pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
     let key = read_memory(ctx, key_ptr);
@@ -36,8 +36,8 @@ pub fn do_canonical_address<A: Api>(
 ) -> i32 {
     let human = read_memory(ctx, human_ptr);
     let human = match from_utf8(&human) {
-        Ok(human_str) => { HumanAddr(human_str.to_string())},
-        Err(_) => { return -2 },
+        Ok(human_str) => HumanAddr(human_str.to_string()),
+        Err(_) => return -2,
     };
     match api.canonical_address(&human) {
         Ok(canon) => {

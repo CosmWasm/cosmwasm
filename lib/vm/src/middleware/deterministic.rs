@@ -4,7 +4,6 @@ under the MIT license.
 
 Original source: https://github.com/spacemeshos/svm/blob/5df80288c8b9a5ab3665297251c283cb614ebb81/crates/svm-compiler/src/middleware/validation.rs
 */
-
 use wasmer_runtime_core::{
     codegen::{Event, EventSink, FunctionMiddleware},
     error::CompileError,
@@ -154,7 +153,9 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
         | Operator::I64Extend8S
         | Operator::I64Extend16S
         | Operator::I64Extend32S => Ok(()),
-        _ => Err(CompileError::ValidationError{msg: "non-deterministic opcode".to_string()}),
+        _ => Err(CompileError::ValidationError {
+            msg: "non-deterministic opcode".to_string(),
+        }),
     }
 }
 
@@ -164,7 +165,7 @@ mod tests {
     use wasmer_runtime::{imports, Func};
 
     use crate::backends::compile;
-    use crate::errors::{Error};
+    use crate::errors::Error;
 
     #[test]
     #[cfg(feature = "default-singlepass")]
@@ -205,7 +206,10 @@ mod tests {
 
         if let Error::CompileErr { source } = &failure {
             if let CompileError::InternalError { msg } = source {
-                assert_eq!("Codegen(\"ValidationError { msg: \\\"non-deterministic opcode\\\" }\")", msg.as_str());
+                assert_eq!(
+                    "Codegen(\"ValidationError { msg: \\\"non-deterministic opcode\\\" }\")",
+                    msg.as_str()
+                );
                 return;
             }
         }
