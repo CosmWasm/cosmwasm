@@ -7,6 +7,7 @@ workflows:
       - singlepass_vm
       - cranelift_vm
       - hackatom
+      - fmt
 
 jobs:
   base:
