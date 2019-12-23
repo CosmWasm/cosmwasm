@@ -216,7 +216,7 @@ mod tests {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let handle_res = handle(&mut deps, handle_params, HandleMsg{}).unwrap();
+        let handle_res = handle(&mut deps, handle_params, HandleMsg {}).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
@@ -258,7 +258,7 @@ mod tests {
         // beneficiary can release it
         let handle_params =
             mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-        let handle_res = handle(&mut deps, handle_params, HandleMsg{});
+        let handle_res = handle(&mut deps, handle_params, HandleMsg {});
         assert!(handle_res.is_err());
 
         // state should not change
