@@ -117,6 +117,19 @@ mod test {
     }
 
     #[test]
+    fn ignore_same_as_rollback() {
+        let mut base = MockStorage::new();
+        base.set(b"foo", b"bar");
+
+        let mut check = StorageTransaction::new(&mut base);
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works");
+
+        assert_eq!(base.get(b"subtx"), None);
+    }
+
+
+    #[test]
     fn transactional_works() {
         let mut base = MockStorage::new();
         base.set(b"foo", b"bar");
