@@ -1,7 +1,7 @@
 use std::vec::Vec;
 
 use crate::errors::Result;
-use crate::types::{HumanAddr, CanonicalAddr};
+use crate::types::{CanonicalAddr, HumanAddr};
 
 // Extern holds all external dependencies of the contract,
 // designed to allow easy dependency injection at runtime

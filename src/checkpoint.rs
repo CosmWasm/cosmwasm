@@ -1,6 +1,6 @@
-use crate::traits::{Storage, ReadonlyStorage};
 use crate::errors::Result;
 use crate::mock::MockStorage;
+use crate::traits::{ReadonlyStorage, Storage};
 
 pub struct Checkpoint<'a, S: Storage> {
     /// a backing storage that is only modified upon commit
@@ -12,12 +12,12 @@ pub struct Checkpoint<'a, S: Storage> {
 }
 
 enum Op {
-    Set{key: Vec<u8>, value: Vec<u8>},
+    Set { key: Vec<u8>, value: Vec<u8> },
 }
 
 impl<'a, S: Storage> Checkpoint<'a, S> {
     pub fn new(storage: &'a mut S) -> Self {
-        Checkpoint{
+        Checkpoint {
             storage,
             local_state: MockStorage::new(),
             rep_log: vec![],
@@ -28,7 +28,7 @@ impl<'a, S: Storage> Checkpoint<'a, S> {
     pub fn commit(self) {
         for op in self.rep_log.iter() {
             match op {
-                Op::Set{key, value} => self.storage.set(&key, &value),
+                Op::Set { key, value } => self.storage.set(&key, &value),
             }
         }
     }
@@ -49,12 +49,17 @@ impl<'a, S: Storage> ReadonlyStorage for Checkpoint<'a, S> {
 impl<'a, S: Storage> Storage for Checkpoint<'a, S> {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         self.local_state.set(key, value);
-        self.rep_log.push(Op::Set{key: key.to_vec(), value: value.to_vec()})
+        self.rep_log.push(Op::Set {
+            key: key.to_vec(),
+            value: value.to_vec(),
+        })
     }
 }
 
-
-pub fn checkpoint<S: Storage, T>(storage: &mut S, tx: &dyn Fn(&mut Checkpoint<S>) -> Result<T>) -> Result<T>  {
+pub fn checkpoint<S: Storage, T>(
+    storage: &mut S,
+    tx: &dyn Fn(&mut Checkpoint<S>) -> Result<T>,
+) -> Result<T> {
     let mut c = Checkpoint::new(storage);
     let res = tx(&mut c)?;
     c.commit();
@@ -64,8 +69,8 @@ pub fn checkpoint<S: Storage, T>(storage: &mut S, tx: &dyn Fn(&mut Checkpoint<S>
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::mock::MockStorage;
     use crate::errors::Unauthorized;
+    use crate::mock::MockStorage;
 
     #[test]
     fn commit_writes_through() {
@@ -73,7 +78,7 @@ mod test {
         base.set(b"foo", b"bar");
 
         let mut check = Checkpoint::new(&mut base);
-        assert_eq!( check.get(b"foo"), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
         check.commit();
 
@@ -121,5 +126,4 @@ mod test {
         assert!(res.is_err());
         assert_eq!(base.get(b"bad"), None);
     }
-
 }
