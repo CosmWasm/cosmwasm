@@ -8,6 +8,7 @@ workflows:
       - cranelift_vm
       - hackatom
       - fmt
+      - clippy
 
 jobs:
   base:
@@ -145,7 +146,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - v4-cargo-cache-base-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - v4-cargo-cache-fmt-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: Cargo format
           command: cargo fmt
@@ -167,4 +168,29 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: v4-cargo-cache-base-{{ arch }}-{{ checksum "Cargo.lock" }}
+          key: v4-cargo-cache-fmt-{{ arch }}-{{ checksum "Cargo.lock" }}
+
+  clippy:
+    docker:
+      - image: rust:1.39
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-clippy-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Clippy linting
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Clippy linting on hackatom
+          command: cd contracts/hackatom && cargo clippy -- -D warnings
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: v4-cargo-cache-clippy-{{ arch }}-{{ checksum "Cargo.lock" }}
