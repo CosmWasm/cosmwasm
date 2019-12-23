@@ -5,7 +5,6 @@
 
 use crate::traits::{ReadonlyStorage, Storage};
 
-//#[derive(Clone)]
 pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
     prefix: Vec<u8>,
     storage: &'a T,
@@ -19,6 +18,8 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
         }
     }
 
+    // note: multilevel is here for demonstration purposes, but may well be removed
+    // before exposing any of these demo apis
     fn multilevel(prefixes: &[&[u8]], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
             prefix: multi_length_prefix(prefixes),
@@ -35,7 +36,6 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
     }
 }
 
-//#[derive(Clone)]
 pub struct PrefixedStorage<'a, T: Storage> {
     prefix: Vec<u8>,
     storage: &'a mut T,
@@ -49,6 +49,8 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
         }
     }
 
+    // note: multilevel is here for demonstration purposes, but may well be removed
+    // before exposing any of these demo apis
     fn multilevel(prefixes: &[&[u8]], storage: &'a mut T) -> Self {
         PrefixedStorage {
             prefix: multi_length_prefix(prefixes),
@@ -102,7 +104,6 @@ fn multi_length_prefix(prefixes: &[&[u8]]) -> Vec<u8> {
     v
 }
 
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -136,7 +137,7 @@ mod test {
 
         // set with nested
         let mut foo = PrefixedStorage::new(b"foo", &mut storage);
-        let mut bar = PrefixedStorage::new(b"bar",&mut foo);
+        let mut bar = PrefixedStorage::new(b"bar", &mut foo);
         bar.set(b"baz", b"winner");
 
         // we can nest them the same encoding with one operation
