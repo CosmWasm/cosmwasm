@@ -192,7 +192,7 @@ jobs:
           command: cargo clippy -- -D warnings
       - run:
           name: Clippy linting on lib/vm (use flags for stable support)
-          command: cargo clippy --no-default-features --features default-cranelift
+          command: cd lib/vm && cargo clippy --no-default-features --features default-cranelift
       - run:
           name: Clippy linting on hackatom
           command: cd contracts/hackatom && cargo clippy -- -D warnings
