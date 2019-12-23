@@ -4,10 +4,13 @@
 //! allocate and deallocate should be re-exported as is
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
-use snafu::ResultExt;
 use std::fmt::Display;
 use std::os::raw::c_void;
 use std::vec::Vec;
+
+use schemars::JsonSchema;
+use serde::de::DeserializeOwned;
+use snafu::ResultExt;
 
 use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::{dependencies, ExternalApi, ExternalStorage};
@@ -15,7 +18,6 @@ use crate::memory::{alloc, consume_slice, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Params, QueryResult, Response};
-use serde::de::DeserializeOwned;
 
 // allocate reserves the given number of bytes in wasm memory and returns a pointer
 // to a slice defining this data. This space is managed by the calling process
@@ -34,7 +36,7 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 }
 
 // do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_init<T: DeserializeOwned>(
+pub fn do_init<T: DeserializeOwned + JsonSchema>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
@@ -50,7 +52,7 @@ pub fn do_init<T: DeserializeOwned>(
 }
 
 // do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_handle<T: DeserializeOwned>(
+pub fn do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
@@ -66,7 +68,7 @@ pub fn do_handle<T: DeserializeOwned>(
 }
 
 // do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_query<T: DeserializeOwned>(
+pub fn do_query<T: DeserializeOwned + JsonSchema>(
     query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
@@ -76,7 +78,7 @@ pub fn do_query<T: DeserializeOwned>(
     }
 }
 
-fn _do_init<T: DeserializeOwned>(
+fn _do_init<T: DeserializeOwned + JsonSchema>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
@@ -97,7 +99,7 @@ fn _do_init<T: DeserializeOwned>(
     Ok(release_buffer(json))
 }
 
-fn _do_handle<T: DeserializeOwned>(
+fn _do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
         Params,
@@ -119,7 +121,7 @@ fn _do_handle<T: DeserializeOwned>(
     Ok(release_buffer(json))
 }
 
-fn _do_query<T: DeserializeOwned>(
+fn _do_query<T: DeserializeOwned + JsonSchema>(
     query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {

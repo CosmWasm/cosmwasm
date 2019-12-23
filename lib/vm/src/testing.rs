@@ -2,6 +2,8 @@
 // They should be imported via full path to ensure there is no confusion
 // use cosmwasm_vm::testing::X
 use serde::Serialize;
+// JsonSchema is a flag for types meant to be publically exposed
+use schemars::JsonSchema;
 
 use cosmwasm::mock::{dependencies, MockApi, MockStorage};
 use cosmwasm::serde::to_vec;
@@ -19,7 +21,7 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 // init mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize>(
+pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     params: Params,
     msg: T,
@@ -34,7 +36,7 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize>(
 // handle mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize>(
+pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     params: Params,
     msg: T,
@@ -49,7 +51,7 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize>(
 // query mimicks the call signature of the smart contracts.
 // thus it moves params and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize>(
+pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     msg: T,
 ) -> QueryResult {
