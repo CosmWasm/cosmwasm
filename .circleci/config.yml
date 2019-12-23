@@ -148,6 +148,9 @@ jobs:
           keys:
             - v4-cargo-cache-fmt-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
+          name: Add rustfmt component
+          command: rustup component add rustfmt            -
+      - run:
           name: Cargo format
           command: cargo fmt
       - run:
@@ -181,6 +184,9 @@ jobs:
       - restore_cache:
           keys:
             - v4-cargo-cache-clippy-{{ arch }}-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add clippy component
+          command: rustup component add clippy            -
       - run:
           name: Clippy linting
           command: cargo clippy -- -D warnings
