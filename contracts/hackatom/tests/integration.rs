@@ -3,7 +3,7 @@ use std::str::from_utf8;
 use cosmwasm::mock::mock_params;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
-use cosmwasm::types::{coin, CosmosMsg, HumanAddr};
+use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
@@ -75,18 +75,24 @@ fn init_and_query() {
         verifier: verifier.clone(),
         beneficiary,
     })
-        .unwrap();
+    .unwrap();
     let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
     let res = init(&mut deps, params, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
-    let qmsg = to_vec(&QueryMsg::Verifier{}).unwrap();
+    let qmsg = to_vec(&QueryMsg::Verifier {}).unwrap();
     let qres = query(&mut deps, qmsg).unwrap();
     let returned = from_utf8(&qres).unwrap();
     assert_eq!(verifier.as_str(), returned);
-}
 
+    // bad query returns parse error
+    let qres = query(&mut deps, b"no json here".to_vec());
+    assert!(qres.is_err());
+    if let QueryResult::Err(msg) = qres {
+        assert!(msg.starts_with("Error parsing QueryMsg:"), msg);
+    }
+}
 
 #[test]
 fn fails_on_bad_init() {

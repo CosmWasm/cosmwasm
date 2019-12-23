@@ -28,7 +28,7 @@ pub struct HandleMsg {}
 pub enum QueryMsg {
     // returns a human-readable representation of the verifier
     // use to ensure query path works in integration tests
-    Verifier{},
+    Verifier {},
 }
 
 pub static CONFIG_KEY: &[u8] = b"config";
@@ -82,7 +82,7 @@ pub fn handle<S: Storage, A: Api>(
 pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: Vec<u8>) -> Result<Vec<u8>> {
     let msg: QueryMsg = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     match msg {
-        QueryMsg::Verifier{} => query_verifier(deps),
+        QueryMsg::Verifier {} => query_verifier(deps),
     }
 }
 
@@ -104,9 +104,10 @@ mod tests {
     use std::str::from_utf8;
 
     use super::*;
+    use cosmwasm::errors::Error;
     use cosmwasm::mock::{dependencies, mock_params};
     // import trait to get access to read
-    use cosmwasm::traits::{ReadonlyStorage};
+    use cosmwasm::traits::ReadonlyStorage;
     use cosmwasm::types::coin;
 
     #[test]
@@ -148,16 +149,24 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         })
-            .unwrap();
+        .unwrap();
         let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
         let res = init(&mut deps, params, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
-        let qmsg = to_vec(&QueryMsg::Verifier{}).unwrap();
+        let qmsg = to_vec(&QueryMsg::Verifier {}).unwrap();
         let qres = query(&deps, qmsg).unwrap();
         let returned = from_utf8(&qres).unwrap();
         assert_eq!(verifier.as_str(), returned);
+
+        // bad query returns parse error
+        let qres = query(&deps, b"no json here".to_vec());
+        match qres {
+            Ok(_) => panic!("Call should fail"),
+            Err(Error::ParseErr { kind, .. }) => assert_eq!(kind, "QueryMsg"),
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
     }
 
     #[test]
