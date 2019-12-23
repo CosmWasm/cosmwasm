@@ -1,9 +1,6 @@
 // This file has some helpers for integration tests.
 // They should be imported via full path to ensure there is no confusion
 // use cosmwasm_vm::testing::X
-
-use std::vec::Vec;
-
 use serde::Serialize;
 
 use cosmwasm::mock::{dependencies, MockApi, MockStorage};
@@ -54,7 +51,7 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize>(
 // this is inefficient here, but only used in test code
 pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize>(
     instance: &mut Instance<S, A>,
-    msg: Vec<u8>,
+    msg: T,
 ) -> QueryResult {
     let msg = to_vec(&msg);
     if let Err(e) = msg {
