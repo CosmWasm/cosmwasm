@@ -22,6 +22,20 @@ fn key_prefix(namespace: &[u8]) -> Vec<u8> {
     out
 }
 
+fn multi_key_prefix(namespaces: &[&[u8]]) -> Vec<u8> {
+    let mut size = namespaces.len();
+    for &namespace in namespaces {
+        size += namespace.len() + 2;
+    }
+
+    let mut out = Vec::with_capacity(size);
+    for &namespace in namespaces {
+        let prefix = key_prefix(namespace);
+        out.extend_from_slice(&prefix);
+    }
+    out
+}
+
 pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
     prefix: Vec<u8>,
     storage: &'a T,
@@ -39,7 +53,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     // before exposing any of these demo apis
     fn multilevel(prefixes: &[&[u8]], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
-            prefix: multi_length_prefix(prefixes),
+            prefix: multi_key_prefix(prefixes),
             storage,
         }
     }
@@ -70,7 +84,7 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
     // before exposing any of these demo apis
     fn multilevel(prefixes: &[&[u8]], storage: &'a mut T) -> Self {
         PrefixedStorage {
-            prefix: multi_length_prefix(prefixes),
+            prefix: multi_key_prefix(prefixes),
             storage,
         }
     }
@@ -90,24 +104,6 @@ impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
         k.extend_from_slice(key);
         self.storage.set(&k, value)
     }
-}
-
-// prepend length and store this
-fn multi_length_prefix(prefixes: &[&[u8]]) -> Vec<u8> {
-    let mut size = prefixes.len();
-    for &p in prefixes {
-        size += p.len();
-    }
-
-    let mut v = Vec::with_capacity(size);
-    for &p in prefixes {
-        if p.len() > 255 {
-            panic!("only supports prefixes up to length 255")
-        }
-        v.push(p.len() as u8);
-        v.extend_from_slice(p);
-    }
-    v
 }
 
 #[cfg(test)]
@@ -136,6 +132,20 @@ mod test {
         let limit = 0xFFFF;
         let long_namespace = vec![0; limit + 1];
         key_prefix(&long_namespace);
+    }
+
+    #[test]
+    fn multi_key_prefix_works() {
+        assert_eq!(multi_key_prefix(&[]), b"");
+        assert_eq!(multi_key_prefix(&[b""]), b"\x00\x00");
+        assert_eq!(multi_key_prefix(&[b"", b""]), b"\x00\x00\x00\x00");
+
+        assert_eq!(multi_key_prefix(&[b"a"]), b"\x00\x01a");
+        assert_eq!(multi_key_prefix(&[b"a", b"ab"]), b"\x00\x01a\x00\x02ab");
+        assert_eq!(
+            multi_key_prefix(&[b"a", b"ab", b"abc"]),
+            b"\x00\x01a\x00\x02ab\x00\x03abc"
+        );
     }
 
     #[test]
