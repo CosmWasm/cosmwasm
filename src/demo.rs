@@ -121,9 +121,20 @@ mod test {
 
     #[test]
     fn key_prefix_works_for_long_prefix() {
-        let limit = 0xFFFF;
-        let long_namespace = vec![0; limit];
-        key_prefix(&long_namespace);
+        let long_namespace1 = vec![0; 256];
+        let prefix1 = key_prefix(&long_namespace1);
+        assert_eq!(prefix1.len(), 256 + 2);
+        assert_eq!(&prefix1[0..2], b"\x01\x00");
+
+        let long_namespace2 = vec![0; 30000];
+        let prefix2 = key_prefix(&long_namespace2);
+        assert_eq!(prefix2.len(), 30000 + 2);
+        assert_eq!(&prefix2[0..2], b"\x75\x30");
+
+        let long_namespace3 = vec![0; 0xFFFF];
+        let prefix3 = key_prefix(&long_namespace3);
+        assert_eq!(prefix3.len(), 0xFFFF + 2);
+        assert_eq!(&prefix3[0..2], b"\xFF\xFF");
     }
 
     #[test]
