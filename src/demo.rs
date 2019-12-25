@@ -5,15 +5,32 @@
 
 use crate::traits::{ReadonlyStorage, Storage};
 
+// returns the length as a 2 byte big endian encoded integer
+fn len(prefix: &[u8]) -> [u8; 2] {
+    if prefix.len() > 0xFFFF {
+        panic!("only supports namespaces up to length 0xFFFF")
+    }
+    let length_bytes = (prefix.len() as u64).to_be_bytes();
+    [length_bytes[6], length_bytes[7]]
+}
+
+// prepend length of the namespace
+fn key_prefix(namespace: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(namespace.len() + 2);
+    out.extend_from_slice(&len(namespace));
+    out.extend_from_slice(namespace);
+    out
+}
+
 pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
     prefix: Vec<u8>,
     storage: &'a T,
 }
 
 impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
-    fn new(prefix: &[u8], storage: &'a T) -> Self {
+    fn new(namespace: &[u8], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
-            prefix: length_prefix(prefix),
+            prefix: key_prefix(namespace),
             storage,
         }
     }
@@ -42,9 +59,9 @@ pub struct PrefixedStorage<'a, T: Storage> {
 }
 
 impl<'a, T: Storage> PrefixedStorage<'a, T> {
-    fn new(prefix: &[u8], storage: &'a mut T) -> Self {
+    fn new(namespace: &[u8], storage: &'a mut T) -> Self {
         PrefixedStorage {
-            prefix: length_prefix(prefix),
+            prefix: key_prefix(namespace),
             storage,
         }
     }
@@ -76,17 +93,6 @@ impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
 }
 
 // prepend length and store this
-fn length_prefix(prefix: &[u8]) -> Vec<u8> {
-    let mut v = Vec::with_capacity(prefix.len() + 1);
-    if prefix.len() > 255 {
-        panic!("only supports prefixes up to length 255")
-    }
-    v.push(prefix.len() as u8);
-    v.extend_from_slice(prefix);
-    v
-}
-
-// prepend length and store this
 fn multi_length_prefix(prefixes: &[&[u8]]) -> Vec<u8> {
     let mut size = prefixes.len();
     for &p in prefixes {
@@ -108,6 +114,29 @@ fn multi_length_prefix(prefixes: &[&[u8]]) -> Vec<u8> {
 mod test {
     use super::*;
     use crate::mock::MockStorage;
+
+    #[test]
+    fn key_prefix_works() {
+        assert_eq!(key_prefix(b""), b"\x00\x00");
+        assert_eq!(key_prefix(b"a"), b"\x00\x01a");
+        assert_eq!(key_prefix(b"ab"), b"\x00\x02ab");
+        assert_eq!(key_prefix(b"abc"), b"\x00\x03abc");
+    }
+
+    #[test]
+    fn key_prefix_works_for_long_prefix() {
+        let limit = 0xFFFF;
+        let long_namespace = vec![0; limit];
+        key_prefix(&long_namespace);
+    }
+
+    #[test]
+    #[should_panic(expected = "only supports namespaces up to length 0xFFFF")]
+    fn key_prefix_panics_for_too_long_prefix() {
+        let limit = 0xFFFF;
+        let long_namespace = vec![0; limit + 1];
+        key_prefix(&long_namespace);
+    }
 
     #[test]
     fn prefix_safe() {
