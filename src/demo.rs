@@ -14,7 +14,8 @@ fn len(prefix: &[u8]) -> [u8; 2] {
     [length_bytes[6], length_bytes[7]]
 }
 
-// prepend length of the namespace
+// Calculates the raw key prefix for a given namespace
+// as documented in https://github.com/webmaster128/key-namespacing#length-prefixed-keys
 fn key_prefix(namespace: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(namespace.len() + 2);
     out.extend_from_slice(&len(namespace));
@@ -22,6 +23,8 @@ fn key_prefix(namespace: &[u8]) -> Vec<u8> {
     out
 }
 
+// Calculates the raw key prefix for a given nested namespace
+// as documented in https://github.com/webmaster128/key-namespacing#nesting
 fn multi_key_prefix(namespaces: &[&[u8]]) -> Vec<u8> {
     let mut size = namespaces.len();
     for &namespace in namespaces {
