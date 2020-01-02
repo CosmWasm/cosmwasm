@@ -11,17 +11,6 @@ license = "Apache-2.0"
 circle-ci = { repository = "confio/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
-[profile.release]
-opt-level = 3
-debug = false
-rpath = false
-lto = false
-debug-assertions = false
-codegen-units = 16
-panic = 'unwind'
-incremental = true
-overflow-checks = true
-
 [features]
 default = ["default-singlepass"]
 # multiple backends may be activated here (available through eg. backends::cranelift::*)
