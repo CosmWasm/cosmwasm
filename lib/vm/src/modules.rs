@@ -15,7 +15,7 @@ pub use wasmer_runtime_core::{
     cache::{Artifact, Cache, WasmHash},
 };
 
-use crate::backends::backend;
+use crate::backends::{backend, compiler_for_backend};
 
 /// Representation of a directory that contains compiled wasm artifacts.
 ///
@@ -128,21 +128,6 @@ impl Cache for FileSystemCache {
         file.write_all(&buffer)?;
 
         Ok(())
-    }
-}
-
-// TODO: maybe pull the same compiler we use in backend
-pub fn compiler_for_backend(backend: Backend) -> Option<Box<dyn Compiler>> {
-    match backend {
-        #[cfg(any(feature = "cranelift", feature = "default-cranelift"))]
-        Backend::Cranelift => Some(Box::new(wasmer_clif_backend::CraneliftCompiler::new())),
-
-        #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
-        Backend::Singlepass => Some(Box::new(
-            wasmer_singlepass_backend::SinglePassCompiler::new(),
-        )),
-
-        _ => None,
     }
 }
 

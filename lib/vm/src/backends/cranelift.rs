@@ -1,6 +1,6 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 use wasmer_clif_backend::CraneliftCompiler;
-use wasmer_runtime::{compile_with, Backend, Instance, Module};
+use wasmer_runtime::{compile_with, Backend, Compiler, Instance, Module};
 
 use crate::errors::{CompileErr, Error};
 use snafu::ResultExt;
@@ -8,7 +8,11 @@ use snafu::ResultExt;
 static FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
 pub fn compile(code: &[u8]) -> Result<Module, Error> {
-    compile_with(code, &CraneliftCompiler::new()).context(CompileErr {})
+    compile_with(code, compiler().as_ref()).context(CompileErr {})
+}
+
+pub fn compiler() -> Box<dyn Compiler> {
+    Box::new(CraneliftCompiler::new())
 }
 
 pub fn backend() -> Backend {

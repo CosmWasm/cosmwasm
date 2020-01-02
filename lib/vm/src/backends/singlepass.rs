@@ -1,6 +1,6 @@
 #![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
 use wasmer_middleware_common::metering;
-use wasmer_runtime::{compile_with, Backend, Instance, Module};
+use wasmer_runtime::{compile_with, Backend, Compiler, Instance, Module};
 use wasmer_runtime_core::codegen::{MiddlewareChain, StreamingCompiler};
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
@@ -11,13 +11,17 @@ use snafu::ResultExt;
 static GAS_LIMIT: u64 = 10_000_000_000;
 
 pub fn compile(code: &[u8]) -> Result<Module, Error> {
+    compile_with(code, compiler().as_ref()).context(CompileErr {})
+}
+
+pub fn compiler() -> Box<dyn Compiler> {
     let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
         let mut chain = MiddlewareChain::new();
         chain.push(DeterministicMiddleware::new());
         chain.push(metering::Metering::new(GAS_LIMIT));
         chain
     });
-    compile_with(code, &c).context(CompileErr {})
+    Box::new(c)
 }
 
 pub fn backend() -> Backend {
