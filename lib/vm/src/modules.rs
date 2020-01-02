@@ -11,7 +11,7 @@ use std::{
 use wasmer_runtime::Module;
 use wasmer_runtime_core::cache::Error as CacheError;
 pub use wasmer_runtime_core::{
-    backend::Backend,
+    backend::{Backend, Compiler},
     cache::{Artifact, Cache, WasmHash},
 };
 
@@ -106,7 +106,7 @@ impl Cache for FileSystemCache {
         unsafe {
             wasmer_runtime_core::load_cache_with(
                 serialized_cache,
-                wasmer_runtime::compiler_for_backend(backend)
+                compiler_for_backend(backend)
                     .ok_or_else(|| CacheError::UnsupportedBackend(backend))?
                     .as_ref(),
             )
@@ -131,6 +131,22 @@ impl Cache for FileSystemCache {
         Ok(())
     }
 }
+
+// TODO: maybe pull the same compiler we use in backend
+pub fn compiler_for_backend(backend: Backend) -> Option<Box<dyn Compiler>> {
+    match backend {
+        #[cfg(any(feature = "cranelift", feature = "default-cranelift"))]
+        Backend::Cranelift => Some(Box::new(wasmer_clif_backend::CraneliftCompiler::new())),
+
+        #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
+        Backend::Singlepass => Some(Box::new(
+            wasmer_singlepass_backend::SinglePassCompiler::new(),
+        )),
+
+        _ => None,
+    }
+}
+
 
 #[cfg(all(test, not(feature = "singlepass")))]
 mod tests {
@@ -162,7 +178,6 @@ mod tests {
         assert_eq!(backend().to_string(), module.info().backend.to_string());
 
         let cache_dir = env::temp_dir();
-        println!("test temp_dir {:?}", cache_dir);
 
         let mut fs_cache = unsafe {
             FileSystemCache::new(cache_dir)
@@ -174,7 +189,8 @@ mod tests {
         fs_cache.store(key, module.clone()).unwrap();
 
         // load module
-        let cached_result = fs_cache.load(key);
+//        let cached_result = fs_cache.load(key);
+        let cached_result = fs_cache.load_with_backend(key, Backend::Singlepass);
 
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};
