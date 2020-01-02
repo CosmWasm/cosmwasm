@@ -25,7 +25,7 @@ fn key_prefix(namespace: &[u8]) -> Vec<u8> {
 
 // Calculates the raw key prefix for a given nested namespace
 // as documented in https://github.com/webmaster128/key-namespacing#nesting
-fn multi_key_prefix(namespaces: &[&[u8]]) -> Vec<u8> {
+fn key_prefix_nested(namespaces: &[&[u8]]) -> Vec<u8> {
     let mut size = namespaces.len();
     for &namespace in namespaces {
         size += namespace.len() + 2;
@@ -56,7 +56,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     // before exposing any of these demo apis
     fn multilevel(prefixes: &[&[u8]], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
-            prefix: multi_key_prefix(prefixes),
+            prefix: key_prefix_nested(prefixes),
             storage,
         }
     }
@@ -87,7 +87,7 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
     // before exposing any of these demo apis
     fn multilevel(prefixes: &[&[u8]], storage: &'a mut T) -> Self {
         PrefixedStorage {
-            prefix: multi_key_prefix(prefixes),
+            prefix: key_prefix_nested(prefixes),
             storage,
         }
     }
@@ -149,15 +149,15 @@ mod test {
     }
 
     #[test]
-    fn multi_key_prefix_works() {
-        assert_eq!(multi_key_prefix(&[]), b"");
-        assert_eq!(multi_key_prefix(&[b""]), b"\x00\x00");
-        assert_eq!(multi_key_prefix(&[b"", b""]), b"\x00\x00\x00\x00");
+    fn key_prefix_nested_works() {
+        assert_eq!(key_prefix_nested(&[]), b"");
+        assert_eq!(key_prefix_nested(&[b""]), b"\x00\x00");
+        assert_eq!(key_prefix_nested(&[b"", b""]), b"\x00\x00\x00\x00");
 
-        assert_eq!(multi_key_prefix(&[b"a"]), b"\x00\x01a");
-        assert_eq!(multi_key_prefix(&[b"a", b"ab"]), b"\x00\x01a\x00\x02ab");
+        assert_eq!(key_prefix_nested(&[b"a"]), b"\x00\x01a");
+        assert_eq!(key_prefix_nested(&[b"a", b"ab"]), b"\x00\x01a\x00\x02ab");
         assert_eq!(
-            multi_key_prefix(&[b"a", b"ab", b"abc"]),
+            key_prefix_nested(&[b"a", b"ab", b"abc"]),
             b"\x00\x01a\x00\x02ab\x00\x03abc"
         );
     }
