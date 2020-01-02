@@ -127,6 +127,7 @@ impl Cache for FileSystemCache {
         let mut file = File::create(new_path_buf)?;
         file.write_all(&buffer)?;
 
+
         Ok(())
     }
 }
@@ -136,11 +137,13 @@ mod tests {
 
     use super::*;
     use std::env;
+    use crate::backends::compile;
+
 
     #[test]
     fn test_file_system_cache_run() {
         use wabt::wat2wasm;
-        use wasmer_runtime::{compile, imports, Func};
+        use wasmer_runtime::{imports, Func};
 
         static WAT: &'static str = r#"
             (module
@@ -154,6 +157,9 @@ mod tests {
         let wasm = wat2wasm(WAT).unwrap();
 
         let module = compile(&wasm).unwrap();
+
+        // assert we are using the proper backend
+        assert_eq!(backend().to_string(), module.info().backend.to_string());
 
         let cache_dir = env::temp_dir();
         println!("test temp_dir {:?}", cache_dir);
@@ -169,6 +175,7 @@ mod tests {
 
         // load module
         let cached_result = fs_cache.load(key);
+
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};
         let instance = cached_module.instantiate(&import_object).unwrap();
