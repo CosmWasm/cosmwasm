@@ -54,9 +54,9 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
 
     // note: multilevel is here for demonstration purposes, but may well be removed
     // before exposing any of these demo apis
-    fn multilevel(prefixes: &[&[u8]], storage: &'a T) -> Self {
+    fn multilevel(namespaces: &[&[u8]], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
-            prefix: key_prefix_nested(prefixes),
+            prefix: key_prefix_nested(namespaces),
             storage,
         }
     }
@@ -85,9 +85,9 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
 
     // note: multilevel is here for demonstration purposes, but may well be removed
     // before exposing any of these demo apis
-    fn multilevel(prefixes: &[&[u8]], storage: &'a mut T) -> Self {
+    fn multilevel(namespaces: &[&[u8]], storage: &'a mut T) -> Self {
         PrefixedStorage {
-            prefix: key_prefix_nested(prefixes),
+            prefix: key_prefix_nested(namespaces),
             storage,
         }
     }
