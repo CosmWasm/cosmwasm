@@ -52,8 +52,8 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
         }
     }
 
-    // note: multilevel is here for demonstration purposes, but may well be removed
-    // before exposing any of these demo apis
+    // Nested namespaces as documented in
+    // https://github.com/webmaster128/key-namespacing#nesting
     fn multilevel(namespaces: &[&[u8]], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
             prefix: key_prefix_nested(namespaces),
@@ -83,8 +83,8 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
         }
     }
 
-    // note: multilevel is here for demonstration purposes, but may well be removed
-    // before exposing any of these demo apis
+    // Nested namespaces as documented in
+    // https://github.com/webmaster128/key-namespacing#nesting
     fn multilevel(namespaces: &[&[u8]], storage: &'a mut T) -> Self {
         PrefixedStorage {
             prefix: key_prefix_nested(namespaces),
