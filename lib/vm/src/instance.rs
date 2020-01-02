@@ -109,7 +109,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::calls::{call_handle, call_init, call_query};
+    use crate::calls::{call_handle, call_init};
     use crate::testing::mock_instance;
     use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
