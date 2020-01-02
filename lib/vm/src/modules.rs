@@ -148,7 +148,7 @@ pub fn compiler_for_backend(backend: Backend) -> Option<Box<dyn Compiler>> {
 }
 
 
-#[cfg(all(test, not(feature = "singlepass")))]
+#[cfg(test)]
 mod tests {
 
     use super::*;
@@ -189,8 +189,7 @@ mod tests {
         fs_cache.store(key, module.clone()).unwrap();
 
         // load module
-//        let cached_result = fs_cache.load(key);
-        let cached_result = fs_cache.load_with_backend(key, Backend::Singlepass);
+        let cached_result = fs_cache.load(key);
 
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};
