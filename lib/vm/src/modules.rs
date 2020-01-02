@@ -127,7 +127,6 @@ impl Cache for FileSystemCache {
         let mut file = File::create(new_path_buf)?;
         file.write_all(&buffer)?;
 
-
         Ok(())
     }
 }
@@ -147,14 +146,12 @@ pub fn compiler_for_backend(backend: Backend) -> Option<Box<dyn Compiler>> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
 
     use super::*;
-    use std::env;
     use crate::backends::compile;
-
+    use std::env;
 
     #[test]
     fn test_file_system_cache_run() {
