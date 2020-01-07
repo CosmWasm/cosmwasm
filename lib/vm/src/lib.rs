@@ -16,3 +16,4 @@ pub use crate::calls::{
 };
 pub use crate::instance::Instance;
 pub use crate::memory::read_memory;
+pub use crate::modules::FileSystemCache;

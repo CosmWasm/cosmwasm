@@ -8,14 +8,13 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer_runtime::Module;
-use wasmer_runtime_core::cache::Error as CacheError;
 pub use wasmer_runtime_core::{
-    backend::Backend,
+    backend::{Backend, Compiler},
     cache::{Artifact, Cache, WasmHash},
 };
+use wasmer_runtime_core::{cache::Error as CacheError, module::Module};
 
-use crate::backends::backend;
+use crate::backends::{backend, compiler_for_backend};
 
 /// Representation of a directory that contains compiled wasm artifacts.
 ///
@@ -27,9 +26,10 @@ use crate::backends::backend;
 /// # Usage:
 ///
 /// ```rust
-/// use wasmer_runtime::cache::{Cache, FileSystemCache, WasmHash};
+/// use cosmwasm_vm::FileSystemCache;
+/// use wasmer_runtime_core::cache::{Cache, Error as CacheError, WasmHash};
+/// use wasmer_runtime_core::module::Module;
 ///
-/// # use wasmer_runtime::{Module, error::CacheError};
 /// fn store_module(module: Module) -> Result<Module, CacheError> {
 ///     // Create a new file system cache.
 ///     // This is unsafe because we can't ensure that the artifact wasn't
@@ -106,7 +106,7 @@ impl Cache for FileSystemCache {
         unsafe {
             wasmer_runtime_core::load_cache_with(
                 serialized_cache,
-                wasmer_runtime::compiler_for_backend(backend)
+                compiler_for_backend(backend)
                     .ok_or_else(|| CacheError::UnsupportedBackend(backend))?
                     .as_ref(),
             )
@@ -131,16 +131,17 @@ impl Cache for FileSystemCache {
     }
 }
 
-#[cfg(all(test, not(feature = "singlepass")))]
+#[cfg(test)]
 mod tests {
 
     use super::*;
+    use crate::backends::compile;
     use std::env;
 
     #[test]
     fn test_file_system_cache_run() {
         use wabt::wat2wasm;
-        use wasmer_runtime::{compile, imports, Func};
+        use wasmer_runtime_core::{imports, typed_func::Func};
 
         static WAT: &'static str = r#"
             (module
@@ -155,8 +156,10 @@ mod tests {
 
         let module = compile(&wasm).unwrap();
 
+        // assert we are using the proper backend
+        assert_eq!(backend().to_string(), module.info().backend.to_string());
+
         let cache_dir = env::temp_dir();
-        println!("test temp_dir {:?}", cache_dir);
 
         let mut fs_cache = unsafe {
             FileSystemCache::new(cache_dir)
@@ -169,12 +172,6 @@ mod tests {
 
         // load module
         let cached_result = fs_cache.load(key);
-        // this should fail for singlepass, work for the rest
-        #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
-        {
-            assert!(cached_result.is_err());
-            return;
-        }
 
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};

@@ -1,9 +1,13 @@
 use std::marker::PhantomData;
 
 use snafu::ResultExt;
-pub use wasmer_runtime::Func;
-use wasmer_runtime::{func, imports, Ctx, Module};
-use wasmer_runtime_core::typed_func::{Wasm, WasmTypeList};
+pub use wasmer_runtime_core::typed_func::Func;
+use wasmer_runtime_core::{
+    func, imports,
+    module::Module,
+    typed_func::{Wasm, WasmTypeList},
+    vm::Ctx,
+};
 
 use cosmwasm::traits::{Api, Extern, Storage};
 
@@ -16,7 +20,7 @@ use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_memory, write_memory};
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static> {
-    instance: wasmer_runtime::Instance,
+    instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
     storage: PhantomData<S>,
 }
@@ -109,7 +113,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::calls::{call_handle, call_init, call_query};
+    use crate::calls::{call_handle, call_init};
     use crate::testing::mock_instance;
     use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
