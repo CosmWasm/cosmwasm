@@ -5,7 +5,7 @@ use std::ffi::c_void;
 use std::mem;
 use std::str::from_utf8;
 
-use wasmer_runtime::Ctx;
+use wasmer_runtime_core::vm::Ctx;
 
 use cosmwasm::traits::{Api, Storage};
 

@@ -1,7 +1,12 @@
 #![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
 use wasmer_middleware_common::metering;
-use wasmer_runtime::{compile_with, Backend, Compiler, Instance, Module};
-use wasmer_runtime_core::codegen::{MiddlewareChain, StreamingCompiler};
+use wasmer_runtime_core::{
+    backend::{Backend, Compiler},
+    codegen::{MiddlewareChain, StreamingCompiler},
+    compile_with,
+    instance::Instance,
+    module::Module,
+};
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
 use crate::errors::{CompileErr, Error};

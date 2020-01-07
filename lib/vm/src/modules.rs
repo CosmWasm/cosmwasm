@@ -8,12 +8,11 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer_runtime::Module;
-use wasmer_runtime_core::cache::Error as CacheError;
 pub use wasmer_runtime_core::{
     backend::{Backend, Compiler},
     cache::{Artifact, Cache, WasmHash},
 };
+use wasmer_runtime_core::{cache::Error as CacheError, module::Module};
 
 use crate::backends::{backend, compiler_for_backend};
 
@@ -27,9 +26,10 @@ use crate::backends::{backend, compiler_for_backend};
 /// # Usage:
 ///
 /// ```rust
-/// use wasmer_runtime::cache::{Cache, FileSystemCache, WasmHash};
+/// use cosmwasm_vm::FileSystemCache;
+/// use wasmer_runtime_core::cache::{Cache, Error as CacheError, WasmHash};
+/// use wasmer_runtime_core::module::Module;
 ///
-/// # use wasmer_runtime::{Module, error::CacheError};
 /// fn store_module(module: Module) -> Result<Module, CacheError> {
 ///     // Create a new file system cache.
 ///     // This is unsafe because we can't ensure that the artifact wasn't
@@ -141,7 +141,7 @@ mod tests {
     #[test]
     fn test_file_system_cache_run() {
         use wabt::wat2wasm;
-        use wasmer_runtime::{imports, Func};
+        use wasmer_runtime_core::{imports, typed_func::Func};
 
         static WAT: &'static str = r#"
             (module

@@ -164,7 +164,7 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
 #[cfg(all(test, feature = "default-singlepass"))]
 mod tests {
     use super::*;
-    use wasmer_runtime::{imports, Func};
+    use wasmer_runtime_core::{imports, typed_func::Func};
 
     use crate::backends::compile;
     use crate::errors::Error;

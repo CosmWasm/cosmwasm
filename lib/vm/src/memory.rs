@@ -1,6 +1,8 @@
-use wasmer_runtime::Ctx;
-use wasmer_runtime_core::memory::ptr::{Array, WasmPtr};
-use wasmer_runtime_core::types::ValueType;
+use wasmer_runtime_core::{
+    memory::ptr::{Array, WasmPtr},
+    types::ValueType,
+    vm::Ctx,
+};
 
 /****** read/write to wasm memory buffer ****/
 

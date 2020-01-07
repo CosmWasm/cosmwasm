@@ -1,6 +1,12 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 use wasmer_clif_backend::CraneliftCompiler;
-use wasmer_runtime::{compile_with, Backend, Compiler, Instance, Module};
+use wasmer_runtime_core::{
+    backend::{Backend, Compiler},
+    codegen::{MiddlewareChain, StreamingCompiler},
+    compile_with,
+    instance::Instance,
+    module::Module,
+};
 
 use crate::errors::{CompileErr, Error};
 use snafu::ResultExt;
