@@ -45,7 +45,7 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Item Not Found"))]
+    #[snafu(display("{} not found", kind))]
     NotFound {
         kind: &'static str,
         #[cfg(feature = "backtraces")]
