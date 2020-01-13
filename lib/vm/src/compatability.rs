@@ -18,6 +18,10 @@ static SUPPORTED_IMPORTS: &[&'static str] = &[
     "c_human_address",
 ];
 
+static EXTRA_IMPORT_MSG: &str = "WASM requires unsupported imports - version too new?";
+
+static MISSING_EXPORT_MSG: &str = "WASM doesn't have required exports - version too old?";
+
 /// Lists all entry points we expect to be present when calling a contract.
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
@@ -28,13 +32,13 @@ pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
     let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
     if !only_imports(&symbols, SUPPORTED_IMPORTS) {
         return ValidationErr {
-            msg: "WASM requires unsupported imports - version too new?",
+            msg: EXTRA_IMPORT_MSG,
         }
         .fail();
     }
     if !has_all_exports(&symbols, REQUIRED_EXPORTS) {
         return ValidationErr {
-            msg: "WASM doesn't have required exports - version too old?",
+            msg: MISSING_EXPORT_MSG,
         }
         .fail();
     }
@@ -139,9 +143,30 @@ mod test {
 
     #[test]
     fn test_api_compatibility() {
+        use crate::errors::Error;
+        use wabt::wat2wasm;
+
         // this is our reference check, must pass
         check_api_compatibility(CONTRACT).unwrap();
 
-        // TODO: add some failing examples
+        // this is invalid, as it doesn't contain all required exports
+        static WAT_MISSING_EXPORTS: &'static str = r#"
+            (module
+              (type $t0 (func (param i32) (result i32)))
+              (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add))
+        "#;
+
+        let wasm_missing_exports = wat2wasm(WAT_MISSING_EXPORTS).unwrap();
+
+        match check_api_compatibility(&wasm_missing_exports) {
+            Err(Error::ValidationErr { msg }) => {
+                assert_eq!(msg, MISSING_EXPORT_MSG);
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
     }
 }

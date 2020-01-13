@@ -7,6 +7,7 @@ use snafu::ResultExt;
 use cosmwasm::traits::{Api, Extern, Storage};
 
 use crate::backends::{backend, compile};
+use crate::compatability::check_api_compatibility;
 use crate::errors::{Error, IntegrityErr, IoErr};
 use crate::instance::Instance;
 use crate::modules::{Cache, FileSystemCache, WasmHash};
@@ -51,6 +52,7 @@ where
     }
 
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
+        check_api_compatibility(wasm)?;
         let id = save(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
         let hash = WasmHash::generate(&id);
@@ -114,10 +116,37 @@ mod test {
     use tempfile::TempDir;
 
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::{dependencies, mock_params};
+    use cosmwasm::mock::{dependencies, mock_params, MockApi, MockStorage};
     use cosmwasm::types::coin;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    #[test]
+    fn saving_rejects_invalid_contract() {
+        use wabt::wat2wasm;
+
+        // this is invalid, as it doesn't contain all required exports
+        static WAT: &'static str = r#"
+            (module
+              (type $t0 (func (param i32) (result i32)))
+              (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add))
+        "#;
+
+        let wasm = wat2wasm(WAT).unwrap();
+
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache: CosmCache<MockStorage, MockApi> =
+            unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let save_result = cache.save_wasm(&wasm);
+        match save_result {
+            Err(Error::ValidationErr { .. }) => {}
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
 
     #[test]
     fn init_cached_contract() {
