@@ -11,21 +11,21 @@ static PUBLIC_SYMBOLS: Options = Options {
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
-static SUPPORTED_IMPORTS: &[&'static str] = &[
+static SUPPORTED_IMPORTS: &[&str] = &[
     "c_read",
     "c_write",
     "c_canonical_address",
     "c_human_address",
 ];
 
-static EXTRA_IMPORT_MSG: &str = "WASM requires unsupported imports - version too new?";
-
-static MISSING_EXPORT_MSG: &str = "WASM doesn't have required exports - version too old?";
-
 /// Lists all entry points we expect to be present when calling a contract.
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
-static REQUIRED_EXPORTS: &[&'static str] = &["query", "init", "handle", "allocate", "deallocate"];
+static REQUIRED_EXPORTS: &[&str] = &["query", "init", "handle", "allocate", "deallocate"];
+
+static EXTRA_IMPORT_MSG: &str = "WASM requires unsupported imports - version too new?";
+
+static MISSING_EXPORT_MSG: &str = "WASM doesn't have required exports - version too old?";
 
 pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
     let mut reader = std::io::Cursor::new(wasm_code);
