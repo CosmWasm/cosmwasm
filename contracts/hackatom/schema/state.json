@@ -9,13 +9,23 @@
   ],
   "properties": {
     "beneficiary": {
-      "type": "string"
+      "$ref": "#/definitions/CanonicalAddr"
     },
     "funder": {
-      "type": "string"
+      "$ref": "#/definitions/CanonicalAddr"
     },
     "verifier": {
-      "type": "string"
+      "$ref": "#/definitions/CanonicalAddr"
+    }
+  },
+  "definitions": {
+    "CanonicalAddr": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      }
     }
   }
 }
