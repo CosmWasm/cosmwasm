@@ -51,7 +51,7 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Invalid {}: {}", kind, msg))]
+    #[snafu(display("Invalid {}: {}", field, msg))]
     ValidationErr {
         field: &'static str,
         msg: &'static str,
@@ -61,3 +61,25 @@ pub enum Error {
 }
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
+
+pub fn invalid<T>(field: &'static str, msg: &'static str) -> Result<T> {
+    ValidationErr { field, msg }.fail()
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn use_invalid() {
+        let e: Result<()> = invalid("demo", "not implemented");
+        match e {
+            Err(Error::ValidationErr { field, msg, .. }) => {
+                assert_eq!(field, "demo");
+                assert_eq!(msg, "not implemented");
+            }
+            Err(e) => panic!("unexpected error, {:?}", e),
+            Ok(_) => panic!("invalid must return error"),
+        }
+    }
+}
