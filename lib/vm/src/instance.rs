@@ -113,7 +113,7 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::calls::{call_handle, call_init};
+    use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::mock_instance;
     use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
@@ -166,7 +166,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66_169);
+        assert_eq!(init_used, 66_762);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -183,7 +183,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 111_687);
+        assert_eq!(handle_used, 112_352);
     }
 
     #[test]
@@ -202,30 +202,28 @@ mod test {
         assert!(res.is_err());
     }
 
-    // we have remove query support in the contract for now, add this back later with a proper query
-    //    #[test]
-    //    #[cfg(feature = "default-singlepass")]
-    //    fn query_works_with_metering() {
-    //        let mut instance = mock_instance(&CONTRACT);
-    //        let orig_gas = 200_000;
-    //        instance.set_gas(orig_gas);
-    //
-    //        // init contract
-    //        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
-    //        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-    //        let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
-    //
-    //        // run contract - just sanity check - results validate in contract unit tests
-    //        instance.set_gas(orig_gas);
-    //        // we need to encode the key in base64
-    //        let msg = r#"{"raw":{"key":"config"}}"#.as_bytes();
-    //        let res = call_query(&mut instance, msg).unwrap();
-    //        let msgs = res.unwrap().results;
-    //        assert_eq!(1, msgs.len());
-    //        assert_eq!(&msgs.get(0).unwrap().key, "config");
-    //
-    //        let query_used = orig_gas - instance.get_gas();
-    //        println!("query used: {}", query_used);
-    //        assert_eq!(query_used, 77_400);
-    //    }
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn query_works_with_metering() {
+        let mut instance = mock_instance(&CONTRACT);
+        let orig_gas = 200_000;
+        instance.set_gas(orig_gas);
+
+        // init contract
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
+
+        // run contract - just sanity check - results validate in contract unit tests
+        instance.set_gas(orig_gas);
+        // we need to encode the key in base64
+        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let res = call_query(&mut instance, msg).unwrap();
+        let answer = res.unwrap();
+        assert_eq!(answer, "verifies".as_bytes());
+
+        let query_used = orig_gas - instance.get_gas();
+        println!("query used: {}", query_used);
+        assert_eq!(query_used, 58_630);
+    }
 }

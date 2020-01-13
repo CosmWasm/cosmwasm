@@ -5,26 +5,13 @@
     {
       "type": "object",
       "required": [
-        "raw"
+        "verifier"
       ],
       "properties": {
-        "raw": {
-          "$ref": "#/definitions/RawQuery"
+        "verifier": {
+          "type": "object"
         }
       }
     }
-  ],
-  "definitions": {
-    "RawQuery": {
-      "type": "object",
-      "required": [
-        "key"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        }
-      }
-    }
-  }
+  ]
 }
