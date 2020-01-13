@@ -166,7 +166,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66_169);
+        assert_eq!(init_used, 66_762);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -183,7 +183,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 111_687);
+        assert_eq!(handle_used, 112_352);
     }
 
     #[test]
