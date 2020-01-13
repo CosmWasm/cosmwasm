@@ -202,28 +202,28 @@ mod test {
         assert!(res.is_err());
     }
 
-        #[test]
-        #[cfg(feature = "default-singlepass")]
-        fn query_works_with_metering() {
-            let mut instance = mock_instance(&CONTRACT);
-            let orig_gas = 200_000;
-            instance.set_gas(orig_gas);
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn query_works_with_metering() {
+        let mut instance = mock_instance(&CONTRACT);
+        let orig_gas = 200_000;
+        instance.set_gas(orig_gas);
 
-            // init contract
-            let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
-            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-            let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
+        // init contract
+        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
 
-            // run contract - just sanity check - results validate in contract unit tests
-            instance.set_gas(orig_gas);
-            // we need to encode the key in base64
-            let msg = r#"{"verifier":{}}"#.as_bytes();
-            let res = call_query(&mut instance, msg).unwrap();
-            let answer = res.unwrap();
-            assert_eq!(answer, "verifies".as_bytes());
+        // run contract - just sanity check - results validate in contract unit tests
+        instance.set_gas(orig_gas);
+        // we need to encode the key in base64
+        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let res = call_query(&mut instance, msg).unwrap();
+        let answer = res.unwrap();
+        assert_eq!(answer, "verifies".as_bytes());
 
-            let query_used = orig_gas - instance.get_gas();
-            println!("query used: {}", query_used);
-            assert_eq!(query_used, 58_630);
-        }
+        let query_used = orig_gas - instance.get_gas();
+        println!("query used: {}", query_used);
+        assert_eq!(query_used, 58_630);
+    }
 }
