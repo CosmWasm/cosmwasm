@@ -50,7 +50,7 @@ impl FileSystemCache {
     /// Construct a new `FileSystemCache` around the specified directory.
     /// The contents of the cache are stored in sub-versioned directories.
     ///
-    /// # Safety:
+    /// # Safety
     ///
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
