@@ -111,84 +111,14 @@ where
     }
 }
 
-use wasm_nm::{Symbol, Symbols};
-
-fn only_imports(symbols: &Symbols, allowed: &[&str]) -> bool {
-    let imports: Vec<&str> = symbols.iter().filter_map(|s| match s {
-        Symbol::Import { name } => Some(name),
-        _ => None,
-    }).collect();
-
-    for i in imports {
-        if !allowed.contains(&i) {
-            return false;
-        }
-    }
-    true
-}
-
-fn has_all_exports(symbols: &Symbols, required: &[&str]) -> bool {
-    let exports: Vec<&str> = symbols.iter().filter_map(|s| match s {
-        Symbol::Export { name, .. } => Some(name),
-        _ => None,
-    }).collect();
-
-    for i in required {
-        if !exports.contains(&i) {
-            return false;
-        }
-    }
-    true
-}
-
 #[cfg(test)]
 mod test {
     use crate::calls::{call_handle, call_init};
     use crate::testing::mock_instance;
     use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
-    use crate::instance::{only_imports, has_all_exports};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-
-
-    #[test]
-    fn check_symbols() {
-        let opts = wasm_nm::Options{
-            imports: true,
-            exports: true,
-            privates: false,
-            sizes: false,
-        };
-        let mut reader = std::io::Cursor::new(CONTRACT);
-        let symbols = wasm_nm::symbols(opts, &mut reader).unwrap();
-        for sym in symbols.iter() {
-            println!("{}", sym);
-        }
-        // if contract has more than we provide, bad
-        let imports_good = only_imports(&symbols, &["c_read", "c_write"]);
-        assert_eq!(imports_good, false);
-
-        // exact match good
-        let imports_good = only_imports(&symbols, &["c_read", "c_write", "c_canonical_address", "c_human_address"]);
-        assert_eq!(imports_good, true);
-
-        // if we provide more, also good
-        let imports_good = only_imports(&symbols, &["c_read", "c_write", "c_canonical_address", "c_human_address", "future_function"]);
-        assert_eq!(imports_good, true);
-
-        // subset okay
-        let exports_good = has_all_exports(&symbols, &["init", "handle", "allocate"]);
-        assert_eq!(exports_good, true);
-
-        // match okay
-        let exports_good = has_all_exports(&symbols, &["query", "init", "handle", "allocate", "deallocate"]);
-        assert_eq!(exports_good, true);
-
-        // missing one from list not okay
-        let exports_good = has_all_exports(&symbols, &["init", "handle", "extra"]);
-        assert_eq!(exports_good, false);
-    }
 
     #[test]
     #[cfg(feature = "default-cranelift")]
