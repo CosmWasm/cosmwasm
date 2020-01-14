@@ -28,7 +28,7 @@ backtraces = [ "cosmwasm/backtraces", "cosmwasm-vm/backtraces" ]
 [dependencies]
 cosmwasm = { path = "../..", version = "0.6.2" }
 # To make optimized builds (cosmwasm-opt) you need to refer to external deps, not path refs outside of docker
-#cosmwasm = { git = "https://github.com/confio/cosmwasm", branch = "address-newtypes" }
+#cosmwasm = { git = "https://github.com/confio/cosmwasm", branch = "dummy-0.6-marker" }
 #cosmwasm = { version = "0.6.2" }
 schemars = "0.5"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
@@ -39,6 +39,6 @@ wasm-bindgen = "0.2.55"
 [dev-dependencies]
 cosmwasm-vm = { path = "../../lib/vm", version = "0.6.2" }
 # To make optimized builds (cosmwasm-opt) you need to refer to external deps, not path refs outside of docker
-#cosmwasm-vm = { git = "https://github.com/confio/cosmwasm", branch = "address-newtypes" }
+#cosmwasm-vm = { git = "https://github.com/confio/cosmwasm", branch = "dummy-0.6-marker", default-features = false, features = ["default-cranelift"] }
 #cosmwasm-vm = { version = "0.6.2", default-features = false, features = ["default-cranelift"] }
 serde_json = "1.0"
