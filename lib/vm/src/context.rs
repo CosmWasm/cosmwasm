@@ -3,7 +3,6 @@ Internal details to be used by instance.rs only
 **/
 use std::ffi::c_void;
 use std::mem;
-use std::str::from_utf8;
 
 use wasmer_runtime_core::vm::Ctx;
 
@@ -35,8 +34,8 @@ pub fn do_canonical_address<A: Api>(
     canonical_ptr: u32,
 ) -> i32 {
     let human = read_memory(ctx, human_ptr);
-    let human = match from_utf8(&human) {
-        Ok(human_str) => HumanAddr(human_str.to_string()),
+    let human = match String::from_utf8(human) {
+        Ok(human_str) => HumanAddr(human_str),
         Err(_) => return -2,
     };
     match api.canonical_address(&human) {

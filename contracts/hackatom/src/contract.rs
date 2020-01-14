@@ -99,8 +99,6 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
-    use std::str::from_utf8;
-
     use super::*;
     use cosmwasm::mock::{dependencies, mock_params};
     use cosmwasm::storage::transactional_deps;
@@ -152,8 +150,8 @@ mod tests {
 
         // now let's query
         let qres = query(&deps, QueryMsg::Verifier {}).unwrap();
-        let returned = from_utf8(&qres).unwrap();
-        assert_eq!(verifier.as_str(), returned);
+        let returned = String::from_utf8(qres).unwrap();
+        assert_eq!(verifier, HumanAddr(returned));
     }
 
     #[test]
