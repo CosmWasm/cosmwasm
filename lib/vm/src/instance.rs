@@ -183,7 +183,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 112_352);
+        assert_eq!(handle_used, 110_267);
     }
 
     #[test]
@@ -196,8 +196,6 @@ mod test {
         // init contract
         let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        // this call will panic on out-of-gas
-        // TODO: improve error handling through-out the whole stack
         let res = call_init(&mut instance, &params, msg);
         assert!(res.is_err());
     }
@@ -224,6 +222,6 @@ mod test {
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 58_630);
+        assert_eq!(query_used, 58_033);
     }
 }
