@@ -81,9 +81,8 @@ pub fn dyn_contract<T>(msg: String) -> Result<T> {
 }
 
 pub fn unauthorized<T>() -> Result<T> {
-    Unauthorized { }.fail()
+    Unauthorized {}.fail()
 }
-
 
 #[cfg(test)]
 mod test {
