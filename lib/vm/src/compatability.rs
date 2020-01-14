@@ -21,7 +21,7 @@ static SUPPORTED_IMPORTS: &[&str] = &[
 /// Lists all entry points we expect to be present when calling a contract.
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
-static REQUIRED_EXPORTS: &[&str] = &["query", "init", "handle", "allocate", "deallocate"];
+static REQUIRED_EXPORTS: &[&str] = &["query", "init", "handle", "allocate", "deallocate", "cosmwasm_api_0_6"];
 
 static EXTRA_IMPORT_MSG: &str = "WASM requires unsupported imports - version too new?";
 
@@ -84,6 +84,7 @@ mod test {
     use super::*;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static OLD_CONTRACT: &[u8] = include_bytes!("../testdata/contract-old.wasm");
 
     #[test]
     fn test_supported_imports() {
@@ -132,7 +133,7 @@ mod test {
         // match okay
         let exports_good = has_all_exports(
             &symbols,
-            &["query", "init", "handle", "allocate", "deallocate"],
+            &["query", "init", "handle", "allocate", "deallocate", "cosmwasm_api_0_6"],
         );
         assert_eq!(exports_good, true);
 
@@ -148,6 +149,15 @@ mod test {
 
         // this is our reference check, must pass
         check_api_compatibility(CONTRACT).unwrap();
+
+        // "old" (0.6) contract without cosmwasm_api_0_6 export is also rejected
+        match check_api_compatibility(OLD_CONTRACT) {
+            Err(Error::ValidationErr { msg }) => {
+                assert_eq!(msg, MISSING_EXPORT_MSG);
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
 
         // this is invalid, as it doesn't contain all required exports
         static WAT_MISSING_EXPORTS: &'static str = r#"
