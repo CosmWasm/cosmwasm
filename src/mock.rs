@@ -1,9 +1,8 @@
 use std::collections::HashMap;
-use std::str::from_utf8;
 
 use snafu::ResultExt;
 
-use crate::errors::{ContractErr, Result, Utf8Err};
+use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, HumanAddr, MessageInfo, Params};
 
@@ -91,8 +90,8 @@ impl Api for MockApi {
             .filter(|&x| x != 0)
             .collect();
         // convert to utf8
-        let human = from_utf8(&trimmed).context(Utf8Err {})?;
-        Ok(HumanAddr(human.to_string()))
+        let human = String::from_utf8(trimmed).context(Utf8StringErr {})?;
+        Ok(HumanAddr(human))
     }
 }
 

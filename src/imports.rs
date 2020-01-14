@@ -1,12 +1,9 @@
 #![cfg(target_arch = "wasm32")]
 
 use std::ffi::c_void;
-use std::str::from_utf8;
 use std::vec::Vec;
 
-use snafu::ResultExt;
-
-use crate::errors::{ContractErr, Result, Utf8Err};
+use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_slice, consume_slice, Slice};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
@@ -125,7 +122,8 @@ impl Api for ExternalApi {
 
         let mut out = unsafe { consume_slice(human)? };
         out.truncate(read as usize);
-        let result = from_utf8(&out).context(Utf8Err {})?.to_string();
+        // we know input was correct when created, so let's save some bytes
+        let result = unsafe { String::from_utf8_unchecked(out) };
         Ok(HumanAddr(result))
     }
 }

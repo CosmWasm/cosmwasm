@@ -80,6 +80,10 @@ pub fn dyn_contract<T>(msg: String) -> Result<T> {
     DynContractErr { msg }.fail()
 }
 
+pub fn unauthorized<T>() -> Result<T> {
+    Unauthorized {}.fail()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
