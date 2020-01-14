@@ -19,23 +19,31 @@ use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Params, QueryResult, Response};
 
-// allocate reserves the given number of bytes in wasm memory and returns a pointer
-// to a slice defining this data. This space is managed by the calling process
-// and should be accompanied by a corresponding deallocate
+/// cosmwasm_api_* exports mark which api level this contract is compiled with (and compatible with).
+/// they can be checked by cosmwasm-vm::compatibility.
+/// Update this at major releases, so we can follow contract compatibility in the frontend
+#[no_mangle]
+pub extern "C" fn cosmwasm_api_0_6() -> i32 {
+    0x0603
+}
+
+/// allocate reserves the given number of bytes in wasm memory and returns a pointer
+/// to a slice defining this data. This space is managed by the calling process
+/// and should be accompanied by a corresponding deallocate
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut c_void {
     alloc(size)
 }
 
-// deallocate expects a pointer to a Slice created with allocate.
-// It will free both the Slice and the memory referenced by the slice.
+/// deallocate expects a pointer to a Slice created with allocate.
+/// It will free both the Slice and the memory referenced by the slice.
 #[no_mangle]
 pub extern "C" fn deallocate(pointer: *mut c_void) {
     // auto-drop slice on function end
     let _ = unsafe { consume_slice(pointer) };
 }
 
-// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_init<T: DeserializeOwned + JsonSchema>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
@@ -51,7 +59,7 @@ pub fn do_init<T: DeserializeOwned + JsonSchema>(
     }
 }
 
-// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
@@ -67,7 +75,7 @@ pub fn do_handle<T: DeserializeOwned + JsonSchema>(
     }
 }
 
-// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: DeserializeOwned + JsonSchema>(
     query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
     msg_ptr: *mut c_void,
