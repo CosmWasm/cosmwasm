@@ -21,7 +21,14 @@ static SUPPORTED_IMPORTS: &[&str] = &[
 /// Lists all entry points we expect to be present when calling a contract.
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
-static REQUIRED_EXPORTS: &[&str] = &["query", "init", "handle", "allocate", "deallocate", "cosmwasm_api_0_6"];
+static REQUIRED_EXPORTS: &[&str] = &[
+    "query",
+    "init",
+    "handle",
+    "allocate",
+    "deallocate",
+    "cosmwasm_api_0_6",
+];
 
 static EXTRA_IMPORT_MSG: &str = "WASM requires unsupported imports - version too new?";
 
@@ -133,7 +140,14 @@ mod test {
         // match okay
         let exports_good = has_all_exports(
             &symbols,
-            &["query", "init", "handle", "allocate", "deallocate", "cosmwasm_api_0_6"],
+            &[
+                "query",
+                "init",
+                "handle",
+                "allocate",
+                "deallocate",
+                "cosmwasm_api_0_6",
+            ],
         );
         assert_eq!(exports_good, true);
 

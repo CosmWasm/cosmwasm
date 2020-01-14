@@ -23,7 +23,9 @@ use crate::types::{ContractResult, Params, QueryResult, Response};
 /// they can be checked by cosmwasm-vm::compatibility.
 /// Update this at major releases, so we can follow contract compatibility in the frontend
 #[no_mangle]
-pub extern "C" fn cosmwasm_api_0_6() -> i32 { 0x0603 }
+pub extern "C" fn cosmwasm_api_0_6() -> i32 {
+    0x0603
+}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a slice defining this data. This space is managed by the calling process
