@@ -46,6 +46,12 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("UTF8 encoding error: {}", source))]
+    Utf8StringErr {
+        source: std::string::FromUtf8Error,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Unauthorized"))]
     Unauthorized {
         #[cfg(feature = "backtraces")]
