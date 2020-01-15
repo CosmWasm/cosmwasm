@@ -40,12 +40,14 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
+    // This is used for std::str::from_utf8, which we may well deprecate
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8Err {
         source: std::str::Utf8Error,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
+    // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8StringErr {
         source: std::string::FromUtf8Error,
@@ -72,11 +74,11 @@ pub fn invalid<T>(field: &'static str, msg: &'static str) -> Result<T> {
     ValidationErr { field, msg }.fail()
 }
 
-pub fn contract<T>(msg: &'static str) -> Result<T> {
+pub fn contract_err<T>(msg: &'static str) -> Result<T> {
     ContractErr { msg }.fail()
 }
 
-pub fn dyn_contract<T>(msg: String) -> Result<T> {
+pub fn dyn_contract_err<T>(msg: String) -> Result<T> {
     DynContractErr { msg }.fail()
 }
 
@@ -104,7 +106,7 @@ mod test {
     #[test]
     // example of reporting static contract errors
     fn contract_helper() {
-        let e: Result<()> = contract("not implemented");
+        let e: Result<()> = contract_err("not implemented");
         match e {
             Err(Error::ContractErr { msg, .. }) => {
                 assert_eq!(msg, "not implemented");
@@ -118,7 +120,7 @@ mod test {
     // example of reporting contract errors with format!
     fn dyn_contract_helper() {
         let guess = 7;
-        let e: Result<()> = dyn_contract(format!("{} is too low", guess));
+        let e: Result<()> = dyn_contract_err(format!("{} is too low", guess));
         match e {
             Err(Error::DynContractErr { msg, .. }) => {
                 assert_eq!(msg, String::from("7 is too low"));
