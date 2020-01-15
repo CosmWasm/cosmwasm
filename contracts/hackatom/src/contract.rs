@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{ContractErr, ParseErr, Result, SerializeErr, Unauthorized};
+use cosmwasm::errors::{unauthorized, NotFound, ParseErr, Result, SerializeErr};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Extern, Storage};
 use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Params, Response};
@@ -55,9 +55,10 @@ pub fn handle<S: Storage, A: Api>(
     params: Params,
     _: HandleMsg,
 ) -> Result<Response> {
-    let data = deps.storage.get(CONFIG_KEY).context(ContractErr {
-        msg: "uninitialized data",
-    })?;
+    let data = deps
+        .storage
+        .get(CONFIG_KEY)
+        .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
 
     if params.message.signer == state.verifier {
@@ -74,7 +75,7 @@ pub fn handle<S: Storage, A: Api>(
         };
         Ok(res)
     } else {
-        Unauthorized {}.fail()
+        unauthorized()
     }
 }
 
@@ -85,9 +86,10 @@ pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<V
 }
 
 fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
-    let data = deps.storage.get(CONFIG_KEY).context(ContractErr {
-        msg: "uninitialized data",
-    })?;
+    let data = deps
+        .storage
+        .get(CONFIG_KEY)
+        .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
     let addr = deps.api.human_address(&state.verifier)?;
     // we just pass the address as raw bytes
