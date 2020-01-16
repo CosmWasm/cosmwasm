@@ -64,7 +64,7 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
 
 // to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
 fn to_slice(ctx: &Ctx, ptr: u32) -> Slice {
-    let memory = &ctx.memory(0);
+    let memory = ctx.memory(0);
     let wptr = WasmPtr::<Slice>::new(ptr);
     wptr.deref(memory).map(|x| x.get()).unwrap_or_default()
 }
