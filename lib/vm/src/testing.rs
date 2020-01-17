@@ -26,11 +26,10 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     params: Params,
     msg: T,
 ) -> ContractResult {
-    let msg = to_vec(&msg);
-    if let Err(e) = msg {
-        return ContractResult::Err(e.to_string());
+    match to_vec(&msg) {
+        Err(e) => ContractResult::Err(e.to_string()),
+        Ok(serialized_msg) => call_init(instance, &params, &serialized_msg).unwrap(),
     }
-    call_init(instance, &params, &msg.unwrap()).unwrap()
 }
 
 // handle mimicks the call signature of the smart contracts.
@@ -41,11 +40,10 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>
     params: Params,
     msg: T,
 ) -> ContractResult {
-    let msg = to_vec(&msg);
-    if let Err(e) = msg {
-        return ContractResult::Err(e.to_string());
+    match to_vec(&msg) {
+        Err(e) => ContractResult::Err(e.to_string()),
+        Ok(serialized_msg) => call_handle(instance, &params, &serialized_msg).unwrap(),
     }
-    call_handle(instance, &params, &msg.unwrap()).unwrap()
 }
 
 // query mimicks the call signature of the smart contracts.
@@ -55,9 +53,8 @@ pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     msg: T,
 ) -> QueryResult {
-    let msg = to_vec(&msg);
-    if let Err(e) = msg {
-        return QueryResult::Err(e.to_string());
+    match to_vec(&msg) {
+        Err(e) => QueryResult::Err(e.to_string()),
+        Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),
     }
-    call_query(instance, &msg.unwrap()).unwrap()
 }

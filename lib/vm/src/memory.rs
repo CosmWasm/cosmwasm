@@ -12,7 +12,7 @@ use wasmer_runtime_core::{
 /// This is the same as cosmwasm::memory::Slice
 /// but defined here to allow wasm impl
 #[repr(C)]
-#[derive(Default, Clone, Copy)]
+#[derive(Default, Clone, Copy, Debug)]
 pub struct Slice {
     pub offset: u32,
     pub len: u32,
@@ -20,22 +20,30 @@ pub struct Slice {
 
 unsafe impl ValueType for Slice {}
 
+// Expects a (fixed size) Slice struct at ptr, which is read. This links to the
+// memory region, which is read in the second step.
 pub fn read_memory(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let slice = to_slice(ctx, ptr);
     let memory = ctx.memory(0);
-    let len = slice.len as usize;
-    let mut result = vec![0u8; len];
 
     // TODO: there must be a faster way to copy memory
-    let buffer = WasmPtr::<u8, Array>::new(slice.offset)
-        .deref(memory, 0, slice.len)
-        .unwrap();
-    for i in 0..len {
-        // result[i] = unsafe { buffer.get_unchecked(i).get() }
-        // resolved to memcpy, but only if we really start copying huge arrays
-        result[i] = buffer[i].get();
+    match WasmPtr::<u8, Array>::new(slice.offset).deref(memory, 0, slice.len) {
+        Some(cells) => {
+            let len = slice.len as usize;
+            let mut result = vec![0u8; len];
+            for i in 0..len {
+                // result[i] = unsafe { cells.get_unchecked(i).get() }
+                // resolved to memcpy, but only if we really start copying huge arrays
+                result[i] = cells[i].get();
+            }
+            result
+        }
+        None => panic!(
+            "Error dereferencing slice {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Slice struct.",
+            slice,
+            memory.size().bytes().0
+        ),
     }
-    result
 }
 
 // write_memory returns how many bytes written on success
@@ -64,7 +72,8 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
 
 // to_slice reads in a ptr to slice in wasm memory and constructs the object we can use to access it
 fn to_slice(ctx: &Ctx, ptr: u32) -> Slice {
-    let memory = &ctx.memory(0);
+    let memory = ctx.memory(0);
     let wptr = WasmPtr::<Slice>::new(ptr);
-    wptr.deref(memory).map(|x| x.get()).unwrap_or_default()
+    let cell = wptr.deref(memory).unwrap();
+    cell.get()
 }
