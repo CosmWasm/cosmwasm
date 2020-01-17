@@ -1,0 +1,21 @@
+{
+  "contributors": [
+    {
+      "name": "Simon Warta",
+      "url": "https://warta.it/"
+    }
+  ],
+  "license": "(WTFPL OR 0BSD OR Unlicense OR MIT OR BSD-3-Clause)",
+  "scripts": {
+    "build:untouched": "asc src/index.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --runtime stub --validate --debug",
+    "build:optimized": "asc src/index.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap --runtime stub --validate --optimize",
+    "build": "yarn build:untouched && yarn build:optimized"
+  },
+  "dependencies": {
+    "assemblyscript-json": "^0.2.0"
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.8.1",
+    "eslint": "^6.8.0"
+  }
+}
