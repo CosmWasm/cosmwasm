@@ -66,5 +66,6 @@ pub fn write_memory(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
 fn to_slice(ctx: &Ctx, ptr: u32) -> Slice {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Slice>::new(ptr);
-    wptr.deref(memory).map(|x| x.get()).unwrap_or_default()
+    let cell = wptr.deref(memory).unwrap();
+    cell.get()
 }
