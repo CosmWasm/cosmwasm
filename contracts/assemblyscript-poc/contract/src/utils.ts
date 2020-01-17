@@ -1,4 +1,3 @@
-
 export function getDataPtr(arr: Uint8Array): usize {
   return changetype<usize>(arr.buffer) + arr.byteOffset;
 }

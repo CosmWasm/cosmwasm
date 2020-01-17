@@ -1,5 +1,4 @@
 // The entry file of your WebAssembly module.
-
 import { JSONEncoder } from "assemblyscript-json";
 
 import * as contract from "./contract";
@@ -36,34 +35,38 @@ function wrapSuccessData(data: Uint8Array): usize {
   const out: Slice = {
     offset: resultPtr,
     len: result.byteLength,
-  }
+  };
 
   return changetype<usize>(out);
 }
 
-export function init(paramsPtr: usize, messagePtr: usize): usize {
+export function init(_paramsPtr: usize, _messagePtr: usize): usize {
   throw new Error("Not implemented");
 }
 
-export function handle(paramsPtr: usize, messagePtr: usize): usize {
+export function handle(_paramsPtr: usize, _messagePtr: usize): usize {
   throw new Error("Not implemented");
 }
 
-export function query(messagePtr: usize): usize {
+export function query(_messagePtr: usize): usize {
   return wrapSuccessData(contract.query());
 }
 
-/// allocate reserves the given number of bytes in wasm memory and returns a pointer
-/// to a slice defining this data. This space is managed by the calling process
-/// and should be accompanied by a corresponding deallocate
+/**
+ * allocate reserves the given number of bytes in wasm memory and returns a pointer
+ * to a slice defining this data. This space is managed by the calling process
+ * and should be accompanied by a corresponding deallocate
+ */
 export function allocate(size: usize): usize {
   const obj = __alloc(size, idof<ArrayBuffer>());
   __retain(obj);
   return obj;
 }
 
-/// deallocate expects a pointer to a Slice created with allocate.
-/// It will free both the Slice and the memory referenced by the slice.
+/**
+ * deallocate expects a pointer to a Slice created with allocate.
+ * It will free both the Slice and the memory referenced by the slice.
+ */
 export function deallocate(pointer: usize): void {
   __release(pointer);
 }

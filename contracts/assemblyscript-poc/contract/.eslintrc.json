@@ -1,0 +1,40 @@
+{
+  "env": {
+    "es6": true
+  },
+  "globals": {
+    "unmanaged": false,
+    "idof": false,
+    "changetype": false,
+    "memory": false,
+    "__alloc": false,
+    "__release": false,
+    "__retain": false
+  },
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2018
+  },
+  "plugins": ["@typescript-eslint", "prettier", "simple-import-sort"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier/@typescript-eslint",
+    "plugin:prettier/recommended"
+  ],
+  "rules": {
+    "curly": ["warn", "multi-line", "consistent"],
+    "no-console": ["warn", { "allow": ["error", "info", "warn"] }],
+    "no-param-reassign": "warn",
+    "no-shadow": "warn",
+    "prefer-const": "warn",
+    "spaced-comment": ["warn", "always", { "line": { "markers": ["/ <reference"] } }],
+    "simple-import-sort/sort": "warn",
+    "@typescript-eslint/explicit-function-return-type": ["warn", { "allowExpressions": true }],
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "@typescript-eslint/no-unused-vars": ["warn", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "@typescript-eslint/no-use-before-define": "warn"
+  },
+  "overrides": []
+}
