@@ -2,7 +2,6 @@
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime_core::{
     backend::{Backend, Compiler},
-    codegen::{MiddlewareChain, StreamingCompiler},
     compile_with,
     instance::Instance,
     module::Module,
