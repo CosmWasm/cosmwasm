@@ -6,6 +6,7 @@ workflows:
       - base
       - singlepass_vm
       - cranelift_vm
+      - assemblyscript-poc
       - hackatom
       - hackatom_in_singlepass_vm
       - fmt
@@ -99,6 +100,43 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
+
+  assemblyscript-poc:
+    docker:
+      - image: rust:1.39
+    working_directory: ~/cosmwasm/contracts/assemblyscript-poc
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Install yarn (and nodejs)
+          command: |
+            curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+            echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+            apt update && apt install -y yarn
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; echo "node $(node --version)"; echo "yarn $(yarn --version)"
+      # the `checksum` command in the template engine does not support sub-directories
+      - run: cat tests/Cargo.lock contract/yarn.lock > lockfiles.tmp
+      - restore_cache:
+          keys:
+            - v4-cargo-cache-assemblyscript-poc-{{ arch }}-{{ checksum "lockfiles.tmp" }}
+            - v4-cargo-cache-assemblyscript-poc-{{ arch }}
+      - run:
+          name: Test and build contract
+          command: (cd contract && yarn install && yarn lint && yarn test && yarn build)
+      - run:
+          name: Run integration tests
+          command: (cd tests && cargo integration-test --locked)
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - contract/node_modules/
+            - tests/target/debug/.fingerprint
+            - tests/target/debug/build
+            - tests/target/debug/deps
+          key: v4-cargo-cache-assemblyscript-poc-{{ arch }}-{{ checksum "lockfiles.tmp" }}
 
   hackatom:
     docker:
