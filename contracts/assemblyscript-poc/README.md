@@ -20,7 +20,7 @@ INSERT LINK
 The following command shows you how to build and test the project.
 
 ```sh
-(cd contract && yarn install && yarn build) && \
+(cd contract && yarn install && yarn test && yarn build) && \
   (cd tests && cargo integration-test)
 ```
 

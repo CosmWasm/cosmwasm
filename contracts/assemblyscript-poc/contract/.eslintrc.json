@@ -3,6 +3,11 @@
     "es6": true
   },
   "globals": {
+    // testing
+    "describe": false,
+    "it": false,
+    "expect": false,
+    // assemblyscript runtime
     "unmanaged": false,
     "idof": false,
     "changetype": false,
