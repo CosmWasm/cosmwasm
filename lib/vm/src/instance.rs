@@ -93,6 +93,7 @@ where
         write_region(self.instance.context(), ptr, data);
         Ok(ptr)
     }
+
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
