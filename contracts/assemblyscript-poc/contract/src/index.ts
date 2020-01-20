@@ -2,7 +2,7 @@
 import { JSONEncoder } from "assemblyscript-json";
 
 import * as contract from "./contract";
-import { releaseOwnership } from "./cosmwasm";
+import { log, releaseOwnership } from "./cosmwasm";
 
 export { allocate, deallocate } from "./cosmwasm";
 
@@ -31,5 +31,6 @@ export function handle(_paramsPtr: usize, _messagePtr: usize): usize {
 }
 
 export function query(_messagePtr: usize): usize {
+  log("buh!");
   return wrapSuccessData(contract.query());
 }

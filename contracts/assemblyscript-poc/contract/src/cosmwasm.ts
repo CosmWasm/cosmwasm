@@ -1,4 +1,5 @@
-import { getDataPtr } from "./utils";
+import * as env from "./env";
+import { Encoding, getDataPtr } from "./utils";
 
 /**
  * Refers to some heap allocated data in wasm.
@@ -58,6 +59,19 @@ export function releaseOwnership(data: Uint8Array): usize {
 }
 
 /**
+ * Keeps ownership of the data and the Region and returns a pointer to the Region.
+ */
+export function keepOwnership(data: Uint8Array): usize {
+  const dataPtr = getDataPtr(data);
+
+  const region: Region = {
+    offset: dataPtr,
+    len: data.byteLength,
+  };
+  return changetype<usize>(region);
+}
+
+/**
  * Takes ownership of the data at the given pointer
  */
 export function takeOwnership(regionPtr: usize): Uint8Array {
@@ -69,4 +83,9 @@ export function takeOwnership(regionPtr: usize): Uint8Array {
   deallocate(regionPtr);
 
   return out;
+}
+
+export function log(text: string): void {
+  const data = Encoding.toUtf8(text);
+  env.log(keepOwnership(data));
 }
