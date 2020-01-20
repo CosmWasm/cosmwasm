@@ -5,11 +5,11 @@ import * as contract from "./contract";
 import { getDataPtr } from "./utils";
 
 /**
- * Slice refers to some heap allocated data in wasm.
+ * Refers to some heap allocated data in wasm.
  * A pointer to this can be returned over ffi boundaries.
  */
 @unmanaged
-class Slice {
+class Region {
   offset: u32;
   len: u32;
 }
@@ -32,7 +32,7 @@ function wrapSuccessData(data: Uint8Array): usize {
   // do not remove result before caller got the chance to copy it
   __retain(resultPtr);
 
-  const out: Slice = {
+  const out: Region = {
     offset: resultPtr,
     len: result.byteLength,
   };
@@ -58,15 +58,24 @@ export function query(_messagePtr: usize): usize {
  * and should be accompanied by a corresponding deallocate
  */
 export function allocate(size: usize): usize {
-  const obj = __alloc(size, idof<ArrayBuffer>());
-  __retain(obj);
-  return obj;
+  const dataPtr = __alloc(size, idof<ArrayBuffer>());
+  __retain(dataPtr);
+
+  const region: Region = {
+    offset: dataPtr,
+    len: size,
+  };
+  const regionPtr = changetype<usize>(region);
+  __retain(regionPtr);
+  return regionPtr;
 }
 
 /**
- * deallocate expects a pointer to a Slice created with allocate.
- * It will free both the Slice and the memory referenced by the slice.
+ * Expects a pointer to a Region created with allocate.
+ * It will free both the Region and the memory referenced by the Region.
  */
-export function deallocate(pointer: usize): void {
-  __release(pointer);
+export function deallocate(regionPtr: usize): void {
+  const dataPtr = changetype<Region>(regionPtr).offset;
+  __release(regionPtr); // release Region
+  __release(dataPtr); // release ArrayBuffer
 }

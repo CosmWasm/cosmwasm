@@ -1,5 +1,5 @@
 use cosmwasm::types::HumanAddr;
-use cosmwasm_vm::testing::{mock_instance, query};
+use cosmwasm_vm::testing::{mock_instance, query, test_io};
 
 use assemblyscript_poc_tests::QueryMsg;
 
@@ -13,6 +13,12 @@ fn address(index: u8) -> HumanAddr {
         3 => HumanAddr("addr5432".to_string()),
         _ => panic!("Unsupported address index"),
     }
+}
+
+#[test]
+fn passes_io_tests() {
+    let mut deps = mock_instance(WASM);
+    test_io(&mut deps);
 }
 
 #[test]
