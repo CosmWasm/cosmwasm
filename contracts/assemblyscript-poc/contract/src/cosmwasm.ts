@@ -89,3 +89,25 @@ export function log(text: string): void {
   const data = Encoding.toUtf8(text);
   env.log(keepOwnership(data));
 }
+
+export function logAndCrash(
+  message: string | null,
+  fileName: string | null,
+  lineNumber: u32,
+  columnNumber: u32,
+): void {
+  const msg =
+    "Aborted with message '" +
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    (message || "unset")! +
+    " (in '" +
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    (fileName || "unset")! +
+    "', line " +
+    lineNumber.toString() +
+    ", column " +
+    columnNumber.toString() +
+    ")";
+  log(msg);
+  unreachable(); // crash hard
+}

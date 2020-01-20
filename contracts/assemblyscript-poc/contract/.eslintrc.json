@@ -8,6 +8,7 @@
     "it": false,
     "expect": false,
     // assemblyscript runtime
+    "unreachable": false,
     "unmanaged": false,
     "idof": false,
     "changetype": false,

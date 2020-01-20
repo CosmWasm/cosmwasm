@@ -9,8 +9,8 @@
   "scripts": {
     "lint": "eslint --max-warnings 0 \"**/*.{js,ts}\"",
     "lint-fix": "yarn lint --fix",
-    "build:untouched": "asc src/index.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --runtime stub --validate --debug",
-    "build:optimized": "asc src/index.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap --runtime stub --validate --optimize",
+    "build:untouched": "asc src/index.ts -b build/untouched.wasm -t build/untouched.wat --sourceMap --runtime stub --use abort=src/cosmwasm/logAndCrash --validate --debug",
+    "build:optimized": "asc src/index.ts -b build/optimized.wasm -t build/optimized.wat --sourceMap --runtime stub --use abort=src/cosmwasm/logAndCrash --validate --optimize",
     "build": "yarn build:untouched && yarn build:optimized",
     "test": "asp"
   },
