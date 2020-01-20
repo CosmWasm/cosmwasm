@@ -2,17 +2,7 @@
 import { JSONEncoder } from "assemblyscript-json";
 
 import * as contract from "./contract";
-import { getDataPtr } from "./utils";
-
-/**
- * Refers to some heap allocated data in wasm.
- * A pointer to this can be returned over ffi boundaries.
- */
-@unmanaged
-class Region {
-  offset: u32;
-  len: u32;
-}
+import { releaseOwnership, Region } from "./cosmwasm";
 
 function wrapSuccessData(data: Uint8Array): usize {
   const encoder = new JSONEncoder();
@@ -27,17 +17,7 @@ function wrapSuccessData(data: Uint8Array): usize {
   encoder.popObject();
 
   const result = encoder.serialize();
-  const resultPtr = getDataPtr(result);
-
-  // do not remove result before caller got the chance to copy it
-  __retain(resultPtr);
-
-  const out: Region = {
-    offset: resultPtr,
-    len: result.byteLength,
-  };
-
-  return changetype<usize>(out);
+  return releaseOwnership(result);
 }
 
 export function init(_paramsPtr: usize, _messagePtr: usize): usize {
