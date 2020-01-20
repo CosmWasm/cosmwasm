@@ -2,7 +2,8 @@
 import { JSONEncoder } from "assemblyscript-json";
 
 import * as contract from "./contract";
-import { log, releaseOwnership } from "./cosmwasm";
+import { log, releaseOwnership, takeOwnership } from "./cosmwasm";
+import { Encoding } from "./utils";
 
 export { allocate, deallocate } from "./cosmwasm";
 
@@ -30,7 +31,8 @@ export function handle(_paramsPtr: usize, _messagePtr: usize): usize {
   throw new Error("Not implemented");
 }
 
-export function query(_messagePtr: usize): usize {
-  log("buh!");
+export function query(messagePtr: usize): usize {
+  const msg = Encoding.fromUtf8(takeOwnership(messagePtr));
+  log("JSON query request: " + msg);
   return wrapSuccessData(contract.query());
 }
