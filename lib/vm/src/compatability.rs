@@ -5,6 +5,7 @@ use crate::errors::{Result, ValidationErr};
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 static SUPPORTED_IMPORTS: &[&str] = &[
+    "env.log",
     "env.read_db",
     "env.write_db",
     "env.canonicalize_address",
