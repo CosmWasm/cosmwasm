@@ -12,6 +12,8 @@
 - Remove export `cosmwasm_vm::read_memory`. Using this indicates an
   architectural flaw, since this is a method for host to guest communication
   inside the VM and not needed for users of the VM.
+- Add `cosmwasm_vm::testing::test_io` for basic memory allocation/deallocation
+  testing between host and guest.
 
 ## 0.6
 

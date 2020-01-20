@@ -5,7 +5,7 @@ use cosmwasm::serde::from_slice;
 use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
 
-use cosmwasm_vm::testing::{handle, init, mock_instance, query};
+use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
 
@@ -185,4 +185,10 @@ fn failed_handle() {
             }
         );
     });
+}
+
+#[test]
+fn passes_io_tests() {
+    let mut deps = mock_instance(WASM);
+    test_io(&mut deps);
 }
