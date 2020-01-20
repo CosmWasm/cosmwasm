@@ -9,4 +9,8 @@ export class Encoding {
     memory.copy(getDataPtr(destination), sourcePtr, String.UTF8.byteLength(source, false));
     return destination;
   }
+
+  public static fromUtf8(encoded: Uint8Array): string {
+    return String.UTF8.decode(encoded.buffer, false);
+  }
 }

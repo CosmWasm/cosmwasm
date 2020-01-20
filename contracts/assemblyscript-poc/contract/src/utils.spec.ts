@@ -37,4 +37,37 @@ describe("Encoding", () => {
       }
     });
   });
+
+  describe("fromUtf8", () => {
+    it("works for empty input", () => {
+      expect(Encoding.fromUtf8(new Uint8Array(0))).toStrictEqual("");
+    });
+
+    it("works for simmple examples", () => {
+      {
+        const encoded = new Uint8Array(3);
+        encoded[0] = 0x61;
+        encoded[1] = 0x62;
+        encoded[2] = 0x63;
+        expect(Encoding.fromUtf8(encoded)).toStrictEqual("abc");
+      }
+      {
+        const encoded = new Uint8Array(12);
+        let i = 0;
+        encoded[i++] = 0x20;
+        encoded[i++] = 0x3f;
+        encoded[i++] = 0x3d;
+        encoded[i++] = 0x2d;
+        encoded[i++] = 0x6e;
+        encoded[i++] = 0x7c;
+        encoded[i++] = 0x7e;
+        encoded[i++] = 0x2b;
+        encoded[i++] = 0x2d;
+        encoded[i++] = 0x2a;
+        encoded[i++] = 0x2f;
+        encoded[i++] = 0x5c;
+        expect(Encoding.fromUtf8(encoded)).toStrictEqual(" ?=-n|~+-*/\\");
+      }
+    });
+  });
 });
