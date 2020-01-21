@@ -82,15 +82,22 @@ pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void;
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If you're using Rust, you can implement them by simply [re-exporting them from cosmwasm::exports](https://github.com/confio/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
 `init`, `handle` and `query` must be defined by your contract.
 
-And the imports provided to give you contract access to the environment are:
+And the imports provided to give the contract access to the environment are:
 
 ```rust
 extern "C" {
+    // these are needed for storage
     fn c_read(key: *const c_void, value: *mut c_void) -> i32;
     fn c_write(key: *const c_void, value: *mut c_void);
+
+    // we define two more functions that must be available...
+    // they take a string and return to a preallocated buffer
+    // returns negative on error, length of returned data on success
+    fn c_canonical_address(human: *const c_void, canonical: *mut c_void) -> i32;
+    fn c_human_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
 ```
-(from [imports.rs](https://github.com/confio/cosmwasm/blob/master/src/imports.rs#L12-L17))
+(from [imports.rs](https://github.com/confio/cosmwasm/blob/v0.6.3/src/imports.rs#L19-L29))
 
 You could actually implement a WebAssembly module in any language,
 and as long as you implement these functions, it will be interoperable,
