@@ -70,7 +70,7 @@ on [how to create imports and exports](./EntryPoints.md) in general.
 
 The actual exports provided by the cosmwasm smart contract are:
 
-```C
+```rust
 pub extern "C" fn init(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
 pub extern "C" fn handle(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
 
@@ -82,7 +82,7 @@ pub extern "C" fn deallocate(pointer: *mut c_void);
 
 And the imports provided to give you contract access to the environment are:
 
-```C
+```rust
 extern "C" {
     fn c_read(key: *const c_void, value: *mut c_void) -> i32;
     fn c_write(key: *const c_void, value: *mut c_void);
