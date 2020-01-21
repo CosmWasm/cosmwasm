@@ -2,6 +2,11 @@
 
 ## 0.7.0 (not yet released)
 
+**cosmwasm**
+
+- Rename `Slice` to `Region` to simplify differentiation between Wasm memory
+  region and serde's `from_slice`
+
 **cosmwasm_vm**
 
 - Remove export `cosmwasm_vm::read_memory`. Using this indicates an

@@ -4,10 +4,10 @@ use std::vec::Vec;
 
 use crate::errors::{Error, NullPointer};
 
-/// Slice refers to some heap allocated data in wasm.
+/// Refers to some heap allocated data in wasm.
 /// A pointer to this can be returned over ffi boundaries.
 #[repr(C)]
-pub struct Slice {
+pub struct Region {
     pub offset: u32,
     pub len: u32,
 }
@@ -20,46 +20,46 @@ pub fn alloc(size: usize) -> *mut c_void {
 }
 
 /// release_buffer is like alloc, but instead of creating a new vector
-/// it consumes an existing one and returns a pointer to the slice
+/// it consumes an existing one and returns a pointer to the Region
 /// (preventing the memory from being freed until explicitly called later)
 pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
-    let slice = build_slice(&buffer);
+    let region = build_region(&buffer);
     mem::forget(buffer);
-    Box::into_raw(slice) as *mut c_void
+    Box::into_raw(region) as *mut c_void
 }
 
-/// consume_slice will return the data referenced by the slice and
-/// deallocates the slice (and the vector when finished).
-/// Warning: only use this when you are sure the caller will never use (or free) the slice later
+/// Return the data referenced by the Region and
+/// deallocates the Region (and the vector when finished).
+/// Warning: only use this when you are sure the caller will never use (or free) the Region later
 ///
 /// # Safety
 ///
-/// If ptr is non-nil, it must refer to a valid slice, which was previously returned by alloc,
-/// and not yet deallocated. This call will deallocate the Slice and return an owner vector
+/// If ptr is non-nil, it must refer to a valid Region, which was previously returned by alloc,
+/// and not yet deallocated. This call will deallocate the Region and return an owner vector
 /// to the caller containing the referenced data.
 ///
 /// Naturally, calling this function twice on the same pointer will double deallocate data
 /// and lead to a crash. Make sure to call it exactly once (either consuming the input in
 /// the wasm code OR deallocating the buffer from the caller).
-pub unsafe fn consume_slice(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
+pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
     if ptr.is_null() {
         return NullPointer {}.fail();
     }
-    let slice = Box::from_raw(ptr as *mut Slice);
+    let region = Box::from_raw(ptr as *mut Region);
     let buffer = Vec::from_raw_parts(
-        slice.offset as *mut u8,
-        slice.len as usize,
-        slice.len as usize,
+        region.offset as *mut u8,
+        region.len as usize,
+        region.len as usize,
     );
     Ok(buffer)
 }
 
-/// build_slice returns a box of a slice, which can be sent over a call to extern
-/// note that this DOES NOT take ownership of the data, and we MUST NOT consume_slice
+/// Returns a box of a Region, which can be sent over a call to extern
+/// note that this DOES NOT take ownership of the data, and we MUST NOT consume_region
 /// the resulting data.
 /// The Box must be dropped (with scope), but not the data
-pub fn build_slice(data: &[u8]) -> Box<Slice> {
-    Box::new(Slice {
+pub fn build_region(data: &[u8]) -> Box<Region> {
+    Box::new(Region {
         offset: data.as_ptr() as u32,
         len: data.len() as u32,
     })

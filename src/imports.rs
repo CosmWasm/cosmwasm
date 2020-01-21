@@ -4,7 +4,7 @@ use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::errors::{ContractErr, Result};
-use crate::memory::{alloc, build_slice, consume_slice, Slice};
+use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
@@ -47,8 +47,8 @@ impl ExternalStorage {
 
 impl ReadonlyStorage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        let key = build_slice(key);
-        let key_ptr = &*key as *const Slice as *const c_void;
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as *const c_void;
         let value = alloc(MAX_READ);
 
         let read = unsafe { c_read(key_ptr, value) };
@@ -59,7 +59,7 @@ impl ReadonlyStorage for ExternalStorage {
             return None;
         }
 
-        unsafe { consume_slice(value).ok() }.map(|mut d| {
+        unsafe { consume_region(value).ok() }.map(|mut d| {
             d.truncate(read as usize);
             d
         })
@@ -68,11 +68,11 @@ impl ReadonlyStorage for ExternalStorage {
 
 impl Storage for ExternalStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) {
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_slice)
-        let key = build_slice(key);
-        let key_ptr = &*key as *const Slice as *const c_void;
-        let mut value = build_slice(value);
-        let value_ptr = &mut *value as *mut Slice as *mut c_void;
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as *const c_void;
+        let mut value = build_region(value);
+        let value_ptr = &mut *value as *mut Region as *mut c_void;
         unsafe {
             c_write(key_ptr, value_ptr);
         }
@@ -90,8 +90,8 @@ impl ExternalApi {
 
 impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
-        let send = build_slice(human.as_str().as_bytes());
-        let send_ptr = &*send as *const Slice as *const c_void;
+        let send = build_region(human.as_str().as_bytes());
+        let send_ptr = &*send as *const Region as *const c_void;
         let canon = alloc(ADDR_BUFFER);
 
         let read = unsafe { c_canonical_address(send_ptr, canon) };
@@ -102,14 +102,14 @@ impl Api for ExternalApi {
             .fail();
         }
 
-        let mut out = unsafe { consume_slice(canon)? };
+        let mut out = unsafe { consume_region(canon)? };
         out.truncate(read as usize);
         Ok(CanonicalAddr(out))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
-        let send = build_slice(canonical.as_bytes());
-        let send_ptr = &*send as *const Slice as *const c_void;
+        let send = build_region(canonical.as_bytes());
+        let send_ptr = &*send as *const Region as *const c_void;
         let human = alloc(ADDR_BUFFER);
 
         let read = unsafe { c_human_address(send_ptr, human) };
@@ -120,7 +120,7 @@ impl Api for ExternalApi {
             .fail();
         }
 
-        let mut out = unsafe { consume_slice(human)? };
+        let mut out = unsafe { consume_region(human)? };
         out.truncate(read as usize);
         // we know input was correct when created, so let's save some bytes
         let result = unsafe { String::from_utf8_unchecked(out) };

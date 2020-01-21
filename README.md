@@ -95,15 +95,15 @@ You could actually implement a Web Assembly module in any language,
 and as long as you implement these 6 functions, it will be interoperable,
 given the JSON data passed around is the proper format.
 
-Note that these `*c_void` pointers refers to a Slice pointer, containing
+Note that these `*c_void` pointers refers to a Region pointer, containing
 the offset and length of some Wasm memory, to allow for safe access between the
 caller and the contract:
 
 ```rust
-/// Slice refers to some heap allocated data in wasm.
+/// Refers to some heap allocated data in wasm.
 /// A pointer to this can be returned over ffi boundaries.
 #[repr(C)]
-pub struct Slice {
+pub struct Region {
     pub offset: u32,
     pub len: u32,
 }
