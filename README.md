@@ -68,6 +68,8 @@ a few elements.
 If you haven't worked with WebAssembly before, please read an overview
 on [how to create imports and exports](./EntryPoints.md) in general.
 
+### Exports
+
 The required exports provided by the cosmwasm smart contract are:
 
 ```rust
@@ -82,7 +84,9 @@ pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void;
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If you're using Rust, you can implement them by simply [re-exporting them from cosmwasm::exports](https://github.com/confio/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
 `init`, `handle` and `query` must be defined by your contract.
 
-And the imports provided to give the contract access to the environment are:
+### Imports
+
+The imports provided to give the contract access to the environment are:
 
 ```rust
 extern "C" {
