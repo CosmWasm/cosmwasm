@@ -5,7 +5,7 @@
 [![crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
 
 
-**Web Assembly Smart Contracts for the Cosmos SDK**
+**WebAssembly Smart Contracts for the Cosmos SDK**
 
 This repo provides a useful functionality to build smart contracts that
 are compatible with Cosmos SDK runtime, [currently being developed](https://github.com/cosmwasm/cosmos-sdk/issues).
@@ -61,11 +61,11 @@ we [configure a library for wasm](./Building.md)
 
 ## API entry points
 
-Web Assembly contracts are basically black boxes. The have no default entry points,
+WebAssembly contracts are basically black boxes. The have no default entry points,
 and no access to the outside world by default. To make them useful, we need to add
 a few elements.
 
-If you haven't worked with Web Assembly before, please read an overview
+If you haven't worked with WebAssembly before, please read an overview
 on [how to create imports and exports](./EntryPoints.md) in general.
 
 The actual exports provided by the cosmwasm smart contract are:
@@ -90,7 +90,7 @@ extern "C" {
 ```
 (from [imports.rs](https://github.com/confio/cosmwasm/blob/master/src/imports.rs#L12-L17))
 
-You could actually implement a Web Assembly module in any language,
+You could actually implement a WebAssembly module in any language,
 and as long as you implement these 6 functions, it will be interoperable,
 given the JSON data passed around is the proper format.
 
