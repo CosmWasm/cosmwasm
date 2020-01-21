@@ -35,7 +35,7 @@ around 40% of the code size.
 **Executing contracts:**
 
 * [cosmwasm-vm](https://github.com/confio/cosmwasm/tree/master/lib/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
-to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](https://github.com/confio/cosmwasm/blob/master/lib/vm/README.md).
+to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](lib/vm/README.md).
 * [go-cosmwasm](https://github.com/confio/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
 making use of all the optimizations and caching available inside `cosmwasm-vm`.
 * [Cosmos SDK](https://github.com/cosmwasm/modules/tree/master/incubator/contract) - Currently an WIP fork targeting `cosmos/modules`
