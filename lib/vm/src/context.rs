@@ -8,22 +8,22 @@ use wasmer_runtime_core::vm::Ctx;
 
 use cosmwasm::traits::{Api, Storage};
 
-use crate::memory::{read_memory, write_memory};
+use crate::memory::{read_region, write_region};
 use cosmwasm::types::{CanonicalAddr, HumanAddr};
 
 pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
-    let key = read_memory(ctx, key_ptr);
+    let key = read_region(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
     with_storage_from_context(ctx, |store: &mut T| value = store.get(&key));
     match value {
-        Some(buf) => write_memory(ctx, val_ptr, &buf),
+        Some(buf) => write_region(ctx, val_ptr, &buf),
         None => 0,
     }
 }
 
 pub fn do_write<T: Storage>(ctx: &mut Ctx, key: u32, value: u32) {
-    let key = read_memory(ctx, key);
-    let value = read_memory(ctx, value);
+    let key = read_region(ctx, key);
+    let value = read_region(ctx, value);
     with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
 }
 
@@ -33,14 +33,14 @@ pub fn do_canonical_address<A: Api>(
     human_ptr: u32,
     canonical_ptr: u32,
 ) -> i32 {
-    let human = read_memory(ctx, human_ptr);
+    let human = read_region(ctx, human_ptr);
     let human = match String::from_utf8(human) {
         Ok(human_str) => HumanAddr(human_str),
         Err(_) => return -2,
     };
     match api.canonical_address(&human) {
         Ok(canon) => {
-            write_memory(ctx, canonical_ptr, canon.as_bytes());
+            write_region(ctx, canonical_ptr, canon.as_bytes());
             canon.len() as i32
         }
         Err(_) => -1,
@@ -48,11 +48,11 @@ pub fn do_canonical_address<A: Api>(
 }
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
-    let canon = read_memory(ctx, canonical_ptr);
+    let canon = read_region(ctx, canonical_ptr);
     match api.human_address(&CanonicalAddr(canon)) {
         Ok(human) => {
             let bz = human.as_str().as_bytes();
-            write_memory(ctx, human_ptr, bz);
+            write_region(ctx, human_ptr, bz);
             bz.len() as i32
         }
         Err(_) => -1,

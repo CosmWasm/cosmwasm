@@ -1,5 +1,14 @@
-target
+# macOS
+.DS_Store
+
+# Text file backups
 **/*.rs.bk
-*.iml
-.idea
+
+# Build results
+target/
 contract.wasm
+
+# IDEs
+.vscode/
+.idea/
+*.iml

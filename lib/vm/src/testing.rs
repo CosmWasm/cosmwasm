@@ -26,11 +26,10 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     params: Params,
     msg: T,
 ) -> ContractResult {
-    let msg = to_vec(&msg);
-    if let Err(e) = msg {
-        return ContractResult::Err(e.to_string());
+    match to_vec(&msg) {
+        Err(e) => ContractResult::Err(e.to_string()),
+        Ok(serialized_msg) => call_init(instance, &params, &serialized_msg).unwrap(),
     }
-    call_init(instance, &params, &msg.unwrap()).unwrap()
 }
 
 // handle mimicks the call signature of the smart contracts.
@@ -41,11 +40,10 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>
     params: Params,
     msg: T,
 ) -> ContractResult {
-    let msg = to_vec(&msg);
-    if let Err(e) = msg {
-        return ContractResult::Err(e.to_string());
+    match to_vec(&msg) {
+        Err(e) => ContractResult::Err(e.to_string()),
+        Ok(serialized_msg) => call_handle(instance, &params, &serialized_msg).unwrap(),
     }
-    call_handle(instance, &params, &msg.unwrap()).unwrap()
 }
 
 // query mimicks the call signature of the smart contracts.
@@ -55,9 +53,33 @@ pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     msg: T,
 ) -> QueryResult {
-    let msg = to_vec(&msg);
-    if let Err(e) = msg {
-        return QueryResult::Err(e.to_string());
+    match to_vec(&msg) {
+        Err(e) => QueryResult::Err(e.to_string()),
+        Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),
     }
-    call_query(instance, &msg.unwrap()).unwrap()
+}
+
+/// Runs a series of IO tests, hammering especially on allocate and deallocate.
+/// This could be especially useful when run with some kind of leak detector.
+pub fn test_io<S: Storage + 'static, A: Api + 'static>(instance: &mut Instance<S, A>) {
+    let sizes: Vec<usize> = vec![0, 1, 3, 10, 200, 2000, 5 * 1024];
+    let bytes: Vec<u8> = vec![0x00, 0xA5, 0xFF];
+
+    for size in sizes.into_iter() {
+        for byte in bytes.iter() {
+            let original = vec![*byte; size];
+            let wasm_ptr = instance
+                .allocate(&original)
+                .expect("Could not allocate memory");
+            let wasm_data = instance.memory(wasm_ptr);
+            assert_eq!(
+                original, wasm_data,
+                "failed for size {}; expected: {:?}; actual: {:?}",
+                size, original, wasm_data
+            );
+            instance
+                .deallocate(wasm_ptr)
+                .expect("Could not deallocate memory");
+        }
+    }
 }

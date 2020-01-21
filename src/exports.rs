@@ -14,7 +14,7 @@ use snafu::ResultExt;
 
 use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::{dependencies, ExternalApi, ExternalStorage};
-use crate::memory::{alloc, consume_slice, release_buffer};
+use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Params, QueryResult, Response};
@@ -28,19 +28,19 @@ pub extern "C" fn cosmwasm_api_0_6() -> i32 {
 }
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
-/// to a slice defining this data. This space is managed by the calling process
+/// to a Region defining this data. This space is managed by the calling process
 /// and should be accompanied by a corresponding deallocate
 #[no_mangle]
 pub extern "C" fn allocate(size: usize) -> *mut c_void {
     alloc(size)
 }
 
-/// deallocate expects a pointer to a Slice created with allocate.
-/// It will free both the Slice and the memory referenced by the slice.
+/// deallocate expects a pointer to a Region created with allocate.
+/// It will free both the Region and the memory referenced by the Region.
 #[no_mangle]
 pub extern "C" fn deallocate(pointer: *mut c_void) {
-    // auto-drop slice on function end
-    let _ = unsafe { consume_slice(pointer) };
+    // auto-drop Region on function end
+    let _ = unsafe { consume_region(pointer) };
 }
 
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -95,8 +95,8 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
-    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
+    let params: Vec<u8> = unsafe { consume_region(params_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
     let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     let mut deps = dependencies();
@@ -116,8 +116,8 @@ fn _do_handle<T: DeserializeOwned + JsonSchema>(
     params_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = unsafe { consume_slice(params_ptr)? };
-    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
+    let params: Vec<u8> = unsafe { consume_region(params_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
     let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
     let msg: T = from_slice(&msg).context(ParseErr { kind: "HandleMsg" })?;
@@ -133,7 +133,7 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
     query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let msg: Vec<u8> = unsafe { consume_slice(msg_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
     let msg: T = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     let deps = dependencies();

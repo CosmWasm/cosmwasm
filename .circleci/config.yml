@@ -123,8 +123,12 @@ jobs:
           name: Build wasm binary
           command: cargo wasm --locked
       - run:
-          name: Run all tests (rust unit tests, vm integration tests)
-          command: cargo test --locked
+          name: Unit tests
+          env: RUST_BACKTRACE=1
+          command: cargo unit-test --locked
+      - run:
+          name: Integration tests
+          command: cargo integration-test --locked
       - save_cache:
           paths:
             - /usr/local/cargo/registry

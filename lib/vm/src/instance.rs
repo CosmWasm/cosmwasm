@@ -17,7 +17,7 @@ use crate::context::{
     take_storage, with_storage_from_context,
 };
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
-use crate::memory::{read_memory, write_memory};
+use crate::memory::{read_region, write_region};
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static> {
     instance: wasmer_runtime_core::instance::Instance,
@@ -82,7 +82,7 @@ where
     }
 
     pub fn memory(&self, ptr: u32) -> Vec<u8> {
-        read_memory(self.instance.context(), ptr)
+        read_region(self.instance.context(), ptr)
     }
 
     // allocate memory in the instance and copies the given data in
@@ -90,9 +90,10 @@ where
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
-        write_memory(self.instance.context(), ptr, data);
+        write_region(self.instance.context(), ptr, data);
         Ok(ptr)
     }
+
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
