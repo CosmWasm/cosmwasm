@@ -3,6 +3,7 @@ import { JSONEncoder } from "assemblyscript-json";
 
 import * as contract from "./contract";
 import { log, releaseOwnership, takeOwnership } from "./cosmwasm";
+import { parse } from "./encoding/json";
 import { Encoding } from "./utils";
 
 export { allocate, deallocate } from "./cosmwasm";
@@ -32,7 +33,8 @@ export function handle(_paramsPtr: usize, _messagePtr: usize): usize {
 }
 
 export function query(messagePtr: usize): usize {
-  const msg = Encoding.fromUtf8(takeOwnership(messagePtr));
-  log("JSON query request: " + msg);
-  return wrapSuccessData(contract.query());
+  const msgJson = takeOwnership(messagePtr);
+  log("JSON query request: " + Encoding.fromUtf8(msgJson));
+  const msg = parse(msgJson).asObject();
+  return wrapSuccessData(contract.query(msg));
 }
