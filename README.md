@@ -68,17 +68,19 @@ a few elements.
 If you haven't worked with WebAssembly before, please read an overview
 on [how to create imports and exports](./EntryPoints.md) in general.
 
-The actual exports provided by the cosmwasm smart contract are:
+The required exports provided by the cosmwasm smart contract are:
 
 ```rust
-pub extern "C" fn init(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
-pub extern "C" fn handle(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
-
 pub extern "C" fn allocate(size: usize) -> *mut c_void;
 pub extern "C" fn deallocate(pointer: *mut c_void);
+
+pub extern "C" fn init(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
+pub extern "C" fn handle(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
+pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void;
 ```
-(`init` and `handle` must be defined by your contract. De-allocate can simply be
-[re-exported exports.rs](https://github.com/confio/cosmwasm/blob/master/src/exports.rs#L16-L30))
+
+`allocate`/`deallocate` allow the host to manage data within the Wasm VM. If you're using Rust, you can implement them by simply [re-exporting them from cosmwasm::exports](https://github.com/confio/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
+`init`, `handle` and `query` must be defined by your contract.
 
 And the imports provided to give you contract access to the environment are:
 
@@ -91,7 +93,7 @@ extern "C" {
 (from [imports.rs](https://github.com/confio/cosmwasm/blob/master/src/imports.rs#L12-L17))
 
 You could actually implement a WebAssembly module in any language,
-and as long as you implement these 6 functions, it will be interoperable,
+and as long as you implement these functions, it will be interoperable,
 given the JSON data passed around is the proper format.
 
 Note that these `*c_void` pointers refers to a Region pointer, containing
