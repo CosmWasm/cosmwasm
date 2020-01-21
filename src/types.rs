@@ -110,7 +110,7 @@ pub enum CosmosMsg {
     Contract {
         contract_addr: HumanAddr,
         msg: String,
-        send: Vec<Coin>,
+        send: Option<Vec<Coin>>,
     },
     // this should never be created here, just passed in from the user and later dispatched
     Opaque {
