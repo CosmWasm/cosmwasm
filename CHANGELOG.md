@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## HEAD
+## 0.7.0 (not yet released)
+
+## 0.6
 
 [Define canonical address callbacks](https://github.com/confio/cosmwasm/issues/73)
 
