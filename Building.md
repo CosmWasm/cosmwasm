@@ -87,7 +87,7 @@ also the most actively maintained stack for trimmed wasm builds with rust.
 [`wasm-gc`](https://github.com/alexcrichton/wasm-gc), the older alternative, has
 been deprecated for this approach. (Note you must [install wasm-pack first](https://rustwasm.github.io/wasm-pack/installer/)):
 
-```shell script
+```sh
 cargo wasm
 du -h target/wasm32-unknown-unknown/release/hackatom.wasm
 
@@ -101,7 +101,7 @@ If you have plenty of dependencies and this is still too big,
 you can do a bit of investigation of where the size comes from, and maybe
 change your dependencies:
 
-```shell script
+```sh
 cargo install twiggy
 twiggy top contract.wasm | head -20
 twiggy garbage contract.wasm
@@ -110,7 +110,7 @@ twiggy dominators contract.wasm | less
 
 Look at the imports and exports:
 
-```shell script
+```sh
 cargo install wasm-nm
 wasm-nm -e contract.wasm
 wasm-nm -i contract.wasm
@@ -127,7 +127,7 @@ simplify the whole process, as well as create reproduceable builds, we have crea
 which contains a `Dockerfile` that you can use to run both `wasm-pack` and `wasm-opt`.
 To make the build, just run the following in the project directory:
 
-```shell script
+```sh
 docker run --rm -u $(id -u):$(id -g) -v $(pwd):/code confio/cosmwasm-opt:0.4.1
 
 du -h contract.wasm
@@ -143,7 +143,7 @@ for loading in blockchain transactions. We [soon plan](https://github.com/confio
 to allow gzip-ed wasm in the transactions posted to the chain, which will further
 reduce gas cost of the code upload. Check out this final output:
 
-```shell script
+```sh
 $ gzip -k contract.wasm
 $ du -h contract.wasm*
 52K     contract.wasm

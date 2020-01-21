@@ -201,7 +201,7 @@ for building. For more info, look at
 [cosmwasm-opt README](https://github.com/confio/cosmwasm-opt/blob/master/README.md#usage),
 but the quickstart guide is:
 
-```shell script
+```sh
 export CODE=/path/to/your/wasm/script
 docker run --rm -u $(id -u):$(id -g) -v "${CODE}":/code confio/cosmwasm-opt:1.38
 ```
