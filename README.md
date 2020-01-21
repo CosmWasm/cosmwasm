@@ -38,8 +38,7 @@ around 40% of the code size.
 to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](lib/vm/README.md).
 * [go-cosmwasm](https://github.com/confio/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
 making use of all the optimizations and caching available inside `cosmwasm-vm`.
-* [Cosmos SDK](https://github.com/cosmwasm/modules/tree/master/incubator/contract) - Currently an WIP fork targeting `cosmos/modules`
-to provide an wasm module you can easily plug into any Cosmos-SDK based application.
+* [wasmd](https://github.com/cosmwasm/wasmd) - A basic Cosmos SDK app to host WebAssembly smart contracts.
 
 Ongoing work is currently tracked [on this project board](https://github.com/orgs/confio/projects/1)
 for all of the internals, and [on this project board](https://github.com/cosmwasm/modules/projects/3)
