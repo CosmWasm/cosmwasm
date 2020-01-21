@@ -2,6 +2,12 @@
 
 ## 0.7.0 (not yet released)
 
+**cosmwasm_vm**
+
+- Remove export `cosmwasm_vm::read_memory`. Using this indicates an
+  architectural flaw, since this is a method for host to guest communication
+  inside the VM and not needed for users of the VM.
+
 ## 0.6
 
 [Define canonical address callbacks](https://github.com/confio/cosmwasm/issues/73)
