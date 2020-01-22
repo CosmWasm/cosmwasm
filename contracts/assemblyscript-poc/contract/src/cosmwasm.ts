@@ -96,6 +96,20 @@ export function log(text: string): void {
   env.log(keepOwnership(data));
 }
 
+export function canonicalize(human: string): Uint8Array {
+  const humanEncoded = Encoding.toUtf8(human);
+  const resultPtr = allocate(50);
+  const returnCode = env.canonicalize_address(keepOwnership(humanEncoded), resultPtr);
+  if (returnCode < 0) {
+    throw new Error(
+      "Call to env.canonicalize_address failed with return code " + returnCode.toString(),
+    );
+  }
+  const canonical = readRegion(resultPtr);
+  deallocate(resultPtr);
+  return canonical;
+}
+
 export function logAndCrash(
   message: string | null,
   fileName: string | null,
