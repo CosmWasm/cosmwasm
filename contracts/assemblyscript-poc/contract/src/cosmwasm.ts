@@ -11,6 +11,16 @@ export class Region {
   len: u32;
 }
 
+function readRegion(regionPtr: usize): Uint8Array {
+  const region = changetype<Region>(regionPtr);
+
+  // TODO: is this copy really necessary?
+  const buffer = new ArrayBuffer(region.len);
+  memory.copy(changetype<usize>(buffer), region.offset, region.len);
+
+  return Uint8Array.wrap(buffer);
+}
+
 /**
  * allocate reserves the given number of bytes in wasm memory and returns a pointer
  * to a slice defining this data. This space is managed by the calling process
@@ -75,13 +85,8 @@ export function keepOwnership(data: Uint8Array): usize {
  * Takes ownership of the data at the given pointer
  */
 export function takeOwnership(regionPtr: usize): Uint8Array {
-  const region = changetype<Region>(regionPtr);
-
-  const out = new Uint8Array(region.len);
-  // TODO: is this copy really necessary?
-  memory.copy(getDataPtr(out), region.offset, region.len);
+  const out = readRegion(regionPtr);
   deallocate(regionPtr);
-
   return out;
 }
 
