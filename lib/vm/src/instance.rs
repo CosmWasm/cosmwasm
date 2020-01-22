@@ -43,9 +43,17 @@ where
             "env" => {
                 "c_read" => func!(do_read::<S>),
                 "c_write" => func!(do_write::<S>),
+                // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
+                // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
+                // Returns negative value on error. Returns length of the canoncal address on success.
+                // Ownership of both input and output pointer is not transferred to the host.
                 "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
                     do_canonical_address(api, ctx, human_ptr, canonical_ptr)
                 }),
+                // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
+                // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
+                // Returns negative value on error. Returns length of the human address on success.
+                // Ownership of both input and output pointer is not transferred to the host.
                 "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
