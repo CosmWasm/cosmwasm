@@ -46,28 +46,35 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     }
 }
 
-// Returns how many bytes written on success
-// negative result is how many bytes requested if too small
+/// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
+/// Returns how many bytes written on success negative result is how many bytes requested if too small.
 pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
     let region = to_region(ctx, ptr);
     if data.len() > (region.len as usize) {
         return -(data.len() as i32);
     }
+
+    // A performance optimization
     if data.is_empty() {
         return 0;
     }
 
     let memory = ctx.memory(0);
+
     // TODO: there must be a faster way to copy memory
-    let buffer = unsafe {
-        WasmPtr::<u8, Array>::new(region.offset)
-            .deref_mut(memory, 0, region.len)
-            .unwrap()
-    };
-    for i in 0..data.len() {
-        buffer[i].set(data[i])
+    match unsafe { WasmPtr::<u8, Array>::new(region.offset).deref_mut(memory, 0, region.len) } {
+        Some(cells) => {
+            for i in 0..data.len() {
+                cells[i].set(data[i])
+            }
+            data.len() as i32
+        },
+        None => panic!(
+            "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
+            region,
+            memory.size().bytes().0
+        ),
     }
-    data.len() as i32
 }
 
 // Reads in a ptr to Region in wasm memory and constructs the object we can use to access it
