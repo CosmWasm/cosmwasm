@@ -22,9 +22,9 @@ function readRegion(regionPtr: usize): Uint8Array {
 }
 
 /**
- * allocate reserves the given number of bytes in wasm memory and returns a pointer
- * to a slice defining this data. This space is managed by the calling process
- * and should be accompanied by a corresponding deallocate
+ * Reserves the given number of bytes in wasm memory. Creates a Region and returns a pointer
+ * to that Region.
+ * This space is managed by the calling process and should be accompanied by a corresponding deallocate.
  */
 export function allocate(size: usize): usize {
   const dataPtr = __alloc(size, idof<ArrayBuffer>());
@@ -69,6 +69,7 @@ export function releaseOwnership(data: Uint8Array): usize {
 }
 
 /**
+ * Creates a Region linking to the given data.
  * Keeps ownership of the data and the Region and returns a pointer to the Region.
  */
 export function keepOwnership(data: Uint8Array): usize {
