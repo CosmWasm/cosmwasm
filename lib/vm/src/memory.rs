@@ -27,14 +27,13 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let region = to_region(ctx, ptr);
     let memory = ctx.memory(0);
 
-    // TODO: there must be a faster way to copy memory
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.len) {
         Some(cells) => {
+            // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
+            // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
             let len = region.len as usize;
             let mut result = vec![0u8; len];
             for i in 0..len {
-                // result[i] = unsafe { cells.get_unchecked(i).get() }
-                // resolved to memcpy, but only if we really start copying huge arrays
                 result[i] = cells[i].get();
             }
             result
@@ -66,9 +65,10 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
 
     let memory = ctx.memory(0);
 
-    // TODO: there must be a faster way to copy memory
     match unsafe { WasmPtr::<u8, Array>::new(region.offset).deref_mut(memory, 0, region.len) } {
         Some(cells) => {
+            // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
+            // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
             for i in 0..data.len() {
                 cells[i].set(data[i])
             }
