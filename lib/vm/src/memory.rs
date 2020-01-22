@@ -65,7 +65,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
 
     let memory = ctx.memory(0);
 
-    match unsafe { WasmPtr::<u8, Array>::new(region.offset).deref_mut(memory, 0, region.len) } {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.len) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
