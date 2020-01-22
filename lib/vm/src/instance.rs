@@ -43,7 +43,8 @@ where
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
-                // Returns negative value on error. Returns length of the value in bytes on success.
+                // Returns length of the value in bytes on success. Returns negative value on error. An incomplete list of error codes is:
+                //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
                 "c_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S>(ctx, key_ptr, value_ptr)

@@ -52,9 +52,11 @@ impl ReadonlyStorage for ExternalStorage {
         let value = alloc(MAX_READ);
 
         let read = unsafe { c_read(key_ptr, value) };
-        if read < 0 {
-            // TODO: try to read again with larger amount
-            panic!("needed to read more data")
+        if read == -1000002 {
+            panic!("Allocated memory too small to hold the database value for the given key. \
+                If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
+        } else if read < 0 {
+            panic!("An unknown error occurred in the c_read call.")
         } else if read == 0 {
             return None;
         }

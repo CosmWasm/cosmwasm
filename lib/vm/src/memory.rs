@@ -1,4 +1,4 @@
-use crate::errors::{Error, ExecutionErr};
+use crate::errors::{Error, RegionTooSmallErr};
 use wasmer_runtime_core::{
     memory::ptr::{Array, WasmPtr},
     types::ValueType,
@@ -51,9 +51,12 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
 /// Returns number of bytes written on success.
 pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
     let region = to_region(ctx, ptr);
-    if data.len() > (region.len as usize) {
-        return ExecutionErr {
-            msg: "Region is not sufficiently large to store the given data",
+    let region_size = region.len as usize;
+
+    if data.len() > region_size {
+        return RegionTooSmallErr {
+            size: region_size,
+            required: data.len(),
         }
         .fail();
     }

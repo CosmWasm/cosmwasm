@@ -9,11 +9,14 @@ use wasmer_runtime_core::vm::Ctx;
 
 use cosmwasm::traits::{Api, Storage};
 
+use crate::errors::Error;
 use crate::memory::{read_region, write_region};
 use cosmwasm::types::{CanonicalAddr, HumanAddr};
 
-/// An undocumented, unstable constant. This can change at any time. Be warned.
-static WRITE_REGION_ERROR: i32 = -1001;
+/// An unknown error occurred when writing to region
+static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
+/// Could not write to region because it is too small
+static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
 
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = read_region(ctx, key_ptr);
@@ -22,7 +25,8 @@ pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
-            Err(_) => WRITE_REGION_ERROR,
+            Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
+            Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
         None => 0,
     }
@@ -48,7 +52,8 @@ pub fn do_canonical_address<A: Api>(
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_bytes()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
-            Err(_) => WRITE_REGION_ERROR,
+            Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
+            Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
         Err(_) => -1,
     }
@@ -59,7 +64,8 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
     match api.human_address(&CanonicalAddr(canon)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
-            Err(_) => WRITE_REGION_ERROR,
+            Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
+            Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
         Err(_) => -1,
     }
