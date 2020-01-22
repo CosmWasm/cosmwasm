@@ -41,9 +41,15 @@ where
         let import_obj = imports! {
             || { setup_context::<S>() },
             "env" => {
+                // Reads the database entry at the given key into the the value.
+                // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
+                // Returns negative value on error. Returns length of the value in bytes on success.
+                // Ownership of both input and output pointer is not transferred to the host.
                 "c_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S>(ctx, key_ptr, value_ptr)
                 }),
+                // Writes the given value into the database entry at the given key.
+                // Ownership of both input and output pointer is not transferred to the host.
                 "c_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
                     do_write::<S>(ctx, key_ptr, value_ptr)
                 }),
