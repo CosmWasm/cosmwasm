@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
-    func, imports,
+    imports,
     module::Module,
     typed_func::{Wasm, WasmTypeList},
     vm::Ctx,
@@ -41,8 +41,12 @@ where
         let import_obj = imports! {
             || { setup_context::<S>() },
             "env" => {
-                "c_read" => func!(do_read::<S>),
-                "c_write" => func!(do_write::<S>),
+                "c_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                    do_read::<S>(ctx, key_ptr, value_ptr)
+                }),
+                "c_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
+                    do_write::<S>(ctx, key_ptr, value_ptr)
+                }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
                 // Returns negative value on error. Returns length of the canoncal address on success.

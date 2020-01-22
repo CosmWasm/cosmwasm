@@ -15,12 +15,12 @@ use cosmwasm::types::{CanonicalAddr, HumanAddr};
 /// An undocumented, unstable constant. This can change at any time. Be warned.
 static WRITE_REGION_ERROR: i32 = -1001;
 
-pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
+pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = read_region(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
     with_storage_from_context(ctx, |store: &mut T| value = store.get(&key));
     match value {
-        Some(buf) => match write_region(ctx, val_ptr, &buf) {
+        Some(buf) => match write_region(ctx, value_ptr, &buf) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
             Err(_) => WRITE_REGION_ERROR,
         },
@@ -28,9 +28,9 @@ pub fn do_read<T: Storage>(ctx: &mut Ctx, key_ptr: u32, val_ptr: u32) -> i32 {
     }
 }
 
-pub fn do_write<T: Storage>(ctx: &mut Ctx, key: u32, value: u32) {
-    let key = read_region(ctx, key);
-    let value = read_region(ctx, value);
+pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) {
+    let key = read_region(ctx, key_ptr);
+    let value = read_region(ctx, value_ptr);
     with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
 }
 
