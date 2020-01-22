@@ -1,3 +1,4 @@
+use crate::errors::{Error, ExecutionErr};
 use wasmer_runtime_core::{
     memory::ptr::{Array, WasmPtr},
     types::ValueType,
@@ -47,16 +48,20 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
 }
 
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
-/// Returns how many bytes written on success negative result is how many bytes requested if too small.
-pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
+///
+/// Returns number of bytes written on success.
+pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
     let region = to_region(ctx, ptr);
     if data.len() > (region.len as usize) {
-        return -(data.len() as i32);
+        return ExecutionErr {
+            msg: "Region is not sufficiently large to store the given data",
+        }
+        .fail();
     }
 
     // A performance optimization
     if data.is_empty() {
-        return 0;
+        return Ok(0);
     }
 
     let memory = ctx.memory(0);
@@ -67,7 +72,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> i32 {
             for i in 0..data.len() {
                 cells[i].set(data[i])
             }
-            data.len() as i32
+            Ok(data.len())
         },
         None => panic!(
             "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",

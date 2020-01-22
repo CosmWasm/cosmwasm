@@ -12,6 +12,11 @@
 - Remove export `cosmwasm_vm::read_memory`. Using this indicates an
   architectural flaw, since this is a method for host to guest communication
   inside the VM and not needed for users of the VM.
+- Create new type `cosmwasm_vm:errors::ExecutionErr`.
+- Change return type of `cosmwasm_vm::write_memory` to `Result<usize, Error>` to
+  make it harder to forget handling errors.
+- Fix missing error propagation in `do_canonical_address`, `do_human_address`
+  and `allocate`.
 - Add `cosmwasm_vm::testing::test_io` for basic memory allocation/deallocation
   testing between host and guest.
 

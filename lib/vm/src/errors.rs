@@ -55,6 +55,13 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
+    // Similar to RuntimeErr but with custom message
+    #[snafu(display("Error during wasm execution: {}", msg))]
+    ExecutionErr {
+        msg: &'static str,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
         msg: &'static str,

@@ -90,7 +90,7 @@ where
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
-        write_region(self.instance.context(), ptr, data);
+        write_region(self.instance.context(), ptr, data)?;
         Ok(ptr)
     }
 
