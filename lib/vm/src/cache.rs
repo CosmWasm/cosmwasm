@@ -119,7 +119,7 @@ mod test {
     use cosmwasm::mock::{dependencies, mock_params, MockApi, MockStorage};
     use cosmwasm::types::coin;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
 
     #[test]
     fn saving_rejects_invalid_contract() {
@@ -152,7 +152,7 @@ mod test {
     fn init_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
-        let id = cache.save_wasm(CONTRACT).unwrap();
+        let id = cache.save_wasm(CONTRACT_0_6).unwrap();
         let deps = dependencies(20);
         let mut instance = cache.get_instance(&id, deps).unwrap();
 
@@ -170,7 +170,7 @@ mod test {
     fn run_cached_contract() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
-        let id = cache.save_wasm(CONTRACT).unwrap();
+        let id = cache.save_wasm(CONTRACT_0_6).unwrap();
         let deps = dependencies(20);
         let mut instance = cache.get_instance(&id, deps).unwrap();
 
@@ -198,7 +198,7 @@ mod test {
     fn use_multiple_cached_instances_of_same_contract() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
-        let id = cache.save_wasm(CONTRACT).unwrap();
+        let id = cache.save_wasm(CONTRACT_0_6).unwrap();
 
         // these differentiate the two instances of the same contract
         let deps1 = dependencies(20);

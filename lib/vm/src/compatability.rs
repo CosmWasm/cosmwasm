@@ -93,12 +93,12 @@ fn has_all_exports(symbols: &Symbols, required: &[&str]) -> bool {
 mod test {
     use super::*;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-    static OLD_CONTRACT: &[u8] = include_bytes!("../testdata/contract-old.wasm");
+    static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
+    static CONTRACT_0_6_OLD: &[u8] = include_bytes!("../testdata/contract_0.6-old.wasm");
 
     #[test]
     fn test_supported_imports() {
-        let mut reader = std::io::Cursor::new(CONTRACT);
+        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
         let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
 
         // if contract has more than we provide, bad
@@ -133,7 +133,7 @@ mod test {
 
     #[test]
     fn test_required_exports() {
-        let mut reader = std::io::Cursor::new(CONTRACT);
+        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
         let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
 
         // subset okay
@@ -165,10 +165,10 @@ mod test {
         use wabt::wat2wasm;
 
         // this is our reference check, must pass
-        check_api_compatibility(CONTRACT).unwrap();
+        check_api_compatibility(CONTRACT_0_6).unwrap();
 
         // "old" (0.6) contract without cosmwasm_api_0_6 export is also rejected
-        match check_api_compatibility(OLD_CONTRACT) {
+        match check_api_compatibility(CONTRACT_0_6_OLD) {
             Err(Error::ValidationErr { msg }) => {
                 assert_eq!(msg, MISSING_EXPORT_MSG);
             }

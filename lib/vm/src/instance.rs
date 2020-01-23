@@ -138,12 +138,12 @@ mod test {
     use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
 
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn get_and_set_gas_cranelift_noop() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_6);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000);
         // this is a no-op
@@ -154,7 +154,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn get_and_set_gas_singlepass_works() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_6);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000000);
         // it is updated to whatever we set it with
@@ -166,14 +166,14 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let instance = mock_instance(&CONTRACT);
+        let instance = mock_instance(&CONTRACT_0_6);
         instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_6);
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -209,7 +209,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_6);
         let orig_gas = 20_000;
         instance.set_gas(orig_gas);
 
@@ -223,7 +223,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_6);
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
