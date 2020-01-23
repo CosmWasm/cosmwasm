@@ -12,10 +12,10 @@ static PUBLIC_SYMBOLS: Options = Options {
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 static SUPPORTED_IMPORTS: &[&str] = &[
-    "c_read",
-    "c_write",
-    "c_canonical_address",
-    "c_human_address",
+    "db_read",
+    "db_write",
+    "canonicalize_address",
+    "humanize_address",
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.
@@ -94,7 +94,7 @@ mod test {
     use super::*;
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
-    static CONTRACT_0_6_OLD: &[u8] = include_bytes!("../testdata/contract_0.6-old.wasm");
+    static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
 
     #[test]
     fn test_supported_imports() {
@@ -165,12 +165,12 @@ mod test {
         use wabt::wat2wasm;
 
         // this is our reference check, must pass
-        check_api_compatibility(CONTRACT_0_6).unwrap();
+        check_api_compatibility(CONTRACT_0_7).unwrap();
 
-        // "old" (0.6) contract without cosmwasm_api_0_6 export is also rejected
-        match check_api_compatibility(CONTRACT_0_6_OLD) {
+        // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
+        match check_api_compatibility(CONTRACT_0_6) {
             Err(Error::ValidationErr { msg }) => {
-                assert_eq!(msg, MISSING_EXPORT_MSG);
+                assert_eq!(msg, EXTRA_IMPORT_MSG);
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),

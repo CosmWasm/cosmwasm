@@ -14,18 +14,17 @@ static MAX_READ: usize = 2000;
 // this should be plenty for any address representation
 static ADDR_BUFFER: usize = 72;
 
+// This interface will compile into required Wasm imports.
+// A complete documentation those functions is available in the VM that provides them:
+// https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
+//
 // TODO: use feature switches to enable precompile dependencies in the future,
 // so contracts that need less
 extern "C" {
-    // these are needed for storage
-    fn c_read(key: *const c_void, value: *mut c_void) -> i32;
-    fn c_write(key: *const c_void, value: *mut c_void);
-
-    // we define two more functions that must be available...
-    // they take a string and return to a preallocated buffer
-    // returns negative on error, length of returned data on success
-    fn c_canonical_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn c_human_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn db_read(key: *const c_void, value: *mut c_void) -> i32;
+    fn db_write(key: *const c_void, value: *mut c_void);
+    fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
+    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
 
 // dependencies are all external requirements that can be injected in a real-wasm contract
@@ -51,12 +50,12 @@ impl ReadonlyStorage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
         let value = alloc(MAX_READ);
 
-        let read = unsafe { c_read(key_ptr, value) };
+        let read = unsafe { db_read(key_ptr, value) };
         if read == -1000002 {
             panic!("Allocated memory too small to hold the database value for the given key. \
                 If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
         } else if read < 0 {
-            panic!("An unknown error occurred in the c_read call.")
+            panic!("An unknown error occurred in the db_read call.")
         } else if read == 0 {
             return None;
         }
@@ -76,7 +75,7 @@ impl Storage for ExternalStorage {
         let mut value = build_region(value);
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         unsafe {
-            c_write(key_ptr, value_ptr);
+            db_write(key_ptr, value_ptr);
         }
     }
 }
@@ -96,10 +95,10 @@ impl Api for ExternalApi {
         let send_ptr = &*send as *const Region as *const c_void;
         let canon = alloc(ADDR_BUFFER);
 
-        let read = unsafe { c_canonical_address(send_ptr, canon) };
+        let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
             return ContractErr {
-                msg: "canonical_address returned error",
+                msg: "canonicalize_address returned error",
             }
             .fail();
         }
@@ -114,7 +113,7 @@ impl Api for ExternalApi {
         let send_ptr = &*send as *const Region as *const c_void;
         let human = alloc(ADDR_BUFFER);
 
-        let read = unsafe { c_human_address(send_ptr, human) };
+        let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
             return ContractErr {
                 msg: "humanize_address returned error",
