@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
-    func, imports,
+    imports,
     module::Module,
     typed_func::{Wasm, WasmTypeList},
     vm::Ctx,
@@ -41,11 +41,30 @@ where
         let import_obj = imports! {
             || { setup_context::<S>() },
             "env" => {
-                "c_read" => func!(do_read::<S>),
-                "c_write" => func!(do_write::<S>),
+                // Reads the database entry at the given key into the the value.
+                // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
+                // Returns length of the value in bytes on success. Returns negative value on error. An incomplete list of error codes is:
+                //   value region too small: -1000002
+                // Ownership of both input and output pointer is not transferred to the host.
+                "c_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                    do_read::<S>(ctx, key_ptr, value_ptr)
+                }),
+                // Writes the given value into the database entry at the given key.
+                // Ownership of both input and output pointer is not transferred to the host.
+                "c_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
+                    do_write::<S>(ctx, key_ptr, value_ptr)
+                }),
+                // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
+                // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
+                // Returns negative value on error. Returns length of the canoncal address on success.
+                // Ownership of both input and output pointer is not transferred to the host.
                 "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
                     do_canonical_address(api, ctx, human_ptr, canonical_ptr)
                 }),
+                // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
+                // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
+                // Returns negative value on error. Returns length of the human address on success.
+                // Ownership of both input and output pointer is not transferred to the host.
                 "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
@@ -90,7 +109,7 @@ where
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
-        write_region(self.instance.context(), ptr, data);
+        write_region(self.instance.context(), ptr, data)?;
         Ok(ptr)
     }
 
