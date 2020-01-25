@@ -21,8 +21,8 @@ static ADDR_BUFFER: usize = 72;
 // TODO: use feature switches to enable precompile dependencies in the future,
 // so contracts that need less
 extern "C" {
-    fn db_read(key: *const c_void, value: *mut c_void) -> i32;
-    fn db_write(key: *const c_void, value: *mut c_void);
+    fn read_db(key: *const c_void, value: *mut c_void) -> i32;
+    fn write_db(key: *const c_void, value: *mut c_void);
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
@@ -50,12 +50,12 @@ impl ReadonlyStorage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
         let value = alloc(MAX_READ);
 
-        let read = unsafe { db_read(key_ptr, value) };
+        let read = unsafe { read_db(key_ptr, value) };
         if read == -1000002 {
             panic!("Allocated memory too small to hold the database value for the given key. \
                 If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
         } else if read < 0 {
-            panic!("An unknown error occurred in the db_read call.")
+            panic!("An unknown error occurred in the read_db call.")
         } else if read == 0 {
             return None;
         }
@@ -75,7 +75,7 @@ impl Storage for ExternalStorage {
         let mut value = build_region(value);
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         unsafe {
-            db_write(key_ptr, value_ptr);
+            write_db(key_ptr, value_ptr);
         }
     }
 }

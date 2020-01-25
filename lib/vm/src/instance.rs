@@ -46,12 +46,12 @@ where
                 // Returns length of the value in bytes on success. Returns negative value on error. An incomplete list of error codes is:
                 //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "read_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S>(ctx, key_ptr, value_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
+                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
                     do_write::<S>(ctx, key_ptr, value_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.

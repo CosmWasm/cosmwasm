@@ -12,8 +12,8 @@ static PUBLIC_SYMBOLS: Options = Options {
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 static SUPPORTED_IMPORTS: &[&str] = &[
-    "db_read",
-    "db_write",
+    "read_db",
+    "write_db",
     "canonicalize_address",
     "humanize_address",
 ];

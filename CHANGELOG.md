@@ -18,7 +18,7 @@
 - Fix missing error propagation in `do_canonical_address`, `do_human_address`
   and `allocate`.
 - Update error return codes in import `c_read`.
-- Rename imports `c_read`/`c_write` to `db_read`/`db_write`.
+- Rename imports `c_read`/`c_write` to `read_db`/`write_db`.
 - Rename imports `c_canonical_address`/`c_human_address` to
   `canonicalize_address`/`humanize_address`.
 - Add `cosmwasm_vm::testing::test_io` for basic memory allocation/deallocation
