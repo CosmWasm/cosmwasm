@@ -46,26 +46,26 @@ where
                 // Returns length of the value in bytes on success. Returns negative value on error. An incomplete list of error codes is:
                 //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
-                "c_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "read_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S>(ctx, key_ptr, value_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "c_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
+                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
                     do_write::<S>(ctx, key_ptr, value_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
                 // Returns negative value on error. Returns length of the canoncal address on success.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "c_canonical_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
+                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
                     do_canonical_address(api, ctx, human_ptr, canonical_ptr)
                 }),
                 // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
                 // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
                 // Returns negative value on error. Returns length of the human address on success.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "c_human_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
+                "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
             },
@@ -138,12 +138,12 @@ mod test {
     use cosmwasm::mock::mock_params;
     use cosmwasm::types::coin;
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
 
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn get_and_set_gas_cranelift_noop() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_7);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000);
         // this is a no-op
@@ -154,7 +154,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn get_and_set_gas_singlepass_works() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_7);
         let orig_gas = instance.get_gas();
         assert!(orig_gas > 1000000);
         // it is updated to whatever we set it with
@@ -166,14 +166,14 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let instance = mock_instance(&CONTRACT);
+        let instance = mock_instance(&CONTRACT_0_7);
         instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_7);
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -186,7 +186,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66_763);
+        assert_eq!(init_used, 70533);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -203,13 +203,13 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 110_267);
+        assert_eq!(handle_used, 115423);
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_7);
         let orig_gas = 20_000;
         instance.set_gas(orig_gas);
 
@@ -223,7 +223,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT_0_7);
         let orig_gas = 200_000;
         instance.set_gas(orig_gas);
 
@@ -242,6 +242,6 @@ mod test {
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 58_033);
+        assert_eq!(query_used, 60315);
     }
 }

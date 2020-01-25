@@ -89,19 +89,20 @@ pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void;
 The imports provided to give the contract access to the environment are:
 
 ```rust
+// This interface will compile into required Wasm imports.
+// A complete documentation those functions is available in the VM that provides them:
+// https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
+//
+// TODO: use feature switches to enable precompile dependencies in the future,
+// so contracts that need less
 extern "C" {
-    // these are needed for storage
-    fn c_read(key: *const c_void, value: *mut c_void) -> i32;
-    fn c_write(key: *const c_void, value: *mut c_void);
-
-    // we define two more functions that must be available...
-    // they take a string and return to a preallocated buffer
-    // returns negative on error, length of returned data on success
-    fn c_canonical_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn c_human_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn read_db(key: *const c_void, value: *mut c_void) -> i32;
+    fn write_db(key: *const c_void, value: *mut c_void);
+    fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
+    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
 ```
-(from [imports.rs](https://github.com/confio/cosmwasm/blob/v0.6.3/src/imports.rs#L19-L29))
+(from [imports.rs](https://github.com/confio/cosmwasm/blob/0.7/src/imports.rs))
 
 You could actually implement a WebAssembly module in any language,
 and as long as you implement these functions, it will be interoperable,
