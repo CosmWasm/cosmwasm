@@ -15,6 +15,8 @@
     "idof": false,
     "changetype": false,
     "memory": false,
+    "load": false,
+    "store": false,
     "__alloc": false,
     "__release": false,
     "__retain": false

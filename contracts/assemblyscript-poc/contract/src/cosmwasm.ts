@@ -11,24 +11,14 @@ export class Region {
   len: u32;
 }
 
-function readRegion(regionPtr: usize): Uint8Array {
-  const region = changetype<Region>(regionPtr);
-
-  // This copy is required because the basic binary type ArrayBuffer has an
-  // AssemblyScript-specific 16 bytes "common header", which is not provided by the VM.
-  // https://docs.assemblyscript.org/details/memory#internals
-  const buffer = new ArrayBuffer(region.len);
-  memory.copy(changetype<usize>(buffer), region.offset, region.len);
-
-  return Uint8Array.wrap(buffer);
-}
-
 /**
  * Reserves the given number of bytes in wasm memory. Creates a Region and returns a pointer
  * to that Region.
  * This space is managed by the calling process and should be accompanied by a corresponding deallocate.
  */
 export function allocate(size: usize): usize {
+  // Like `new ArrayBuffer(size);` but without zeroing memory
+  // See https://github.com/AssemblyScript/assemblyscript/blob/v0.9.0/std/assembly/arraybuffer.ts#L53-L58
   const dataPtr = __alloc(size, idof<ArrayBuffer>());
   __retain(dataPtr);
 
@@ -49,6 +39,15 @@ export function deallocate(regionPtr: usize): void {
   const dataPtr = changetype<Region>(regionPtr).offset;
   __release(regionPtr); // release Region
   __release(dataPtr); // release ArrayBuffer
+}
+
+export function readRegion(regionPtr: usize): Uint8Array {
+  const region = changetype<Region>(regionPtr);
+  // The ArrayBuffer here was created using the `allocate` function. Thus we
+  // know the 16 byte common header is prepended to `region.offset`.
+  // Note: the ArrayBuffer might be longer than the length stored in the region.
+  const data = changetype<ArrayBuffer>(region.offset);
+  return Uint8Array.wrap(data, 0, region.len);
 }
 
 /**
