@@ -5,7 +5,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{unauthorized, NotFound, ParseErr, Result, SerializeErr};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Params, Response};
+use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Env, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -35,7 +35,7 @@ pub static CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
-    params: Params,
+    env: Env,
     msg: InitMsg,
 ) -> Result<Response> {
     deps.storage.set(
@@ -43,7 +43,7 @@ pub fn init<S: Storage, A: Api>(
         &to_vec(&State {
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: params.message.signer,
+            funder: env.message.signer,
         })
         .context(SerializeErr { kind: "State" })?,
     );
@@ -52,7 +52,7 @@ pub fn init<S: Storage, A: Api>(
 
 pub fn handle<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
-    params: Params,
+    env: Env,
     _: HandleMsg,
 ) -> Result<Response> {
     let data = deps
@@ -61,15 +61,15 @@ pub fn handle<S: Storage, A: Api>(
         .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
 
-    if params.message.signer == state.verifier {
+    if env.message.signer == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
-        let from_addr = deps.api.human_address(&params.contract.address)?;
+        let from_addr = deps.api.human_address(&env.contract.address)?;
         let res = Response {
             log: Some(format!("released funds to {}", to_addr)),
             messages: vec![CosmosMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
-                amount: params.contract.balance.unwrap_or_default(),
+                amount: env.contract.balance.unwrap_or_default(),
             }],
             data: None,
         };
@@ -102,7 +102,7 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::mock::{dependencies, mock_params};
+    use cosmwasm::mock::{dependencies, mock_env};
     use cosmwasm::storage::transactional_deps;
     // import trait to get access to read
     use cosmwasm::traits::ReadonlyStorage;
@@ -125,8 +125,8 @@ mod tests {
             verifier,
             beneficiary,
         };
-        let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-        let res = init(&mut deps, params, msg).unwrap();
+        let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+        let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
@@ -146,8 +146,8 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-        let res = init(&mut deps, params, msg).unwrap();
+        let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+        let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
@@ -175,9 +175,9 @@ mod tests {
                 verifier: verifier.clone(),
                 beneficiary: beneficiary.clone(),
             };
-            let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+            let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
 
-            init(deps, params, msg)
+            init(deps, env, msg)
         })
         .unwrap();
         assert_eq!(0, res.messages.len());
@@ -200,7 +200,7 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_params = mock_params(
+        let init_params = mock_env(
             &deps.api,
             "creator",
             &coin("1000", "earth"),
@@ -210,7 +210,7 @@ mod tests {
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_params = mock_params(
+        let handle_params = mock_env(
             &deps.api,
             verifier.as_str(),
             &coin("15", "earth"),
@@ -246,7 +246,7 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_params = mock_params(
+        let init_params = mock_env(
             &deps.api,
             creator.as_str(),
             &coin("1000", "earth"),
@@ -257,7 +257,7 @@ mod tests {
 
         // beneficiary can release it
         let handle_params =
-            mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+            mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
         let handle_res = handle(&mut deps, handle_params, HandleMsg {});
         assert!(handle_res.is_err());
 

@@ -1,6 +1,6 @@
 use std::str::from_utf8;
 
-use cosmwasm::mock::mock_params;
+use cosmwasm::mock::mock_env;
 use cosmwasm::serde::from_slice;
 use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
@@ -51,8 +51,8 @@ fn proper_initialization() {
         verifier,
         beneficiary,
     };
-    let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
-    let res = init(&mut deps, params, msg).unwrap();
+    let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
+    let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's check the state
@@ -74,8 +74,8 @@ fn init_and_query() {
         verifier: verifier.clone(),
         beneficiary,
     };
-    let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-    let res = init(&mut deps, params, msg).unwrap();
+    let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+    let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
@@ -94,9 +94,9 @@ fn init_and_query() {
 #[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM);
-    let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
+    let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res = init(&mut deps, params, HandleMsg {});
+    let res = init(&mut deps, env, HandleMsg {});
     assert_eq!(true, res.is_err());
 }
 
@@ -112,23 +112,23 @@ fn proper_handle() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_params = mock_params(
+    let init_env = mock_env(
         &deps.api,
         "creator",
         &coin("1000", "earth"),
         &coin("1000", "earth"),
     );
-    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary can release it
-    let handle_params = mock_params(
+    let handle_env = mock_env(
         &deps.api,
         verifier.as_str(),
         &coin("15", "earth"),
         &coin("1015", "earth"),
     );
-    let handle_res = handle(&mut deps, handle_params, HandleMsg {}).unwrap();
+    let handle_res = handle(&mut deps, handle_env, HandleMsg {}).unwrap();
     assert_eq!(1, handle_res.messages.len());
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
@@ -158,18 +158,18 @@ fn failed_handle() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_params = mock_params(
+    let init_env = mock_env(
         &deps.api,
         creator.as_str(),
         &coin("1000", "earth"),
         &coin("1000", "earth"),
     );
-    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary can release it
-    let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-    let handle_res = handle(&mut deps, handle_params, HandleMsg {});
+    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+    let handle_res = handle(&mut deps, handle_env, HandleMsg {});
     assert!(handle_res.is_err());
 
     // state should not change
