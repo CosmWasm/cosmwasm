@@ -78,13 +78,13 @@ impl Api for MockApi {
         if append > 0 {
             out.extend(vec![0u8; append]);
         }
-        Ok(CanonicalAddr(out))
+        Ok(CanonicalAddr::encode(&out))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
-        // remove trailing 0's (TODO: fix this - but fine for first tests)
+        // remove trailing 0's (TODO: optimize this - but fine for first tests)
         let trimmed: Vec<u8> = canonical
-            .as_bytes()
+            .decode()?
             .iter()
             .cloned()
             .filter(|&x| x != 0)
@@ -166,9 +166,13 @@ mod test {
         let api = MockApi::new(20);
         let human = HumanAddr("shorty".to_string());
         let canon = api.canonical_address(&human).unwrap();
-        assert_eq!(canon.len(), 20);
-        assert_eq!(&canon.as_bytes()[0..6], human.as_str().as_bytes());
-        assert_eq!(&canon.as_bytes()[6..], &[0u8; 14]);
+        // this is base64 encoded version (of 20 bytes - above)
+        assert_eq!(canon.len(), 28);
+        // check the underlying binary behind the CanonicalAddr
+        let decoded = canon.decode().unwrap();
+        assert_eq!(decoded.len(), 20);
+        assert_eq!(&decoded[0..6], human.as_str().as_bytes());
+        assert_eq!(&decoded[6..], &[0u8; 14]);
 
         let recovered = api.human_address(&canon).unwrap();
         assert_eq!(human, recovered);
