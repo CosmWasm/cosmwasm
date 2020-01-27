@@ -3,7 +3,7 @@ use cosmwasm_vm::testing::{mock_instance, query, test_io};
 
 use assemblyscript_poc_tests::QueryMsg;
 
-static WASM: &[u8] = include_bytes!("../../contract/build/optimized.wasm");
+static WASM: &[u8] = include_bytes!("../../contract/build/untouched.wasm");
 
 fn address(index: u8) -> HumanAddr {
     match index {
