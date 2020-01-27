@@ -14,7 +14,9 @@ export class Region {
 function readRegion(regionPtr: usize): Uint8Array {
   const region = changetype<Region>(regionPtr);
 
-  // TODO: is this copy really necessary?
+  // This copy is required because the basic binary type ArrayBuffer has an
+  // AssemblyScript-specific 16 bytes "common header", which is not provided by the VM.
+  // https://docs.assemblyscript.org/details/memory#internals
   const buffer = new ArrayBuffer(region.len);
   memory.copy(changetype<usize>(buffer), region.offset, region.len);
 
