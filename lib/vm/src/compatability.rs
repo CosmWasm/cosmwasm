@@ -30,22 +30,24 @@ static REQUIRED_EXPORTS: &[&str] = &[
     "cosmwasm_api_0_6",
 ];
 
-static EXTRA_IMPORT_MSG: &str = "WASM requires unsupported imports - version too new?";
-
-static MISSING_EXPORT_MSG: &str = "WASM doesn't have required exports - version too old?";
-
 pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
     let mut reader = std::io::Cursor::new(wasm_code);
     let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
-    if !import_requirements_satisfied(&symbols, SUPPORTED_IMPORTS) {
+    if let Some(missing) = find_missing_import(&symbols, SUPPORTED_IMPORTS) {
         return ValidationErr {
-            msg: EXTRA_IMPORT_MSG,
+            msg: format!(
+                "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
+                missing, SUPPORTED_IMPORTS
+            ),
         }
         .fail();
     }
-    if !has_all_exports(&symbols, REQUIRED_EXPORTS) {
+    if let Some(missing) = find_missing_export(&symbols, REQUIRED_EXPORTS) {
         return ValidationErr {
-            msg: MISSING_EXPORT_MSG,
+            msg: format!(
+                "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
+                missing, REQUIRED_EXPORTS
+            ),
         }
         .fail();
     }
@@ -55,7 +57,7 @@ pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
-fn import_requirements_satisfied(symbols: &Symbols, supported_imports: &[&str]) -> bool {
+fn find_missing_import(symbols: &Symbols, supported_imports: &[&str]) -> Option<String> {
     let required_imports: Vec<&str> = symbols
         .iter()
         .filter_map(|s| match s {
@@ -66,14 +68,14 @@ fn import_requirements_satisfied(symbols: &Symbols, supported_imports: &[&str]) 
 
     for required_import in required_imports {
         if !supported_imports.contains(&required_import) {
-            return false;
+            return Some(String::from(required_import));
         }
     }
-    true
+    None
 }
 
-fn has_all_exports(symbols: &Symbols, required: &[&str]) -> bool {
-    let exports: Vec<&str> = symbols
+fn find_missing_export(symbols: &Symbols, required_exports: &[&str]) -> Option<String> {
+    let available_exports: Vec<&str> = symbols
         .iter()
         .filter_map(|s| match s {
             Symbol::Export { name, .. } => Some(name),
@@ -81,12 +83,12 @@ fn has_all_exports(symbols: &Symbols, required: &[&str]) -> bool {
         })
         .collect();
 
-    for i in required {
-        if !exports.contains(&i) {
-            return false;
+    for required_export in required_exports {
+        if !available_exports.contains(required_export) {
+            return Some(String::from(*required_export));
         }
     }
-    true
+    None
 }
 
 #[cfg(test)]
@@ -102,11 +104,11 @@ mod test {
         let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
 
         // if contract has more than we provide, bad
-        let imports_good = import_requirements_satisfied(&symbols, &["c_read", "c_write"]);
-        assert_eq!(imports_good, false);
+        let imports_good = find_missing_import(&symbols, &["c_read", "c_write"]);
+        assert_eq!(imports_good, Some(String::from("c_canonical_address")));
 
         // exact match good
-        let imports_good = import_requirements_satisfied(
+        let imports_good = find_missing_import(
             &symbols,
             &[
                 "c_read",
@@ -115,10 +117,10 @@ mod test {
                 "c_human_address",
             ],
         );
-        assert_eq!(imports_good, true);
+        assert_eq!(imports_good, None);
 
         // if we provide more, also good
-        let imports_good = import_requirements_satisfied(
+        let imports_good = find_missing_import(
             &symbols,
             &[
                 "c_read",
@@ -128,7 +130,7 @@ mod test {
                 "future_function",
             ],
         );
-        assert_eq!(imports_good, true);
+        assert_eq!(imports_good, None);
     }
 
     #[test]
@@ -137,11 +139,11 @@ mod test {
         let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
 
         // subset okay
-        let exports_good = has_all_exports(&symbols, &["init", "handle", "allocate"]);
-        assert_eq!(exports_good, true);
+        let exports_good = find_missing_export(&symbols, &["init", "handle", "allocate"]);
+        assert_eq!(exports_good, None);
 
         // match okay
-        let exports_good = has_all_exports(
+        let exports_good = find_missing_export(
             &symbols,
             &[
                 "query",
@@ -152,17 +154,16 @@ mod test {
                 "cosmwasm_api_0_6",
             ],
         );
-        assert_eq!(exports_good, true);
+        assert_eq!(exports_good, None);
 
         // missing one from list not okay
-        let exports_good = has_all_exports(&symbols, &["init", "handle", "extra"]);
-        assert_eq!(exports_good, false);
+        let missing_extra = find_missing_export(&symbols, &["init", "handle", "extra"]);
+        assert_eq!(missing_extra, Some(String::from("extra")));
     }
 
     #[test]
-    fn test_api_compatibility() {
+    fn test_api_compatibility_imports() {
         use crate::errors::Error;
-        use wabt::wat2wasm;
 
         // this is our reference check, must pass
         check_api_compatibility(CONTRACT_0_7).unwrap();
@@ -170,11 +171,17 @@ mod test {
         // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
         match check_api_compatibility(CONTRACT_0_6) {
             Err(Error::ValidationErr { msg }) => {
-                assert_eq!(msg, EXTRA_IMPORT_MSG);
+                assert!(msg.starts_with("Wasm contract requires unsupported import: \"c_read\""));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
+    }
+
+    #[test]
+    fn test_api_compatibility_exports() {
+        use crate::errors::Error;
+        use wabt::wat2wasm;
 
         // this is invalid, as it doesn't contain all required exports
         static WAT_MISSING_EXPORTS: &'static str = r#"
@@ -190,7 +197,7 @@ mod test {
 
         match check_api_compatibility(&wasm_missing_exports) {
             Err(Error::ValidationErr { msg }) => {
-                assert_eq!(msg, MISSING_EXPORT_MSG);
+                assert!(msg.starts_with("Wasm contract doesn't have required export: \"query\""));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),

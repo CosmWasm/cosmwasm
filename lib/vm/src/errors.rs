@@ -64,7 +64,7 @@ pub enum Error {
     },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
-        msg: &'static str,
+        msg: String,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },

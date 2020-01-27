@@ -23,6 +23,8 @@
   `canonicalize_address`/`humanize_address`.
 - Add `cosmwasm_vm::testing::test_io` for basic memory allocation/deallocation
   testing between host and guest.
+- Make `ValidationErr.msg` a dynamic `String` including relevant runtime
+  information.
 
 ## 0.6
 
