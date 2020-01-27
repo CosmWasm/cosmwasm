@@ -225,16 +225,17 @@ pub struct RawQuery {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum QueryResult {
-    Ok(Vec<u8>),
+    Ok(Base64),
     Err(String),
 }
 
 impl QueryResult {
     // unwrap will panic on err, or give us the real data useful for tests
+    // this decodes the Base64 encoding, so we can easily parse it (for integration tests)
     pub fn unwrap(self) -> Vec<u8> {
         match self {
             QueryResult::Err(msg) => panic!("Unexpected error: {}", msg),
-            QueryResult::Ok(res) => res,
+            QueryResult::Ok(res) => res.decode().unwrap(),
         }
     }
 
