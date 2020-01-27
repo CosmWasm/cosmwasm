@@ -249,11 +249,12 @@ export class ReadAllHandler extends JSONHandler {
   // end implementation of JSONHandler
 
   private addValue(name: string, obj: JsonValue): void {
-    if (this.top) {
-      if (isJsonArray(this.top)) {
-        (this.top as JsonArray).push(obj);
-      } else if (isJsonObject(this.top)) {
-        (this.top as JsonObject).set(name, obj);
+    const top = this.top;
+    if (top) {
+      if (isJsonArray(top)) {
+        (top as JsonArray).push(obj);
+      } else if (isJsonObject(top)) {
+        (top as JsonObject).set(name, obj);
       } else {
         // hmm, what does this case mean?
       }
