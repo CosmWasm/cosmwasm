@@ -5,7 +5,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{unauthorized, NotFound, ParseErr, Result, SerializeErr};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{CanonicalAddr, CosmosMsg, HumanAddr, Env, Response};
+use cosmwasm::types::{CanonicalAddr, CosmosMsg, Env, HumanAddr, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -256,8 +256,7 @@ mod tests {
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_params =
-            mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+        let handle_params = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
         let handle_res = handle(&mut deps, handle_params, HandleMsg {});
         assert!(handle_res.is_err());
 
