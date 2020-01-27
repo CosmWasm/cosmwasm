@@ -18,6 +18,11 @@ static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
 /// Could not write to region because it is too small
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
 
+// when data passed in as canonical bytes is not Base64
+static ERROR_INVALID_CANONICAL_BYTES: i32 = -1;
+// when data passed in as human bytes is not proper format
+static ERROR_INVALID_HUMAN_BYTES: i32 = -2;
+
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = read_region(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
@@ -47,7 +52,7 @@ pub fn do_canonical_address<A: Api>(
     let human = read_region(ctx, human_ptr);
     let human = match String::from_utf8(human) {
         Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return -2,
+        Err(_) => return ERROR_INVALID_HUMAN_BYTES,
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_bytes()) {
@@ -55,19 +60,22 @@ pub fn do_canonical_address<A: Api>(
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
-        Err(_) => -1,
+        Err(_) => ERROR_INVALID_HUMAN_BYTES,
     }
 }
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
-    let canon = read_region(ctx, canonical_ptr);
-    match api.human_address(&CanonicalAddr(canon)) {
+    let canon = match CanonicalAddr::from_external_base64(read_region(ctx, canonical_ptr)) {
+        Ok(v) => v,
+        Err(_) => return ERROR_INVALID_CANONICAL_BYTES,
+    };
+    match api.human_address(&canon) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
-        Err(_) => -1,
+        Err(_) => ERROR_INVALID_CANONICAL_BYTES,
     }
 }
 
