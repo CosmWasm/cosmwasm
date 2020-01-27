@@ -20,7 +20,7 @@ use crate::traits::Extern;
 use crate::types::{ContractResult, Params, QueryResult, Response};
 
 /// cosmwasm_api_* exports mark which api level this contract is compiled with (and compatible with).
-/// they can be checked by cosmwasm-vm::compatibility.
+/// they can be checked by cosmwasm_vm.
 /// Update this at major releases, so we can follow contract compatibility in the frontend
 #[no_mangle]
 pub extern "C" fn cosmwasm_api_0_6() -> i32 {
