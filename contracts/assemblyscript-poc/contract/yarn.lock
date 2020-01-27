@@ -166,12 +166,12 @@ assemblyscript-json@^0.2.0:
   resolved "https://registry.yarnpkg.com/assemblyscript-json/-/assemblyscript-json-0.2.0.tgz#e308c469547d26c7e9a7ef670a83b67061c7401c"
   integrity sha512-feJLBrec5O600QytfpkFb9oUYc+rANwtEUuSfIxVmjGcup4uR42maQTWOuIv8w/YOsHDMYHTXCwPQsuCynrwKA==
 
-assemblyscript@^0.8.1:
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/assemblyscript/-/assemblyscript-0.8.1.tgz#c5c627492406e6d87f426897b3d92bd2a533f7fe"
-  integrity sha512-AEpb4Aq5g77XOxSvWn9ZFjIdfyypGavO5oKOAXUo22tnSpebGHdrx0iyVindGKkDlxWhHUc87B0fvM/w1fnpDg==
+assemblyscript@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/assemblyscript/-/assemblyscript-0.9.0.tgz#2c85f0ff3bad7385484007d10ac65d29416f46c2"
+  integrity sha512-HDDoaDfdnp0Ki/k272ib12sKz3ytVlXsIDise5meamInLC1qZAcmwwO+aqNyiVksmPYyLhQlaVZRPKWibHqo3g==
   dependencies:
-    binaryen "89.0.0-nightly.20191113"
+    binaryen "90.0.0-nightly.20200111"
     long "^4.0.0"
 
 astral-regex@^1.0.0:
@@ -184,10 +184,10 @@ balanced-match@^1.0.0:
   resolved "https://registry.yarnpkg.com/balanced-match/-/balanced-match-1.0.0.tgz#89b4d199ab2bee49de164ea02b89ce462d71b767"
   integrity sha1-ibTRmasr7kneFk6gK4nORi1xt2c=
 
-binaryen@89.0.0-nightly.20191113:
-  version "89.0.0-nightly.20191113"
-  resolved "https://registry.yarnpkg.com/binaryen/-/binaryen-89.0.0-nightly.20191113.tgz#a0d3914f35c929787341e02910b7ffaeb7d897a9"
-  integrity sha512-scODswmj6Xf/Adjy1PRsjf8fHxpIIUYpH7HjKUaZ/RdZYjqB1Zq3X4izpLfcK+hKGNah92DpAJ3i/adEayMe9g==
+binaryen@90.0.0-nightly.20200111:
+  version "90.0.0-nightly.20200111"
+  resolved "https://registry.yarnpkg.com/binaryen/-/binaryen-90.0.0-nightly.20200111.tgz#dc5cfa53a7c2cb97a785a64ca041effd6ae66c4a"
+  integrity sha512-2uihf1tqfkG2OJB54LjIDu5/fqbGgbj9VSwnj8hYtsRfML61y0uHeMkPfWctyl99m7hsgyDu7xUbJ7iyqBz6BA==
 
 brace-expansion@^1.1.7:
   version "1.1.11"

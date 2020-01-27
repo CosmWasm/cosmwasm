@@ -5,10 +5,6 @@ export function getDataPtr(arr: Uint8Array): usize {
 export class Encoding {
   public static toUtf8(source: string): Uint8Array {
     const buffer = String.UTF8.encode(source);
-
-    // Workaround for https://github.com/AssemblyScript/assemblyscript/issues/1066
-    if (buffer.byteLength === 0) return new Uint8Array(0);
-
     return Uint8Array.wrap(buffer);
   }
 
