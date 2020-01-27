@@ -23,6 +23,9 @@
   `canonicalize_address`/`humanize_address`.
 - Add `cosmwasm_vm::testing::test_io` for basic memory allocation/deallocation
   testing between host and guest.
+- Make `ValidationErr.msg` a dynamic `String` including relevant runtime
+  information.
+- Remove export `check_api_compatibility`. The VM will take care of calling it.
 
 ## 0.6
 

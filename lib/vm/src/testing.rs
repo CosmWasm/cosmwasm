@@ -11,9 +11,11 @@ use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Params, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
+use crate::compatability::check_api_compatibility;
 use crate::instance::Instance;
 
 pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
+    check_api_compatibility(wasm).unwrap();
     let deps = dependencies(20);
     Instance::from_code(wasm, deps).unwrap()
 }
