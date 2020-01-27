@@ -8,7 +8,7 @@ use schemars::JsonSchema;
 use cosmwasm::mock::{dependencies, MockApi, MockStorage};
 use cosmwasm::serde::to_vec;
 use cosmwasm::traits::{Api, Storage};
-use cosmwasm::types::{ContractResult, Params, QueryResult};
+use cosmwasm::types::{ContractResult, Env, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::instance::Instance;
@@ -23,7 +23,7 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 // this is inefficient here, but only used in test code
 pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
-    params: Params,
+    params: Env,
     msg: T,
 ) -> ContractResult {
     match to_vec(&msg) {
@@ -37,7 +37,7 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
 // this is inefficient here, but only used in test code
 pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
-    params: Params,
+    params: Env,
     msg: T,
 ) -> ContractResult {
     match to_vec(&msg) {

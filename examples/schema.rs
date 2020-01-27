@@ -4,14 +4,14 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use cosmwasm::types::{ContractResult, CosmosMsg, Params};
+use cosmwasm::types::{ContractResult, CosmosMsg, Env};
 
 fn main() {
     let mut pwd = current_dir().unwrap();
     pwd.push("schema");
     create_dir_all(&pwd).unwrap();
 
-    let schema = schema_for!(Params);
+    let schema = schema_for!(Env);
     export_schema(&schema, &pwd, "params.json");
 
     let schema = schema_for!(CosmosMsg);

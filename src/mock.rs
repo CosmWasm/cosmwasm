@@ -4,7 +4,7 @@ use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
-use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, HumanAddr, MessageInfo, Params};
+use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 // dependencies are all external requirements that can be injected for unit tests
 pub fn dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
@@ -102,9 +102,9 @@ pub fn mock_params<T: Api, U: Into<HumanAddr>>(
     signer: U,
     sent: &[Coin],
     balance: &[Coin],
-) -> Params {
+) -> Env {
     let signer = signer.into();
-    Params {
+    Env {
         block: BlockInfo {
             height: 12_345,
             time: 1_571_797_419,

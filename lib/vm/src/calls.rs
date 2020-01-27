@@ -2,14 +2,14 @@ use snafu::ResultExt;
 
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Storage};
-use cosmwasm::types::{ContractResult, Params, QueryResult};
+use cosmwasm::types::{ContractResult, Env, QueryResult};
 
 use crate::errors::{Error, ParseErr, RuntimeErr, SerializeErr};
 use crate::instance::{Func, Instance};
 
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
-    params: &Params,
+    params: &Env,
     msg: &[u8],
 ) -> Result<ContractResult, Error> {
     let params = to_vec(params).context(SerializeErr {})?;
@@ -20,7 +20,7 @@ pub fn call_init<S: Storage + 'static, A: Api + 'static>(
 
 pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
-    params: &Params,
+    params: &Env,
     msg: &[u8],
 ) -> Result<ContractResult, Error> {
     let params = to_vec(params).context(SerializeErr {})?;
