@@ -112,7 +112,7 @@ mod test {
                 assert_eq!(msg, "not implemented");
             }
             Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("invalid must return error"),
+            Ok(_) => panic!("contract_err must return error"),
         }
     }
 
@@ -126,7 +126,7 @@ mod test {
                 assert_eq!(msg, String::from("7 is too low"));
             }
             Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("invalid must return error"),
+            Ok(_) => panic!("dyn_contract_err must return error"),
         }
     }
 }
