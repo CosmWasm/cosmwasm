@@ -38,3 +38,8 @@ export function query(messagePtr: usize): usize {
   const msg = parse(msgJson).asObject();
   return wrapSuccessData(contract.query(msg));
 }
+
+// eslint-disable-next-line @typescript-eslint/camelcase
+export function cosmwasm_api_0_6(): i32 {
+  return 0x0603;
+}
