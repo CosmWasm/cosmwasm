@@ -18,10 +18,11 @@ static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
 /// Could not write to region because it is too small
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
 
-// when data passed in as canonical bytes is not Base64
-static ERROR_INVALID_CANONICAL_BYTES: i32 = -1;
-// when data passed in as human bytes is not proper format
-static ERROR_INVALID_HUMAN_BYTES: i32 = -2;
+static ERROR_CANONICAL_ADDRESS_UNKNOWN: i32 = -1000101;
+static ERROR_CANONICAL_ADDRESS_INVALID_UTF8: i32 = -1000102;
+
+static ERROR_HUMAN_ADDRESS_UNKNOWN: i32 = -1000201;
+static ERROR_HUMAN_ADDRESS_INVALID_UTF8: i32 = -1000202;
 
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = read_region(ctx, key_ptr);
@@ -52,7 +53,7 @@ pub fn do_canonical_address<A: Api>(
     let human = read_region(ctx, human_ptr);
     let human = match String::from_utf8(human) {
         Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return ERROR_INVALID_HUMAN_BYTES,
+        Err(_) => return ERROR_HUMAN_ADDRESS_INVALID_UTF8,
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_bytes()) {
@@ -60,14 +61,14 @@ pub fn do_canonical_address<A: Api>(
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
-        Err(_) => ERROR_INVALID_HUMAN_BYTES,
+        Err(_) => ERROR_CANONICAL_ADDRESS_UNKNOWN,
     }
 }
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
     let canon = match CanonicalAddr::from_external_base64(read_region(ctx, canonical_ptr)) {
         Ok(v) => v,
-        Err(_) => return ERROR_INVALID_CANONICAL_BYTES,
+        Err(_) => return ERROR_CANONICAL_ADDRESS_INVALID_UTF8,
     };
     match api.human_address(&canon) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
@@ -75,7 +76,7 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
-        Err(_) => ERROR_INVALID_CANONICAL_BYTES,
+        Err(_) => ERROR_HUMAN_ADDRESS_UNKNOWN,
     }
 }
 
