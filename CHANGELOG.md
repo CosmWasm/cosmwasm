@@ -26,6 +26,8 @@
 - Make `ValidationErr.msg` a dynamic `String` including relevant runtime
   information.
 - Remove export `check_api_compatibility`. The VM will take care of calling it.
+- Let `check_api_compatibility` check imports by fully qualified identifier
+  `<module>.<name>`.
 
 ## 0.6
 

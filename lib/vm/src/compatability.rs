@@ -1,21 +1,14 @@
-use wasm_nm::{Options, Symbol, Symbols};
+use parity_wasm::elements::{Deserialize, Module};
 
 use crate::errors::{Result, ValidationErr};
-
-static PUBLIC_SYMBOLS: Options = Options {
-    imports: true,
-    exports: true,
-    privates: false,
-    sizes: false,
-};
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 static SUPPORTED_IMPORTS: &[&str] = &[
-    "read_db",
-    "write_db",
-    "canonicalize_address",
-    "humanize_address",
+    "env.read_db",
+    "env.write_db",
+    "env.canonicalize_address",
+    "env.humanize_address",
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.
@@ -32,8 +25,8 @@ static REQUIRED_EXPORTS: &[&str] = &[
 
 pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
     let mut reader = std::io::Cursor::new(wasm_code);
-    let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
-    if let Some(missing) = find_missing_import(&symbols, SUPPORTED_IMPORTS) {
+    let module = Module::deserialize(&mut reader).unwrap();
+    if let Some(missing) = find_missing_import(&module, SUPPORTED_IMPORTS) {
         return ValidationErr {
             msg: format!(
                 "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
@@ -42,7 +35,7 @@ pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
         }
         .fail();
     }
-    if let Some(missing) = find_missing_export(&symbols, REQUIRED_EXPORTS) {
+    if let Some(missing) = find_missing_export(&module, REQUIRED_EXPORTS) {
         return ValidationErr {
             msg: format!(
                 "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
@@ -57,34 +50,34 @@ pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
-fn find_missing_import(symbols: &Symbols, supported_imports: &[&str]) -> Option<String> {
-    let required_imports: Vec<&str> = symbols
-        .iter()
-        .filter_map(|s| match s {
-            Symbol::Import { name } => Some(name),
-            _ => None,
-        })
-        .collect();
+fn find_missing_import(module: &Module, supported_imports: &[&str]) -> Option<String> {
+    let required_imports: Vec<String> = match module.import_section() {
+        Some(import_section) => Vec::from(import_section.entries())
+            .iter()
+            .map(|entry| format!("{}.{}", entry.module(), entry.field()))
+            .collect(),
+        None => vec![],
+    };
 
     for required_import in required_imports {
-        if !supported_imports.contains(&required_import) {
-            return Some(String::from(required_import));
+        if !supported_imports.contains(&required_import.as_str()) {
+            return Some(required_import);
         }
     }
     None
 }
 
-fn find_missing_export(symbols: &Symbols, required_exports: &[&str]) -> Option<String> {
-    let available_exports: Vec<&str> = symbols
-        .iter()
-        .filter_map(|s| match s {
-            Symbol::Export { name, .. } => Some(name),
-            _ => None,
-        })
-        .collect();
+fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<String> {
+    let available_exports: Vec<String> = match module.export_section() {
+        Some(export_section) => Vec::from(export_section.entries())
+            .iter()
+            .map(|entry| format!("{}", entry.field()))
+            .collect(),
+        None => vec![],
+    };
 
     for required_export in required_exports {
-        if !available_exports.contains(required_export) {
+        if !available_exports.iter().any(|x| x == required_export) {
             return Some(String::from(*required_export));
         }
     }
@@ -101,33 +94,33 @@ mod test {
     #[test]
     fn test_supported_imports() {
         let mut reader = std::io::Cursor::new(CONTRACT_0_6);
-        let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
+        let module = Module::deserialize(&mut reader).unwrap();
 
         // if contract has more than we provide, bad
-        let imports_good = find_missing_import(&symbols, &["c_read", "c_write"]);
-        assert_eq!(imports_good, Some(String::from("c_canonical_address")));
+        let imports_good = find_missing_import(&module, &["env.c_read", "env.c_write"]);
+        assert_eq!(imports_good, Some(String::from("env.c_canonical_address")));
 
         // exact match good
         let imports_good = find_missing_import(
-            &symbols,
+            &module,
             &[
-                "c_read",
-                "c_write",
-                "c_canonical_address",
-                "c_human_address",
+                "env.c_read",
+                "env.c_write",
+                "env.c_canonical_address",
+                "env.c_human_address",
             ],
         );
         assert_eq!(imports_good, None);
 
         // if we provide more, also good
         let imports_good = find_missing_import(
-            &symbols,
+            &module,
             &[
-                "c_read",
-                "c_write",
-                "c_canonical_address",
-                "c_human_address",
-                "future_function",
+                "env.c_read",
+                "env.c_write",
+                "env.c_canonical_address",
+                "env.c_human_address",
+                "env.future_function",
             ],
         );
         assert_eq!(imports_good, None);
@@ -136,15 +129,15 @@ mod test {
     #[test]
     fn test_required_exports() {
         let mut reader = std::io::Cursor::new(CONTRACT_0_6);
-        let symbols = wasm_nm::symbols(PUBLIC_SYMBOLS.clone(), &mut reader).unwrap();
+        let module = Module::deserialize(&mut reader).unwrap();
 
         // subset okay
-        let exports_good = find_missing_export(&symbols, &["init", "handle", "allocate"]);
+        let exports_good = find_missing_export(&module, &["init", "handle", "allocate"]);
         assert_eq!(exports_good, None);
 
         // match okay
         let exports_good = find_missing_export(
-            &symbols,
+            &module,
             &[
                 "query",
                 "init",
@@ -157,7 +150,7 @@ mod test {
         assert_eq!(exports_good, None);
 
         // missing one from list not okay
-        let missing_extra = find_missing_export(&symbols, &["init", "handle", "extra"]);
+        let missing_extra = find_missing_export(&module, &["init", "handle", "extra"]);
         assert_eq!(missing_extra, Some(String::from("extra")));
     }
 
@@ -171,7 +164,9 @@ mod test {
         // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
         match check_api_compatibility(CONTRACT_0_6) {
             Err(Error::ValidationErr { msg }) => {
-                assert!(msg.starts_with("Wasm contract requires unsupported import: \"c_read\""));
+                assert!(
+                    msg.starts_with("Wasm contract requires unsupported import: \"env.c_read\"")
+                );
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
