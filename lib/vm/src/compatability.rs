@@ -5,10 +5,10 @@ use crate::errors::{Result, ValidationErr};
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 static SUPPORTED_IMPORTS: &[&str] = &[
-    "read_db",
-    "write_db",
-    "canonicalize_address",
-    "humanize_address",
+    "env.read_db",
+    "env.write_db",
+    "env.canonicalize_address",
+    "env.humanize_address",
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.
@@ -54,7 +54,7 @@ fn find_missing_import(module: &Module, supported_imports: &[&str]) -> Option<St
     let required_imports: Vec<String> = match module.import_section() {
         Some(import_section) => Vec::from(import_section.entries())
             .iter()
-            .map(|entry| format!("{}", entry.field()))
+            .map(|entry| format!("{}.{}", entry.module(), entry.field()))
             .collect(),
         None => vec![],
     };
@@ -97,17 +97,17 @@ mod test {
         let module = Module::deserialize(&mut reader).unwrap();
 
         // if contract has more than we provide, bad
-        let imports_good = find_missing_import(&module, &["c_read", "c_write"]);
-        assert_eq!(imports_good, Some(String::from("c_canonical_address")));
+        let imports_good = find_missing_import(&module, &["env.c_read", "env.c_write"]);
+        assert_eq!(imports_good, Some(String::from("env.c_canonical_address")));
 
         // exact match good
         let imports_good = find_missing_import(
             &module,
             &[
-                "c_read",
-                "c_write",
-                "c_canonical_address",
-                "c_human_address",
+                "env.c_read",
+                "env.c_write",
+                "env.c_canonical_address",
+                "env.c_human_address",
             ],
         );
         assert_eq!(imports_good, None);
@@ -116,11 +116,11 @@ mod test {
         let imports_good = find_missing_import(
             &module,
             &[
-                "c_read",
-                "c_write",
-                "c_canonical_address",
-                "c_human_address",
-                "future_function",
+                "env.c_read",
+                "env.c_write",
+                "env.c_canonical_address",
+                "env.c_human_address",
+                "env.future_function",
             ],
         );
         assert_eq!(imports_good, None);
@@ -164,7 +164,9 @@ mod test {
         // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
         match check_api_compatibility(CONTRACT_0_6) {
             Err(Error::ValidationErr { msg }) => {
-                assert!(msg.starts_with("Wasm contract requires unsupported import: \"c_read\""));
+                assert!(
+                    msg.starts_with("Wasm contract requires unsupported import: \"env.c_read\"")
+                );
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
