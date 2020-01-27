@@ -135,7 +135,7 @@ where
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::mock_instance;
-    use cosmwasm::mock::mock_params;
+    use cosmwasm::mock::mock_env;
     use cosmwasm::types::coin;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
@@ -178,7 +178,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let params = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -190,7 +190,7 @@ mod test {
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
-        let params = mock_params(
+        let params = mock_env(
             &instance.api,
             "verifies",
             &coin("15", "earth"),
@@ -214,7 +214,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let params = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &params, msg);
         assert!(res.is_err());
@@ -228,7 +228,7 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let params = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
 

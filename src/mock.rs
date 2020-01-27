@@ -97,7 +97,7 @@ impl Api for MockApi {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params<T: Api, U: Into<HumanAddr>>(
+pub fn mock_env<T: Api, U: Into<HumanAddr>>(
     api: &T,
     signer: U,
     sent: &[Coin],
@@ -138,14 +138,14 @@ mod test {
     use crate::types::coin;
 
     #[test]
-    fn mock_params_arguments() {
+    fn mock_env_arguments() {
         let name = HumanAddr("my name".to_string());
         let api = MockApi::new(20);
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_params(&api, "my name", &[], &coin("100", "atom"));
-        let b = mock_params(&api, &name, &[], &coin("100", "atom"));
-        let c = mock_params(&api, name, &[], &coin("100", "atom"));
+        let a = mock_env(&api, "my name", &[], &coin("100", "atom"));
+        let b = mock_env(&api, &name, &[], &coin("100", "atom"));
+        let c = mock_env(&api, name, &[], &coin("100", "atom"));
 
         // and the results are the same
         assert_eq!(a, b);
