@@ -112,12 +112,16 @@ impl CanonicalAddr {
         self.0.is_empty()
     }
     /// this is meant to read in data from external APIs that pass in base64 data
-    /// it ensures proper utf8 string, but doesn't check base64 charset
+    /// it stores the data as a utf8 string, also ensures that it is a valid base64 encoding
     pub fn from_external_base64(data: Vec<u8>) -> Result<Self> {
-        // TODO: make this unsafe to avoid checks?
-        // TODO: double-check base64 charset?
         let s = String::from_utf8(data).context(Utf8StringErr {})?;
-        Ok(CanonicalAddr(Base64(s)))
+        let res = CanonicalAddr(Base64(s));
+        res.validate()?;
+        Ok(res)
+    }
+    pub fn validate(&self) -> Result<()> {
+        let _ = self.0.decode()?;
+        Ok(())
     }
 }
 
