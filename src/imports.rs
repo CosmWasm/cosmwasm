@@ -105,13 +105,13 @@ impl Api for ExternalApi {
 
         let mut out = unsafe { consume_region(canon)? };
         out.truncate(read as usize);
-        // we require that the external implementation returns a byte slice containing base64-encoded value
-        // TODO: where to document this??
-        CanonicalAddr::from_external_base64(out)
+        // we turn raw bytes into base64 here
+        Ok(CanonicalAddr::from_external_base64(out))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
-        let send = build_region(canonical.as_bytes());
+        let decoded = canonical.decode()?;
+        let send = build_region(&decoded);
         let send_ptr = &*send as *const Region as *const c_void;
         let human = alloc(ADDR_BUFFER);
 

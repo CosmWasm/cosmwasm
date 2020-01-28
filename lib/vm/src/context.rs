@@ -55,6 +55,8 @@ pub fn do_canonical_address<A: Api>(
         Ok(human_str) => HumanAddr(human_str),
         Err(_) => return ERROR_HUMAN_ADDRESS_INVALID_UTF8,
     };
+    // TODO: it seems a bit heavy to keep encoding/decoding at each level
+    // different API for vm than contracts?
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_bytes()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
@@ -66,10 +68,9 @@ pub fn do_canonical_address<A: Api>(
 }
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
-    let canon = match CanonicalAddr::from_external_base64(read_region(ctx, canonical_ptr)) {
-        Ok(v) => v,
-        Err(_) => return ERROR_CANONICAL_ADDRESS_INVALID_UTF8,
-    };
+    // TODO: here we take raw data (decoded from the contract), and then encode it again to base64.
+    // I don't see why we have a different format on the calls than internally.
+    let canon = CanonicalAddr::from_external_base64(read_region(ctx, canonical_ptr));
     match api.human_address(&canon) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
