@@ -116,7 +116,7 @@ mod test {
     use tempfile::TempDir;
 
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::{dependencies, mock_params, MockApi, MockStorage};
+    use cosmwasm::mock::{dependencies, mock_env, MockApi, MockStorage};
     use cosmwasm::types::coin;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
@@ -157,11 +157,11 @@ mod test {
         let mut instance = cache.get_instance(&id, deps).unwrap();
 
         // run contract
-        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
-        let res = call_init(&mut instance, &params, msg).unwrap();
+        let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
     }
@@ -175,21 +175,21 @@ mod test {
         let mut instance = cache.get_instance(&id, deps).unwrap();
 
         // init contract
-        let params = mock_params(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init(&mut instance, &params, msg).unwrap();
+        let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
 
         // run contract - just sanity check - results validate in contract unit tests
-        let params = mock_params(
+        let env = mock_env(
             &instance.api,
             "verifies",
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
         let msg = b"{}";
-        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let res = call_handle(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
@@ -206,46 +206,46 @@ mod test {
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1).unwrap();
-        let params = mock_params(&instance.api, "owner1", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
-        let res = call_init(&mut instance, &params, msg).unwrap();
+        let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let deps1 = cache.store_instance(&id, instance).unwrap();
 
         // init instance 2
         let mut instance = cache.get_instance(&id, deps2).unwrap();
-        let params = mock_params(&instance.api, "owner2", &coin("500", "earth"), &[]);
+        let env = mock_env(&instance.api, "owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
-        let res = call_init(&mut instance, &params, msg).unwrap();
+        let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let deps2 = cache.store_instance(&id, instance).unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps2).unwrap();
-        let params = mock_params(
+        let env = mock_env(
             &instance.api,
             "bob",
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
         let msg = b"{}";
-        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let res = call_handle(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
         let _ = cache.store_instance(&id, instance).unwrap();
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps1).unwrap();
-        let params = mock_params(
+        let env = mock_env(
             &instance.api,
             "sue",
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
         let msg = b"{}";
-        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let res = call_handle(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
         let _ = cache.store_instance(&id, instance);

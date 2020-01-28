@@ -4,7 +4,7 @@ use snafu::ResultExt;
 
 use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
-use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, HumanAddr, MessageInfo, Params};
+use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 // dependencies are all external requirements that can be injected for unit tests
 pub fn dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
@@ -97,14 +97,14 @@ impl Api for MockApi {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_params<T: Api, U: Into<HumanAddr>>(
+pub fn mock_env<T: Api, U: Into<HumanAddr>>(
     api: &T,
     signer: U,
     sent: &[Coin],
     balance: &[Coin],
-) -> Params {
+) -> Env {
     let signer = signer.into();
-    Params {
+    Env {
         block: BlockInfo {
             height: 12_345,
             time: 1_571_797_419,
@@ -138,14 +138,14 @@ mod test {
     use crate::types::coin;
 
     #[test]
-    fn mock_params_arguments() {
+    fn mock_env_arguments() {
         let name = HumanAddr("my name".to_string());
         let api = MockApi::new(20);
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_params(&api, "my name", &[], &coin("100", "atom"));
-        let b = mock_params(&api, &name, &[], &coin("100", "atom"));
-        let c = mock_params(&api, name, &[], &coin("100", "atom"));
+        let a = mock_env(&api, "my name", &[], &coin("100", "atom"));
+        let b = mock_env(&api, &name, &[], &coin("100", "atom"));
+        let c = mock_env(&api, name, &[], &coin("100", "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

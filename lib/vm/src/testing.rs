@@ -8,7 +8,7 @@ use schemars::JsonSchema;
 use cosmwasm::mock::{dependencies, MockApi, MockStorage};
 use cosmwasm::serde::to_vec;
 use cosmwasm::traits::{Api, Storage};
-use cosmwasm::types::{ContractResult, Params, QueryResult};
+use cosmwasm::types::{ContractResult, Env, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::compatability::check_api_compatibility;
@@ -21,35 +21,35 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 }
 
 // init mimicks the call signature of the smart contracts.
-// thus it moves params and msg rather than take them as reference.
+// thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
-    params: Params,
+    env: Env,
     msg: T,
 ) -> ContractResult {
     match to_vec(&msg) {
         Err(e) => ContractResult::Err(e.to_string()),
-        Ok(serialized_msg) => call_init(instance, &params, &serialized_msg).unwrap(),
+        Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
     }
 }
 
 // handle mimicks the call signature of the smart contracts.
-// thus it moves params and msg rather than take them as reference.
+// thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
-    params: Params,
+    env: Env,
     msg: T,
 ) -> ContractResult {
     match to_vec(&msg) {
         Err(e) => ContractResult::Err(e.to_string()),
-        Ok(serialized_msg) => call_handle(instance, &params, &serialized_msg).unwrap(),
+        Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),
     }
 }
 
 // query mimicks the call signature of the smart contracts.
-// thus it moves params and msg rather than take them as reference.
+// thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,

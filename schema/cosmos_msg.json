@@ -23,10 +23,10 @@
               }
             },
             "from_address": {
-              "type": "string"
+              "$ref": "#/definitions/HumanAddr"
             },
             "to_address": {
-              "type": "string"
+              "$ref": "#/definitions/HumanAddr"
             }
           }
         }
@@ -47,13 +47,16 @@
           ],
           "properties": {
             "contract_addr": {
-              "type": "string"
+              "$ref": "#/definitions/HumanAddr"
             },
             "msg": {
               "type": "string"
             },
             "send": {
-              "type": "array",
+              "type": [
+                "array",
+                "null"
+              ],
               "items": {
                 "$ref": "#/definitions/Coin"
               }
@@ -97,6 +100,9 @@
           "type": "string"
         }
       }
+    },
+    "HumanAddr": {
+      "type": "string"
     }
   }
 }

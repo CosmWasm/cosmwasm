@@ -17,7 +17,7 @@ use crate::imports::{dependencies, ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::types::{ContractResult, Params, QueryResult, Response};
+use crate::types::{ContractResult, Env, QueryResult, Response};
 
 /// cosmwasm_api_* exports mark which api level this contract is compiled with (and compatible with).
 /// they can be checked by cosmwasm_vm.
@@ -45,15 +45,11 @@ pub extern "C" fn deallocate(pointer: *mut c_void) {
 
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_init<T: DeserializeOwned + JsonSchema>(
-    init_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi>,
-        Params,
-        T,
-    ) -> Result<Response, Error>,
-    params_ptr: *mut c_void,
+    init_fn: &dyn Fn(&mut Extern<ExternalStorage, ExternalApi>, Env, T) -> Result<Response, Error>,
+    env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
-    match _do_init(init_fn, params_ptr, msg_ptr) {
+    match _do_init(init_fn, env_ptr, msg_ptr) {
         Ok(res) => res,
         Err(err) => make_error_c_string(err),
     }
@@ -63,13 +59,13 @@ pub fn do_init<T: DeserializeOwned + JsonSchema>(
 pub fn do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
-        Params,
+        Env,
         T,
     ) -> Result<Response, Error>,
-    params_ptr: *mut c_void,
+    env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
-    match _do_handle(handle_fn, params_ptr, msg_ptr) {
+    match _do_handle(handle_fn, env_ptr, msg_ptr) {
         Ok(res) => res,
         Err(err) => make_error_c_string(err),
     }
@@ -87,20 +83,16 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
 }
 
 fn _do_init<T: DeserializeOwned + JsonSchema>(
-    init_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi>,
-        Params,
-        T,
-    ) -> Result<Response, Error>,
-    params_ptr: *mut c_void,
+    init_fn: &dyn Fn(&mut Extern<ExternalStorage, ExternalApi>, Env, T) -> Result<Response, Error>,
+    env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = unsafe { consume_region(params_ptr)? };
+    let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
-    let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
+    let env: Env = from_slice(&env).context(ParseErr { kind: "Env" })?;
     let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
     let mut deps = dependencies();
-    let res = init_fn(&mut deps, params, msg)?;
+    let res = init_fn(&mut deps, env, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
         kind: "ContractResult",
     })?;
@@ -110,19 +102,19 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
 fn _do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi>,
-        Params,
+        Env,
         T,
     ) -> Result<Response, Error>,
-    params_ptr: *mut c_void,
+    env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
-    let params: Vec<u8> = unsafe { consume_region(params_ptr)? };
+    let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
-    let params: Params = from_slice(&params).context(ParseErr { kind: "Params" })?;
+    let env: Env = from_slice(&env).context(ParseErr { kind: "Env" })?;
     let msg: T = from_slice(&msg).context(ParseErr { kind: "HandleMsg" })?;
     let mut deps = dependencies();
-    let res = handle_fn(&mut deps, params, msg)?;
+    let res = handle_fn(&mut deps, env, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
         kind: "ContractResult",
     })?;
