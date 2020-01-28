@@ -178,9 +178,9 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init(&mut instance, &params, msg).unwrap();
+        let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
 
@@ -190,14 +190,14 @@ mod test {
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
-        let params = mock_env(
+        let env = mock_env(
             &instance.api,
             "verifies",
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
         let msg = b"{}";
-        let res = call_handle(&mut instance, &params, msg).unwrap();
+        let res = call_handle(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
@@ -214,9 +214,9 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init(&mut instance, &params, msg);
+        let res = call_init(&mut instance, &env, msg);
         assert!(res.is_err());
     }
 
@@ -228,9 +228,9 @@ mod test {
         instance.set_gas(orig_gas);
 
         // init contract
-        let params = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let _res = call_init(&mut instance, &params, msg).unwrap().unwrap();
+        let _res = call_init(&mut instance, &env, msg).unwrap().unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);

@@ -12,7 +12,7 @@ fn main() {
     create_dir_all(&pwd).unwrap();
 
     let schema = schema_for!(Env);
-    export_schema(&schema, &pwd, "params.json");
+    export_schema(&schema, &pwd, "env.json");
 
     let schema = schema_for!(CosmosMsg);
     export_schema(&schema, &pwd, "cosmos_msg.json");
