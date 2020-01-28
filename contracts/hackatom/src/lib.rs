@@ -14,19 +14,19 @@ mod wasm {
     use std::ffi::c_void;
 
     #[no_mangle]
-    pub extern "C" fn init(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
+    pub extern "C" fn init(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
         exports::do_init(
             &contract::init::<imports::ExternalStorage, imports::ExternalApi>,
-            params_ptr,
+            env_ptr,
             msg_ptr,
         )
     }
 
     #[no_mangle]
-    pub extern "C" fn handle(params_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
+    pub extern "C" fn handle(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
         exports::do_handle(
             &contract::handle::<imports::ExternalStorage, imports::ExternalApi>,
-            params_ptr,
+            env_ptr,
             msg_ptr,
         )
     }
