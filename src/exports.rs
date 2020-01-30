@@ -12,6 +12,7 @@ use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use snafu::ResultExt;
 
+use crate::encoding::Binary;
 use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::{dependencies, ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
@@ -129,7 +130,7 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
 
     let msg: T = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     let deps = dependencies();
-    let res = query_fn(&deps, msg)?;
+    let res = Binary(query_fn(&deps, msg)?);
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
         kind: "QueryResult",
     })?;

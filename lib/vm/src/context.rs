@@ -11,6 +11,7 @@ use cosmwasm::traits::{Api, Storage};
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
+use cosmwasm::encoding::Binary;
 use cosmwasm::types::{CanonicalAddr, HumanAddr};
 
 /// An unknown error occurred when writing to region
@@ -50,7 +51,7 @@ pub fn do_canonical_address<A: Api>(
         Err(_) => return -2,
     };
     match api.canonical_address(&human) {
-        Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_bytes()) {
+        Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
@@ -60,7 +61,7 @@ pub fn do_canonical_address<A: Api>(
 }
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
-    let canon = read_region(ctx, canonical_ptr);
+    let canon = Binary(read_region(ctx, canonical_ptr));
     match api.human_address(&CanonicalAddr(canon)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(bytes_written) => bytes_written.try_into().unwrap(),

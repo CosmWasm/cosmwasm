@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use snafu::ResultExt;
 
+use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
@@ -78,13 +79,13 @@ impl Api for MockApi {
         if append > 0 {
             out.extend(vec![0u8; append]);
         }
-        Ok(CanonicalAddr(out))
+        Ok(CanonicalAddr(Binary(out)))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
         // remove trailing 0's (TODO: fix this - but fine for first tests)
         let trimmed: Vec<u8> = canonical
-            .as_bytes()
+            .as_slice()
             .iter()
             .cloned()
             .filter(|&x| x != 0)
@@ -167,8 +168,8 @@ mod test {
         let human = HumanAddr("shorty".to_string());
         let canon = api.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
-        assert_eq!(&canon.as_bytes()[0..6], human.as_str().as_bytes());
-        assert_eq!(&canon.as_bytes()[6..], &[0u8; 14]);
+        assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
+        assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
 
         let recovered = api.human_address(&canon).unwrap();
         assert_eq!(human, recovered);

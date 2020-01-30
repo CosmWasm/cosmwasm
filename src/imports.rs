@@ -3,6 +3,7 @@
 use std::ffi::c_void;
 use std::vec::Vec;
 
+use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
@@ -105,11 +106,11 @@ impl Api for ExternalApi {
 
         let mut out = unsafe { consume_region(canon)? };
         out.truncate(read as usize);
-        Ok(CanonicalAddr(out))
+        Ok(CanonicalAddr(Binary(out)))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
-        let send = build_region(canonical.as_bytes());
+        let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as *const c_void;
         let human = alloc(ADDR_BUFFER);
 

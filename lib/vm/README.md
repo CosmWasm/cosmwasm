@@ -19,6 +19,7 @@ docker run --rm -v $(pwd):/code \
   --mount type=volume,source=$(basename $(pwd))_cache,target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   confio/cosmwasm-opt:0.6.2 ./contracts/hackatom
-cp contracts/hackatom/target/wasm32-unknown-unknown/release/hackatom.wasm \
-  lib/vm/testdata/contract_0.7.wasm
+cp contracts/hackatom/contract.wasm lib/vm/testdata/contract_0.7.wasm
 ```
+
+(You must update Cargo.toml to use the commented out lines and cranelift compiler)
