@@ -186,7 +186,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 70533);
+        assert_eq!(init_used, 52_468);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -203,7 +203,7 @@ mod test {
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 115423);
+        assert_eq!(handle_used, 86_749);
     }
 
     #[test]
@@ -238,10 +238,10 @@ mod test {
         let msg = r#"{"verifier":{}}"#.as_bytes();
         let res = call_query(&mut instance, msg).unwrap();
         let answer = res.unwrap();
-        assert_eq!(answer, "verifies".as_bytes());
+        assert_eq!(answer.as_slice(), "verifies".as_bytes());
 
         let query_used = orig_gas - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 60315);
+        assert_eq!(query_used, 44_919);
     }
 }
