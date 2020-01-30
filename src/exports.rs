@@ -18,6 +18,7 @@ use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Env, QueryResult, Response};
+use crate::encoding::Binary;
 
 /// cosmwasm_api_* exports mark which api level this contract is compiled with (and compatible with).
 /// they can be checked by cosmwasm_vm.
@@ -129,7 +130,7 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
 
     let msg: T = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
     let deps = dependencies();
-    let res = query_fn(&deps, msg)?;
+    let res = Binary(query_fn(&deps, msg)?);
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
         kind: "QueryResult",
     })?;

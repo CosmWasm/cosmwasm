@@ -7,6 +7,7 @@ use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
+use crate::encoding::Binary;
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -105,11 +106,11 @@ impl Api for ExternalApi {
 
         let mut out = unsafe { consume_region(canon)? };
         out.truncate(read as usize);
-        Ok(CanonicalAddr(out))
+        Ok(CanonicalAddr(Binary(out)))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
-        let send = build_region(canonical.as_bytes());
+        let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as *const c_void;
         let human = alloc(ADDR_BUFFER);
 
