@@ -30,7 +30,7 @@ fn can_query_balance_of_existing_address() {
         address: address(2),
     };
     let query_result = query(&mut deps, query_msg).unwrap();
-    assert_eq!(query_result, b"{\"balance\":\"22\"}");
+    assert_eq!(query_result.as_slice(), b"{\"balance\":\"22\"}");
 }
 
 #[test]
@@ -41,5 +41,5 @@ fn can_query_balance_of_nonexisting_address() {
         address: address(4), // only indices 1, 2, 3 are initialized
     };
     let query_result = query(&mut deps, query_msg).unwrap();
-    assert_eq!(query_result, b"{\"balance\":\"0\"}");
+    assert_eq!(query_result.as_slice(), b"{\"balance\":\"0\"}");
 }
