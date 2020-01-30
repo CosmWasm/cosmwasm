@@ -20,13 +20,11 @@ impl Binary {
         let binary = base64::decode(&encoded).context(Base64Err {})?;
         Ok(Binary(binary))
     }
-
     /// encode to base64 string (guaranteed to be success as we control the data inside).
     /// this returns normalized form (with trailing = if needed)
     pub fn to_base64(&self) -> String {
         base64::encode(&self.0)
     }
-
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
     }
@@ -50,6 +48,7 @@ impl From<&[u8]> for Binary {
     }
 }
 
+/// Serializes as a base64 string
 impl Serialize for Binary {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -59,7 +58,7 @@ impl Serialize for Binary {
     }
 }
 
-// decode base64 string to binary
+/// Deserializes as a base64 string
 impl<'de> Deserialize<'de> for Binary {
     fn deserialize<D>(deserializer: D) -> Result<Binary, D::Error>
     where
