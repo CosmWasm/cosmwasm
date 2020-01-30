@@ -6,22 +6,24 @@ use snafu::ResultExt;
 
 use crate::errors::{Base64Err, Result};
 
+/// Binary is a wrapper around Vec<u8> to add base64 de/serialization
+/// with serde. It also adds some helper methods to help encode inline.
+///
+/// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
 #[derive(Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Base64(pub Vec<u8>);
+pub struct Binary(pub Vec<u8>);
 
-// Base64 is guaranteed to be a valid Base64 string.
-// This is meant to be converted to-and-from raw bytes, but can also be json serialized as a string
-impl Base64 {
+impl Binary {
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
-    pub fn decode(encoded: &str) -> Result<Self> {
+    pub fn from_base64(encoded: &str) -> Result<Self> {
         let binary = base64::decode(&encoded).context(Base64Err {})?;
-        Ok(Base64(binary))
+        Ok(Binary(binary))
     }
 
-    /// encode to string (guaranteed to be success as we control the data inside).
+    /// encode to base64 string (guaranteed to be success as we control the data inside).
     /// this returns normalized form (with trailing = if needed)
-    pub fn encode(&self) -> String {
+    pub fn to_base64(&self) -> String {
         base64::encode(&self.0)
     }
 
@@ -36,30 +38,30 @@ impl Base64 {
     }
 }
 
-impl fmt::Display for Base64 {
+impl fmt::Display for Binary {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.encode())
+        write!(f, "{}", self.to_base64())
     }
 }
 
-impl From<&[u8]> for Base64 {
+impl From<&[u8]> for Binary {
     fn from(data: &[u8]) -> Self {
         Self(data.to_vec())
     }
 }
 
-impl Serialize for Base64 {
+impl Serialize for Binary {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
-        serializer.serialize_str(&self.encode())
+        serializer.serialize_str(&self.to_base64())
     }
 }
 
 // decode base64 string to binary
-impl<'de> Deserialize<'de> for Base64 {
-    fn deserialize<D>(deserializer: D) -> Result<Base64, D::Error>
+impl<'de> Deserialize<'de> for Binary {
+    fn deserialize<D>(deserializer: D) -> Result<Binary, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -70,7 +72,7 @@ impl<'de> Deserialize<'de> for Base64 {
 struct Base64Visitor;
 
 impl<'de> de::Visitor<'de> for Base64Visitor {
-    type Value = Base64;
+    type Value = Binary;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
         formatter.write_str("valid base64 encoded string")
@@ -80,7 +82,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     where
         E: de::Error,
     {
-        match Base64::decode(v) {
+        match Binary::from_base64(v) {
             Ok(b64) => Ok(b64),
             Err(_) => Err(E::custom(format!("invalid base64: {}", v))),
         }
@@ -95,25 +97,25 @@ mod test {
     #[test]
     fn encode_decode() {
         let data: &[u8] = b"hello";
-        let encoded = Base64::from(data).encode();
+        let encoded = Binary::from(data).to_base64();
         assert_eq!(8, encoded.len());
-        let decoded = Base64::decode(&encoded).unwrap();
+        let decoded = Binary::from_base64(&encoded).unwrap();
         assert_eq!(data, decoded.as_slice());
     }
 
     #[test]
     fn encode_decode_non_ascii() {
         let data = vec![12u8, 187, 0, 17, 250, 1];
-        let encoded = Base64(data.clone()).encode();
+        let encoded = Binary(data.clone()).to_base64();
         assert_eq!(8, encoded.len());
-        let decoded = Base64::decode(&encoded).unwrap();
+        let decoded = Binary::from_base64(&encoded).unwrap();
         assert_eq!(data.as_slice(), decoded.as_slice());
     }
 
     #[test]
     fn from_valid_string() {
         let valid = "cmFuZG9taVo=";
-        let decoded = Base64::decode(valid).unwrap();
+        let decoded = Binary::from_base64(valid).unwrap();
         assert_eq!(b"randomiZ", decoded.as_slice());
     }
 
@@ -122,25 +124,25 @@ mod test {
     fn from_shortened_string() {
         let short = "cmFuZG9taVo";
         let long = "cmFuZG9taVo=";
-        let decoded = Base64::decode(short).unwrap();
+        let decoded = Binary::from_base64(short).unwrap();
         assert_eq!(b"randomiZ", decoded.as_slice());
-        assert_eq!(long, decoded.encode());
+        assert_eq!(long, decoded.to_base64());
     }
 
     #[test]
     fn from_invalid_string() {
         let valid = "cm%uZG9taVo";
-        let res = Base64::decode(valid);
+        let res = Binary::from_base64(valid);
         assert!(res.is_err());
     }
 
     #[test]
     fn serialization_works() {
         let data = vec![0u8, 187, 61, 11, 250, 0];
-        let encoded = Base64(data);
+        let encoded = Binary(data);
 
         let serialized = to_vec(&encoded).unwrap();
-        let deserialized: Base64 = from_slice(&serialized).unwrap();
+        let deserialized: Binary = from_slice(&serialized).unwrap();
 
         assert_eq!(encoded, deserialized);
     }
@@ -152,7 +154,7 @@ mod test {
         let expected = vec![0u8, 187, 61, 11, 250, 0];
 
         let serialized = to_vec(&b64_str).unwrap();
-        let deserialized: Base64 = from_slice(&serialized).unwrap();
+        let deserialized: Binary = from_slice(&serialized).unwrap();
         assert_eq!(expected, deserialized.as_slice());
     }
 
@@ -160,7 +162,7 @@ mod test {
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
         let serialized = to_vec(&invalid_str).unwrap();
-        let deserialized = from_slice::<Base64>(&serialized);
+        let deserialized = from_slice::<Binary>(&serialized);
         assert!(deserialized.is_err());
     }
 }
