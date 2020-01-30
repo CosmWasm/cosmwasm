@@ -1,12 +1,12 @@
 use std::fmt;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Deserializer, Serialize};
 use snafu::ResultExt;
 
 use crate::errors::{Base64Err, Result};
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Base64(String);
 
 // Base64 is guaranteed to be a valid Base64 string.
@@ -48,6 +48,36 @@ impl Base64 {
 impl fmt::Display for Base64 {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.as_str())
+    }
+}
+
+// all this to enforce json is correct when decoding
+impl<'de> Deserialize<'de> for Base64 {
+    fn deserialize<D>(deserializer: D) -> Result<Base64, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(Base64Visitor)
+    }
+}
+
+struct Base64Visitor;
+
+impl<'de> de::Visitor<'de> for Base64Visitor {
+    type Value = Base64;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("valid base64 encoded string")
+    }
+
+    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        match Base64::from_encoded(v) {
+            Ok(b64) => Ok(b64),
+            Err(_) => Err(E::custom(format!("invalid base64: {}", v))),
+        }
     }
 }
 
@@ -128,7 +158,7 @@ mod test {
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
         let serialized = to_vec(&invalid_str).unwrap();
-        let deserialized= from_slice::<Base64>(&serialized);
+        let deserialized = from_slice::<Base64>(&serialized);
         assert!(deserialized.is_err());
     }
 }
