@@ -48,6 +48,14 @@ impl From<&[u8]> for Base64 {
     }
 }
 
+impl Serialize for Base64 {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        serializer.serialize_str(&self.encode())
+    }
+}
 
 // decode base64 string to binary
 impl<'de> Deserialize<'de> for Base64 {
@@ -109,12 +117,14 @@ mod test {
         assert_eq!(b"randomiZ", decoded.as_slice());
     }
 
+    // this accepts input without a trailing = but outputs normal form
     #[test]
-    // this must be normalized form (with trailing =)
     fn from_shortened_string() {
         let short = "cmFuZG9taVo";
+        let long = "cmFuZG9taVo=";
         let decoded = Base64::decode(short).unwrap();
         assert_eq!(b"randomiZ", decoded.as_slice());
+        assert_eq!(long, decoded.encode());
     }
 
     #[test]
@@ -124,34 +134,33 @@ mod test {
         assert!(res.is_err());
     }
 
-//    #[test]
-//    fn serialization_works() {
-//        let data = vec![0u8, 187, 61, 11, 250, 0];
-//        let encoded = Base64(data);
-//
-//        let serialized = to_vec(&encoded).unwrap();
-//        let deserialized: Base64 = from_slice(&serialized).unwrap();
-//
-//        assert_eq!(encoded, deserialized);
-//        assert_eq!(data, deserialized.decode());
-//    }
-//
-//    #[test]
-//    fn deserialize_from_valid_string() {
-//        let b64_str = "ALs9C/oA";
-//        // this is the binary behind above string
-//        let expected = vec![0u8, 187, 61, 11, 250, 0];
-//
-//        let serialized = to_vec(&b64_str).unwrap();
-//        let deserialized: Base64 = from_slice(&serialized).unwrap();
-//        assert_eq!(expected, deserialized.decode());
-//    }
-//
-//    #[test]
-//    fn deserialize_from_invalid_string() {
-//        let invalid_str = "**BAD!**";
-//        let serialized = to_vec(&invalid_str).unwrap();
-//        let deserialized = from_slice::<Base64>(&serialized);
-//        assert!(deserialized.is_err());
-//    }
+    #[test]
+    fn serialization_works() {
+        let data = vec![0u8, 187, 61, 11, 250, 0];
+        let encoded = Base64(data);
+
+        let serialized = to_vec(&encoded).unwrap();
+        let deserialized: Base64 = from_slice(&serialized).unwrap();
+
+        assert_eq!(encoded, deserialized);
+    }
+
+    #[test]
+    fn deserialize_from_valid_string() {
+        let b64_str = "ALs9C/oA";
+        // this is the binary behind above string
+        let expected = vec![0u8, 187, 61, 11, 250, 0];
+
+        let serialized = to_vec(&b64_str).unwrap();
+        let deserialized: Base64 = from_slice(&serialized).unwrap();
+        assert_eq!(expected, deserialized.as_slice());
+    }
+
+    #[test]
+    fn deserialize_from_invalid_string() {
+        let invalid_str = "**BAD!**";
+        let serialized = to_vec(&invalid_str).unwrap();
+        let deserialized = from_slice::<Base64>(&serialized);
+        assert!(deserialized.is_err());
+    }
 }
