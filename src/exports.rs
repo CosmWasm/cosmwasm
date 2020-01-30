@@ -12,13 +12,13 @@ use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use snafu::ResultExt;
 
+use crate::encoding::Binary;
 use crate::errors::{Error, ParseErr, SerializeErr};
 use crate::imports::{dependencies, ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Env, QueryResult, Response};
-use crate::encoding::Binary;
 
 /// cosmwasm_api_* exports mark which api level this contract is compiled with (and compatible with).
 /// they can be checked by cosmwasm_vm.

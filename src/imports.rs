@@ -3,11 +3,11 @@
 use std::ffi::c_void;
 use std::vec::Vec;
 
+use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
-use crate::encoding::Binary;
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;

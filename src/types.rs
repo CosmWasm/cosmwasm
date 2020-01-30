@@ -107,7 +107,7 @@ pub enum CosmosMsg {
     // msg is the json-encoded HandleMsg struct
     Contract {
         contract_addr: HumanAddr,
-        msg: Binary,  // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
+        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
         send: Option<Vec<Coin>>,
     },
     // this should never be created here, just passed in from the user and later dispatched
@@ -144,8 +144,8 @@ impl ContractResult {
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
-    pub log: Option<String>, // abci defines this as string
-    pub data: Option<Binary>,  // abci defines this as bytes
+    pub log: Option<String>,  // abci defines this as string
+    pub data: Option<Binary>, // abci defines this as bytes
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

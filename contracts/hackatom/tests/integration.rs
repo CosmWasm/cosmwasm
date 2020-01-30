@@ -80,7 +80,7 @@ fn init_and_query() {
 
     // now let's query
     let qres = query(&mut deps, QueryMsg::Verifier {}).unwrap();
-    let returned = from_utf8(&qres).unwrap();
+    let returned = from_utf8(qres.as_slice()).unwrap();
     assert_eq!(verifier.as_str(), returned);
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)

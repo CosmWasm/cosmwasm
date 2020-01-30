@@ -2,10 +2,10 @@ use std::collections::HashMap;
 
 use snafu::ResultExt;
 
+use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
-use crate::encoding::Binary;
 
 // dependencies are all external requirements that can be injected for unit tests
 pub fn dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
