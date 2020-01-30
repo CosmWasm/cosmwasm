@@ -28,7 +28,9 @@ impl Base64 {
     }
 
     // this returns the base64 string
-    pub fn as_str(&self) -> &str { self.0.as_str() }
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 
     // decode the raw data (guaranteed to be success as we control the data inside)
     pub fn decode(&self) -> Vec<u8> {
@@ -51,7 +53,8 @@ impl fmt::Display for Base64 {
 
 #[cfg(test)]
 mod test {
-    use crate::encoding::Base64;
+    use super::*;
+    use crate::serde::{from_slice, to_vec};
 
     #[test]
     fn encode_decode() {
@@ -96,5 +99,36 @@ mod test {
         let valid = "cm%uZG9taVo";
         let res = Base64::from_encoded(valid);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn serialization_works() {
+        let data = vec![0u8, 187, 61, 11, 250, 0];
+        let encoded = Base64::new(&data);
+
+        let serialized = to_vec(&encoded).unwrap();
+        let deserialized: Base64 = from_slice(&serialized).unwrap();
+
+        assert_eq!(encoded, deserialized);
+        assert_eq!(data, deserialized.decode());
+    }
+
+    #[test]
+    fn deserialize_from_valid_string() {
+        let b64_str = "ALs9C/oA";
+        // this is the binary behind above string
+        let expected = vec![0u8, 187, 61, 11, 250, 0];
+
+        let serialized = to_vec(&b64_str).unwrap();
+        let deserialized: Base64 = from_slice(&serialized).unwrap();
+        assert_eq!(expected, deserialized.decode());
+    }
+
+    #[test]
+    fn deserialize_from_invalid_string() {
+        let invalid_str = "**BAD!**";
+        let serialized = to_vec(&invalid_str).unwrap();
+        let deserialized= from_slice::<Base64>(&serialized);
+        assert!(deserialized.is_err());
     }
 }
