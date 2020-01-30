@@ -43,8 +43,8 @@ impl fmt::Display for Binary {
 }
 
 impl From<&[u8]> for Binary {
-    fn from(data: &[u8]) -> Self {
-        Self(data.to_vec())
+    fn from(binary: &[u8]) -> Self {
+        Self(binary.to_vec())
     }
 }
 
@@ -82,7 +82,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
         E: de::Error,
     {
         match Binary::from_base64(v) {
-            Ok(b64) => Ok(b64),
+            Ok(binary) => Ok(binary),
             Err(_) => Err(E::custom(format!("invalid base64: {}", v))),
         }
     }
@@ -95,27 +95,27 @@ mod test {
 
     #[test]
     fn encode_decode() {
-        let data: &[u8] = b"hello";
-        let encoded = Binary::from(data).to_base64();
+        let binary: &[u8] = b"hello";
+        let encoded = Binary::from(binary).to_base64();
         assert_eq!(8, encoded.len());
         let decoded = Binary::from_base64(&encoded).unwrap();
-        assert_eq!(data, decoded.as_slice());
+        assert_eq!(binary, decoded.as_slice());
     }
 
     #[test]
     fn encode_decode_non_ascii() {
-        let data = vec![12u8, 187, 0, 17, 250, 1];
-        let encoded = Binary(data.clone()).to_base64();
+        let binary = vec![12u8, 187, 0, 17, 250, 1];
+        let encoded = Binary(binary.clone()).to_base64();
         assert_eq!(8, encoded.len());
         let decoded = Binary::from_base64(&encoded).unwrap();
-        assert_eq!(data.as_slice(), decoded.as_slice());
+        assert_eq!(binary.as_slice(), decoded.as_slice());
     }
 
     #[test]
     fn from_valid_string() {
-        let valid = "cmFuZG9taVo=";
-        let decoded = Binary::from_base64(valid).unwrap();
-        assert_eq!(b"randomiZ", decoded.as_slice());
+        let valid_base64 = "cmFuZG9taVo=";
+        let binary = Binary::from_base64(valid_base64).unwrap();
+        assert_eq!(b"randomiZ", binary.as_slice());
     }
 
     // this accepts input without a trailing = but outputs normal form
@@ -123,27 +123,26 @@ mod test {
     fn from_shortened_string() {
         let short = "cmFuZG9taVo";
         let long = "cmFuZG9taVo=";
-        let decoded = Binary::from_base64(short).unwrap();
-        assert_eq!(b"randomiZ", decoded.as_slice());
-        assert_eq!(long, decoded.to_base64());
+        let binary = Binary::from_base64(short).unwrap();
+        assert_eq!(b"randomiZ", binary.as_slice());
+        assert_eq!(long, binary.to_base64());
     }
 
     #[test]
     fn from_invalid_string() {
-        let valid = "cm%uZG9taVo";
-        let res = Binary::from_base64(valid);
+        let invalid_base64 = "cm%uZG9taVo";
+        let res = Binary::from_base64(invalid_base64);
         assert!(res.is_err());
     }
 
     #[test]
     fn serialization_works() {
-        let data = vec![0u8, 187, 61, 11, 250, 0];
-        let encoded = Binary(data);
+        let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
-        let serialized = to_vec(&encoded).unwrap();
-        let deserialized: Binary = from_slice(&serialized).unwrap();
+        let json = to_vec(&binary).unwrap();
+        let deserialized: Binary = from_slice(&json).unwrap();
 
-        assert_eq!(encoded, deserialized);
+        assert_eq!(binary, deserialized);
     }
 
     #[test]
@@ -161,7 +160,7 @@ mod test {
     fn deserialize_from_invalid_string() {
         let invalid_str = "**BAD!**";
         let serialized = to_vec(&invalid_str).unwrap();
-        let deserialized = from_slice::<Binary>(&serialized);
-        assert!(deserialized.is_err());
+        let res = from_slice::<Binary>(&serialized);
+        assert!(res.is_err());
     }
 }
