@@ -335,4 +335,44 @@ mod test {
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas(), TESTING_GAS_LIMIT);
     }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn recovers_from_out_of_gas() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = cache.save_wasm(CONTRACT_0_7).unwrap();
+
+        let deps1 = dependencies(20);
+        let deps2 = dependencies(20);
+
+        // Init from module cache
+        let mut instance1 = cache.get_instance(&id, deps1, 10).unwrap();
+        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_instance, 0);
+        assert_eq!(cache.stats.misses, 0);
+
+        // Consume some gas. This fails
+        let env1 = mock_env(&instance1.api, "owner1", &coin("1000", "earth"), &[]);
+        let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
+        match call_init(&mut instance1, &env1, msg1) {
+            Err(Error::RuntimeErr { .. }) => (), // all good, continue
+            Err(e) => panic!("unexpected error, {:?}", e),
+            Ok(_) => panic!("call_init must run out of gas"),
+        }
+        assert_eq!(instance1.get_gas(), 0);
+        cache.store_instance(&id, instance1).unwrap();
+
+        // Init from instance cache
+        let mut instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_instance, 1);
+        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(instance2.get_gas(), TESTING_GAS_LIMIT);
+
+        // Now it works
+        let env2 = mock_env(&instance2.api, "owner2", &coin("500", "earth"), &[]);
+        let msg2 = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
+        call_init(&mut instance2, &env2, msg2).unwrap();
+    }
 }
