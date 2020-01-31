@@ -70,13 +70,24 @@ where
                 }),
             },
         };
+        let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
+        Ok(Instance::from_wasmer(wasmer_instance, deps))
+    }
+
+    pub fn from_wasmer(wasmer_instance: wasmer_runtime_core::Instance, deps: Extern<S, A>) -> Self {
         let res = Instance {
-            wasmer_instance: module.instantiate(&import_obj).context(WasmerErr {})?,
-            api,
+            wasmer_instance: wasmer_instance,
+            api: deps.api,
             storage: PhantomData::<S> {},
         };
         res.leave_storage(Some(deps.storage));
-        Ok(res)
+        res
+    }
+
+    /// Takes ownership of instance and decomposes it into its components.
+    /// The components we want to preserve are returned, the rest is dropped.
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, A) {
+        (instance.wasmer_instance, instance.api)
     }
 
     pub fn get_gas(&self) -> u64 {

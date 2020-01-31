@@ -1,4 +1,5 @@
 use std::fs::create_dir_all;
+use std::marker::PhantomData;
 use std::path::PathBuf;
 
 use lru::LruCache;
@@ -19,7 +20,10 @@ static MODULES_DIR: &str = "modules";
 pub struct CosmCache<S: Storage + 'static, A: Api + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
-    instances: Option<LruCache<WasmHash, Instance<S, A>>>,
+    instances: Option<LruCache<WasmHash, wasmer_runtime_core::Instance>>,
+    // Those two don't store data but only fix type information
+    type_storage: PhantomData<S>,
+    type_api: PhantomData<A>,
 }
 
 impl<S, A> CosmCache<S, A>
@@ -48,6 +52,8 @@ where
             modules,
             wasm_path,
             instances,
+            type_storage: PhantomData::<S> {},
+            type_api: PhantomData::<A> {},
         })
     }
 
@@ -78,10 +84,8 @@ where
 
         // pop from lru cache if present
         if let Some(cache) = &mut self.instances {
-            let val = cache.pop(&hash);
-            if let Some(inst) = val {
-                inst.leave_storage(Some(deps.storage));
-                return Ok(inst);
+            if let Some(cached_instance) = cache.pop(&hash) {
+                return Ok(Instance::from_wasmer(cached_instance, deps));
             }
         }
 
@@ -100,8 +104,8 @@ where
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let storage = instance.take_storage();
-            let api = instance.api; // copy it
-            cache.put(hash, instance);
+            let (wasmer_instance, api) = Instance::recycle(instance);
+            cache.put(hash, wasmer_instance);
             if let Some(storage) = storage {
                 return Some(Extern { storage, api });
             }
