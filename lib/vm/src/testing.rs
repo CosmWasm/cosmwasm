@@ -14,10 +14,17 @@ use crate::calls::{call_handle, call_init, call_query};
 use crate::compatability::check_api_compatibility;
 use crate::instance::Instance;
 
+/// Gas limit for testing
+static DEFAULT_GAS_LIMIT: u64 = 500_000;
+
 pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
+    mock_instance_with_gas_limit(wasm, DEFAULT_GAS_LIMIT)
+}
+
+pub fn mock_instance_with_gas_limit(wasm: &[u8], gas_limit: u64) -> Instance<MockStorage, MockApi> {
     check_api_compatibility(wasm).unwrap();
     let deps = dependencies(20);
-    Instance::from_code(wasm, deps).unwrap()
+    Instance::from_code(wasm, deps, gas_limit).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.

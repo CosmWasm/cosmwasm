@@ -30,6 +30,8 @@
 - Remove export `check_api_compatibility`. The VM will take care of calling it.
 - Let `check_api_compatibility` check imports by fully qualified identifier
   `<module>.<name>`.
+- Make gas limit immutable in `cosmwasm_vm::instance::Instance`. It is passed
+  once at construction time and cannot publicly be manipulated anymore.
 
 ## 0.6
 
