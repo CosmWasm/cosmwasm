@@ -1,4 +1,5 @@
 use std::fs::create_dir_all;
+use std::marker::PhantomData;
 use std::path::PathBuf;
 
 use lru::LruCache;
@@ -16,10 +17,21 @@ use crate::wasm_store::{load, save, wasm_hash};
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
 
+#[derive(Debug, Default, Clone)]
+struct Stats {
+    hits_instance: u32,
+    hits_module: u32,
+    misses: u32,
+}
+
 pub struct CosmCache<S: Storage + 'static, A: Api + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
-    instances: Option<LruCache<WasmHash, Instance<S, A>>>,
+    instances: Option<LruCache<WasmHash, wasmer_runtime_core::Instance>>,
+    stats: Stats,
+    // Those two don't store data but only fix type information
+    type_storage: PhantomData<S>,
+    type_api: PhantomData<A>,
 }
 
 impl<S, A> CosmCache<S, A>
@@ -48,6 +60,9 @@ where
             modules,
             wasm_path,
             instances,
+            stats: Stats::default(),
+            type_storage: PhantomData::<S> {},
+            type_api: PhantomData::<A> {},
         })
     }
 
@@ -78,21 +93,22 @@ where
 
         // pop from lru cache if present
         if let Some(cache) = &mut self.instances {
-            let val = cache.pop(&hash);
-            if let Some(inst) = val {
-                inst.leave_storage(Some(deps.storage));
-                return Ok(inst);
+            if let Some(cached_instance) = cache.pop(&hash) {
+                self.stats.hits_instance += 1;
+                return Ok(Instance::from_wasmer(cached_instance, deps));
             }
         }
 
         // try from the module cache
         let res = self.modules.load_with_backend(hash, backend());
         if let Ok(module) = res {
+            self.stats.hits_module += 1;
             return Instance::from_module(&module, deps);
         }
 
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
+        self.stats.misses += 1;
         Instance::from_code(&wasm, deps)
     }
 
@@ -100,8 +116,8 @@ where
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let storage = instance.take_storage();
-            let api = instance.api; // copy it
-            cache.put(hash, instance);
+            let (wasmer_instance, api) = Instance::recycle(instance);
+            cache.put(hash, wasmer_instance);
             if let Some(storage) = storage {
                 return Some(Extern { storage, api });
             }
@@ -146,6 +162,37 @@ mod test {
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
+    }
+
+    #[test]
+    fn finds_cached_module() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = cache.save_wasm(CONTRACT_0_7).unwrap();
+        let deps = dependencies(20);
+        let _instance = cache.get_instance(&id, deps).unwrap();
+        assert_eq!(cache.stats.hits_instance, 0);
+        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.misses, 0);
+    }
+
+    #[test]
+    fn finds_cached_instance() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = cache.save_wasm(CONTRACT_0_7).unwrap();
+        let deps1 = dependencies(20);
+        let deps2 = dependencies(20);
+        let deps3 = dependencies(20);
+        let instance1 = cache.get_instance(&id, deps1).unwrap();
+        cache.store_instance(&id, instance1);
+        let instance2 = cache.get_instance(&id, deps2).unwrap();
+        cache.store_instance(&id, instance2);
+        let instance3 = cache.get_instance(&id, deps3).unwrap();
+        cache.store_instance(&id, instance3);
+        assert_eq!(cache.stats.hits_instance, 2);
+        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.misses, 0);
     }
 
     #[test]

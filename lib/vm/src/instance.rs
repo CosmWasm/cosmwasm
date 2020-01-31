@@ -20,9 +20,10 @@ use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_region, write_region};
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static> {
-    instance: wasmer_runtime_core::instance::Instance,
+    wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
-    storage: PhantomData<S>,
+    // This does not store data but only fixes type information
+    type_storage: PhantomData<S>,
 }
 
 impl<S, A> Instance<S, A>
@@ -70,38 +71,48 @@ where
                 }),
             },
         };
-        let instance = module.instantiate(&import_obj).context(WasmerErr {})?;
+        let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
+        Ok(Instance::from_wasmer(wasmer_instance, deps))
+    }
+
+    pub fn from_wasmer(wasmer_instance: wasmer_runtime_core::Instance, deps: Extern<S, A>) -> Self {
         let res = Instance {
-            instance,
-            api,
-            storage: PhantomData::<S> {},
+            wasmer_instance: wasmer_instance,
+            api: deps.api,
+            type_storage: PhantomData::<S> {},
         };
         res.leave_storage(Some(deps.storage));
-        Ok(res)
+        res
+    }
+
+    /// Takes ownership of instance and decomposes it into its components.
+    /// The components we want to preserve are returned, the rest is dropped.
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, A) {
+        (instance.wasmer_instance, instance.api)
     }
 
     pub fn get_gas(&self) -> u64 {
-        get_gas(&self.instance)
+        get_gas(&self.wasmer_instance)
     }
 
     pub fn set_gas(&mut self, gas: u64) {
-        set_gas(&mut self.instance, gas)
+        set_gas(&mut self.wasmer_instance, gas)
     }
 
     pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
-        with_storage_from_context(self.instance.context(), func)
+        with_storage_from_context(self.wasmer_instance.context(), func)
     }
 
     pub fn take_storage(&self) -> Option<S> {
-        take_storage(self.instance.context())
+        take_storage(self.wasmer_instance.context())
     }
 
     pub fn leave_storage(&self, storage: Option<S>) {
-        leave_storage(self.instance.context(), storage);
+        leave_storage(self.wasmer_instance.context(), storage);
     }
 
     pub fn memory(&self, ptr: u32) -> Vec<u8> {
-        read_region(self.instance.context(), ptr)
+        read_region(self.wasmer_instance.context(), ptr)
     }
 
     // allocate memory in the instance and copies the given data in
@@ -109,7 +120,7 @@ where
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
-        write_region(self.instance.context(), ptr, data)?;
+        write_region(self.wasmer_instance.context(), ptr, data)?;
         Ok(ptr)
     }
 
@@ -127,7 +138,7 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.instance.func(name).context(ResolveErr {})
+        self.wasmer_instance.func(name).context(ResolveErr {})
     }
 }
 
