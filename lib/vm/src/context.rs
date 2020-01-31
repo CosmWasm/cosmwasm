@@ -74,50 +74,50 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
 
 /** context data **/
 
-struct ContextData<T: Storage> {
-    data: Option<T>,
+struct ContextData<S: Storage> {
+    data: Option<S>,
 }
 
-pub fn setup_context<T: Storage>() -> (*mut c_void, fn(*mut c_void)) {
+pub fn setup_context<S: Storage>() -> (*mut c_void, fn(*mut c_void)) {
     (
-        create_unmanaged_storage::<T>(),
-        destroy_unmanaged_storage::<T>,
+        create_unmanaged_storage::<S>(),
+        destroy_unmanaged_storage::<S>,
     )
 }
 
-fn create_unmanaged_storage<T: Storage>() -> *mut c_void {
-    let data = ContextData::<T> { data: None };
+fn create_unmanaged_storage<S: Storage>() -> *mut c_void {
+    let data = ContextData::<S> { data: None };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
 }
 
-unsafe fn get_data<T: Storage>(ptr: *mut c_void) -> Box<ContextData<T>> {
-    Box::from_raw(ptr as *mut ContextData<T>)
+unsafe fn get_data<S: Storage>(ptr: *mut c_void) -> Box<ContextData<S>> {
+    Box::from_raw(ptr as *mut ContextData<S>)
 }
 
-fn destroy_unmanaged_storage<T: Storage>(ptr: *mut c_void) {
+fn destroy_unmanaged_storage<S: Storage>(ptr: *mut c_void) {
     if !ptr.is_null() {
         // auto-dropped with scope
-        let _ = unsafe { get_data::<T>(ptr) };
+        let _ = unsafe { get_data::<S>(ptr) };
     }
 }
 
-pub fn with_storage_from_context<T: Storage, F: FnMut(&mut T)>(ctx: &Ctx, mut func: F) {
-    let mut storage: Option<T> = take_storage(ctx);
+pub fn with_storage_from_context<S: Storage, F: FnMut(&mut S)>(ctx: &Ctx, mut func: F) {
+    let mut storage: Option<S> = take_storage(ctx);
     if let Some(data) = &mut storage {
         func(data);
     }
     leave_storage(ctx, storage);
 }
 
-pub fn take_storage<T: Storage>(ctx: &Ctx) -> Option<T> {
+pub fn take_storage<S: Storage>(ctx: &Ctx) -> Option<S> {
     let mut b = unsafe { get_data(ctx.data) };
     let res = b.data.take();
     mem::forget(b); // we do this to avoid cleanup
     res
 }
 
-pub fn leave_storage<T: Storage>(ctx: &Ctx, storage: Option<T>) {
+pub fn leave_storage<S: Storage>(ctx: &Ctx, storage: Option<S>) {
     let mut b = unsafe { get_data(ctx.data) };
     // clean-up if needed
     let _ = b.data.take();
