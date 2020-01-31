@@ -303,4 +303,36 @@ mod test {
         assert_eq!(1, msgs.len());
         let _ = cache.store_instance(&id, instance);
     }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn resets_gas_when_reusing_instance() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = cache.save_wasm(CONTRACT_0_7).unwrap();
+
+        let deps1 = dependencies(20);
+        let deps2 = dependencies(20);
+
+        // Init from module cache
+        let mut instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
+        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_instance, 0);
+        assert_eq!(cache.stats.misses, 0);
+        let original_gas = instance1.get_gas();
+
+        // Consume some gas
+        let env = mock_env(&instance1.api, "owner1", &coin("1000", "earth"), &[]);
+        let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
+        call_init(&mut instance1, &env, msg).unwrap();
+        assert!(instance1.get_gas() < original_gas);
+        cache.store_instance(&id, instance1).unwrap();
+
+        // Init from instance cache
+        let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_instance, 1);
+        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(instance2.get_gas(), TESTING_GAS_LIMIT);
+    }
 }
