@@ -17,6 +17,7 @@ use crate::wasm_store::{load, save, wasm_hash};
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
 
+#[derive(Debug, Default, Clone)]
 struct Stats {
     hits_instance: u32,
     hits_module: u32,
@@ -59,11 +60,7 @@ where
             modules,
             wasm_path,
             instances,
-            stats: Stats {
-                hits_instance: 0,
-                hits_module: 0,
-                misses: 0,
-            },
+            stats: Stats::default(),
             type_storage: PhantomData::<S> {},
             type_api: PhantomData::<A> {},
         })
