@@ -22,7 +22,8 @@ use crate::memory::{read_region, write_region};
 pub struct Instance<S: Storage + 'static, A: Api + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
-    storage: PhantomData<S>,
+    // This does not store data but only fixes type information
+    type_storage: PhantomData<S>,
 }
 
 impl<S, A> Instance<S, A>
@@ -78,7 +79,7 @@ where
         let res = Instance {
             wasmer_instance: wasmer_instance,
             api: deps.api,
-            storage: PhantomData::<S> {},
+            type_storage: PhantomData::<S> {},
         };
         res.leave_storage(Some(deps.storage));
         res
