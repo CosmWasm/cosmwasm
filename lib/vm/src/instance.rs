@@ -92,8 +92,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, A) {
-        (instance.wasmer_instance, instance.api)
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, A, Option<S>) {
+        let storage = instance.take_storage();
+        (instance.wasmer_instance, instance.api, storage)
     }
 
     pub fn get_gas(&self) -> u64 {
@@ -102,14 +103,6 @@ where
 
     pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
         with_storage_from_context(self.wasmer_instance.context(), func)
-    }
-
-    pub fn take_storage(&self) -> Option<S> {
-        take_storage(self.wasmer_instance.context())
-    }
-
-    pub fn leave_storage(&self, storage: Option<S>) {
-        leave_storage(self.wasmer_instance.context(), storage);
     }
 
     pub fn memory(&self, ptr: u32) -> Vec<u8> {
@@ -140,6 +133,14 @@ where
         Rets: WasmTypeList,
     {
         self.wasmer_instance.func(name).context(ResolveErr {})
+    }
+
+    fn take_storage(&self) -> Option<S> {
+        take_storage(self.wasmer_instance.context())
+    }
+
+    fn leave_storage(&self, storage: Option<S>) {
+        leave_storage(self.wasmer_instance.context(), storage);
     }
 }
 

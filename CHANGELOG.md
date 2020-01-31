@@ -32,6 +32,7 @@
   `<module>.<name>`.
 - Make gas limit immutable in `cosmwasm_vm::instance::Instance`. It is passed
   once at construction time and cannot publicly be manipulated anymore.
+- Make `take_storage`/`leave_storage` from `cosmwasm_vm::Instance` private.
 
 ## 0.6
 

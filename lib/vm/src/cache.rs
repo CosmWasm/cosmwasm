@@ -120,8 +120,7 @@ where
     pub fn store_instance(&mut self, id: &[u8], instance: Instance<S, A>) -> Option<Extern<S, A>> {
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
-            let storage = instance.take_storage();
-            let (wasmer_instance, api) = Instance::recycle(instance);
+            let (wasmer_instance, api, storage) = Instance::recycle(instance);
             cache.put(hash, wasmer_instance);
             if let Some(storage) = storage {
                 return Some(Extern { storage, api });
