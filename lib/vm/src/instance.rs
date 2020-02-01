@@ -31,12 +31,12 @@ where
     S: Storage + 'static,
     A: Api + 'static,
 {
-    pub fn from_code(code: &[u8], deps: Extern<S, A>) -> Result<Self> {
+    pub fn from_code(code: &[u8], deps: Extern<S, A>, gas_limit: u64) -> Result<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, deps)
+        Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A>) -> Result<Self> {
+    pub fn from_module(module: &Module, deps: Extern<S, A>, gas_limit: u64) -> Result<Self> {
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
         let import_obj = imports! {
@@ -72,10 +72,15 @@ where
             },
         };
         let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
-        Ok(Instance::from_wasmer(wasmer_instance, deps))
+        Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
 
-    pub fn from_wasmer(wasmer_instance: wasmer_runtime_core::Instance, deps: Extern<S, A>) -> Self {
+    pub fn from_wasmer(
+        mut wasmer_instance: wasmer_runtime_core::Instance,
+        deps: Extern<S, A>,
+        gas_limit: u64,
+    ) -> Self {
+        set_gas(&mut wasmer_instance, gas_limit);
         let res = Instance {
             wasmer_instance: wasmer_instance,
             api: deps.api,
@@ -93,10 +98,6 @@ where
 
     pub fn get_gas(&self) -> u64 {
         get_gas(&self.wasmer_instance)
-    }
-
-    pub fn set_gas(&mut self, gas: u64) {
-        set_gas(&mut self.wasmer_instance, gas)
     }
 
     pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
@@ -145,7 +146,7 @@ where
 #[cfg(test)]
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
-    use crate::testing::mock_instance;
+    use crate::testing::{mock_instance, mock_instance_with_gas_limit};
     use cosmwasm::mock::mock_env;
     use cosmwasm::types::coin;
 
@@ -153,24 +154,18 @@ mod test {
 
     #[test]
     #[cfg(feature = "default-cranelift")]
-    fn get_and_set_gas_cranelift_noop() {
-        let mut instance = mock_instance(&CONTRACT_0_7);
+    fn set_get_and_gas_cranelift_noop() {
+        let instance = mock_instance_with_gas_limit(&CONTRACT_0_7, 123321);
         let orig_gas = instance.get_gas();
-        assert!(orig_gas > 1000);
-        // this is a no-op
-        instance.set_gas(123456);
-        assert_eq!(orig_gas, instance.get_gas());
+        assert_eq!(orig_gas, 1_000_000);
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
-    fn get_and_set_gas_singlepass_works() {
-        let mut instance = mock_instance(&CONTRACT_0_7);
+    fn set_get_and_gas_singlepass_works() {
+        let instance = mock_instance_with_gas_limit(&CONTRACT_0_7, 123321);
         let orig_gas = instance.get_gas();
-        assert!(orig_gas > 1000000);
-        // it is updated to whatever we set it with
-        instance.set_gas(123456);
-        assert_eq!(123456, instance.get_gas());
+        assert_eq!(orig_gas, 123321);
     }
 
     #[test]
@@ -185,8 +180,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas() {
         let mut instance = mock_instance(&CONTRACT_0_7);
-        let orig_gas = 200_000;
-        instance.set_gas(orig_gas);
+        let orig_gas = instance.get_gas();
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -200,7 +194,7 @@ mod test {
         assert_eq!(init_used, 52_468);
 
         // run contract - just sanity check - results validate in contract unit tests
-        instance.set_gas(orig_gas);
+        let gas_before_handle = instance.get_gas();
         let env = mock_env(
             &instance.api,
             "verifies",
@@ -212,7 +206,7 @@ mod test {
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
-        let handle_used = orig_gas - instance.get_gas();
+        let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
         assert_eq!(handle_used, 86_749);
     }
@@ -220,9 +214,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance(&CONTRACT_0_7);
-        let orig_gas = 20_000;
-        instance.set_gas(orig_gas);
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT_0_7, 20_000);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -235,8 +227,6 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
         let mut instance = mock_instance(&CONTRACT_0_7);
-        let orig_gas = 200_000;
-        instance.set_gas(orig_gas);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -244,14 +234,14 @@ mod test {
         let _res = call_init(&mut instance, &env, msg).unwrap().unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        instance.set_gas(orig_gas);
+        let gas_before_query = instance.get_gas();
         // we need to encode the key in base64
         let msg = r#"{"verifier":{}}"#.as_bytes();
         let res = call_query(&mut instance, msg).unwrap();
         let answer = res.unwrap();
         assert_eq!(answer.as_slice(), "verifies".as_bytes());
 
-        let query_used = orig_gas - instance.get_gas();
+        let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
         assert_eq!(query_used, 44_919);
     }
