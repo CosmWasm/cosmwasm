@@ -91,9 +91,16 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, A, Option<S>) {
-        let storage = take_storage(instance.wasmer_instance.context());
-        (instance.wasmer_instance, instance.api, storage)
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A>>) {
+        let ext = if let Some(storage) = take_storage(instance.wasmer_instance.context()) {
+            Some(Extern {
+                storage: storage,
+                api: instance.api,
+            })
+        } else {
+            None
+        };
+        (instance.wasmer_instance, ext)
     }
 
     pub fn get_gas(&self) -> u64 {
