@@ -81,19 +81,26 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        let res = Instance {
+        leave_storage(wasmer_instance.context(), Some(deps.storage));
+        Instance {
             wasmer_instance: wasmer_instance,
             api: deps.api,
             type_storage: PhantomData::<S> {},
-        };
-        res.leave_storage(Some(deps.storage));
-        res
+        }
     }
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, A) {
-        (instance.wasmer_instance, instance.api)
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A>>) {
+        let ext = if let Some(storage) = take_storage(instance.wasmer_instance.context()) {
+            Some(Extern {
+                storage: storage,
+                api: instance.api,
+            })
+        } else {
+            None
+        };
+        (instance.wasmer_instance, ext)
     }
 
     pub fn get_gas(&self) -> u64 {
@@ -102,14 +109,6 @@ where
 
     pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
         with_storage_from_context(self.wasmer_instance.context(), func)
-    }
-
-    pub fn take_storage(&self) -> Option<S> {
-        take_storage(self.wasmer_instance.context())
-    }
-
-    pub fn leave_storage(&self, storage: Option<S>) {
-        leave_storage(self.wasmer_instance.context(), storage);
     }
 
     pub fn memory(&self, ptr: u32) -> Vec<u8> {
