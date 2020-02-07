@@ -20,8 +20,19 @@ pub struct State {
     pub funder: CanonicalAddr,
 }
 
+// failure modes to help test wasmd, based on this comment
+// https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct HandleMsg {}
+pub enum HandleMsg {
+    // Release is the only "proper" action, releasing funds in the contract
+    Release {},
+    // Infinite loop to burn cpu cycles (only run when metering is enabled)
+    CpuLoop {},
+    // Infinite loop making storage calls (to test when their limit hits)
+    StorageLoop {},
+    // Trigger a panic to ensure framework handles gracefully
+    Panic {},
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
@@ -53,8 +64,17 @@ pub fn init<S: Storage, A: Api>(
 pub fn handle<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     params: Params,
-    _: HandleMsg,
+    msg: HandleMsg,
 ) -> Result<Response> {
+    match msg {
+        HandleMsg::Release {} => try_release(deps, params),
+        HandleMsg::CpuLoop {} => cpu_loop(),
+        HandleMsg::StorageLoop {} => storage_loop(deps),
+        HandleMsg::Panic {} => do_panic(),
+    }
+}
+
+fn try_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, params: Params) -> Result<Response> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -77,6 +97,29 @@ pub fn handle<S: Storage, A: Api>(
     } else {
         unauthorized()
     }
+}
+
+fn cpu_loop() -> Result<Response> {
+    let mut counter = 0u64;
+    loop {
+        counter += 1;
+        if counter >= 9000000000 {
+            counter = 0;
+        }
+    }
+}
+
+fn storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response> {
+    let mut test_case = 0u64;
+    loop {
+        deps.storage
+            .set("test.key".as_bytes(), test_case.to_string().as_bytes());
+        test_case += 1;
+    }
+}
+
+fn do_panic() -> Result<Response> {
+    panic!("This page intentionally faulted");
 }
 
 pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
