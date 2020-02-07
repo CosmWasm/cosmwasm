@@ -84,7 +84,7 @@ fn init_and_query() {
     assert_eq!(verifier.as_str(), returned);
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
-    let qres = query(&mut deps, HandleMsg {});
+    let qres = query(&mut deps, HandleMsg::Release {});
     match qres {
         QueryResult::Err(msg) => assert!(msg.starts_with("Error parsing QueryMsg:"), msg),
         _ => panic!("Call should fail"),
@@ -96,7 +96,7 @@ fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM);
     let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res = init(&mut deps, params, HandleMsg {});
+    let res = init(&mut deps, params, HandleMsg::Release {});
     assert_eq!(true, res.is_err());
 }
 
@@ -128,7 +128,7 @@ fn proper_handle() {
         &coin("15", "earth"),
         &coin("1015", "earth"),
     );
-    let handle_res = handle(&mut deps, handle_params, HandleMsg {}).unwrap();
+    let handle_res = handle(&mut deps, handle_params, HandleMsg::Release {}).unwrap();
     assert_eq!(1, handle_res.messages.len());
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
@@ -169,7 +169,7 @@ fn failed_handle() {
 
     // beneficiary can release it
     let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-    let handle_res = handle(&mut deps, handle_params, HandleMsg {});
+    let handle_res = handle(&mut deps, handle_params, HandleMsg::Release {});
     assert!(handle_res.is_err());
 
     // state should not change
