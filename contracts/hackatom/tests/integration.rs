@@ -5,7 +5,7 @@ use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
 
-use cosmwasm_vm::{call_handle};
+use cosmwasm_vm::call_handle;
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -214,13 +214,21 @@ fn handle_panic_and_loops() {
     let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
     // panic inside contract should not panic out here
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let handle_res = call_handle(&mut deps, &handle_params, &to_vec(&HandleMsg::Panic {}).unwrap());
+    let handle_res = call_handle(
+        &mut deps,
+        &handle_params,
+        &to_vec(&HandleMsg::Panic {}).unwrap(),
+    );
     assert!(handle_res.is_err());
 
     // TRY INFINITE LOOP
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     deps.set_gas(1_000_000);
-    let handle_res = call_handle(&mut deps, &handle_params, &to_vec(&HandleMsg::CpuLoop {}).unwrap());
+    let handle_res = call_handle(
+        &mut deps,
+        &handle_params,
+        &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
+    );
     assert!(handle_res.is_err());
     assert_eq!(deps.get_gas(), 0);
 }

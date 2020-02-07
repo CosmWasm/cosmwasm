@@ -23,6 +23,7 @@ pub struct State {
 // failure modes to help test wasmd, based on this comment
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "lowercase")]
 pub enum HandleMsg {
     // Release is the only "proper" action, releasing funds in the contract
     Release {},
@@ -103,7 +104,7 @@ fn cpu_loop() -> Result<Response> {
     let mut counter = 0u64;
     loop {
         counter += 1;
-        if counter >= 9000000000 {
+        if counter >= 9_000_000_000 {
             counter = 0;
         }
     }
@@ -113,7 +114,7 @@ fn storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response>
     let mut test_case = 0u64;
     loop {
         deps.storage
-            .set("test.key".as_bytes(), test_case.to_string().as_bytes());
+            .set(b"test.key", test_case.to_string().as_bytes());
         test_case += 1;
     }
 }
