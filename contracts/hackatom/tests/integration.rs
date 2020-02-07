@@ -1,10 +1,11 @@
 use std::str::from_utf8;
 
 use cosmwasm::mock::mock_params;
-use cosmwasm::serde::from_slice;
+use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
 
+use cosmwasm_vm::{call_handle};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -185,4 +186,34 @@ fn failed_handle() {
             }
         );
     });
+}
+
+#[test]
+fn handle_panic() {
+    let mut deps = mock_instance(WASM);
+
+    // initialize the store
+    let verifier = HumanAddr(String::from("verifies"));
+    let beneficiary = HumanAddr(String::from("benefits"));
+    let creator = HumanAddr(String::from("creator"));
+
+    let init_msg = InitMsg {
+        verifier: verifier.clone(),
+        beneficiary: beneficiary.clone(),
+    };
+    let init_params = mock_params(
+        &deps.api,
+        creator.as_str(),
+        &coin("1000", "earth"),
+        &coin("1000", "earth"),
+    );
+    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    // beneficiary can release it
+    let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+    // panic inside contract should not panic out here
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    let handle_res = call_handle(&mut deps, &handle_params, &to_vec(&HandleMsg::Panic {}).unwrap());
+    assert!(handle_res.is_err());
 }
