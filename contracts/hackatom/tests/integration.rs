@@ -189,7 +189,7 @@ fn failed_handle() {
 }
 
 #[test]
-fn handle_panic() {
+fn handle_panic_and_loops() {
     let mut deps = mock_instance(WASM);
 
     // initialize the store
@@ -210,10 +210,17 @@ fn handle_panic() {
     let init_res = init(&mut deps, init_params, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
-    // beneficiary can release it
+    // TRY PANIC
     let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
     // panic inside contract should not panic out here
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let handle_res = call_handle(&mut deps, &handle_params, &to_vec(&HandleMsg::Panic {}).unwrap());
     assert!(handle_res.is_err());
+
+    // TRY INFINITE LOOP
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    deps.set_gas(1_000_000);
+    let handle_res = call_handle(&mut deps, &handle_params, &to_vec(&HandleMsg::CpuLoop {}).unwrap());
+    assert!(handle_res.is_err());
+    assert_eq!(deps.get_gas(), 0);
 }
