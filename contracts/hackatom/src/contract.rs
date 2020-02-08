@@ -68,14 +68,14 @@ pub fn handle<S: Storage, A: Api>(
     msg: HandleMsg,
 ) -> Result<Response> {
     match msg {
-        HandleMsg::Release {} => try_release(deps, params),
-        HandleMsg::CpuLoop {} => cpu_loop(),
-        HandleMsg::StorageLoop {} => storage_loop(deps),
+        HandleMsg::Release {} => do_release(deps, params),
+        HandleMsg::CpuLoop {} => do_cpu_loop(),
+        HandleMsg::StorageLoop {} => do_storage_loop(deps),
         HandleMsg::Panic {} => do_panic(),
     }
 }
 
-fn try_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, params: Params) -> Result<Response> {
+fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, params: Params) -> Result<Response> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -100,7 +100,7 @@ fn try_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, params: Params) -> R
     }
 }
 
-fn cpu_loop() -> Result<Response> {
+fn do_cpu_loop() -> Result<Response> {
     let mut counter = 0u64;
     loop {
         counter += 1;
@@ -110,7 +110,7 @@ fn cpu_loop() -> Result<Response> {
     }
 }
 
-fn storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response> {
+fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -319,7 +319,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "This page intentionally faulted")]
     fn handle_panic() {
         let mut deps = dependencies(20);
 
@@ -341,7 +341,6 @@ mod tests {
         let init_res = init(&mut deps, init_params, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        // beneficiary can release it
         let handle_params =
             mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
         // this should panic

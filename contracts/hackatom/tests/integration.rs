@@ -191,6 +191,8 @@ fn failed_handle() {
 #[test]
 fn handle_panic_and_loops() {
     let mut deps = mock_instance(WASM);
+    // Gas must be set so we die early on infinite loop
+    deps.set_gas(1_000_000);
 
     // initialize the store
     let verifier = HumanAddr(String::from("verifies"));
@@ -223,7 +225,6 @@ fn handle_panic_and_loops() {
 
     // TRY INFINITE LOOP
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    deps.set_gas(1_000_000);
     let handle_res = call_handle(
         &mut deps,
         &handle_params,
