@@ -20,8 +20,20 @@ pub struct State {
     pub funder: CanonicalAddr,
 }
 
+// failure modes to help test wasmd, based on this comment
+// https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct HandleMsg {}
+#[serde(rename_all = "lowercase")]
+pub enum HandleMsg {
+    // Release is the only "proper" action, releasing funds in the contract
+    Release {},
+    // Infinite loop to burn cpu cycles (only run when metering is enabled)
+    CpuLoop {},
+    // Infinite loop making storage calls (to test when their limit hits)
+    StorageLoop {},
+    // Trigger a panic to ensure framework handles gracefully
+    Panic {},
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
@@ -53,8 +65,17 @@ pub fn init<S: Storage, A: Api>(
 pub fn handle<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     params: Params,
-    _: HandleMsg,
+    msg: HandleMsg,
 ) -> Result<Response> {
+    match msg {
+        HandleMsg::Release {} => do_release(deps, params),
+        HandleMsg::CpuLoop {} => do_cpu_loop(),
+        HandleMsg::StorageLoop {} => do_storage_loop(deps),
+        HandleMsg::Panic {} => do_panic(),
+    }
+}
+
+fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, params: Params) -> Result<Response> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -77,6 +98,29 @@ pub fn handle<S: Storage, A: Api>(
     } else {
         unauthorized()
     }
+}
+
+fn do_cpu_loop() -> Result<Response> {
+    let mut counter = 0u64;
+    loop {
+        counter += 1;
+        if counter >= 9_000_000_000 {
+            counter = 0;
+        }
+    }
+}
+
+fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response> {
+    let mut test_case = 0u64;
+    loop {
+        deps.storage
+            .set(b"test.key", test_case.to_string().as_bytes());
+        test_case += 1;
+    }
+}
+
+fn do_panic() -> Result<Response> {
+    panic!("This page intentionally faulted");
 }
 
 pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
@@ -216,7 +260,7 @@ mod tests {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let handle_res = handle(&mut deps, handle_params, HandleMsg {}).unwrap();
+        let handle_res = handle(&mut deps, handle_params, HandleMsg::Release {}).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
@@ -258,7 +302,7 @@ mod tests {
         // beneficiary can release it
         let handle_params =
             mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-        let handle_res = handle(&mut deps, handle_params, HandleMsg {});
+        let handle_res = handle(&mut deps, handle_params, HandleMsg::Release {});
         assert!(handle_res.is_err());
 
         // state should not change
@@ -272,5 +316,34 @@ mod tests {
                 funder: deps.api.canonical_address(&creator).unwrap(),
             }
         );
+    }
+
+    #[test]
+    #[should_panic(expected = "This page intentionally faulted")]
+    fn handle_panic() {
+        let mut deps = dependencies(20);
+
+        // initialize the store
+        let verifier = HumanAddr(String::from("verifies"));
+        let beneficiary = HumanAddr(String::from("benefits"));
+        let creator = HumanAddr(String::from("creator"));
+
+        let init_msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary: beneficiary.clone(),
+        };
+        let init_params = mock_params(
+            &deps.api,
+            creator.as_str(),
+            &coin("1000", "earth"),
+            &coin("1000", "earth"),
+        );
+        let init_res = init(&mut deps, init_params, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_params =
+            mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+        // this should panic
+        let _ = handle(&mut deps, handle_params, HandleMsg::Panic {});
     }
 }

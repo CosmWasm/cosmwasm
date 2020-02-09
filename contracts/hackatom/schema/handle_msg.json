@@ -1,5 +1,50 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "HandleMsg",
-  "type": "object"
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "release"
+      ],
+      "properties": {
+        "release": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "cpuloop"
+      ],
+      "properties": {
+        "cpuloop": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "storageloop"
+      ],
+      "properties": {
+        "storageloop": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "panic"
+      ],
+      "properties": {
+        "panic": {
+          "type": "object"
+        }
+      }
+    }
+  ]
 }

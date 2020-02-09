@@ -188,7 +188,7 @@ mod test {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let msg = b"{}";
+        let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
@@ -230,7 +230,7 @@ mod test {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let msg = b"{}";
+        let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
@@ -244,7 +244,7 @@ mod test {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let msg = b"{}";
+        let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());

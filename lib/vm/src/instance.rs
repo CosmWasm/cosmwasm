@@ -166,7 +166,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66_763);
+        assert_eq!(init_used, 66_765);
 
         // run contract - just sanity check - results validate in contract unit tests
         instance.set_gas(orig_gas);
@@ -176,14 +176,14 @@ mod test {
             &coin("15", "earth"),
             &coin("1015", "earth"),
         );
-        let msg = b"{}";
+        let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &params, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
         let handle_used = orig_gas - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 110_267);
+        assert_eq!(handle_used, 112_832);
     }
 
     #[test]

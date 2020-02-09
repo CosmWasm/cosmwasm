@@ -34,11 +34,19 @@ pub fn backend() -> Backend {
 }
 
 pub fn set_gas(instance: &mut Instance, limit: u64) {
-    let used = GAS_LIMIT - limit;
+    let used = if limit > GAS_LIMIT {
+        0
+    } else {
+        GAS_LIMIT - limit
+    };
     metering::set_points_used(instance, used)
 }
 
 pub fn get_gas(instance: &Instance) -> u64 {
     let used = metering::get_points_used(instance);
-    GAS_LIMIT - used
+    if used > GAS_LIMIT {
+        0
+    } else {
+        GAS_LIMIT - used
+    }
 }
