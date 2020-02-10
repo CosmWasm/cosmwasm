@@ -29,8 +29,8 @@ pub fn compiler() -> Box<dyn Compiler> {
     Box::new(c)
 }
 
-pub fn backend() -> String {
-    "singlepass".to_string()
+pub fn backend() -> &'static str {
+    "singlepass"
 }
 
 pub fn set_gas(instance: &mut Instance, limit: u64) {

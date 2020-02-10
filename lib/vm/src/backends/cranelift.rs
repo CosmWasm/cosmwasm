@@ -20,8 +20,8 @@ pub fn compiler() -> Box<dyn Compiler> {
     Box::new(CraneliftCompiler::new())
 }
 
-pub fn backend() -> Backend {
-    "cranelift".to_string()
+pub fn backend() -> &'static str {
+    "cranelift"
 }
 
 pub fn set_gas(_instance: &mut Instance, _limit: u64) {}

@@ -61,11 +61,11 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
         | Operator::CallIndirect { .. }
         | Operator::Drop
         | Operator::Select
-        | Operator::GetLocal { .. }
-        | Operator::SetLocal { .. }
-        | Operator::TeeLocal { .. }
-        | Operator::GetGlobal { .. }
-        | Operator::SetGlobal { .. }
+        | Operator::LocalGet { .. }
+        | Operator::LocalSet { .. }
+        | Operator::LocalTee { .. }
+        | Operator::GlobalGet { .. }
+        | Operator::GlobalSet { .. }
         | Operator::I32Load { .. }
         | Operator::I64Load { .. }
         | Operator::I32Load8S { .. }
@@ -148,15 +148,14 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
         | Operator::I64Rotl
         | Operator::I64Rotr
         | Operator::I32WrapI64
-        | Operator::I64ExtendSI32
-        | Operator::I64ExtendUI32
         | Operator::I32Extend8S
         | Operator::I32Extend16S
         | Operator::I64Extend8S
         | Operator::I64Extend16S
-        | Operator::I64Extend32S => Ok(()),
+        | Operator::I64ExtendI32S
+        | Operator::I64ExtendI32U => Ok(()),
         _ => Err(CompileError::ValidationError {
-            msg: "non-deterministic opcode".to_string(),
+            msg: format!("non-deterministic opcode: {:?}", opcode),
         }),
     }
 }
@@ -209,7 +208,7 @@ mod tests {
         if let Error::CompileErr { source } = &failure {
             if let CompileError::InternalError { msg } = source {
                 assert_eq!(
-                    "Codegen(\"ValidationError { msg: \\\"non-deterministic opcode\\\" }\")",
+                    "Codegen(\"ValidationError { msg: \\\"non-deterministic opcode: F32ConvertI32U\\\" }\")",
                     msg.as_str()
                 );
                 return;

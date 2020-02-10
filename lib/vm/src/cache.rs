@@ -10,7 +10,7 @@ use crate::backends::{backend, compile};
 use crate::compatability::check_api_compatibility;
 use crate::errors::{Error, IntegrityErr, IoErr};
 use crate::instance::Instance;
-use crate::modules::{Cache, FileSystemCache, WasmHash};
+use crate::modules::{FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
 
 static WASM_DIR: &str = "wasm";

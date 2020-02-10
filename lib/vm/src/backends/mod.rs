@@ -3,8 +3,8 @@ pub mod singlepass;
 
 pub use wasmer_runtime_core::backend::Compiler;
 
-pub fn compiler_for_backend(backend: String) -> Option<Box<dyn Compiler>> {
-    match backend.as_str() {
+pub fn compiler_for_backend(backend: &str) -> Option<Box<dyn Compiler>> {
+    match backend {
         #[cfg(any(feature = "cranelift", feature = "default-cranelift"))]
         "cranelift" => Some(cranelift::compiler()),
 
