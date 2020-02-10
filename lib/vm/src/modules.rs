@@ -9,7 +9,7 @@ use std::{
 };
 
 pub use wasmer_runtime_core::{
-    backend::{Backend, Compiler},
+    backend::Compiler,
     cache::{Artifact, Cache, WasmHash},
 };
 use wasmer_runtime_core::{cache::Error as CacheError, module::Module};
@@ -94,7 +94,7 @@ impl Cache for FileSystemCache {
         self.load_with_backend(key, backend())
     }
 
-    fn load_with_backend(&self, key: WasmHash, backend: Backend) -> Result<Module, CacheError> {
+    fn load_with_backend(&self, key: WasmHash, backend: String) -> Result<Module, CacheError> {
         let filename = key.encode();
         let mut new_path_buf = self.path.clone();
         new_path_buf.push(backend.to_string());

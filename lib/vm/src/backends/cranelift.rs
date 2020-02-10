@@ -21,7 +21,7 @@ pub fn compiler() -> Box<dyn Compiler> {
 }
 
 pub fn backend() -> Backend {
-    Backend::Cranelift
+    "cranelift".to_string()
 }
 
 pub fn set_gas(_instance: &mut Instance, _limit: u64) {}

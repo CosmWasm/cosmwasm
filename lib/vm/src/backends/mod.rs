@@ -1,15 +1,15 @@
 pub mod cranelift;
 pub mod singlepass;
 
-pub use wasmer_runtime_core::backend::{Backend, Compiler};
+pub use wasmer_runtime_core::backend::Compiler;
 
-pub fn compiler_for_backend(backend: Backend) -> Option<Box<dyn Compiler>> {
-    match backend {
+pub fn compiler_for_backend(backend: String) -> Option<Box<dyn Compiler>> {
+    match backend.as_str() {
         #[cfg(any(feature = "cranelift", feature = "default-cranelift"))]
-        Backend::Cranelift => Some(cranelift::compiler()),
+        "cranelift" => Some(cranelift::compiler()),
 
         #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
-        Backend::Singlepass => Some(singlepass::compiler()),
+        "singlepass" => Some(singlepass::compiler()),
 
         _ => None,
     }
