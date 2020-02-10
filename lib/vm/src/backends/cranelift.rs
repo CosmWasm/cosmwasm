@@ -1,11 +1,6 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 use wasmer_clif_backend::CraneliftCompiler;
-use wasmer_runtime_core::{
-    backend::{Backend, Compiler},
-    compile_with,
-    instance::Instance,
-    module::Module,
-};
+use wasmer_runtime_core::{backend::Compiler, compile_with, instance::Instance, module::Module};
 
 use crate::errors::{CompileErr, Error};
 use snafu::ResultExt;
@@ -20,8 +15,8 @@ pub fn compiler() -> Box<dyn Compiler> {
     Box::new(CraneliftCompiler::new())
 }
 
-pub fn backend() -> Backend {
-    Backend::Cranelift
+pub fn backend() -> &'static str {
+    "cranelift"
 }
 
 pub fn set_gas(_instance: &mut Instance, _limit: u64) {}

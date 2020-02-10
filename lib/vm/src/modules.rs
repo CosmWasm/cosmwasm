@@ -9,8 +9,8 @@ use std::{
 };
 
 pub use wasmer_runtime_core::{
-    backend::{Backend, Compiler},
-    cache::{Artifact, Cache, WasmHash},
+    backend::Compiler,
+    cache::{Artifact, WasmHash},
 };
 use wasmer_runtime_core::{cache::Error as CacheError, module::Module};
 
@@ -18,16 +18,11 @@ use crate::backends::{backend, compiler_for_backend};
 
 /// Representation of a directory that contains compiled wasm artifacts.
 ///
-/// The `FileSystemCache` type implements the [`Cache`] trait, which allows it to be used
-/// generically when some sort of cache is required.
-///
-/// [`Cache`]: trait.Cache.html
-///
 /// # Usage:
 ///
 /// ```rust
 /// use cosmwasm_vm::FileSystemCache;
-/// use wasmer_runtime_core::cache::{Cache, Error as CacheError, WasmHash};
+/// use wasmer_runtime_core::cache::{Error as CacheError, WasmHash};
 /// use wasmer_runtime_core::module::Module;
 ///
 /// fn store_module(module: Module) -> Result<Module, CacheError> {
@@ -84,17 +79,15 @@ impl FileSystemCache {
             Ok(Self { path })
         }
     }
-}
 
-impl Cache for FileSystemCache {
-    type LoadError = CacheError;
-    type StoreError = CacheError;
+    //    type LoadError = CacheError;
+    //    type StoreError = CacheError;
 
-    fn load(&self, key: WasmHash) -> Result<Module, CacheError> {
+    pub fn load(&self, key: WasmHash) -> Result<Module, CacheError> {
         self.load_with_backend(key, backend())
     }
 
-    fn load_with_backend(&self, key: WasmHash, backend: Backend) -> Result<Module, CacheError> {
+    pub fn load_with_backend(&self, key: WasmHash, backend: &str) -> Result<Module, CacheError> {
         let filename = key.encode();
         let mut new_path_buf = self.path.clone();
         new_path_buf.push(backend.to_string());
@@ -107,13 +100,13 @@ impl Cache for FileSystemCache {
             wasmer_runtime_core::load_cache_with(
                 serialized_cache,
                 compiler_for_backend(backend)
-                    .ok_or_else(|| CacheError::UnsupportedBackend(backend))?
+                    .ok_or_else(|| CacheError::UnsupportedBackend(backend.to_string()))?
                     .as_ref(),
             )
         }
     }
 
-    fn store(&mut self, key: WasmHash, module: Module) -> Result<(), CacheError> {
+    pub fn store(&mut self, key: WasmHash, module: Module) -> Result<(), CacheError> {
         let filename = key.encode();
         let backend_str = module.info().backend.to_string();
         let mut new_path_buf = self.path.clone();

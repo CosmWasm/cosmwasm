@@ -1,7 +1,7 @@
 #![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
 use wasmer_middleware_common::metering;
 use wasmer_runtime_core::{
-    backend::{Backend, Compiler},
+    backend::Compiler,
     codegen::{MiddlewareChain, StreamingCompiler},
     compile_with,
     instance::Instance,
@@ -29,8 +29,8 @@ pub fn compiler() -> Box<dyn Compiler> {
     Box::new(c)
 }
 
-pub fn backend() -> Backend {
-    Backend::Singlepass
+pub fn backend() -> &'static str {
+    "singlepass"
 }
 
 pub fn set_gas(instance: &mut Instance, limit: u64) {
