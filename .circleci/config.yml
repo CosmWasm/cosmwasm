@@ -111,10 +111,9 @@ jobs:
       - run:
           name: Install nodejs and yarn
           command: |
-            curl -sL https://deb.nodesource.com/setup_12.x | bash -
             curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
             echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
-            apt update && apt install -y nodejs yarn
+            apt update && apt install -y yarn
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; echo "node $(node --version)"; echo "yarn $(yarn --version)"
