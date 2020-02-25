@@ -2,29 +2,29 @@ use snafu::ResultExt;
 
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Storage};
-use cosmwasm::types::{ContractResult, Params, QueryResult};
+use cosmwasm::types::{ContractResult, Env, QueryResult};
 
 use crate::errors::{Error, ParseErr, RuntimeErr, SerializeErr};
 use crate::instance::{Func, Instance};
 
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
-    params: &Params,
+    env: &Env,
     msg: &[u8],
 ) -> Result<ContractResult, Error> {
-    let params = to_vec(params).context(SerializeErr {})?;
-    let data = call_init_raw(instance, &params, msg)?;
+    let env = to_vec(env).context(SerializeErr {})?;
+    let data = call_init_raw(instance, &env, msg)?;
     let res: ContractResult = from_slice(&data).context(ParseErr {})?;
     Ok(res)
 }
 
 pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
-    params: &Params,
+    env: &Env,
     msg: &[u8],
 ) -> Result<ContractResult, Error> {
-    let params = to_vec(params).context(SerializeErr {})?;
-    let data = call_handle_raw(instance, &params, msg)?;
+    let env = to_vec(env).context(SerializeErr {})?;
+    let data = call_handle_raw(instance, &env, msg)?;
     let res: ContractResult = from_slice(&data).context(ParseErr {})?;
     Ok(res)
 }
@@ -54,27 +54,27 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
 
 pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
-    params: &[u8],
+    env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    call_raw(instance, "init", params, msg)
+    call_raw(instance, "init", env, msg)
 }
 
 pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
-    params: &[u8],
+    env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    call_raw(instance, "handle", params, msg)
+    call_raw(instance, "handle", env, msg)
 }
 
 fn call_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     name: &str,
-    params: &[u8],
+    env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    let param_offset = instance.allocate(params)?;
+    let param_offset = instance.allocate(env)?;
     let msg_offset = instance.allocate(msg)?;
 
     let func: Func<(u32, u32), u32> = instance.func(name)?;
