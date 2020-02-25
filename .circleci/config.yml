@@ -13,7 +13,7 @@ workflows:
 jobs:
   base:
     docker:
-      - image: rust:1.39
+      - image: rust:1.40
     steps:
       - checkout
       - run:
@@ -71,7 +71,7 @@ jobs:
 
   cranelift_vm:
     docker:
-      - image: rust:1.39
+      - image: rust:1.40
     steps:
       - checkout
       - run:
@@ -142,7 +142,7 @@ jobs:
 
   fmt:
     docker:
-      - image: rust:1.39
+      - image: rust:1.40
     steps:
       - checkout
       - run:
@@ -179,7 +179,7 @@ jobs:
 
   clippy:
     docker:
-      - image: rust:1.39
+      - image: rust:1.40
     steps:
       - checkout
       - run:
