@@ -1,2 +1,2 @@
 export * from "./cosmwasm";
-export { Extern, makeExtern } from "./extern";
+export { Extern, makeExtern, Storage } from "./extern";

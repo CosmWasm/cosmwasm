@@ -2,8 +2,18 @@ import { toUtf8 } from "../cosmwasm-encoding";
 import { allocate, deallocate, keepOwnership, readRegion } from "./cosmwasm";
 import * as env from "./env";
 
+export class Storage {
+  constructor(
+    public readonly read: (key: Uint8Array) => Uint8Array,
+    public readonly write: (key: Uint8Array, value: Uint8Array) => void,
+  ) {}
+}
+
 export class Extern {
-  constructor(public readonly canonicalize: (humanAddress: string) => Uint8Array) {}
+  constructor(
+    public readonly canonicalize: (humanAddress: string) => Uint8Array,
+    public readonly storage: Storage,
+  ) {}
 }
 
 export function canonicalizeImpl(human: string): Uint8Array {
@@ -21,5 +31,21 @@ export function canonicalizeImpl(human: string): Uint8Array {
 }
 
 export function makeExtern(): Extern {
-  return new Extern(canonicalizeImpl);
+  const storage = new Storage(
+    (key: Uint8Array): Uint8Array => {
+      const keyPtr = keepOwnership(key);
+      const resultPtr = allocate(2048);
+      const readResult = env.read_db(keyPtr, resultPtr);
+      if (readResult < 0) throw new Error("Error reading from database");
+      const result = readRegion(resultPtr);
+      return result.slice(0, readResult);
+    },
+    (key: Uint8Array, value: Uint8Array): void => {
+      const keyPtr = keepOwnership(key);
+      const valuePtr = keepOwnership(value);
+      const writeResult = env.write_db(keyPtr, valuePtr);
+      if (writeResult < 0) throw new Error("Error writing to database");
+    },
+  );
+  return new Extern(canonicalizeImpl, storage);
 }
