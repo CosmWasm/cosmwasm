@@ -186,6 +186,14 @@ pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
     }]
 }
 
+// log is shorthand to produce log messages
+pub fn log(key: &str, value: &str) -> LogAttribute {
+    LogAttribute {
+        key: key.to_string(),
+        value: value.to_string(),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

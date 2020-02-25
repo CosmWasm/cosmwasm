@@ -5,7 +5,7 @@ use snafu::{OptionExt, ResultExt};
 use cosmwasm::errors::{unauthorized, NotFound, ParseErr, Result, SerializeErr};
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{CanonicalAddr, CosmosMsg, Env, HumanAddr, Response};
+use cosmwasm::types::{log, CanonicalAddr, CosmosMsg, Env, HumanAddr, Response};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -86,7 +86,10 @@ fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<R
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&env.contract.address)?;
         let res = Response {
-            log: Some(format!("released funds to {}", to_addr)),
+            log: Some(vec![
+                log("action", "release"),
+                log("destination", to_addr.as_str()),
+            ]),
             messages: vec![CosmosMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
@@ -272,8 +275,11 @@ mod tests {
             }
         );
         assert_eq!(
-            Some("released funds to benefits".to_string()),
-            handle_res.log
+            handle_res.log,
+            Some(vec![
+                log("action", "release"),
+                log("destination", "benefits"),
+            ]),
         );
     }
 

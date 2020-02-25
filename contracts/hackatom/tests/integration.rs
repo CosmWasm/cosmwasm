@@ -3,7 +3,7 @@ use std::str::from_utf8;
 use cosmwasm::mock::mock_env;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
-use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
+use cosmwasm::types::{coin, log, CosmosMsg, HumanAddr, QueryResult};
 
 use cosmwasm_vm::call_handle;
 use cosmwasm_vm::testing::{
@@ -143,8 +143,11 @@ fn proper_handle() {
         }
     );
     assert_eq!(
-        Some("released funds to benefits".to_string()),
-        handle_res.log
+        handle_res.log,
+        Some(vec![
+            log("action", "release"),
+            log("destination", "benefits"),
+        ]),
     );
 }
 
