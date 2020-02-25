@@ -5,6 +5,9 @@
 
 export declare function log(messagePtr: usize): void;
 
+export declare function read_db(keyPtr: usize, resultPtr: usize): i32;
+export declare function write_db(keyPtr: usize, valuePtr: usize): i32;
+
 /**
  * Canonicalizes an human readable address
  *
