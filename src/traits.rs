@@ -31,7 +31,7 @@ pub trait Storage: ReadonlyStorage {
 //
 // We should consider if there is a way for modules to opt-in to only a subset of these
 // Api for backwards compatibility in systems that don't have them all.
-pub trait Api: Copy + Clone {
+pub trait Api: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
 }
