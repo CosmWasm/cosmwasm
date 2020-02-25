@@ -161,10 +161,10 @@ argparse@^1.0.7:
   dependencies:
     sprintf-js "~1.0.2"
 
-assemblyscript-json@^0.2.0:
-  version "0.2.0"
-  resolved "https://registry.yarnpkg.com/assemblyscript-json/-/assemblyscript-json-0.2.0.tgz#e308c469547d26c7e9a7ef670a83b67061c7401c"
-  integrity sha512-feJLBrec5O600QytfpkFb9oUYc+rANwtEUuSfIxVmjGcup4uR42maQTWOuIv8w/YOsHDMYHTXCwPQsuCynrwKA==
+assemblyscript-json@^0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/assemblyscript-json/-/assemblyscript-json-0.3.0.tgz#f44e4001ecf8db5816bf74d2ef34868ec80e2867"
+  integrity sha512-CW05xrcMQ2mQUXj84Nq8KESyMHn5x+Z4NUwRQveUhWpWwPu7zp8oLNMLb5lKJ8CgRXmE8lxYSfe3/867sN+qRA==
 
 assemblyscript@^0.9.2:
   version "0.9.2"

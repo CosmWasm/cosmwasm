@@ -141,6 +141,5 @@ export function wrapOk(data: Uint8Array): Uint8Array {
   encoder.pushObject(null);
   encoder.setString("ok", Base64.encode(data));
   encoder.popObject();
-  const json = encoder.toString();
-  return Encoding.toUtf8(json);
+  return encoder.serialize();
 }
