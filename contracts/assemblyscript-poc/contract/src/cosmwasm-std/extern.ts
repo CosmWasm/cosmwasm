@@ -3,11 +3,10 @@ import { allocate, deallocate, keepOwnership, readRegion } from "./cosmwasm";
 import * as env from "./env";
 
 export class Extern {
-  // eslint-disable-next-line no-shadow
   constructor(public readonly canonicalize: (humanAddress: string) => Uint8Array) {}
 }
 
-export function canonicalize(human: string): Uint8Array {
+export function canonicalizeImpl(human: string): Uint8Array {
   const humanEncoded = toUtf8(human);
   const resultPtr = allocate(50);
   const returnCode = env.canonicalize_address(keepOwnership(humanEncoded), resultPtr);
@@ -19,4 +18,8 @@ export function canonicalize(human: string): Uint8Array {
   const canonical = readRegion(resultPtr);
   deallocate(resultPtr);
   return canonical;
+}
+
+export function makeExtern(): Extern {
+  return new Extern(canonicalizeImpl);
 }

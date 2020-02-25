@@ -1,2 +1,2 @@
 export * from "./cosmwasm";
-export { Extern, canonicalize } from "./extern";
+export { Extern, makeExtern } from "./extern";

@@ -2,11 +2,11 @@
 
 import * as contract from "./contract";
 import { fromUtf8, toUtf8 } from "./cosmwasm-encoding";
-import { canonicalize, Extern, log, releaseOwnership, takeOwnership, wrapOk } from "./cosmwasm-std";
+import { log, makeExtern, releaseOwnership, takeOwnership, wrapOk } from "./cosmwasm-std";
 
 export { allocate, deallocate } from "./cosmwasm-std";
 
-const extern = new Extern(canonicalize);
+const extern = makeExtern();
 
 export function init(_paramsPtr: usize, _messagePtr: usize): usize {
   throw new Error("Not implemented");
