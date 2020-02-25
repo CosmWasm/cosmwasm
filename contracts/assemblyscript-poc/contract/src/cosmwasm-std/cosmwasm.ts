@@ -13,11 +13,6 @@ export class Region {
   len: u32;
 }
 
-export class Extern {
-  // eslint-disable-next-line no-shadow
-  constructor(public readonly canonicalize: (humanAddress: string) => Uint8Array) {}
-}
-
 /**
  * Reserves the given number of bytes in wasm memory. Creates a Region and returns a pointer
  * to that Region.
@@ -106,20 +101,6 @@ export function takeOwnership(regionPtr: usize): Uint8Array {
 export function log(text: string): void {
   const data = toUtf8(text);
   env.log(keepOwnership(data));
-}
-
-export function canonicalize(human: string): Uint8Array {
-  const humanEncoded = toUtf8(human);
-  const resultPtr = allocate(50);
-  const returnCode = env.canonicalize_address(keepOwnership(humanEncoded), resultPtr);
-  if (returnCode < 0) {
-    throw new Error(
-      "Call to env.canonicalize_address failed with return code " + returnCode.toString(),
-    );
-  }
-  const canonical = readRegion(resultPtr);
-  deallocate(resultPtr);
-  return canonical;
 }
 
 export function logAndCrash(
