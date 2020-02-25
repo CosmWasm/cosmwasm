@@ -15,7 +15,5 @@ pub use crate::cache::CosmCache;
 pub use crate::calls::{
     call_handle, call_handle_raw, call_init, call_init_raw, call_query, call_query_raw,
 };
-pub use crate::compatability::check_api_compatibility;
 pub use crate::instance::Instance;
-pub use crate::memory::read_memory;
 pub use crate::modules::FileSystemCache;

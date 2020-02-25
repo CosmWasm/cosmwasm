@@ -1,12 +1,14 @@
 use std::str::from_utf8;
 
-use cosmwasm::mock::mock_params;
+use cosmwasm::mock::mock_env;
 use cosmwasm::serde::{from_slice, to_vec};
 use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, CosmosMsg, HumanAddr, QueryResult};
 
 use cosmwasm_vm::call_handle;
-use cosmwasm_vm::testing::{handle, init, mock_instance, query};
+use cosmwasm_vm::testing::{
+    handle, init, mock_instance, mock_instance_with_gas_limit, query, test_io,
+};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
 
@@ -52,8 +54,8 @@ fn proper_initialization() {
         verifier,
         beneficiary,
     };
-    let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
-    let res = init(&mut deps, params, msg).unwrap();
+    let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
+    let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's check the state
@@ -75,13 +77,13 @@ fn init_and_query() {
         verifier: verifier.clone(),
         beneficiary,
     };
-    let params = mock_params(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-    let res = init(&mut deps, params, msg).unwrap();
+    let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
+    let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
     let qres = query(&mut deps, QueryMsg::Verifier {}).unwrap();
-    let returned = from_utf8(&qres).unwrap();
+    let returned = from_utf8(qres.as_slice()).unwrap();
     assert_eq!(verifier.as_str(), returned);
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
@@ -95,9 +97,9 @@ fn init_and_query() {
 #[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM);
-    let params = mock_params(&deps.api, "creator", &coin("1000", "earth"), &[]);
+    let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res = init(&mut deps, params, HandleMsg::Release {});
+    let res = init(&mut deps, env, HandleMsg::Release {});
     assert_eq!(true, res.is_err());
 }
 
@@ -113,23 +115,23 @@ fn proper_handle() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_params = mock_params(
+    let init_env = mock_env(
         &deps.api,
         "creator",
         &coin("1000", "earth"),
         &coin("1000", "earth"),
     );
-    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary can release it
-    let handle_params = mock_params(
+    let handle_env = mock_env(
         &deps.api,
         verifier.as_str(),
         &coin("15", "earth"),
         &coin("1015", "earth"),
     );
-    let handle_res = handle(&mut deps, handle_params, HandleMsg::Release {}).unwrap();
+    let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
     assert_eq!(1, handle_res.messages.len());
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
@@ -159,18 +161,18 @@ fn failed_handle() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_params = mock_params(
+    let init_env = mock_env(
         &deps.api,
         creator.as_str(),
         &coin("1000", "earth"),
         &coin("1000", "earth"),
     );
-    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary can release it
-    let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-    let handle_res = handle(&mut deps, handle_params, HandleMsg::Release {});
+    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+    let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
     assert!(handle_res.is_err());
 
     // state should not change
@@ -190,9 +192,8 @@ fn failed_handle() {
 
 #[test]
 fn handle_panic_and_loops() {
-    let mut deps = mock_instance(WASM);
     // Gas must be set so we die early on infinite loop
-    deps.set_gas(1_000_000);
+    let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000);
 
     // initialize the store
     let verifier = HumanAddr(String::from("verifies"));
@@ -203,22 +204,22 @@ fn handle_panic_and_loops() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_params = mock_params(
+    let init_env = mock_env(
         &deps.api,
         creator.as_str(),
         &coin("1000", "earth"),
         &coin("1000", "earth"),
     );
-    let init_res = init(&mut deps, init_params, init_msg).unwrap();
+    let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // TRY PANIC
-    let handle_params = mock_params(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
     // panic inside contract should not panic out here
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let handle_res = call_handle(
         &mut deps,
-        &handle_params,
+        &handle_env,
         &to_vec(&HandleMsg::Panic {}).unwrap(),
     );
     assert!(handle_res.is_err());
@@ -227,9 +228,15 @@ fn handle_panic_and_loops() {
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let handle_res = call_handle(
         &mut deps,
-        &handle_params,
+        &handle_env,
         &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
     );
     assert!(handle_res.is_err());
     assert_eq!(deps.get_gas(), 0);
+}
+
+#[test]
+fn passes_io_tests() {
+    let mut deps = mock_instance(WASM);
+    test_io(&mut deps);
 }

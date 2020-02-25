@@ -3,6 +3,12 @@ use snafu::Snafu;
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
 pub enum Error {
+    #[snafu(display("Invalid Base64 string: {}", source))]
+    Base64Err {
+        source: base64::DecodeError,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Contract error: {}", msg))]
     ContractErr {
         msg: &'static str,
@@ -112,7 +118,7 @@ mod test {
                 assert_eq!(msg, "not implemented");
             }
             Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("invalid must return error"),
+            Ok(_) => panic!("contract_err must return error"),
         }
     }
 
@@ -126,7 +132,7 @@ mod test {
                 assert_eq!(msg, String::from("7 is too low"));
             }
             Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("invalid must return error"),
+            Ok(_) => panic!("dyn_contract_err must return error"),
         }
     }
 }

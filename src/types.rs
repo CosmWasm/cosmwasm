@@ -3,11 +3,13 @@ use std::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::encoding::Binary;
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct HumanAddr(pub String);
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct CanonicalAddr(pub Vec<u8>);
+pub struct CanonicalAddr(pub Binary);
 
 impl HumanAddr {
     pub fn as_str(&self) -> &str {
@@ -40,8 +42,8 @@ impl From<&HumanAddr> for HumanAddr {
 }
 
 impl CanonicalAddr {
-    pub fn as_bytes(&self) -> &[u8] {
-        &self.0
+    pub fn as_slice(&self) -> &[u8] {
+        &self.0.as_slice()
     }
     pub fn len(&self) -> usize {
         self.0.len()
@@ -51,18 +53,14 @@ impl CanonicalAddr {
     }
 }
 
-// upper-case hex
 impl fmt::Display for CanonicalAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for byte in &self.0 {
-            write!(f, "{:X} ", byte)?;
-        }
-        Ok(())
+        self.0.fmt(f)
     }
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Params {
+pub struct Env {
     pub block: BlockInfo,
     pub message: MessageInfo,
     pub contract: ContractInfo,
@@ -109,12 +107,12 @@ pub enum CosmosMsg {
     // msg is the json-encoded HandleMsg struct
     Contract {
         contract_addr: HumanAddr,
-        msg: String,
+        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
         send: Option<Vec<Coin>>,
     },
     // this should never be created here, just passed in from the user and later dispatched
     Opaque {
-        data: String,
+        data: Binary,
     },
 }
 
@@ -146,26 +144,20 @@ impl ContractResult {
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
-    pub log: Option<String>,
-    pub data: Option<String>,
-}
-
-// RawQuery is a default query that can easily be supported by all contracts
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct RawQuery {
-    pub key: String,
+    pub log: Option<String>,  // abci defines this as string
+    pub data: Option<Binary>, // abci defines this as bytes
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum QueryResult {
-    Ok(Vec<u8>),
+    Ok(Binary),
     Err(String),
 }
 
 impl QueryResult {
     // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> Vec<u8> {
+    pub fn unwrap(self) -> Binary {
         match self {
             QueryResult::Err(msg) => panic!("Unexpected error: {}", msg),
             QueryResult::Ok(res) => res,

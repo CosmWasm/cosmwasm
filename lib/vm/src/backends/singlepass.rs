@@ -44,6 +44,7 @@ pub fn set_gas(instance: &mut Instance, limit: u64) {
 
 pub fn get_gas(instance: &Instance) -> u64 {
     let used = metering::get_points_used(instance);
+    // when running out of gas, get_points_used can exceed GAS_LIMIT
     if used > GAS_LIMIT {
         0
     } else {

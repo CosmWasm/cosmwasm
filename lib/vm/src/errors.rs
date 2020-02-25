@@ -55,9 +55,16 @@ pub enum Error {
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Region too small. Got {}, required {}", size, required))]
+    RegionTooSmallErr {
+        size: usize,
+        required: usize,
+        #[cfg(feature = "backtraces")]
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
-        msg: &'static str,
+        msg: String,
         #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
