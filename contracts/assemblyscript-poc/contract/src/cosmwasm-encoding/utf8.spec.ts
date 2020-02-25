@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/triple-slash-reference */
 
-/// <reference path="../node_modules/@as-pect/assembly/types/as-pect.d.ts" />
+/// <reference path="../../node_modules/@as-pect/assembly/types/as-pect.d.ts" />
 
-import { Encoding } from "./utils";
+import { fromUtf8, toUtf8 } from "./utf8";
 
-describe("Encoding", () => {
+describe("utf8", () => {
   describe("toUtf8", () => {
     it("works for empty input", () => {
-      expect(Encoding.toUtf8("")).toStrictEqual(new Uint8Array(0));
+      expect(toUtf8("")).toStrictEqual(new Uint8Array(0));
     });
 
     it("works for simmple examples", () => {
@@ -16,7 +16,7 @@ describe("Encoding", () => {
         expected[0] = 0x61;
         expected[1] = 0x62;
         expected[2] = 0x63;
-        expect(Encoding.toUtf8("abc")).toStrictEqual(expected);
+        expect(toUtf8("abc")).toStrictEqual(expected);
       }
       {
         const expected = new Uint8Array(12);
@@ -33,14 +33,14 @@ describe("Encoding", () => {
         expected[i++] = 0x2a;
         expected[i++] = 0x2f;
         expected[i++] = 0x5c;
-        expect(Encoding.toUtf8(" ?=-n|~+-*/\\")).toStrictEqual(expected);
+        expect(toUtf8(" ?=-n|~+-*/\\")).toStrictEqual(expected);
       }
     });
   });
 
   describe("fromUtf8", () => {
     it("works for empty input", () => {
-      expect(Encoding.fromUtf8(new Uint8Array(0))).toStrictEqual("");
+      expect(fromUtf8(new Uint8Array(0))).toStrictEqual("");
     });
 
     it("works for simmple examples", () => {
@@ -49,7 +49,7 @@ describe("Encoding", () => {
         encoded[0] = 0x61;
         encoded[1] = 0x62;
         encoded[2] = 0x63;
-        expect(Encoding.fromUtf8(encoded)).toStrictEqual("abc");
+        expect(fromUtf8(encoded)).toStrictEqual("abc");
       }
       {
         const encoded = new Uint8Array(12);
@@ -66,7 +66,7 @@ describe("Encoding", () => {
         encoded[i++] = 0x2a;
         encoded[i++] = 0x2f;
         encoded[i++] = 0x5c;
-        expect(Encoding.fromUtf8(encoded)).toStrictEqual(" ?=-n|~+-*/\\");
+        expect(fromUtf8(encoded)).toStrictEqual(" ?=-n|~+-*/\\");
       }
     });
   });

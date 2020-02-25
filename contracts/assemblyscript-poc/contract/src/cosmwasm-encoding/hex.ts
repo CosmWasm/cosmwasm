@@ -1,4 +1,4 @@
-import { Encoding } from "../utils";
+import { fromUtf8 } from "./utf8";
 
 function charToNumicValue(char: i32): u8 {
   // 0-9
@@ -21,7 +21,7 @@ export class Hex {
       out[i * 2 + 0] = leftFourBits < 10 ? leftFourBits + 48 : leftFourBits - 10 + 97;
       out[i * 2 + 1] = rightFourBits < 10 ? rightFourBits + 48 : rightFourBits - 10 + 97;
     }
-    return Encoding.fromUtf8(out);
+    return fromUtf8(out);
   }
 
   public static decode(hex: string): Uint8Array {

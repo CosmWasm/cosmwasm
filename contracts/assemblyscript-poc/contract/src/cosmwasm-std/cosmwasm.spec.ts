@@ -1,4 +1,4 @@
-import { Encoding } from "../utils";
+import { fromUtf8 } from "../cosmwasm-encoding";
 import { allocate, deallocate, readRegion, Region, wrapOk } from "./cosmwasm";
 
 describe("cosmwasm", () => {
@@ -61,7 +61,7 @@ describe("cosmwasm", () => {
       data[1] = 0x62;
       data[2] = 0x63;
       const wrapped = wrapOk(data);
-      expect(Encoding.fromUtf8(wrapped)).toStrictEqual('{"ok":"YWJj"}');
+      expect(fromUtf8(wrapped)).toStrictEqual('{"ok":"YWJj"}');
     });
   });
 });

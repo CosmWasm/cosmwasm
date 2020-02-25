@@ -1,8 +1,8 @@
 // The entry file of your WebAssembly module.
 
 import * as contract from "./contract";
+import { fromUtf8, toUtf8 } from "./cosmwasm-encoding";
 import { canonicalize, Extern, log, releaseOwnership, takeOwnership, wrapOk } from "./cosmwasm-std";
-import { Encoding } from "./utils";
 
 export { allocate, deallocate } from "./cosmwasm-std";
 
@@ -18,8 +18,8 @@ export function handle(_paramsPtr: usize, _messagePtr: usize): usize {
 
 export function query(messagePtr: usize): usize {
   const msgJson = takeOwnership(messagePtr);
-  log("JSON query request: " + Encoding.fromUtf8(msgJson));
-  const resultBinary = Encoding.toUtf8(contract.query(extern, msgJson));
+  log("JSON query request: " + fromUtf8(msgJson));
+  const resultBinary = toUtf8(contract.query(extern, msgJson));
   const out = wrapOk(resultBinary);
   return releaseOwnership(out);
 }

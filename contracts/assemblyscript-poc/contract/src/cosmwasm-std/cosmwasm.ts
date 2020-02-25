@@ -1,7 +1,6 @@
 import { JSONEncoder } from "assemblyscript-json";
 
-import { Base64 } from "../encoding/base64";
-import { Encoding, getDataPtr } from "../utils";
+import { Base64, toUtf8 } from "../cosmwasm-encoding";
 import * as env from "./env";
 
 /**
@@ -58,6 +57,10 @@ export function readRegion(regionPtr: usize): Uint8Array {
   return Uint8Array.wrap(data, 0, region.len);
 }
 
+function getDataPtr(arr: Uint8Array): usize {
+  return changetype<usize>(arr.buffer) + arr.byteOffset;
+}
+
 /**
  * Releases ownership of the data without destroying it.
  */
@@ -101,12 +104,12 @@ export function takeOwnership(regionPtr: usize): Uint8Array {
 }
 
 export function log(text: string): void {
-  const data = Encoding.toUtf8(text);
+  const data = toUtf8(text);
   env.log(keepOwnership(data));
 }
 
 export function canonicalize(human: string): Uint8Array {
-  const humanEncoded = Encoding.toUtf8(human);
+  const humanEncoded = toUtf8(human);
   const resultPtr = allocate(50);
   const returnCode = env.canonicalize_address(keepOwnership(humanEncoded), resultPtr);
   if (returnCode < 0) {

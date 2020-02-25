@@ -1,4 +1,3 @@
-import { Encoding } from "../utils";
 import {
   isJsonArray,
   isJsonBoolean,
@@ -15,6 +14,7 @@ import {
   JsonValue,
   parse,
 } from "./json";
+import { toUtf8 } from "./utf8";
 
 describe("json", () => {
   describe("JsonString", () => {
@@ -216,45 +216,45 @@ describe("json", () => {
 
   describe("parse", () => {
     it("works for strings", () => {
-      const result = parse(Encoding.toUtf8('"foobar"'));
+      const result = parse(toUtf8('"foobar"'));
       expect(isJsonString(result)).toStrictEqual(true);
       expect((result as JsonString).toString()).toStrictEqual("foobar");
     });
 
     it("works for number", () => {
-      const result = parse(Encoding.toUtf8("123"));
+      const result = parse(toUtf8("123"));
       expect(isJsonNumber(result)).toStrictEqual(true);
       expect((result as JsonNumber).toI64()).toStrictEqual(123);
     });
 
     it("works for true/false", () => {
       {
-        const result = parse(Encoding.toUtf8("true"));
+        const result = parse(toUtf8("true"));
         expect(isJsonBoolean(result)).toStrictEqual(true);
         expect((result as JsonBoolean).toBool()).toStrictEqual(true);
       }
       {
-        const result = parse(Encoding.toUtf8("false"));
+        const result = parse(toUtf8("false"));
         expect(isJsonBoolean(result)).toStrictEqual(true);
         expect((result as JsonBoolean).toBool()).toStrictEqual(false);
       }
     });
 
     it("works for null", () => {
-      const result = parse(Encoding.toUtf8("null"));
+      const result = parse(toUtf8("null"));
       expect(isJsonNull(result)).toStrictEqual(true);
     });
 
     // Arrays
 
     it("works for empty array", () => {
-      const result = parse(Encoding.toUtf8("[]"));
+      const result = parse(toUtf8("[]"));
       expect(isJsonArray(result)).toStrictEqual(true);
       expect((result as JsonArray).length).toStrictEqual(0);
     });
 
     it("works for array of numbers", () => {
-      const result = parse(Encoding.toUtf8("[1, 2, 3]"));
+      const result = parse(toUtf8("[1, 2, 3]"));
       expect(isJsonArray(result)).toStrictEqual(true);
       expect((result as JsonArray).length).toStrictEqual(3);
       expect(((result as JsonArray).get(0) as JsonNumber).toI64()).toStrictEqual(1);
@@ -263,7 +263,7 @@ describe("json", () => {
     });
 
     it("works for array of strings", () => {
-      const result = parse(Encoding.toUtf8('["a", "2", ""]'));
+      const result = parse(toUtf8('["a", "2", ""]'));
       expect(isJsonArray(result)).toStrictEqual(true);
       expect((result as JsonArray).length).toStrictEqual(3);
       expect(((result as JsonArray).get(0) as JsonString).toString()).toStrictEqual("a");
@@ -272,7 +272,7 @@ describe("json", () => {
     });
 
     it("works for array of arrays", () => {
-      const result = parse(Encoding.toUtf8("[[], [1], [2, 3]]"));
+      const result = parse(toUtf8("[[], [1], [2, 3]]"));
       expect(isJsonArray(result)).toStrictEqual(true);
       expect((result as JsonArray).length).toStrictEqual(3);
       const inner0 = (result as JsonArray).get(0) as JsonArray;
@@ -289,20 +289,20 @@ describe("json", () => {
     // Objects
 
     it("works for empty object", () => {
-      const result = parse(Encoding.toUtf8("{}"));
+      const result = parse(toUtf8("{}"));
       expect(isJsonObject(result)).toStrictEqual(true);
       expect((result as JsonObject).size).toStrictEqual(0);
     });
 
     it("works for object with one field", () => {
-      const result = parse(Encoding.toUtf8('{"foo": true}'));
+      const result = parse(toUtf8('{"foo": true}'));
       expect(isJsonObject(result)).toStrictEqual(true);
       expect((result as JsonObject).size).toStrictEqual(1);
       expect((result as JsonObject).get("foo")).toStrictEqual(new JsonBoolean(true));
     });
 
     it("works for object with two fields", () => {
-      const result = parse(Encoding.toUtf8('{"foo": true, "bar": false}'));
+      const result = parse(toUtf8('{"foo": true, "bar": false}'));
       expect(isJsonObject(result)).toStrictEqual(true);
       expect((result as JsonObject).size).toStrictEqual(2);
       expect((result as JsonObject).get("foo")).toStrictEqual(new JsonBoolean(true));
@@ -310,7 +310,7 @@ describe("json", () => {
     });
 
     it("works for object with nested fields", () => {
-      const result = parse(Encoding.toUtf8('{"foo": {"bar": 42}}'));
+      const result = parse(toUtf8('{"foo": {"bar": 42}}'));
       expect(isJsonObject(result)).toStrictEqual(true);
       expect((result as JsonObject).size).toStrictEqual(1);
       const foo = (result as JsonObject).get("foo");
@@ -320,7 +320,7 @@ describe("json", () => {
     });
 
     it("has nice API to read known nested field", () => {
-      const parsed = parse(Encoding.toUtf8('{"balance":{"address":"addr4321"}}'));
+      const parsed = parse(toUtf8('{"balance":{"address":"addr4321"}}'));
       const address = parsed
         .asObject()
         .get("balance")

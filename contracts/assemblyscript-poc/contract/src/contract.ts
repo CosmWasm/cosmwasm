@@ -1,9 +1,8 @@
+import { equalUint8Array, parseJson } from "./cosmwasm-encoding";
 import { Extern } from "./cosmwasm-std";
-import { parse } from "./encoding/json";
-import { equalUint8Array } from "./encoding/memory";
 
 export function query(extern: Extern, msgJson: Uint8Array): string {
-  const msg = parse(msgJson).asObject();
+  const msg = parseJson(msgJson).asObject();
   if (msg.has("balance")) {
     const address = extern.canonicalize(
       msg

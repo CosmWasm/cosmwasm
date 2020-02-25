@@ -1,4 +1,4 @@
-import { Encoding } from "../utils";
+import { fromUtf8 } from "./utf8";
 
 const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const equalsChar: u8 = 61; // ASCII value of =
@@ -37,6 +37,6 @@ export class Base64 {
       out[out.length - 1 - i] = equalsChar;
     }
 
-    return Encoding.fromUtf8(out);
+    return fromUtf8(out);
   }
 }
