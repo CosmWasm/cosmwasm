@@ -1,4 +1,4 @@
-import { Extern } from "./cosmwasm";
+import { Extern } from "./cosmwasm-std";
 import { parse } from "./encoding/json";
 import { equalUint8Array } from "./encoding/memory";
 

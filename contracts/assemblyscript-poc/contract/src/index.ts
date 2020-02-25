@@ -1,10 +1,10 @@
 // The entry file of your WebAssembly module.
 
 import * as contract from "./contract";
-import { canonicalize, Extern, log, releaseOwnership, takeOwnership, wrapOk } from "./cosmwasm";
+import { canonicalize, Extern, log, releaseOwnership, takeOwnership, wrapOk } from "./cosmwasm-std";
 import { Encoding } from "./utils";
 
-export { allocate, deallocate } from "./cosmwasm";
+export { allocate, deallocate } from "./cosmwasm-std";
 
 const extern = new Extern(canonicalize);
 

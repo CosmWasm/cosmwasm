@@ -1,5 +1,5 @@
+import { Encoding } from "../utils";
 import { allocate, deallocate, readRegion, Region, wrapOk } from "./cosmwasm";
-import { Encoding } from "./utils";
 
 describe("cosmwasm", () => {
   describe("allocate", () => {

@@ -1,8 +1,8 @@
 import { JSONEncoder } from "assemblyscript-json";
 
-import { Base64 } from "./encoding/base64";
+import { Base64 } from "../encoding/base64";
+import { Encoding, getDataPtr } from "../utils";
 import * as env from "./env";
-import { Encoding, getDataPtr } from "./utils";
 
 /**
  * Refers to some heap allocated data in wasm.
