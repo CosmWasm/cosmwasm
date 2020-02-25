@@ -1,3 +1,6 @@
+import { JSONEncoder } from "assemblyscript-json";
+
+import { Base64 } from "./encoding/base64";
 import * as env from "./env";
 import { Encoding, getDataPtr } from "./utils";
 
@@ -131,4 +134,13 @@ export function logAndCrash(
     ")";
   log(msg);
   unreachable(); // crash hard
+}
+
+export function wrapOk(data: Uint8Array): Uint8Array {
+  const encoder = new JSONEncoder();
+  encoder.pushObject(null);
+  encoder.setString("ok", Base64.encode(data));
+  encoder.popObject();
+  const json = encoder.toString();
+  return Encoding.toUtf8(json);
 }

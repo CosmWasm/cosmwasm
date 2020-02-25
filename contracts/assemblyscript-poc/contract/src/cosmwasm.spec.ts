@@ -1,4 +1,5 @@
-import { allocate, deallocate, readRegion, Region } from "./cosmwasm";
+import { allocate, deallocate, readRegion, Region, wrapOk } from "./cosmwasm";
+import { Encoding } from "./utils";
 
 describe("cosmwasm", () => {
   describe("allocate", () => {
@@ -50,6 +51,17 @@ describe("cosmwasm", () => {
       expect(data[2]).toStrictEqual(0xcc);
 
       deallocate(regionPtr);
+    });
+  });
+
+  describe("wrapOk", () => {
+    it("works", () => {
+      const data = new Uint8Array(3);
+      data[0] = 0x61;
+      data[1] = 0x62;
+      data[2] = 0x63;
+      const wrapped = wrapOk(data);
+      expect(Encoding.fromUtf8(wrapped)).toStrictEqual('{"ok":"YWJj"}');
     });
   });
 });
