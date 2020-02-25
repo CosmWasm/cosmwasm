@@ -1,11 +1,11 @@
-import { canonicalize } from "./cosmwasm";
-import { JsonObject } from "./encoding/json";
+import { Extern } from "./cosmwasm";
+import { parse } from "./encoding/json";
 import { equalUint8Array } from "./encoding/memory";
-import { Encoding } from "./utils";
 
-export function query(msg: JsonObject): Uint8Array {
+export function query(extern: Extern, msgJson: Uint8Array): string {
+  const msg = parse(msgJson).asObject();
   if (msg.has("balance")) {
-    const address = canonicalize(
+    const address = extern.canonicalize(
       msg
         .get("balance")
         .asObject()
@@ -16,10 +16,10 @@ export function query(msg: JsonObject): Uint8Array {
 
     let balance: string;
 
-    if (equalUint8Array(address, canonicalize("addr4321"))) balance = "22";
+    if (equalUint8Array(address, extern.canonicalize("addr4321"))) balance = "22";
     else balance = "0";
 
-    return Encoding.toUtf8('{"balance":"' + balance + '"}');
+    return '{"balance":"' + balance + '"}';
   } else {
     throw new Error("Unsupported query method");
   }

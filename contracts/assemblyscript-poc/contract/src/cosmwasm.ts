@@ -14,6 +14,11 @@ export class Region {
   len: u32;
 }
 
+export class Extern {
+  // eslint-disable-next-line no-shadow
+  constructor(public readonly canonicalize: (humanAddress: string) => Uint8Array) {}
+}
+
 /**
  * Reserves the given number of bytes in wasm memory. Creates a Region and returns a pointer
  * to that Region.
