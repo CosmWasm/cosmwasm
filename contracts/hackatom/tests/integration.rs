@@ -1,14 +1,20 @@
 use std::str::from_utf8;
 
 use cosmwasm::mock::mock_env;
-use cosmwasm::serde::{from_slice, to_vec};
+use cosmwasm::serde::from_slice;
 use cosmwasm::traits::{Api, ReadonlyStorage};
 use cosmwasm::types::{coin, log, CosmosMsg, HumanAddr, QueryResult};
 
+use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
+
+#[cfg(feature = "singlepass")]
+use cosmwasm::serde::to_vec;
+
+#[cfg(feature = "singlepass")]
+use cosmwasm_vm::testing::mock_instance_with_gas_limit;
+
+#[cfg(feature = "singlepass")]
 use cosmwasm_vm::call_handle;
-use cosmwasm_vm::testing::{
-    handle, init, mock_instance, mock_instance_with_gas_limit, query, test_io,
-};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
 
@@ -191,6 +197,7 @@ fn failed_handle() {
 }
 
 #[test]
+#[cfg(feature = "singlepass")]
 fn handle_panic_and_loops() {
     // Gas must be set so we die early on infinite loop
     let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000);
