@@ -144,10 +144,7 @@ fn proper_handle() {
     );
     assert_eq!(
         handle_res.log,
-        Some(vec![
-            log("action", "release"),
-            log("destination", "benefits"),
-        ]),
+        vec![log("action", "release"), log("destination", "benefits"),],
     );
 }
 

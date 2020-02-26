@@ -150,8 +150,8 @@ pub struct LogAttribute {
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
-    pub log: Option<Vec<LogAttribute>>, // abci defines this as string
-    pub data: Option<Binary>,           // abci defines this as bytes
+    pub log: Vec<LogAttribute>, // abci defines this as string
+    pub data: Option<Binary>,   // abci defines this as bytes
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -216,10 +216,10 @@ mod test {
                 to_address: HumanAddr("you".to_string()),
                 amount: coin("1015", "earth"),
             }],
-            log: Some(vec![LogAttribute {
+            log: vec![LogAttribute {
                 key: "action".to_string(),
                 value: "release".to_string(),
-            }]),
+            }],
             data: None,
         });
         let bin = to_vec(&send).expect("encode contract result");
