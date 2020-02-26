@@ -8,8 +8,8 @@ glue code needed for typical actions, like fs caching.
 
 ## Setup
 
-There is a demo file in `testdata/contract.wasm` - this is a compiled and
-optimized version of [contracts/hackatom](https://github.com/confio/cosmwasm/tree/master/contracts/hackatom)
+There are demo files in `testdata/contract*.wasm`. Those are compiled and
+optimized versions of [contracts/hackatom](https://github.com/confio/cosmwasm/tree/master/contracts/hackatom)
 run through [cosmwasm-opt](https://github.com/confio/cosmwasm-opt).
 
 To rebuild the test contract, go to the repo root and do
@@ -21,7 +21,3 @@ docker run --rm -v $(pwd):/code \
   confio/cosmwasm-opt:0.6.2 ./contracts/hackatom
 cp contracts/hackatom/contract.wasm lib/vm/testdata/contract_0.7.wasm
 ```
-
-You must temporarily update the `[dev-dependencies]` in [Cargo.toml](../../contracts/hackatom/Cargo.toml)
-to avoid compiling the singlepass backend, which only compiles with Rust nightly.
-Then `cargo update --package cosmwasm-vm` to adapt `Cargo.lock`.
