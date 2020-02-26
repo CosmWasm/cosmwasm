@@ -7,15 +7,6 @@ use cosmwasm::types::{coin, log, CosmosMsg, HumanAddr, QueryResult};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
 
-#[cfg(feature = "singlepass")]
-use cosmwasm::serde::to_vec;
-
-#[cfg(feature = "singlepass")]
-use cosmwasm_vm::testing::mock_instance_with_gas_limit;
-
-#[cfg(feature = "singlepass")]
-use cosmwasm_vm::call_handle;
-
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
 
 /**
@@ -197,53 +188,61 @@ fn failed_handle() {
 }
 
 #[test]
-#[cfg(feature = "singlepass")]
-fn handle_panic_and_loops() {
-    // Gas must be set so we die early on infinite loop
-    let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000);
-
-    // initialize the store
-    let verifier = HumanAddr(String::from("verifies"));
-    let beneficiary = HumanAddr(String::from("benefits"));
-    let creator = HumanAddr(String::from("creator"));
-
-    let init_msg = InitMsg {
-        verifier: verifier.clone(),
-        beneficiary: beneficiary.clone(),
-    };
-    let init_env = mock_env(
-        &deps.api,
-        creator.as_str(),
-        &coin("1000", "earth"),
-        &coin("1000", "earth"),
-    );
-    let init_res = init(&mut deps, init_env, init_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
-
-    // TRY PANIC
-    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-    // panic inside contract should not panic out here
-    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let handle_res = call_handle(
-        &mut deps,
-        &handle_env,
-        &to_vec(&HandleMsg::Panic {}).unwrap(),
-    );
-    assert!(handle_res.is_err());
-
-    // TRY INFINITE LOOP
-    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let handle_res = call_handle(
-        &mut deps,
-        &handle_env,
-        &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
-    );
-    assert!(handle_res.is_err());
-    assert_eq!(deps.get_gas(), 0);
-}
-
-#[test]
 fn passes_io_tests() {
     let mut deps = mock_instance(WASM);
     test_io(&mut deps);
+}
+
+#[cfg(feature = "singlepass")]
+mod singlepass_tests {
+    use super::*;
+
+    use cosmwasm::serde::to_vec;
+    use cosmwasm_vm::call_handle;
+    use cosmwasm_vm::testing::mock_instance_with_gas_limit;
+
+    #[test]
+    fn handle_panic_and_loops() {
+        // Gas must be set so we die early on infinite loop
+        let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000);
+
+        // initialize the store
+        let verifier = HumanAddr(String::from("verifies"));
+        let beneficiary = HumanAddr(String::from("benefits"));
+        let creator = HumanAddr(String::from("creator"));
+
+        let init_msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary: beneficiary.clone(),
+        };
+        let init_env = mock_env(
+            &deps.api,
+            creator.as_str(),
+            &coin("1000", "earth"),
+            &coin("1000", "earth"),
+        );
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        // TRY PANIC
+        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
+        // panic inside contract should not panic out here
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::Panic {}).unwrap(),
+        );
+        assert!(handle_res.is_err());
+
+        // TRY INFINITE LOOP
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
+        );
+        assert!(handle_res.is_err());
+        assert_eq!(deps.get_gas(), 0);
+    }
 }
