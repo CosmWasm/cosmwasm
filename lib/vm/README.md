@@ -8,8 +8,8 @@ glue code needed for typical actions, like fs caching.
 
 ## Setup
 
-There is a demo file in `testdata/contract.wasm` - this is a compiled and
-optimized version of [contracts/hackatom](https://github.com/confio/cosmwasm/tree/master/contracts/hackatom)
+There are demo files in `testdata/contract*.wasm`. Those are compiled and
+optimized versions of [contracts/hackatom](https://github.com/confio/cosmwasm/tree/master/contracts/hackatom)
 run through [cosmwasm-opt](https://github.com/confio/cosmwasm-opt).
 
 To rebuild the test contract, go to the repo root and do
