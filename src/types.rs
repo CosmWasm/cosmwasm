@@ -141,11 +141,17 @@ impl ContractResult {
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+pub struct LogAttribute {
+    pub key: String,
+    pub value: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Response {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
-    pub log: Option<String>,  // abci defines this as string
-    pub data: Option<Binary>, // abci defines this as bytes
+    pub log: Vec<LogAttribute>, // abci defines this as string
+    pub data: Option<Binary>,   // abci defines this as bytes
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -180,6 +186,14 @@ pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
     }]
 }
 
+// log is shorthand to produce log messages
+pub fn log(key: &str, value: &str) -> LogAttribute {
+    LogAttribute {
+        key: key.to_string(),
+        value: value.to_string(),
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -202,7 +216,10 @@ mod test {
                 to_address: HumanAddr("you".to_string()),
                 amount: coin("1015", "earth"),
             }],
-            log: Some("released funds!".to_string()),
+            log: vec![LogAttribute {
+                key: "action".to_string(),
+                value: "release".to_string(),
+            }],
             data: None,
         });
         let bin = to_vec(&send).expect("encode contract result");

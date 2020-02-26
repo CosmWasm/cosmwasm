@@ -22,4 +22,6 @@ docker run --rm -v $(pwd):/code \
 cp contracts/hackatom/contract.wasm lib/vm/testdata/contract_0.7.wasm
 ```
 
-(You must update Cargo.toml to use the commented out lines and cranelift compiler)
+You must temporarily update the `[dev-dependencies]` in [Cargo.toml](../../contracts/hackatom/Cargo.toml)
+to avoid compiling the singlepass backend, which only compiles with Rust nightly.
+Then `cargo update --package cosmwasm-vm` to adapt `Cargo.lock`.
