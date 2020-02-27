@@ -50,7 +50,7 @@
               "$ref": "#/definitions/HumanAddr"
             },
             "msg": {
-              "type": "string"
+              "$ref": "#/definitions/Binary"
             },
             "send": {
               "type": [
@@ -78,7 +78,7 @@
           ],
           "properties": {
             "data": {
-              "type": "string"
+              "$ref": "#/definitions/Binary"
             }
           }
         }
@@ -86,6 +86,14 @@
     }
   ],
   "definitions": {
+    "Binary": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      }
+    },
     "Coin": {
       "type": "object",
       "required": [
