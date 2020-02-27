@@ -1,0 +1,2 @@
+[alias]
+schema = "run --example schema"

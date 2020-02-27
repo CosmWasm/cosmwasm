@@ -26,6 +26,14 @@
     }
   ],
   "definitions": {
+    "Binary": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      }
+    },
     "Coin": {
       "type": "object",
       "required": [
@@ -91,7 +99,7 @@
                   "$ref": "#/definitions/HumanAddr"
                 },
                 "msg": {
-                  "type": "string"
+                  "$ref": "#/definitions/Binary"
                 },
                 "send": {
                   "type": [
@@ -119,7 +127,7 @@
               ],
               "properties": {
                 "data": {
-                  "type": "string"
+                  "$ref": "#/definitions/Binary"
                 }
               }
             }
@@ -130,6 +138,21 @@
     "HumanAddr": {
       "type": "string"
     },
+    "LogAttribute": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "Response": {
       "type": "object",
       "required": [
@@ -139,16 +162,20 @@
       ],
       "properties": {
         "data": {
-          "type": [
-            "string",
-            "null"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            },
+            {
+              "type": "null"
+            }
           ]
         },
         "log": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LogAttribute"
+          }
         },
         "messages": {
           "type": "array",
