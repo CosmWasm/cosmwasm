@@ -6,8 +6,8 @@
 
 - Rename `Slice` to `Region` to simplify differentiation between Wasm memory
   region and serde's `from_slice`
-- Rename `Params` to `Env`, `mock_params` to `mock_env` for clearer naming
-  (this is information on the execution environment)
+- Rename `Params` to `Env`, `mock_params` to `mock_env` for clearer naming (this
+  is information on the execution environment)
 
 **cosmwasm_vm**
 
