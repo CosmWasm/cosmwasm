@@ -23,10 +23,16 @@ static REQUIRED_EXPORTS: &[&str] = &[
     "cosmwasm_api_0_6",
 ];
 
-pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
+/// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
+pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
     let mut reader = std::io::Cursor::new(wasm_code);
     let module = Module::deserialize(&mut reader).unwrap();
-    if let Some(missing) = find_missing_import(&module, SUPPORTED_IMPORTS) {
+    check_api_compatibility(&module)
+}
+
+/// This is called as part of check_wasm
+fn check_api_compatibility(module: &Module) -> Result<()> {
+    if let Some(missing) = find_missing_import(module, SUPPORTED_IMPORTS) {
         return ValidationErr {
             msg: format!(
                 "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
@@ -35,7 +41,7 @@ pub fn check_api_compatibility(wasm_code: &[u8]) -> Result<()> {
         }
         .fail();
     }
-    if let Some(missing) = find_missing_export(&module, REQUIRED_EXPORTS) {
+    if let Some(missing) = find_missing_export(module, REQUIRED_EXPORTS) {
         return ValidationErr {
             msg: format!(
                 "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
@@ -155,14 +161,14 @@ mod test {
     }
 
     #[test]
-    fn test_api_compatibility_imports() {
+    fn test_check_wasm_imports() {
         use crate::errors::Error;
 
         // this is our reference check, must pass
-        check_api_compatibility(CONTRACT_0_7).unwrap();
+        check_wasm(CONTRACT_0_7).unwrap();
 
         // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
-        match check_api_compatibility(CONTRACT_0_6) {
+        match check_wasm(CONTRACT_0_6) {
             Err(Error::ValidationErr { msg }) => {
                 assert!(
                     msg.starts_with("Wasm contract requires unsupported import: \"env.c_read\"")
@@ -174,7 +180,7 @@ mod test {
     }
 
     #[test]
-    fn test_api_compatibility_exports() {
+    fn test_check_wasm_exports() {
         use crate::errors::Error;
         use wabt::wat2wasm;
 
@@ -190,7 +196,7 @@ mod test {
 
         let wasm_missing_exports = wat2wasm(WAT_MISSING_EXPORTS).unwrap();
 
-        match check_api_compatibility(&wasm_missing_exports) {
+        match check_wasm(&wasm_missing_exports) {
             Err(Error::ValidationErr { msg }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have required export: \"query\""));
             }
