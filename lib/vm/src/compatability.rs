@@ -93,6 +93,7 @@ fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<Str
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::errors::Error;
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
@@ -162,8 +163,6 @@ mod test {
 
     #[test]
     fn test_check_wasm_imports() {
-        use crate::errors::Error;
-
         // this is our reference check, must pass
         check_wasm(CONTRACT_0_7).unwrap();
 
@@ -181,7 +180,6 @@ mod test {
 
     #[test]
     fn test_check_wasm_exports() {
-        use crate::errors::Error;
         use wabt::wat2wasm;
 
         // this is invalid, as it doesn't contain all required exports
