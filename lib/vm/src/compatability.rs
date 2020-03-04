@@ -26,7 +26,18 @@ static REQUIRED_EXPORTS: &[&str] = &[
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
     let mut reader = std::io::Cursor::new(wasm_code);
-    let module = Module::deserialize(&mut reader).unwrap();
+    let module = match Module::deserialize(&mut reader) {
+        Ok(deserialized) => deserialized,
+        Err(err) => {
+            return ValidationErr {
+                msg: format!(
+                    "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
+                    err
+                ),
+            }
+            .fail()
+        }
+    };
     check_api_compatibility(&module)
 }
 
@@ -97,6 +108,7 @@ mod test {
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
+    static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     #[test]
     fn test_supported_imports() {
@@ -159,6 +171,17 @@ mod test {
         // missing one from list not okay
         let missing_extra = find_missing_export(&module, &["init", "handle", "extra"]);
         assert_eq!(missing_extra, Some(String::from("extra")));
+    }
+
+    #[test]
+    fn test_check_wasm_corrupted_data() {
+        match check_wasm(CORRUPTED) {
+            Err(Error::ValidationErr { msg }) => {
+                assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("This must not succeeed"),
+        }
     }
 
     #[test]
