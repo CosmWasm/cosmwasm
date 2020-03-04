@@ -11,7 +11,7 @@ use cosmwasm::traits::{Api, Storage};
 use cosmwasm::types::{ContractResult, Env, QueryResult};
 
 use crate::calls::{call_handle, call_init, call_query};
-use crate::compatability::check_api_compatibility;
+use crate::compatability::check_wasm;
 use crate::instance::Instance;
 
 /// Gas limit for testing
@@ -22,7 +22,7 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 }
 
 pub fn mock_instance_with_gas_limit(wasm: &[u8], gas_limit: u64) -> Instance<MockStorage, MockApi> {
-    check_api_compatibility(wasm).unwrap();
+    check_wasm(wasm).unwrap();
     let deps = dependencies(20);
     Instance::from_code(wasm, deps, gas_limit).unwrap()
 }

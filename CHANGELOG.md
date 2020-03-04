@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.7.1 (not yet released)
+
+**cosmwasm_vm**
+
+- Avoid unnecessary panic when checking corrupted wasm file.
+
 ## 0.7.0 (2020-02-26)
 
 **cosmwasm**

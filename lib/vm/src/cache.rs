@@ -8,7 +8,7 @@ use snafu::ResultExt;
 use cosmwasm::traits::{Api, Extern, Storage};
 
 use crate::backends::{backend, compile};
-use crate::compatability::check_api_compatibility;
+use crate::compatability::check_wasm;
 use crate::errors::{Error, IntegrityErr, IoErr};
 use crate::instance::Instance;
 use crate::modules::{FileSystemCache, WasmHash};
@@ -67,7 +67,7 @@ where
     }
 
     pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
-        check_api_compatibility(wasm)?;
+        check_wasm(wasm)?;
         let id = save(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
         let hash = WasmHash::generate(&id);
