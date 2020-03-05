@@ -21,3 +21,20 @@ docker run --rm -v "$(pwd)":/code \
   confio/cosmwasm-opt:0.7.2 ./contracts/hackatom
 cp contracts/hackatom/contract.wasm lib/vm/testdata/contract_0.7.wasm
 ```
+
+## Testing
+
+By default, this repository is built and tested with the singlepass backend. This
+requires running Rust nighty:
+
+```sh
+cd lib/vm
+cargo +nightly test
+```
+
+To test with Rust stable, you need to switch to cranelift:
+
+```sh
+cd lib/vm
+cargo test --no-default-features --features default-cranelift
+```
