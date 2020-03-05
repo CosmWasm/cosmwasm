@@ -15,9 +15,26 @@ run through [cosmwasm-opt](https://github.com/confio/cosmwasm-opt).
 To rebuild the test contract, go to the repo root and do
 
 ```sh
-docker run --rm -v $(pwd):/code \
-  --mount type=volume,source=$(basename $(pwd))_cache,target=/code/target \
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source=$(basename "$(pwd)")_cache,target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  confio/cosmwasm-opt:0.6.2 ./contracts/hackatom
+  confio/cosmwasm-opt:0.7.2 ./contracts/hackatom
 cp contracts/hackatom/contract.wasm lib/vm/testdata/contract_0.7.wasm
+```
+
+## Testing
+
+By default, this repository is built and tested with the singlepass backend. This
+requires running Rust nighty:
+
+```sh
+cd lib/vm
+cargo +nightly test
+```
+
+To test with Rust stable, you need to switch to cranelift:
+
+```sh
+cd lib/vm
+cargo test --no-default-features --features default-cranelift
 ```
