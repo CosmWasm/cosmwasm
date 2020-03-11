@@ -5,6 +5,7 @@
 **cosmwasm_vm**
 
 - Avoid unnecessary panic when checking corrupted wasm file.
+- Support saving the same wasm to cache multiple times.
 
 ## 0.7.0 (2020-02-26)
 

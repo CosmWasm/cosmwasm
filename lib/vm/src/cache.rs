@@ -150,6 +150,16 @@ mod test {
     }
 
     #[test]
+    // This property is required when the same bytecode is uploaded multiple times
+    fn save_wasm_allows_saving_multiple_times() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache: CosmCache<MockStorage, MockApi> =
+            unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        cache.save_wasm(CONTRACT_0_7).unwrap();
+        cache.save_wasm(CONTRACT_0_7).unwrap();
+    }
+
+    #[test]
     fn save_wasm_rejects_invalid_contract() {
         use wabt::wat2wasm;
 
