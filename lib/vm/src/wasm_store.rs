@@ -7,13 +7,14 @@ use snafu::ResultExt;
 
 use crate::errors::{Error, IoErr};
 
+/// A collision resistent hash function
 pub fn wasm_hash(wasm: &[u8]) -> Vec<u8> {
     Sha256::digest(wasm).to_vec()
 }
 
 /// save stores the wasm code in the given directory and returns an ID for lookup.
 /// It will create the directory if it doesn't exist.
-/// If the file already exists, it will return an error.
+/// Saving the same byte code multiple times is allowed.
 pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     // calculate filename
     let id = wasm_hash(wasm);
@@ -21,9 +22,11 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     let filepath = dir.into().join(&filename);
 
     // write data to file
+    // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
+    // (even if a malicious actor tried), it is safe to override.
     let mut file = OpenOptions::new()
         .write(true)
-        .create_new(true)
+        .create(true)
         .open(filepath)
         .context(IoErr {})?;
     file.write_all(wasm).context(IoErr {})?;
@@ -60,6 +63,16 @@ mod test {
     }
 
     #[test]
+    fn save_same_data_multiple_times() {
+        let tmp_dir = TempDir::new().unwrap();
+        let path = tmp_dir.path();
+        let code = vec![12u8; 17];
+
+        save(path, &code).unwrap();
+        save(path, &code).unwrap();
+    }
+
+    #[test]
     fn fails_on_non_existent_dir() {
         let tmp_dir = TempDir::new().unwrap();
         let path = tmp_dir.path().join("something");
@@ -79,17 +92,5 @@ mod test {
 
         let loaded = load(&path, &id).unwrap();
         assert_eq!(code, loaded);
-    }
-
-    #[test]
-    fn file_already_exists() {
-        let tmp_dir = TempDir::new().unwrap();
-        let path = tmp_dir.path().to_str().unwrap();
-        let code = vec![12u8; 17];
-        let id = save(path, &code).unwrap();
-        assert_eq!(id.len(), 32);
-
-        let dup = save(path, &code);
-        assert!(dup.is_err());
     }
 }
