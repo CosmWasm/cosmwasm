@@ -1,6 +1,8 @@
 # CHANGELOG
 
-## 0.7.1 (not yet released)
+## (not yet released)
+
+## 0.7.1 (2020-03-11)
 
 **cosmwasm_vm**
 
