@@ -142,7 +142,15 @@ mod test {
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
 
     #[test]
-    fn saving_rejects_invalid_contract() {
+    fn save_wasm_works() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache: CosmCache<MockStorage, MockApi> =
+            unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        cache.save_wasm(CONTRACT_0_7).unwrap();
+    }
+
+    #[test]
+    fn save_wasm_rejects_invalid_contract() {
         use wabt::wat2wasm;
 
         // this is invalid, as it doesn't contain all required exports
