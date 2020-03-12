@@ -1,16 +1,16 @@
 [package]
 name = "cosmwasm"
-version = "0.7.0"
+version = "0.7.1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Wasm smart contracts for Cosmos"
-repository = "https://github.com/confio/cosmwasm"
+repository = "https://github.com/CosmWasm/cosmwasm"
 license = "Apache-2.0"
 readme = "README.md"
 exclude = [".circleci/*", ".gitignore"]
 
 [badges]
-circle-ci = { repository = "confio/cosmwasm", branch = "master" }
+circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [workspace]

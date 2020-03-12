@@ -1,6 +1,6 @@
 # CosmWasm
 
-[![CircleCI](https://circleci.com/gh/confio/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/confio/cosmwasm/tree/master)
+[![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
 [![Docs](https://docs.rs/cosmwasm/badge.svg)](https://docs.rs/cosmwasm)
 [![crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
 
@@ -8,12 +8,12 @@
 **WebAssembly Smart Contracts for the Cosmos SDK**
 
 This repo provides a useful functionality to build smart contracts that
-are compatible with Cosmos SDK runtime, [currently being developed](https://github.com/cosmwasm/cosmos-sdk/issues).
+are compatible with a Cosmos SDK based runtime, [`wasmd`](https://github.com/CosmWasm/wasmd).
 
-**Note** Compiling with `v0.6.3+` will produce contracts compatible with the
-[`wasmd`](https://github.com/cosmwasm/wasmd) blockchain. There is no active development on
-master (0.6.x) branch except for bugfixes if needed. Development is targetting the `0.7`
-*branch*, which is the next planned, breaking release.
+Compatibility:
+
+* Contracts built with CosmWasm `v0.6.3+` will run on `wasmd` `v0.6.x`
+* Contracts built with CosmWasm `v0.7.x` will run on `wasmd` `v0.7.x`
 
 ## Overview
 
@@ -21,30 +21,29 @@ This crate provides the bindings and all imports needed to build a smart contrac
 However, to get that contract to interact with a system needs many moving parts.
 To get oriented, here is a list of the various components of the CosmWasm ecosystem:
 
-* [cosmwasm](https://github.com/confio/cosmwasm) - This crate. All needed functionality and no more - to build a small, efficient wasm smart contract.
+* [cosmwasm](https://github.com/CosmWasm/cosmwasm) - This crate. All needed functionality and no more - to build a small, efficient wasm smart contract.
 
 **Building contracts:**
 
-* [cosmwasm-template](https://github.com/confio/cosmwasm-template) - A starter-pack to get you quickly building your custom contract compatible with the cosmwasm system.
-* [cosmwasm-examples](https://github.com/confio/cosmwasm-examples) - Some sample contracts (build with cosmwasm-template) for use and inspiration. Please submit your contract via PR.
-* [cosmwasm-opt](https://github.com/confio/cosmwasm-opt) - A docker image and scripts to take your rust code and produce the smallest possible wasm output. *Deterministically*
+* [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A starter-pack to get you quickly building your custom contract compatible with the cosmwasm system.
+* [cosmwasm-examples](https://github.com/CosmWasm/cosmwasm-examples) - Some sample contracts (build with cosmwasm-template) for use and inspiration. Please submit your contract via PR.
+* [cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt) - A docker image and scripts to take your rust code and produce the smallest possible wasm output. *Deterministically*
 This is designed both for preparing contracts for deployment as well as validating that a given deployed contract is based on some given rust code.,
 allow a [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945) as etherscan.
-* [serde-json-wasm](https://github.com/confio/serde-json-wasm) - A custom json library, forked from `serde-json-core`. This provides an interface similar to
+* [serde-json-wasm](https://github.com/CosmWasm/serde-json-wasm) - A custom json library, forked from `serde-json-core`. This provides an interface similar to
 `serde-json`, but without ay floating-point instructions (non-deterministic) and producing builds
 around 40% of the code size.
 
 **Executing contracts:**
 
-* [cosmwasm-vm](https://github.com/confio/cosmwasm/tree/master/lib/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
+* [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/lib/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
 to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](lib/vm/README.md).
-* [go-cosmwasm](https://github.com/confio/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
+* [go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
 making use of all the optimizations and caching available inside `cosmwasm-vm`.
-* [wasmd](https://github.com/cosmwasm/wasmd) - A basic Cosmos SDK app to host WebAssembly smart contracts.
+* [wasmd](https://github.com/CosmwWasm/wasmd) - A basic Cosmos SDK app to host WebAssembly smart contracts.
 
-Ongoing work is currently tracked [on this project board](https://github.com/orgs/confio/projects/1)
-for all of the internals, and [on this project board](https://github.com/cosmwasm/modules/projects/3)
-for the Cosmos-SDK integration work.
+Ongoing work is currently tracked [on this project board](https://github.com/orgs/CosmWasm/projects/1)
+for all of the blockchain / contract work.
 
 ## Creating a Smart Contract
 
@@ -52,7 +51,7 @@ You can see some examples of contracts under the `contracts` directory,
 which you can look at.
 
 If you want to get started building you own, the simplest
-way is to go to the [cosmwasm-template](https://github.com/confio/cosmwasm-template)
+way is to go to the [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template)
 repository and follow the instructions. This will give you a simple contract
 along with tests, and a properly configured build environment. From there
 you can edit the code to add your desired logic and publish it as an independent
@@ -83,7 +82,7 @@ pub extern "C" fn handle(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_v
 pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void;
 ```
 
-`allocate`/`deallocate` allow the host to manage data within the Wasm VM. If you're using Rust, you can implement them by simply [re-exporting them from cosmwasm::exports](https://github.com/confio/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
+`allocate`/`deallocate` allow the host to manage data within the Wasm VM. If you're using Rust, you can implement them by simply [re-exporting them from cosmwasm::exports](https://github.com/CosmWasm/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
 `init`, `handle` and `query` must be defined by your contract.
 
 ### Imports
@@ -93,7 +92,7 @@ The imports provided to give the contract access to the environment are:
 ```rust
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
-// https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
+// https://github.com/CosmWasm/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 //
 // TODO: use feature switches to enable precompile dependencies in the future,
 // so contracts that need less
@@ -104,7 +103,7 @@ extern "C" {
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
 ```
-(from [imports.rs](https://github.com/confio/cosmwasm/blob/0.7/src/imports.rs))
+(from [imports.rs](https://github.com/CosmWasm/cosmwasm/blob/0.7/src/imports.rs))
 
 You could actually implement a WebAssembly module in any language,
 and as long as you implement these functions, it will be interoperable,
@@ -123,7 +122,7 @@ pub struct Region {
     pub len: u32,
 }
 ```
-(from [memory.rs](https://github.com/confio/cosmwasm/blob/master/src/memory.rs#L7-L13))
+(from [memory.rs](https://github.com/CosmWasm/cosmwasm/blob/master/src/memory.rs#L7-L13))
 
 ## Implementing the Smart Contract
 
@@ -172,7 +171,7 @@ the (release) Wasm builds and have no overhead on the production artifact.
 Note that for tests, you can use the `MockStorage` implementation which
 gives a generic in-memory hashtable in order to quickly test your logic.
 You can see a
-[simple example how to write a test](https://github.com/confio/cosmwasm/blob/81b6702d3994c8c34fb51c53176993b7e672860b/contracts/hackatom/src/contract.rs#L70-L88)
+[simple example how to write a test](https://github.com/CosmWasm/cosmwasm/blob/81b6702d3994c8c34fb51c53176993b7e672860b/contracts/hackatom/src/contract.rs#L70-L88)
 in our sample contract.
 
 ## Testing the Smart Contract (wasm)
@@ -181,12 +180,12 @@ You may also want to ensure the compiled contract interacts with the environment
 properly. To do so, you will want to create a canonical release build of
 the `<contract>.wasm` file and then write tests in with the
 same VM tooling we will use in production. This is a bit more complicated but
-we added some tools to help in [cosmwasm-vm](https://github.com/confio/cosmwasm/tree/master/lib/vm)
+we added some tools to help in [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/lib/vm)
 which can be added as a `dev-dependency`.
 
 You will need to first compile the contract using `cargo wasm`,
 then load this file in the integration tests. Take a
-[look at the sample tests](https://github.com/confio/cosmwasm/blob/master/contracts/hackatom/tests/integration.rs)
+[look at the sample tests](https://github.com/CosmWasm/cosmwasm/blob/master/contracts/hackatom/tests/integration.rs)
 to see how to do this... it is often quite easy to port a unit test
 to an integration test.
 
@@ -198,10 +197,10 @@ for posting to the blockchain. Furthermore, it is very helpful if we have
 reproducible build step so others can prove the on-chain wasm code was generated
 from the published rust code.
 
-For that, we have a separate repo, [cosmwasm-opt](https://github.com/confio/cosmwasm-opt)
-that provides a [docker image](https://hub.docker.com/r/confio/cosmwasm-opt/tags)
+For that, we have a separate repo, [cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt)
+that provides a [docker image](https://hub.docker.com/r/CosmWasm/cosmwasm-opt/tags)
 for building. For more info, look at
-[cosmwasm-opt README](https://github.com/confio/cosmwasm-opt/blob/master/README.md#usage),
+[cosmwasm-opt README](https://github.com/CosmWasm/cosmwasm-opt/blob/master/README.md#usage),
 but the quickstart guide is:
 
 ```sh
