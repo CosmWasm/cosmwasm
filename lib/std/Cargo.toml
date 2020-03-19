@@ -1,0 +1,26 @@
+[package]
+name = "cosmwasm"
+version = "0.7.1"
+authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+edition = "2018"
+description = "Wasm smart contracts for Cosmos"
+repository = "https://github.com/CosmWasm/cosmwasm"
+license = "Apache-2.0"
+readme = "README.md"
+
+[badges]
+circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+base64 = "0.11.0"
+serde-json-wasm = "0.1.2"
+schemars = "0.5"
+serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
+
+[dev-dependencies]
+serde_json = "1.0"
+
+[features]
+backtraces = ["snafu/backtraces"]
