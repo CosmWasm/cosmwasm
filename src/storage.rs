@@ -2,42 +2,71 @@ use crate::errors::Result;
 use crate::mock::MockStorage;
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 
-pub struct StorageTransaction<'a, S: Storage> {
-    /// a backing storage that is only modified upon commit
-    storage: &'a mut S,
+pub struct StorageTransaction<'a, S: ReadonlyStorage> {
+    /// read-only access to backing storage
+    storage: &'a S,
     /// these are local changes not flushed to backing storage
     local_state: MockStorage,
+    /// a log of local changes not yet flushed to backing storage
+    rep_log: RepLog,
+}
+
+pub struct RepLog {
     /// this is a list of changes to be written to backing storage upon commit
-    rep_log: Vec<Op>,
+    ops_log: Vec<Op>,
+}
+
+impl RepLog {
+    fn new() -> Self {
+        RepLog { ops_log: vec![] }
+    }
+
+    /// appends an op to the list of changes to be applied upon commit
+    fn append(&mut self, op: Op) {
+        self.ops_log.push(op);
+    }
+
+    /// applies the stored list of `Op`s to the provided `Storage`
+    pub fn commit<S: Storage>(self, storage: &mut S) {
+        for op in self.ops_log {
+            op.apply(storage);
+        }
+    }
 }
 
 enum Op {
+    /// represents the `Set` operation for setting a key-value pair in storage
     Set { key: Vec<u8>, value: Vec<u8> },
 }
 
-impl<'a, S: Storage> StorageTransaction<'a, S> {
-    pub fn new(storage: &'a mut S) -> Self {
+impl Op {
+    /// applies this `Op` to the provided storage
+    pub fn apply<S: Storage>(&self, storage: &mut S) {
+        match self {
+            Op::Set { key, value } => storage.set(&key, &value),
+        }
+    }
+}
+
+impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
+    pub fn new(storage: &'a S) -> Self {
         StorageTransaction {
             storage,
             local_state: MockStorage::new(),
-            rep_log: vec![],
+            rep_log: RepLog::new(),
         }
     }
 
-    /// commit will consume the checkpoint and write all changes to the underlying store
-    pub fn commit(self) {
-        for op in self.rep_log.iter() {
-            match op {
-                Op::Set { key, value } => self.storage.set(&key, &value),
-            }
-        }
+    /// prepares this transaction to be committed to storage
+    pub fn prepare(self) -> RepLog {
+        self.rep_log
     }
 
     /// rollback will consume the checkpoint and drop all changes (no really needed, going out of scope does the same, but nice for clarity)
     pub fn rollback(self) {}
 }
 
-impl<'a, S: Storage> ReadonlyStorage for StorageTransaction<'a, S> {
+impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
             Some(val) => Some(val),
@@ -46,13 +75,14 @@ impl<'a, S: Storage> ReadonlyStorage for StorageTransaction<'a, S> {
     }
 }
 
-impl<'a, S: Storage> Storage for StorageTransaction<'a, S> {
+impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
     fn set(&mut self, key: &[u8], value: &[u8]) {
-        self.local_state.set(key, value);
-        self.rep_log.push(Op::Set {
+        let op = Op::Set {
             key: key.to_vec(),
             value: value.to_vec(),
-        })
+        };
+        op.apply(&mut self.local_state);
+        self.rep_log.append(op);
     }
 }
 
@@ -60,9 +90,9 @@ pub fn transactional<S: Storage, T>(
     storage: &mut S,
     tx: &dyn Fn(&mut StorageTransaction<S>) -> Result<T>,
 ) -> Result<T> {
-    let mut c = StorageTransaction::new(storage);
-    let res = tx(&mut c)?;
-    c.commit();
+    let mut stx = StorageTransaction::new(storage);
+    let res = tx(&mut stx)?;
+    stx.prepare().commit(storage);
     Ok(res)
 }
 
@@ -70,16 +100,16 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
     deps: &mut Extern<S, A>,
     tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A>) -> Result<T>,
 ) -> Result<T> {
-    let c = StorageTransaction::new(&mut deps.storage);
-    let mut deps = Extern {
+    let c = StorageTransaction::new(&deps.storage);
+    let mut stx_deps = Extern {
         storage: c,
         api: deps.api,
     };
-    let res = tx(&mut deps);
+    let res = tx(&mut stx_deps);
     if res.is_ok() {
-        deps.storage.commit();
+        stx_deps.storage.prepare().commit(&mut deps.storage);
     } else {
-        deps.storage.rollback();
+        stx_deps.storage.rollback();
     }
     res
 }
@@ -95,11 +125,30 @@ mod test {
         let mut base = MockStorage::new();
         base.set(b"foo", b"bar");
 
-        let mut check = StorageTransaction::new(&mut base);
+        let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
-        check.commit();
+        check.prepare().commit(&mut base);
 
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
+    }
+
+    #[test]
+    fn storage_remains_readable() {
+        let mut base = MockStorage::new();
+        base.set(b"foo", b"bar");
+
+        let mut stxn1 = StorageTransaction::new(&base);
+
+        assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
+
+        stxn1.set(b"subtx", b"works");
+        assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
+
+        // Can still read from base, txn is not yet committed
+        assert_eq!(base.get(b"subtx"), None);
+
+        stxn1.prepare().commit(&mut base);
         assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
