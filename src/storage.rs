@@ -7,32 +7,40 @@ pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     storage: &'a S,
     /// these are local changes not flushed to backing storage
     local_state: MockStorage,
-    /// this is a list of changes to be written to backing storage upon commit
-    rep_log: Vec<Op>,
+    /// a log of local changes not yet flushed to backing storage
+    rep_log: RepLog,
 }
 
-pub struct Commit {
+pub struct RepLog {
     /// this is a list of changes to be written to backing storage upon commit
-    rep_log: Vec<Op>,
+    ops_log: Vec<Op>,
 }
 
-impl Commit {
-    fn new(rep_log: Vec<Op>) -> Self {
-        Commit { rep_log }
+impl RepLog {
+    fn new() -> Self {
+        RepLog { ops_log: vec![] }
     }
 
+    /// appends an op to the list of changes to be applied upon commit
+    fn append(&mut self, op: Op) {
+        self.ops_log.push(op);
+    }
+
+    /// applies the stored list of `Op`s to the provided `Storage`
     pub fn commit<S: Storage>(self, storage: &mut S) {
-        for op in self.rep_log {
+        for op in self.ops_log {
             op.apply(storage);
         }
     }
 }
 
 enum Op {
+    /// represents the `Set` operation for setting a key-value pair in storage
     Set { key: Vec<u8>, value: Vec<u8> },
 }
 
 impl Op {
+    /// applies this `Op` to the provided storage
     pub fn apply<S: Storage>(&self, storage: &mut S) {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
@@ -45,12 +53,13 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
         StorageTransaction {
             storage,
             local_state: MockStorage::new(),
-            rep_log: vec![],
+            rep_log: RepLog::new(),
         }
     }
 
-    pub fn prepare(self) -> Commit {
-        Commit::new(self.rep_log)
+    /// prepares this transaction to be committed to storage
+    pub fn prepare(self) -> RepLog {
+        self.rep_log
     }
 
     /// rollback will consume the checkpoint and drop all changes (no really needed, going out of scope does the same, but nice for clarity)
@@ -68,11 +77,12 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
 
 impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
     fn set(&mut self, key: &[u8], value: &[u8]) {
-        self.local_state.set(key, value);
-        self.rep_log.push(Op::Set {
+        let op = Op::Set {
             key: key.to_vec(),
             value: value.to_vec(),
-        })
+        };
+        op.apply(&mut self.local_state);
+        self.rep_log.append(op);
     }
 }
 
