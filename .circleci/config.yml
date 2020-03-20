@@ -233,10 +233,10 @@ jobs:
           name: Add clippy component
           command: rustup component add clippy
       - run:
-          name: Clippy linting
-          command: cargo clippy -- -D warnings
+          name: Clippy linting on std
+          command: cd lib/std && cargo clippy -- -D warnings
       - run:
-          name: Clippy linting on lib/vm (use flags for stable support)
+          name: Clippy linting on vm (use flags for Rust stable support)
           command: cd lib/vm && cargo clippy --no-default-features --features default-cranelift
       - run:
           name: Clippy linting on hackatom
