@@ -3,7 +3,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - base
+      - std
       - singlepass_vm
       - cranelift_vm
       - hackatom
@@ -12,7 +12,7 @@ workflows:
       - clippy
 
 jobs:
-  base:
+  std:
     docker:
       - image: rust:1.40.0
     steps:
@@ -25,12 +25,14 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-base-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build all targets (including workspaces)
+          name: Build standard library
+          working_directory: ~/project/lib/std
           command: cargo build --locked
       - run:
-          name: Run all tests (including workspaces)
+          name: Run standard library tests
+          working_directory: ~/project/lib/std
           command: cargo test --locked
       - save_cache:
           paths:
@@ -38,7 +40,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-base-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   singlepass_vm:
     docker:
