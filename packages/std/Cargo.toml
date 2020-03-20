@@ -3,8 +3,8 @@ name = "cosmwasm"
 version = "0.7.1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
-description = "Wasm smart contracts for Cosmos"
-repository = "https://github.com/CosmWasm/cosmwasm"
+description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/std"
 license = "Apache-2.0"
 readme = "README.md"
 

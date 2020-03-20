@@ -1,4 +1,6 @@
-# Cosmwasm VM
+# CosmWasm VM
+
+[![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)
 
 This is an abstraction layer around the wasmer VM to expose just what
 we need to run cosmwasm contracts in a high-level manner.
@@ -38,3 +40,10 @@ To test with Rust stable, you need to switch to cranelift:
 cd packages/vm
 cargo test --no-default-features --features default-cranelift
 ```
+
+## License
+
+This package is part of the cosmwasm repository, licensed under the Apache
+License 2.0 (see
+[NOTICE](https://github.com/CosmWasm/cosmwasm/blob/master/NOTICE) and
+[LICENSE](https://github.com/CosmWasm/cosmwasm/blob/master/LICENSE)).
