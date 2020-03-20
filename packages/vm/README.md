@@ -19,7 +19,7 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=$(basename "$(pwd)")_cache,target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   confio/cosmwasm-opt:0.7.2 ./contracts/hackatom
-cp contracts/hackatom/contract.wasm lib/vm/testdata/contract_0.7.wasm
+cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.7.wasm
 ```
 
 ## Testing
@@ -28,13 +28,13 @@ By default, this repository is built and tested with the singlepass backend. Thi
 requires running Rust nighty:
 
 ```sh
-cd lib/vm
+cd packages/vm
 cargo +nightly test
 ```
 
 To test with Rust stable, you need to switch to cranelift:
 
 ```sh
-cd lib/vm
+cd packages/vm
 cargo test --no-default-features --features default-cranelift
 ```

@@ -28,11 +28,11 @@ jobs:
             - cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build standard library
-          working_directory: ~/project/lib/std
+          working_directory: ~/project/packages/std
           command: cargo build --locked
       - run:
           name: Run standard library tests
-          working_directory: ~/project/lib/std
+          working_directory: ~/project/packages/std
           command: cargo test --locked
       - save_cache:
           paths:
@@ -58,11 +58,11 @@ jobs:
             - cargocache-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo build --locked
       - run:
           name: Run all tests (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo test --locked
       - save_cache:
           paths:
@@ -88,11 +88,11 @@ jobs:
             - cargocache-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo build --locked --no-default-features --features default-cranelift
       - run:
           name: Run all tests (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo test --locked --no-default-features --features default-cranelift
       - save_cache:
           paths:
@@ -236,11 +236,11 @@ jobs:
           command: rustup component add clippy
       - run:
           name: Clippy linting on std
-          working_directory: ~/project/lib/std
+          working_directory: ~/project/packages/std
           command: cargo clippy -- -D warnings
       - run:
           name: Clippy linting on vm (use flags for Rust stable support)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo clippy --no-default-features --features default-cranelift
       - run:
           name: Clippy linting on hackatom

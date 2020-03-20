@@ -1,6 +1,6 @@
 [workspace]
 members = [
-  "lib/std",
-  "lib/vm",
+  "packages/std",
+  "packages/vm",
 ]
 exclude = ["contracts"]
