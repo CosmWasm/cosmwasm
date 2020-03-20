@@ -3,7 +3,7 @@ workflows:
   version: 2
   test:
     jobs:
-      - base
+      - std
       - singlepass_vm
       - cranelift_vm
       - hackatom
@@ -12,7 +12,7 @@ workflows:
       - clippy
 
 jobs:
-  base:
+  std:
     docker:
       - image: rust:1.40.0
     steps:
@@ -25,12 +25,14 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-base-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build all targets (including workspaces)
+          name: Build standard library
+          working_directory: ~/project/packages/std
           command: cargo build --locked
       - run:
-          name: Run all tests (including workspaces)
+          name: Run standard library tests
+          working_directory: ~/project/packages/std
           command: cargo test --locked
       - save_cache:
           paths:
@@ -38,7 +40,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-base-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   singlepass_vm:
     docker:
@@ -56,11 +58,11 @@ jobs:
             - cargocache-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo build --locked
       - run:
           name: Run all tests (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo test --locked
       - save_cache:
           paths:
@@ -86,11 +88,11 @@ jobs:
             - cargocache-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo build --locked --no-default-features --features default-cranelift
       - run:
           name: Run all tests (including workspaces)
-          working_directory: ~/project/lib/vm
+          working_directory: ~/project/packages/vm
           command: cargo test --locked --no-default-features --features default-cranelift
       - save_cache:
           paths:
@@ -233,14 +235,17 @@ jobs:
           name: Add clippy component
           command: rustup component add clippy
       - run:
-          name: Clippy linting
+          name: Clippy linting on std
+          working_directory: ~/project/packages/std
           command: cargo clippy -- -D warnings
       - run:
-          name: Clippy linting on lib/vm (use flags for stable support)
-          command: cd lib/vm && cargo clippy --no-default-features --features default-cranelift
+          name: Clippy linting on vm (use flags for Rust stable support)
+          working_directory: ~/project/packages/vm
+          command: cargo clippy --no-default-features --features default-cranelift
       - run:
           name: Clippy linting on hackatom
-          command: cd contracts/hackatom && cargo clippy -- -D warnings
+          working_directory: ~/project/contracts/hackatom
+          command: cargo clippy -- -D warnings
       - save_cache:
           paths:
             - /usr/local/cargo/registry

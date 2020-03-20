@@ -2,8 +2,8 @@
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
 [![Docs](https://docs.rs/cosmwasm/badge.svg)](https://docs.rs/cosmwasm)
-[![crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
-
+[![cosmwasm on crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
+[![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)
 
 **WebAssembly Smart Contracts for the Cosmos SDK**
 
@@ -36,8 +36,8 @@ around 40% of the code size.
 
 **Executing contracts:**
 
-* [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/lib/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
-to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](lib/vm/README.md).
+* [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
+to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](packages/vm/README.md).
 * [go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
 making use of all the optimizations and caching available inside `cosmwasm-vm`.
 * [wasmd](https://github.com/CosmWasm/wasmd) - A basic Cosmos SDK app to host WebAssembly smart contracts.
@@ -180,7 +180,7 @@ You may also want to ensure the compiled contract interacts with the environment
 properly. To do so, you will want to create a canonical release build of
 the `<contract>.wasm` file and then write tests in with the
 same VM tooling we will use in production. This is a bit more complicated but
-we added some tools to help in [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/lib/vm)
+we added some tools to help in [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm)
 which can be added as a `dev-dependency`.
 
 You will need to first compile the contract using `cargo wasm`,
