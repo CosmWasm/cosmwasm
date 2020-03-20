@@ -1,6 +1,3 @@
 [workspace]
-members = [
-  "packages/std",
-  "packages/vm",
-]
+members = ["packages/*"]
 exclude = ["contracts"]
