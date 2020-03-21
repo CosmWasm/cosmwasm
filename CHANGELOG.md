@@ -5,6 +5,9 @@
 **cosmwasm**
 
 - Fix JSON schema type of `Binary` from int array (wrong) to string (right).
+- Make `Extern` not `Clone`able anymore. Before cloning led to copying the data
+  for mock storage and copying a stateless bridge for the external storage,
+  which are different semantics.
 
 ## 0.7.1 (2020-03-11)
 

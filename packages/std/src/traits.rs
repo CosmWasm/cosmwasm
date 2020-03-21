@@ -3,9 +3,10 @@ use std::vec::Vec;
 use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
-// Extern holds all external dependencies of the contract,
-// designed to allow easy dependency injection at runtime
-#[derive(Clone)]
+/// Holds all external dependencies of the contract.
+/// Designed to allow easy dependency injection at runtime.
+/// This cannot be copied or cloned since it would behave differently
+/// for mock storages and a bridge storage in the VM.
 pub struct Extern<S: Storage, A: Api> {
     pub storage: S,
     pub api: A,
