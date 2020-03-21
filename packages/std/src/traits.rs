@@ -12,7 +12,6 @@ pub struct Extern<S: Storage, A: Api> {
 }
 
 // ReadonlyStorage is access to the contracts persistent data store
-//pub trait ReadonlyStorage: Clone {
 pub trait ReadonlyStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 }
