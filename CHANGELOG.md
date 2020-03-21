@@ -1,6 +1,10 @@
 # CHANGELOG
 
-## (not yet released)
+## 0.7.2 (not yet released)
+
+**cosmwasm**
+
+- Fix JSON schema type of `Binary` from int array (wrong) to string (right).
 
 ## 0.7.1 (2020-03-11)
 

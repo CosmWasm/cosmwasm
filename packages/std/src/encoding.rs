@@ -11,7 +11,7 @@ use crate::errors::{Base64Err, Result};
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
 #[derive(Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Binary(pub Vec<u8>);
+pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
 impl Binary {
     /// take an (untrusted) string and decode it into bytes.
