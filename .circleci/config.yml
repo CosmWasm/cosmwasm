@@ -24,13 +24,33 @@ jobs:
           keys:
             - cargocache-v2-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build standard library
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Build library for native target
           working_directory: ~/project/packages/std
           command: cargo build --locked
       - run:
-          name: Run standard library tests
+          name: Build library for wasm target
+          working_directory: ~/project/packages/std
+          command: cargo wasm --locked
+      - run:
+          name: Run unit tests
           working_directory: ~/project/packages/std
           command: cargo test --locked
+      - run:
+          name: Build and run schema generator
+          working_directory: ~/project/packages/std
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -114,10 +134,7 @@ jobs:
             - cargocache-v2-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown
-      - run:
-          name: Show targets
-          command: rustup target list --installed
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
@@ -155,10 +172,7 @@ jobs:
             - cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown
-      - run:
-          name: Show targets
-          command: rustup target list --installed
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
