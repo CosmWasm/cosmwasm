@@ -134,10 +134,7 @@ jobs:
             - cargocache-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown
-      - run:
-          name: Show targets
-          command: rustup target list --installed
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
@@ -175,10 +172,7 @@ jobs:
             - cargocache-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown
-      - run:
-          name: Show targets
-          command: rustup target list --installed
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
