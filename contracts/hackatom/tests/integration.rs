@@ -19,7 +19,7 @@ Then running `cargo test` will validate we can properly call into that generated
 You can easily convert unit tests to integration tests.
 1. First copy them over verbatum,
 2. Then change
-    let mut deps = dependencies(20);
+    let mut deps = mock_dependencies(20);
 To
     let mut deps = mock_instance(WASM);
 3. If you access raw storage, where ever you see something like:

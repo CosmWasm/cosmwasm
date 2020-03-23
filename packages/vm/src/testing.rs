@@ -6,7 +6,7 @@ use serde::Serialize;
 use schemars::JsonSchema;
 
 use cosmwasm::{
-    dependencies, to_vec, Api, ContractResult, Env, MockApi, MockStorage, QueryResult, Storage,
+    mock_dependencies, to_vec, Api, ContractResult, Env, MockApi, MockStorage, QueryResult, Storage,
 };
 
 use crate::calls::{call_handle, call_init, call_query};
@@ -22,7 +22,7 @@ pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
 
 pub fn mock_instance_with_gas_limit(wasm: &[u8], gas_limit: u64) -> Instance<MockStorage, MockApi> {
     check_wasm(wasm).unwrap();
-    let deps = dependencies(20);
+    let deps = mock_dependencies(20);
     Instance::from_code(wasm, deps, gas_limit).unwrap()
 }
 

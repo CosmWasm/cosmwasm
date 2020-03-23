@@ -13,7 +13,7 @@ pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
     Result, SerializeErr,
 };
-pub use crate::mock::{dependencies, mock_env, MockApi, MockStorage};
+pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockStorage};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::{transactional, transactional_deps};
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
