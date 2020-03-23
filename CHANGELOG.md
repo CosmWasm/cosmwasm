@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.8.0 (not yet released)
+
+**cosmwasm**
+
+- Make all symbols from `cosmwasm::memory` crate internal, as those symbols are
+  not needed by users of the library.
+
 ## 0.7.2 (2020-03-23)
 
 **cosmwasm**
