@@ -38,6 +38,19 @@ jobs:
           name: Run unit tests
           working_directory: ~/project/packages/std
           command: cargo test --locked
+      - run:
+          name: Build and run schema generator
+          working_directory: ~/project/packages/std
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
