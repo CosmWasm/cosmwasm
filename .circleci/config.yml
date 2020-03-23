@@ -31,6 +31,10 @@ jobs:
           working_directory: ~/project/packages/std
           command: cargo build --locked
       - run:
+          name: Build library for wasm target
+          working_directory: ~/project/packages/std
+          command: cargo wasm --locked
+      - run:
           name: Run unit tests
           working_directory: ~/project/packages/std
           command: cargo test --locked
