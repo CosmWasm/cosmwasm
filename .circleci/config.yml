@@ -27,6 +27,9 @@ jobs:
           keys:
             - cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
           name: Build library for native target
           working_directory: ~/project/packages/std
           command: cargo build --locked
