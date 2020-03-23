@@ -7,12 +7,10 @@ use std::mem;
 
 use wasmer_runtime_core::vm::Ctx;
 
-use cosmwasm::traits::{Api, Storage};
+use cosmwasm::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
-use cosmwasm::encoding::Binary;
-use cosmwasm::types::{CanonicalAddr, HumanAddr};
 
 /// An unknown error occurred when writing to region
 static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;

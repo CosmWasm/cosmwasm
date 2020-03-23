@@ -5,10 +5,9 @@ use serde::Serialize;
 // JsonSchema is a flag for types meant to be publically exposed
 use schemars::JsonSchema;
 
-use cosmwasm::mock::{dependencies, MockApi, MockStorage};
-use cosmwasm::serde::to_vec;
-use cosmwasm::traits::{Api, Storage};
-use cosmwasm::types::{ContractResult, Env, QueryResult};
+use cosmwasm::{
+    dependencies, to_vec, Api, ContractResult, Env, MockApi, MockStorage, QueryResult, Storage,
+};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::compatability::check_wasm;

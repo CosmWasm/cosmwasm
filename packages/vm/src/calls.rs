@@ -1,8 +1,6 @@
 use snafu::ResultExt;
 
-use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::traits::{Api, Storage};
-use cosmwasm::types::{ContractResult, Env, QueryResult};
+use cosmwasm::{from_slice, to_vec, Api, ContractResult, Env, QueryResult, Storage};
 
 use crate::errors::{Error, ParseErr, RuntimeErr, SerializeErr};
 use crate::instance::{Func, Instance};

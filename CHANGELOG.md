@@ -6,6 +6,9 @@
 
 - Make all symbols from `cosmwasm::memory` crate internal, as those symbols are
   not needed by users of the library.
+- Export all symbols at top level (e.g.
+  `use cosmwasm::traits::{Api, Storage};` + `use cosmwasm::encoding::Binary;`
+  becomes `use cosmwasm::{Api, Binary, Storage};`).
 
 ## 0.7.2 (2020-03-23)
 

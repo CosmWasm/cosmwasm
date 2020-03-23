@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm::traits::{Api, Extern, Storage};
+use cosmwasm::{Api, Extern, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
@@ -132,11 +132,9 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use tempfile::TempDir;
-
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::{dependencies, mock_env, MockApi, MockStorage};
-    use cosmwasm::types::coin;
+    use cosmwasm::{coin, dependencies, mock_env, MockApi, MockStorage};
+    use tempfile::TempDir;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
