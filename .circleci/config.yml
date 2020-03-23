@@ -27,11 +27,11 @@ jobs:
           keys:
             - cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build standard library
+          name: Build library for native target
           working_directory: ~/project/packages/std
           command: cargo build --locked
       - run:
-          name: Run standard library tests
+          name: Run unit tests
           working_directory: ~/project/packages/std
           command: cargo test --locked
       - save_cache:
