@@ -14,7 +14,7 @@ use snafu::ResultExt;
 
 use crate::encoding::Binary;
 use crate::errors::{Error, ParseErr, SerializeErr};
-use crate::imports::{dependencies, ExternalApi, ExternalStorage};
+use crate::imports::{ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
@@ -92,7 +92,7 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
     let env: Env = from_slice(&env).context(ParseErr { kind: "Env" })?;
     let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
-    let mut deps = dependencies();
+    let mut deps = make_dependencies();
     let res = init_fn(&mut deps, env, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
         kind: "ContractResult",
@@ -114,7 +114,7 @@ fn _do_handle<T: DeserializeOwned + JsonSchema>(
 
     let env: Env = from_slice(&env).context(ParseErr { kind: "Env" })?;
     let msg: T = from_slice(&msg).context(ParseErr { kind: "HandleMsg" })?;
-    let mut deps = dependencies();
+    let mut deps = make_dependencies();
     let res = handle_fn(&mut deps, env, msg)?;
     let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
         kind: "ContractResult",
@@ -129,7 +129,7 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
     let msg: T = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
-    let deps = dependencies();
+    let deps = make_dependencies();
     let res = Binary(query_fn(&deps, msg)?);
     let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
         kind: "QueryResult",
@@ -145,4 +145,12 @@ fn make_error_c_string<T: Display>(error: T) -> *mut c_void {
 fn make_query_error_c_string<T: Display>(error: T) -> *mut c_void {
     let v = to_vec(&QueryResult::Err(error.to_string())).unwrap();
     release_buffer(v)
+}
+
+/// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
+fn make_dependencies() -> Extern<ExternalStorage, ExternalApi> {
+    Extern {
+        storage: ExternalStorage::new(),
+        api: ExternalApi::new(),
+    }
 }

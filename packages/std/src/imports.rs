@@ -6,7 +6,7 @@ use std::vec::Vec;
 use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
-use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+use crate::traits::{Api, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
@@ -26,14 +26,6 @@ extern "C" {
     fn write_db(key: *const c_void, value: *mut c_void);
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
-}
-
-// dependencies are all external requirements that can be injected in a real-wasm contract
-pub fn dependencies() -> Extern<ExternalStorage, ExternalApi> {
-    Extern {
-        storage: ExternalStorage::new(),
-        api: ExternalApi::new(),
-    }
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
