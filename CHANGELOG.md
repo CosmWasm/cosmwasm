@@ -12,6 +12,8 @@
   not need to call this explicitely. Dependencies are created internally and
   passed as an argument in `exports::do_init`, `exports::do_handle` and
   `exports::do_query`.
+- Make `ExternalStorage` not `Clone`able anymore. This does not copy any data,
+  so a clone could lead to unexpected results.
 
 ## 0.7.1 (2020-03-11)
 

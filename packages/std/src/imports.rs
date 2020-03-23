@@ -29,8 +29,7 @@ extern "C" {
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
-/// Clone with caution: this might not do what you expect, in particular no data is cloned.
-#[derive(Clone)]
+/// This cannot be cloned as it would not copy any data. If you need to clone this, it indicates a flaw in your logic.
 pub struct ExternalStorage {}
 
 impl ExternalStorage {
