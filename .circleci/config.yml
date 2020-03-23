@@ -18,14 +18,11 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install CMAKE
-          command: 'apt-get update && apt-get install -y cmake'
-      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build standard library
           working_directory: ~/project/packages/std
@@ -40,7 +37,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-std-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   singlepass_vm:
     docker:
@@ -48,14 +45,14 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install CMAKE
+          name: Install CMake (required for compiling wabt-sys, a dev dependency of the VM)
           command: 'apt-get update && apt-get install -y cmake'
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
           working_directory: ~/project/packages/vm
@@ -70,7 +67,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
 
   cranelift_vm:
     docker:
@@ -78,14 +75,14 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install CMAKE
+          name: Install CMake (required for compiling wabt-sys, a dev dependency of the VM)
           command: 'apt-get update && apt-get install -y cmake'
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build all targets (including workspaces)
           working_directory: ~/project/packages/vm
@@ -100,7 +97,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-cranelift-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   hackatom:
     docker:
@@ -114,7 +111,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -140,7 +137,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
   hackatom_in_singlepass_vm:
@@ -155,7 +152,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown
@@ -181,7 +178,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:
@@ -193,7 +190,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-fmt-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-fmt-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add rustfmt component
           command: rustup component add rustfmt
@@ -218,7 +215,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-fmt-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-fmt-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   clippy:
     docker:
@@ -230,7 +227,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-clippy-rust:1.40.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-clippy-rust:1.40.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -252,4 +249,4 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-clippy-rust:1.40.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-clippy-rust:1.40.0-{{ checksum "Cargo.lock" }}
