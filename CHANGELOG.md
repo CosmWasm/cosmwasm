@@ -5,6 +5,15 @@
 **cosmwasm**
 
 - Fix JSON schema type of `Binary` from int array (wrong) to string (right).
+- Make `Extern` not `Clone`able anymore. Before cloning led to copying the data
+  for mock storage and copying a stateless bridge for the external storage,
+  which are different semantics.
+- Remove public `cosmwasm::imports::dependencies`. A user of this library does
+  not need to call this explicitely. Dependencies are created internally and
+  passed as an argument in `exports::do_init`, `exports::do_handle` and
+  `exports::do_query`.
+- Make `ExternalStorage` not `Clone`able anymore. This does not copy any data,
+  so a clone could lead to unexpected results.
 
 ## 0.7.1 (2020-03-11)
 
