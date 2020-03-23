@@ -4,8 +4,10 @@ use std::vec::Vec;
 
 use crate::errors::{Error, NullPointer};
 
-/// Refers to some heap allocated data in wasm.
-/// A pointer to this can be returned over ffi boundaries.
+/// Refers to some heap allocated data in Wasm.
+/// A pointer to an instance of this can be returned over FFI boundaries.
+///
+/// This struct is crate internal since the VM defined the same type independently.
 #[repr(C)]
 pub struct Region {
     pub offset: u32,

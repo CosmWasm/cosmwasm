@@ -7,11 +7,11 @@ use wasmer_runtime_core::{
 
 /****** read/write to wasm memory buffer ****/
 
-/// Refers to some heap allocated data in wasm.
-/// A pointer to this can be returned over ffi boundaries.
+/// Refers to some heap allocated data in Wasm.
+/// A pointer to an instance of this can be returned over FFI boundaries.
 ///
 /// This is the same as cosmwasm::memory::Region
-/// but defined here to allow wasm impl
+/// but defined here to allow Wasmer specific implementation.
 #[repr(C)]
 #[derive(Default, Clone, Copy, Debug)]
 pub struct Region {
