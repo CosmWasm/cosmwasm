@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.7.2 (not yet released)
+## 0.7.2 (2020-03-23)
 
 **cosmwasm**
 

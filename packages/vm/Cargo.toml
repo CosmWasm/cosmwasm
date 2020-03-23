@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.7.1"
+version = "0.7.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -23,7 +23,7 @@ default-singlepass = ["wasmer-singlepass-backend"]
 backtraces = ["snafu/backtraces"]
 
 [dependencies]
-cosmwasm = { path = "../std", version = "0.7.1" }
+cosmwasm = { path = "../std", version = "0.7.2" }
 serde-json-wasm = "0.1.0"
 wasmer-runtime-core = "0.14.0"
 wasmer-middleware-common = "0.14.0"
