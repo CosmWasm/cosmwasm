@@ -36,6 +36,8 @@ pub fn dependencies() -> Extern<ExternalStorage, ExternalApi> {
     }
 }
 
+/// A stateless convenience wrapper around database imports provided by the VM.
+/// Clone with caution: this might not do what you expect, in particular no data is cloned.
 #[derive(Clone)]
 pub struct ExternalStorage {}
 
@@ -81,6 +83,7 @@ impl Storage for ExternalStorage {
     }
 }
 
+/// A stateless convenience wrapper around imports provided by the VM
 #[derive(Copy, Clone)]
 pub struct ExternalApi {}
 
