@@ -15,7 +15,9 @@ pub use crate::errors::{
 };
 pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockStorage};
 pub use crate::serde::{from_slice, to_vec};
-pub use crate::storage::{transactional, transactional_deps};
+pub use crate::storage::{
+    transactional, transactional_deps, MemoryStorage, RepLog, StorageTransaction,
+};
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 pub use crate::types::{
     coin, log, CanonicalAddr, ContractResult, CosmosMsg, Env, HumanAddr, QueryResult, Response,
