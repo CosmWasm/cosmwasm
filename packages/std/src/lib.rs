@@ -44,7 +44,3 @@ mod mock;
 pub mod testing {
     pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockStorage};
 }
-
-// Not exposed
-
-mod demo;

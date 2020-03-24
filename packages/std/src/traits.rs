@@ -1,6 +1,5 @@
 #[cfg(feature = "iterator")]
 use std::ops::RangeBounds;
-use std::vec::Vec;
 
 use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
