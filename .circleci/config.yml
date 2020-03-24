@@ -145,6 +145,18 @@ jobs:
       - run:
           name: Integration tests
           command: cargo integration-test --locked
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -157,6 +169,7 @@ jobs:
           key: cargocache-v2-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
+  # Avoid duplicating generic checks like unit tests or schema generation – they belong in the generic hackatom job.
   hackatom_in_singlepass_vm:
     docker:
       - image: rustlang/rust:nightly
@@ -176,10 +189,6 @@ jobs:
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          env: RUST_BACKTRACE=1
-          command: cargo unit-test --locked
       - run:
           name: Integration tests
           command: cargo integration-test --no-default-features --features singlepass --locked

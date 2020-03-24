@@ -29,7 +29,7 @@ wasmer-runtime-core = "0.14.0"
 wasmer-middleware-common = "0.14.0"
 wasmer-clif-backend = {version = "0.14.0", optional = true }
 wasmer-singlepass-backend = {version = "0.14.0", optional = true }
-schemars = "0.5"
+schemars = "0.6"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
 sha2 = "0.8.0"

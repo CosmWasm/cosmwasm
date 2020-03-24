@@ -164,7 +164,7 @@ name = "cosmwasm"
 version = "0.7.2"
 dependencies = [
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "schemars 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "schemars 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-json-wasm 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -180,7 +180,7 @@ dependencies = [
  "lru 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "parity-wasm 0.41.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "schemars 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "schemars 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-json-wasm 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -707,17 +707,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "schemars"
-version = "0.5.1"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
- "schemars_derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "schemars_derive 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "schemars_derive"
-version = "0.5.0"
+version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1186,8 +1186,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum rustc-demangle 0.1.16 (registry+https://github.com/rust-lang/crates.io-index)" = "4c691c0e608126e00913e33f0ccf3727d5fc84573623b8d65b2df340b5201783"
 "checksum rustc_version 0.2.3 (registry+https://github.com/rust-lang/crates.io-index)" = "138e3e0acb6c9fb258b19b67cb8abd63c00679d2851805ea151465464fe9030a"
 "checksum ryu 1.0.2 (registry+https://github.com/rust-lang/crates.io-index)" = "bfa8506c1de11c9c4e4c38863ccbe02a305c8188e85a05a784c9e11e1c3910c8"
-"checksum schemars 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)" = "273d9b56198caf703e271dcc07b28f2e794971750ace6585399d40e2af9f4823"
-"checksum schemars_derive 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "73ab7f0b9b64633747a68dce4ed6318bbf30e3befe67df7624ad83abb7295c09"
+"checksum schemars 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)" = "07569773d6aaf3324812c6572244aec08521b64ce056f2be3b5cc135fb63caec"
+"checksum schemars_derive 0.6.5 (registry+https://github.com/rust-lang/crates.io-index)" = "38535ecef477d8495dc6c288e876c03c4428b8141ffa57803111348cf14230a9"
 "checksum scopeguard 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "d29ab0c6d3fc0ee92fe66e2d99f700eab17a8d57d1c1d3b748380fb20baa78cd"
 "checksum semver 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "1d7eb9ef2c18661902cc47e535f9bc51b78acd254da71d375c2f6720d9a40403"
 "checksum semver-parser 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)" = "388a1df253eca08550bef6c72392cfe7c30914bf41df5269b68cbd6ff8f570a3"
