@@ -169,6 +169,7 @@ jobs:
           key: cargocache-v2-hackatom-rust:1.40.0-{{ checksum "Cargo.lock" }}
 
   # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
+  # Avoid duplicating generic checks like unit tests or schema generation – they belong in the generic hackatom job.
   hackatom_in_singlepass_vm:
     docker:
       - image: rustlang/rust:nightly
@@ -188,10 +189,6 @@ jobs:
       - run:
           name: Build wasm binary
           command: cargo wasm --locked
-      - run:
-          name: Unit tests
-          env: RUST_BACKTRACE=1
-          command: cargo unit-test --locked
       - run:
           name: Integration tests
           command: cargo integration-test --no-default-features --features singlepass --locked
