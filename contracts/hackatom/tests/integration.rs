@@ -1,7 +1,9 @@
 use std::str::from_utf8;
 
-use cosmwasm::testing::mock_env;
-use cosmwasm::{coin, from_slice, log, Api, CosmosMsg, HumanAddr, QueryResult, ReadonlyStorage};
+use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::{
+    coin, from_slice, log, Api, CosmosMsg, HumanAddr, QueryResult, ReadonlyStorage,
+};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -194,7 +196,7 @@ fn passes_io_tests() {
 mod singlepass_tests {
     use super::*;
 
-    use cosmwasm::to_vec;
+    use cosmwasm_std::to_vec;
     use cosmwasm_vm::call_handle;
     use cosmwasm_vm::testing::mock_instance_with_gas_limit;
 

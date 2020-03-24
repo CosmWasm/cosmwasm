@@ -1,5 +1,5 @@
 [package]
-name = "cosmwasm"
+name = "cosmwasm-std"
 version = "0.7.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"

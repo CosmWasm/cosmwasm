@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use cosmwasm::{ContractResult, CosmosMsg, Env};
+use cosmwasm_std::{ContractResult, CosmosMsg, Env};
 
 fn main() {
     let mut pwd = current_dir().unwrap();

@@ -7,7 +7,7 @@ use std::mem;
 
 use wasmer_runtime_core::vm::Ctx;
 
-use cosmwasm::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
+use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
