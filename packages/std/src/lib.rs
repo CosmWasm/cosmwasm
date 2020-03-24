@@ -5,6 +5,7 @@ mod errors;
 mod serde;
 mod storage;
 mod traits;
+mod transactions;
 mod types;
 
 pub use crate::encoding::Binary;
@@ -13,10 +14,9 @@ pub use crate::errors::{
     Result, SerializeErr,
 };
 pub use crate::serde::{from_slice, to_vec};
-pub use crate::storage::{
-    transactional, transactional_deps, MemoryStorage, RepLog, StorageTransaction,
-};
+pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
 pub use crate::types::{
     coin, log, CanonicalAddr, ContractResult, CosmosMsg, Env, HumanAddr, QueryResult, Response,
 };
