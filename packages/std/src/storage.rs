@@ -165,6 +165,81 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
 }
 
 #[cfg(test)]
+#[cfg(feature = "iterator")]
+// iterator_test_suite takes an empty storage, adds data and runs iterator tests
+// designed to be imported by other modules
+fn iterator_test_suite<S: Storage>(store: &mut S) {
+    // setup
+    store.set(b"foo", b"bar");
+    store.set(b"ant", b"hill");
+    store.set(b"ze", b"bra");
+
+    // open ended range
+    {
+        let iter = store.range(..);
+        assert_eq!(3, iter.count());
+        let mut iter2 = store.range(..);
+        let first = iter2.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+        let mut iter3 = store.range(..).rev();
+        let last = iter3.next().unwrap();
+        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
+    }
+
+    // closed range
+    {
+        let range = b"f".to_vec()..b"n".to_vec();
+        let iter = store.range(range.clone());
+        assert_eq!(1, iter.count());
+        let mut iter2 = store.range(range.clone());
+        let first = iter2.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+    }
+
+    // closed range reverse
+    {
+        let range = b"air".to_vec()..b"loop".to_vec();
+        let iter = store.range(range.clone()).rev();
+        assert_eq!(2, iter.count());
+        let mut iter2 = store.range(range.clone()).rev();
+        let first = iter2.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+        let second = iter2.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
+    }
+
+    // end open iterator
+    {
+        let range = b"f".to_vec()..;
+        let iter = store.range(range.clone());
+        assert_eq!(2, iter.count());
+        let mut iter2 = store.range(range.clone());
+        let first = iter2.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+    }
+
+    // end open iterator reverse
+    {
+        let range = b"f".to_vec()..;
+        let iter = store.range(range.clone()).rev();
+        assert_eq!(2, iter.count());
+        let mut iter2 = store.range(range.clone()).rev();
+        let first = iter2.next().unwrap();
+        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
+    }
+
+    // start open iterator
+    {
+        let range = ..b"f".to_vec();
+        let iter = store.range(range.clone());
+        assert_eq!(1, iter.count());
+        let mut iter2 = store.range(range.clone());
+        let first = iter2.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+    }
+}
+
+#[cfg(test)]
 mod test {
     use super::*;
     use crate::errors::Unauthorized;
@@ -178,69 +253,11 @@ mod test {
         assert_eq!(None, store.get(b"food"));
     }
 
-    fn storage_with_data() -> MemoryStorage {
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn memory_storage_iterator() {
         let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar");
-        store.set(b"ant", b"hill");
-        store.set(b"ze", b"bra");
-        store
-    }
-
-    #[test]
-    fn memory_storage_iterator_full() {
-        let store = storage_with_data();
-        let iter = store.range(..);
-        assert_eq!(3, iter.count());
-        let mut iter2 = store.range(..);
-        let first = iter2.next().unwrap();
-        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
-    }
-
-    #[test]
-    fn memory_storage_iterator_closed() {
-        let store = storage_with_data();
-        let range = b"f".to_vec()..b"n".to_vec();
-        let iter = store.range(range.clone());
-        assert_eq!(1, iter.count());
-        let mut iter2 = store.range(range.clone());
-        let first = iter2.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-    }
-
-    #[test]
-    fn memory_storage_iterator_closed_reverse() {
-        let store = storage_with_data();
-        let range = b"air".to_vec()..b"loop".to_vec();
-        let iter = store.range(range.clone()).rev();
-        assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone()).rev();
-        let first = iter2.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-        let second = iter2.next().unwrap();
-        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
-    }
-
-    #[test]
-    fn memory_storage_iterator_half_open() {
-        let store = storage_with_data();
-        // check this
-        let range = b"f".to_vec()..;
-        let iter = store.range(range.clone());
-        assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone());
-        let first = iter2.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-    }
-
-    #[test]
-    fn memory_storage_iterator_half_open_reverse() {
-        let store = storage_with_data();
-        let range = b"f".to_vec()..; // from end to f backwards
-        let iter = store.range(range.clone()).rev();
-        assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone()).rev();
-        let first = iter2.next().unwrap();
-        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
+        iterator_test_suite(&mut store);
     }
 
     #[test]
