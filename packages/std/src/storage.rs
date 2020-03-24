@@ -1,9 +1,13 @@
+#[cfg(feature = "iterator")]
+use std::cmp::Ordering;
 use std::collections::BTreeMap;
+#[cfg(feature = "iterator")]
+use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::RangeBounds;
 
 use crate::errors::Result;
-use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+use crate::traits::{Api, Extern, KVPair, ReadonlyStorage, Storage};
 
 #[derive(Default)]
 pub struct MemoryStorage {
@@ -27,10 +31,16 @@ impl ReadonlyStorage for MemoryStorage {
     fn range<R: RangeBounds<Vec<u8>>>(
         &self,
         bounds: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>> {
+        reverse: bool,
+    ) -> Box<dyn Iterator<Item = KVPair>> {
         let iter = self.data.range(bounds);
+
         // We brute force this a bit to deal with lifetimes.... should do this lazy
-        let res: Vec<_> = iter.map(|(k, v)| (k.clone(), v.clone())).collect();
+        let res: Vec<_> = if reverse {
+            iter.rev().map(|(k, v)| (k.clone(), v.clone())).collect()
+        } else {
+            iter.map(|(k, v)| (k.clone(), v.clone())).collect()
+        };
         Box::new(res.into_iter())
     }
 }
@@ -116,12 +126,17 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: RangeBounds<Vec<u8>>>(
+    fn range<R: Clone + RangeBounds<Vec<u8>>>(
         &self,
         bounds: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>> {
+        reverse: bool,
+    ) -> Box<dyn Iterator<Item = KVPair>> {
         // TODO: also combine with underlying storage
-        self.local_state.range(bounds)
+        let local = self.local_state.range(bounds.clone(), reverse);
+        let base = self.storage.range(bounds, reverse);
+        // TODO: we need to choose MergeDescending otherwise?
+        let merged = MergeOrdered::new(local, base, reverse);
+        Box::new(merged)
     }
 }
 
@@ -133,6 +148,58 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
         };
         op.apply(&mut self.local_state);
         self.rep_log.append(op);
+    }
+}
+
+#[cfg(feature = "iterator")]
+struct MergeOrdered<L, R>
+where
+    L: Iterator<Item = R::Item>,
+    R: Iterator,
+{
+    left: Peekable<L>,
+    right: Peekable<R>,
+    descending: bool,
+}
+
+#[cfg(feature = "iterator")]
+impl<L, R> MergeOrdered<L, R>
+where
+    L: Iterator<Item = R::Item>,
+    R: Iterator,
+{
+    fn new(left: L, right: R, descending: bool) -> Self {
+        MergeOrdered {
+            left: left.peekable(),
+            right: right.peekable(),
+            descending,
+        }
+    }
+}
+
+#[cfg(feature = "iterator")]
+impl<L, R> Iterator for MergeOrdered<L, R>
+where
+    L: Iterator<Item = R::Item>,
+    R: Iterator,
+    L::Item: Ord,
+{
+    type Item = L::Item;
+
+    fn next(&mut self) -> Option<L::Item> {
+        match (self.left.peek(), self.right.peek()) {
+            (Some(l), Some(r)) => {
+                let order = if self.descending { r.cmp(l) } else { l.cmp(r) };
+                match order {
+                    Ordering::Less => self.left.next(),
+                    Ordering::Equal => self.left.next(),
+                    Ordering::Greater => self.right.next(),
+                }
+            }
+            (Some(_), None) => self.left.next(),
+            (None, Some(_)) => self.right.next(),
+            (None, None) => None,
+        }
     }
 }
 
@@ -174,7 +241,7 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
 fn iterator_test_suite<S: Storage>(store: &mut S) {
     // ensure we had previously set "foo" = "bar"
     assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-    assert_eq!(store.range(..).count(), 1);
+    assert_eq!(store.range(.., false).count(), 1);
 
     // setup
     store.set(b"ant", b"hill");
@@ -182,12 +249,12 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
 
     // open ended range
     {
-        let iter = store.range(..);
+        let iter = store.range(.., false);
         assert_eq!(3, iter.count());
-        let mut iter2 = store.range(..);
+        let mut iter2 = store.range(.., false);
         let first = iter2.next().unwrap();
         assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
-        let mut iter3 = store.range(..).rev();
+        let mut iter3 = store.range(.., true);
         let last = iter3.next().unwrap();
         assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
     }
@@ -195,9 +262,9 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
     // closed range
     {
         let range = b"f".to_vec()..b"n".to_vec();
-        let iter = store.range(range.clone());
+        let iter = store.range(range.clone(), false);
         assert_eq!(1, iter.count());
-        let mut iter2 = store.range(range.clone());
+        let mut iter2 = store.range(range.clone(), false);
         let first = iter2.next().unwrap();
         assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
@@ -205,9 +272,9 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
     // closed range reverse
     {
         let range = b"air".to_vec()..b"loop".to_vec();
-        let iter = store.range(range.clone()).rev();
+        let iter = store.range(range.clone(), true);
         assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone()).rev();
+        let mut iter2 = store.range(range.clone(), true);
         let first = iter2.next().unwrap();
         assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
         let second = iter2.next().unwrap();
@@ -217,9 +284,9 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
     // end open iterator
     {
         let range = b"f".to_vec()..;
-        let iter = store.range(range.clone());
+        let iter = store.range(range.clone(), false);
         assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone());
+        let mut iter2 = store.range(range.clone(), false);
         let first = iter2.next().unwrap();
         assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
@@ -227,9 +294,9 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
     // end open iterator reverse
     {
         let range = b"f".to_vec()..;
-        let iter = store.range(range.clone()).rev();
+        let iter = store.range(range.clone(), true);
         assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone()).rev();
+        let mut iter2 = store.range(range.clone(), true);
         let first = iter2.next().unwrap();
         assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
     }
@@ -237,9 +304,9 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
     // start open iterator
     {
         let range = ..b"f".to_vec();
-        let iter = store.range(range.clone());
+        let iter = store.range(range.clone(), false);
         assert_eq!(1, iter.count());
-        let mut iter2 = store.range(range.clone());
+        let mut iter2 = store.range(range.clone(), false);
         let first = iter2.next().unwrap();
         assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
     }

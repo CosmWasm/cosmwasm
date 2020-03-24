@@ -4,6 +4,8 @@ use std::ops::RangeBounds;
 use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
+pub type KVPair = (Vec<u8>, Vec<u8>);
+
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
@@ -20,10 +22,12 @@ pub trait ReadonlyStorage {
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation eg db.range(b"bar"..b"foo")
     /// returns a DoubleEndedIterator, so range(..).rev() is efficient to get the end
-    fn range<R: RangeBounds<Vec<u8>>>(
+    fn range<R: Clone + RangeBounds<Vec<u8>>>(
         &self,
         bounds: R,
-    ) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>>;
+        // TODO: use Asc/Desc as enum for clarity
+        reverse: bool,
+    ) -> Box<dyn Iterator<Item = KVPair>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
