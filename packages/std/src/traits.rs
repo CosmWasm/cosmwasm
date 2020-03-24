@@ -1,3 +1,5 @@
+#[cfg(feature = "iterator")]
+use std::ops::RangeBounds;
 use std::vec::Vec;
 
 use crate::errors::Result;
@@ -12,9 +14,13 @@ pub struct Extern<S: Storage, A: Api> {
     pub api: A,
 }
 
-// ReadonlyStorage is access to the contracts persistent data store
+/// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
+    #[cfg(feature = "iterator")]
+    /// range allows iteration over a set of keys, either forwards or backwards
+    /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
+    fn range<R: RangeBounds<&[u8]>>(&self, bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
