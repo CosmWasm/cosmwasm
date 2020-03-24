@@ -20,7 +20,10 @@ pub trait ReadonlyStorage {
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation eg db.range(b"bar"..b"foo")
     /// returns a DoubleEndedIterator, so range(..).rev() is efficient to get the end
-    fn range<R: RangeBounds<Vec<u8>>>(&self, bounds: R) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>>;
+    fn range<R: RangeBounds<Vec<u8>>>(
+        &self,
+        bounds: R,
+    ) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

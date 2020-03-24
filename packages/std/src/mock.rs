@@ -108,7 +108,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
 mod test {
     use super::*;
 
-    use crate::{coin};
+    use crate::coin;
 
     #[test]
     fn mock_env_arguments() {
