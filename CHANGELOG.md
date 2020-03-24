@@ -2,6 +2,10 @@
 
 ## 0.8.0 (not yet released)
 
+**all**
+
+- Upgrade schemars to 0.6.
+
 **cosmwasm**
 
 - Make all symbols from `cosmwasm::memory` crate internal, as those symbols are
