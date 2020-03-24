@@ -24,7 +24,7 @@ impl ReadonlyStorage for MemoryStorage {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: RangeBounds<Vec<u8>>>(&self, bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>> {
+    fn range<R: RangeBounds<Vec<u8>>>(&self, bounds: R) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>> {
         let iter = self.data.range(bounds);
         // We brute force this a bit to deal with lifetimes.... should do this lazy
         let res: Vec<_> = iter.map(
@@ -115,7 +115,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: RangeBounds<Vec<u8>>>(&self, _bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>> {
+    fn range<R: RangeBounds<Vec<u8>>>(&self, _bounds: R) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>> {
         // TODO
         panic!("unimplemented");
     }
@@ -164,11 +164,85 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
 mod test {
     use super::*;
     use crate::errors::Unauthorized;
-    use crate::mock::MockStorage;
+
+    #[test]
+    fn memory_storage_get_and_set() {
+        let mut store = MemoryStorage::new();
+        assert_eq!(None, store.get(b"foo"));
+        store.set(b"foo", b"bar");
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
+        assert_eq!(None, store.get(b"food"));
+    }
+
+    fn storage_with_data() -> MemoryStorage {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
+        store.set(b"ant", b"hill");
+        store.set(b"ze", b"bra");
+        store
+    }
+
+    #[test]
+    fn memory_storage_iterator_full() {
+        let store = storage_with_data();
+        let iter = store.range(..);
+        assert_eq!(3, iter.count());
+        let mut iter2 = store.range(..);
+        let first = iter2.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+    }
+
+    #[test]
+    fn memory_storage_iterator_closed() {
+        let store = storage_with_data();
+        let range = b"f".to_vec()..b"n".to_vec();
+        let iter = store.range(range.clone());
+        assert_eq!(1, iter.count());
+        let mut iter2 = store.range(range.clone());
+        let first = iter2.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+    }
+
+    #[test]
+    fn memory_storage_iterator_closed_reverse() {
+        let store = storage_with_data();
+        let range = b"air".to_vec()..b"loop".to_vec();
+        let iter = store.range(range.clone()).rev();
+        assert_eq!(2, iter.count());
+        let mut iter2 = store.range(range.clone()).rev();
+        let first = iter2.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+        let second = iter2.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
+    }
+
+
+    #[test]
+    fn memory_storage_iterator_half_open() {
+        let store = storage_with_data();
+        // check this
+        let range = b"f".to_vec()..;
+        let iter = store.range(range.clone());
+        assert_eq!(2, iter.count());
+        let mut iter2 = store.range(range.clone());
+        let first = iter2.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+    }
+
+    #[test]
+    fn memory_storage_iterator_half_open_reverse() {
+        let store = storage_with_data();
+        let range = b"f".to_vec()..; // from end to f backwards
+        let iter = store.range(range.clone()).rev();
+        assert_eq!(2, iter.count());
+        let mut iter2 = store.range(range.clone()).rev();
+        let first = iter2.next().unwrap();
+        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
+    }
 
     #[test]
     fn commit_writes_through() {
-        let mut base = MockStorage::new();
+        let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
@@ -181,7 +255,7 @@ mod test {
 
     #[test]
     fn storage_remains_readable() {
-        let mut base = MockStorage::new();
+        let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
         let mut stxn1 = StorageTransaction::new(&base);
@@ -200,7 +274,7 @@ mod test {
 
     #[test]
     fn rollback_has_no_effect() {
-        let mut base = MockStorage::new();
+        let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&mut base);
@@ -213,7 +287,7 @@ mod test {
 
     #[test]
     fn ignore_same_as_rollback() {
-        let mut base = MockStorage::new();
+        let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&mut base);
@@ -225,7 +299,7 @@ mod test {
 
     #[test]
     fn transactional_works() {
-        let mut base = MockStorage::new();
+        let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
         // writes on success

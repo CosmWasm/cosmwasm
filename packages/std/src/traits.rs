@@ -18,8 +18,9 @@ pub trait ReadonlyStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
-    /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: RangeBounds<Vec<u8>>>(&self, bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>>;
+    /// uses standard rust range notation eg db.range(b"bar"..b"foo")
+    /// returns a DoubleEndedIterator, so range(..).rev() is efficient to get the end
+    fn range<R: RangeBounds<Vec<u8>>>(&self, bounds: R) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

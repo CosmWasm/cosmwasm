@@ -108,7 +108,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
 mod test {
     use super::*;
 
-    use crate::{coin, ReadonlyStorage, Storage};
+    use crate::{coin};
 
     #[test]
     fn mock_env_arguments() {
@@ -123,15 +123,6 @@ mod test {
         // and the results are the same
         assert_eq!(a, b);
         assert_eq!(a, c);
-    }
-
-    #[test]
-    fn get_and_set() {
-        let mut store = MockStorage::new();
-        assert_eq!(None, store.get(b"foo"));
-        store.set(b"foo", b"bar");
-        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
-        assert_eq!(None, store.get(b"food"));
     }
 
     #[test]
