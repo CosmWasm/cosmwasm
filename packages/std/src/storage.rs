@@ -7,7 +7,9 @@ use std::iter::Peekable;
 use std::ops::RangeBounds;
 
 use crate::errors::Result;
-use crate::traits::{Api, Extern, KVPair, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::traits::KVPair;
+use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 
 #[derive(Default)]
 pub struct MemoryStorage {

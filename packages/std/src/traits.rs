@@ -4,6 +4,7 @@ use std::ops::RangeBounds;
 use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
+#[cfg(feature = "iterator")]
 pub type KVPair = (Vec<u8>, Vec<u8>);
 
 /// Holds all external dependencies of the contract.
