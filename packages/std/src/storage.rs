@@ -1,12 +1,36 @@
+use std::collections::HashMap;
+
 use crate::errors::Result;
-use crate::mock::MockStorage;
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+
+#[derive(Default)]
+pub struct MemoryStorage {
+    data: HashMap<Vec<u8>, Vec<u8>>,
+}
+
+impl MemoryStorage {
+    pub fn new() -> Self {
+        MemoryStorage::default()
+    }
+}
+
+impl ReadonlyStorage for MemoryStorage {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.data.get(key).cloned()
+    }
+}
+
+impl Storage for MemoryStorage {
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        self.data.insert(key.to_vec(), value.to_vec());
+    }
+}
 
 pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     /// read-only access to backing storage
     storage: &'a S,
     /// these are local changes not flushed to backing storage
-    local_state: MockStorage,
+    local_state: MemoryStorage,
     /// a log of local changes not yet flushed to backing storage
     rep_log: RepLog,
 }
@@ -52,7 +76,7 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
     pub fn new(storage: &'a S) -> Self {
         StorageTransaction {
             storage,
-            local_state: MockStorage::new(),
+            local_state: MemoryStorage::new(),
             rep_log: RepLog::new(),
         }
     }
