@@ -118,10 +118,10 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
     fn range<R: RangeBounds<Vec<u8>>>(
         &self,
-        _bounds: R,
+        bounds: R,
     ) -> Box<dyn DoubleEndedIterator<Item = (Vec<u8>, Vec<u8>)>> {
-        // TODO
-        panic!("unimplemented");
+        // TODO: also combine with underlying storage
+        self.local_state.range(bounds)
     }
 }
 
@@ -166,11 +166,17 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
 
 #[cfg(test)]
 #[cfg(feature = "iterator")]
-// iterator_test_suite takes an empty storage, adds data and runs iterator tests
+// iterator_test_suite takes a storage, adds data and runs iterator tests
+// the storage must previously have exactly one key: "foo" = "bar"
+// (this allows us to test StorageTransaction and other wrapped storage better)
+//
 // designed to be imported by other modules
 fn iterator_test_suite<S: Storage>(store: &mut S) {
+    // ensure we had previously set "foo" = "bar"
+    assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+    assert_eq!(store.range(..).count(), 1);
+
     // setup
-    store.set(b"foo", b"bar");
     store.set(b"ant", b"hill");
     store.set(b"ze", b"bra");
 
@@ -257,7 +263,26 @@ mod test {
     #[cfg(feature = "iterator")]
     fn memory_storage_iterator() {
         let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
         iterator_test_suite(&mut store);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn storage_transaction_iterator_empty_base() {
+        let mut base = MemoryStorage::new();
+        let mut check = StorageTransaction::new(&mut base);
+        check.set(b"foo", b"bar");
+        iterator_test_suite(&mut check);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn storage_transaction_iterator_with_base_data() {
+        let mut base = MemoryStorage::new();
+        base.set(b"foo", b"bar");
+        let mut check = StorageTransaction::new(&mut base);
+        iterator_test_suite(&mut check);
     }
 
     #[test]
