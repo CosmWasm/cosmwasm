@@ -1,10 +1,9 @@
-use std::collections::HashMap;
-
 use snafu::ResultExt;
 
 use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
-use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+use crate::storage::MemoryStorage;
+use crate::traits::{Api, Extern};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 /// All external requirements that can be injected for unit tests
@@ -15,36 +14,9 @@ pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi
     }
 }
 
-#[derive(Clone)]
-pub struct MockStorage {
-    data: HashMap<Vec<u8>, Vec<u8>>,
-}
-
-impl MockStorage {
-    pub fn new() -> Self {
-        MockStorage {
-            data: HashMap::new(),
-        }
-    }
-}
-
-impl Default for MockStorage {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl ReadonlyStorage for MockStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.data.get(key).cloned()
-    }
-}
-
-impl Storage for MockStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
-        self.data.insert(key.to_vec(), value.to_vec());
-    }
-}
+// Use MemoryStorage implementation (which is valid in non-testcode)
+// We can later make simplifications here if needed
+pub type MockStorage = MemoryStorage;
 
 // MockPrecompiles zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
@@ -136,7 +108,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
 mod test {
     use super::*;
 
-    use crate::types::coin;
+    use crate::{coin, ReadonlyStorage, Storage};
 
     #[test]
     fn mock_env_arguments() {

@@ -24,9 +24,13 @@ impl ReadonlyStorage for MemoryStorage {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: RangeBounds<&[u8]>>(&self, bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>> {
+    fn range<R: RangeBounds<Vec<u8>>>(&self, bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>> {
         let iter = self.data.range(bounds);
-        Box::new(iter)
+        // We brute force this a bit to deal with lifetimes.... should do this lazy
+        let res: Vec<_> = iter.map(
+            |(k, v)| (k.clone(), v.clone())
+        ).collect();
+        Box::new(res.into_iter())
     }
 }
 
@@ -106,6 +110,14 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
             Some(val) => Some(val),
             None => self.storage.get(key),
         }
+    }
+
+    #[cfg(feature = "iterator")]
+    /// range allows iteration over a set of keys, either forwards or backwards
+    /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
+    fn range<R: RangeBounds<Vec<u8>>>(&self, _bounds: R) -> Box<dyn Iterator<Item = (Vec<u8>, Vec<u8>)>> {
+        // TODO
+        panic!("unimplemented");
     }
 }
 
