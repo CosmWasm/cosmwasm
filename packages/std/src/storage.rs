@@ -4,12 +4,12 @@ use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
 use std::iter::Peekable;
 #[cfg(feature = "iterator")]
-use std::ops::RangeBounds;
+use std::ops::Bound;
 
 use crate::errors::Result;
-#[cfg(feature = "iterator")]
-use crate::traits::KVPair;
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::traits::{KVPair, Sort};
 
 #[derive(Default)]
 pub struct MemoryStorage {
@@ -30,18 +30,22 @@ impl ReadonlyStorage for MemoryStorage {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: RangeBounds<Vec<u8>>>(
+    fn range(
         &self,
-        bounds: R,
-        reverse: bool,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Sort,
     ) -> Box<dyn Iterator<Item = KVPair>> {
+        let bounds = (
+            start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
+            end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
+        );
         let iter = self.data.range(bounds);
 
         // We brute force this a bit to deal with lifetimes.... should do this lazy
-        let res: Vec<_> = if reverse {
-            iter.rev().map(|(k, v)| (k.clone(), v.clone())).collect()
-        } else {
-            iter.map(|(k, v)| (k.clone(), v.clone())).collect()
+        let res: Vec<_> = match order {
+            Sort::Ascending => iter.map(|(k, v)| (k.clone(), v.clone())).collect(),
+            Sort::Descending => iter.rev().map(|(k, v)| (k.clone(), v.clone())).collect(),
         };
         Box::new(res.into_iter())
     }
@@ -128,16 +132,15 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range<R: Clone + RangeBounds<Vec<u8>>>(
+    fn range(
         &self,
-        bounds: R,
-        reverse: bool,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Sort,
     ) -> Box<dyn Iterator<Item = KVPair>> {
-        // TODO: also combine with underlying storage
-        let local = self.local_state.range(bounds.clone(), reverse);
-        let base = self.storage.range(bounds, reverse);
-        // TODO: we need to choose MergeDescending otherwise?
-        let merged = MergeOrdered::new(local, base, reverse);
+        let local = self.local_state.range(start, end, order);
+        let base = self.storage.range(start, end, order);
+        let merged = MergeOrdered::new(local, base, order);
         Box::new(merged)
     }
 }
@@ -161,7 +164,7 @@ where
 {
     left: Peekable<L>,
     right: Peekable<R>,
-    descending: bool,
+    order: Sort,
 }
 
 #[cfg(feature = "iterator")]
@@ -170,11 +173,11 @@ where
     L: Iterator<Item = R::Item>,
     R: Iterator,
 {
-    fn new(left: L, right: R, descending: bool) -> Self {
+    fn new(left: L, right: R, order: Sort) -> Self {
         MergeOrdered {
             left: left.peekable(),
             right: right.peekable(),
-            descending,
+            order,
         }
     }
 }
@@ -191,7 +194,10 @@ where
     fn next(&mut self) -> Option<L::Item> {
         match (self.left.peek(), self.right.peek()) {
             (Some(l), Some(r)) => {
-                let order = if self.descending { r.cmp(l) } else { l.cmp(r) };
+                let order = match self.order {
+                    Sort::Ascending => l.cmp(r),
+                    Sort::Descending => r.cmp(l),
+                };
                 match order {
                     Ordering::Less => self.left.next(),
                     Ordering::Equal => self.left.next(),
@@ -243,7 +249,7 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
 fn iterator_test_suite<S: Storage>(store: &mut S) {
     // ensure we had previously set "foo" = "bar"
     assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-    assert_eq!(store.range(.., false).count(), 1);
+    assert_eq!(store.range(None, None, Sort::Ascending).count(), 1);
 
     // setup
     store.set(b"ant", b"hill");
@@ -251,66 +257,70 @@ fn iterator_test_suite<S: Storage>(store: &mut S) {
 
     // open ended range
     {
-        let iter = store.range(.., false);
+        let iter = store.range(None, None, Sort::Ascending);
         assert_eq!(3, iter.count());
-        let mut iter2 = store.range(.., false);
-        let first = iter2.next().unwrap();
+        let mut iter = store.range(None, None, Sort::Ascending);
+        let first = iter.next().unwrap();
         assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
-        let mut iter3 = store.range(.., true);
-        let last = iter3.next().unwrap();
+        let mut iter = store.range(None, None, Sort::Descending);
+        let last = iter.next().unwrap();
         assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
     }
 
     // closed range
     {
-        let range = b"f".to_vec()..b"n".to_vec();
-        let iter = store.range(range.clone(), false);
+        let iter = store.range(Some(b"f"), Some(b"n"), Sort::Ascending);
         assert_eq!(1, iter.count());
-        let mut iter2 = store.range(range.clone(), false);
-        let first = iter2.next().unwrap();
+        let mut iter = store.range(Some(b"f"), Some(b"n"), Sort::Ascending);
+        let first = iter.next().unwrap();
         assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
 
     // closed range reverse
     {
-        let range = b"air".to_vec()..b"loop".to_vec();
-        let iter = store.range(range.clone(), true);
+        let iter = store.range(Some(b"air"), Some(b"loop"), Sort::Descending);
         assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone(), true);
-        let first = iter2.next().unwrap();
+        let mut iter = store.range(Some(b"air"), Some(b"loop"), Sort::Descending);
+        let first = iter.next().unwrap();
         assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-        let second = iter2.next().unwrap();
+        let second = iter.next().unwrap();
         assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
     }
 
     // end open iterator
     {
-        let range = b"f".to_vec()..;
-        let iter = store.range(range.clone(), false);
+        let iter = store.range(Some(b"f"), None, Sort::Ascending);
         assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone(), false);
-        let first = iter2.next().unwrap();
+        let mut iter = store.range(Some(b"f"), None, Sort::Ascending);
+        let first = iter.next().unwrap();
         assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
 
     // end open iterator reverse
     {
-        let range = b"f".to_vec()..;
-        let iter = store.range(range.clone(), true);
+        let iter = store.range(Some(b"f"), None, Sort::Descending);
         assert_eq!(2, iter.count());
-        let mut iter2 = store.range(range.clone(), true);
-        let first = iter2.next().unwrap();
+        let mut iter = store.range(Some(b"f"), None, Sort::Descending);
+        let first = iter.next().unwrap();
         assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
     }
 
     // start open iterator
     {
-        let range = ..b"f".to_vec();
-        let iter = store.range(range.clone(), false);
+        let iter = store.range(None, Some(b"f"), Sort::Ascending);
         assert_eq!(1, iter.count());
-        let mut iter2 = store.range(range.clone(), false);
-        let first = iter2.next().unwrap();
+        let mut iter = store.range(None, Some(b"f"), Sort::Ascending);
+        let first = iter.next().unwrap();
         assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+    }
+
+    // start open iterator
+    {
+        let iter = store.range(None, Some(b"no"), Sort::Descending);
+        assert_eq!(2, iter.count());
+        let mut iter = store.range(None, Some(b"no"), Sort::Descending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
 }
 

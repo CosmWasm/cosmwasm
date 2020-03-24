@@ -1,11 +1,15 @@
-#[cfg(feature = "iterator")]
-use std::ops::RangeBounds;
-
 use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
 pub type KVPair = (Vec<u8>, Vec<u8>);
+
+#[cfg(feature = "iterator")]
+#[derive(Copy, Clone)]
+pub enum Sort {
+    Ascending,
+    Descending,
+}
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -23,11 +27,11 @@ pub trait ReadonlyStorage {
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation eg db.range(b"bar"..b"foo")
     /// returns a DoubleEndedIterator, so range(..).rev() is efficient to get the end
-    fn range<R: Clone + RangeBounds<Vec<u8>>>(
+    fn range(
         &self,
-        bounds: R,
-        // TODO: use Asc/Desc as enum for clarity
-        reverse: bool,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Sort,
     ) -> Box<dyn Iterator<Item = KVPair>>;
 }
 
