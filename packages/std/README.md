@@ -1,6 +1,6 @@
 # cosmwasm
 
-[![cosmwasm on crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
+[![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)
 
 The standard library for building CosmWasm smart contracts. Code in this package is compiled into the smart contract.
 

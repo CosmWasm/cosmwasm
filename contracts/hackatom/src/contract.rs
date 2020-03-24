@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::{
+use cosmwasm_std::{
     from_slice, log, to_vec, unauthorized, Api, CanonicalAddr, CosmosMsg, Env, Extern, HumanAddr,
     NotFound, ParseErr, Response, Result, SerializeErr, Storage,
 };
@@ -149,9 +149,9 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::testing::{mock_dependencies, mock_env};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm::{coin, transactional_deps, ReadonlyStorage};
+    use cosmwasm_std::{coin, transactional_deps, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {

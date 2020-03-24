@@ -17,6 +17,7 @@
   `cosmwasm::testing`. Export all remaining symbols at top level (e.g.
   `use cosmwasm::traits::{Api, Storage};` + `use cosmwasm::encoding::Binary;`
   becomes `use cosmwasm::{Api, Binary, Storage};`).
+- Rename package `cosmwasm` to `cosmwasm-std`.
 
 ## 0.7.2 (2020-03-23)
 

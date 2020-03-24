@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
 [![Docs](https://docs.rs/cosmwasm/badge.svg)](https://docs.rs/cosmwasm)
-[![cosmwasm on crates.io](https://img.shields.io/crates/v/cosmwasm.svg)](https://crates.io/crates/cosmwasm)
+[![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)
 [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)
 
 **WebAssembly Smart Contracts for the Cosmos SDK**

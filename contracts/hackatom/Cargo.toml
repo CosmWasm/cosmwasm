@@ -23,12 +23,12 @@ overflow-checks = true
 [features]
 default = ["cranelift"]
 # For quicker tests, cargo test --lib. for more explicit tests, cargo test --features=backtraces
-backtraces = ["cosmwasm/backtraces", "cosmwasm-vm/backtraces"]
+backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 cranelift = ["cosmwasm-vm/default-cranelift"]
 singlepass = ["cosmwasm-vm/default-singlepass"]
 
 [dependencies]
-cosmwasm = { path = "../../packages/std" }
+cosmwasm-std = { path = "../../packages/std" }
 schemars = "0.6"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
