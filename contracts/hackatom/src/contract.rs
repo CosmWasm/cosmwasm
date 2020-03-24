@@ -149,8 +149,9 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm::testing::{mock_dependencies, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm::{coin, mock_dependencies, mock_env, transactional_deps, ReadonlyStorage};
+    use cosmwasm::{coin, transactional_deps, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {

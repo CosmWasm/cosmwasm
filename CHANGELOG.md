@@ -6,11 +6,12 @@
 
 - Make all symbols from `cosmwasm::memory` crate internal, as those symbols are
   not needed by users of the library.
-- Export all symbols at top level (e.g.
+- Rename `cosmwasm::mock::dependencies` -> `cosmwasm::mock::mock_dependencies`
+  to differentiate between testing and production `External`.
+- Export all symbols from `cosmwasm::mock` as the new non-wasm32 module
+  `cosmwasm::testing`. Export all remaining symbols at top level (e.g.
   `use cosmwasm::traits::{Api, Storage};` + `use cosmwasm::encoding::Binary;`
   becomes `use cosmwasm::{Api, Binary, Storage};`).
-- Rename `cosmwasm::dependencies` -> `cosmwasm::mock_dependencies` to
-  differentiate between testing and production `External`.
 
 ## 0.7.2 (2020-03-23)
 

@@ -133,7 +133,8 @@ where
 mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::{coin, mock_dependencies, mock_env, MockApi, MockStorage};
+    use cosmwasm::coin;
+    use cosmwasm::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
     use tempfile::TempDir;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;

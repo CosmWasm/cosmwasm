@@ -146,7 +146,8 @@ where
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_instance, mock_instance_with_gas_limit};
-    use cosmwasm::{coin, mock_env};
+    use cosmwasm::coin;
+    use cosmwasm::testing::mock_env;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
 

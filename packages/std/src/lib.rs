@@ -2,7 +2,6 @@
 
 mod encoding;
 mod errors;
-mod mock;
 mod serde;
 mod storage;
 mod traits;
@@ -13,7 +12,6 @@ pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
     Result, SerializeErr,
 };
-pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockStorage};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::{
     transactional, transactional_deps, MemoryStorage, RepLog, StorageTransaction,
@@ -36,6 +34,16 @@ mod memory; // used by exports and imports only
 pub use crate::exports::{allocate, deallocate, do_handle, do_init, do_query};
 #[cfg(target_arch = "wasm32")]
 pub use crate::imports::{ExternalApi, ExternalStorage};
+
+// Exposed for testing only
+// Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
+
+#[cfg(not(target_arch = "wasm32"))]
+mod mock;
+#[cfg(not(target_arch = "wasm32"))]
+pub mod testing {
+    pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockStorage};
+}
 
 // Not exposed
 
