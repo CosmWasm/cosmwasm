@@ -112,7 +112,7 @@ impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::mock::MockStorage;
+    use crate::testing::MockStorage;
 
     #[test]
     fn key_prefix_works() {

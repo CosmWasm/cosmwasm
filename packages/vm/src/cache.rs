@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm::traits::{Api, Extern, Storage};
+use cosmwasm::{Api, Extern, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
@@ -132,11 +132,10 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use tempfile::TempDir;
-
     use crate::calls::{call_handle, call_init};
-    use cosmwasm::mock::{dependencies, mock_env, MockApi, MockStorage};
-    use cosmwasm::types::coin;
+    use cosmwasm::coin;
+    use cosmwasm::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
+    use tempfile::TempDir;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
@@ -191,7 +190,7 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
-        let deps = dependencies(20);
+        let deps = mock_dependencies(20);
         let _instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
         assert_eq!(cache.stats.hits_instance, 0);
         assert_eq!(cache.stats.hits_module, 1);
@@ -203,9 +202,9 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
-        let deps1 = dependencies(20);
-        let deps2 = dependencies(20);
-        let deps3 = dependencies(20);
+        let deps1 = mock_dependencies(20);
+        let deps2 = mock_dependencies(20);
+        let deps3 = mock_dependencies(20);
         let instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
         cache.store_instance(&id, instance1);
         let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
@@ -222,7 +221,7 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
-        let deps = dependencies(20);
+        let deps = mock_dependencies(20);
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // run contract
@@ -240,7 +239,7 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
-        let deps = dependencies(20);
+        let deps = mock_dependencies(20);
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // init contract
@@ -270,8 +269,8 @@ mod test {
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
 
         // these differentiate the two instances of the same contract
-        let deps1 = dependencies(20);
-        let deps2 = dependencies(20);
+        let deps1 = mock_dependencies(20);
+        let deps2 = mock_dependencies(20);
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
@@ -327,8 +326,8 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
 
-        let deps1 = dependencies(20);
-        let deps2 = dependencies(20);
+        let deps1 = mock_dependencies(20);
+        let deps2 = mock_dependencies(20);
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
@@ -359,8 +358,8 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT_0_7).unwrap();
 
-        let deps1 = dependencies(20);
-        let deps2 = dependencies(20);
+        let deps1 = mock_dependencies(20);
+        let deps2 = mock_dependencies(20);
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, 10).unwrap();

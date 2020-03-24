@@ -1,10 +1,7 @@
 use std::str::from_utf8;
 
-use cosmwasm::mock::mock_env;
-use cosmwasm::serde::from_slice;
-use cosmwasm::traits::{Api, ReadonlyStorage};
-use cosmwasm::types::{coin, log, CosmosMsg, HumanAddr, QueryResult};
-
+use cosmwasm::testing::mock_env;
+use cosmwasm::{coin, from_slice, log, Api, CosmosMsg, HumanAddr, QueryResult, ReadonlyStorage};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -20,7 +17,7 @@ Then running `cargo test` will validate we can properly call into that generated
 You can easily convert unit tests to integration tests.
 1. First copy them over verbatum,
 2. Then change
-    let mut deps = dependencies(20);
+    let mut deps = mock_dependencies(20);
 To
     let mut deps = mock_instance(WASM);
 3. If you access raw storage, where ever you see something like:
@@ -197,7 +194,7 @@ fn passes_io_tests() {
 mod singlepass_tests {
     use super::*;
 
-    use cosmwasm::serde::to_vec;
+    use cosmwasm::to_vec;
     use cosmwasm_vm::call_handle;
     use cosmwasm_vm::testing::mock_instance_with_gas_limit;
 

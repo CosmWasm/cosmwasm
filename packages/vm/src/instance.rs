@@ -9,7 +9,7 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use cosmwasm::traits::{Api, Extern, Storage};
+use cosmwasm::{Api, Extern, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
@@ -146,8 +146,8 @@ where
 mod test {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_instance, mock_instance_with_gas_limit};
-    use cosmwasm::mock::mock_env;
-    use cosmwasm::types::coin;
+    use cosmwasm::coin;
+    use cosmwasm::testing::mock_env;
 
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
 

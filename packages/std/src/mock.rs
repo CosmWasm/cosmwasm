@@ -7,8 +7,8 @@ use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
-// dependencies are all external requirements that can be injected for unit tests
-pub fn dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
+/// All external requirements that can be injected for unit tests
+pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
     Extern {
         storage: MockStorage::new(),
         api: MockApi::new(canonical_length),

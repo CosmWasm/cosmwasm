@@ -1,5 +1,3 @@
-#![cfg(target_arch = "wasm32")]
-
 //! exports exposes the public wasm API
 //! allocate and deallocate should be re-exported as is
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point

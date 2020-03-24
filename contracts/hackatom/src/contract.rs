@@ -2,10 +2,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use snafu::{OptionExt, ResultExt};
 
-use cosmwasm::errors::{unauthorized, NotFound, ParseErr, Result, SerializeErr};
-use cosmwasm::serde::{from_slice, to_vec};
-use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{log, CanonicalAddr, CosmosMsg, Env, HumanAddr, Response};
+use cosmwasm::{
+    from_slice, log, to_vec, unauthorized, Api, CanonicalAddr, CosmosMsg, Env, Extern, HumanAddr,
+    NotFound, ParseErr, Response, Result, SerializeErr, Storage,
+};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -149,15 +149,13 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::mock::{dependencies, mock_env};
-    use cosmwasm::storage::transactional_deps;
-    // import trait to get access to read
-    use cosmwasm::traits::ReadonlyStorage;
-    use cosmwasm::types::coin;
+    use cosmwasm::testing::{mock_dependencies, mock_env};
+    // import trait ReadonlyStorage to get access to read
+    use cosmwasm::{coin, transactional_deps, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -184,7 +182,7 @@ mod tests {
 
     #[test]
     fn init_and_query() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -205,7 +203,7 @@ mod tests {
 
     #[test]
     fn checkpointing_works_on_contract() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -237,7 +235,7 @@ mod tests {
 
     #[test]
     fn proper_handle() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -282,7 +280,7 @@ mod tests {
 
     #[test]
     fn failed_handle() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -323,7 +321,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "This page intentionally faulted")]
     fn handle_panic() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
