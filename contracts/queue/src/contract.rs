@@ -42,12 +42,12 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct CountResponse {
-    count: i32,
+    pub count: i32,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SumResponse {
-    sum: i32,
+    pub sum: i32,
 }
 
 // init is a no-op, just empty data
