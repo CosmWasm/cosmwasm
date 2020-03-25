@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 use cosmwasm_std::{
-    from_slice, to_vec, Api, Binary, Env, Extern, HumanAddr, ParseErr, Response, Result,
-    SerializeErr, Sort, Storage,
+    from_slice, to_vec, Api, Binary, Env, Extern, ParseErr, Response, Result, SerializeErr, Sort,
+    Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -98,8 +98,7 @@ fn do_pop<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<Resp
     let mut res = Response::default();
     if let Some((k, v)) = first {
         // remove from storage and return old value
-        // TODO: add delete
-        deps.storage.set(&k, &[]);
+        deps.storage.remove(&k);
         res.data = Some(Binary(v));
         Ok(res)
     } else {
@@ -136,8 +135,8 @@ fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::coin;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
+    use cosmwasm_std::{coin, HumanAddr};
 
     fn create_contract() -> (Extern<MockStorage, MockApi>, Env) {
         let mut deps = mock_dependencies(20);
@@ -197,53 +196,7 @@ mod tests {
         let state: State = from_slice(data.as_slice()).unwrap();
         assert_eq!(state.value, 25);
 
-        // Note: this doesn't work yet (add delete)
-//        assert_eq!(get_count(&deps), 1);
-//        assert_eq!(get_sum(&deps), 17);
+        assert_eq!(get_count(&deps), 1);
+        assert_eq!(get_sum(&deps), 17);
     }
-
-    //    #[test]
-    //    fn proper_handle() {
-    //        let mut deps = mock_dependencies(20);
-    //
-    //        // initialize the store
-    //        let verifier = HumanAddr(String::from("verifies"));
-    //        let beneficiary = HumanAddr(String::from("benefits"));
-    //
-    //        let init_msg = InitMsg {
-    //            verifier: verifier.clone(),
-    //            beneficiary: beneficiary.clone(),
-    //        };
-    //        let init_env = mock_env(
-    //            &deps.api,
-    //            "creator",
-    //            &coin("1000", "earth"),
-    //            &coin("1000", "earth"),
-    //        );
-    //        let init_res = init(&mut deps, init_env, init_msg).unwrap();
-    //        assert_eq!(0, init_res.messages.len());
-    //
-    //        // beneficiary can release it
-    //        let handle_env = mock_env(
-    //            &deps.api,
-    //            verifier.as_str(),
-    //            &coin("15", "earth"),
-    //            &coin("1015", "earth"),
-    //        );
-    //        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
-    //        assert_eq!(1, handle_res.messages.len());
-    //        let msg = handle_res.messages.get(0).expect("no message");
-    //        assert_eq!(
-    //            msg,
-    //            &CosmosMsg::Send {
-    //                from_address: HumanAddr("cosmos2contract".to_string()),
-    //                to_address: beneficiary,
-    //                amount: coin("1015", "earth"),
-    //            }
-    //        );
-    //        assert_eq!(
-    //            handle_res.log,
-    //            vec![log("action", "release"), log("destination", "benefits"),],
-    //        );
-    //    }
 }
