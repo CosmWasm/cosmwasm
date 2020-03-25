@@ -46,11 +46,11 @@ jobs:
       - run:
           name: Build library for wasm target (with iterator support)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked  --features iterator
+          command: cargo wasm --locked --features iterator
       - run:
           name: Run unit tests (with iterator support)
           working_directory: ~/project/packages/std
-          command: cargo test --locked  --features iterator
+          command: cargo test --locked --features iterator
       - run:
           name: Build and run schema generator
           working_directory: ~/project/packages/std

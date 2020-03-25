@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use queue::contract::{HandleMsg, InitMsg, QueryMsg, State};
+use queue::contract::{HandleMsg, InitMsg, QueryMsg, State, CountResponse, SumResponse};
 
 fn main() {
     let mut pwd = current_dir().unwrap();
@@ -22,6 +22,12 @@ fn main() {
 
     let schema = schema_for!(State);
     export_schema(&schema, &pwd, "state.json");
+
+    let schema = schema_for!(CountResponse);
+    export_schema(&schema, &pwd, "count_response.json");
+
+    let schema = schema_for!(SumResponse);
+    export_schema(&schema, &pwd, "sum_response.json");
 }
 
 // panics if any error writing out the schema
