@@ -20,6 +20,11 @@
   becomes `use cosmwasm::{Api, Binary, Storage};`).
 - Rename package `cosmwasm` to `cosmwasm-std`.
 
+**cosmwasm-vm**
+
+- Make `Instance.memory`/`.allocate`/`.deallocate`/`.func` crate internal. A
+  user of the VM must not access the instance's memory directly.
+
 ## 0.7.2 (2020-03-23)
 
 **cosmwasm**

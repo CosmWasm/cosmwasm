@@ -113,13 +113,13 @@ where
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
-    pub fn memory(&self, region_ptr: u32) -> Vec<u8> {
+    pub(crate) fn memory(&self, region_ptr: u32) -> Vec<u8> {
         read_region(self.wasmer_instance.context(), region_ptr)
     }
 
     /// Allocates memory in the instance and copies the given data into it.
     /// Returns a pointer in the Wasm address space to the created Region object.
-    pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
+    pub(crate) fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
         write_region(self.wasmer_instance.context(), ptr, data)?;
@@ -129,13 +129,13 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub fn deallocate(&mut self, ptr: u32) -> Result<()> {
+    pub(crate) fn deallocate(&mut self, ptr: u32) -> Result<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
         dealloc.call(ptr).context(RuntimeErr {})?;
         Ok(())
     }
 
-    pub fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>>
+    pub(crate) fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
