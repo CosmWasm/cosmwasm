@@ -151,12 +151,12 @@ mod test {
     use cosmwasm_std::coin;
     use cosmwasm_std::testing::mock_env;
 
-    static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift_noop() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT_0_7, 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 1_000_000);
     }
@@ -164,7 +164,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn set_get_and_gas_singlepass_works() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT_0_7, 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 123321);
     }
@@ -173,14 +173,14 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let instance = mock_instance(&CONTRACT_0_7);
+        let instance = mock_instance(&CONTRACT);
         instance.with_storage(|_store| assert_eq!(1, 2));
     }
 
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas_init() {
-        let mut instance = mock_instance(&CONTRACT_0_7);
+        let mut instance = mock_instance(&CONTRACT);
         let orig_gas = instance.get_gas();
 
         // init contract
@@ -196,7 +196,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas_handle() {
-        let mut instance = mock_instance(&CONTRACT_0_7);
+        let mut instance = mock_instance(&CONTRACT);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -222,7 +222,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT_0_7, 20_000);
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT, 20_000);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -234,7 +234,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
-        let mut instance = mock_instance(&CONTRACT_0_7);
+        let mut instance = mock_instance(&CONTRACT);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
