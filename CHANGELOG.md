@@ -5,6 +5,7 @@
 **all**
 
 - Upgrade schemars to 0.6.
+- Upgrade wasmer to 0.16.
 - Minimal supported Rust version is 1.41.
 
 **cosmwasm**
