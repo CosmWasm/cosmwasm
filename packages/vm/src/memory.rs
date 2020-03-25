@@ -50,6 +50,16 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     }
 }
 
+/// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
+/// meant to be used where the argument is optional (like scan)
+pub fn maybe_read_region(ctx: &Ctx, ptr: u32) -> Option<Vec<u8>> {
+    if ptr == 0 {
+        None
+    } else {
+        Some(read_region(ctx, ptr))
+    }
+}
+
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.

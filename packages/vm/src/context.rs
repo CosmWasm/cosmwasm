@@ -6,9 +6,13 @@ use std::mem;
 
 use wasmer_runtime_core::vm::Ctx;
 
+#[cfg(feature = "iterator")]
+use cosmwasm_std::Order;
 use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
 
 use crate::errors::Error;
+#[cfg(feature = "iterator")]
+use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 
 /// An unknown error occurred when writing to region
@@ -36,6 +40,36 @@ pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) {
     let key = read_region(ctx, key_ptr);
     let value = read_region(ctx, value_ptr);
     with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
+}
+
+pub fn do_remove<T: Storage>(ctx: &Ctx, key_ptr: u32) {
+    let key = read_region(ctx, key_ptr);
+    with_storage_from_context(ctx, |store: &mut T| store.remove(&key));
+}
+
+#[cfg(feature = "iterator")]
+pub fn do_scan<T: Storage>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) -> i32 {
+    let start = maybe_read_region(ctx, start_ptr);
+    let end = maybe_read_region(ctx, end_ptr);
+    // TODO: handle this without panic??
+    let order: Order = order.try_into().unwrap();
+    // TODO: properly get return value
+    with_storage_from_context(ctx, |store: &mut T| {
+        let _ = store.range(start.as_deref(), end.as_deref(), order);
+    });
+    return 0;
+}
+
+#[cfg(feature = "iterator")]
+pub fn do_next<T: Storage>(_ctx: &Ctx, _iter: u32, _key_ptr: u32, _end_ptr: u32) -> i32 {
+    // TODO
+    return 0;
+    //    let mut value: Option<Pair> = None;
+    //    with_storage_from_context(ctx, |store: &mut T| value = store.get(&key));
+    //    let start = read_region(ctx, start_ptr);
+    //    let end = read_region(ctx, end_ptr);
+    //    // TODO: properly get return value
+    //    with_storage_from_context(ctx, |store: &mut T| store.range(start, end, order));
 }
 
 pub fn do_canonical_address<A: Api>(

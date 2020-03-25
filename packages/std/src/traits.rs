@@ -1,4 +1,9 @@
-use crate::errors::Result;
+#[cfg(feature = "iterator")]
+use std::convert::TryFrom;
+#[cfg(feature = "iterator")]
+use crate::errors::{contract_err, Error};
+
+use crate::errors::{Result};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
@@ -10,6 +15,26 @@ pub type Pair = (Vec<u8>, Vec<u8>);
 pub enum Order {
     Ascending = 1,
     Descending = 2,
+}
+
+#[cfg(feature = "iterator")]
+impl TryFrom<i32> for Order {
+    type Error = Error;
+
+    fn try_from(value: i32) -> Result<Self, Self::Error> {
+        match value {
+            1 => Ok(Order::Ascending),
+            2 => Ok(Order::Descending),
+            _ => contract_err("Order must be 1 or 2")
+        }
+    }
+}
+
+#[cfg(feature = "iterator")]
+impl Into<i32> for Order {
+    fn into(self) -> i32 {
+        self as i32
+    }
 }
 
 /// Holds all external dependencies of the contract.
