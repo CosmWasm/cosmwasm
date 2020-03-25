@@ -103,6 +103,7 @@ where
         (instance.wasmer_instance, ext)
     }
 
+    /// Returns the currently remaining gas
     pub fn get_gas(&self) -> u64 {
         get_gas(&self.wasmer_instance)
     }
