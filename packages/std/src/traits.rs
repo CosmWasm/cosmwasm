@@ -7,8 +7,8 @@ pub type KVPair = (Vec<u8>, Vec<u8>);
 #[cfg(feature = "iterator")]
 #[derive(Copy, Clone)]
 pub enum Sort {
-    Ascending,
-    Descending,
+    Ascending = 1,
+    Descending = 2,
 }
 
 /// Holds all external dependencies of the contract.

@@ -5,7 +5,10 @@ use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::traits::{Api, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::traits::{KVPair, Sort};
 use crate::types::{CanonicalAddr, HumanAddr};
+use std::ptr::null;
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -22,6 +25,12 @@ static ADDR_BUFFER: usize = 72;
 extern "C" {
     fn read_db(key: *const c_void, value: *mut c_void) -> i32;
     fn write_db(key: *const c_void, value: *mut c_void);
+    // scan creates an iterator, which can be read by consecutive next() calls
+    fn scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    fn next(iterator: i32, key: *mut c_void, value: *mut c_void) -> i32;
+    // TODO: add cleanup
+    //    fn close(iterator: i32);
+
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 }
@@ -62,6 +71,34 @@ impl ReadonlyStorage for ExternalStorage {
             Err(_) => None,
         }
     }
+
+    fn range(
+        &self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Sort,
+    ) -> Box<dyn Iterator<Item = KVPair>> {
+        // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
+        // thus they are not inside a block
+        let start = start.map(|s| build_region(s));
+        let start_ptr = match start {
+            Some(reg) => &*reg as *const Region as *const c_void,
+            None => null(),
+        };
+        let end = end.map(|e| build_region(e));
+        let end_ptr = match end {
+            Some(reg) => &*reg as *const Region as *const c_void,
+            None => null(),
+        };
+        let order = order as i32;
+
+        let iter_ptr = unsafe { scan(start_ptr, end_ptr, order) };
+        if iter_ptr < 0 {
+            panic!(format!("Error creating iterator: {}", iter_ptr));
+        }
+        let iter = ExternalIterator { ptr: iter_ptr };
+        Box::new(iter)
+    }
 }
 
 impl Storage for ExternalStorage {
@@ -74,6 +111,34 @@ impl Storage for ExternalStorage {
         unsafe {
             write_db(key_ptr, value_ptr);
         }
+    }
+}
+
+struct ExternalIterator {
+    ptr: i32,
+}
+
+impl Iterator for ExternalIterator {
+    type Item = KVPair;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let key = alloc(MAX_READ);
+        let value = alloc(MAX_READ);
+
+        let read = unsafe { next(self.ptr, key, value) };
+        if read == 0 {
+            return None;
+        } else if read < 0 {
+            panic!(format!("Unknown error on next: {}", read));
+        }
+
+        // TODO: how to properly get length of both!
+        // TODO: handle read errors better than unwrap (cannot return Result here)
+        let mut key = unsafe { consume_region(key).unwrap() };
+        key.truncate(read as usize);
+        let value = unsafe { consume_region(value).unwrap() };
+
+        Some((key, value))
     }
 }
 
