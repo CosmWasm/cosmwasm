@@ -1,9 +1,9 @@
 #[cfg(feature = "iterator")]
-use std::convert::TryFrom;
-#[cfg(feature = "iterator")]
 use crate::errors::{contract_err, Error};
+#[cfg(feature = "iterator")]
+use std::convert::TryFrom;
 
-use crate::errors::{Result};
+use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
@@ -25,7 +25,7 @@ impl TryFrom<i32> for Order {
         match value {
             1 => Ok(Order::Ascending),
             2 => Ok(Order::Descending),
-            _ => contract_err("Order must be 1 or 2")
+            _ => contract_err("Order must be 1 or 2"),
         }
     }
 }

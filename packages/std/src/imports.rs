@@ -149,9 +149,10 @@ impl Iterator for ExternalIterator {
 
         // TODO: how to properly get length of both!
         // TODO: handle read errors better than unwrap (cannot return Result here)
-        let mut key = unsafe { consume_region(key).unwrap() };
-        key.truncate(read as usize);
-        let value = unsafe { consume_region(value).unwrap() };
+        let key = unsafe { consume_region(key).unwrap() };
+        let mut value = unsafe { consume_region(value).unwrap() };
+        // TODO: we need to return the length of key somehow, now this is just the length of value
+        value.truncate(read as usize);
 
         Some((key, value))
     }

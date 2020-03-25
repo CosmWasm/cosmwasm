@@ -75,7 +75,7 @@ where
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                "next" => Func::new(move |ctx: &mut Ctx, iter: u32, key_ptr: u32, value_ptr: u32| -> i32 {
+                "next" => Func::new(move |ctx: &mut Ctx, iter: i32, key_ptr: u32, value_ptr: u32| -> i32 {
                     #[cfg(not(feature = "iterator"))]
                     return 0;
                     #[cfg(feature = "iterator")]
