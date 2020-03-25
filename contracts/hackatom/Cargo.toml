@@ -21,11 +21,6 @@ panic = 'abort'
 incremental = false
 overflow-checks = true
 
-# speed up integration tests
-[profile.dev.package.wasmer-clif-backend]
-debug-assertions = false
-opt-level = 1
-
 [features]
 default = ["cranelift"]
 # For quicker tests, cargo test --lib. for more explicit tests, cargo test --features=backtraces

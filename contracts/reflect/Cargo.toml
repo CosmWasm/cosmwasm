@@ -37,11 +37,6 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 cranelift = ["cosmwasm-vm/default-cranelift"]
 singlepass = ["cosmwasm-vm/default-singlepass"]
 
-# speed up integration tests
-[profile.dev.package.wasmer-clif-backend]
-debug-assertions = false
-opt-level = 1
-
 [dependencies]
 cosmwasm-std = { path = "../../packages/std", features = ["staking"] }
 cosmwasm-storage = { path = "../../packages/storage" }
