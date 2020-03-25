@@ -66,15 +66,19 @@ where
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                #[cfg(feature = "iterator")]
                 "scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
+                    #[cfg(not(feature = "iterator"))]
+                    return 0;
+                    #[cfg(feature = "iterator")]
                     do_scan::<S>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                #[cfg(feature = "iterator")]
                 "next" => Func::new(move |ctx: &mut Ctx, iter: u32, key_ptr: u32, value_ptr: u32| -> i32 {
+                    #[cfg(not(feature = "iterator"))]
+                    return 0;
+                    #[cfg(feature = "iterator")]
                     do_next::<S>(ctx, iter, key_ptr, value_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
