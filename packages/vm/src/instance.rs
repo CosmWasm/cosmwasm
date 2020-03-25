@@ -44,7 +44,7 @@ where
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
-                // Returns length of the value in bytes on success. Returns negative value on error. An incomplete list of error codes is:
+                // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
                 //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
                 "read_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
@@ -57,14 +57,14 @@ where
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
-                // Returns negative value on error. Returns length of the canoncal address on success.
+                // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "canonicalize_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
                     do_canonical_address(api, ctx, human_ptr, canonical_ptr)
                 }),
                 // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
                 // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
-                // Returns negative value on error. Returns length of the human address on success.
+                // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)

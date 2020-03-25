@@ -1,7 +1,6 @@
 /**
 Internal details to be used by instance.rs only
 **/
-use std::convert::TryInto;
 use std::ffi::c_void;
 use std::mem;
 
@@ -24,7 +23,7 @@ pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     with_storage_from_context(ctx, |store: &mut T| value = store.get(&key));
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
-            Ok(bytes_written) => bytes_written.try_into().unwrap(),
+            Ok(()) => 0,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
@@ -52,7 +51,7 @@ pub fn do_canonical_address<A: Api>(
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
-            Ok(bytes_written) => bytes_written.try_into().unwrap(),
+            Ok(()) => 0,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
@@ -64,7 +63,7 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
     let canon = Binary(read_region(ctx, canonical_ptr));
     match api.human_address(&CanonicalAddr(canon)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
-            Ok(bytes_written) => bytes_written.try_into().unwrap(),
+            Ok(()) => 0,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },

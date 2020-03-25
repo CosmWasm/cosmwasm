@@ -48,14 +48,19 @@ impl ReadonlyStorage for ExternalStorage {
                 If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
         } else if read < 0 {
             panic!("An unknown error occurred in the read_db call.")
-        } else if read == 0 {
-            return None;
         }
 
-        unsafe { consume_region(value).ok() }.map(|mut d| {
-            d.truncate(read as usize);
-            d
-        })
+        match unsafe { consume_region(value) } {
+            Ok(data) => {
+                if data.len() == 0 {
+                    None
+                } else {
+                    Some(data)
+                }
+            }
+            // TODO: do we really want to convert errors to None?
+            Err(_) => None,
+        }
     }
 }
 
@@ -96,8 +101,7 @@ impl Api for ExternalApi {
             .fail();
         }
 
-        let mut out = unsafe { consume_region(canon)? };
-        out.truncate(read as usize);
+        let out = unsafe { consume_region(canon)? };
         Ok(CanonicalAddr(Binary(out)))
     }
 
@@ -114,8 +118,7 @@ impl Api for ExternalApi {
             .fail();
         }
 
-        let mut out = unsafe { consume_region(human)? };
-        out.truncate(read as usize);
+        let out = unsafe { consume_region(human)? };
         // we know input was correct when created, so let's save some bytes
         let result = unsafe { String::from_utf8_unchecked(out) };
         Ok(HumanAddr(result))

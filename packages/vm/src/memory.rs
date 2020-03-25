@@ -1,9 +1,10 @@
-use crate::errors::{Error, RegionTooSmallErr};
 use wasmer_runtime_core::{
     memory::ptr::{Array, WasmPtr},
     types::ValueType,
     vm::Ctx,
 };
+
+use crate::errors::{Error, RegionTooSmallErr};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -18,6 +19,8 @@ struct Region {
     pub offset: u32,
     /// The number of bytes available in this region
     pub capacity: u32,
+    /// The number of bytes used in this region
+    pub length: u32,
 }
 
 unsafe impl ValueType for Region {}
@@ -28,11 +31,11 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let region = to_region(ctx, ptr);
     let memory = ctx.memory(0);
 
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-            let len = region.capacity as usize;
+            let len = region.length as usize;
             let mut result = vec![0u8; len];
             for i in 0..len {
                 result[i] = cells[i].get();
@@ -50,13 +53,13 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.
-pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
-    let region = to_region(ctx, ptr);
-    let region_size = region.capacity as usize;
+pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<(), Error> {
+    let mut region = to_region(ctx, ptr);
 
-    if data.len() > region_size {
+    let region_capacity = region.capacity as usize;
+    if data.len() > region_capacity {
         return RegionTooSmallErr {
-            size: region_size,
+            size: region_capacity,
             required: data.len(),
         }
         .fail();
@@ -64,7 +67,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
 
     // A performance optimization
     if data.is_empty() {
-        return Ok(0);
+        return Ok(());
     }
 
     let memory = ctx.memory(0);
@@ -76,7 +79,8 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
             for i in 0..data.len() {
                 cells[i].set(data[i])
             }
-            Ok(data.len())
+            region.length = data.len() as u32;
+            Ok(())
         },
         None => panic!(
             "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
