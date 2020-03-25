@@ -80,6 +80,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<(), Error> {
                 cells[i].set(data[i])
             }
             region.length = data.len() as u32;
+            set_region(ctx, ptr, region);
             Ok(())
         },
         None => panic!(
@@ -96,4 +97,12 @@ fn get_region(ctx: &Ctx, ptr: u32) -> Region {
     let wptr = WasmPtr::<Region>::new(ptr);
     let cell = wptr.deref(memory).unwrap();
     cell.get()
+}
+
+/// Overrides a Region at ptr in wasm memory with data
+fn set_region(ctx: &Ctx, ptr: u32, data: Region) {
+    let memory = ctx.memory(0);
+    let wptr = WasmPtr::<Region>::new(ptr);
+    let cell = wptr.deref(memory).unwrap();
+    cell.set(data);
 }
