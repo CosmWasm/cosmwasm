@@ -31,6 +31,7 @@ impl FunctionMiddleware for DeterministicMiddleware {
         event: Event<'a, 'b>,
         _module_info: &ModuleInfo,
         sink: &mut EventSink<'a, 'b>,
+        _source_loc: u32,
     ) -> Result<(), Self::Error> {
         match event {
             Event::Wasm(op) => parse_wasm_opcode(op)?,
