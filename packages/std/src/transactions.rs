@@ -228,6 +228,7 @@ mod test {
     }
 
     #[test]
+    #[ignore]
     fn delete_from_base() {
         let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
@@ -244,8 +245,6 @@ mod test {
         assert_eq!(Some(b"bank".to_vec()), base.get(b"food"));
     }
 
-    // TODO: check iterators working with delete
-
     #[test]
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_empty_base() {
@@ -261,6 +260,19 @@ mod test {
         let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
         let mut check = StorageTransaction::new(&base);
+        crate::storage::iterator_test_suite(&mut check);
+    }
+
+    // TODO: check iterators working with some deleted data
+    #[test]
+    #[ignore]
+    #[cfg(feature = "iterator")]
+    fn storage_transaction_iterator_removed_items_from_base() {
+        let mut base = MemoryStorage::new();
+        base.set(b"foo", b"bar");
+        base.set(b"food", b"bank");
+        let mut check = StorageTransaction::new(&base);
+        check.remove(b"food");
         crate::storage::iterator_test_suite(&mut check);
     }
 
