@@ -1,8 +1,6 @@
 /**
 Internal details to be used by instance.rs only
 **/
-#[cfg(feature = "iterator")]
-use std::collections::HashMap;
 use std::convert::TryInto;
 use std::ffi::c_void;
 use std::mem;
@@ -68,9 +66,9 @@ pub fn do_scan<T: Storage>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) 
     let mut storage: Option<T> = take_storage(ctx);
     if let Some(store) = &mut storage {
         let iter = store.range(start.as_deref(), end.as_deref(), order);
-        let res = leave_iterator::<T>(ctx, iter, None);
+        leave_iterator::<T>(ctx, iter);
         leave_storage(ctx, storage);
-        return res;
+        return 0;
     } else {
         leave_storage(ctx, storage);
         return ERROR_NO_STORAGE;
@@ -78,14 +76,14 @@ pub fn do_scan<T: Storage>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) 
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_next<T: Storage>(ctx: &Ctx, iter_ptr: i32, key_ptr: u32, value_ptr: u32) -> i32 {
-    let mut iter = match take_iterator::<T>(ctx, iter_ptr) {
+pub fn do_next<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+    let mut iter = match take_iterator::<T>(ctx) {
         Some(i) => i,
         None => return ERROR_NEXT_INVALID_ITERATOR,
     };
     // get next item and return iterator
     let item = iter.next();
-    leave_iterator::<T>(ctx, iter, Some(iter_ptr));
+    leave_iterator::<T>(ctx, iter);
 
     // prepare return values
     let (key, value) = match item {
@@ -145,23 +143,7 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
 struct ContextData<S: Storage> {
     data: Option<S>,
     #[cfg(feature = "iterator")]
-    iters: IterInfo,
-}
-
-#[cfg(feature = "iterator")]
-struct IterInfo {
-    counter: i32,
-    lookup: HashMap<i32, Box<dyn Iterator<Item = Pair>>>,
-}
-
-#[cfg(feature = "iterator")]
-impl IterInfo {
-    fn new() -> Self {
-        IterInfo {
-            counter: 0,
-            lookup: HashMap::new(),
-        }
-    }
+    iter: Option<Box<dyn Iterator<Item = Pair>>>,
 }
 
 pub fn setup_context<S: Storage>() -> (*mut c_void, fn(*mut c_void)) {
@@ -175,7 +157,7 @@ fn create_unmanaged_storage<S: Storage>() -> *mut c_void {
     let data = ContextData::<S> {
         data: None,
         #[cfg(feature = "iterator")]
-        iters: IterInfo::new(),
+        iter: None,
     };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
@@ -219,25 +201,18 @@ pub fn leave_storage<S: Storage>(ctx: &Ctx, storage: Option<S>) {
 #[cfg(feature = "iterator")]
 // if ptr is None, find a new slot.
 // otherwise, place in slot defined by ptr (only after take)
-pub fn leave_iterator<S: Storage>(
-    ctx: &Ctx,
-    iter: Box<dyn Iterator<Item = Pair>>,
-    ptr: Option<i32>,
-) -> i32 {
+pub fn leave_iterator<S: Storage>(ctx: &Ctx, iter: Box<dyn Iterator<Item = Pair>>) {
     let mut b = unsafe { get_data::<S>(ctx.data) };
-    let ptr = match ptr {
-        Some(v) => v,
-        None => {
-            b.iters.counter += 1;
-            b.iters.counter
-        }
-    };
-    b.iters.lookup.insert(ptr, iter);
-    ptr
+    // clean up old one if there was one
+    let _ = b.iter.take();
+    b.iter = Some(iter);
+    mem::forget(b); // we do this to avoid cleanup
 }
 
 #[cfg(feature = "iterator")]
-pub fn take_iterator<S: Storage>(ctx: &Ctx, ptr: i32) -> Option<Box<dyn Iterator<Item = Pair>>> {
+pub fn take_iterator<S: Storage>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = Pair>>> {
     let mut b = unsafe { get_data::<S>(ctx.data) };
-    b.iters.lookup.remove(&ptr)
+    let res = b.iter.take();
+    mem::forget(b); // we do this to avoid cleanup
+    res
 }

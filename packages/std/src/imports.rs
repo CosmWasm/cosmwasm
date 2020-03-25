@@ -30,7 +30,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn next(iterator: i32, key: *mut c_void, value: *mut c_void) -> i32;
+    fn next(key: *mut c_void, value: *mut c_void) -> i32;
     // TODO: add cleanup
     //    fn close(iterator: i32);
 
@@ -100,7 +100,7 @@ impl ReadonlyStorage for ExternalStorage {
         if iter_ptr < 0 {
             panic!(format!("Error creating iterator: {}", iter_ptr));
         }
-        let iter = ExternalIterator { ptr: iter_ptr };
+        let iter = ExternalIterator {};
         Box::new(iter)
     }
 }
@@ -128,9 +128,10 @@ impl Storage for ExternalStorage {
 }
 
 #[cfg(feature = "iterator")]
-struct ExternalIterator {
-    ptr: i32,
-}
+/// ExternalIterator makes a call out to next
+/// We only allow one open iterator at a time, so no need to pass references
+/// it automatically refers to result of last range call
+struct ExternalIterator {}
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
@@ -140,7 +141,7 @@ impl Iterator for ExternalIterator {
         let key = alloc(MAX_READ);
         let value = alloc(MAX_READ);
 
-        let read = unsafe { next(self.ptr, key, value) };
+        let read = unsafe { next(key, value) };
         if read == 0 {
             return None;
         } else if read < 0 {
