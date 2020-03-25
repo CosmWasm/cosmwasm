@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InitMsg",
+  "type": "object",
+  "required": [
+    "beneficiary",
+    "verifier"
+  ],
+  "properties": {
+    "beneficiary": {
+      "$ref": "#/definitions/HumanAddr"
+    },
+    "verifier": {
+      "$ref": "#/definitions/HumanAddr"
+    }
+  },
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    }
+  }
+}
