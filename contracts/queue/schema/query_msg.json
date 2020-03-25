@@ -5,10 +5,21 @@
     {
       "type": "object",
       "required": [
-        "verifier"
+        "count"
       ],
       "properties": {
-        "verifier": {
+        "count": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "sum"
+      ],
+      "properties": {
+        "sum": {
           "type": "object"
         }
       }

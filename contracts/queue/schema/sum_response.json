@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "State",
+  "title": "SumResponse",
   "type": "object",
   "required": [
-    "value"
+    "sum"
   ],
   "properties": {
-    "value": {
+    "sum": {
       "type": "integer",
       "format": "int32"
     }

@@ -1,12 +1,12 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "State",
+  "title": "CountResponse",
   "type": "object",
   "required": [
-    "value"
+    "count"
   ],
   "properties": {
-    "value": {
+    "count": {
       "type": "integer",
       "format": "int32"
     }
