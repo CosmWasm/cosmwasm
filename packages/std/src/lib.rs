@@ -16,6 +16,8 @@ pub use crate::errors::{
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+pub use crate::traits::{KVPair, Sort};
 pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
 pub use crate::types::{
     coin, log, CanonicalAddr, ContractResult, CosmosMsg, Env, HumanAddr, QueryResult, Response,

@@ -1,23 +1,19 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use snafu::{OptionExt, ResultExt};
+use snafu::ResultExt;
 
 use cosmwasm_std::{
-    from_slice, log, to_vec, unauthorized, Api, CanonicalAddr, CosmosMsg, Env, Extern, HumanAddr,
-    NotFound, ParseErr, Response, Result, SerializeErr, Storage,
+    from_slice, to_vec, Api, Binary, Env, Extern, HumanAddr, ParseErr, Response, Result,
+    SerializeErr, Sort, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
-    pub verifier: HumanAddr,
-    pub beneficiary: HumanAddr,
-}
+pub struct InitMsg {}
 
+// we store one entry for each item in the queue
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub verifier: CanonicalAddr,
-    pub beneficiary: CanonicalAddr,
-    pub funder: CanonicalAddr,
+    pub value: i32,
 }
 
 // failure modes to help test wasmd, based on this comment
@@ -25,40 +21,41 @@ pub struct State {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum HandleMsg {
-    // Release is the only "proper" action, releasing funds in the contract
-    Release {},
-    // Infinite loop to burn cpu cycles (only run when metering is enabled)
-    CpuLoop {},
-    // Infinite loop making storage calls (to test when their limit hits)
-    StorageLoop {},
-    // Trigger a panic to ensure framework handles gracefully
-    Panic {},
+    // Push will add some value to the end of list
+    Push { value: i32 },
+    // Pop will remove value from start of the list
+    Pop {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum QueryMsg {
-    // returns a human-readable representation of the verifier
-    // use to ensure query path works in integration tests
-    Verifier {},
+    // how many items are in the queue
+    Count {},
+    // total of all values in the queue
+    Sum {},
+    //    // first element in the queue
+    //    First {},
+    //    // last element in the queue
+    //    Last {},
 }
 
-pub static CONFIG_KEY: &[u8] = b"config";
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct CountResponse {
+    count: i32,
+}
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct SumResponse {
+    sum: i32,
+}
+
+// init is a no-op, just empty data
 pub fn init<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
-    env: Env,
-    msg: InitMsg,
+    _deps: &mut Extern<S, A>,
+    _env: Env,
+    _msg: InitMsg,
 ) -> Result<Response> {
-    deps.storage.set(
-        CONFIG_KEY,
-        &to_vec(&State {
-            verifier: deps.api.canonical_address(&msg.verifier)?,
-            beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: env.message.signer,
-        })
-        .context(SerializeErr { kind: "State" })?,
-    );
     Ok(Response::default())
 }
 
@@ -68,281 +65,185 @@ pub fn handle<S: Storage, A: Api>(
     msg: HandleMsg,
 ) -> Result<Response> {
     match msg {
-        HandleMsg::Release {} => do_release(deps, env),
-        HandleMsg::CpuLoop {} => do_cpu_loop(),
-        HandleMsg::StorageLoop {} => do_storage_loop(deps),
-        HandleMsg::Panic {} => do_panic(),
+        HandleMsg::Push { value } => do_push(deps, env, value),
+        HandleMsg::Pop {} => do_pop(deps, env),
     }
 }
 
-fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<Response> {
-    let data = deps
-        .storage
-        .get(CONFIG_KEY)
-        .context(NotFound { kind: "State" })?;
-    let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
+const FIRST_KEY: u8 = 1;
 
-    if env.message.signer == state.verifier {
-        let to_addr = deps.api.human_address(&state.beneficiary)?;
-        let from_addr = deps.api.human_address(&env.contract.address)?;
-        let res = Response {
-            log: vec![
-                log("action", "release"),
-                log("destination", to_addr.as_str()),
-            ],
-            messages: vec![CosmosMsg::Send {
-                from_address: from_addr,
-                to_address: to_addr,
-                amount: env.contract.balance.unwrap_or_default(),
-            }],
-            data: None,
-        };
+fn do_push<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env, value: i32) -> Result<Response> {
+    // find the last element in the queue and extract key
+    let last = deps
+        .storage
+        .range(None, None, Sort::Descending)
+        .next()
+        .map(|(k, _)| k);
+
+    // all keys are one byte
+    let my_key = match last {
+        Some(k) => k[0] + 1,
+        None => FIRST_KEY,
+    };
+    let data = to_vec(&State { value }).context(SerializeErr { kind: "State" })?;
+
+    deps.storage.set(&[my_key], &data);
+    Ok(Response::default())
+}
+
+fn do_pop<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<Response> {
+    // find the first element in the queue and extract value
+    let first = deps.storage.range(None, None, Sort::Ascending).next();
+
+    let mut res = Response::default();
+    if let Some((k, v)) = first {
+        // remove from storage and return old value
+        // TODO: add delete
+        deps.storage.set(&k, &[]);
+        res.data = Some(Binary(v));
         Ok(res)
     } else {
-        unauthorized()
+        Ok(res)
     }
-}
-
-fn do_cpu_loop() -> Result<Response> {
-    let mut counter = 0u64;
-    loop {
-        counter += 1;
-        if counter >= 9_000_000_000 {
-            counter = 0;
-        }
-    }
-}
-
-fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response> {
-    let mut test_case = 0u64;
-    loop {
-        deps.storage
-            .set(b"test.key", test_case.to_string().as_bytes());
-        test_case += 1;
-    }
-}
-
-fn do_panic() -> Result<Response> {
-    panic!("This page intentionally faulted");
 }
 
 pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
     match msg {
-        QueryMsg::Verifier {} => query_verifier(deps),
+        QueryMsg::Count {} => query_count(deps),
+        QueryMsg::Sum {} => query_sum(deps),
     }
 }
 
-fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
-    let data = deps
+fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+    let count = deps.storage.range(None, None, Sort::Ascending).count() as i32;
+    to_vec(&CountResponse { count }).context(SerializeErr {
+        kind: "CountResponse",
+    })
+}
+
+fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+    let values: Result<Vec<State>> = deps
         .storage
-        .get(CONFIG_KEY)
-        .context(NotFound { kind: "State" })?;
-    let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
-    let addr = deps.api.human_address(&state.verifier)?;
-    // we just pass the address as raw bytes
-    // these will be base64 encoded into the json we return, and parsed on the way out.
-    // maybe we should wrap this in a struct then json encode it into a vec?
-    // other ideas?
-    Ok(addr.as_str().as_bytes().to_vec())
+        .range(None, None, Sort::Ascending)
+        .map(|(_, v)| from_slice(&v).context(ParseErr { kind: "State" }))
+        .collect();
+    let sum = values?.iter().fold(0, |s, v| s + v.value);
+    to_vec(&SumResponse { sum }).context(SerializeErr {
+        kind: "SumResponse",
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coin, transactional_deps, ReadonlyStorage};
+    use cosmwasm_std::coin;
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
 
-    #[test]
-    fn proper_initialization() {
+    fn create_contract() -> (Extern<MockStorage, MockApi>, Env) {
         let mut deps = mock_dependencies(20);
-
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
         let creator = HumanAddr(String::from("creator"));
-        let expected_state = State {
-            verifier: deps.api.canonical_address(&verifier).unwrap(),
-            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-            funder: deps.api.canonical_address(&creator).unwrap(),
-        };
-
-        let msg = InitMsg {
-            verifier,
-            beneficiary,
-        };
         let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let res = init(&mut deps, env.clone(), InitMsg {}).unwrap();
         assert_eq!(0, res.messages.len());
+        (deps, env)
+    }
 
-        // it worked, let's check the state
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, expected_state);
+    fn get_count(deps: &Extern<MockStorage, MockApi>) -> i32 {
+        let data = query(deps, QueryMsg::Count {}).unwrap();
+        let res: CountResponse = from_slice(&data).unwrap();
+        res.count
+    }
+
+    fn get_sum(deps: &Extern<MockStorage, MockApi>) -> i32 {
+        let data = query(deps, QueryMsg::Sum {}).unwrap();
+        let res: SumResponse = from_slice(&data).unwrap();
+        res.sum
     }
 
     #[test]
     fn init_and_query() {
-        let mut deps = mock_dependencies(20);
-
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-        let msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary,
-        };
-        let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // now let's query
-        let qres = query(&deps, QueryMsg::Verifier {}).unwrap();
-        let returned = String::from_utf8(qres).unwrap();
-        assert_eq!(verifier, HumanAddr(returned));
+        let (deps, _) = create_contract();
+        assert_eq!(get_count(&deps), 0);
+        assert_eq!(get_sum(&deps), 0);
     }
 
     #[test]
-    fn checkpointing_works_on_contract() {
-        let mut deps = mock_dependencies(20);
-
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-        let expected_state = State {
-            verifier: deps.api.canonical_address(&verifier).unwrap(),
-            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-            funder: deps.api.canonical_address(&creator).unwrap(),
-        };
-
-        // let's see if we can checkpoint on a contract
-        let res = transactional_deps(&mut deps, &|deps| {
-            let msg = InitMsg {
-                verifier: verifier.clone(),
-                beneficiary: beneficiary.clone(),
-            };
-            let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
-
-            init(deps, env, msg)
-        })
-        .unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's check the state
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, expected_state);
+    fn push_and_query() {
+        let (mut deps, env) = create_contract();
+        handle(&mut deps, env.clone(), HandleMsg::Push { value: 25 }).unwrap();
+        assert_eq!(get_count(&deps), 1);
+        assert_eq!(get_sum(&deps), 25);
     }
 
     #[test]
-    fn proper_handle() {
-        let mut deps = mock_dependencies(20);
-
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("1000", "earth"),
-            &coin("1000", "earth"),
-        );
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        // beneficiary can release it
-        let handle_env = mock_env(
-            &deps.api,
-            verifier.as_str(),
-            &coin("15", "earth"),
-            &coin("1015", "earth"),
-        );
-        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
-        assert_eq!(1, handle_res.messages.len());
-        let msg = handle_res.messages.get(0).expect("no message");
-        assert_eq!(
-            msg,
-            &CosmosMsg::Send {
-                from_address: HumanAddr("cosmos2contract".to_string()),
-                to_address: beneficiary,
-                amount: coin("1015", "earth"),
-            }
-        );
-        assert_eq!(
-            handle_res.log,
-            vec![log("action", "release"), log("destination", "benefits"),],
-        );
+    fn multiple_push() {
+        let (mut deps, env) = create_contract();
+        handle(&mut deps, env.clone(), HandleMsg::Push { value: 25 }).unwrap();
+        handle(&mut deps, env.clone(), HandleMsg::Push { value: 35 }).unwrap();
+        handle(&mut deps, env.clone(), HandleMsg::Push { value: 45 }).unwrap();
+        assert_eq!(get_count(&deps), 3);
+        assert_eq!(get_sum(&deps), 105);
     }
 
     #[test]
-    fn failed_handle() {
-        let mut deps = mock_dependencies(20);
+    fn push_and_pop() {
+        let (mut deps, env) = create_contract();
+        handle(&mut deps, env.clone(), HandleMsg::Push { value: 25 }).unwrap();
+        handle(&mut deps, env.clone(), HandleMsg::Push { value: 17 }).unwrap();
+        let res = handle(&mut deps, env.clone(), HandleMsg::Pop {}).unwrap();
+        // ensure we popped properly
+        assert!(res.data.is_some());
+        let data = res.data.unwrap();
+        let state: State = from_slice(data.as_slice()).unwrap();
+        assert_eq!(state.value, 25);
 
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coin("1000", "earth"),
-            &coin("1000", "earth"),
-        );
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        // beneficiary can release it
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
-        assert!(handle_res.is_err());
-
-        // state should not change
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(
-            state,
-            State {
-                verifier: deps.api.canonical_address(&verifier).unwrap(),
-                beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-                funder: deps.api.canonical_address(&creator).unwrap(),
-            }
-        );
+        // Note: this doesn't work yet (add delete)
+//        assert_eq!(get_count(&deps), 1);
+//        assert_eq!(get_sum(&deps), 17);
     }
 
-    #[test]
-    #[should_panic(expected = "This page intentionally faulted")]
-    fn handle_panic() {
-        let mut deps = mock_dependencies(20);
-
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coin("1000", "earth"),
-            &coin("1000", "earth"),
-        );
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
-        // this should panic
-        let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
-    }
+    //    #[test]
+    //    fn proper_handle() {
+    //        let mut deps = mock_dependencies(20);
+    //
+    //        // initialize the store
+    //        let verifier = HumanAddr(String::from("verifies"));
+    //        let beneficiary = HumanAddr(String::from("benefits"));
+    //
+    //        let init_msg = InitMsg {
+    //            verifier: verifier.clone(),
+    //            beneficiary: beneficiary.clone(),
+    //        };
+    //        let init_env = mock_env(
+    //            &deps.api,
+    //            "creator",
+    //            &coin("1000", "earth"),
+    //            &coin("1000", "earth"),
+    //        );
+    //        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+    //        assert_eq!(0, init_res.messages.len());
+    //
+    //        // beneficiary can release it
+    //        let handle_env = mock_env(
+    //            &deps.api,
+    //            verifier.as_str(),
+    //            &coin("15", "earth"),
+    //            &coin("1015", "earth"),
+    //        );
+    //        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
+    //        assert_eq!(1, handle_res.messages.len());
+    //        let msg = handle_res.messages.get(0).expect("no message");
+    //        assert_eq!(
+    //            msg,
+    //            &CosmosMsg::Send {
+    //                from_address: HumanAddr("cosmos2contract".to_string()),
+    //                to_address: beneficiary,
+    //                amount: coin("1015", "earth"),
+    //            }
+    //        );
+    //        assert_eq!(
+    //            handle_res.log,
+    //            vec![log("action", "release"), log("destination", "benefits"),],
+    //        );
+    //    }
 }
