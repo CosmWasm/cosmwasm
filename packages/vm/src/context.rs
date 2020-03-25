@@ -17,6 +17,7 @@ static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
 /// Could not write to region because it is too small
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
 
+/// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = read_region(ctx, key_ptr);
     let mut value: Option<Vec<u8>> = None;
@@ -31,6 +32,7 @@ pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     }
 }
 
+/// Writes a storage entry from Wasm memory into the VM's storage
 pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) {
     let key = read_region(ctx, key_ptr);
     let value = read_region(ctx, value_ptr);

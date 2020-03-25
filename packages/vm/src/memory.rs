@@ -21,8 +21,8 @@ pub struct Region {
 
 unsafe impl ValueType for Region {}
 
-// Expects a (fixed size) Region struct at ptr, which is read. This links to the
-// memory region, which is read in the second step.
+/// Expects a (fixed size) Region struct at ptr, which is read. This links to the
+/// memory region, which is copied in the second step.
 pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let region = to_region(ctx, ptr);
     let memory = ctx.memory(0);

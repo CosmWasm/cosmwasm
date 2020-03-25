@@ -111,12 +111,13 @@ where
         with_storage_from_context(self.wasmer_instance.context(), func)
     }
 
-    pub fn memory(&self, ptr: u32) -> Vec<u8> {
-        read_region(self.wasmer_instance.context(), ptr)
+    /// Copies all data described by the Region at the given pointer from Wasm to the caller.
+    pub fn memory(&self, region_ptr: u32) -> Vec<u8> {
+        read_region(self.wasmer_instance.context(), region_ptr)
     }
 
-    // allocate memory in the instance and copies the given data in
-    // returns the memory offset, to be later passed as an argument
+    /// Allocates memory in the instance and copies the given data into it.
+    /// Returns a pointer in the Wasm address space to the created Region object.
     pub fn allocate(&mut self, data: &[u8]) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
