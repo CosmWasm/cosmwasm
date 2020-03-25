@@ -50,6 +50,9 @@ impl Storage for MemoryStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         self.data.insert(key.to_vec(), value.to_vec());
     }
+    fn remove(&mut self, key: &[u8]) {
+        self.data.remove(key);
+    }
 }
 
 #[cfg(test)]
@@ -60,6 +63,8 @@ impl Storage for MemoryStorage {
 //
 // designed to be imported by other modules
 pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
+    // TODO: set with a delete
+
     // ensure we had previously set "foo" = "bar"
     assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
     assert_eq!(store.range(None, None, Sort::Ascending).count(), 1);
@@ -142,7 +147,7 @@ mod test {
     use super::*;
 
     #[test]
-    fn memory_storage_get_and_set() {
+    fn get_and_set() {
         let mut store = MemoryStorage::new();
         assert_eq!(None, store.get(b"foo"));
         store.set(b"foo", b"bar");
@@ -151,8 +156,19 @@ mod test {
     }
 
     #[test]
+    fn delete() {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
+        store.set(b"food", b"bank");
+        store.remove(b"foo");
+
+        assert_eq!(None, store.get(b"foo"));
+        assert_eq!(Some(b"bank".to_vec()), store.get(b"food"));
+    }
+
+    #[test]
     #[cfg(feature = "iterator")]
-    fn memory_storage_iterator() {
+    fn iterator() {
         let mut store = MemoryStorage::new();
         store.set(b"foo", b"bar");
         iterator_test_suite(&mut store);

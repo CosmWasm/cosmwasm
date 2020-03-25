@@ -38,6 +38,7 @@ pub trait ReadonlyStorage {
 // Storage extends ReadonlyStorage to give mutable access
 pub trait Storage: ReadonlyStorage {
     fn set(&mut self, key: &[u8], value: &[u8]);
+    fn remove(&mut self, key: &[u8]);
 }
 
 // Api are callbacks to system functions defined outside of the wasm modules.

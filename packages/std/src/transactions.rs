@@ -69,6 +69,13 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
         op.apply(&mut self.local_state);
         self.rep_log.append(op);
     }
+
+    fn remove(&mut self, key: &[u8]) {
+        // TODO: handle overlay better
+        let op = Op::Delete { key: key.to_vec() };
+        op.apply(&mut self.local_state);
+        self.rep_log.append(op);
+    }
 }
 
 pub struct RepLog {
@@ -96,7 +103,13 @@ impl RepLog {
 
 enum Op {
     /// represents the `Set` operation for setting a key-value pair in storage
-    Set { key: Vec<u8>, value: Vec<u8> },
+    Set {
+        key: Vec<u8>,
+        value: Vec<u8>,
+    },
+    Delete {
+        key: Vec<u8>,
+    },
 }
 
 impl Op {
@@ -104,6 +117,7 @@ impl Op {
     pub fn apply<S: Storage>(&self, storage: &mut S) {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
+            Op::Delete { key } => storage.remove(&key),
         }
     }
 }
@@ -197,10 +211,46 @@ mod test {
     use crate::errors::Unauthorized;
 
     #[test]
+    fn delete_local() {
+        let mut base = MemoryStorage::new();
+        let mut check = StorageTransaction::new(&base);
+        check.set(b"foo", b"bar");
+        check.set(b"food", b"bank");
+        check.remove(b"foo");
+
+        assert_eq!(None, check.get(b"foo"));
+        assert_eq!(Some(b"bank".to_vec()), check.get(b"food"));
+
+        // now commit to base and query there
+        check.prepare().commit(&mut base);
+        assert_eq!(None, base.get(b"foo"));
+        assert_eq!(Some(b"bank".to_vec()), base.get(b"food"));
+    }
+
+    #[test]
+    fn delete_from_base() {
+        let mut base = MemoryStorage::new();
+        base.set(b"foo", b"bar");
+        let mut check = StorageTransaction::new(&base);
+        check.set(b"food", b"bank");
+        check.remove(b"foo");
+
+        assert_eq!(None, check.get(b"foo"));
+        assert_eq!(Some(b"bank".to_vec()), check.get(b"food"));
+
+        // now commit to base and query there
+        check.prepare().commit(&mut base);
+        assert_eq!(None, base.get(b"foo"));
+        assert_eq!(Some(b"bank".to_vec()), base.get(b"food"));
+    }
+
+    // TODO: check iterators working with delete
+
+    #[test]
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_empty_base() {
-        let mut base = MemoryStorage::new();
-        let mut check = StorageTransaction::new(&mut base);
+        let base = MemoryStorage::new();
+        let mut check = StorageTransaction::new(&base);
         check.set(b"foo", b"bar");
         crate::storage::iterator_test_suite(&mut check);
     }
@@ -210,7 +260,7 @@ mod test {
     fn storage_transaction_iterator_with_base_data() {
         let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
-        let mut check = StorageTransaction::new(&mut base);
+        let mut check = StorageTransaction::new(&base);
         crate::storage::iterator_test_suite(&mut check);
     }
 
@@ -251,7 +301,7 @@ mod test {
         let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
-        let mut check = StorageTransaction::new(&mut base);
+        let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
         check.rollback();
@@ -264,7 +314,7 @@ mod test {
         let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
 
-        let mut check = StorageTransaction::new(&mut base);
+        let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
 

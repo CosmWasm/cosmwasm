@@ -24,6 +24,7 @@ static ADDR_BUFFER: usize = 72;
 extern "C" {
     fn read_db(key: *const c_void, value: *mut c_void) -> i32;
     fn write_db(key: *const c_void, value: *mut c_void);
+    fn remove_db(key: *const c_void);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
@@ -113,6 +114,15 @@ impl Storage for ExternalStorage {
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         unsafe {
             write_db(key_ptr, value_ptr);
+        }
+    }
+
+    fn remove(&mut self, key: &[u8]) {
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as *const c_void;
+        unsafe {
+            remove_db(key_ptr);
         }
     }
 }
