@@ -8,7 +8,6 @@ use crate::traits::{Api, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use crate::traits::{KVPair, Sort};
 use crate::types::{CanonicalAddr, HumanAddr};
-use std::ptr::null;
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
@@ -25,8 +24,11 @@ static ADDR_BUFFER: usize = 72;
 extern "C" {
     fn read_db(key: *const c_void, value: *mut c_void) -> i32;
     fn write_db(key: *const c_void, value: *mut c_void);
+
     // scan creates an iterator, which can be read by consecutive next() calls
+    #[cfg(feature = "iterator")]
     fn scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    #[cfg(feature = "iterator")]
     fn next(iterator: i32, key: *mut c_void, value: *mut c_void) -> i32;
     // TODO: add cleanup
     //    fn close(iterator: i32);
@@ -72,6 +74,7 @@ impl ReadonlyStorage for ExternalStorage {
         }
     }
 
+    #[cfg(feature = "iterator")]
     fn range(
         &self,
         start: Option<&[u8]>,
@@ -83,12 +86,12 @@ impl ReadonlyStorage for ExternalStorage {
         let start = start.map(|s| build_region(s));
         let start_ptr = match start {
             Some(reg) => &*reg as *const Region as *const c_void,
-            None => null(),
+            None => std::ptr::null(),
         };
         let end = end.map(|e| build_region(e));
         let end_ptr = match end {
             Some(reg) => &*reg as *const Region as *const c_void,
-            None => null(),
+            None => std::ptr::null(),
         };
         let order = order as i32;
 
@@ -114,10 +117,12 @@ impl Storage for ExternalStorage {
     }
 }
 
+#[cfg(feature = "iterator")]
 struct ExternalIterator {
     ptr: i32,
 }
 
+#[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
     type Item = KVPair;
 
