@@ -7,7 +7,7 @@ use crate::errors::Result;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
-use crate::traits::{KVPair, Sort};
+use crate::traits::{Order, Pair};
 
 pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     /// read-only access to backing storage
@@ -51,8 +51,8 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         &self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
-        order: Sort,
-    ) -> Box<dyn Iterator<Item = KVPair>> {
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Pair>> {
         let local = self.local_state.range(start, end, order);
         let base = self.storage.range(start, end, order);
         let merged = MergeOrdered::new(local, base, order);
@@ -130,7 +130,7 @@ where
 {
     left: Peekable<L>,
     right: Peekable<R>,
-    order: Sort,
+    order: Order,
 }
 
 #[cfg(feature = "iterator")]
@@ -139,7 +139,7 @@ where
     L: Iterator<Item = R::Item>,
     R: Iterator,
 {
-    fn new(left: L, right: R, order: Sort) -> Self {
+    fn new(left: L, right: R, order: Order) -> Self {
         MergeOrdered {
             left: left.peekable(),
             right: right.peekable(),
@@ -161,8 +161,8 @@ where
         match (self.left.peek(), self.right.peek()) {
             (Some(l), Some(r)) => {
                 let order = match self.order {
-                    Sort::Ascending => l.cmp(r),
-                    Sort::Descending => r.cmp(l),
+                    Order::Ascending => l.cmp(r),
+                    Order::Descending => r.cmp(l),
                 };
                 match order {
                     Ordering::Less => self.left.next(),

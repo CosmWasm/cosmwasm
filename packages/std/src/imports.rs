@@ -6,7 +6,7 @@ use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::traits::{Api, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
-use crate::traits::{KVPair, Sort};
+use crate::traits::{Order, Pair};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 // this is the buffer we pre-allocate in get - we should configure this somehow later
@@ -80,8 +80,8 @@ impl ReadonlyStorage for ExternalStorage {
         &self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
-        order: Sort,
-    ) -> Box<dyn Iterator<Item = KVPair>> {
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Pair>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -134,7 +134,7 @@ struct ExternalIterator {
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
-    type Item = KVPair;
+    type Item = Pair;
 
     fn next(&mut self) -> Option<Self::Item> {
         let key = alloc(MAX_READ);

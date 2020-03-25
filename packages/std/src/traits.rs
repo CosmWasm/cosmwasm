@@ -2,11 +2,12 @@ use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
-pub type KVPair = (Vec<u8>, Vec<u8>);
+pub type Pair = (Vec<u8>, Vec<u8>);
 
 #[cfg(feature = "iterator")]
 #[derive(Copy, Clone)]
-pub enum Sort {
+// We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
+pub enum Order {
     Ascending = 1,
     Descending = 2,
 }
@@ -25,14 +26,14 @@ pub trait ReadonlyStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
-    /// uses standard rust range notation eg db.range(b"bar"..b"foo")
-    /// returns a DoubleEndedIterator, so range(..).rev() is efficient to get the end
+    /// start is inclusive and end is exclusive
+    /// start must be lexicographically before end
     fn range(
         &self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
-        order: Sort,
-    ) -> Box<dyn Iterator<Item = KVPair>>;
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Pair>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

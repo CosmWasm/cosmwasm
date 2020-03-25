@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use queue::contract::{HandleMsg, InitMsg, QueryMsg, State, CountResponse, SumResponse};
+use queue::contract::{CountResponse, HandleMsg, InitMsg, QueryMsg, State, SumResponse};
 
 fn main() {
     let mut pwd = current_dir().unwrap();

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 
 use cosmwasm_std::{
-    from_slice, to_vec, Api, Binary, Env, Extern, ParseErr, Response, Result, SerializeErr, Sort,
+    from_slice, to_vec, Api, Binary, Env, Extern, Order, ParseErr, Response, Result, SerializeErr,
     Storage,
 };
 
@@ -76,7 +76,7 @@ fn do_push<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env, value: i32) -
     // find the last element in the queue and extract key
     let last = deps
         .storage
-        .range(None, None, Sort::Descending)
+        .range(None, None, Order::Descending)
         .next()
         .map(|(k, _)| k);
 
@@ -93,7 +93,7 @@ fn do_push<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env, value: i32) -
 
 fn do_pop<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<Response> {
     // find the first element in the queue and extract value
-    let first = deps.storage.range(None, None, Sort::Ascending).next();
+    let first = deps.storage.range(None, None, Order::Ascending).next();
 
     let mut res = Response::default();
     if let Some((k, v)) = first {
@@ -114,7 +114,7 @@ pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<V
 }
 
 fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
-    let count = deps.storage.range(None, None, Sort::Ascending).count() as i32;
+    let count = deps.storage.range(None, None, Order::Ascending).count() as i32;
     to_vec(&CountResponse { count }).context(SerializeErr {
         kind: "CountResponse",
     })
@@ -123,7 +123,7 @@ fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
 fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
     let values: Result<Vec<State>> = deps
         .storage
-        .range(None, None, Sort::Ascending)
+        .range(None, None, Order::Ascending)
         .map(|(_, v)| from_slice(&v).context(ParseErr { kind: "State" }))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
