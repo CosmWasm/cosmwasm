@@ -36,3 +36,9 @@ snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
 serde_json = "1.0"
+
+[patch.crates-io]
+wasmer-runtime-core = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
+wasmer-middleware-common = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
+wasmer-clif-backend = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
+wasmer-singlepass-backend = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }

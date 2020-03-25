@@ -1,3 +1,9 @@
 [workspace]
 members = ["packages/*"]
 exclude = ["contracts"]
+
+[patch.crates-io]
+wasmer-runtime-core = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
+wasmer-middleware-common = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
+wasmer-clif-backend = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
+wasmer-singlepass-backend = { git = "https://github.com/wasmerio/wasmer", rev = "4e53f9e9c6f8c4d864f53e387da347604f0cb852" }
