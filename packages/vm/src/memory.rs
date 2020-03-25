@@ -14,9 +14,10 @@ use wasmer_runtime_core::{
 /// but defined here to allow Wasmer specific implementation.
 #[repr(C)]
 #[derive(Default, Clone, Copy, Debug)]
-pub struct Region {
+struct Region {
     pub offset: u32,
-    pub len: u32,
+    /// The number of bytes available in this region
+    pub capacity: u32,
 }
 
 unsafe impl ValueType for Region {}
@@ -27,11 +28,11 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
     let region = to_region(ctx, ptr);
     let memory = ctx.memory(0);
 
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.len) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-            let len = region.len as usize;
+            let len = region.capacity as usize;
             let mut result = vec![0u8; len];
             for i in 0..len {
                 result[i] = cells[i].get();
@@ -51,7 +52,7 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
 /// Returns number of bytes written on success.
 pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
     let region = to_region(ctx, ptr);
-    let region_size = region.len as usize;
+    let region_size = region.capacity as usize;
 
     if data.len() > region_size {
         return RegionTooSmallErr {
@@ -68,7 +69,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<usize, Error> {
 
     let memory = ctx.memory(0);
 
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.len) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81

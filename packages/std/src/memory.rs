@@ -11,7 +11,8 @@ use crate::errors::{Error, NullPointer};
 #[repr(C)]
 pub struct Region {
     pub offset: u32,
-    pub len: u32,
+    /// The number of bytes available in this region
+    pub capacity: u32,
 }
 
 /// alloc is the same as external allocate, but designed to be called internally
@@ -50,8 +51,8 @@ pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
     let region = Box::from_raw(ptr as *mut Region);
     let buffer = Vec::from_raw_parts(
         region.offset as *mut u8,
-        region.len as usize,
-        region.len as usize,
+        region.capacity as usize, // TODO: only read the relevant part of the region to avoid the need for truncating later on
+        region.capacity as usize,
     );
     Ok(buffer)
 }
@@ -63,6 +64,6 @@ pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
 pub fn build_region(data: &[u8]) -> Box<Region> {
     Box::new(Region {
         offset: data.as_ptr() as u32,
-        len: data.len() as u32,
+        capacity: data.len() as u32,
     })
 }

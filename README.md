@@ -121,7 +121,8 @@ caller and the contract:
 #[repr(C)]
 pub struct Region {
     pub offset: u32,
-    pub len: u32,
+    /// The number of bytes available in this region
+    pub capacity: u32,
 }
 ```
 (from [memory.rs](https://github.com/CosmWasm/cosmwasm/blob/master/src/memory.rs#L7-L13))
