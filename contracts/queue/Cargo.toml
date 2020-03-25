@@ -40,5 +40,5 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"]  }
 serde_json = "1.0"
