@@ -28,7 +28,7 @@ unsafe impl ValueType for Region {}
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
-    let region = to_region(ctx, ptr);
+    let region = get_region(ctx, ptr);
     let memory = ctx.memory(0);
 
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
@@ -54,7 +54,7 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
 ///
 /// Returns number of bytes written on success.
 pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<(), Error> {
-    let mut region = to_region(ctx, ptr);
+    let mut region = get_region(ctx, ptr);
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
@@ -90,8 +90,8 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<(), Error> {
     }
 }
 
-// Reads in a ptr to Region in wasm memory and constructs the object we can use to access it
-fn to_region(ctx: &Ctx, ptr: u32) -> Region {
+/// Reads in a Region at ptr in wasm memory and returns a copy of it
+fn get_region(ctx: &Ctx, ptr: u32) -> Region {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Region>::new(ptr);
     let cell = wptr.deref(memory).unwrap();
