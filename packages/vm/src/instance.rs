@@ -67,7 +67,7 @@ where
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns negative code on error, 0 on success
-                "scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32{
+                "scan_db" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32{
                     #[cfg(not(feature = "iterator"))]
                     return 0;
                     #[cfg(feature = "iterator")]
@@ -76,7 +76,7 @@ where
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                "next" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "next_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     #[cfg(not(feature = "iterator"))]
                     return 0;
                     #[cfg(feature = "iterator")]

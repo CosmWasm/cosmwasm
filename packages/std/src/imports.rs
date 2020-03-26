@@ -25,9 +25,9 @@ extern "C" {
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    fn scan_db(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn next(key: *mut c_void, value: *mut c_void) -> i32;
+    fn next_db(key: *mut c_void, value: *mut c_void) -> i32;
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
@@ -91,7 +91,7 @@ impl ReadonlyStorage for ExternalStorage {
         };
         let order = order as i32;
 
-        let iter_ptr = unsafe { scan(start_ptr, end_ptr, order) };
+        let iter_ptr = unsafe { scan_db(start_ptr, end_ptr, order) };
         if iter_ptr < 0 {
             panic!(format!("Error creating iterator: {}", iter_ptr));
         }
@@ -136,7 +136,7 @@ impl Iterator for ExternalIterator {
         let key = alloc(MAX_READ);
         let value = alloc(MAX_READ);
 
-        let read = unsafe { next(key, value) };
+        let read = unsafe { next_db(key, value) };
         if read < 0 {
             panic!(format!("Unknown error on next: {}", read));
         }

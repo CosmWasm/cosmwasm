@@ -11,9 +11,9 @@ static SUPPORTED_IMPORTS: &[&str] = &[
     "env.canonicalize_address",
     "env.humanize_address",
     #[cfg(feature = "iterator")]
-    "env.scan",
+    "env.scan_db",
     #[cfg(feature = "iterator")]
-    "env.next",
+    "env.next_db",
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.

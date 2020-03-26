@@ -1,6 +1,7 @@
 /**
 Internal details to be used by instance.rs only
 **/
+#[cfg(feature = "iterator")]
 use std::convert::TryInto;
 use std::ffi::c_void;
 use std::mem;
@@ -22,10 +23,13 @@ static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
 
 /// Invalid Order enum value passed into scan
+#[cfg(feature = "iterator")]
 static ERROR_SCAN_INVALID_ORDER: i32 = -2000001;
 // Iterator pointer not registered
+#[cfg(feature = "iterator")]
 static ERROR_NEXT_INVALID_ITERATOR: i32 = -2000002;
 /// Generic error - using context with no Storage attached
+#[cfg(feature = "iterator")]
 static ERROR_NO_STORAGE: i32 = -3000001;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
@@ -93,7 +97,6 @@ pub fn do_next<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
         }
     };
     match write_region(ctx, key_ptr, &key) {
-        // TODO: we need to return the length of key somehow, now this is just the length of value
         Ok(()) => 0,
         Err(Error::RegionTooSmallErr { .. }) => return ERROR_WRITE_TO_REGION_TOO_SMALL,
         Err(_) => return ERROR_WRITE_TO_REGION_UNKNONW,
