@@ -143,7 +143,7 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
 struct ContextData<S: Storage> {
     data: Option<S>,
     #[cfg(feature = "iterator")]
-    iter: Option<Box<dyn Iterator<Item =KV>>>,
+    iter: Option<Box<dyn Iterator<Item = KV>>>,
 }
 
 pub fn setup_context<S: Storage>() -> (*mut c_void, fn(*mut c_void)) {
@@ -201,7 +201,7 @@ pub fn leave_storage<S: Storage>(ctx: &Ctx, storage: Option<S>) {
 #[cfg(feature = "iterator")]
 // if ptr is None, find a new slot.
 // otherwise, place in slot defined by ptr (only after take)
-pub fn leave_iterator<S: Storage>(ctx: &Ctx, iter: Box<dyn Iterator<Item =KV>>) {
+pub fn leave_iterator<S: Storage>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
     let mut b = unsafe { get_data::<S>(ctx.data) };
     // clean up old one if there was one
     let _ = b.iter.take();
@@ -210,7 +210,7 @@ pub fn leave_iterator<S: Storage>(ctx: &Ctx, iter: Box<dyn Iterator<Item =KV>>) 
 }
 
 #[cfg(feature = "iterator")]
-pub fn take_iterator<S: Storage>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item =KV>>> {
+pub fn take_iterator<S: Storage>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = KV>>> {
     let mut b = unsafe { get_data::<S>(ctx.data) };
     let res = b.iter.take();
     mem::forget(b); // we do this to avoid cleanup

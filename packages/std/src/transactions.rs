@@ -138,10 +138,10 @@ impl Op {
     /// converts the Op to a delta, which can be stored in a local cache
     pub fn to_delta(&self) -> Delta {
         match self {
-            Op::Set { key: _, value } => Delta::Set {
+            Op::Set { value, .. } => Delta::Set {
                 value: value.clone(),
             },
-            Op::Delete { key: _ } => Delta::Delete {},
+            Op::Delete { .. } => Delta::Delete {},
         }
     }
 }
