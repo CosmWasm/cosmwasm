@@ -7,6 +7,10 @@
 - Upgrade schemars to 0.6.
 - Upgrade wasmer to 0.16.
 - Minimal supported Rust version is 1.41.
+- Split `Region.len` into `Region.capacity` and `Region.length`, where the new
+  capacity is the number of bytes available and `length` is the number of bytes
+  used. This is a breaking change in the contract-vm interface, which requires
+  the same memory layout of the `Region` struct on both sides.
 
 **cosmwasm**
 
@@ -19,11 +23,16 @@
   `use cosmwasm::traits::{Api, Storage};` + `use cosmwasm::encoding::Binary;`
   becomes `use cosmwasm::{Api, Binary, Storage};`).
 - Rename package `cosmwasm` to `cosmwasm-std`.
+- The export `allocate` does not zero-fill the allocated memory anymore.
 
 **cosmwasm-vm**
 
 - Make `Instance.memory`/`.allocate`/`.deallocate`/`.func` crate internal. A
   user of the VM must not access the instance's memory directly.
+- The imports `env.canonicalize_address`, `env.humanize_address` and
+  `env.read_db` don't return the number of bytes written anymore. This value is
+  now available in the resulting regions. Negative return values are errors, 0
+  is success and values greater than 0 are reserved for future use.
 
 ## 0.7.2 (2020-03-23)
 
