@@ -1,15 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CountResponse",
+  "title": "Item",
   "type": "object",
   "required": [
-    "count"
+    "value"
   ],
   "properties": {
-    "count": {
+    "value": {
       "type": "integer",
-      "format": "uint32",
-      "minimum": 0.0
+      "format": "int32"
     }
   }
 }
