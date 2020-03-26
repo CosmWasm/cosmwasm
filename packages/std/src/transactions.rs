@@ -1,19 +1,21 @@
 #[cfg(feature = "iterator")]
 use std::cmp::Ordering;
+use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
 use std::iter::Peekable;
 
 use crate::errors::Result;
-use crate::storage::MemoryStorage;
+#[cfg(feature = "iterator")]
+use crate::storage::range_bounds;
 use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
-use crate::traits::{Order, Pair};
+use crate::traits::{KVRef, Order, KV};
 
 pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     /// read-only access to backing storage
     storage: &'a S,
     /// these are local changes not flushed to backing storage
-    local_state: MemoryStorage,
+    local_state: BTreeMap<Vec<u8>, Delta>,
     /// a log of local changes not yet flushed to backing storage
     rep_log: RepLog,
 }
@@ -22,7 +24,7 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
     pub fn new(storage: &'a S) -> Self {
         StorageTransaction {
             storage,
-            local_state: MemoryStorage::new(),
+            local_state: BTreeMap::new(),
             rep_log: RepLog::new(),
         }
     }
@@ -39,7 +41,10 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
 impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
-            Some(val) => Some(val),
+            Some(val) => match val {
+                Delta::Set { value } => Some(value.clone()),
+                Delta::Delete {} => None,
+            },
             None => self.storage.get(key),
         }
     }
@@ -52,11 +57,19 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair>> {
-        let local = self.local_state.range(start, end, order);
+    ) -> Box<dyn Iterator<Item = KV>> {
+        let local_raw = self.local_state.range(range_bounds(start, end));
+        let local: Box<dyn Iterator<Item = KVRef<Delta>>> = match order {
+            Order::Ascending => Box::new(local_raw),
+            Order::Descending => Box::new(local_raw.rev()),
+        };
         let base = self.storage.range(start, end, order);
-        let merged = MergeOrdered::new(local, base, order);
-        Box::new(merged)
+        let merged = MergeOverlay::new(local, base, order);
+
+        // again, ugliness fighting lifetimes...
+        // TODO: fix this along with MemoryStorage.range trick
+        let all: Vec<_> = merged.collect();
+        Box::new(all.into_iter())
     }
 }
 
@@ -66,14 +79,13 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
             key: key.to_vec(),
             value: value.to_vec(),
         };
-        op.apply(&mut self.local_state);
+        self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
     }
 
     fn remove(&mut self, key: &[u8]) {
-        // TODO: handle overlay better
         let op = Op::Delete { key: key.to_vec() };
-        op.apply(&mut self.local_state);
+        self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
     }
 }
@@ -101,6 +113,8 @@ impl RepLog {
     }
 }
 
+/// Op is the user operation, which can be stored in the RepLog.
+/// Currently Set or Delete.
 enum Op {
     /// represents the `Set` operation for setting a key-value pair in storage
     Set {
@@ -120,13 +134,31 @@ impl Op {
             Op::Delete { key } => storage.remove(&key),
         }
     }
+
+    /// converts the Op to a delta, which can be stored in a local cache
+    pub fn to_delta(&self) -> Delta {
+        match self {
+            Op::Set { key: _, value } => Delta::Set {
+                value: value.clone(),
+            },
+            Op::Delete { key: _ } => Delta::Delete {},
+        }
+    }
+}
+
+/// Delta is the changes, stored in the local transaction cache.
+/// This is either Set{value} or Delete{}. Note that this is the "value"
+/// part of a BTree, so the Key (from the Op) is stored separately.
+enum Delta {
+    Set { value: Vec<u8> },
+    Delete {},
 }
 
 #[cfg(feature = "iterator")]
-struct MergeOrdered<L, R>
+struct MergeOverlay<'a, L, R>
 where
-    L: Iterator<Item = R::Item>,
-    R: Iterator,
+    L: Iterator<Item = KVRef<'a, Delta>>,
+    R: Iterator<Item = KV>,
 {
     left: Peekable<L>,
     right: Peekable<R>,
@@ -134,43 +166,66 @@ where
 }
 
 #[cfg(feature = "iterator")]
-impl<L, R> MergeOrdered<L, R>
+impl<'a, L, R> MergeOverlay<'a, L, R>
 where
-    L: Iterator<Item = R::Item>,
-    R: Iterator,
+    L: Iterator<Item = KVRef<'a, Delta>>,
+    R: Iterator<Item = KV>,
 {
     fn new(left: L, right: R, order: Order) -> Self {
-        MergeOrdered {
+        MergeOverlay {
             left: left.peekable(),
             right: right.peekable(),
             order,
         }
     }
+
+    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<KV> {
+        // compare keys - result is such that Ordering::Less => return left side
+        let order = match self.order {
+            Order::Ascending => lkey.cmp(&rkey),
+            Order::Descending => rkey.cmp(&lkey),
+        };
+
+        // left must be translated and filtered before return, not so with right
+        match order {
+            Ordering::Less => self.take_left(),
+            Ordering::Equal => {
+                //
+                let _ = self.right.next();
+                self.take_left()
+            }
+            Ordering::Greater => self.right.next(),
+        }
+    }
+
+    /// take_left must only be called when we know self.left.next() will return Some
+    fn take_left(&mut self) -> Option<KV> {
+        let (lkey, lval) = self.left.next().unwrap();
+        match lval {
+            Delta::Set { value } => Some((lkey.clone(), value.clone())),
+            Delta::Delete {} => self.next(),
+        }
+    }
 }
 
 #[cfg(feature = "iterator")]
-impl<L, R> Iterator for MergeOrdered<L, R>
+impl<'a, L, R> Iterator for MergeOverlay<'a, L, R>
 where
-    L: Iterator<Item = R::Item>,
-    R: Iterator,
-    L::Item: Ord,
+    L: Iterator<Item = KVRef<'a, Delta>>,
+    R: Iterator<Item = KV>,
 {
-    type Item = L::Item;
+    type Item = KV;
 
-    fn next(&mut self) -> Option<L::Item> {
-        match (self.left.peek(), self.right.peek()) {
-            (Some(l), Some(r)) => {
-                let order = match self.order {
-                    Order::Ascending => l.cmp(r),
-                    Order::Descending => r.cmp(l),
-                };
-                match order {
-                    Ordering::Less => self.left.next(),
-                    Ordering::Equal => self.left.next(),
-                    Ordering::Greater => self.right.next(),
-                }
+    fn next(&mut self) -> Option<KV> {
+        let (left, right) = (self.left.peek(), self.right.peek());
+        match (left, right) {
+            (Some((lkey, _)), Some((rkey, _))) => {
+                // we just use cloned keys to avoid double mutable references
+                // (we must release the return value from peek, before beginning to call next or other mut methods
+                let (l, r) = (lkey.to_vec(), rkey.to_vec());
+                self.pick_match(l, r)
             }
-            (Some(_), None) => self.left.next(),
+            (Some(_), None) => self.take_left(),
             (None, Some(_)) => self.right.next(),
             (None, None) => None,
         }
@@ -209,6 +264,7 @@ pub fn transactional_deps<S: Storage, A: Api, T>(
 mod test {
     use super::*;
     use crate::errors::Unauthorized;
+    use crate::storage::MemoryStorage;
 
     #[test]
     fn delete_local() {

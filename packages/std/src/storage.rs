@@ -1,9 +1,9 @@
 use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
-use std::ops::Bound;
+use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
-use crate::traits::{Order, Pair};
+use crate::traits::{Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]
@@ -30,20 +30,26 @@ impl ReadonlyStorage for MemoryStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair>> {
-        let bounds = (
-            start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
-            end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
-        );
+    ) -> Box<dyn Iterator<Item = KV>> {
+        let bounds = range_bounds(start, end);
         let iter = self.data.range(bounds);
 
         // We brute force this a bit to deal with lifetimes.... should do this lazy
+        // TODO: if we use memory storage for anything over a few dozen entries, we should definitely make this lazy
         let res: Vec<_> = match order {
             Order::Ascending => iter.map(|(k, v)| (k.clone(), v.clone())).collect(),
             Order::Descending => iter.rev().map(|(k, v)| (k.clone(), v.clone())).collect(),
         };
         Box::new(res.into_iter())
     }
+}
+
+#[cfg(feature = "iterator")]
+pub(crate) fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
+    (
+        start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
+        end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
+    )
 }
 
 impl Storage for MemoryStorage {

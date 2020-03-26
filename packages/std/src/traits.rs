@@ -7,7 +7,11 @@ use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
-pub type Pair = (Vec<u8>, Vec<u8>);
+/// KV is a Key-Value pair, returned from our iterators
+pub type KV<T = Vec<u8>> = (Vec<u8>, T);
+#[cfg(feature = "iterator")]
+/// KVRef is a Key-Value pair reference, returned from underlying btree iterators
+pub type KVRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 #[cfg(feature = "iterator")]
 #[derive(Copy, Clone)]
@@ -58,7 +62,7 @@ pub trait ReadonlyStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Pair>>;
+    ) -> Box<dyn Iterator<Item = KV>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
