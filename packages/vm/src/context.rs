@@ -60,7 +60,7 @@ pub fn do_remove<T: Storage>(ctx: &Ctx, key_ptr: u32) {
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_scan<T: Storage>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) -> i32 {
+pub fn do_scan<T: Storage + 'static>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) -> i32 {
     let start = maybe_read_region(ctx, start_ptr);
     let end = maybe_read_region(ctx, end_ptr);
     let order: Order = match order.try_into() {
@@ -68,10 +68,10 @@ pub fn do_scan<T: Storage>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) 
         Err(_) => return ERROR_SCAN_INVALID_ORDER,
     };
     let mut storage: Option<T> = take_storage(ctx);
-    if let Some(store) = &mut storage {
+    if let Some(store) = storage {
         let iter = store.range(start.as_deref(), end.as_deref(), order);
         leave_iterator::<T>(ctx, iter);
-        leave_storage(ctx, storage);
+        leave_storage(ctx, Some(store));
         return 0;
     } else {
         leave_storage(ctx, storage);
