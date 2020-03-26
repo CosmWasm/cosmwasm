@@ -69,8 +69,6 @@ impl Storage for MemoryStorage {
 //
 // designed to be imported by other modules
 pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
-    // TODO: set with a delete
-
     // ensure we had previously set "foo" = "bar"
     assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
     assert_eq!(store.range(None, None, Order::Ascending).count(), 1);

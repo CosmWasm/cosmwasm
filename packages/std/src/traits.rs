@@ -1,45 +1,8 @@
-#[cfg(feature = "iterator")]
-use crate::errors::{contract_err, Error};
-#[cfg(feature = "iterator")]
-use std::convert::TryFrom;
-
 use crate::errors::Result;
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
-/// KV is a Key-Value pair, returned from our iterators
-pub type KV<T = Vec<u8>> = (Vec<u8>, T);
-#[cfg(feature = "iterator")]
-/// KVRef is a Key-Value pair reference, returned from underlying btree iterators
-pub type KVRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
-
-#[cfg(feature = "iterator")]
-#[derive(Copy, Clone)]
-// We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
-pub enum Order {
-    Ascending = 1,
-    Descending = 2,
-}
-
-#[cfg(feature = "iterator")]
-impl TryFrom<i32> for Order {
-    type Error = Error;
-
-    fn try_from(value: i32) -> Result<Self, Self::Error> {
-        match value {
-            1 => Ok(Order::Ascending),
-            2 => Ok(Order::Descending),
-            _ => contract_err("Order must be 1 or 2"),
-        }
-    }
-}
-
-#[cfg(feature = "iterator")]
-impl Into<i32> for Order {
-    fn into(self) -> i32 {
-        self as i32
-    }
-}
+pub use iter_support::{KVRef, Order, KV};
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -83,4 +46,42 @@ pub trait Storage: ReadonlyStorage {
 pub trait Api: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
+}
+
+// put them here to avoid so many feature flags
+#[cfg(feature = "iterator")]
+mod iter_support {
+    use crate::errors::{contract_err, Error};
+    use std::convert::TryFrom;
+
+    /// KV is a Key-Value pair, returned from our iterators
+    pub type KV<T = Vec<u8>> = (Vec<u8>, T);
+
+    /// KVRef is a Key-Value pair reference, returned from underlying btree iterators
+    pub type KVRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
+
+    #[derive(Copy, Clone)]
+    // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
+    pub enum Order {
+        Ascending = 1,
+        Descending = 2,
+    }
+
+    impl TryFrom<i32> for Order {
+        type Error = Error;
+
+        fn try_from(value: i32) -> Result<Self, Self::Error> {
+            match value {
+                1 => Ok(Order::Ascending),
+                2 => Ok(Order::Descending),
+                _ => contract_err("Order must be 1 or 2"),
+            }
+        }
+    }
+
+    impl Into<i32> for Order {
+        fn into(self) -> i32 {
+            self as i32
+        }
+    }
 }

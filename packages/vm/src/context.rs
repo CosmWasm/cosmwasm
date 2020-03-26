@@ -170,7 +170,6 @@ unsafe fn get_data<S: Storage>(ptr: *mut c_void) -> Box<ContextData<S>> {
 fn destroy_unmanaged_storage<S: Storage>(ptr: *mut c_void) {
     if !ptr.is_null() {
         // auto-dropped with scope
-        // TODO: do we need to manually clean up iterators before storage?
         let _ = unsafe { get_data::<S>(ptr) };
     }
 }
