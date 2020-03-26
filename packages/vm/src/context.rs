@@ -67,10 +67,13 @@ pub fn do_scan<T: Storage + 'static>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, or
         Ok(o) => o,
         Err(_) => return ERROR_SCAN_INVALID_ORDER,
     };
-    let mut storage: Option<T> = take_storage(ctx);
+    let storage: Option<T> = take_storage(ctx);
     if let Some(store) = storage {
         let iter = store.range(start.as_deref(), end.as_deref(), order);
-        leave_iterator::<T>(ctx, iter);
+        // TODO: we want to do this lazy as well, but even more lifetime tiwddling needed
+        //        leave_iterator::<T>(ctx, iter);
+        let res: Vec<_> = iter.collect();
+        leave_iterator::<T>(ctx, Box::new(res.into_iter()));
         leave_storage(ctx, Some(store));
         return 0;
     } else {
