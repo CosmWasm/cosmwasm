@@ -3,13 +3,13 @@ use cosmwasm_std::{coin, from_slice, Env, HumanAddr};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 use cosmwasm_vm::Instance;
 
-use queue::contract::{CountResponse, HandleMsg, InitMsg, QueryMsg, State, SumResponse};
+use queue::contract::{CountResponse, HandleMsg, InitMsg, Item, QueryMsg, SumResponse};
 
 /**
 This integration test tries to run and call the generated wasm.
 It depends on a release build being available already. You can create that with:
 
-cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
+RUSTFLAGS='-C link-arg=-s' cargo wasm
 
 Then running `cargo test` will validate we can properly call into that generated data.
 
@@ -40,7 +40,7 @@ fn create_contract() -> (Instance<MockStorage, MockApi>, Env) {
     (deps, env)
 }
 
-fn get_count(deps: &mut Instance<MockStorage, MockApi>) -> i32 {
+fn get_count(deps: &mut Instance<MockStorage, MockApi>) -> u32 {
     let data = query(deps, QueryMsg::Count {}).unwrap();
     let res: CountResponse = from_slice(data.as_slice()).unwrap();
     res.count
@@ -62,7 +62,7 @@ fn init_and_query() {
 #[test]
 fn push_and_query() {
     let (mut deps, env) = create_contract();
-    handle(&mut deps, env.clone(), HandleMsg::Push { value: 25 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 25 }).unwrap();
     assert_eq!(get_count(&mut deps), 1);
     assert_eq!(get_sum(&mut deps), 25);
 }
@@ -70,9 +70,9 @@ fn push_and_query() {
 #[test]
 fn multiple_push() {
     let (mut deps, env) = create_contract();
-    handle(&mut deps, env.clone(), HandleMsg::Push { value: 25 }).unwrap();
-    handle(&mut deps, env.clone(), HandleMsg::Push { value: 35 }).unwrap();
-    handle(&mut deps, env.clone(), HandleMsg::Push { value: 45 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 25 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 35 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 45 }).unwrap();
     assert_eq!(get_count(&mut deps), 3);
     assert_eq!(get_sum(&mut deps), 105);
 }
@@ -80,14 +80,14 @@ fn multiple_push() {
 #[test]
 fn push_and_pop() {
     let (mut deps, env) = create_contract();
-    handle(&mut deps, env.clone(), HandleMsg::Push { value: 25 }).unwrap();
-    handle(&mut deps, env.clone(), HandleMsg::Push { value: 17 }).unwrap();
-    let res = handle(&mut deps, env.clone(), HandleMsg::Pop {}).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 25 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 17 }).unwrap();
+    let res = handle(&mut deps, env.clone(), HandleMsg::Dequeue {}).unwrap();
     // ensure we popped properly
     assert!(res.data.is_some());
     let data = res.data.unwrap();
-    let state: State = from_slice(data.as_slice()).unwrap();
-    assert_eq!(state.value, 25);
+    let item: Item = from_slice(data.as_slice()).unwrap();
+    assert_eq!(item.value, 25);
 
     assert_eq!(get_count(&mut deps), 1);
     assert_eq!(get_sum(&mut deps), 17);
