@@ -18,13 +18,11 @@ use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::{ContractResult, Env, QueryResult, Response};
 
-/// cosmwasm_api_* exports mark which api level this contract is compiled with (and compatible with).
-/// they can be checked by cosmwasm_vm.
-/// Update this at major releases, so we can follow contract compatibility in the frontend
+/// cosmwasm_vm_version_* exports mark which Wasm VM interface level this contract is compiled for.
+/// They can be checked by cosmwasm_vm.
+/// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-pub extern "C" fn cosmwasm_api_0_6() -> i32 {
-    0x0603
-}
+pub extern "C" fn cosmwasm_vm_version_1() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
