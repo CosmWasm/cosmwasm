@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
@@ -11,19 +12,31 @@ use crate::errors::{Error, NullPointer};
 #[repr(C)]
 pub struct Region {
     pub offset: u32,
-    pub len: u32,
+    /// The number of bytes available in this region
+    pub capacity: u32,
+    /// The number of bytes used in this region
+    pub length: u32,
 }
 
-/// alloc is the same as external allocate, but designed to be called internally
+/// Creates a memory region of capacity `size` and length 0. Returns a pointer to the Region.
+/// This is the same as the `allocate` export, but designed to be called internally.
 pub fn alloc(size: usize) -> *mut c_void {
-    // allocate the space in memory
-    let buffer = vec![0u8; size];
-    release_buffer(buffer)
+    let data: Vec<u8> = Vec::with_capacity(size);
+    let data_ptr = data.as_ptr() as usize;
+
+    let region = build_region_from_components(
+        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
+        u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
+        0,
+    );
+    mem::forget(data);
+    Box::into_raw(region) as *mut c_void
 }
 
-/// release_buffer is like alloc, but instead of creating a new vector
-/// it consumes an existing one and returns a pointer to the Region
-/// (preventing the memory from being freed until explicitly called later)
+/// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
+/// a pointer to the Region (preventing the memory from being freed until explicitly called later).
+///
+/// The resulting Region has capacity = length, i.e. the buffer's capacity is ignored.
 pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
     let region = build_region(&buffer);
     mem::forget(buffer);
@@ -50,8 +63,8 @@ pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
     let region = Box::from_raw(ptr as *mut Region);
     let buffer = Vec::from_raw_parts(
         region.offset as *mut u8,
-        region.len as usize,
-        region.len as usize,
+        region.length as usize,
+        region.capacity as usize,
     );
     Ok(buffer)
 }
@@ -61,8 +74,18 @@ pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
 /// the resulting data.
 /// The Box must be dropped (with scope), but not the data
 pub fn build_region(data: &[u8]) -> Box<Region> {
+    let data_ptr = data.as_ptr() as usize;
+    build_region_from_components(
+        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
+        u32::try_from(data.len()).expect("length doesn't fit in u32"),
+        u32::try_from(data.len()).expect("length doesn't fit in u32"),
+    )
+}
+
+fn build_region_from_components(offset: u32, capacity: u32, length: u32) -> Box<Region> {
     Box::new(Region {
-        offset: data.as_ptr() as u32,
-        len: data.len() as u32,
+        offset: offset,
+        capacity: capacity,
+        length: length,
     })
 }

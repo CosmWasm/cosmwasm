@@ -41,12 +41,12 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
     // we cannot resuse the call_raw functionality as it assumes a param variable... just do it inline
-    let msg_offset = instance.allocate(msg)?;
+    let msg_region_ptr = instance.allocate(msg)?;
     let func: Func<u32, u32> = instance.func("query")?;
-    let res_offset = func.call(msg_offset).context(RuntimeErr {})?;
-    let data = instance.memory(res_offset);
+    let res_region_ptr = func.call(msg_region_ptr).context(RuntimeErr {})?;
+    let data = instance.memory(res_region_ptr);
     // free return value in wasm (arguments were freed in wasm code)
-    instance.deallocate(res_offset)?;
+    instance.deallocate(res_region_ptr)?;
     Ok(data)
 }
 
@@ -76,10 +76,10 @@ fn call_raw<S: Storage + 'static, A: Api + 'static>(
     let msg_offset = instance.allocate(msg)?;
 
     let func: Func<(u32, u32), u32> = instance.func(name)?;
-    let res_offset = func.call(param_offset, msg_offset).context(RuntimeErr {})?;
+    let res_region_ptr = func.call(param_offset, msg_offset).context(RuntimeErr {})?;
 
-    let data = instance.memory(res_offset);
+    let data = instance.memory(res_region_ptr);
     // free return value in wasm (arguments were freed in wasm code)
-    instance.deallocate(res_offset)?;
+    instance.deallocate(res_region_ptr)?;
     Ok(data)
 }

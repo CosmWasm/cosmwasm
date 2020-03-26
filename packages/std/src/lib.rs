@@ -28,7 +28,7 @@ mod exports;
 #[cfg(target_arch = "wasm32")]
 mod imports;
 #[cfg(target_arch = "wasm32")]
-mod memory; // used by exports and imports only
+mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
 #[cfg(target_arch = "wasm32")]
 pub use crate::exports::{allocate, deallocate, do_handle, do_init, do_query};
