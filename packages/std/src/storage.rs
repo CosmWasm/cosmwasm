@@ -25,12 +25,12 @@ impl ReadonlyStorage for MemoryStorage {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range(
-        &self,
+    fn range<'a>(
+        &'a self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = KV>> {
+    ) -> Box<dyn Iterator<Item = KV> + 'a> {
         let bounds = range_bounds(start, end);
         let iter = self.data.range(bounds);
 

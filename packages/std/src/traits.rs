@@ -20,12 +20,12 @@ pub trait ReadonlyStorage {
     /// range allows iteration over a set of keys, either forwards or backwards
     /// start is inclusive and end is exclusive
     /// start must be lexicographically before end
-    fn range(
-        &self,
+    fn range<'a>(
+        &'a self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = KV>>;
+    ) -> Box<dyn Iterator<Item = KV> + 'a>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
