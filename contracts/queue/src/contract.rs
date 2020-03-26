@@ -97,9 +97,6 @@ fn do_pop<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<Resp
 
     let mut res = Response::default();
     if let Some((k, v)) = first {
-        // force k to be 1 byte (this is not guaranteed right now with external storage)
-        // TODO: remove this once 187 is merged
-        let k = &k[0..1];
         // remove from storage and return old value
         deps.storage.remove(&k);
         res.data = Some(Binary(v));

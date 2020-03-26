@@ -94,12 +94,12 @@ pub fn do_next<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     };
     match write_region(ctx, key_ptr, &key) {
         // TODO: we need to return the length of key somehow, now this is just the length of value
-        Ok(_) => {}
+        Ok(()) => 0,
         Err(Error::RegionTooSmallErr { .. }) => return ERROR_WRITE_TO_REGION_TOO_SMALL,
         Err(_) => return ERROR_WRITE_TO_REGION_UNKNONW,
     };
     match write_region(ctx, value_ptr, &value) {
-        Ok(bytes_written) => bytes_written.try_into().unwrap(),
+        Ok(()) => 0,
         Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
         Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
     }
