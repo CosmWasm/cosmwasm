@@ -33,6 +33,8 @@
   `env.read_db` don't return the number of bytes written anymore. This value is
   now available in the resulting regions. Negative return values are errors, 0
   is success and values greater than 0 are reserved for future use.
+- Change the required interface version guard export from `cosmwasm_api_0_6` to
+  `cosmwasm_vm_version_1`.
 
 ## 0.7.2 (2020-03-23)
 
