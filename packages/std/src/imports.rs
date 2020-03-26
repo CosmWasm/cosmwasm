@@ -18,9 +18,6 @@ static ADDR_BUFFER: usize = 72;
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
-//
-// TODO: use feature switches to enable precompile dependencies in the future,
-// so contracts that need less
 extern "C" {
     fn read_db(key: *const c_void, value: *mut c_void) -> i32;
     fn write_db(key: *const c_void, value: *mut c_void);
@@ -31,8 +28,6 @@ extern "C" {
     fn scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
     fn next(key: *mut c_void, value: *mut c_void) -> i32;
-    // TODO: add cleanup
-    //    fn close(iterator: i32);
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
