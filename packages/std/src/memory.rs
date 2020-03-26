@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
@@ -64,9 +65,18 @@ pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
 /// the resulting data.
 /// The Box must be dropped (with scope), but not the data
 pub fn build_region(data: &[u8]) -> Box<Region> {
+    let data_ptr = data.as_ptr() as usize;
+    build_region_from_components(
+        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
+        u32::try_from(data.len()).expect("length doesn't fit in u32"),
+        u32::try_from(data.len()).expect("length doesn't fit in u32"),
+    )
+}
+
+fn build_region_from_components(offset: u32, capacity: u32, length: u32) -> Box<Region> {
     Box::new(Region {
-        offset: data.as_ptr() as u32,
-        capacity: data.len() as u32,
-        length: data.len() as u32,
+        offset: offset,
+        capacity: capacity,
+        length: length,
     })
 }
