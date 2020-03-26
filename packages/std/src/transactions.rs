@@ -284,7 +284,6 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn delete_from_base() {
         let mut base = MemoryStorage::new();
         base.set(b"foo", b"bar");
@@ -319,9 +318,7 @@ mod test {
         crate::storage::iterator_test_suite(&mut check);
     }
 
-    // TODO: check iterators working with some deleted data
     #[test]
-    #[ignore]
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_removed_items_from_base() {
         let mut base = MemoryStorage::new();

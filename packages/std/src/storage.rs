@@ -75,9 +75,13 @@ pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
     assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
     assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
 
-    // setup
+    // setup - add some data, and delete part of it as well
     store.set(b"ant", b"hill");
     store.set(b"ze", b"bra");
+
+    // noise that should be ignored
+    store.set(b"bye", b"bye");
+    store.remove(b"bye");
 
     // open ended range
     {
