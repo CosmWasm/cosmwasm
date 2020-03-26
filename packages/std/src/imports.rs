@@ -133,19 +133,19 @@ impl Iterator for ExternalIterator {
     type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key = alloc(MAX_READ);
-        let value = alloc(MAX_READ);
+        let key_ptr = alloc(MAX_READ);
+        let value_ptr = alloc(MAX_READ);
 
-        let read = unsafe { next_db(key, value) };
+        let read = unsafe { next_db(key_ptr, value_ptr) };
         if read < 0 {
             panic!(format!("Unknown error on next: {}", read));
         }
 
-        let key = unsafe { consume_region(key).unwrap() };
+        let key = unsafe { consume_region(key_ptr).unwrap() };
         if key.is_empty() {
             return None;
         }
-        let value = unsafe { consume_region(value).unwrap() };
+        let value = unsafe { consume_region(value_ptr).unwrap() };
         Some((key, value))
     }
 }
