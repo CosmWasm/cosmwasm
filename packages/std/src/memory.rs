@@ -18,16 +18,25 @@ pub struct Region {
     pub length: u32,
 }
 
-/// alloc is the same as external allocate, but designed to be called internally
+/// Creates a memory region of capacity `size` and length 0. Returns a pointer to the Region.
+/// This is the same as the `allocate` export, but designed to be called internally.
 pub fn alloc(size: usize) -> *mut c_void {
-    // allocate the space in memory
-    let buffer = vec![0u8; size];
-    release_buffer(buffer)
+    let data: Vec<u8> = Vec::with_capacity(size);
+    let data_ptr = data.as_ptr() as usize;
+
+    let region = build_region_from_components(
+        u32::try_from(data_ptr).expect("pointer doesn't fit in u32"),
+        u32::try_from(data.capacity()).expect("capacity doesn't fit in u32"),
+        0,
+    );
+    mem::forget(data);
+    Box::into_raw(region) as *mut c_void
 }
 
-/// release_buffer is like alloc, but instead of creating a new vector
-/// it consumes an existing one and returns a pointer to the Region
-/// (preventing the memory from being freed until explicitly called later)
+/// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
+/// a pointer to the Region (preventing the memory from being freed until explicitly called later).
+///
+/// The resulting Region has capacity = length, i.e. the buffer's capacity is ignored.
 pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
     let region = build_region(&buffer);
     mem::forget(buffer);
