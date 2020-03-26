@@ -65,11 +65,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         };
         let base = self.storage.range(start, end, order);
         let merged = MergeOverlay::new(local, base, order);
-
-        // again, ugliness fighting lifetimes...
-        // TODO: fix this along with MemoryStorage.range trick
-        let all: Vec<_> = merged.collect();
-        Box::new(all.into_iter())
+        Box::new(merged)
     }
 }
 
