@@ -3,6 +3,7 @@
 mod encoding;
 mod errors;
 mod init_handle;
+mod query;
 mod serde;
 mod storage;
 mod traits;
@@ -17,13 +18,14 @@ pub use crate::errors::{
 pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
+pub use crate::query::QueryResult;
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 pub use crate::traits::{Order, KV};
 pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
-pub use crate::types::{coin, CanonicalAddr, Env, HumanAddr, QueryResult};
+pub use crate::types::{coin, CanonicalAddr, Env, HumanAddr};
 
 // Exposed in wasm build only
 
