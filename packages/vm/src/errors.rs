@@ -27,11 +27,13 @@ pub enum Error {
     IntegrityErr { backtrace: snafu::Backtrace },
     #[snafu(display("Parse error: {}", source))]
     ParseErr {
+        kind: &'static str,
         source: serde_json_wasm::de::Error,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Serialize error: {}", source))]
     SerializeErr {
+        kind: &'static str,
         source: serde_json_wasm::ser::Error,
         backtrace: snafu::Backtrace,
     },
