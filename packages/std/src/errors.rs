@@ -255,9 +255,7 @@ mod test {
 
     #[test]
     fn parse_err_conversion() {
-        let err = from_slice::<String>(b"123")
-            .context(ParseErr { kind: "String" })
-            .map(|_| ());
+        let err = from_slice::<String>(b"123").map(|_| ());
         assert_conversion(err);
     }
 
