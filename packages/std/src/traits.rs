@@ -35,22 +35,27 @@ pub trait Storage: ReadonlyStorage {
     fn remove(&mut self, key: &[u8]);
 }
 
-// Api are callbacks to system functions defined outside of the wasm modules.
-// This is a trait to allow Mocks in the test code.
-//
-// Currently it just supports address conversion, we could add eg. crypto functions here.
-// These should all be pure (stateless) functions. If you need state, you probably want
-// to use the Querier (TODO)
-//
-// We should consider if there is a way for modules to opt-in to only a subset of these
-// Api for backwards compatibility in systems that don't have them all.
+/// Api are callbacks to system functions defined outside of the wasm modules.
+/// This is a trait to allow Mocks in the test code.
+///
+/// Currently it just supports address conversion, we could add eg. crypto functions here.
+/// These should all be pure (stateless) functions. If you need state, you probably want
+/// to use the Querier (TODO)
+///
+/// We can use feature flags to opt-in to non-essential methods
+/// for backwards compatibility in systems that don't have them all.
 pub trait Api: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
 }
 
 pub trait Querier {
-    // TODO: look into how to return nicer errors
+    // Note: I considered returning Result<Binary> (as in Api), but figured that would be misleading.
+    // In rust unit tests, it would return a specific snafu::Error enum. But if passed over wasm FFI,
+    // it will always be Error::ContractErr.
+    //
+    // Ideas on better way to represent knowing this must work transparently over FFI?
+    // I could not find a way to serialize/deserialize the snafu error
     fn query(&self, request: QueryRequest) -> QueryResult;
 }
 
