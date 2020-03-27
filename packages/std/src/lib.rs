@@ -10,8 +10,8 @@ mod types;
 
 pub use crate::encoding::Binary;
 pub use crate::errors::{
-    contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
-    Result, SerializeErr,
+    contract_err, dyn_contract_err, invalid, unauthorized, ApiError, Error, NotFound, NullPointer,
+    ParseErr, Result, SerializeErr,
 };
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
