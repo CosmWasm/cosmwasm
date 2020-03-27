@@ -33,6 +33,8 @@ ranges).
 - The export `allocate` does not zero-fill the allocated memory anymore.
 - Add `remove_db` to the required imports of a contract.
 - (feature-flagged) add `scan_db` and `next_db` callbacks from wasm contract to VM.
+- `serde::{from_slice, to_vec}` return `cosmwasm_std::Result`, no more need to use
+`.context(...)` when calling these functions
 
 **cosmwasm-vm**
 
@@ -45,6 +47,8 @@ ranges).
 - Change the required interface version guard export from `cosmwasm_api_0_6` to
   `cosmwasm_vm_version_1`.
 - Provide implementations for `remove_db` and (feature-flagged) `scan_db` and `next_db`
+- Provide custom `serde::{from_slice, to_vec}` implementation separate from `cosmwasm_std`,
+so we can return cosmwasm-vm specific `Result` (only used internally).
 
 ## 0.7.2 (2020-03-23)
 
