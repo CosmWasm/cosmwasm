@@ -37,7 +37,7 @@ singlepass = ["cosmwasm-vm/default-singlepass"]
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] }
+snafu = { version = "0.6.3" }
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"]  }
