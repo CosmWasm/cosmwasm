@@ -182,7 +182,7 @@ mod test {
     #[test]
     fn test_check_wasm_corrupted_data() {
         match check_wasm(CORRUPTED) {
-            Err(Error::ValidationErr { msg }) => {
+            Err(Error::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
             }
             Err(e) => panic!("Unexpected error {:?}", e),
@@ -197,7 +197,7 @@ mod test {
 
         // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
         match check_wasm(CONTRACT_0_6) {
-            Err(Error::ValidationErr { msg }) => {
+            Err(Error::ValidationErr { msg, .. }) => {
                 assert!(
                     msg.starts_with("Wasm contract requires unsupported import: \"env.c_read\"")
                 );
@@ -224,7 +224,7 @@ mod test {
         let wasm_missing_exports = wat2wasm(WAT_MISSING_EXPORTS).unwrap();
 
         match check_wasm(&wasm_missing_exports) {
-            Err(Error::ValidationErr { msg }) => {
+            Err(Error::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
                     "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
                 ));
@@ -238,7 +238,7 @@ mod test {
     fn test_check_wasm_exports_of_old_contract() {
         // This test only works well because required imports (checked before exports) did not change between 0.7 and 0.8
         match check_wasm(CONTRACT_0_7) {
-            Err(Error::ValidationErr { msg }) => {
+            Err(Error::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
                     "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
                 ));

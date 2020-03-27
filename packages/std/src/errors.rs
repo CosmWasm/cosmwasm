@@ -6,70 +6,55 @@ pub enum Error {
     #[snafu(display("Invalid Base64 string: {}", source))]
     Base64Err {
         source: base64::DecodeError,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Contract error: {}", msg))]
     ContractErr {
         msg: &'static str,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Contract error: {}", msg))]
     DynContractErr {
         msg: String,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("{} not found", kind))]
     NotFound {
         kind: &'static str,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Received null pointer, refuse to use"))]
-    NullPointer {
-        #[cfg(feature = "backtraces")]
-        backtrace: snafu::Backtrace,
-    },
+    NullPointer { backtrace: snafu::Backtrace },
     #[snafu(display("Error parsing {}: {}", kind, source))]
     ParseErr {
         source: serde_json_wasm::de::Error,
         kind: &'static str,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Error serializing {}: {}", kind, source))]
     SerializeErr {
         source: serde_json_wasm::ser::Error,
         kind: &'static str,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     // This is used for std::str::from_utf8, which we may well deprecate
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8Err {
         source: std::str::Utf8Error,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8StringErr {
         source: std::string::FromUtf8Error,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Unauthorized"))]
-    Unauthorized {
-        #[cfg(feature = "backtraces")]
-        backtrace: snafu::Backtrace,
-    },
+    Unauthorized { backtrace: snafu::Backtrace },
     #[snafu(display("Invalid {}: {}", field, msg))]
     ValidationErr {
         field: &'static str,
         msg: &'static str,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
 }

@@ -206,7 +206,7 @@ mod tests {
 
         let failure = res.err().expect("compile should have failed");
 
-        if let Error::CompileErr { source } = &failure {
+        if let Error::CompileErr { source, .. } = &failure {
             if let CompileError::InternalError { msg } = source {
                 assert_eq!(
                     "Codegen(\"ValidationError { msg: \\\"non-deterministic opcode: F32ConvertI32U\\\" }\")",
