@@ -172,11 +172,19 @@ unsafe fn get_data<S: Storage>(ptr: *mut c_void) -> Box<ContextData<S>> {
     Box::from_raw(ptr as *mut ContextData<S>)
 }
 
+#[cfg(feature = "iterator")]
 fn destroy_unmanaged_storage<S: Storage>(ptr: *mut c_void) {
     if !ptr.is_null() {
         let mut dead = unsafe { get_data::<S>(ptr) };
         // ensure the iterator is dropped before the storage
-        dead.storage.clear_iterator();
+        let _ = dead.iter.take();
+    }
+}
+
+#[cfg(not(feature = "iterator"))]
+fn destroy_unmanaged_storage<S: Storage>(ptr: *mut c_void) {
+    if !ptr.is_null() {
+        let _ = unsafe { get_data::<S>(ptr) };
     }
 }
 
