@@ -3,7 +3,7 @@ use std::collections::BTreeMap;
 use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
-use crate::traits::{Order, KV};
+use crate::traits::{KVRef, Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]
@@ -25,22 +25,18 @@ impl ReadonlyStorage for MemoryStorage {
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    fn range(
-        &self,
+    fn range<'a>(
+        &'a self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = KV>> {
+    ) -> Box<dyn Iterator<Item = KV> + 'a> {
         let bounds = range_bounds(start, end);
         let iter = self.data.range(bounds);
-
-        // We brute force this a bit to deal with lifetimes.... should do this lazy
-        // TODO: if we use memory storage for anything over a few dozen entries, we should definitely make this lazy
-        let res: Vec<_> = match order {
-            Order::Ascending => iter.map(|(k, v)| (k.clone(), v.clone())).collect(),
-            Order::Descending => iter.rev().map(|(k, v)| (k.clone(), v.clone())).collect(),
-        };
-        Box::new(res.into_iter())
+        match order {
+            Order::Ascending => Box::new(IterVec { iter }),
+            Order::Descending => Box::new(IterVec { iter: iter.rev() }),
+        }
     }
 }
 
@@ -50,6 +46,24 @@ pub(crate) fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl Ran
         start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
         end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
     )
+}
+
+#[cfg(feature = "iterator")]
+struct IterVec<'a, T: Iterator<Item = KVRef<'a>>> {
+    iter: T,
+}
+
+#[cfg(feature = "iterator")]
+impl<'a, T: Iterator<Item = KVRef<'a>>> Iterator for IterVec<'a, T> {
+    type Item = KV;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let n = self.iter.next();
+        match n {
+            Some((k, v)) => Some((k.clone(), v.clone())),
+            None => None,
+        }
+    }
 }
 
 impl Storage for MemoryStorage {
