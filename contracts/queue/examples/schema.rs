@@ -30,11 +30,11 @@ fn main() {
     export_schema(&schema, &pwd, "sum_response.json");
 }
 
-// panics if any error writing out the schema
-// overwrites any existing schema
-fn export_schema(schema: &RootSchema, dir: &PathBuf, name: &str) -> () {
-    let path = dir.join(name);
+/// Writes schema to file. Overwrites existing file.
+/// Panics on any error writing out the schema.
+fn export_schema(schema: &RootSchema, out_dir: &PathBuf, file_name: &str) -> () {
+    let path = out_dir.join(file_name);
     let json = serde_json::to_string_pretty(schema).unwrap();
-    write(&path, json.as_bytes()).unwrap();
-    println!("{}", path.to_str().unwrap());
+    write(&path, json + "\n").unwrap();
+    println!("Created {}", path.to_str().unwrap());
 }
