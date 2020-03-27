@@ -26,8 +26,19 @@ fn export_schema(schema: &RootSchema, out_dir: &PathBuf) -> () {
         .as_ref()
         .map(|b| b.title.clone().unwrap_or("untitled".to_string()))
         .unwrap_or("unknown".to_string());
-    let path = out_dir.join(format!("{}.json", title));
+    let path = out_dir.join(format!("{}.json", to_snake_case(&title)));
     let json = serde_json::to_string_pretty(schema).unwrap();
     write(&path, json + "\n").unwrap();
     println!("Created {}", path.to_str().unwrap());
+}
+
+fn to_snake_case(name: &str) -> String {
+    let mut out = String::new();
+    for (index, ch) in name.char_indices() {
+        if index != 0 && ch.is_uppercase() {
+            out.push('_');
+        }
+        out.push(ch.to_ascii_lowercase());
+    }
+    out
 }
