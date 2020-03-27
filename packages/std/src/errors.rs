@@ -1,3 +1,4 @@
+use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -77,92 +78,86 @@ pub fn unauthorized<T>() -> Result<T> {
     Unauthorized {}.fail()
 }
 
-pub use api::ApiError;
+/// ApiError is a "converted" Error that can be serialized and deserialized.
+/// It can be created via `error.into()`
+/// This will not contain all information of the original (source error and backtrace cannot be serialized),
+/// but we ensure the following:
+/// 1. An ApiError will have the same type as the original Error
+/// 2. An ApiError will have the same display as the original
+/// 3. Serializing and deserializing an ApiError will give you an identical struct
+///
+/// Rather than use Display to pass Errors over API/FFI boundaries, we can use ApiError
+/// and provide much more context to the client.
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub enum ApiError {
+    Base64Err { source: String },
+    ContractErr { msg: String },
+    DynContractErr { msg: String },
+    NotFound { kind: String },
+    NullPointer {},
+    ParseErr { kind: String, source: String },
+    SerializeErr { kind: String, source: String },
+    // This is used for std::str::from_utf8, which we may well deprecate
+    Utf8Err { source: String },
+    // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
+    Utf8StringErr { source: String },
+    Unauthorized {},
+    ValidationErr { field: String, msg: String },
+}
 
-// place this in a submod, so the auto-generated contexts don't conflict with same-named context from above
-mod api {
-    use super::Error;
-    use serde::{Deserialize, Serialize};
-
-    /// ApiError is a "rehydrated" Error after it has been Serialized and restored.
-    /// This will not contain all information of the original (source error and backtrace cannot be serialized),
-    /// but we aim to ensure the following:
-    /// 1. A rehydrated ApiError will have the same type as the original Error
-    /// 2. A rehydrated ApiError will have the same display as the original
-    /// 3. Serializing and Deserializing an ApiError will give you an identical struct
-    #[derive(Debug, Serialize, Deserialize, PartialEq)]
-    pub enum ApiError {
-        Base64Err { source: String },
-        ContractErr { msg: String },
-        DynContractErr { msg: String },
-        NotFound { kind: String },
-        NullPointer {},
-        ParseErr { kind: String, source: String },
-        SerializeErr { kind: String, source: String },
-        // This is used for std::str::from_utf8, which we may well deprecate
-        Utf8Err { source: String },
-        // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
-        Utf8StringErr { source: String },
-        Unauthorized {},
-        ValidationErr { field: String, msg: String },
-    }
-
-    impl std::fmt::Display for ApiError {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-            match self {
-                ApiError::Base64Err { source } => write!(f, "Invalid Base64 string: {}", source),
-                ApiError::ContractErr { msg } => write!(f, "Contract error: {}", msg),
-                ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
-                ApiError::NotFound { kind } => write!(f, "{} not found", kind),
-                ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
-                ApiError::ParseErr { kind, source } => {
-                    write!(f, "Error parsing {}: {}", kind, source)
-                }
-                ApiError::SerializeErr { kind, source } => {
-                    write!(f, "Error serializing {}: {}", kind, source)
-                }
-                ApiError::Utf8Err { source } => write!(f, "UTF8 encoding error: {}", source),
-                ApiError::Utf8StringErr { source } => write!(f, "UTF8 encoding error: {}", source),
-                ApiError::Unauthorized {} => write!(f, "Unauthorized"),
-                ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
+impl std::fmt::Display for ApiError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApiError::Base64Err { source } => write!(f, "Invalid Base64 string: {}", source),
+            ApiError::ContractErr { msg } => write!(f, "Contract error: {}", msg),
+            ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
+            ApiError::NotFound { kind } => write!(f, "{} not found", kind),
+            ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
+            ApiError::ParseErr { kind, source } => write!(f, "Error parsing {}: {}", kind, source),
+            ApiError::SerializeErr { kind, source } => {
+                write!(f, "Error serializing {}: {}", kind, source)
             }
+            ApiError::Utf8Err { source } => write!(f, "UTF8 encoding error: {}", source),
+            ApiError::Utf8StringErr { source } => write!(f, "UTF8 encoding error: {}", source),
+            ApiError::Unauthorized {} => write!(f, "Unauthorized"),
+            ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
         }
     }
+}
 
-    impl From<Error> for ApiError {
-        fn from(value: Error) -> Self {
-            match value {
-                Error::Base64Err { source, .. } => ApiError::Base64Err {
-                    source: format!("{}", source),
-                },
-                Error::ContractErr { msg, .. } => ApiError::ContractErr {
-                    msg: msg.to_string(),
-                },
-                Error::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
-                Error::NotFound { kind, .. } => ApiError::NotFound {
-                    kind: kind.to_string(),
-                },
-                Error::NullPointer { .. } => ApiError::NullPointer {},
-                Error::ParseErr { kind, source, .. } => ApiError::ParseErr {
-                    kind: kind.to_string(),
-                    source: format!("{}", source),
-                },
-                Error::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
-                    kind: kind.to_string(),
-                    source: format!("{}", source),
-                },
-                Error::Utf8Err { source, .. } => ApiError::Utf8Err {
-                    source: format!("{}", source),
-                },
-                Error::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
-                    source: format!("{}", source),
-                },
-                Error::Unauthorized { .. } => ApiError::Unauthorized {},
-                Error::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
-                    field: field.to_string(),
-                    msg: msg.to_string(),
-                },
-            }
+impl From<Error> for ApiError {
+    fn from(value: Error) -> Self {
+        match value {
+            Error::Base64Err { source, .. } => ApiError::Base64Err {
+                source: format!("{}", source),
+            },
+            Error::ContractErr { msg, .. } => ApiError::ContractErr {
+                msg: msg.to_string(),
+            },
+            Error::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
+            Error::NotFound { kind, .. } => ApiError::NotFound {
+                kind: kind.to_string(),
+            },
+            Error::NullPointer { .. } => ApiError::NullPointer {},
+            Error::ParseErr { kind, source, .. } => ApiError::ParseErr {
+                kind: kind.to_string(),
+                source: format!("{}", source),
+            },
+            Error::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
+                kind: kind.to_string(),
+                source: format!("{}", source),
+            },
+            Error::Utf8Err { source, .. } => ApiError::Utf8Err {
+                source: format!("{}", source),
+            },
+            Error::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
+                source: format!("{}", source),
+            },
+            Error::Unauthorized { .. } => ApiError::Unauthorized {},
+            Error::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
+                field: field.to_string(),
+                msg: msg.to_string(),
+            },
         }
     }
 }
