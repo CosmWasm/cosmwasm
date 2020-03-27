@@ -7,8 +7,13 @@ use crate::errors::{Result, ValidationErr};
 static SUPPORTED_IMPORTS: &[&str] = &[
     "env.read_db",
     "env.write_db",
+    "env.remove_db",
     "env.canonicalize_address",
     "env.humanize_address",
+    #[cfg(feature = "iterator")]
+    "env.scan_db",
+    #[cfg(feature = "iterator")]
+    "env.next_db",
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.

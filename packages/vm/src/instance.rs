@@ -13,9 +13,11 @@ use cosmwasm_std::{Api, Extern, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_canonical_address, do_human_address, do_read, do_write, leave_storage, setup_context,
-    take_storage, with_storage_from_context,
+    do_canonical_address, do_human_address, do_read, do_remove, do_write, leave_storage,
+    setup_context, take_storage, with_storage_from_context,
 };
+#[cfg(feature = "iterator")]
+use crate::context::{do_next, do_scan};
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_region, write_region};
 
@@ -54,6 +56,31 @@ where
                 // Ownership of both input and output pointer is not transferred to the host.
                 "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
                     do_write::<S>(ctx, key_ptr, value_ptr)
+                }),
+                // Removes the value at the given key. Different than writing &[] as future
+                // scans will not find this key.
+                // Ownership of both key pointer is not transferred to the host.
+                "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| {
+                    do_remove::<S>(ctx, key_ptr)
+                }),
+                // Creates an iterator that will go from start to end
+                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
+                // Ownership of both start and end pointer is not transferred to the host.
+                // Returns negative code on error, 0 on success
+                "scan_db" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32{
+                    #[cfg(not(feature = "iterator"))]
+                    return 0;
+                    #[cfg(feature = "iterator")]
+                    do_scan::<S>(ctx, start_ptr, end_ptr, order)
+                }),
+                // Creates an iterator that will go from start to end
+                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
+                // Ownership of both start and end pointer is not transferred to the host.
+                "next_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                    #[cfg(not(feature = "iterator"))]
+                    return 0;
+                    #[cfg(feature = "iterator")]
+                    do_next::<S>(ctx, key_ptr, value_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.

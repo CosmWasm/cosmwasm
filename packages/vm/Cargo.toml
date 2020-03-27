@@ -21,6 +21,12 @@ default-cranelift = ["wasmer-clif-backend"]
 default-singlepass = ["wasmer-singlepass-backend"]
 # enable this for better error reporting
 backtraces = ["snafu/backtraces"]
+# iterator allows us to iterate over all DB items in a given range
+# this must be enabled to support cosmwasm contracts compiled with the 'iterator' feature
+# optional as some merkle stores (like tries) don't support this
+# given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
+# we keep this optional, to allow possible future integration (or different Cosmos Backends)
+iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
 cosmwasm-std = { path = "../std", version = "0.7.2" }

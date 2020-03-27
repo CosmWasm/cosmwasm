@@ -1,11 +1,14 @@
-use std::collections::HashMap;
+use std::collections::BTreeMap;
+#[cfg(feature = "iterator")]
+use std::ops::{Bound, RangeBounds};
 
-use crate::errors::Result;
-use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::traits::{Order, KV};
+use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]
 pub struct MemoryStorage {
-    data: HashMap<Vec<u8>, Vec<u8>>,
+    data: BTreeMap<Vec<u8>, Vec<u8>>,
 }
 
 impl MemoryStorage {
@@ -18,215 +21,164 @@ impl ReadonlyStorage for MemoryStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         self.data.get(key).cloned()
     }
+
+    #[cfg(feature = "iterator")]
+    /// range allows iteration over a set of keys, either forwards or backwards
+    /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
+    fn range(
+        &self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = KV>> {
+        let bounds = range_bounds(start, end);
+        let iter = self.data.range(bounds);
+
+        // We brute force this a bit to deal with lifetimes.... should do this lazy
+        // TODO: if we use memory storage for anything over a few dozen entries, we should definitely make this lazy
+        let res: Vec<_> = match order {
+            Order::Ascending => iter.map(|(k, v)| (k.clone(), v.clone())).collect(),
+            Order::Descending => iter.rev().map(|(k, v)| (k.clone(), v.clone())).collect(),
+        };
+        Box::new(res.into_iter())
+    }
+}
+
+#[cfg(feature = "iterator")]
+pub(crate) fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
+    (
+        start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
+        end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
+    )
 }
 
 impl Storage for MemoryStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         self.data.insert(key.to_vec(), value.to_vec());
     }
-}
-
-pub struct StorageTransaction<'a, S: ReadonlyStorage> {
-    /// read-only access to backing storage
-    storage: &'a S,
-    /// these are local changes not flushed to backing storage
-    local_state: MemoryStorage,
-    /// a log of local changes not yet flushed to backing storage
-    rep_log: RepLog,
-}
-
-pub struct RepLog {
-    /// this is a list of changes to be written to backing storage upon commit
-    ops_log: Vec<Op>,
-}
-
-impl RepLog {
-    fn new() -> Self {
-        RepLog { ops_log: vec![] }
-    }
-
-    /// appends an op to the list of changes to be applied upon commit
-    fn append(&mut self, op: Op) {
-        self.ops_log.push(op);
-    }
-
-    /// applies the stored list of `Op`s to the provided `Storage`
-    pub fn commit<S: Storage>(self, storage: &mut S) {
-        for op in self.ops_log {
-            op.apply(storage);
-        }
+    fn remove(&mut self, key: &[u8]) {
+        self.data.remove(key);
     }
 }
 
-enum Op {
-    /// represents the `Set` operation for setting a key-value pair in storage
-    Set { key: Vec<u8>, value: Vec<u8> },
-}
+#[cfg(test)]
+#[cfg(feature = "iterator")]
+// iterator_test_suite takes a storage, adds data and runs iterator tests
+// the storage must previously have exactly one key: "foo" = "bar"
+// (this allows us to test StorageTransaction and other wrapped storage better)
+//
+// designed to be imported by other modules
+pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
+    // ensure we had previously set "foo" = "bar"
+    assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+    assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
 
-impl Op {
-    /// applies this `Op` to the provided storage
-    pub fn apply<S: Storage>(&self, storage: &mut S) {
-        match self {
-            Op::Set { key, value } => storage.set(&key, &value),
-        }
+    // setup - add some data, and delete part of it as well
+    store.set(b"ant", b"hill");
+    store.set(b"ze", b"bra");
+
+    // noise that should be ignored
+    store.set(b"bye", b"bye");
+    store.remove(b"bye");
+
+    // open ended range
+    {
+        let iter = store.range(None, None, Order::Ascending);
+        assert_eq!(3, iter.count());
+        let mut iter = store.range(None, None, Order::Ascending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+        let mut iter = store.range(None, None, Order::Descending);
+        let last = iter.next().unwrap();
+        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
     }
-}
 
-impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
-    pub fn new(storage: &'a S) -> Self {
-        StorageTransaction {
-            storage,
-            local_state: MemoryStorage::new(),
-            rep_log: RepLog::new(),
-        }
+    // closed range
+    {
+        let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
+        assert_eq!(1, iter.count());
+        let mut iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
 
-    /// prepares this transaction to be committed to storage
-    pub fn prepare(self) -> RepLog {
-        self.rep_log
+    // closed range reverse
+    {
+        let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
+        assert_eq!(2, iter.count());
+        let mut iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+        let second = iter.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
     }
 
-    /// rollback will consume the checkpoint and drop all changes (no really needed, going out of scope does the same, but nice for clarity)
-    pub fn rollback(self) {}
-}
-
-impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        match self.local_state.get(key) {
-            Some(val) => Some(val),
-            None => self.storage.get(key),
-        }
+    // end open iterator
+    {
+        let iter = store.range(Some(b"f"), None, Order::Ascending);
+        assert_eq!(2, iter.count());
+        let mut iter = store.range(Some(b"f"), None, Order::Ascending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
     }
-}
 
-impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
-        let op = Op::Set {
-            key: key.to_vec(),
-            value: value.to_vec(),
-        };
-        op.apply(&mut self.local_state);
-        self.rep_log.append(op);
+    // end open iterator reverse
+    {
+        let iter = store.range(Some(b"f"), None, Order::Descending);
+        assert_eq!(2, iter.count());
+        let mut iter = store.range(Some(b"f"), None, Order::Descending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
     }
-}
 
-pub fn transactional<S: Storage, T>(
-    storage: &mut S,
-    tx: &dyn Fn(&mut StorageTransaction<S>) -> Result<T>,
-) -> Result<T> {
-    let mut stx = StorageTransaction::new(storage);
-    let res = tx(&mut stx)?;
-    stx.prepare().commit(storage);
-    Ok(res)
-}
-
-pub fn transactional_deps<S: Storage, A: Api, T>(
-    deps: &mut Extern<S, A>,
-    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A>) -> Result<T>,
-) -> Result<T> {
-    let c = StorageTransaction::new(&deps.storage);
-    let mut stx_deps = Extern {
-        storage: c,
-        api: deps.api,
-    };
-    let res = tx(&mut stx_deps);
-    if res.is_ok() {
-        stx_deps.storage.prepare().commit(&mut deps.storage);
-    } else {
-        stx_deps.storage.rollback();
+    // start open iterator
+    {
+        let iter = store.range(None, Some(b"f"), Order::Ascending);
+        assert_eq!(1, iter.count());
+        let mut iter = store.range(None, Some(b"f"), Order::Ascending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
     }
-    res
+
+    // start open iterator
+    {
+        let iter = store.range(None, Some(b"no"), Order::Descending);
+        assert_eq!(2, iter.count());
+        let mut iter = store.range(None, Some(b"no"), Order::Descending);
+        let first = iter.next().unwrap();
+        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::errors::Unauthorized;
-    use crate::mock::MockStorage;
 
     #[test]
-    fn commit_writes_through() {
-        let mut base = MockStorage::new();
-        base.set(b"foo", b"bar");
-
-        let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works");
-        check.prepare().commit(&mut base);
-
-        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
+    fn get_and_set() {
+        let mut store = MemoryStorage::new();
+        assert_eq!(None, store.get(b"foo"));
+        store.set(b"foo", b"bar");
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
+        assert_eq!(None, store.get(b"food"));
     }
 
     #[test]
-    fn storage_remains_readable() {
-        let mut base = MockStorage::new();
-        base.set(b"foo", b"bar");
+    fn delete() {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
+        store.set(b"food", b"bank");
+        store.remove(b"foo");
 
-        let mut stxn1 = StorageTransaction::new(&base);
-
-        assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
-
-        stxn1.set(b"subtx", b"works");
-        assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
-
-        // Can still read from base, txn is not yet committed
-        assert_eq!(base.get(b"subtx"), None);
-
-        stxn1.prepare().commit(&mut base);
-        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
+        assert_eq!(None, store.get(b"foo"));
+        assert_eq!(Some(b"bank".to_vec()), store.get(b"food"));
     }
 
     #[test]
-    fn rollback_has_no_effect() {
-        let mut base = MockStorage::new();
-        base.set(b"foo", b"bar");
-
-        let mut check = StorageTransaction::new(&mut base);
-        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works");
-        check.rollback();
-
-        assert_eq!(base.get(b"subtx"), None);
-    }
-
-    #[test]
-    fn ignore_same_as_rollback() {
-        let mut base = MockStorage::new();
-        base.set(b"foo", b"bar");
-
-        let mut check = StorageTransaction::new(&mut base);
-        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works");
-
-        assert_eq!(base.get(b"subtx"), None);
-    }
-
-    #[test]
-    fn transactional_works() {
-        let mut base = MockStorage::new();
-        base.set(b"foo", b"bar");
-
-        // writes on success
-        let res: Result<i32> = transactional(&mut base, &|store| {
-            // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-            // we write in the Ok case
-            store.set(b"good", b"one");
-            Ok(5)
-        });
-        assert_eq!(5, res.unwrap());
-        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
-
-        // rejects on error
-        let res: Result<i32> = transactional(&mut base, &|store| {
-            // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
-            // we write in the Error case
-            store.set(b"bad", b"value");
-            Unauthorized.fail()
-        });
-        assert!(res.is_err());
-        assert_eq!(base.get(b"bad"), None);
+    #[cfg(feature = "iterator")]
+    fn iterator() {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
+        iterator_test_suite(&mut store);
     }
 }

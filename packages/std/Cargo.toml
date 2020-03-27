@@ -12,6 +12,16 @@ readme = "README.md"
 circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
+[features]
+# iterator allows us to iterate over all DB items in a given range
+# optional as some merkle stores (like tries) don't support this
+# given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
+# we keep this optional, to allow possible future integration (or different Cosmos Backends)
+iterator = []
+# backtraces provides much better context at runtime errors (in non-wasm code)
+# at the cost of a bit of code size and performance.
+backtraces = ["snafu/backtraces"]
+
 [dependencies]
 base64 = "0.11.0"
 serde-json-wasm = "0.1.2"
@@ -21,6 +31,3 @@ snafu = { version = "0.5.0", default-features = false, features = ["rust_1_30"] 
 
 [dev-dependencies]
 serde_json = "1.0"
-
-[features]
-backtraces = ["snafu/backtraces"]
