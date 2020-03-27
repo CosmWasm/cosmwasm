@@ -113,7 +113,11 @@ pub use api::ApiError;
 // place this in a submod, so the auto-generated contexts don't conflict with same-named context from above
 mod api {
     use serde::{Deserialize, Serialize};
-    use snafu::Snafu;
+    use snafu::{ResultExt, Snafu};
+    use std::convert::TryFrom;
+
+    use super::Error;
+    use crate::serde::{from_slice, to_vec};
 
     /// ApiError is a "rehydrated" Error after it has been Serialized and restored.
     /// This will not contain all information of the original (source error and backtrace cannot be serialized),
@@ -165,13 +169,23 @@ mod api {
         #[snafu(display("Invalid {}: {}", field, msg))]
         ValidationErr { field: String, msg: String },
     }
+
+    impl TryFrom<Error> for ApiError {
+        type Error = Error;
+
+        fn try_from(value: Error) -> Result<Self, Self::Error> {
+            let ser = to_vec(&value).context(super::SerializeErr { kind: "Error" })?;
+            from_slice(&ser).context(super::ParseErr { kind: "ApiError" })
+        }
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::serde::{from_slice, to_vec};
     use snafu::ResultExt;
-    use crate::serde::{to_vec, from_slice};
+    use std::convert::TryInto;
 
     #[test]
     fn use_invalid() {
@@ -255,18 +269,29 @@ mod test {
 
     #[test]
     fn not_found_serializable() {
-        assert_serializable(NotFound { kind: "State"}.fail());
+        assert_serializable(NotFound { kind: "State" }.fail());
     }
 
     #[test]
     fn parse_err_serializable() {
-        let err = from_slice::<String>(b"123").context(ParseErr { kind: "String"}).map(|_| ());
+        let err = from_slice::<String>(b"123")
+            .context(ParseErr { kind: "String" })
+            .map(|_| ());
         assert_serializable(err);
     }
 
     #[test]
     fn serialize_err_serializable() {
         let source = Err(serde_json_wasm::ser::Error::BufferFull);
-        assert_serializable(source.context(SerializeErr { kind: "faker"}));
+        assert_serializable(source.context(SerializeErr { kind: "faker" }));
+    }
+
+    #[test]
+    fn try_from_error_conversion() {
+        let source: Result<(), _> = Err(serde_json_wasm::ser::Error::BufferFull);
+        let error = source.context(SerializeErr { kind: "faker" }).unwrap_err();
+        let msg = format!("{}", error);
+        let api_error: ApiError = error.try_into().unwrap();
+        assert_eq!(msg, format!("{}", api_error));
     }
 }
