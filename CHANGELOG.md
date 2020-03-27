@@ -37,6 +37,7 @@ ranges).
 `.context(...)` when calling these functions
 - Split `Response` into `InitResponse` and `HandleResponse`; split
   `ContractResult` into `InitResult` and `HandleResult`.
+- Create explicit `QueryResponse`, analogue to `InitResponse` and `HandleResponse`.
 
 **cosmwasm-vm**
 

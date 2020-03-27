@@ -9,13 +9,14 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 
-use crate::encoding::Binary;
 use crate::errors::Error;
 use crate::imports::{ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::{Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResult};
+use crate::{
+    Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResponse, QueryResult,
+};
 
 /// cosmwasm_vm_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
@@ -73,7 +74,7 @@ pub fn do_handle<T: DeserializeOwned + JsonSchema>(
 
 /// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<QueryResponse, Error>,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
     match _do_query(query_fn, msg_ptr) {
@@ -122,14 +123,14 @@ fn _do_handle<T: DeserializeOwned + JsonSchema>(
 }
 
 fn _do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<Vec<u8>, Error>,
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<QueryResponse, Error>,
     msg_ptr: *mut c_void,
 ) -> Result<*mut c_void, Error> {
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
     let msg: T = from_slice(&msg)?;
     let deps = make_dependencies();
-    let res = Binary(query_fn(&deps, msg)?);
+    let res = query_fn(&deps, msg)?;
     let json = to_vec(&QueryResult::Ok(res))?;
     Ok(release_buffer(json))
 }

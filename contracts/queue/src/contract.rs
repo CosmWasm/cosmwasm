@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order, Result,
-    Storage,
+    from_slice, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order,
+    QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -107,26 +107,26 @@ fn dequeue<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<Han
     }
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
+pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<QueryResponse> {
     match msg {
         QueryMsg::Count {} => query_count(deps),
         QueryMsg::Sum {} => query_sum(deps),
     }
 }
 
-fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
-    to_vec(&CountResponse { count })
+    Ok(Binary(to_vec(&CountResponse { count })?))
 }
 
-fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
     let values: Result<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)
         .map(|(_, v)| from_slice(&v))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
-    to_vec(&SumResponse { sum })
+    Ok(Binary(to_vec(&SumResponse { sum })?))
 }
 
 #[cfg(test)]
@@ -146,13 +146,13 @@ mod tests {
 
     fn get_count(deps: &Extern<MockStorage, MockApi>) -> u32 {
         let data = query(deps, QueryMsg::Count {}).unwrap();
-        let res: CountResponse = from_slice(&data).unwrap();
+        let res: CountResponse = from_slice(data.as_slice()).unwrap();
         res.count
     }
 
     fn get_sum(deps: &Extern<MockStorage, MockApi>) -> i32 {
         let data = query(deps, QueryMsg::Sum {}).unwrap();
-        let res: SumResponse = from_slice(&data).unwrap();
+        let res: SumResponse = from_slice(data.as_slice()).unwrap();
         res.sum
     }
 

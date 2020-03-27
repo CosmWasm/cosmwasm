@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    from_slice, log, to_vec, unauthorized, Api, CanonicalAddr, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, NotFound, Result, Storage,
+    from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg, Env, Extern,
+    HandleResponse, HumanAddr, InitResponse, NotFound, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -125,13 +125,13 @@ fn do_panic() -> Result<HandleResponse> {
     panic!("This page intentionally faulted");
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
+pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => query_verifier(deps),
     }
 }
 
-fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -142,7 +142,7 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
     // these will be base64 encoded into the json we return, and parsed on the way out.
     // maybe we should wrap this in a struct then json encode it into a vec?
     // other ideas?
-    Ok(addr.as_str().as_bytes().to_vec())
+    Ok(Binary(addr.as_str().as_bytes().to_vec()))
 }
 
 #[cfg(test)]
@@ -196,8 +196,8 @@ mod tests {
 
         // now let's query
         let qres = query(&deps, QueryMsg::Verifier {}).unwrap();
-        let returned = String::from_utf8(qres).unwrap();
-        assert_eq!(verifier, HumanAddr(returned));
+        let returned = std::str::from_utf8(qres.as_slice()).unwrap();
+        assert_eq!(verifier, HumanAddr::from(returned));
     }
 
     #[test]

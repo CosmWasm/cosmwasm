@@ -3,16 +3,18 @@ use serde::{Deserialize, Serialize};
 
 use crate::encoding::Binary;
 
+pub type QueryResponse = Binary;
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum QueryResult {
-    Ok(Binary),
+    Ok(QueryResponse),
     Err(String),
 }
 
 impl QueryResult {
     // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> Binary {
+    pub fn unwrap(self) -> QueryResponse {
         match self {
             QueryResult::Err(msg) => panic!("Unexpected error: {}", msg),
             QueryResult::Ok(res) => res,
