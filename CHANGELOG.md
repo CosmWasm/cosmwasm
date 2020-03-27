@@ -4,7 +4,7 @@
 
 **all**
 
-- Upgrade schemars to 0.6.
+- Upgrade schemars to 0.7.
 - Upgrade wasmer to 0.16.
 - Minimal supported Rust version is 1.41.
 - Split `Region.len` into `Region.capacity` and `Region.length`, where the new
