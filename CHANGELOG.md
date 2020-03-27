@@ -43,7 +43,7 @@ ranges).
   is success and values greater than 0 are reserved for future use.
 - Change the required interface version guard export from `cosmwasm_api_0_6` to
   `cosmwasm_vm_version_1`.
-- Provide implementations for `remove-db` and (feature-flagged)`scan_db` and `next_db`
+- Provide implementations for `remove_db` and (feature-flagged) `scan_db` and `next_db`
 
 ## 0.7.2 (2020-03-23)
 
