@@ -121,7 +121,7 @@ mod api {
     /// 1. A rehydrated ApiError will have the same type as the original Error
     /// 2. A rehydrated ApiError will have the same display as the original
     /// 3. Serializing and Deserializing an ApiError will give you an identical struct
-    #[derive(Debug, Snafu, Serialize, Deserialize)]
+    #[derive(Debug, Snafu, Serialize, Deserialize, PartialEq)]
     pub enum ApiError {
         #[snafu(display("Invalid Base64 string: {}", source))]
         Base64Err {
@@ -170,6 +170,8 @@ mod api {
 #[cfg(test)]
 mod test {
     use super::*;
+    use snafu::ResultExt;
+    use crate::serde::{to_vec, from_slice};
 
     #[test]
     fn use_invalid() {
@@ -209,5 +211,16 @@ mod test {
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("dyn_contract_err must return error"),
         }
+    }
+
+    #[test]
+    fn base64_serializable() {
+        let source = base64::DecodeError::InvalidLength;
+        let error = Err::<(), _>(source).context(Base64Err { }).unwrap_err();
+        let orig_ser = to_vec(&error).unwrap();
+        let rehydrated: ApiError = from_slice(&orig_ser).unwrap();
+        assert_eq!(format!("{}", error), format!("{}", rehydrated));
+        let round_trip: ApiError = from_slice(&to_vec(&rehydrated).unwrap()).unwrap();
+        assert_eq!(round_trip, rehydrated);
     }
 }
