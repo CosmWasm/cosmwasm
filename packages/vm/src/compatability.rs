@@ -15,12 +15,12 @@ static SUPPORTED_IMPORTS: &[&str] = &[
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
 static REQUIRED_EXPORTS: &[&str] = &[
+    "cosmwasm_vm_version_1",
     "query",
     "init",
     "handle",
     "allocate",
     "deallocate",
-    "cosmwasm_api_0_6",
 ];
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
@@ -108,6 +108,7 @@ mod test {
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     #[test]
@@ -187,7 +188,7 @@ mod test {
     #[test]
     fn test_check_wasm_imports() {
         // this is our reference check, must pass
-        check_wasm(CONTRACT_0_7).unwrap();
+        check_wasm(CONTRACT).unwrap();
 
         // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
         match check_wasm(CONTRACT_0_6) {
@@ -219,7 +220,23 @@ mod test {
 
         match check_wasm(&wasm_missing_exports) {
             Err(Error::ValidationErr { msg }) => {
-                assert!(msg.starts_with("Wasm contract doesn't have required export: \"query\""));
+                assert!(msg.starts_with(
+                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
+                ));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_exports_of_old_contract() {
+        // This test only works well because required imports (checked before exports) did not change between 0.7 and 0.8
+        match check_wasm(CONTRACT_0_7) {
+            Err(Error::ValidationErr { msg }) => {
+                assert!(msg.starts_with(
+                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
+                ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
