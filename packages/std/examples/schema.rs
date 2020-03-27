@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use cosmwasm_std::{ContractResult, CosmosMsg, Env, QueryResult};
+use cosmwasm_std::{CosmosMsg, Env, HandleResult, InitResult, QueryResult};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -13,7 +13,8 @@ fn main() {
 
     export_schema(&schema_for!(Env), &out_dir);
     export_schema(&schema_for!(CosmosMsg), &out_dir);
-    export_schema(&schema_for!(ContractResult), &out_dir);
+    export_schema(&schema_for!(InitResult), &out_dir);
+    export_schema(&schema_for!(HandleResult), &out_dir);
     export_schema(&schema_for!(QueryResult), &out_dir);
 }
 

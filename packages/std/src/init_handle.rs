@@ -43,7 +43,7 @@ pub fn log(key: &str, value: &str) -> LogAttribute {
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Response {
+pub struct InitResponse {
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg>,
     pub log: Vec<LogAttribute>, // abci defines this as string
@@ -52,23 +52,55 @@ pub struct Response {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-pub enum ContractResult {
-    Ok(Response),
+pub enum InitResult {
+    Ok(InitResponse),
     Err(String),
 }
 
-impl ContractResult {
+impl InitResult {
     // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> Response {
+    pub fn unwrap(self) -> InitResponse {
         match self {
-            ContractResult::Err(msg) => panic!("Unexpected error: {}", msg),
-            ContractResult::Ok(res) => res,
+            InitResult::Err(msg) => panic!("Unexpected error: {}", msg),
+            InitResult::Ok(res) => res,
         }
     }
 
     pub fn is_err(&self) -> bool {
         match self {
-            ContractResult::Err(_) => true,
+            InitResult::Err(_) => true,
+            _ => false,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+pub struct HandleResponse {
+    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
+    pub messages: Vec<CosmosMsg>,
+    pub log: Vec<LogAttribute>, // abci defines this as string
+    pub data: Option<Binary>,   // abci defines this as bytes
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum HandleResult {
+    Ok(HandleResponse),
+    Err(String),
+}
+
+impl HandleResult {
+    // unwrap will panic on err, or give us the real data useful for tests
+    pub fn unwrap(self) -> HandleResponse {
+        match self {
+            HandleResult::Err(msg) => panic!("Unexpected error: {}", msg),
+            HandleResult::Ok(res) => res,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        match self {
+            HandleResult::Err(_) => true,
             _ => false,
         }
     }
@@ -81,16 +113,16 @@ mod test {
 
     #[test]
     fn can_deser_error_result() {
-        let fail = ContractResult::Err("foobar".to_string());
+        let fail = InitResult::Err("foobar".to_string());
         let bin = to_vec(&fail).expect("encode contract result");
         println!("error: {}", std::str::from_utf8(&bin).unwrap());
-        let back: ContractResult = from_slice(&bin).expect("decode contract result");
+        let back: InitResult = from_slice(&bin).expect("decode contract result");
         assert_eq!(fail, back);
     }
 
     #[test]
     fn can_deser_ok_result() {
-        let send = ContractResult::Ok(Response {
+        let send = InitResult::Ok(InitResponse {
             messages: vec![CosmosMsg::Send {
                 from_address: HumanAddr("me".to_string()),
                 to_address: HumanAddr("you".to_string()),
@@ -104,7 +136,7 @@ mod test {
         });
         let bin = to_vec(&send).expect("encode contract result");
         println!("ok: {}", std::str::from_utf8(&bin).unwrap());
-        let back: ContractResult = from_slice(&bin).expect("decode contract result");
+        let back: InitResult = from_slice(&bin).expect("decode contract result");
         assert_eq!(send, back);
     }
 }

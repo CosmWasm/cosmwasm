@@ -14,7 +14,9 @@ pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, ApiError, Error, NotFound, NullPointer,
     ParseErr, Result, SerializeErr,
 };
-pub use crate::init_handle::{log, ContractResult, CosmosMsg, LogAttribute, Response};
+pub use crate::init_handle::{
+    log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
+};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
