@@ -7,11 +7,9 @@ use queue::contract::{CountResponse, HandleMsg, InitMsg, Item, QueryMsg, SumResp
 
 /**
 This integration test tries to run and call the generated wasm.
-It depends on a release build being available already. You can create that with:
+It depends on a release build being available already. You can create that with `cargo wasm`.
 
-RUSTFLAGS='-C link-arg=-s' cargo wasm
-
-Then running `cargo test` will validate we can properly call into that generated data.
+Then running `cargo integration-test` will validate we can properly call into that generated data.
 
 You can easily convert unit tests to integration tests.
 1. First copy them over verbatum,
