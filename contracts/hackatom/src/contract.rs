@@ -1,10 +1,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use snafu::{OptionExt, ResultExt};
+use snafu::OptionExt;
 
 use cosmwasm_std::{
     from_slice, log, to_vec, unauthorized, Api, CanonicalAddr, CosmosMsg, Env, Extern, HumanAddr,
-    NotFound, ParseErr, Response, Result, SerializeErr, Storage,
+    NotFound, Response, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -56,8 +56,7 @@ pub fn init<S: Storage, A: Api>(
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
             funder: env.message.signer,
-        })
-        .context(SerializeErr { kind: "State" })?,
+        })?,
     );
     Ok(Response::default())
 }
@@ -80,7 +79,7 @@ fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<R
         .storage
         .get(CONFIG_KEY)
         .context(NotFound { kind: "State" })?;
-    let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
+    let state: State = from_slice(&data)?;
 
     if env.message.signer == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
@@ -137,7 +136,7 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
         .storage
         .get(CONFIG_KEY)
         .context(NotFound { kind: "State" })?;
-    let state: State = from_slice(&data).context(ParseErr { kind: "State" })?;
+    let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
     // we just pass the address as raw bytes
     // these will be base64 encoded into the json we return, and parsed on the way out.

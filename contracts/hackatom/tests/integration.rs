@@ -83,7 +83,10 @@ fn init_and_query() {
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});
     match qres {
-        QueryResult::Err(msg) => assert!(msg.starts_with("Error parsing QueryMsg:"), msg),
+        QueryResult::Err(msg) => assert!(
+            msg.starts_with("Error parsing hackatom::contract::QueryMsg:"),
+            msg
+        ),
         _ => panic!("Call should fail"),
     }
 }

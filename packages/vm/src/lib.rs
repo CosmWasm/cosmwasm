@@ -8,6 +8,7 @@ mod instance;
 mod memory;
 mod middleware;
 mod modules;
+mod serde;
 pub mod testing;
 mod wasm_store;
 

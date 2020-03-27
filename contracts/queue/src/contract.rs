@@ -1,9 +1,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
 
 use cosmwasm_std::{
-    from_slice, to_vec, Api, Binary, Env, Extern, Order, ParseErr, Response, Result, SerializeErr,
+    from_slice, to_vec, Api, Binary, Env, Extern, Order, Response, Result,
     Storage,
 };
 
@@ -83,7 +82,7 @@ fn enqueue<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env, value: i32) -
         Some(k) => k[0] + 1,
         None => FIRST_KEY,
     };
-    let data = to_vec(&Item { value }).context(SerializeErr { kind: "State" })?;
+    let data = to_vec(&Item { value })?;
 
     deps.storage.set(&[my_key], &data);
     Ok(Response::default())
@@ -113,21 +112,17 @@ pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<V
 
 fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
-    to_vec(&CountResponse { count }).context(SerializeErr {
-        kind: "CountResponse",
-    })
+    to_vec(&CountResponse { count })
 }
 
 fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
     let values: Result<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)
-        .map(|(_, v)| from_slice(&v).context(ParseErr { kind: "State" }))
+        .map(|(_, v)| from_slice(&v))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
-    to_vec(&SumResponse { sum }).context(SerializeErr {
-        kind: "SumResponse",
-    })
+    to_vec(&SumResponse { sum })
 }
 
 #[cfg(test)]

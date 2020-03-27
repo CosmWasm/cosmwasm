@@ -1,8 +1,10 @@
 use snafu::ResultExt;
 
-use cosmwasm_std::{from_slice, to_vec, Api, ContractResult, Env, QueryResult, Storage};
+use cosmwasm_std::{Api, ContractResult, Env, QueryResult, Storage};
 
-use crate::errors::{Error, ParseErr, RuntimeErr, SerializeErr};
+use crate::serde::{from_slice, to_vec};
+
+use crate::errors::{Error, RuntimeErr};
 use crate::instance::{Func, Instance};
 
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
@@ -10,9 +12,9 @@ pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     env: &Env,
     msg: &[u8],
 ) -> Result<ContractResult, Error> {
-    let env = to_vec(env).context(SerializeErr {})?;
+    let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let res: ContractResult = from_slice(&data).context(ParseErr {})?;
+    let res: ContractResult = from_slice(&data)?;
     Ok(res)
 }
 
@@ -21,9 +23,9 @@ pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
     env: &Env,
     msg: &[u8],
 ) -> Result<ContractResult, Error> {
-    let env = to_vec(env).context(SerializeErr {})?;
+    let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
-    let res: ContractResult = from_slice(&data).context(ParseErr {})?;
+    let res: ContractResult = from_slice(&data)?;
     Ok(res)
 }
 
@@ -32,7 +34,7 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static>(
     msg: &[u8],
 ) -> Result<QueryResult, Error> {
     let data = call_query_raw(instance, msg)?;
-    let res: QueryResult = from_slice(&data).context(ParseErr {})?;
+    let res: QueryResult = from_slice(&data)?;
     Ok(res)
 }
 
