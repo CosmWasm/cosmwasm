@@ -2,4 +2,26 @@
 // The reason is two fold:
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
-pub use serde_json_wasm::{from_slice, to_vec};
+use serde::{Deserialize, Serialize};
+use snafu::ResultExt;
+use std::any::type_name;
+
+use crate::errors::{ParseErr, Result, SerializeErr};
+
+pub fn from_slice<'a, T>(value: &'a [u8]) -> Result<T>
+where
+    T: Deserialize<'a>,
+{
+    serde_json_wasm::from_slice(value).context(ParseErr {
+        kind: type_name::<T>(),
+    })
+}
+
+pub fn to_vec<T>(data: &T) -> Result<Vec<u8>>
+where
+    T: Serialize + ?Sized,
+{
+    serde_json_wasm::to_vec(data).context(SerializeErr {
+        kind: type_name::<T>(),
+    })
+}
