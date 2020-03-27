@@ -70,14 +70,13 @@ pub fn do_scan<T: Storage + 'static>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, or
     let storage: Option<T> = take_storage(ctx);
     if let Some(store) = storage {
         let iter = store.range(start.as_deref(), end.as_deref(), order);
-        // TODO: we want to do this lazy as well, but even more lifetime tiwddling needed
-        //        leave_iterator::<T>(ctx, iter);
-        let res: Vec<_> = iter.collect();
-        leave_iterator::<T>(ctx, Box::new(res.into_iter()));
+        // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
+        // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
+        let live_forever: Box<dyn Iterator<Item = KV> + 'static> = unsafe { mem::transmute(iter) };
+        leave_iterator::<T>(ctx, live_forever);
         leave_storage(ctx, Some(store));
         return 0;
     } else {
-        leave_storage(ctx, storage);
         return ERROR_NO_STORAGE;
     }
 }
@@ -175,8 +174,9 @@ unsafe fn get_data<S: Storage>(ptr: *mut c_void) -> Box<ContextData<S>> {
 
 fn destroy_unmanaged_storage<S: Storage>(ptr: *mut c_void) {
     if !ptr.is_null() {
-        // auto-dropped with scope
-        let _ = unsafe { get_data::<S>(ptr) };
+        let mut dead = unsafe { get_data::<S>(ptr) };
+        // ensure the iterator is dropped before the storage
+        dead.storage.clear_iterator();
     }
 }
 
