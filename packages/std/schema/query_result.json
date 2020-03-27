@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ContractResult",
+  "title": "QueryResult",
   "anyOf": [
     {
       "type": "object",
@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/Response"
+          "$ref": "#/definitions/Binary"
         }
       }
     },
@@ -29,157 +29,6 @@
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
       "type": "string"
-    },
-    "Coin": {
-      "type": "object",
-      "required": [
-        "amount",
-        "denom"
-      ],
-      "properties": {
-        "amount": {
-          "type": "string"
-        },
-        "denom": {
-          "type": "string"
-        }
-      }
-    },
-    "CosmosMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "send"
-          ],
-          "properties": {
-            "send": {
-              "type": "object",
-              "required": [
-                "amount",
-                "from_address",
-                "to_address"
-              ],
-              "properties": {
-                "amount": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Coin"
-                  }
-                },
-                "from_address": {
-                  "$ref": "#/definitions/HumanAddr"
-                },
-                "to_address": {
-                  "$ref": "#/definitions/HumanAddr"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "contract"
-          ],
-          "properties": {
-            "contract": {
-              "type": "object",
-              "required": [
-                "contract_addr",
-                "msg",
-                "send"
-              ],
-              "properties": {
-                "contract_addr": {
-                  "$ref": "#/definitions/HumanAddr"
-                },
-                "msg": {
-                  "$ref": "#/definitions/Binary"
-                },
-                "send": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
-                  "items": {
-                    "$ref": "#/definitions/Coin"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "opaque"
-          ],
-          "properties": {
-            "opaque": {
-              "type": "object",
-              "required": [
-                "data"
-              ],
-              "properties": {
-                "data": {
-                  "$ref": "#/definitions/Binary"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    "HumanAddr": {
-      "type": "string"
-    },
-    "LogAttribute": {
-      "type": "object",
-      "required": [
-        "key",
-        "value"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
-    "Response": {
-      "type": "object",
-      "required": [
-        "data",
-        "log",
-        "messages"
-      ],
-      "properties": {
-        "data": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Binary"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "log": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/LogAttribute"
-          }
-        },
-        "messages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CosmosMsg"
-          }
-        }
-      }
     }
   }
 }

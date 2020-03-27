@@ -87,8 +87,7 @@
               "type": "object",
               "required": [
                 "contract_addr",
-                "msg",
-                "send"
+                "msg"
               ],
               "properties": {
                 "contract_addr": {
@@ -152,7 +151,6 @@
     "Response": {
       "type": "object",
       "required": [
-        "data",
         "log",
         "messages"
       ],
