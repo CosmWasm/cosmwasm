@@ -15,7 +15,7 @@ use crate::imports::{ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::types::{ContractResult, Env, QueryResult, Response};
+use crate::{ContractResult, Env, QueryResult, Response};
 
 /// cosmwasm_vm_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
