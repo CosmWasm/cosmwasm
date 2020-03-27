@@ -1,36 +1,28 @@
 /**
 Internal details to be used by instance.rs only
 **/
-#[cfg(feature = "iterator")]
-use std::convert::TryInto;
 use std::ffi::c_void;
 use std::mem;
 
 use wasmer_runtime_core::vm::Ctx;
 
-use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
+use cosmwasm_std::KV;
+use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
+
+#[cfg(feature = "iterator")]
+pub use iter_support::{
+    do_next, do_scan, leave_iterator, take_iterator, ERROR_NEXT_INVALID_ITERATOR, ERROR_NO_STORAGE,
+    ERROR_SCAN_INVALID_ORDER,
+};
 
 use crate::errors::Error;
-#[cfg(feature = "iterator")]
-use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 
 /// An unknown error occurred when writing to region
 static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
 /// Could not write to region because it is too small
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
-
-/// Invalid Order enum value passed into scan
-#[cfg(feature = "iterator")]
-static ERROR_SCAN_INVALID_ORDER: i32 = -2000001;
-// Iterator pointer not registered
-#[cfg(feature = "iterator")]
-static ERROR_NEXT_INVALID_ITERATOR: i32 = -2000002;
-/// Generic error - using context with no Storage attached
-#[cfg(feature = "iterator")]
-static ERROR_NO_STORAGE: i32 = -3000001;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -57,57 +49,6 @@ pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) {
 pub fn do_remove<T: Storage>(ctx: &Ctx, key_ptr: u32) {
     let key = read_region(ctx, key_ptr);
     with_storage_from_context(ctx, |store: &mut T| store.remove(&key));
-}
-
-#[cfg(feature = "iterator")]
-pub fn do_scan<T: Storage + 'static>(ctx: &Ctx, start_ptr: u32, end_ptr: u32, order: i32) -> i32 {
-    let start = maybe_read_region(ctx, start_ptr);
-    let end = maybe_read_region(ctx, end_ptr);
-    let order: Order = match order.try_into() {
-        Ok(o) => o,
-        Err(_) => return ERROR_SCAN_INVALID_ORDER,
-    };
-    let storage: Option<T> = take_storage(ctx);
-    if let Some(store) = storage {
-        let iter = store.range(start.as_deref(), end.as_deref(), order);
-        // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
-        // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
-        let live_forever: Box<dyn Iterator<Item = KV> + 'static> = unsafe { mem::transmute(iter) };
-        leave_iterator::<T>(ctx, live_forever);
-        leave_storage(ctx, Some(store));
-        return 0;
-    } else {
-        return ERROR_NO_STORAGE;
-    }
-}
-
-#[cfg(feature = "iterator")]
-pub fn do_next<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-    let mut iter = match take_iterator::<T>(ctx) {
-        Some(i) => i,
-        None => return ERROR_NEXT_INVALID_ITERATOR,
-    };
-    // get next item and return iterator
-    let item = iter.next();
-    leave_iterator::<T>(ctx, iter);
-
-    // prepare return values
-    let (key, value) = match item {
-        Some(item) => item,
-        None => {
-            return 0;
-        }
-    };
-    match write_region(ctx, key_ptr, &key) {
-        Ok(()) => 0,
-        Err(Error::RegionTooSmallErr { .. }) => return ERROR_WRITE_TO_REGION_TOO_SMALL,
-        Err(_) => return ERROR_WRITE_TO_REGION_UNKNONW,
-    };
-    match write_region(ctx, value_ptr, &value) {
-        Ok(()) => 0,
-        Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
-        Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
-    }
 }
 
 pub fn do_canonical_address<A: Api>(
@@ -140,6 +81,93 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
             Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
         },
         Err(_) => -1,
+    }
+}
+
+#[cfg(feature = "iterator")]
+mod iter_support {
+    use super::*;
+    use crate::memory::maybe_read_region;
+    use cosmwasm_std::{Order, KV};
+    use std::convert::TryInto;
+
+    /// Invalid Order enum value passed into scan
+    pub static ERROR_SCAN_INVALID_ORDER: i32 = -2000001;
+    // Iterator pointer not registered
+    pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2000002;
+    /// Generic error - using context with no Storage attached
+    pub static ERROR_NO_STORAGE: i32 = -3000001;
+
+    pub fn do_scan<T: Storage + 'static>(
+        ctx: &Ctx,
+        start_ptr: u32,
+        end_ptr: u32,
+        order: i32,
+    ) -> i32 {
+        let start = maybe_read_region(ctx, start_ptr);
+        let end = maybe_read_region(ctx, end_ptr);
+        let order: Order = match order.try_into() {
+            Ok(o) => o,
+            Err(_) => return ERROR_SCAN_INVALID_ORDER,
+        };
+        let storage: Option<T> = take_storage(ctx);
+        if let Some(store) = storage {
+            let iter = store.range(start.as_deref(), end.as_deref(), order);
+            // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
+            // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
+            let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
+                unsafe { mem::transmute(iter) };
+            leave_iterator::<T>(ctx, live_forever);
+            leave_storage(ctx, Some(store));
+            return 0;
+        } else {
+            return ERROR_NO_STORAGE;
+        }
+    }
+
+    pub fn do_next<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+        let mut iter = match take_iterator::<T>(ctx) {
+            Some(i) => i,
+            None => return ERROR_NEXT_INVALID_ITERATOR,
+        };
+        // get next item and return iterator
+        let item = iter.next();
+        leave_iterator::<T>(ctx, iter);
+
+        // prepare return values
+        let (key, value) = match item {
+            Some(item) => item,
+            None => {
+                return 0;
+            }
+        };
+        match write_region(ctx, key_ptr, &key) {
+            Ok(()) => 0,
+            Err(Error::RegionTooSmallErr { .. }) => return ERROR_WRITE_TO_REGION_TOO_SMALL,
+            Err(_) => return ERROR_WRITE_TO_REGION_UNKNONW,
+        };
+        match write_region(ctx, value_ptr, &value) {
+            Ok(()) => 0,
+            Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
+            Err(_) => ERROR_WRITE_TO_REGION_UNKNONW,
+        }
+    }
+
+    // if ptr is None, find a new slot.
+    // otherwise, place in slot defined by ptr (only after take)
+    pub fn leave_iterator<S: Storage>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
+        let mut b = unsafe { get_data::<S>(ctx.data) };
+        // clean up old one if there was one
+        let _ = b.iter.take();
+        b.iter = Some(iter);
+        mem::forget(b); // we do this to avoid cleanup
+    }
+
+    pub fn take_iterator<S: Storage>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = KV>>> {
+        let mut b = unsafe { get_data::<S>(ctx.data) };
+        let res = b.iter.take();
+        mem::forget(b); // we do this to avoid cleanup
+        res
     }
 }
 
@@ -209,23 +237,4 @@ pub fn leave_storage<S: Storage>(ctx: &Ctx, storage: Option<S>) {
     let _ = b.data.take();
     b.data = storage;
     mem::forget(b); // we do this to avoid cleanup
-}
-
-#[cfg(feature = "iterator")]
-// if ptr is None, find a new slot.
-// otherwise, place in slot defined by ptr (only after take)
-pub fn leave_iterator<S: Storage>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
-    let mut b = unsafe { get_data::<S>(ctx.data) };
-    // clean up old one if there was one
-    let _ = b.iter.take();
-    b.iter = Some(iter);
-    mem::forget(b); // we do this to avoid cleanup
-}
-
-#[cfg(feature = "iterator")]
-pub fn take_iterator<S: Storage>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = KV>>> {
-    let mut b = unsafe { get_data::<S>(ctx.data) };
-    let res = b.iter.take();
-    mem::forget(b); // we do this to avoid cleanup
-    res
 }
