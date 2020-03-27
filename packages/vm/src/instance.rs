@@ -69,7 +69,11 @@ where
                 // Returns negative code on error, 0 on success
                 "scan_db" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32{
                     #[cfg(not(feature = "iterator"))]
-                    return 0;
+                    {
+                        // get rid of unused argument warning
+                        let (_, _, _, _) = (ctx, start_ptr, end_ptr, order);
+                        return 0;
+                    }
                     #[cfg(feature = "iterator")]
                     do_scan::<S>(ctx, start_ptr, end_ptr, order)
                 }),
@@ -78,7 +82,11 @@ where
                 // Ownership of both start and end pointer is not transferred to the host.
                 "next_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     #[cfg(not(feature = "iterator"))]
-                    return 0;
+                    {
+                        // get rid of unused argument warning
+                        let (_, _, _) = (ctx, key_ptr, value_ptr);
+                        return 0;
+                    }
                     #[cfg(feature = "iterator")]
                     do_next::<S>(ctx, key_ptr, value_ptr)
                 }),
