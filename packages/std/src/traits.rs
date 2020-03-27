@@ -1,4 +1,5 @@
 use crate::errors::Result;
+use crate::query::{QueryRequest, QueryResult};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
@@ -46,6 +47,11 @@ pub trait Storage: ReadonlyStorage {
 pub trait Api: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
+}
+
+pub trait Querier {
+    // TODO: look into how to return nicer errors
+    fn query(&self, request: QueryRequest) -> QueryResult;
 }
 
 // put them here to avoid so many feature flags

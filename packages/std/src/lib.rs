@@ -18,7 +18,7 @@ pub use crate::errors::{
 pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
-pub use crate::query::{QueryResponse, QueryResult};
+pub use crate::query::{BalanceResponse, QueryRequest, QueryResponse, QueryResult};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
