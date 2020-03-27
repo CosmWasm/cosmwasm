@@ -6,6 +6,7 @@
 
 - Upgrade schemars to 0.7.
 - Upgrade wasmer to 0.16.
+- Update snafu to 0.6.
 - Minimal supported Rust version is 1.41.
 - Split `Region.len` into `Region.capacity` and `Region.length`, where the new
   capacity is the number of bytes available and `length` is the number of bytes

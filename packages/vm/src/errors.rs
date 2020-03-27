@@ -11,67 +11,54 @@ pub enum Error {
     #[snafu(display("Cache error: {}", msg))]
     CacheErr {
         msg: String,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Compiling wasm: {}", source))]
     CompileErr {
         source: core_error::CompileError,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Filesystem error: {}", source))]
     IoErr {
         source: io::Error,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Hash doesn't match stored data"))]
-    IntegrityErr {
-        #[cfg(feature = "backtraces")]
-        backtrace: snafu::Backtrace,
-    },
+    IntegrityErr { backtrace: snafu::Backtrace },
     #[snafu(display("Parse error: {}", source))]
     ParseErr {
         source: serde_json_wasm::de::Error,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Serialize error: {}", source))]
     SerializeErr {
         source: serde_json_wasm::ser::Error,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Resolving wasm function: {}", source))]
     ResolveErr {
         source: core_error::ResolveError,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Calling wasm function: {}", source))]
     RuntimeErr {
         source: core_error::RuntimeError,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Region too small. Got {}, required {}", size, required))]
     RegionTooSmallErr {
         size: usize,
         required: usize,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
         msg: String,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Wasmer error: {}", source))]
     WasmerErr {
         source: core_error::Error,
-        #[cfg(feature = "backtraces")]
         backtrace: snafu::Backtrace,
     },
 }
