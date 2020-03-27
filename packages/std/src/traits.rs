@@ -1,5 +1,6 @@
-use crate::errors::Result;
-use crate::query::{QueryRequest, QueryResult};
+use crate::encoding::Binary;
+use crate::errors::{ApiError, Result};
+use crate::query::QueryRequest;
 use crate::types::{CanonicalAddr, HumanAddr};
 
 #[cfg(feature = "iterator")]
@@ -50,13 +51,9 @@ pub trait Api: Copy + Clone + Send {
 }
 
 pub trait Querier {
-    // Note: I considered returning Result<Binary> (as in Api), but figured that would be misleading.
-    // In rust unit tests, it would return a specific snafu::Error enum. But if passed over wasm FFI,
-    // it will always be Error::ContractErr.
-    //
-    // Ideas on better way to represent knowing this must work transparently over FFI?
-    // I could not find a way to serialize/deserialize the snafu error
-    fn query(&self, request: QueryRequest) -> QueryResult;
+    // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
+    // Since this is information that is returned from outside, we define it this way.
+    fn query(&self, request: QueryRequest) -> Result<Binary, ApiError>;
 }
 
 // put them here to avoid so many feature flags
