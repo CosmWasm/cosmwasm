@@ -213,14 +213,60 @@ mod test {
         }
     }
 
-    #[test]
-    fn base64_serializable() {
-        let source = base64::DecodeError::InvalidLength;
-        let error = Err::<(), _>(source).context(Base64Err { }).unwrap_err();
+    fn assert_serializable(r: Result<()>) {
+        let error = r.unwrap_err();
         let orig_ser = to_vec(&error).unwrap();
         let rehydrated: ApiError = from_slice(&orig_ser).unwrap();
         assert_eq!(format!("{}", error), format!("{}", rehydrated));
         let round_trip: ApiError = from_slice(&to_vec(&rehydrated).unwrap()).unwrap();
         assert_eq!(round_trip, rehydrated);
+    }
+
+    #[test]
+    fn base64_serializable() {
+        let source = Err(base64::DecodeError::InvalidLength);
+        assert_serializable(source.context(Base64Err {}));
+    }
+
+    #[test]
+    fn contract_serializable() {
+        assert_serializable(contract_err("foobar"));
+    }
+
+    #[test]
+    fn dyn_contract_serializable() {
+        assert_serializable(dyn_contract_err("dynamic".to_string()));
+    }
+
+    #[test]
+    fn invalid_serializable() {
+        assert_serializable(invalid("name", "too short"));
+    }
+
+    #[test]
+    fn unauthorized_serializable() {
+        assert_serializable(unauthorized());
+    }
+
+    #[test]
+    fn null_pointer_serializable() {
+        assert_serializable(NullPointer {}.fail());
+    }
+
+    #[test]
+    fn not_found_serializable() {
+        assert_serializable(NotFound { kind: "State"}.fail());
+    }
+
+    #[test]
+    fn parse_err_serializable() {
+        let err = from_slice::<String>(b"123").context(ParseErr { kind: "String"}).map(|_| ());
+        assert_serializable(err);
+    }
+
+    #[test]
+    fn serialize_err_serializable() {
+        let source = Err(serde_json_wasm::ser::Error::BufferFull);
+        assert_serializable(source.context(SerializeErr { kind: "faker"}));
     }
 }
