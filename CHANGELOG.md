@@ -11,6 +11,12 @@
   capacity is the number of bytes available and `length` is the number of bytes
   used. This is a breaking change in the contract-vm interface, which requires
   the same memory layout of the `Region` struct on both sides.
+- Add `remove` method to `Storage` trait.
+- (feature-flagged) Add `range` method to `ReadonlyStorage` trait. This returns an iterator that covers
+all or a subset of the items in the db ordered ascending or descending by key.
+- Add new feature flag `iterator` to both packages to enable `range` functionality. This is used
+to allow potential porting to chains that use Merkle Tries (which don't allow iterating over
+ranges).
 
 **cosmwasm**
 
@@ -24,6 +30,8 @@
   becomes `use cosmwasm::{Api, Binary, Storage};`).
 - Rename package `cosmwasm` to `cosmwasm-std`.
 - The export `allocate` does not zero-fill the allocated memory anymore.
+- Add `remove_db` to the required imports of a contract.
+- (feature-flagged) add `scan_db` and `next_db` callbacks from wasm contract to VM.
 
 **cosmwasm-vm**
 
@@ -35,6 +43,7 @@
   is success and values greater than 0 are reserved for future use.
 - Change the required interface version guard export from `cosmwasm_api_0_6` to
   `cosmwasm_vm_version_1`.
+- Provide implementations for `remove-db` and (feature-flagged)`scan_db` and `next_db`
 
 ## 0.7.2 (2020-03-23)
 
