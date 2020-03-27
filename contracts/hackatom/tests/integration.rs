@@ -10,11 +10,9 @@ use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
 
 /**
 This integration test tries to run and call the generated wasm.
-It depends on a release build being available already. You can create that with:
+It depends on a release build being available already. You can create that with `cargo wasm`.
 
-cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
-
-Then running `cargo test` will validate we can properly call into that generated data.
+Then running `cargo integration-test` will validate we can properly call into that generated data.
 
 You can easily convert unit tests to integration tests.
 1. First copy them over verbatum,
