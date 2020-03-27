@@ -8,10 +8,9 @@ use std::vec::Vec;
 
 use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
-use snafu::ResultExt;
 
 use crate::encoding::Binary;
-use crate::errors::{Error, ParseErr, SerializeErr};
+use crate::errors::Error;
 use crate::imports::{ExternalApi, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
@@ -86,13 +85,11 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
 ) -> Result<*mut c_void, Error> {
     let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
-    let env: Env = from_slice(&env).context(ParseErr { kind: "Env" })?;
-    let msg: T = from_slice(&msg).context(ParseErr { kind: "InitMsg" })?;
+    let env: Env = from_slice(&env)?;
+    let msg: T = from_slice(&msg)?;
     let mut deps = make_dependencies();
     let res = init_fn(&mut deps, env, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
-        kind: "ContractResult",
-    })?;
+    let json = to_vec(&ContractResult::Ok(res))?;
     Ok(release_buffer(json))
 }
 
@@ -108,13 +105,11 @@ fn _do_handle<T: DeserializeOwned + JsonSchema>(
     let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
-    let env: Env = from_slice(&env).context(ParseErr { kind: "Env" })?;
-    let msg: T = from_slice(&msg).context(ParseErr { kind: "HandleMsg" })?;
+    let env: Env = from_slice(&env)?;
+    let msg: T = from_slice(&msg)?;
     let mut deps = make_dependencies();
     let res = handle_fn(&mut deps, env, msg)?;
-    let json = to_vec(&ContractResult::Ok(res)).context(SerializeErr {
-        kind: "ContractResult",
-    })?;
+    let json = to_vec(&ContractResult::Ok(res))?;
     Ok(release_buffer(json))
 }
 
@@ -124,12 +119,10 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
 ) -> Result<*mut c_void, Error> {
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
-    let msg: T = from_slice(&msg).context(ParseErr { kind: "QueryMsg" })?;
+    let msg: T = from_slice(&msg)?;
     let deps = make_dependencies();
     let res = Binary(query_fn(&deps, msg)?);
-    let json = to_vec(&QueryResult::Ok(res)).context(SerializeErr {
-        kind: "QueryResult",
-    })?;
+    let json = to_vec(&QueryResult::Ok(res))?;
     Ok(release_buffer(json))
 }
 
