@@ -1,81 +1,60 @@
-use serde::Serialize;
 use snafu::Snafu;
 
-#[derive(Debug, Snafu, Serialize)]
+#[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
 pub enum Error {
     #[snafu(display("Invalid Base64 string: {}", source))]
     Base64Err {
-        #[serde(serialize_with = "serialize_as_string")]
         source: base64::DecodeError,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Contract error: {}", msg))]
     ContractErr {
         msg: &'static str,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Contract error: {}", msg))]
     DynContractErr {
         msg: String,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("{} not found", kind))]
     NotFound {
         kind: &'static str,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Received null pointer, refuse to use"))]
-    NullPointer {
-        #[serde(skip)]
-        backtrace: snafu::Backtrace,
-    },
+    NullPointer { backtrace: snafu::Backtrace },
     #[snafu(display("Error parsing {}: {}", kind, source))]
     ParseErr {
         kind: &'static str,
-        #[serde(serialize_with = "serialize_as_string")]
         source: serde_json_wasm::de::Error,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Error serializing {}: {}", kind, source))]
     SerializeErr {
         kind: &'static str,
-        #[serde(serialize_with = "serialize_as_string")]
         source: serde_json_wasm::ser::Error,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     // This is used for std::str::from_utf8, which we may well deprecate
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8Err {
-        #[serde(serialize_with = "serialize_as_string")]
         source: std::str::Utf8Error,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8StringErr {
-        #[serde(serialize_with = "serialize_as_string")]
         source: std::string::FromUtf8Error,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Unauthorized"))]
-    Unauthorized {
-        #[serde(skip)]
-        backtrace: snafu::Backtrace,
-    },
+    Unauthorized { backtrace: snafu::Backtrace },
     #[snafu(display("Invalid {}: {}", field, msg))]
     ValidationErr {
         field: &'static str,
         msg: &'static str,
-        #[serde(skip)]
         backtrace: snafu::Backtrace,
     },
 }
@@ -98,26 +77,12 @@ pub fn unauthorized<T>() -> Result<T> {
     Unauthorized {}.fail()
 }
 
-/// serialize_as_string allows us to serialize source errors with the important info
-fn serialize_as_string<T, S>(err: &T, serializer: S) -> Result<S::Ok, S::Error>
-where
-    S: serde::Serializer,
-    T: std::fmt::Display,
-{
-    let msg = format!("{}", err);
-    serde::Serialize::serialize(&msg, serializer)
-}
-
 pub use api::ApiError;
 
 // place this in a submod, so the auto-generated contexts don't conflict with same-named context from above
 mod api {
-    use serde::{Deserialize, Serialize};
-    use snafu::{ResultExt, Snafu};
-    use std::convert::TryFrom;
-
     use super::Error;
-    use crate::serde::{from_slice, to_vec};
+    use serde::{Deserialize, Serialize};
 
     /// ApiError is a "rehydrated" Error after it has been Serialized and restored.
     /// This will not contain all information of the original (source error and backtrace cannot be serialized),
@@ -125,57 +90,79 @@ mod api {
     /// 1. A rehydrated ApiError will have the same type as the original Error
     /// 2. A rehydrated ApiError will have the same display as the original
     /// 3. Serializing and Deserializing an ApiError will give you an identical struct
-    #[derive(Debug, Snafu, Serialize, Deserialize, PartialEq)]
+    #[derive(Debug, Serialize, Deserialize, PartialEq)]
     pub enum ApiError {
-        #[snafu(display("Invalid Base64 string: {}", source))]
-        Base64Err {
-            #[snafu(source(false))]
-            source: String,
-        },
-        #[snafu(display("Contract error: {}", msg))]
+        Base64Err { source: String },
         ContractErr { msg: String },
-        #[snafu(display("Contract error: {}", msg))]
         DynContractErr { msg: String },
-        #[snafu(display("{} not found", kind))]
         NotFound { kind: String },
-        #[snafu(display("Received null pointer, refuse to use"))]
         NullPointer {},
-        #[snafu(display("Error parsing {}: {}", kind, source))]
-        ParseErr {
-            kind: String,
-            #[snafu(source(false))]
-            source: String,
-        },
-        #[snafu(display("Error serializing {}: {}", kind, source))]
-        SerializeErr {
-            kind: String,
-            #[snafu(source(false))]
-            source: String,
-        },
+        ParseErr { kind: String, source: String },
+        SerializeErr { kind: String, source: String },
         // This is used for std::str::from_utf8, which we may well deprecate
-        #[snafu(display("UTF8 encoding error: {}", source))]
-        Utf8Err {
-            #[snafu(source(false))]
-            source: String,
-        },
+        Utf8Err { source: String },
         // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
-        #[snafu(display("UTF8 encoding error: {}", source))]
-        Utf8StringErr {
-            #[snafu(source(false))]
-            source: String,
-        },
-        #[snafu(display("Unauthorized"))]
+        Utf8StringErr { source: String },
         Unauthorized {},
-        #[snafu(display("Invalid {}: {}", field, msg))]
         ValidationErr { field: String, msg: String },
     }
 
-    impl TryFrom<Error> for ApiError {
-        type Error = Error;
+    impl std::fmt::Display for ApiError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            match self {
+                ApiError::Base64Err { source } => write!(f, "Invalid Base64 string: {}", source),
+                ApiError::ContractErr { msg } => write!(f, "Contract error: {}", msg),
+                ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
+                ApiError::NotFound { kind } => write!(f, "{} not found", kind),
+                ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
+                ApiError::ParseErr { kind, source } => {
+                    write!(f, "Error parsing {}: {}", kind, source)
+                }
+                ApiError::SerializeErr { kind, source } => {
+                    write!(f, "Error serializing {}: {}", kind, source)
+                }
+                ApiError::Utf8Err { source } => write!(f, "UTF8 encoding error: {}", source),
+                ApiError::Utf8StringErr { source } => write!(f, "UTF8 encoding error: {}", source),
+                ApiError::Unauthorized {} => write!(f, "Unauthorized"),
+                ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
+            }
+        }
+    }
 
-        fn try_from(value: Error) -> Result<Self, Self::Error> {
-            let ser = to_vec(&value).context(super::SerializeErr { kind: "Error" })?;
-            from_slice(&ser).context(super::ParseErr { kind: "ApiError" })
+    impl From<Error> for ApiError {
+        fn from(value: Error) -> Self {
+            match value {
+                Error::Base64Err { source, .. } => ApiError::Base64Err {
+                    source: format!("{}", source),
+                },
+                Error::ContractErr { msg, .. } => ApiError::ContractErr {
+                    msg: msg.to_string(),
+                },
+                Error::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
+                Error::NotFound { kind, .. } => ApiError::NotFound {
+                    kind: kind.to_string(),
+                },
+                Error::NullPointer { .. } => ApiError::NullPointer {},
+                Error::ParseErr { kind, source, .. } => ApiError::ParseErr {
+                    kind: kind.to_string(),
+                    source: format!("{}", source),
+                },
+                Error::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
+                    kind: kind.to_string(),
+                    source: format!("{}", source),
+                },
+                Error::Utf8Err { source, .. } => ApiError::Utf8Err {
+                    source: format!("{}", source),
+                },
+                Error::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
+                    source: format!("{}", source),
+                },
+                Error::Unauthorized { .. } => ApiError::Unauthorized {},
+                Error::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
+                    field: field.to_string(),
+                    msg: msg.to_string(),
+                },
+            }
         }
     }
 }
@@ -185,7 +172,6 @@ mod test {
     use super::*;
     use crate::serde::{from_slice, to_vec};
     use snafu::ResultExt;
-    use std::convert::TryInto;
 
     #[test]
     fn use_invalid() {
@@ -227,71 +213,62 @@ mod test {
         }
     }
 
-    fn assert_serializable(r: Result<()>) {
+    fn assert_conversion(r: Result<()>) {
         let error = r.unwrap_err();
-        let orig_ser = to_vec(&error).unwrap();
-        let rehydrated: ApiError = from_slice(&orig_ser).unwrap();
-        assert_eq!(format!("{}", error), format!("{}", rehydrated));
-        let round_trip: ApiError = from_slice(&to_vec(&rehydrated).unwrap()).unwrap();
-        assert_eq!(round_trip, rehydrated);
+        let msg = format!("{}", error);
+        let converted: ApiError = error.into();
+        assert_eq!(msg, format!("{}", converted));
+        let round_trip: ApiError = from_slice(&to_vec(&converted).unwrap()).unwrap();
+        assert_eq!(round_trip, converted);
     }
 
     #[test]
-    fn base64_serializable() {
+    fn base64_conversion() {
         let source = Err(base64::DecodeError::InvalidLength);
-        assert_serializable(source.context(Base64Err {}));
+        assert_conversion(source.context(Base64Err {}));
     }
 
     #[test]
-    fn contract_serializable() {
-        assert_serializable(contract_err("foobar"));
+    fn contract_conversion() {
+        assert_conversion(contract_err("foobar"));
     }
 
     #[test]
-    fn dyn_contract_serializable() {
-        assert_serializable(dyn_contract_err("dynamic".to_string()));
+    fn dyn_contract_conversion() {
+        assert_conversion(dyn_contract_err("dynamic".to_string()));
     }
 
     #[test]
-    fn invalid_serializable() {
-        assert_serializable(invalid("name", "too short"));
+    fn invalid_conversion() {
+        assert_conversion(invalid("name", "too short"));
     }
 
     #[test]
-    fn unauthorized_serializable() {
-        assert_serializable(unauthorized());
+    fn unauthorized_conversion() {
+        assert_conversion(unauthorized());
     }
 
     #[test]
-    fn null_pointer_serializable() {
-        assert_serializable(NullPointer {}.fail());
+    fn null_pointer_conversion() {
+        assert_conversion(NullPointer {}.fail());
     }
 
     #[test]
-    fn not_found_serializable() {
-        assert_serializable(NotFound { kind: "State" }.fail());
+    fn not_found_conversion() {
+        assert_conversion(NotFound { kind: "State" }.fail());
     }
 
     #[test]
-    fn parse_err_serializable() {
+    fn parse_err_conversion() {
         let err = from_slice::<String>(b"123")
             .context(ParseErr { kind: "String" })
             .map(|_| ());
-        assert_serializable(err);
+        assert_conversion(err);
     }
 
     #[test]
-    fn serialize_err_serializable() {
+    fn serialize_err_conversion() {
         let source = Err(serde_json_wasm::ser::Error::BufferFull);
-        assert_serializable(source.context(SerializeErr { kind: "faker" }));
-    }
-
-    #[test]
-    fn try_from_error_conversion() {
-        let source: Result<(), _> = Err(serde_json_wasm::ser::Error::BufferFull);
-        let error = source.context(SerializeErr { kind: "faker" }).unwrap_err();
-        let msg = format!("{}", error);
-        let api_error: ApiError = error.try_into().unwrap();
-        assert_eq!(msg, format!("{}", api_error));
+        assert_conversion(source.context(SerializeErr { kind: "faker" }));
     }
 }
