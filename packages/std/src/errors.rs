@@ -3,6 +3,8 @@ use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
+/// Structured error type for init, handle and query. This cannot be serialized to JSON, such that
+/// it is only available within the contract and its unit tests.
 pub enum Error {
     #[snafu(display("Invalid Base64 string: {}", source))]
     Base64Err {
@@ -60,6 +62,8 @@ pub enum Error {
     },
 }
 
+/// Result for init, handle and query. Since the error type cannot be serialized to JSON,
+/// this is only available within the contract and its unit tests.
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 pub fn invalid<T>(field: &'static str, msg: &'static str) -> Result<T> {

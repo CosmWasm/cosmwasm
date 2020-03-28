@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "ContractResult",
+  "title": "InitResult",
   "anyOf": [
     {
       "type": "object",
@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/Response"
+          "$ref": "#/definitions/InitResponse"
         }
       }
     },
@@ -133,22 +133,7 @@
     "HumanAddr": {
       "type": "string"
     },
-    "LogAttribute": {
-      "type": "object",
-      "required": [
-        "key",
-        "value"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
-    "Response": {
+    "InitResponse": {
       "type": "object",
       "required": [
         "log",
@@ -176,6 +161,21 @@
           "items": {
             "$ref": "#/definitions/CosmosMsg"
           }
+        }
+      }
+    },
+    "LogAttribute": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
         }
       }
     }

@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    from_slice, log, to_vec, unauthorized, Api, CanonicalAddr, CosmosMsg, Env, Extern, HumanAddr,
-    NotFound, Response, Result, Storage,
+    from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg, Env, Extern,
+    HandleResponse, HumanAddr, InitResponse, NotFound, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -49,7 +49,7 @@ pub fn init<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     env: Env,
     msg: InitMsg,
-) -> Result<Response> {
+) -> Result<InitResponse> {
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
@@ -58,14 +58,14 @@ pub fn init<S: Storage, A: Api>(
             funder: env.message.signer,
         })?,
     );
-    Ok(Response::default())
+    Ok(InitResponse::default())
 }
 
 pub fn handle<S: Storage, A: Api>(
     deps: &mut Extern<S, A>,
     env: Env,
     msg: HandleMsg,
-) -> Result<Response> {
+) -> Result<HandleResponse> {
     match msg {
         HandleMsg::Release {} => do_release(deps, env),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
@@ -74,7 +74,7 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<Response> {
+fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<HandleResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -84,7 +84,7 @@ fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<R
     if env.message.signer == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&env.contract.address)?;
-        let res = Response {
+        let res = HandleResponse {
             log: vec![
                 log("action", "release"),
                 log("destination", to_addr.as_str()),
@@ -102,7 +102,7 @@ fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<R
     }
 }
 
-fn do_cpu_loop() -> Result<Response> {
+fn do_cpu_loop() -> Result<HandleResponse> {
     let mut counter = 0u64;
     loop {
         counter += 1;
@@ -112,7 +112,7 @@ fn do_cpu_loop() -> Result<Response> {
     }
 }
 
-fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Response> {
+fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<HandleResponse> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -121,17 +121,17 @@ fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<Respon
     }
 }
 
-fn do_panic() -> Result<Response> {
+fn do_panic() -> Result<HandleResponse> {
     panic!("This page intentionally faulted");
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
+pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => query_verifier(deps),
     }
 }
 
-fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -142,7 +142,7 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
     // these will be base64 encoded into the json we return, and parsed on the way out.
     // maybe we should wrap this in a struct then json encode it into a vec?
     // other ideas?
-    Ok(addr.as_str().as_bytes().to_vec())
+    Ok(Binary(addr.as_str().as_bytes().to_vec()))
 }
 
 #[cfg(test)]
@@ -196,8 +196,8 @@ mod tests {
 
         // now let's query
         let qres = query(&deps, QueryMsg::Verifier {}).unwrap();
-        let returned = String::from_utf8(qres).unwrap();
-        assert_eq!(verifier, HumanAddr(returned));
+        let returned = std::str::from_utf8(qres.as_slice()).unwrap();
+        assert_eq!(verifier, HumanAddr::from(returned));
     }
 
     #[test]

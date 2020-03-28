@@ -1,20 +1,19 @@
 use snafu::ResultExt;
 
-use cosmwasm_std::{Api, ContractResult, Env, QueryResult, Storage};
-
-use crate::serde::{from_slice, to_vec};
+use cosmwasm_std::{Api, Env, HandleResult, InitResult, QueryResult, Storage};
 
 use crate::errors::{Error, RuntimeErr};
 use crate::instance::{Func, Instance};
+use crate::serde::{from_slice, to_vec};
 
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &Env,
     msg: &[u8],
-) -> Result<ContractResult, Error> {
+) -> Result<InitResult, Error> {
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let res: ContractResult = from_slice(&data)?;
+    let res: InitResult = from_slice(&data)?;
     Ok(res)
 }
 
@@ -22,10 +21,10 @@ pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &Env,
     msg: &[u8],
-) -> Result<ContractResult, Error> {
+) -> Result<HandleResult, Error> {
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
-    let res: ContractResult = from_slice(&data)?;
+    let res: HandleResult = from_slice(&data)?;
     Ok(res)
 }
 

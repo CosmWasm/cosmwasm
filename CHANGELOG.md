@@ -35,6 +35,9 @@ ranges).
 - (feature-flagged) add `scan_db` and `next_db` callbacks from wasm contract to VM.
 - `serde::{from_slice, to_vec}` return `cosmwasm_std::Result`, no more need to use
 `.context(...)` when calling these functions
+- Split `Response` into `InitResponse` and `HandleResponse`; split
+  `ContractResult` into `InitResult` and `HandleResult`.
+- Create explicit `QueryResponse`, analogue to `InitResponse` and `HandleResponse`.
 
 **cosmwasm-vm**
 
