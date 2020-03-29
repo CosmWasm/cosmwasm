@@ -1,5 +1,6 @@
+use crate::api::ApiError;
 use crate::encoding::Binary;
-use crate::errors::{ApiError, Result};
+use crate::errors::Result;
 use crate::query::QueryRequest;
 use crate::types::{CanonicalAddr, HumanAddr};
 

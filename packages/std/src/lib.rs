@@ -11,10 +11,11 @@ mod traits;
 mod transactions;
 mod types;
 
+pub use crate::api::{ApiError, ApiResult};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
-    contract_err, dyn_contract_err, invalid, unauthorized, ApiError, Error, NotFound, NullPointer,
-    ParseErr, Result, SerializeErr,
+    contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
+    Result, SerializeErr,
 };
 pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
