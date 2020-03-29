@@ -1,3 +1,22 @@
+//! This integration test tries to run and call the generated wasm.
+//! It depends on a Wasm build being available, which you can create with `cargo wasm`.
+//! Then running `cargo integration-test` will validate we can properly call into that generated Wasm.
+//!
+//! You can easily convert unit tests to integration tests.
+//! 1. First copy them over verbatum,
+//! 2. Then change
+//!      let mut deps = mock_dependencies(20);
+//!    to
+//!      let mut deps = mock_instance(WASM);
+//! 3. If you access raw storage, where ever you see something like:
+//!      deps.storage.get(CONFIG_KEY).expect("no data stored");
+//!    replace it with:
+//!      deps.with_storage(|store| {
+//!          let data = store.get(CONFIG_KEY).expect("no data stored");
+//!          //...
+//!      });
+//! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
+
 use cosmwasm_std::testing::{mock_env, MockApi, MockStorage};
 use cosmwasm_std::{coin, from_slice, Env, HumanAddr};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
@@ -5,28 +24,6 @@ use cosmwasm_vm::Instance;
 
 use queue::contract::{CountResponse, HandleMsg, InitMsg, Item, QueryMsg, SumResponse};
 
-/**
-This integration test tries to run and call the generated wasm.
-It depends on a release build being available already. You can create that with `cargo wasm`.
-
-Then running `cargo integration-test` will validate we can properly call into that generated data.
-
-You can easily convert unit tests to integration tests.
-1. First copy them over verbatum,
-2. Then change
-    let mut deps = mock_dependencies(20);
-To
-    let mut deps = mock_instance(WASM);
-3. If you access raw storage, where ever you see something like:
-    deps.storage.get(CONFIG_KEY).expect("no data stored");
- replace it with:
-    deps.with_storage(|store| {
-        let data = store.get(CONFIG_KEY).expect("no data stored");
-        //...
-    });
-4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-
-**/
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
 fn create_contract() -> (Instance<MockStorage, MockApi>, Env) {
