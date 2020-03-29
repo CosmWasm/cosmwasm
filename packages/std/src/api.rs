@@ -14,16 +14,16 @@ pub enum ApiResult<T, E: std::error::Error = ApiError> {
 }
 
 impl<T, E: std::error::Error> ApiResult<T, E> {
-    pub fn result<U: From<T>>(self) -> Result<U, E> {
+    pub fn result<U: From<T>, F: From<E>>(self) -> Result<U, F> {
         match self {
             ApiResult::Ok(t) => Ok(t.into()),
-            ApiResult::Err(e) => Err(e),
+            ApiResult::Err(e) => Err(e.into()),
         }
     }
 }
 
-impl<T, U: From<T>, E: std::error::Error> Into<Result<U, E>> for ApiResult<T, E> {
-    fn into(self) -> Result<U, E> {
+impl<T, U: From<T>, E: std::error::Error, F: From<E>> Into<Result<U, F>> for ApiResult<T, E> {
+    fn into(self) -> Result<U, F> {
         self.result()
     }
 }
@@ -183,6 +183,74 @@ mod test {
                 msg: "sample error".to_string()
             })
         );
+        let reconvert: Result<(), ApiError> = convert.into();
+        match reconvert {
+            Ok(_) => panic!("must be error"),
+            Err(e) => assert_eq!(
+                e,
+                ApiError::ContractErr {
+                    msg: "sample error".to_string()
+                }
+            ),
+        }
+    }
+
+    #[test]
+    fn convert_sys_err_result() {
+        let input: Result<(), SystemError> = NoSuchContract {
+            addr: HumanAddr::from("bad_address"),
+        }
+        .fail();
+        let convert: ApiResult<(), ApiSystemError> = input.into();
+        assert_eq!(
+            convert,
+            ApiResult::Err(ApiSystemError::NoSuchContract {
+                addr: HumanAddr::from("bad_address"),
+            })
+        );
+    }
+
+    #[test]
+    // this tests Ok(Err(_)) case for SystemError, Error
+    fn convert_nested_ok_err_result() {
+        let input: Result<Result<()>, SystemError> = Ok(contract_err("nested error"));
+        let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
+        assert_eq!(
+            convert,
+            ApiResult::Ok(ApiResult::Err(ApiError::ContractErr {
+                msg: "nested error".to_string()
+            }))
+        );
+    }
+
+    #[test]
+    // this tests Ok(Ok(_)) case for SystemError, Error
+    fn convert_nested_ok_ok_result() {
+        let input: Result<Result<i32>, SystemError> = Ok(Ok(123));
+        let convert: ApiResult<ApiResult<i32>, ApiSystemError> = input.into();
+        assert_eq!(convert, ApiResult::Ok(ApiResult::Ok(123)),);
+    }
+
+    #[test]
+    // make sure we can shove this all over API boundaries
+    fn serialize_and_recover_nested_result() {
+        let input: Result<Result<()>, SystemError> = Ok(contract_err("over ffi"));
+        let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
+        let recovered: ApiResult<ApiResult<()>, ApiSystemError> =
+            from_slice(&to_vec(&convert).unwrap()).unwrap();
+        assert_eq!(
+            recovered,
+            ApiResult::Ok(ApiResult::Err(ApiError::ContractErr {
+                msg: "over ffi".to_string()
+            }))
+        );
+        // TODO
+        //        let recovered_result: Result<Result<(), ApiError>, ApiSystemError> = recovered.into();
+        //        assert_eq!(
+        //            recovered_result, Ok(Err(ApiError::ContractErr {
+        //                msg: "over ffi".to_string()
+        //            }))
+        //        );
     }
 
     fn assert_conversion(r: Result<()>) {

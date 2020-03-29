@@ -1,4 +1,4 @@
-use crate::api::ApiError;
+use crate::api::{ApiError, ApiSystemError};
 use crate::encoding::Binary;
 use crate::errors::Result;
 use crate::query::QueryRequest;
@@ -54,7 +54,10 @@ pub trait Api: Copy + Clone + Send {
 pub trait Querier {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
     // Since this is information that is returned from outside, we define it this way.
-    fn query(&self, request: QueryRequest) -> Result<Binary, ApiError>;
+    //
+    // ApiResult is a format that can capture this info in a serialized form. We parse it into
+    // a typical Result for the implementing object
+    fn query(&self, request: QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError>;
 }
 
 // put them here to avoid so many feature flags
