@@ -1,3 +1,4 @@
+use crate::HumanAddr;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -57,6 +58,27 @@ pub enum Error {
     ValidationErr {
         field: &'static str,
         msg: &'static str,
+        backtrace: snafu::Backtrace,
+    },
+}
+
+#[derive(Debug, Snafu)]
+#[snafu(visibility = "pub")]
+/// SystemError is used for errors inside the runtime.
+/// This is used on return values for Querier as a nested Result -
+/// Result<Result<T, Error>, SystemError>
+/// The first wrap (SystemError) will trigger if the contract address doesn't exist,
+/// the QueryRequest is malformated, etc. The second wrap will be an error message from
+/// the contract itself.
+pub enum SystemError {
+    #[snafu(display("Cannot parse request: {}", source))]
+    InvalidRequest {
+        source: serde_json_wasm::de::Error,
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("No such contract: {}", addr))]
+    NoSuchContract {
+        addr: HumanAddr,
         backtrace: snafu::Backtrace,
     },
 }

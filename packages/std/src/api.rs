@@ -3,7 +3,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::Error;
+use crate::errors::{Error, SystemError};
+use crate::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
@@ -122,14 +123,46 @@ impl From<Error> for ApiError {
     }
 }
 
+/// ApiSystemError is an "api friendly" version of SystemError, just as ApiError
+/// is an "api friendly" version of Error
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
+pub enum ApiSystemError {
+    InvalidRequest { source: String },
+    NoSuchContract { addr: HumanAddr },
+}
+
+impl std::error::Error for ApiSystemError {}
+
+impl std::fmt::Display for ApiSystemError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ApiSystemError::InvalidRequest { source } => {
+                write!(f, "Cannot parse request: {}", source)
+            }
+            ApiSystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
+        }
+    }
+}
+
+impl From<SystemError> for ApiSystemError {
+    fn from(value: SystemError) -> Self {
+        match value {
+            SystemError::InvalidRequest { source, .. } => ApiSystemError::InvalidRequest {
+                source: format!("{}", source),
+            },
+            SystemError::NoSuchContract { addr, .. } => ApiSystemError::NoSuchContract { addr },
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use snafu::ResultExt;
 
     use super::*;
     use crate::errors::{
-        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, NotFound, NullPointer,
-        Result, SerializeErr,
+        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, InvalidRequest,
+        NoSuchContract, NotFound, NullPointer, Result, SerializeErr,
     };
     use crate::serde::{from_slice, to_vec};
 
@@ -207,5 +240,29 @@ mod test {
     fn serialize_err_conversion() {
         let source = Err(serde_json_wasm::ser::Error::BufferFull);
         assert_conversion(source.context(SerializeErr { kind: "faker" }));
+    }
+
+    fn assert_system_conversion(r: Result<(), SystemError>) {
+        let error = r.unwrap_err();
+        let msg = format!("{}", error);
+        let converted: ApiSystemError = error.into();
+        assert_eq!(msg, format!("{}", converted));
+        let round_trip: ApiSystemError = from_slice(&to_vec(&converted).unwrap()).unwrap();
+        assert_eq!(round_trip, converted);
+    }
+
+    #[test]
+    fn invalid_request_conversion() {
+        let err = Err(serde_json_wasm::de::Error::ExpectedSomeValue).context(InvalidRequest {});
+        assert_system_conversion(err);
+    }
+
+    #[test]
+    fn no_such_contract_conversion() {
+        let err = NoSuchContract {
+            addr: HumanAddr::from("bad_address"),
+        }
+        .fail();
+        assert_system_conversion(err);
     }
 }
