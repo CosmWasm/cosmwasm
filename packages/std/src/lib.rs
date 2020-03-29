@@ -1,5 +1,6 @@
 // Exposed on all platforms
 
+mod api;
 mod encoding;
 mod errors;
 mod init_handle;
