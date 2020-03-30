@@ -34,7 +34,7 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     msg: T,
 ) -> InitResult {
     match to_vec(&msg) {
-        Err(e) => InitResult::Err(e.to_string()),
+        Err(e) => InitResult::Err(e.into()),
         Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
     }
 }
@@ -48,7 +48,7 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>
     msg: T,
 ) -> HandleResult {
     match to_vec(&msg) {
-        Err(e) => HandleResult::Err(e.to_string()),
+        Err(e) => HandleResult::Err(e.into()),
         Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),
     }
 }
@@ -61,7 +61,7 @@ pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     msg: T,
 ) -> QueryResult {
     match to_vec(&msg) {
-        Err(e) => QueryResult::Err(e.to_string()),
+        Err(e) => QueryResult::Err(e.into()),
         Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),
     }
 }

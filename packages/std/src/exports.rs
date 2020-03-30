@@ -5,7 +5,6 @@
 //!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
-use std::fmt::Display;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
@@ -138,18 +137,18 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
     Ok(release_buffer(json))
 }
 
-fn make_init_error_c_string<T: Display>(error: T) -> *mut c_void {
-    let v = to_vec(&InitResult::Err(error.to_string())).unwrap();
+fn make_init_error_c_string(error: Error) -> *mut c_void {
+    let v = to_vec(&InitResult::Err(error.into())).unwrap();
     release_buffer(v)
 }
 
-fn make_handle_error_c_string<T: Display>(error: T) -> *mut c_void {
-    let v = to_vec(&HandleResult::Err(error.to_string())).unwrap();
+fn make_handle_error_c_string(error: Error) -> *mut c_void {
+    let v = to_vec(&HandleResult::Err(error.into())).unwrap();
     release_buffer(v)
 }
 
-fn make_query_error_c_string<T: Display>(error: T) -> *mut c_void {
-    let v = to_vec(&QueryResult::Err(error.to_string())).unwrap();
+fn make_query_error_c_string(error: Error) -> *mut c_void {
+    let v = to_vec(&QueryResult::Err(error.into())).unwrap();
     release_buffer(v)
 }
 
