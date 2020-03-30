@@ -24,10 +24,57 @@ pub enum QueryRequest {
     Balance {
         address: HumanAddr,
     },
+    #[cfg(feature = "staking")]
+    Staking(StakingRequest),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct BalanceResponse {
     pub amount: Option<Vec<Coin>>,
+}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum StakingRequest {
+    Validators {},
+    // Delegations will return all delegations by the delegator,
+    // or just those to the given validator (if set)
+    Delegations {
+        delegator: HumanAddr,
+        validator: Option<HumanAddr>,
+    },
+}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+pub struct ValidatorsResponse {
+    pub validators: Option<Vec<Validator>>,
+}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Validator {
+    pub address: HumanAddr,
+    // TODO: what other info do we want to expose?
+}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// DelegationsResponse is data format returned from StakingRequest::Delegations query
+pub struct DelegationsResponse {
+    pub delegations: Option<Vec<Delegation>>,
+}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Delegation {
+    pub delegator: HumanAddr,
+    pub validator: HumanAddr,
+    pub amount: Coin,
+    pub can_redelegate: bool,
+    // TODO: do we want to expose more info?
 }

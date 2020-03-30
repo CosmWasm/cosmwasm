@@ -134,6 +134,10 @@ impl Querier for MockQuerier {
             QueryRequest::Contract { contract_addr, .. } => Err(ApiSystemError::NoSuchContract {
                 addr: contract_addr,
             }),
+            #[cfg(feature = "staking")]
+            QueryRequest::Staking(_) => Err(ApiSystemError::InvalidRequest {
+                source: "staking not yet implemented".to_string(),
+            }),
         }
     }
 }
