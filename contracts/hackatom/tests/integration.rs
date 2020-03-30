@@ -16,23 +16,22 @@
 //!          //...
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-//! 5. When matching on error codes, you can not use Error types, but rather must use strings:
-//!      match res {
-//!          Err(Error::Unauthorized{..}) => {},
+//! 5. When matching on error codes, you can not use Error types, but rather corresponding ApiError variants.
+//!    Note that you don't have backtrace field and can often skip the .. filler:
+//!      match res.unwrap_err() {
+//!          Error::Unauthorized { .. } => {}
 //!          _ => panic!("Must return unauthorized error"),
 //!      }
 //!    becomes:
-//!      match res {
-//!         ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"),
-//!         _ => panic!("Expected error"),
+//!      match res.unwrap_err() {
+//!          ApiError::Unauthorized {} => {}
+//!          _ => panic!("Must return unauthorized error"),
 //!      }
 
 use std::str::from_utf8;
 
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{
-    coin, from_slice, log, Api, CosmosMsg, HumanAddr, QueryResult, ReadonlyStorage,
-};
+use cosmwasm_std::{coin, from_slice, log, Api, ApiError, CosmosMsg, HumanAddr, ReadonlyStorage};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -89,12 +88,9 @@ fn init_and_query() {
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});
-    match qres {
-        QueryResult::Err(msg) => assert!(
-            msg.starts_with("Error parsing hackatom::contract::QueryMsg:"),
-            msg
-        ),
-        _ => panic!("Call should fail"),
+    match qres.unwrap_err() {
+        ApiError::ParseErr { .. } => {}
+        _ => panic!("Expected parse error"),
     }
 }
 
@@ -104,7 +100,10 @@ fn fails_on_bad_init() {
     let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res = init(&mut deps, env, HandleMsg::Release {});
-    assert_eq!(true, res.is_err());
+    match res.unwrap_err() {
+        ApiError::ParseErr { .. } => {}
+        _ => panic!("Expected parse error"),
+    }
 }
 
 #[test]
@@ -174,10 +173,13 @@ fn failed_handle() {
     let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
-    // beneficiary can release it
+    // beneficiary cannot release it
     let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
     let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
-    assert!(handle_res.is_err());
+    match handle_res.unwrap_err() {
+        ApiError::Unauthorized {} => {}
+        _ => panic!("Expect unauthorized error"),
+    }
 
     // state should not change
     deps.with_storage(|store| {

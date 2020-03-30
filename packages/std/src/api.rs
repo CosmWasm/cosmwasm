@@ -41,7 +41,7 @@ impl<T, U: Into<T>, E: std::error::Error, F: Into<E>> From<Result<U, F>> for Api
 ///
 /// Rather than use Display to pass Errors over API/FFI boundaries, we can use ApiError
 /// and provide much more context to the client.
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ApiError {
     Base64Err { source: String },
     ContractErr { msg: String },
@@ -119,7 +119,7 @@ impl From<Error> for ApiError {
 
 /// ApiSystemError is an "api friendly" version of SystemError, just as ApiError
 /// is an "api friendly" version of Error
-#[derive(Debug, Serialize, Deserialize, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ApiSystemError {
     InvalidRequest { source: String },
     NoSuchContract { addr: HumanAddr },

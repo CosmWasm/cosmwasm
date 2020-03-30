@@ -150,7 +150,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coin, transactional_deps, ReadonlyStorage};
+    use cosmwasm_std::{coin, transactional_deps, Error, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {
@@ -299,10 +299,13 @@ mod tests {
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        // beneficiary can release it
+        // beneficiary cannot release it
         let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
-        assert!(handle_res.is_err());
+        match handle_res.unwrap_err() {
+            Error::Unauthorized { .. } => {}
+            _ => panic!("Expect unauthorized error"),
+        }
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");

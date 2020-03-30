@@ -6,7 +6,9 @@ use serde::Serialize;
 use schemars::JsonSchema;
 
 use cosmwasm_std::testing::{mock_dependencies, MockApi, MockStorage};
-use cosmwasm_std::{to_vec, Api, Env, HandleResult, InitResult, QueryResult, Storage};
+use cosmwasm_std::{
+    to_vec, Api, ApiError, Env, HandleResponse, InitResponse, QueryResponse, Storage,
+};
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::compatability::check_wasm;
@@ -32,9 +34,9 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     env: Env,
     msg: T,
-) -> InitResult {
+) -> Result<InitResponse, ApiError> {
     match to_vec(&msg) {
-        Err(e) => InitResult::Err(e.to_string()),
+        Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
     }
 }
@@ -46,9 +48,9 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>
     instance: &mut Instance<S, A>,
     env: Env,
     msg: T,
-) -> HandleResult {
+) -> Result<HandleResponse, ApiError> {
     match to_vec(&msg) {
-        Err(e) => HandleResult::Err(e.to_string()),
+        Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),
     }
 }
@@ -59,9 +61,9 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>
 pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
     instance: &mut Instance<S, A>,
     msg: T,
-) -> QueryResult {
+) -> Result<QueryResponse, ApiError> {
     match to_vec(&msg) {
-        Err(e) => QueryResult::Err(e.to_string()),
+        Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),
     }
 }
