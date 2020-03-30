@@ -27,6 +27,37 @@ pub enum CosmosMsg {
     Opaque {
         data: Binary,
     },
+    #[cfg(feature = "staking")]
+    Staking(StakingMsg),
+}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum StakingMsg {
+    Delegate {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        amount: Coin,
+    },
+    Undelegate {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        amount: Coin,
+    },
+    Withdraw {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        // this is the "withdraw address", the one that should receive the rewards
+        // if None, then use delegator address
+        recipient: Option<HumanAddr>,
+    },
+    Redelegate {
+        // delegator is automatically set to address of the calling contract
+        src_validator: HumanAddr,
+        dst_validator: HumanAddr,
+        amount: Coin,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
