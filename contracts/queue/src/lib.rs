@@ -1,9 +1,5 @@
 pub mod contract;
 
-/** Below we expose wasm exports **/
-#[cfg(target_arch = "wasm32")]
-pub use cosmwasm_std::{allocate, deallocate};
-
 #[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::contract;
@@ -11,7 +7,7 @@ mod wasm {
     use std::ffi::c_void;
 
     #[no_mangle]
-    pub extern "C" fn init(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
+    extern "C" fn init(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
         do_init(
             &contract::init::<ExternalStorage, ExternalApi>,
             env_ptr,
@@ -20,7 +16,7 @@ mod wasm {
     }
 
     #[no_mangle]
-    pub extern "C" fn handle(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
+    extern "C" fn handle(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void {
         do_handle(
             &contract::handle::<ExternalStorage, ExternalApi>,
             env_ptr,
@@ -29,7 +25,10 @@ mod wasm {
     }
 
     #[no_mangle]
-    pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void {
+    extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void {
         do_query(&contract::query::<ExternalStorage, ExternalApi>, msg_ptr)
     }
+
+    // Other C externs like cosmwasm_vm_version_1, allocate, deallocate are available
+    // automatically because we `use cosmwasm_std`.
 }
