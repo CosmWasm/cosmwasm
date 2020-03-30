@@ -114,6 +114,12 @@ pub struct MockQuerier {
     balances: HashMap<HumanAddr, Vec<Coin>>,
 }
 
+impl MockQuerier {
+    pub fn new(balances: HashMap<HumanAddr, Vec<Coin>>) -> Self {
+        MockQuerier { balances }
+    }
+}
+
 impl Querier for MockQuerier {
     fn query(&self, request: QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
