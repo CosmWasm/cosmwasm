@@ -16,6 +16,16 @@
 //!          //...
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
+//! 5. When matching on error codes, you can not use Error types, but rather must use strings:
+//!      match res {
+//!          Err(Error::Unauthorized{..}) => {},
+//!          _ => panic!("Must return unauthorized error"),
+//!      }
+//!    becomes:
+//!      match res {
+//!         ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"),
+//!         _ => panic!("Expected error"),
+//!      }
 
 use std::str::from_utf8;
 
