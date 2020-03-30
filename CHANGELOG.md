@@ -18,6 +18,9 @@ all or a subset of the items in the db ordered ascending or descending by key.
 - Add new feature flag `iterator` to both packages to enable `range` functionality. This is used
 to allow potential porting to chains that use Merkle Tries (which don't allow iterating over
 ranges).
+- All serialized JSON types now use snake_case mappings for names. This means enum fields like
+`ChangeOwner` will map to `change_owner` in the underlying JSON, not `changeowner`. This is
+a breaking change for the clients.
 
 **cosmwasm**
 

@@ -23,7 +23,7 @@ pub struct State {
 // failure modes to help test wasmd, based on this comment
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     // Release is the only "proper" action, releasing funds in the contract
     Release {},
@@ -36,7 +36,7 @@ pub enum HandleMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     // returns a human-readable representation of the verifier
     // use to ensure query path works in integration tests

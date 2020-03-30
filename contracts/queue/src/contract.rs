@@ -16,7 +16,7 @@ pub struct Item {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     // Enqueue will add some value to the end of list
     Enqueue { value: i32 },
@@ -25,7 +25,7 @@ pub enum HandleMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     // how many items are in the queue
     Count {},

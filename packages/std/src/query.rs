@@ -6,7 +6,7 @@ use crate::encoding::Binary;
 pub type QueryResponse = Binary;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum QueryResult {
     Ok(QueryResponse),
     Err(String),

@@ -7,7 +7,7 @@ use crate::encoding::Binary;
 use crate::types::{Coin, HumanAddr};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum CosmosMsg {
     // this moves tokens in the underlying sdk
     Send {
@@ -51,7 +51,7 @@ pub struct InitResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum InitResult {
     Ok(InitResponse),
     Err(String),
@@ -83,7 +83,7 @@ pub struct HandleResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum HandleResult {
     Ok(HandleResponse),
     Err(String),
