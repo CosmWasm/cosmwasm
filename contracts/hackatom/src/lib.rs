@@ -5,9 +5,6 @@ pub mod contract;
 pub use cosmwasm_std::{allocate, deallocate};
 
 #[cfg(target_arch = "wasm32")]
-pub use wasm::{handle, init};
-
-#[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::contract;
     use cosmwasm_std::{do_handle, do_init, do_query, ExternalApi, ExternalStorage};
