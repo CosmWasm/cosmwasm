@@ -99,7 +99,10 @@ fn fails_on_bad_init() {
     let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res = init(&mut deps, env, HandleMsg::Release {});
-    assert_eq!(true, res.is_err());
+    match res.unwrap_err() {
+        ApiError::ParseErr { .. } => {}
+        _ => panic!("Expected parse error"),
+    }
 }
 
 #[test]
@@ -169,10 +172,13 @@ fn failed_handle() {
     let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
-    // beneficiary can release it
+    // beneficiary cannot release it
     let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin("1000", "earth"));
     let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
-    assert!(handle_res.is_err());
+    match handle_res.unwrap_err() {
+        ApiError::Unauthorized {} => {}
+        _ => panic!("Expect unauthorized error"),
+    }
 
     // state should not change
     deps.with_storage(|store| {
