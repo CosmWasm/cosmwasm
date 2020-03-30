@@ -1,6 +1,9 @@
 use snafu::ResultExt;
 
-use cosmwasm_std::{Api, Env, HandleResult, InitResult, QueryResult, Storage};
+use cosmwasm_std::{
+    Api, ApiError, Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResponse,
+    QueryResult, Storage,
+};
 
 use crate::errors::{Error, RuntimeErr};
 use crate::instance::{Func, Instance};
@@ -10,31 +13,31 @@ pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &Env,
     msg: &[u8],
-) -> Result<InitResult, Error> {
+) -> Result<Result<InitResponse, ApiError>, Error> {
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
     let res: InitResult = from_slice(&data)?;
-    Ok(res)
+    Ok(res.into())
 }
 
 pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &Env,
     msg: &[u8],
-) -> Result<HandleResult, Error> {
+) -> Result<Result<HandleResponse, ApiError>, Error> {
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
     let res: HandleResult = from_slice(&data)?;
-    Ok(res)
+    Ok(res.into())
 }
 
 pub fn call_query<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     msg: &[u8],
-) -> Result<QueryResult, Error> {
+) -> Result<Result<QueryResponse, ApiError>, Error> {
     let data = call_query_raw(instance, msg)?;
     let res: QueryResult = from_slice(&data)?;
-    Ok(res)
+    Ok(res.into())
 }
 
 pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
