@@ -13,14 +13,15 @@
   used. This is a breaking change in the contract-vm interface, which requires
   the same memory layout of the `Region` struct on both sides.
 - Add `remove` method to `Storage` trait.
-- (feature-flagged) Add `range` method to `ReadonlyStorage` trait. This returns an iterator that covers
-all or a subset of the items in the db ordered ascending or descending by key.
-- Add new feature flag `iterator` to both packages to enable `range` functionality. This is used
-to allow potential porting to chains that use Merkle Tries (which don't allow iterating over
-ranges).
-- All serialized JSON types now use snake_case mappings for names. This means enum fields like
-`ChangeOwner` will map to `change_owner` in the underlying JSON, not `changeowner`. This is
-a breaking change for the clients.
+- (feature-flagged) Add `range` method to `ReadonlyStorage` trait. This returns
+  an iterator that covers all or a subset of the items in the db ordered
+  ascending or descending by key.
+- Add new feature flag `iterator` to both packages to enable `range`
+  functionality. This is used to allow potential porting to chains that use
+  Merkle Tries (which don't allow iterating over ranges).
+- All serialized JSON types now use snake_case mappings for names. This means
+  enum fields like `ChangeOwner` will map to `change_owner` in the underlying
+  JSON, not `changeowner`. This is a breaking change for the clients.
 
 **cosmwasm**
 
@@ -35,21 +36,24 @@ a breaking change for the clients.
 - Rename package `cosmwasm` to `cosmwasm-std`.
 - The export `allocate` does not zero-fill the allocated memory anymore.
 - Add `remove_db` to the required imports of a contract.
-- (feature-flagged) add `scan_db` and `next_db` callbacks from wasm contract to VM.
-- `serde::{from_slice, to_vec}` return `cosmwasm_std::Result`, no more need to use
-`.context(...)` when calling these functions
+- (feature-flagged) add `scan_db` and `next_db` callbacks from wasm contract to
+  VM.
+- `serde::{from_slice, to_vec}` return `cosmwasm_std::Result`, no more need to
+  use `.context(...)` when calling these functions
 - Split `Response` into `InitResponse` and `HandleResponse`; split
   `ContractResult` into `InitResult` and `HandleResult`.
-- Create explicit `QueryResponse`, analogue to `InitResponse` and `HandleResponse`.
+- Create explicit `QueryResponse`, analogue to `InitResponse` and
+  `HandleResponse`.
 - The exports `cosmwasm_vm_version_1`, `allocate` and `deallocate` are now
   private and can only be called via the Wasm export. Make sure to `use`
   `cosmwasm_std` at least once in the contract to pull in the C exports.
-- Add new `ApiResult` and `ApiError` types to represent serializable counterparts to
-`errors::Result` and `errors::Error`. There are conversions from `Error` into
-serializable `ApiError` (dropping runtime info), and back and forth between `Result`
-and `ApiResult` (with the same serializable error types).
-- Add `Querier` trait and `QueryRequest` for future query callbacks from the contract,
-along with `SystemError` type for the runtime rejecting messages.
+- Add new `ApiResult` and `ApiError` types to represent serializable
+  counterparts to `errors::Result` and `errors::Error`. There are conversions
+  from `Error` into serializable `ApiError` (dropping runtime info), and back
+  and forth between `Result` and `ApiResult` (with the same serializable error
+  types).
+- Add `Querier` trait and `QueryRequest` for future query callbacks from the
+  contract, along with `SystemError` type for the runtime rejecting messages.
 
 **cosmwasm-vm**
 
@@ -61,9 +65,11 @@ along with `SystemError` type for the runtime rejecting messages.
   is success and values greater than 0 are reserved for future use.
 - Change the required interface version guard export from `cosmwasm_api_0_6` to
   `cosmwasm_vm_version_1`.
-- Provide implementations for `remove_db` and (feature-flagged) `scan_db` and `next_db`
-- Provide custom `serde::{from_slice, to_vec}` implementation separate from `cosmwasm_std`,
-so we can return cosmwasm-vm specific `Result` (only used internally).
+- Provide implementations for `remove_db` and (feature-flagged) `scan_db` and
+  `next_db`
+- Provide custom `serde::{from_slice, to_vec}` implementation separate from
+  `cosmwasm_std`, so we can return cosmwasm-vm specific `Result` (only used
+  internally).
 
 ## 0.7.2 (2020-03-23)
 
