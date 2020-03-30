@@ -7,7 +7,7 @@ use crate::errors::{Error, SystemError};
 use crate::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum ApiResult<T, E: std::error::Error = ApiError> {
     Ok(T),
     Err(E),
