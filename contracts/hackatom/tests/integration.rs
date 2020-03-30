@@ -31,7 +31,7 @@ use std::str::from_utf8;
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, from_slice, log, Api, CosmosMsg, HumanAddr, QueryResult, ReadonlyStorage,
+    coin, from_slice, log, Api, ApiError, CosmosMsg, HumanAddr, QueryResult, ReadonlyStorage,
 };
 use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
 
@@ -90,10 +90,10 @@ fn init_and_query() {
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});
     match qres {
-        QueryResult::Err(msg) => assert!(
-            msg.starts_with("Error parsing hackatom::contract::QueryMsg:"),
-            msg
-        ),
+        QueryResult::Err(err) => match err {
+            ApiError::ParseErr { .. } => {}
+            _ => panic!("Expected parse error"),
+        },
         _ => panic!("Call should fail"),
     }
 }
