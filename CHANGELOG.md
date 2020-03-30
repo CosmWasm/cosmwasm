@@ -44,6 +44,11 @@ a breaking change for the clients.
 - The exports `cosmwasm_vm_version_1`, `allocate` and `deallocate` are now
   private and can only be called via the Wasm export. Make sure to `use`
   `cosmwasm_std` at least once in the contract to pull in the C exports.
+- Add new `ApiResult` and `ApiError` types to represent serializable counterparts to
+`errors::Result` and `errors::Error`. This has a powerful `Into` and `From` implementations
+to transfer back and forth between `Result` and `ApiResult`.
+- Add `Querier` trait and `QueryRequest` for future query callbacks from the contract,
+along with `SystemError` type for the runtime rejecting messages.
 
 **cosmwasm-vm**
 
