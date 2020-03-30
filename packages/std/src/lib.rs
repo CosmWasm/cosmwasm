@@ -1,5 +1,6 @@
 // Exposed on all platforms
 
+mod api;
 mod encoding;
 mod errors;
 mod init_handle;
@@ -10,15 +11,16 @@ mod traits;
 mod transactions;
 mod types;
 
+pub use crate::api::{ApiError, ApiResult};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
-    contract_err, dyn_contract_err, invalid, unauthorized, ApiError, Error, NotFound, NullPointer,
-    ParseErr, Result, SerializeErr,
+    contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
+    Result, SerializeErr,
 };
 pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
-pub use crate::query::{QueryResponse, QueryResult};
+pub use crate::query::{BalanceResponse, QueryRequest, QueryResponse, QueryResult};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
@@ -48,5 +50,5 @@ pub use crate::imports::{ExternalApi, ExternalStorage};
 mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
-    pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockStorage};
+    pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
 }
