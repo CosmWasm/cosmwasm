@@ -16,10 +16,10 @@
     {
       "type": "object",
       "required": [
-        "cpuloop"
+        "cpu_loop"
       ],
       "properties": {
-        "cpuloop": {
+        "cpu_loop": {
           "type": "object"
         }
       }
@@ -27,10 +27,10 @@
     {
       "type": "object",
       "required": [
-        "storageloop"
+        "storage_loop"
       ],
       "properties": {
-        "storageloop": {
+        "storage_loop": {
           "type": "object"
         }
       }
