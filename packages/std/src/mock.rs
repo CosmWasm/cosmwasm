@@ -126,9 +126,9 @@ impl Querier for MockQuerier {
             QueryRequest::Balance { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = BalanceResponse {
-                    amount: self.balances.get(&address).map(|t| t.clone()),
+                    amount: self.balances.get(&address).cloned(),
                 };
-                let api_res = to_vec(&bank_res).map(|t| Binary(t)).map_err(|e| e.into());
+                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
             QueryRequest::Contract { contract_addr, .. } => Err(ApiSystemError::NoSuchContract {
