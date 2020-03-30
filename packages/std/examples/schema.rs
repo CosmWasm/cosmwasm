@@ -13,13 +13,12 @@ fn main() {
 
     export_schema(&schema_for!(Env), &out_dir);
     export_schema(&schema_for!(CosmosMsg), &out_dir);
-    export_schema(&schema_for!(InitResult), &out_dir);
-    export_schema(&schema_for!(HandleResult), &out_dir);
+    export_schema_with_title(&mut schema_for!(InitResult), &out_dir, "InitResult");
+    export_schema_with_title(&mut schema_for!(HandleResult), &out_dir, "HandleResult");
     export_schema_with_title(&mut schema_for!(QueryResult), &out_dir, "QueryResult");
 }
 
-/// Writes schema to file. Overwrites existing file.
-/// Panics on any error writing out the schema.
+// Exports a schema, auto-generating filename based on the metadata title of the generated schema.
 fn export_schema(schema: &RootSchema, out_dir: &PathBuf) -> () {
     let title = schema
         .schema
@@ -30,6 +29,8 @@ fn export_schema(schema: &RootSchema, out_dir: &PathBuf) -> () {
     write_schema(schema, out_dir, &title);
 }
 
+// use this if you want to override the auto-detected name of the object.
+// very useful when creating an alias for a type-alias.
 fn export_schema_with_title(schema: &mut RootSchema, out_dir: &PathBuf, title: &str) -> () {
     // set the title explicitly on the schemas metadata
     let metadata = &mut schema.schema.metadata;
@@ -39,7 +40,8 @@ fn export_schema_with_title(schema: &mut RootSchema, out_dir: &PathBuf, title: &
     write_schema(schema, out_dir, &title);
 }
 
-
+/// Writes schema to file. Overwrites existing file.
+/// Panics on any error writing out the schema.
 fn write_schema(schema: &RootSchema, out_dir: &PathBuf, title: &str) -> () {
     // first, we set the title as we wish
     let path = out_dir.join(format!("{}.json", to_snake_case(&title)));
@@ -47,8 +49,6 @@ fn write_schema(schema: &RootSchema, out_dir: &PathBuf, title: &str) -> () {
     write(&path, json + "\n").unwrap();
     println!("Created {}", path.to_str().unwrap());
 }
-
-
 
 fn to_snake_case(name: &str) -> String {
     let mut out = String::new();

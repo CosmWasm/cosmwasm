@@ -3,7 +3,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::api::ApiError;
+use crate::api::ApiResult;
 use crate::encoding::Binary;
 use crate::types::{Coin, HumanAddr};
 
@@ -51,29 +51,7 @@ pub struct InitResponse {
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum InitResult {
-    Ok(InitResponse),
-    Err(ApiError),
-}
-
-impl InitResult {
-    // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> InitResponse {
-        match self {
-            InitResult::Err(msg) => panic!("Unexpected error: {}", msg),
-            InitResult::Ok(res) => res,
-        }
-    }
-
-    pub fn is_err(&self) -> bool {
-        match self {
-            InitResult::Err(_) => true,
-            _ => false,
-        }
-    }
-}
+pub type InitResult = ApiResult<InitResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct HandleResponse {
@@ -83,33 +61,12 @@ pub struct HandleResponse {
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum HandleResult {
-    Ok(HandleResponse),
-    Err(ApiError),
-}
-
-impl HandleResult {
-    // unwrap will panic on err, or give us the real data useful for tests
-    pub fn unwrap(self) -> HandleResponse {
-        match self {
-            HandleResult::Err(msg) => panic!("Unexpected error: {}", msg),
-            HandleResult::Ok(res) => res,
-        }
-    }
-
-    pub fn is_err(&self) -> bool {
-        match self {
-            HandleResult::Err(_) => true,
-            _ => false,
-        }
-    }
-}
+pub type HandleResult = ApiResult<HandleResponse>;
 
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::api::ApiError;
     use crate::{coin, from_slice, to_vec};
 
     #[test]
