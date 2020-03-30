@@ -3,6 +3,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::api::ApiError;
 use crate::encoding::Binary;
 use crate::types::{Coin, HumanAddr};
 
@@ -54,7 +55,7 @@ pub struct InitResponse {
 #[serde(rename_all = "snake_case")]
 pub enum InitResult {
     Ok(InitResponse),
-    Err(String),
+    Err(ApiError),
 }
 
 impl InitResult {
@@ -86,7 +87,7 @@ pub struct HandleResponse {
 #[serde(rename_all = "snake_case")]
 pub enum HandleResult {
     Ok(HandleResponse),
-    Err(String),
+    Err(ApiError),
 }
 
 impl HandleResult {
@@ -113,7 +114,7 @@ mod test {
 
     #[test]
     fn can_deser_error_result() {
-        let fail = InitResult::Err("foobar".to_string());
+        let fail = InitResult::Err(ApiError::Unauthorized {});
         let bin = to_vec(&fail).expect("encode contract result");
         println!("error: {}", std::str::from_utf8(&bin).unwrap());
         let back: InitResult = from_slice(&bin).expect("decode contract result");

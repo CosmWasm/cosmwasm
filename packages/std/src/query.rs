@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::api::ApiError;
 use crate::encoding::Binary;
 use crate::types::{Coin, HumanAddr};
 
@@ -10,7 +11,7 @@ pub type QueryResponse = Binary;
 #[serde(rename_all = "snake_case")]
 pub enum QueryResult {
     Ok(QueryResponse),
-    Err(String),
+    Err(ApiError),
 }
 
 impl QueryResult {

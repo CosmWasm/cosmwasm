@@ -20,12 +20,222 @@
       ],
       "properties": {
         "err": {
-          "type": "string"
+          "$ref": "#/definitions/ApiError"
         }
       }
     }
   ],
   "definitions": {
+    "ApiError": {
+      "description": "ApiError is a \"converted\" Error that can be serialized and deserialized. It can be created via `error.into()` This will not contain all information of the original (source error and backtrace cannot be serialized), but we ensure the following: 1. An ApiError will have the same type as the original Error 2. An ApiError will have the same display as the original 3. Serializing and deserializing an ApiError will give you an identical struct\n\nRather than use Display to pass Errors over API/FFI boundaries, we can use ApiError and provide much more context to the client.",
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "Base64Err"
+          ],
+          "properties": {
+            "Base64Err": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ContractErr"
+          ],
+          "properties": {
+            "ContractErr": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "DynContractErr"
+          ],
+          "properties": {
+            "DynContractErr": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "NotFound"
+          ],
+          "properties": {
+            "NotFound": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "NullPointer"
+          ],
+          "properties": {
+            "NullPointer": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ParseErr"
+          ],
+          "properties": {
+            "ParseErr": {
+              "type": "object",
+              "required": [
+                "kind",
+                "source"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "SerializeErr"
+          ],
+          "properties": {
+            "SerializeErr": {
+              "type": "object",
+              "required": [
+                "kind",
+                "source"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "Utf8Err"
+          ],
+          "properties": {
+            "Utf8Err": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "Utf8StringErr"
+          ],
+          "properties": {
+            "Utf8StringErr": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "Unauthorized"
+          ],
+          "properties": {
+            "Unauthorized": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ValidationErr"
+          ],
+          "properties": {
+            "ValidationErr": {
+              "type": "object",
+              "required": [
+                "field",
+                "msg"
+              ],
+              "properties": {
+                "field": {
+                  "type": "string"
+                },
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
       "type": "string"
