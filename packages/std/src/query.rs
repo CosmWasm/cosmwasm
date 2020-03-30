@@ -50,5 +50,5 @@ pub enum QueryRequest {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct BalanceResponse {
-    amount: Option<Vec<Coin>>,
+    pub amount: Option<Vec<Coin>>,
 }

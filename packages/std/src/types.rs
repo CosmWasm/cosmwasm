@@ -5,7 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::encoding::Binary;
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+// Added Eq and Hash to allow this to be a key in a HashMap (MockQuerier)
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, Hash)]
 pub struct HumanAddr(pub String);
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]

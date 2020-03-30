@@ -1,9 +1,13 @@
 use snafu::ResultExt;
+use std::collections::HashMap;
 
+use crate::api::{ApiError, ApiSystemError};
 use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
+use crate::query::{BalanceResponse, QueryRequest};
+use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
-use crate::traits::{Api, Extern};
+use crate::traits::{Api, Extern, Querier};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 /// All external requirements that can be injected for unit tests
@@ -101,6 +105,30 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
                 Some(balance.to_vec())
             },
         },
+    }
+}
+
+/// MockQuerier holds an immutable table of bank balances
+/// TODO: also allow querying contracts
+pub struct MockQuerier {
+    balances: HashMap<HumanAddr, Vec<Coin>>,
+}
+
+impl Querier for MockQuerier {
+    fn query(&self, request: QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
+        match request {
+            QueryRequest::Balance { address } => {
+                // proper error on not found, serialize result on found
+                let bank_res = BalanceResponse {
+                    amount: self.balances.get(&address).map(|t| t.clone()),
+                };
+                let api_res = to_vec(&bank_res).map(|t| Binary(t)).map_err(|e| e.into());
+                Ok(api_res)
+            }
+            QueryRequest::Contract { contract_addr, .. } => Err(ApiSystemError::NoSuchContract {
+                addr: contract_addr,
+            }),
+        }
     }
 }
 
