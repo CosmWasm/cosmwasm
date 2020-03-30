@@ -13,25 +13,12 @@ pub enum ApiResult<T, E: std::error::Error = ApiError> {
     Err(E),
 }
 
-impl<T, E: std::error::Error> ApiResult<T, E> {
-    pub fn result<U: From<T>>(self) -> Result<U, E> {
+impl<T: Into<U>, U, E: std::error::Error> Into<Result<U, E>> for ApiResult<T, E> {
+    fn into(self) -> Result<U, E> {
         match self {
             ApiResult::Ok(t) => Ok(t.into()),
             ApiResult::Err(e) => Err(e),
         }
-    }
-}
-
-impl<T, E: std::error::Error, F: std::error::Error> ApiResult<ApiResult<T, F>, E> {
-    pub fn nested_result(self) -> Result<Result<T, F>, E> {
-        let step_one: Result<ApiResult<T, F>, E> = self.result();
-        step_one.map(|t| t.into())
-    }
-}
-
-impl<T, U: From<T>, E: std::error::Error> Into<Result<U, E>> for ApiResult<T, E> {
-    fn into(self) -> Result<U, E> {
-        self.result()
     }
 }
 
@@ -256,8 +243,8 @@ mod test_result {
                 msg: "over ffi".to_string()
             }))
         );
-        // custom function to handle nested mapping
-        let recovered_result = recovered.nested_result();
+        // into handles nested errors
+        let recovered_result: Result<Result<(), ApiError>, ApiSystemError> = recovered.into();
         let wrapped_err = recovered_result.unwrap().unwrap_err();
         assert_eq!(
             wrapped_err,
