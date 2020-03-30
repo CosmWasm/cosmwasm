@@ -60,6 +60,8 @@
   contract, along with `SystemError` type for the runtime rejecting messages.
 - `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult`
   type.
+- Add `staking` feature flag to expose new `StakingMsg` types under
+  `CosmosMsg` and new `StakingRequest` types under `QueryRequest`.
 
 **cosmwasm-vm**
 
