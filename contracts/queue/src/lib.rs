@@ -1,10 +1,6 @@
 pub mod contract;
 
 #[cfg(target_arch = "wasm32")]
-#[allow(unused_imports)]
-use cosmwasm_std; // Pull in cosmwasm_std's C externs (cosmwasm_vm_version_1, allocate, deallocate)
-
-#[cfg(target_arch = "wasm32")]
 mod wasm {
     use super::contract;
     use cosmwasm_std::{do_handle, do_init, do_query, ExternalApi, ExternalStorage};
@@ -32,4 +28,7 @@ mod wasm {
     extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void {
         do_query(&contract::query::<ExternalStorage, ExternalApi>, msg_ptr)
     }
+
+    // Other C externs like cosmwasm_vm_version_1, allocate, deallocate are available
+    // automatically because we `use cosmwasm_std`.
 }
