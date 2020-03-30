@@ -85,6 +85,8 @@
   allow propagation of errors.
 - Move `transactional`, `transactional_deps`, `RepLog`, `StorageTransaction`
   into crate `cosmwasm-storage`.
+- Add `staking` feature flag to expose new `StakingMsg` types under
+  `CosmosMsg` and new `StakingRequest` types under `QueryRequest`.
 
 **cosmwasm-vm**
 
