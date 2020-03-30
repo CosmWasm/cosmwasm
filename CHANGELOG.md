@@ -74,9 +74,7 @@
   `cosmwasm_std`, so we can return cosmwasm-vm specific `Result` (only used
   internally).
 - `call_{init,handle,query}` and the `cosmwasm_vm::testing` wrappers return
-  eg. `Result<HandleResponse, ApiError>` rather than
-  `ApiResult<HandleResponse, ApiError>`. This allows much closer usage to the
-  unit tests which return `Result<HandleResponse, Error>`.
+  standard `Result` types now, eg. `Result<HandleResponse, ApiError>`.
 
 ## 0.7.2 (2020-03-23)
 
