@@ -339,7 +339,7 @@ mod test {
         // Consume some gas
         let env = mock_env(&instance1.api, "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
-        call_init(&mut instance1, &env, msg).unwrap();
+        call_init(&mut instance1, &env, msg).unwrap().unwrap();
         assert!(instance1.get_gas() < original_gas);
         cache.store_instance(&id, instance1).unwrap();
 
@@ -388,6 +388,6 @@ mod test {
         // Now it works
         let env2 = mock_env(&instance2.api, "owner2", &coin("500", "earth"), &[]);
         let msg2 = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
-        call_init(&mut instance2, &env2, msg2).unwrap();
+        call_init(&mut instance2, &env2, msg2).unwrap().unwrap();
     }
 }

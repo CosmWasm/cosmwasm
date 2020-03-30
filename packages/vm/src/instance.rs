@@ -221,7 +221,7 @@ mod test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init(&mut instance, &env, msg).unwrap();
+        call_init(&mut instance, &env, msg).unwrap().unwrap();
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
@@ -236,7 +236,7 @@ mod test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init(&mut instance, &env, msg).unwrap();
+        call_init(&mut instance, &env, msg).unwrap().unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_handle = instance.get_gas();
@@ -247,7 +247,7 @@ mod test {
             &coin("1015", "earth"),
         );
         let msg = br#"{"release":{}}"#;
-        call_handle(&mut instance, &env, msg).unwrap();
+        call_handle(&mut instance, &env, msg).unwrap().unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
