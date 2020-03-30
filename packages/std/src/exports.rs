@@ -1,5 +1,8 @@
 //! exports exposes the public wasm API
-//! allocate and deallocate should be re-exported as is
+//!
+//! cosmwasm_vm_version_1, allocate and deallocate turn into Wasm exports
+//! as soon as cosmwasm_std is `use`d in the contract, even privately.
+//!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
 use std::fmt::Display;
@@ -22,20 +25,20 @@ use crate::{
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-pub extern "C" fn cosmwasm_vm_version_1() -> () {}
+extern "C" fn cosmwasm_vm_version_1() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
 /// and should be accompanied by a corresponding deallocate
 #[no_mangle]
-pub extern "C" fn allocate(size: usize) -> *mut c_void {
+extern "C" fn allocate(size: usize) -> *mut c_void {
     alloc(size)
 }
 
 /// deallocate expects a pointer to a Region created with allocate.
 /// It will free both the Region and the memory referenced by the Region.
 #[no_mangle]
-pub extern "C" fn deallocate(pointer: *mut c_void) {
+extern "C" fn deallocate(pointer: *mut c_void) {
     // auto-drop Region on function end
     let _ = unsafe { consume_region(pointer) };
 }

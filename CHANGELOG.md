@@ -41,6 +41,9 @@ a breaking change for the clients.
 - Split `Response` into `InitResponse` and `HandleResponse`; split
   `ContractResult` into `InitResult` and `HandleResult`.
 - Create explicit `QueryResponse`, analogue to `InitResponse` and `HandleResponse`.
+- The exports `cosmwasm_vm_version_1`, `allocate` and `deallocate` are now
+  private and can only be called via the Wasm export. Make sure to `use`
+  `cosmwasm_std` at least once in the contract to pull in the C exports.
 
 **cosmwasm-vm**
 
