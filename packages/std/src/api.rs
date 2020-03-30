@@ -14,16 +14,23 @@ pub enum ApiResult<T, E: std::error::Error = ApiError> {
 }
 
 impl<T, E: std::error::Error> ApiResult<T, E> {
-    pub fn result<U: From<T>, F: From<E>>(self) -> Result<U, F> {
+    pub fn result<U: From<T>>(self) -> Result<U, E> {
         match self {
             ApiResult::Ok(t) => Ok(t.into()),
-            ApiResult::Err(e) => Err(e.into()),
+            ApiResult::Err(e) => Err(e),
         }
     }
 }
 
-impl<T, U: From<T>, E: std::error::Error, F: From<E>> Into<Result<U, F>> for ApiResult<T, E> {
-    fn into(self) -> Result<U, F> {
+impl<T, E: std::error::Error, F: std::error::Error> ApiResult<ApiResult<T, F>, E> {
+    pub fn nested_result(self) -> Result<Result<T, F>, E> {
+        let step_one: Result<ApiResult<T, F>, E> = self.result();
+        step_one.map(|t| t.into())
+    }
+}
+
+impl<T, U: From<T>, E: std::error::Error> Into<Result<U, E>> for ApiResult<T, E> {
+    fn into(self) -> Result<U, E> {
         self.result()
     }
 }
@@ -156,14 +163,9 @@ impl From<SystemError> for ApiSystemError {
 }
 
 #[cfg(test)]
-mod test {
-    use snafu::ResultExt;
-
+mod test_result {
     use super::*;
-    use crate::errors::{
-        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, InvalidRequest,
-        NoSuchContract, NotFound, NullPointer, Result, SerializeErr,
-    };
+    use crate::errors::{contract_err, NoSuchContract, Result};
     use crate::serde::{from_slice, to_vec};
 
     #[test]
@@ -171,6 +173,16 @@ mod test {
         let input: Result<Vec<u8>> = Ok(b"foo".to_vec());
         let convert: ApiResult<Vec<u8>> = input.into();
         assert_eq!(convert, ApiResult::Ok(b"foo".to_vec()));
+    }
+
+    #[test]
+    fn check_ok_into_conversion() {
+        let input: Result<bool> = Ok(true);
+        let convert: ApiResult<i32> = input.into();
+        assert_eq!(convert, ApiResult::Ok(1i32));
+        let expanded: Result<i64, ApiError> = convert.into();
+        assert!(expanded.is_ok());
+        assert_eq!(expanded.unwrap(), 1i64);
     }
 
     #[test]
@@ -236,7 +248,7 @@ mod test {
     fn serialize_and_recover_nested_result() {
         let input: Result<Result<()>, SystemError> = Ok(contract_err("over ffi"));
         let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
-        let recovered: ApiResult<ApiResult<()>, ApiSystemError> =
+        let recovered: ApiResult<ApiResult<(), ApiError>, ApiSystemError> =
             from_slice(&to_vec(&convert).unwrap()).unwrap();
         assert_eq!(
             recovered,
@@ -244,14 +256,28 @@ mod test {
                 msg: "over ffi".to_string()
             }))
         );
-        // TODO
-        //        let recovered_result: Result<Result<(), ApiError>, ApiSystemError> = recovered.into();
-        //        assert_eq!(
-        //            recovered_result, Ok(Err(ApiError::ContractErr {
-        //                msg: "over ffi".to_string()
-        //            }))
-        //        );
+        // custom function to handle nested mapping
+        let recovered_result = recovered.nested_result();
+        let wrapped_err = recovered_result.unwrap().unwrap_err();
+        assert_eq!(
+            wrapped_err,
+            ApiError::ContractErr {
+                msg: "over ffi".to_string()
+            }
+        );
     }
+}
+
+#[cfg(test)]
+mod test_errors {
+    use snafu::ResultExt;
+
+    use super::*;
+    use crate::errors::{
+        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, InvalidRequest,
+        NoSuchContract, NotFound, NullPointer, Result, SerializeErr,
+    };
+    use crate::serde::{from_slice, to_vec};
 
     fn assert_conversion(r: Result<()>) {
         let error = r.unwrap_err();
