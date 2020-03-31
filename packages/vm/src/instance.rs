@@ -1,3 +1,4 @@
+use std::convert::TryFrom;
 use std::marker::PhantomData;
 
 use snafu::ResultExt;
@@ -147,17 +148,12 @@ where
         with_storage_from_context(self.wasmer_instance.context(), func)
     }
 
-    /// Copies all data described by the Region at the given pointer from Wasm to the caller.
-    pub(crate) fn memory(&self, region_ptr: u32) -> Vec<u8> {
-        read_region(self.wasmer_instance.context(), region_ptr)
-    }
-
-    /// Allocates memory in the instance and copies the given data into it.
-    /// Returns a pointer in the Wasm address space to the created Region object.
-    pub(crate) fn allocate(&mut self, data: &[u8]) -> Result<u32> {
+    /// Requests memory allocation by the instance and returns a pointer
+    /// in the Wasm address space to the created Region object.
+    pub(crate) fn allocate(&mut self, size: usize) -> Result<u32> {
+        let size = u32::try_from(size).expect("Could not convert size to u32"); // TODO: convert panic to error
         let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(data.len() as u32).context(RuntimeErr {})?;
-        write_region(self.wasmer_instance.context(), ptr, data)?;
+        let ptr = alloc.call(size).context(RuntimeErr {})?;
         Ok(ptr)
     }
 
@@ -167,6 +163,17 @@ where
     pub(crate) fn deallocate(&mut self, ptr: u32) -> Result<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
         dealloc.call(ptr).context(RuntimeErr {})?;
+        Ok(())
+    }
+
+    /// Copies all data described by the Region at the given pointer from Wasm to the caller.
+    pub(crate) fn read_memory(&self, region_ptr: u32) -> Vec<u8> {
+        read_region(self.wasmer_instance.context(), region_ptr)
+    }
+
+    /// Copies data to the memory region that was created before using allocate.
+    pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> Result<()> {
+        write_region(self.wasmer_instance.context(), region_ptr, data)?;
         Ok(())
     }
 
@@ -186,7 +193,60 @@ mod test {
     use cosmwasm_std::coin;
     use cosmwasm_std::testing::mock_env;
 
+    static KIB: usize = 1024;
+    static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    #[test]
+    fn allocate_deallocate_works() {
+        let mut instance = mock_instance(&CONTRACT);
+
+        let sizes: Vec<usize> = vec![
+            0,
+            4,
+            40,
+            400,
+            4 * KIB,
+            40 * KIB,
+            400 * KIB,
+            4 * MIB,
+            40 * MIB,
+            400 * MIB,
+        ];
+        for size in sizes.into_iter() {
+            let region_ptr = instance.allocate(size).expect("error allocating");
+            instance.deallocate(region_ptr).expect("error deallocating");
+        }
+    }
+
+    #[test]
+    fn write_and_read_memory_works() {
+        let mut instance = mock_instance(&CONTRACT);
+
+        let sizes: Vec<usize> = vec![
+            0,
+            4,
+            40,
+            400,
+            4 * KIB,
+            40 * KIB,
+            400 * KIB,
+            4 * MIB,
+            // disabled for performance reasons, but pass as well
+            // 40 * MIB,
+            // 400 * MIB,
+        ];
+        for size in sizes.into_iter() {
+            let region_ptr = instance.allocate(size).expect("error allocating");
+            let original = vec![0u8; size];
+            instance
+                .write_memory(region_ptr, &original)
+                .expect("error writing");
+            let data = instance.read_memory(region_ptr);
+            assert_eq!(data, original);
+            instance.deallocate(region_ptr).expect("error deallocating");
+        }
+    }
 
     #[test]
     #[cfg(feature = "default-cranelift")]
