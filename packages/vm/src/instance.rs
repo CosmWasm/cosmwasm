@@ -271,7 +271,7 @@ mod test {
         ];
         for size in sizes.into_iter() {
             let region_ptr = instance.allocate(size).expect("error allocating");
-            let original = vec![0u8; size];
+            let original = vec![170u8; size];
             instance
                 .write_memory(region_ptr, &original)
                 .expect("error writing");
@@ -291,7 +291,7 @@ mod test {
 
         // Allocate sets length to 0. Write some data to increase length.
         let region_ptr = instance.allocate(length).expect("error allocating");
-        let data = vec![0u8; length];
+        let data = vec![170u8; length];
         instance
             .write_memory(region_ptr, &data)
             .expect("error writing");
