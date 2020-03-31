@@ -87,11 +87,11 @@ jobs:
           keys:
             - cargocache-v2-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build all targets (including workspaces)
+          name: Build
           working_directory: ~/project/packages/vm
           command: cargo build --locked
       - run:
-          name: Run all tests (including workspaces)
+          name: Test
           working_directory: ~/project/packages/vm
           command: cargo test --locked
       - save_cache:
@@ -117,11 +117,11 @@ jobs:
           keys:
             - cargocache-v2-cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build all targets (including workspaces)
+          name: Build
           working_directory: ~/project/packages/vm
           command: cargo build --locked --no-default-features --features default-cranelift
       - run:
-          name: Run all tests (including workspaces)
+          name: Test
           working_directory: ~/project/packages/vm
           command: cargo test --locked --no-default-features --features default-cranelift
       - save_cache:
