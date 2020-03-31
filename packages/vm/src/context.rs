@@ -130,8 +130,14 @@ mod iter_support {
         end_ptr: u32,
         order: i32,
     ) -> i32 {
-        let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY);
-        let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY);
+        let start = match maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY) {
+            Ok(data) => data,
+            Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+        };
+        let end = match maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY) {
+            Ok(data) => data,
+            Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+        };
         let order: Order = match order.try_into() {
             Ok(o) => o,
             Err(_) => return ERROR_SCAN_INVALID_ORDER,
