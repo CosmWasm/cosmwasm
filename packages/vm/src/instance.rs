@@ -55,13 +55,15 @@ where
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| {
+                // Returns 0 on success. Returns negative value on error.
+                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_write::<S>(ctx, key_ptr, value_ptr)
                 }),
                 // Removes the value at the given key. Different than writing &[] as future
                 // scans will not find this key.
                 // Ownership of both key pointer is not transferred to the host.
-                "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| {
+                // Returns 0 on success. Returns negative value on error.
+                "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
                     do_remove::<S>(ctx, key_ptr)
                 }),
                 // Creates an iterator that will go from start to end

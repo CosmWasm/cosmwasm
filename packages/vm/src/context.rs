@@ -49,17 +49,26 @@ pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) {
-    // TODO: convert panics to error code
-    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY).expect("error reading key");
-    let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE).expect("error reading value");
+pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+    let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
+        Ok(data) => data,
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+    };
+    let value = match read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE) {
+        Ok(data) => data,
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+    };
     with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
+    0
 }
 
-pub fn do_remove<T: Storage>(ctx: &Ctx, key_ptr: u32) {
-    // TODO: convert panic to error code
-    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY).expect("error reading key region");
+pub fn do_remove<T: Storage>(ctx: &Ctx, key_ptr: u32) -> i32 {
+    let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
+        Ok(data) => data,
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+    };
     with_storage_from_context(ctx, |store: &mut T| store.remove(&key));
+    0
 }
 
 pub fn do_canonical_address<A: Api>(
