@@ -22,8 +22,8 @@
 - All serialized JSON types now use snake_case mappings for names. This means
   enum fields like `ChangeOwner` will map to `change_owner` in the underlying
   JSON, not `changeowner`. This is a breaking change for the clients.
-- Public interface between contract and runtime no longer uses `String` to represent
-  an error, but rather serializes `ApiError` as a rich JSON error.
+- Public interface between contract and runtime no longer uses `String` to
+  represent an error, but rather serializes `ApiError` as a rich JSON error.
 
 **cosmwasm**
 
@@ -56,7 +56,8 @@
   types).
 - Add `Querier` trait and `QueryRequest` for future query callbacks from the
   contract, along with `SystemError` type for the runtime rejecting messages.
-- `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult` type.
+- `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult`
+  type.
 
 **cosmwasm-vm**
 
