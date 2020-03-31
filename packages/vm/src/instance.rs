@@ -1,4 +1,3 @@
-use std::convert::TryFrom;
 use std::marker::PhantomData;
 
 use snafu::ResultExt;
@@ -19,6 +18,7 @@ use crate::context::{
 };
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
+use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
 use crate::memory::{read_region, write_region};
 
@@ -151,9 +151,8 @@ where
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> Result<u32> {
-        let size = u32::try_from(size).expect("Could not convert size to u32"); // TODO: convert panic to error
         let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(size).context(RuntimeErr {})?;
+        let ptr = alloc.call(to_u32(size)?).context(RuntimeErr {})?;
         Ok(ptr)
     }
 

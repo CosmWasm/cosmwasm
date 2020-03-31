@@ -13,6 +13,13 @@ pub enum Error {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input))]
+    ConversionErr {
+        from_type: &'static str,
+        to_type: &'static str,
+        input: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Compiling wasm: {}", source))]
     CompileErr {
         source: core_error::CompileError,
