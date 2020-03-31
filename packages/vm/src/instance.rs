@@ -347,7 +347,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 46470);
+        assert_eq!(init_used, 46474);
     }
 
     #[test]
