@@ -39,7 +39,7 @@ mod test {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "4294967296");
             }
-            Err(err) => panic!("unexpected error: {:}", err),
+            Err(err) => panic!("unexpected error: {:?}", err),
             Ok(_) => panic!("must not succeed"),
         };
     }
@@ -63,7 +63,7 @@ mod test {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "4294967296");
             }
-            Err(err) => panic!("unexpected error: {:}", err),
+            Err(err) => panic!("unexpected error: {:?}", err),
             Ok(_) => panic!("must not succeed"),
         };
     }
@@ -85,7 +85,7 @@ mod test {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "-1");
             }
-            Err(err) => panic!("unexpected error: {:}", err),
+            Err(err) => panic!("unexpected error: {:?}", err),
             Ok(_) => panic!("must not succeed"),
         };
     }

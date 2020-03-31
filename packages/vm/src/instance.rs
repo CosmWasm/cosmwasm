@@ -303,7 +303,7 @@ mod test {
                 assert_eq!(length, 6);
                 assert_eq!(max_length, 5);
             }
-            Err(err) => panic!("unexpected error: {:}", err),
+            Err(err) => panic!("unexpected error: {:?}", err),
             Ok(_) => panic!("must not succeed"),
         };
 
