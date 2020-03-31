@@ -76,6 +76,8 @@
   internally).
 - `call_{init,handle,query}` and the `cosmwasm_vm::testing` wrappers return
   standard `Result` types now, eg. `Result<HandleResponse, ApiError>`.
+- Add length limit when reading memory from the instance to protect against
+  malicious contracts creating overly large `Region`s.
 
 ## 0.7.2 (2020-03-23)
 
