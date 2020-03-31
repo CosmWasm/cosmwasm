@@ -9,6 +9,9 @@ use crate::errors::{Error, RuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 
+static MAX_LENGTH_INIT_HANDLE: usize = 100_000;
+static MAX_LENGTH_QUERY: usize = 100_000;
+
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &Env,
@@ -49,7 +52,7 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
     instance.write_memory(msg_region_ptr, msg)?;
     let func: Func<u32, u32> = instance.func("query")?;
     let res_region_ptr = func.call(msg_region_ptr).context(RuntimeErr {})?;
-    let data = instance.read_memory(res_region_ptr);
+    let data = instance.read_memory(res_region_ptr, MAX_LENGTH_INIT_HANDLE)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
@@ -87,7 +90,7 @@ fn call_raw<S: Storage + 'static, A: Api + 'static>(
         .call(env_region_ptr, msg_region_ptr)
         .context(RuntimeErr {})?;
 
-    let data = instance.read_memory(res_region_ptr);
+    let data = instance.read_memory(res_region_ptr, MAX_LENGTH_QUERY)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)

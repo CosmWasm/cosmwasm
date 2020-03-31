@@ -166,8 +166,8 @@ where
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
-    pub(crate) fn read_memory(&self, region_ptr: u32) -> Vec<u8> {
-        read_region(self.wasmer_instance.context(), region_ptr)
+    pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> Result<Vec<u8>> {
+        read_region(self.wasmer_instance.context(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
@@ -273,10 +273,39 @@ mod test {
             instance
                 .write_memory(region_ptr, &original)
                 .expect("error writing");
-            let data = instance.read_memory(region_ptr);
+            let data = instance
+                .read_memory(region_ptr, size)
+                .expect("error reading");
             assert_eq!(data, original);
             instance.deallocate(region_ptr).expect("error deallocating");
         }
+    }
+
+    #[test]
+    fn read_memory_errors_when_when_length_is_too_long() {
+        let length = 6;
+        let max_length = 5;
+        let mut instance = mock_instance(&CONTRACT);
+
+        // Allocate sets length to 0. Write some data to increase length.
+        let region_ptr = instance.allocate(length).expect("error allocating");
+        let data = vec![0u8; length];
+        instance
+            .write_memory(region_ptr, &data)
+            .expect("error writing");
+
+        match instance.read_memory(region_ptr, max_length) {
+            Err(Error::RegionLengthTooBigErr {
+                length, max_length, ..
+            }) => {
+                assert_eq!(length, 6);
+                assert_eq!(max_length, 5);
+            }
+            Err(err) => panic!("unexpected error: {:}", err),
+            Ok(_) => panic!("must not succeed"),
+        };
+
+        instance.deallocate(region_ptr).expect("error deallocating");
     }
 
     #[test]

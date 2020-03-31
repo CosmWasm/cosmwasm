@@ -83,7 +83,7 @@ pub fn test_io<S: Storage + 'static, A: Api + 'static>(instance: &mut Instance<S
             instance
                 .write_memory(wasm_ptr, &original)
                 .expect("Could not write data");
-            let wasm_data = instance.read_memory(wasm_ptr);
+            let wasm_data = instance.read_memory(wasm_ptr, size).expect("error reading");
             assert_eq!(
                 original, wasm_data,
                 "failed for size {}; expected: {:?}; actual: {:?}",

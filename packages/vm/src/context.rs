@@ -19,14 +19,23 @@ pub use iter_support::{
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
 
+static MAX_LENGTH_DB_KEY: usize = 100_000;
+static MAX_LENGTH_DB_VALUE: usize = 100_000;
+static MAX_LENGTH_ADDRESS: usize = 200;
+
 /// An unknown error occurred when writing to region
 static ERROR_WRITE_TO_REGION_UNKNONW: i32 = -1000001;
 /// Could not write to region because it is too small
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
+/// An unknown error occurred when reading region
+static ERROR_READ_FROM_REGION_UNKNONW: i32 = -1000101;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-    let key = read_region(ctx, key_ptr);
+    let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
+        Ok(data) => data,
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+    };
     let mut value: Option<Vec<u8>> = None;
     with_storage_from_context(ctx, |store: &mut T| value = store.get(&key));
     match value {
@@ -41,13 +50,15 @@ pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
 
 /// Writes a storage entry from Wasm memory into the VM's storage
 pub fn do_write<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) {
-    let key = read_region(ctx, key_ptr);
-    let value = read_region(ctx, value_ptr);
+    // TODO: convert panics to error code
+    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY).expect("error reading key");
+    let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE).expect("error reading value");
     with_storage_from_context(ctx, |store: &mut T| store.set(&key, &value));
 }
 
 pub fn do_remove<T: Storage>(ctx: &Ctx, key_ptr: u32) {
-    let key = read_region(ctx, key_ptr);
+    // TODO: convert panic to error code
+    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY).expect("error reading key region");
     with_storage_from_context(ctx, |store: &mut T| store.remove(&key));
 }
 
@@ -57,8 +68,11 @@ pub fn do_canonical_address<A: Api>(
     human_ptr: u32,
     canonical_ptr: u32,
 ) -> i32 {
-    let human = read_region(ctx, human_ptr);
-    let human = match String::from_utf8(human) {
+    let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_ADDRESS) {
+        Ok(data) => data,
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+    };
+    let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
         Err(_) => return -2,
     };
@@ -73,8 +87,11 @@ pub fn do_canonical_address<A: Api>(
 }
 
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
-    let canon = Binary(read_region(ctx, canonical_ptr));
-    match api.human_address(&CanonicalAddr(canon)) {
+    let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_ADDRESS) {
+        Ok(data) => Binary(data),
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNONW,
+    };
+    match api.human_address(&CanonicalAddr(canonical)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(()) => 0,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
@@ -104,8 +121,8 @@ mod iter_support {
         end_ptr: u32,
         order: i32,
     ) -> i32 {
-        let start = maybe_read_region(ctx, start_ptr);
-        let end = maybe_read_region(ctx, end_ptr);
+        let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY);
+        let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY);
         let order: Order = match order.try_into() {
             Ok(o) => o,
             Err(_) => return ERROR_SCAN_INVALID_ORDER,

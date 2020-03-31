@@ -4,7 +4,8 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use crate::errors::{Error, RegionTooSmallErr};
+use crate::conversion::to_u32;
+use crate::errors::{Error, RegionLengthTooBigErr, RegionTooSmallErr, Result};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -27,10 +28,19 @@ unsafe impl ValueType for Region {}
 
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
-pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
+/// Errors if the length of the region exceeds `max_length`.
+pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Vec<u8>> {
     let region = get_region(ctx, ptr);
-    let memory = ctx.memory(0);
 
+    if region.length > to_u32(max_length)? {
+        return RegionLengthTooBigErr {
+            length: region.length as usize,
+            max_length: max_length,
+        }
+        .fail();
+    }
+
+    let memory = ctx.memory(0);
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
@@ -40,7 +50,7 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
             for i in 0..len {
                 result[i] = cells[i].get();
             }
-            result
+            Ok(result)
         }
         None => panic!(
             "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
@@ -53,11 +63,11 @@ pub fn read_region(ctx: &Ctx, ptr: u32) -> Vec<u8> {
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]
-pub fn maybe_read_region(ctx: &Ctx, ptr: u32) -> Option<Vec<u8>> {
+pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Option<Vec<u8>>> {
     if ptr == 0 {
-        None
+        Ok(None)
     } else {
-        Some(read_region(ctx, ptr))
+        read_region(ctx, ptr, max_length).map(|data| Some(data))
     }
 }
 

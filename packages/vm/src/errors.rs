@@ -54,6 +54,13 @@ pub enum Error {
         source: core_error::RuntimeError,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
+    // Note: this only checks length, not capacity
+    RegionLengthTooBigErr {
+        length: usize,
+        max_length: usize,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Region too small. Got {}, required {}", size, required))]
     RegionTooSmallErr {
         size: usize,
