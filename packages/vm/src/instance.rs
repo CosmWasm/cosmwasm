@@ -188,14 +188,46 @@ where
 
 #[cfg(test)]
 mod test {
-    use crate::calls::{call_handle, call_init, call_query};
-    use crate::testing::{mock_instance, mock_instance_with_gas_limit};
+    use super::*;
+
     use cosmwasm_std::coin;
     use cosmwasm_std::testing::mock_env;
+    use wasmer_runtime_core::error::ResolveError;
+
+    use crate::calls::{call_handle, call_init, call_query};
+    use crate::errors::Error;
+    use crate::testing::{mock_instance, mock_instance_with_gas_limit};
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    #[test]
+    fn func_works() {
+        let instance = mock_instance(&CONTRACT);
+
+        // can get func
+        let allocate: Func<u32, u32> = instance.func("allocate").expect("error getting func");
+
+        // can call a few times
+        let _ptr1 = allocate.call(0).expect("error calling allocate func");
+        let _ptr2 = allocate.call(1).expect("error calling allocate func");
+        let _ptr3 = allocate.call(33).expect("error calling allocate func");
+    }
+
+    #[test]
+    fn func_errors_for_non_existent_function() {
+        let instance = mock_instance(&CONTRACT);
+        let missing_function = "bar_foo345";
+        match instance.func::<(), ()>(missing_function) {
+            Err(Error::ResolveErr { source, .. }) => match source {
+                ResolveError::ExportNotFound { name } => assert_eq!(name, missing_function),
+                _ => panic!("found unexpected source error"),
+            },
+            Err(e) => panic!("unexpected error: {:?}", e),
+            Ok(_) => panic!("must not succeed"),
+        }
+    }
 
     #[test]
     fn allocate_deallocate_works() {
