@@ -50,5 +50,8 @@ pub use crate::imports::{ExternalApi, ExternalStorage};
 mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
-    pub use crate::mock::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    pub use crate::mock::{
+        mock_dependencies, mock_dependencies_with_balances, mock_env, MockApi, MockQuerier,
+        MockStorage,
+    };
 }

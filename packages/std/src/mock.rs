@@ -11,10 +11,23 @@ use crate::traits::{Api, Extern, Querier};
 use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 /// All external requirements that can be injected for unit tests
-pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi> {
+pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi, MockQuerier> {
     Extern {
         storage: MockStorage::new(),
         api: MockApi::new(canonical_length),
+        querier: MockQuerier::new(vec![]),
+    }
+}
+
+// This initializes the querier along with the mock_dependencies
+pub fn mock_dependencies_with_balances(
+    canonical_length: usize,
+    balances: Vec<(HumanAddr, Vec<Coin>)>,
+) -> Extern<MockStorage, MockApi, MockQuerier> {
+    Extern {
+        storage: MockStorage::new(),
+        api: MockApi::new(canonical_length),
+        querier: MockQuerier::new(balances),
     }
 }
 
@@ -110,13 +123,18 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
+#[derive(Clone)]
 pub struct MockQuerier {
     balances: HashMap<HumanAddr, Vec<Coin>>,
 }
 
 impl MockQuerier {
-    pub fn new(balances: HashMap<HumanAddr, Vec<Coin>>) -> Self {
-        MockQuerier { balances }
+    pub fn new(balances: Vec<(HumanAddr, Vec<Coin>)>) -> Self {
+        let mut map = HashMap::new();
+        for (addr, coins) in balances.into_iter() {
+            map.insert(addr, coins);
+        }
+        MockQuerier { balances: map }
     }
 }
 

@@ -11,9 +11,10 @@ pub use iter_support::{KVRef, Order, KV};
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Extern<S: Storage, A: Api> {
+pub struct Extern<S: Storage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
+    pub querier: Q,
 }
 
 /// ReadonlyStorage is access to the contracts persistent data store
@@ -51,7 +52,7 @@ pub trait Api: Copy + Clone + Send {
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
 }
 
-pub trait Querier {
+pub trait Querier: Clone + Send {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
     // Since this is information that is returned from outside, we define it this way.
     //
