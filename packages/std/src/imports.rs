@@ -1,10 +1,14 @@
+use snafu::ResultExt;
 use std::ffi::c_void;
 use std::vec::Vec;
 
+use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::{ContractErr, Result};
+use crate::errors::{ContractErr, InvalidRequest, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
-use crate::traits::{Api, ReadonlyStorage, Storage};
+use crate::query::QueryRequest;
+use crate::serde::{from_slice, to_vec};
+use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use crate::traits::{Order, KV};
 use crate::types::{CanonicalAddr, HumanAddr};
@@ -13,7 +17,10 @@ use crate::types::{CanonicalAddr, HumanAddr};
 static MAX_READ: usize = 2000;
 
 // this should be plenty for any address representation
-static ADDR_BUFFER: usize = 72;
+static ADDR_BUFFER: usize = 100;
+
+// this is the space we allocate for query responses
+static QUERY_BUFFER: usize = 4000;
 
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
@@ -31,6 +38,8 @@ extern "C" {
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+
+    fn query(request: *const c_void, response: *mut c_void) -> i32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -199,5 +208,40 @@ impl Api for ExternalApi {
         // we know input was correct when created, so let's save some bytes
         let result = unsafe { String::from_utf8_unchecked(out) };
         Ok(HumanAddr(result))
+    }
+}
+
+/// A stateless convenience wrapper around imports provided by the VM
+#[derive(Copy, Clone)]
+pub struct ExternalQuerier {}
+
+impl ExternalQuerier {
+    pub fn new() -> ExternalQuerier {
+        ExternalQuerier {}
+    }
+}
+
+impl Querier for ExternalQuerier {
+    fn query(&self, request: &QueryRequest) -> QuerierResponse {
+        let bin_request = to_vec(request).context(InvalidRequest {})?;
+        let req = build_region(&bin_request);
+        let req_ptr = &*req as *const Region as *const c_void;
+        let resp = alloc(QUERY_BUFFER);
+
+        let ret = unsafe { query(req_ptr, resp) };
+        if ret < 0 {
+            return Err(ApiSystemError::UnknownError {});
+        }
+
+        let parse = |r| -> Result<QuerierResponse> {
+            let out = unsafe { consume_region(resp)? };
+            let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> = from_slice(&out)?;
+            Ok(parsed.into())
+        };
+
+        match parse(resp) {
+            Ok(api_response) => api_response,
+            Err(err) => Ok(err.into()),
+        }
     }
 }

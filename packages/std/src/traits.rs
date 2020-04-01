@@ -52,13 +52,16 @@ pub trait Api: Copy + Clone + Send {
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
 }
 
+// QuerierResponse is a short-hand alias as this type is long to write
+pub type QuerierResponse = Result<Result<Binary, ApiError>, ApiSystemError>;
+
 pub trait Querier: Clone + Send {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
     // Since this is information that is returned from outside, we define it this way.
     //
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
-    fn query(&self, request: QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError>;
+    fn query(&self, request: QueryRequest) -> QuerierResponse;
 }
 
 // put them here to avoid so many feature flags
