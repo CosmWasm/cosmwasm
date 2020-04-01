@@ -28,8 +28,6 @@
 //!          _ => panic!("Must return unauthorized error"),
 //!      }
 
-use std::str::from_utf8;
-
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{coin, from_slice, log, Api, ApiError, CosmosMsg, HumanAddr, ReadonlyStorage};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
@@ -82,9 +80,8 @@ fn init_and_query() {
     assert_eq!(0, res.messages.len());
 
     // now let's query
-    let qres = query(&mut deps, QueryMsg::Verifier {}).unwrap();
-    let returned = from_utf8(qres.as_slice()).unwrap();
-    assert_eq!(verifier.as_str(), returned);
+    let query_response = query(&mut deps, QueryMsg::Verifier {}).unwrap();
+    assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});

@@ -62,6 +62,11 @@ pub enum Error {
         required: usize,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Runtime error: {}", msg))]
+    RuntimeErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
         msg: String,

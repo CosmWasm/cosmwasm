@@ -5,7 +5,7 @@ use cosmwasm_std::{
     QueryResult, Storage,
 };
 
-use crate::errors::{Error, WasmerRuntimeErr};
+use crate::errors::{Error, RuntimeErr, WasmerRuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 
@@ -40,8 +40,18 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static>(
     msg: &[u8],
 ) -> Result<Result<QueryResponse, ApiError>, Error> {
     let data = call_query_raw(instance, msg)?;
-    let res: QueryResult = from_slice(&data)?;
-    Ok(res.into())
+    let api_result: QueryResult = from_slice(&data)?;
+    let result: Result<QueryResponse, ApiError> = api_result.into();
+
+    // Ensure query response is valid JSON
+    if let Ok(binary_response) = &result {
+        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).or(RuntimeErr {
+            msg: "Query response must be valid JSON",
+        }
+        .fail())?;
+    }
+
+    Ok(result)
 }
 
 /// Calls Wasm export "init" and returns raw data from the contract.
