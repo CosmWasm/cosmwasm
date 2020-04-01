@@ -141,7 +141,7 @@ mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use cosmwasm_std::coin;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use tempfile::TempDir;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;
@@ -150,7 +150,7 @@ mod test {
     #[test]
     fn save_wasm_works() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi> =
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
     }
@@ -159,7 +159,7 @@ mod test {
     // This property is required when the same bytecode is uploaded multiple times
     fn save_wasm_allows_saving_multiple_times() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi> =
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
         cache.save_wasm(CONTRACT).unwrap();
@@ -182,7 +182,7 @@ mod test {
         let wasm = wat2wasm(WAT).unwrap();
 
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi> =
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result {
