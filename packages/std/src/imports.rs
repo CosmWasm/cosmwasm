@@ -1,10 +1,9 @@
-use snafu::ResultExt;
 use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::{ContractErr, InvalidRequest, Result};
+use crate::errors::{ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
@@ -223,7 +222,7 @@ impl ExternalQuerier {
 
 impl Querier for ExternalQuerier {
     fn query(&self, request: &QueryRequest) -> QuerierResponse {
-        let bin_request = to_vec(request).context(InvalidRequest {})?;
+        let bin_request = to_vec(request).or(Err(ApiSystemError::UnknownError {}))?;
         let req = build_region(&bin_request);
         let req_ptr = &*req as *const Region as *const c_void;
         let resp = alloc(QUERY_BUFFER);
@@ -234,14 +233,14 @@ impl Querier for ExternalQuerier {
         }
 
         let parse = |r| -> Result<QuerierResponse> {
-            let out = unsafe { consume_region(resp)? };
+            let out = unsafe { consume_region(r)? };
             let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> = from_slice(&out)?;
             Ok(parsed.into())
         };
 
         match parse(resp) {
             Ok(api_response) => api_response,
-            Err(err) => Ok(err.into()),
+            Err(err) => Ok(Err(err.into())),
         }
     }
 }

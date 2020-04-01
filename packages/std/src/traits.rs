@@ -61,7 +61,7 @@ pub trait Querier: Clone + Send {
     //
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
-    fn query(&self, request: QueryRequest) -> QuerierResponse;
+    fn query(&self, request: &QueryRequest) -> QuerierResponse;
 }
 
 // put them here to avoid so many feature flags

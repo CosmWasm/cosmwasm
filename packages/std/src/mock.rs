@@ -139,18 +139,18 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query(&self, request: QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
+    fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
             QueryRequest::Balance { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = BalanceResponse {
-                    amount: self.balances.get(&address).cloned(),
+                    amount: self.balances.get(address).cloned(),
                 };
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
             QueryRequest::Contract { contract_addr, .. } => Err(ApiSystemError::NoSuchContract {
-                addr: contract_addr,
+                addr: contract_addr.clone(),
             }),
         }
     }
