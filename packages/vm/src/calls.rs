@@ -44,13 +44,6 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static>(
     Ok(res.into())
 }
 
-pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
-    msg: &[u8],
-) -> Result<Vec<u8>, Error> {
-    call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
-}
-
 pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &[u8],
@@ -65,6 +58,13 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
     call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
+}
+
+pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
+    instance: &mut Instance<S, A>,
+    msg: &[u8],
+) -> Result<Vec<u8>, Error> {
+    call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
 }
 
 fn call_raw<S: Storage + 'static, A: Api + 'static>(
