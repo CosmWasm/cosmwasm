@@ -38,7 +38,9 @@ extern "C" {
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 
-    fn query(request: *const c_void, response: *mut c_void) -> i32;
+    // query_chain will launch a query on the chain (import)
+    // different than query which will query the state of the contract (export)
+    fn query_chain(request: *const c_void, response: *mut c_void) -> i32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -227,7 +229,7 @@ impl Querier for ExternalQuerier {
         let req_ptr = &*req as *const Region as *const c_void;
         let resp = alloc(QUERY_BUFFER);
 
-        let ret = unsafe { query(req_ptr, resp) };
+        let ret = unsafe { query_chain(req_ptr, resp) };
         if ret < 0 {
             return Err(ApiSystemError::UnknownError {});
         }

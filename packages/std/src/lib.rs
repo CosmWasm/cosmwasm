@@ -41,7 +41,7 @@ mod memory; // Used by exports and imports only. This assumes pointers are 32 bi
 #[cfg(target_arch = "wasm32")]
 pub use crate::exports::{do_handle, do_init, do_query};
 #[cfg(target_arch = "wasm32")]
-pub use crate::imports::{ExternalApi, ExternalStorage};
+pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.

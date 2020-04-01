@@ -4,7 +4,7 @@ use snafu::OptionExt;
 
 use cosmwasm_std::{
     from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, NotFound, QueryResponse, Result, Storage,
+    HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -50,8 +50,8 @@ pub struct VerifierResponse {
 
 pub static CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn init<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: InitMsg,
 ) -> Result<InitResponse> {
@@ -66,8 +66,8 @@ pub fn init<S: Storage, A: Api>(
     Ok(InitResponse::default())
 }
 
-pub fn handle<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn handle<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
 ) -> Result<HandleResponse> {
@@ -79,7 +79,10 @@ pub fn handle<S: Storage, A: Api>(
     }
 }
 
-fn do_release<S: Storage, A: Api>(deps: &mut Extern<S, A>, env: Env) -> Result<HandleResponse> {
+fn do_release<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> Result<HandleResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -117,7 +120,9 @@ fn do_cpu_loop() -> Result<HandleResponse> {
     }
 }
 
-fn do_storage_loop<S: Storage, A: Api>(deps: &mut Extern<S, A>) -> Result<HandleResponse> {
+fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+) -> Result<HandleResponse> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -130,13 +135,16 @@ fn do_panic() -> Result<HandleResponse> {
     panic!("This page intentionally faulted");
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<QueryResponse> {
+pub fn query<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    msg: QueryMsg,
+) -> Result<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => query_verifier(deps),
     }
 }
 
-fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
+fn query_verifier<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
