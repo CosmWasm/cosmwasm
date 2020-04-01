@@ -3,6 +3,7 @@ mod cache;
 mod calls;
 mod compatability;
 mod context;
+mod conversion;
 pub mod errors;
 mod instance;
 mod memory;

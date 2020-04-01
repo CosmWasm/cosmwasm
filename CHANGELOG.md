@@ -22,8 +22,9 @@
 - All serialized JSON types now use snake_case mappings for names. This means
   enum fields like `ChangeOwner` will map to `change_owner` in the underlying
   JSON, not `changeowner`. This is a breaking change for the clients.
-- Public interface between contract and runtime no longer uses `String` to represent
-  an error, but rather serializes `ApiError` as a rich JSON error.
+- Public interface between contract and runtime no longer uses `String` to
+  represent an error, but rather serializes `ApiError` as a rich JSON error.
+- Return value from `env.write_db` and `env.remove_db` to allow error reporting.
 
 **cosmwasm**
 
@@ -56,7 +57,8 @@
   types).
 - Add `Querier` trait and `QueryRequest` for future query callbacks from the
   contract, along with `SystemError` type for the runtime rejecting messages.
-- `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult` type.
+- `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult`
+  type.
 
 **cosmwasm-vm**
 
@@ -75,6 +77,8 @@
   internally).
 - `call_{init,handle,query}` and the `cosmwasm_vm::testing` wrappers return
   standard `Result` types now, eg. `Result<HandleResponse, ApiError>`.
+- Add length limit when reading memory from the instance to protect against
+  malicious contracts creating overly large `Region`s.
 
 ## 0.7.2 (2020-03-23)
 

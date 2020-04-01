@@ -18,7 +18,7 @@ To rebuild the test contract, go to the repo root and do
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source=$(basename "$(pwd)")_cache,target=/code/target \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   confio/cosmwasm-opt:0.7.3 ./contracts/hackatom
 cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.8.wasm

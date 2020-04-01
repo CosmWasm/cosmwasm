@@ -13,6 +13,13 @@ pub enum Error {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input))]
+    ConversionErr {
+        from_type: &'static str,
+        to_type: &'static str,
+        input: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Compiling wasm: {}", source))]
     CompileErr {
         source: core_error::CompileError,
@@ -45,6 +52,13 @@ pub enum Error {
     #[snafu(display("Calling wasm function: {}", source))]
     RuntimeErr {
         source: core_error::RuntimeError,
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
+    // Note: this only checks length, not capacity
+    RegionLengthTooBigErr {
+        length: usize,
+        max_length: usize,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Region too small. Got {}, required {}", size, required))]

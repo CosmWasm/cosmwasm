@@ -9,6 +9,9 @@ use crate::errors::{Error, RuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 
+static MAX_LENGTH_INIT_HANDLE: usize = 100_000;
+static MAX_LENGTH_QUERY: usize = 100_000;
+
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &Env,
@@ -45,10 +48,11 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
     // we cannot resuse the call_raw functionality as it assumes a param variable... just do it inline
-    let msg_region_ptr = instance.allocate(msg)?;
+    let msg_region_ptr = instance.allocate(msg.len())?;
+    instance.write_memory(msg_region_ptr, msg)?;
     let func: Func<u32, u32> = instance.func("query")?;
     let res_region_ptr = func.call(msg_region_ptr).context(RuntimeErr {})?;
-    let data = instance.memory(res_region_ptr);
+    let data = instance.read_memory(res_region_ptr, MAX_LENGTH_INIT_HANDLE)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
@@ -76,13 +80,17 @@ fn call_raw<S: Storage + 'static, A: Api + 'static>(
     env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    let param_offset = instance.allocate(env)?;
-    let msg_offset = instance.allocate(msg)?;
+    let env_region_ptr = instance.allocate(env.len())?;
+    instance.write_memory(env_region_ptr, env)?;
+    let msg_region_ptr = instance.allocate(msg.len())?;
+    instance.write_memory(msg_region_ptr, msg)?;
 
     let func: Func<(u32, u32), u32> = instance.func(name)?;
-    let res_region_ptr = func.call(param_offset, msg_offset).context(RuntimeErr {})?;
+    let res_region_ptr = func
+        .call(env_region_ptr, msg_region_ptr)
+        .context(RuntimeErr {})?;
 
-    let data = instance.memory(res_region_ptr);
+    let data = instance.read_memory(res_region_ptr, MAX_LENGTH_QUERY)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
