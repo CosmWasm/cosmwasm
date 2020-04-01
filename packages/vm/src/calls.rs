@@ -44,6 +44,8 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static>(
     Ok(res.into())
 }
 
+/// Calls Wasm export "init" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &[u8],
@@ -52,6 +54,8 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
     call_raw(instance, "init", &[env, msg], MAX_LENGTH_INIT)
 }
 
+/// Calls Wasm export "handle" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     env: &[u8],
@@ -60,6 +64,8 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
     call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
 }
 
+/// Calls Wasm export "query" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
 pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     msg: &[u8],
