@@ -9,7 +9,8 @@ use crate::errors::{Error, RuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 
-static MAX_LENGTH_INIT_HANDLE: usize = 100_000;
+static MAX_LENGTH_INIT: usize = 100_000;
+static MAX_LENGTH_HANDLE: usize = 100_000;
 static MAX_LENGTH_QUERY: usize = 100_000;
 
 pub fn call_init<S: Storage + 'static, A: Api + 'static>(
@@ -47,15 +48,7 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    // we cannot resuse the call_raw functionality as it assumes a param variable... just do it inline
-    let msg_region_ptr = instance.allocate(msg.len())?;
-    instance.write_memory(msg_region_ptr, msg)?;
-    let func: Func<u32, u32> = instance.func("query")?;
-    let res_region_ptr = func.call(msg_region_ptr).context(RuntimeErr {})?;
-    let data = instance.read_memory(res_region_ptr, MAX_LENGTH_INIT_HANDLE)?;
-    // free return value in wasm (arguments were freed in wasm code)
-    instance.deallocate(res_region_ptr)?;
-    Ok(data)
+    call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
 }
 
 pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
@@ -63,7 +56,7 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
     env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    call_raw(instance, "init", env, msg)
+    call_raw(instance, "init", &[env, msg], MAX_LENGTH_INIT)
 }
 
 pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
@@ -71,26 +64,36 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
     env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
-    call_raw(instance, "handle", env, msg)
+    call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
 }
 
 fn call_raw<S: Storage + 'static, A: Api + 'static>(
     instance: &mut Instance<S, A>,
     name: &str,
-    env: &[u8],
-    msg: &[u8],
+    args: &[&[u8]],
+    result_max_length: usize,
 ) -> Result<Vec<u8>, Error> {
-    let env_region_ptr = instance.allocate(env.len())?;
-    instance.write_memory(env_region_ptr, env)?;
-    let msg_region_ptr = instance.allocate(msg.len())?;
-    instance.write_memory(msg_region_ptr, msg)?;
+    let mut arg_region_ptrs = Vec::<u32>::with_capacity(args.len());
+    for arg in args {
+        let region_ptr = instance.allocate(arg.len())?;
+        instance.write_memory(region_ptr, arg)?;
+        arg_region_ptrs.push(region_ptr);
+    }
 
-    let func: Func<(u32, u32), u32> = instance.func(name)?;
-    let res_region_ptr = func
-        .call(env_region_ptr, msg_region_ptr)
-        .context(RuntimeErr {})?;
+    let res_region_ptr = match args.len() {
+        1 => {
+            let func: Func<u32, u32> = instance.func(name)?;
+            func.call(arg_region_ptrs[0]).context(RuntimeErr {})?
+        }
+        2 => {
+            let func: Func<(u32, u32), u32> = instance.func(name)?;
+            func.call(arg_region_ptrs[0], arg_region_ptrs[1])
+                .context(RuntimeErr {})?
+        }
+        _ => panic!("call_raw called with unsupported number of arguments"),
+    };
 
-    let data = instance.read_memory(res_region_ptr, MAX_LENGTH_QUERY)?;
+    let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
