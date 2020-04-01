@@ -49,11 +49,6 @@ pub enum Error {
         source: core_error::ResolveError,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Calling wasm function: {}", source))]
-    RuntimeErr {
-        source: core_error::RuntimeError,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
     // Note: this only checks length, not capacity
     RegionLengthTooBigErr {
@@ -67,6 +62,11 @@ pub enum Error {
         required: usize,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Runtime error: {}", msg))]
+    RuntimeErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
         msg: String,
@@ -75,6 +75,11 @@ pub enum Error {
     #[snafu(display("Wasmer error: {}", source))]
     WasmerErr {
         source: core_error::Error,
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("Calling wasm function: {}", source))]
+    WasmerRuntimeErr {
+        source: core_error::RuntimeError,
         backtrace: snafu::Backtrace,
     },
 }

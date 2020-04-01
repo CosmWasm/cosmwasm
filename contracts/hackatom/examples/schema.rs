@@ -4,7 +4,7 @@ use std::path::PathBuf;
 
 use schemars::{schema::RootSchema, schema_for};
 
-use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State};
+use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, VerifierResponse};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -15,6 +15,7 @@ fn main() {
     export_schema(&schema_for!(HandleMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
+    export_schema(&schema_for!(VerifierResponse), &out_dir);
 }
 
 /// Writes schema to file. Overwrites existing file.

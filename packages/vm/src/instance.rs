@@ -19,7 +19,7 @@ use crate::context::{
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
 use crate::conversion::to_u32;
-use crate::errors::{ResolveErr, Result, RuntimeErr, WasmerErr};
+use crate::errors::{ResolveErr, Result, WasmerErr, WasmerRuntimeErr};
 use crate::memory::{read_region, write_region};
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static> {
@@ -154,7 +154,7 @@ where
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> Result<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(to_u32(size)?).context(RuntimeErr {})?;
+        let ptr = alloc.call(to_u32(size)?).context(WasmerRuntimeErr {})?;
         Ok(ptr)
     }
 
@@ -163,7 +163,7 @@ where
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> Result<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
-        dealloc.call(ptr).context(RuntimeErr {})?;
+        dealloc.call(ptr).context(WasmerRuntimeErr {})?;
         Ok(())
     }
 
@@ -373,7 +373,7 @@ mod test {
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 59376);
+        assert_eq!(handle_used, 59373);
     }
 
     #[test]
@@ -404,10 +404,10 @@ mod test {
         let msg = r#"{"verifier":{}}"#.as_bytes();
         let res = call_query(&mut instance, msg).unwrap();
         let answer = res.unwrap();
-        assert_eq!(answer.as_slice(), "verifies".as_bytes());
+        assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 19819);
+        assert_eq!(query_used, 22584);
     }
 }

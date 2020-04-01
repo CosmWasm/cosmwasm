@@ -25,6 +25,7 @@
 - Public interface between contract and runtime no longer uses `String` to
   represent an error, but rather serializes `ApiError` as a rich JSON error.
 - Return value from `env.write_db` and `env.remove_db` to allow error reporting.
+- Query responses are now required to contain valid JSON.
 
 **cosmwasm**
 

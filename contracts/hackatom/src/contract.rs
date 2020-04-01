@@ -43,6 +43,11 @@ pub enum QueryMsg {
     Verifier {},
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct VerifierResponse {
+    pub verifier: HumanAddr,
+}
+
 pub static CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<S: Storage, A: Api>(
@@ -138,11 +143,7 @@ fn query_verifier<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryRespon
         .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
-    // we just pass the address as raw bytes
-    // these will be base64 encoded into the json we return, and parsed on the way out.
-    // maybe we should wrap this in a struct then json encode it into a vec?
-    // other ideas?
-    Ok(Binary(addr.as_str().as_bytes().to_vec()))
+    Ok(Binary(to_vec(&VerifierResponse { verifier: addr })?))
 }
 
 #[cfg(test)]
@@ -195,9 +196,8 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // now let's query
-        let qres = query(&deps, QueryMsg::Verifier {}).unwrap();
-        let returned = std::str::from_utf8(qres.as_slice()).unwrap();
-        assert_eq!(verifier, HumanAddr::from(returned));
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
     }
 
     #[test]
