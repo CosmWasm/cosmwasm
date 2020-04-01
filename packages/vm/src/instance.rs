@@ -373,7 +373,7 @@ mod test {
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 59376);
+        assert_eq!(handle_used, 59373);
     }
 
     #[test]
@@ -404,10 +404,10 @@ mod test {
         let msg = r#"{"verifier":{}}"#.as_bytes();
         let res = call_query(&mut instance, msg).unwrap();
         let answer = res.unwrap();
-        assert_eq!(answer.as_slice(), "verifies".as_bytes());
+        assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 19819);
+        assert_eq!(query_used, 22584);
     }
 }
