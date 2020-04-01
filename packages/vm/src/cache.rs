@@ -371,7 +371,7 @@ mod test {
         let env1 = mock_env(&instance1.api, "owner1", &coin("1000", "earth"), &[]);
         let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         match call_init(&mut instance1, &env1, msg1) {
-            Err(Error::RuntimeErr { .. }) => (), // all good, continue
+            Err(Error::WasmerRuntimeErr { .. }) => (), // all good, continue
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("call_init must run out of gas"),
         }

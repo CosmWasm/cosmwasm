@@ -5,7 +5,7 @@ use cosmwasm_std::{
     QueryResult, Storage,
 };
 
-use crate::errors::{Error, RuntimeErr};
+use crate::errors::{Error, WasmerRuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 
@@ -89,12 +89,12 @@ fn call_raw<S: Storage + 'static, A: Api + 'static>(
     let res_region_ptr = match args.len() {
         1 => {
             let func: Func<u32, u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0]).context(RuntimeErr {})?
+            func.call(arg_region_ptrs[0]).context(WasmerRuntimeErr {})?
         }
         2 => {
             let func: Func<(u32, u32), u32> = instance.func(name)?;
             func.call(arg_region_ptrs[0], arg_region_ptrs[1])
-                .context(RuntimeErr {})?
+                .context(WasmerRuntimeErr {})?
         }
         _ => panic!("call_raw called with unsupported number of arguments"),
     };
