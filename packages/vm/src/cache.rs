@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm_std::{Api, Extern, Storage};
+use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
@@ -24,7 +24,7 @@ struct Stats {
     misses: u32,
 }
 
-pub struct CosmCache<S: Storage + 'static, A: Api + 'static> {
+pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
     instances: Option<LruCache<WasmHash, wasmer_runtime_core::Instance>>,
@@ -32,12 +32,14 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static> {
     // Those two don't store data but only fix type information
     type_storage: PhantomData<S>,
     type_api: PhantomData<A>,
+    type_querier: PhantomData<Q>,
 }
 
-impl<S, A> CosmCache<S, A>
+impl<S, A, Q> CosmCache<S, A, Q>
 where
     S: Storage + 'static,
     A: Api + 'static,
+    Q: Querier + 'static,
 {
     /// new stores the data for cache under base_dir
     ///
@@ -61,8 +63,9 @@ where
             wasm_path,
             instances,
             stats: Stats::default(),
-            type_storage: PhantomData::<S> {},
-            type_api: PhantomData::<A> {},
+            type_storage: PhantomData::<S>,
+            type_api: PhantomData::<A>,
+            type_querier: PhantomData::<Q>,
         })
     }
 
@@ -91,9 +94,9 @@ where
     pub fn get_instance(
         &mut self,
         id: &[u8],
-        deps: Extern<S, A>,
+        deps: Extern<S, A, Q>,
         gas_limit: u64,
-    ) -> Result<Instance<S, A>, Error> {
+    ) -> Result<Instance<S, A, Q>, Error> {
         let hash = WasmHash::generate(&id);
 
         // pop from lru cache if present
@@ -117,7 +120,11 @@ where
         Instance::from_code(&wasm, deps, gas_limit)
     }
 
-    pub fn store_instance(&mut self, id: &[u8], instance: Instance<S, A>) -> Option<Extern<S, A>> {
+    pub fn store_instance(
+        &mut self,
+        id: &[u8],
+        instance: Instance<S, A, Q>,
+    ) -> Option<Extern<S, A, Q>> {
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let (wasmer_instance, ext) = Instance::recycle(instance);

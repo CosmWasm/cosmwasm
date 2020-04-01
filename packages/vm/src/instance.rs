@@ -9,7 +9,7 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use cosmwasm_std::{Api, Extern, Storage};
+use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
@@ -22,24 +22,28 @@ use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, Result, WasmerErr, WasmerRuntimeErr};
 use crate::memory::{read_region, write_region};
 
-pub struct Instance<S: Storage + 'static, A: Api + 'static> {
+pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
+    // TODO: we need this in context, not here
+    // type_querier: PhantomData<Q>,
+    querier: Q,
 }
 
-impl<S, A> Instance<S, A>
+impl<S, A, Q> Instance<S, A, Q>
 where
     S: Storage + 'static,
     A: Api + 'static,
+    Q: Querier + 'static,
 {
-    pub fn from_code(code: &[u8], deps: Extern<S, A>, gas_limit: u64) -> Result<Self> {
+    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
         let module = compile(code)?;
         Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A>, gas_limit: u64) -> Result<Self> {
+    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
         let import_obj = imports! {
@@ -107,6 +111,7 @@ where
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
+                // TODO: add querier callback
             },
         };
         let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
@@ -115,25 +120,30 @@ where
 
     pub fn from_wasmer(
         mut wasmer_instance: wasmer_runtime_core::Instance,
-        deps: Extern<S, A>,
+        deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
+        // TODO: store querier in the context as well
         leave_storage(wasmer_instance.context(), Some(deps.storage));
         Instance {
             wasmer_instance,
             api: deps.api,
             type_storage: PhantomData::<S> {},
+            querier: deps.querier,
+            // type_querier: PhantomData::<Q> {},
         }
     }
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A>>) {
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let Some(storage) = take_storage(instance.wasmer_instance.context()) {
             Some(Extern {
                 storage,
                 api: instance.api,
+                // TODO: load querier from context
+                querier: instance.querier,
             })
         } else {
             None
