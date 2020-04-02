@@ -167,6 +167,10 @@ impl Querier for MockQuerier {
             QueryRequest::Staking(_) => Err(ApiSystemError::InvalidRequest {
                 source: "staking not yet implemented".to_string(),
             }),
+            #[cfg(feature = "swap")]
+            QueryRequest::Swap(_) => Err(ApiSystemError::InvalidRequest {
+                source: "swap not yet implemented".to_string(),
+            }),
         }
     }
 }
