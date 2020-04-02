@@ -24,11 +24,11 @@ static MAX_LENGTH_DB_VALUE: usize = 100_000;
 static MAX_LENGTH_ADDRESS: usize = 200;
 
 /// An unknown error occurred when writing to region
-static ERROR_WRITE_TO_REGION_UNKNOWN: i32 = -1000001;
+static ERROR_WRITE_TO_REGION_UNKNOWN: i32 = -1_000_001;
 /// Could not write to region because it is too small
-static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1000002;
+static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1_000_002;
 /// An unknown error occurred when reading region
-static ERROR_READ_FROM_REGION_UNKNOWN: i32 = -1000101;
+static ERROR_READ_FROM_REGION_UNKNOWN: i32 = -1_000_101;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<T: Storage>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
