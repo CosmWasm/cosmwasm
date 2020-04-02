@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg,
-    Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryRequest,
-    QueryResponse, Result, Storage,
+    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, BalanceResponse, Binary,
+    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
+    Querier, QueryRequest, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -175,7 +175,7 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
     use cosmwasm_std::{coin, transactional_deps, Error, ReadonlyStorage};
 
@@ -224,6 +224,30 @@ mod tests {
         // now let's query
         let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    }
+
+    #[test]
+    fn querier_callbacks_work() {
+        let rich_addr = HumanAddr::from("foobar");
+        let rich_balance = coin("10000", "gold");
+        let deps =
+            mock_dependencies_with_balances(20, vec![(rich_addr.clone(), rich_balance.clone())]);
+
+        // querying with balance gets the balance
+        let query_msg = QueryMsg::OtherBalance {
+            address: rich_addr.clone(),
+        };
+        let query_response = query(&deps, query_msg).unwrap();
+        let bal: BalanceResponse = from_slice(query_response.as_slice()).unwrap();
+        assert_eq!(bal.amount, Some(rich_balance));
+
+        // querying other accounts gets none
+        let query_msg = QueryMsg::OtherBalance {
+            address: HumanAddr::from("someone else"),
+        };
+        let query_response = query(&deps, query_msg).unwrap();
+        let bal: BalanceResponse = from_slice(query_response.as_slice()).unwrap();
+        assert_eq!(bal.amount, None);
     }
 
     #[test]
