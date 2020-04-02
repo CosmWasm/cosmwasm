@@ -10,7 +10,7 @@ use wasmer_runtime_core::vm::Ctx;
 use cosmwasm_std::KV;
 use cosmwasm_std::{
     Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier,
-    QuerierResponse, Storage,
+    QuerierResponse, QueryRequest, Storage,
 };
 
 #[cfg(feature = "iterator")]
@@ -21,7 +21,7 @@ pub use iter_support::{
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
-use crate::serde::to_vec;
+use crate::serde::{from_slice, to_vec};
 
 static MAX_LENGTH_DB_KEY: usize = 100_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
@@ -120,14 +120,21 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
     request_ptr: u32,
     response_ptr: u32,
 ) -> i32 {
-    let _request = match read_region(ctx, request_ptr, MAX_LENGTH_ADDRESS) {
+    let request = match read_region(ctx, request_ptr, MAX_LENGTH_ADDRESS) {
         Ok(data) => data,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
-    // TODO: do a real request on some Querier interface from the Ctx
-    let res: QuerierResponse = Err(ApiSystemError::InvalidRequest {
-        source: "staking not yet implemented".to_string(),
+    let parsed: QueryRequest = match from_slice(&request) {
+        Ok(p) => p,
+        // TODO: real error using API error handler
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
+    };
+
+    // default result, then try real querier callback
+    let mut res: QuerierResponse = Err(ApiSystemError::InvalidRequest {
+        source: "no querier registered".to_string(),
     });
+    with_querier_from_context::<S, Q, _>(ctx, |querier| res = querier.query(&parsed));
     let api_res: ApiQuerierResponse = res.into();
 
     match to_vec(&api_res) {
@@ -289,6 +296,17 @@ pub fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(ctx: 
         func(data);
     }
     leave_storage::<S, Q>(ctx, storage);
+}
+
+pub fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(ctx: &Ctx, mut func: F) {
+    let b = unsafe { get_data::<S, Q>(ctx.data) };
+    // we do this to avoid cleanup
+    let mut b = mem::ManuallyDrop::new(b);
+    let querier = b.querier.take();
+    if let Some(q) = &querier {
+        func(q);
+    }
+    b.querier = querier;
 }
 
 pub fn take_storage<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<S> {
