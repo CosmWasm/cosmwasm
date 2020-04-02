@@ -80,12 +80,10 @@ pub enum SwapRequest {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 /// ExchangeRateResponse is data format returned from SwapRequest::ExchangeRate query
 pub struct ExchangeRateResponse {
-    // TODO: make more complex decimal, with non-fixed digits?
-    // Note: Coin only have integer representation (serialized as Strings)
-    // rate is denominated in 10^-9
-    // 1_000_000_000 means 1 ask for 1 offer
-    // 10_000_000_000 means 10 ask for 1 offer
-    // 1_000_000 means 1 ask for 1000 offer
+    // rate is denominated in 10^-6
+    // 1_000_000 means 1 ask for 1 offer
+    // 10_000_000 means 10 ask for 1 offer
+    // 1_000 means 1 ask for 1000 offer
     pub rate: u64,
 }
 
