@@ -29,6 +29,12 @@ pub enum CosmosMsg {
     },
     #[cfg(feature = "staking")]
     Staking(StakingMsg),
+    #[cfg(feature = "swap")]
+    Swap {
+        trader_addr: HumanAddr,
+        offer_coin: Coin,
+        ask_denom: String,
+    },
 }
 
 #[cfg(feature = "staking")]

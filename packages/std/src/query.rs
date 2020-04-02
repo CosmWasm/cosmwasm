@@ -26,6 +26,8 @@ pub enum QueryRequest {
     },
     #[cfg(feature = "staking")]
     Staking(StakingRequest),
+    #[cfg(feature = "swap")]
+    Swap(SwapRequest),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,6 +47,36 @@ pub enum StakingRequest {
         delegator: HumanAddr,
         validator: Option<HumanAddr>,
     },
+}
+
+#[cfg(feature = "swap")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SwapRequest {
+    ExchangeRate { offer: String, ask: String },
+    // Delegations will return all delegations by the delegator,
+    // or just those to the given validator (if set)
+    Simulate { offer: Coin, ask: String },
+}
+
+#[cfg(feature = "swap")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// ExchangeRateResponse is data format returned from SwapRequest::ExchangeRate query
+pub struct ExchangeRateResponse {
+    // TODO: make more complex decimal, with non-fixed digits?
+    // Note: Coin only have integer representation (serialized as Strings)
+    // rate is denominated in 10^-9
+    // 1_000_000_000 means 1 ask for 1 offer
+    // 10_000_000_000 means 10 ask for 1 offer
+    // 1_000_000 means 1 ask for 1000 offer
+    pub rate: u64,
+}
+
+#[cfg(feature = "swap")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// SimulateSwapResponse is data format returned from SwapRequest::Simulate query
+pub struct SimulateSwapResponse {
+    pub receive: Coin,
 }
 
 #[cfg(feature = "staking")]
