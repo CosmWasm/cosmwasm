@@ -8,7 +8,10 @@ use wasmer_runtime_core::vm::Ctx;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
-use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Storage};
+use cosmwasm_std::{
+    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, QuerierResponse,
+    Storage,
+};
 
 #[cfg(feature = "iterator")]
 pub use iter_support::{
@@ -18,6 +21,7 @@ pub use iter_support::{
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
+use crate::serde::to_vec;
 
 static MAX_LENGTH_DB_KEY: usize = 100_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
@@ -106,6 +110,28 @@ pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human
             Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
             Err(_) => ERROR_WRITE_TO_REGION_UNKNOWN,
         },
+        Err(_) => -1,
+    }
+}
+
+pub fn do_query_chain<A: Api>(_api: A, ctx: &mut Ctx, request_ptr: u32, response_ptr: u32) -> i32 {
+    let _request = match read_region(ctx, request_ptr, MAX_LENGTH_ADDRESS) {
+        Ok(data) => data,
+        Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
+    };
+    // TODO: do a real request on some Querier interface from the Ctx
+    let res: QuerierResponse = Err(ApiSystemError::InvalidRequest {
+        source: "staking not yet implemented".to_string(),
+    });
+    let api_res: ApiQuerierResponse = res.into();
+
+    match to_vec(&api_res) {
+        Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
+            Ok(()) => 0,
+            Err(Error::RegionTooSmallErr { .. }) => ERROR_WRITE_TO_REGION_TOO_SMALL,
+            Err(_) => ERROR_WRITE_TO_REGION_UNKNOWN,
+        },
+        // TODO: other error code?
         Err(_) => -1,
     }
 }

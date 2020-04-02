@@ -1,4 +1,4 @@
-use crate::api::{ApiError, ApiSystemError};
+use crate::api::{ApiError, ApiResult, ApiSystemError};
 use crate::encoding::Binary;
 use crate::errors::Result;
 use crate::query::QueryRequest;
@@ -54,6 +54,9 @@ pub trait Api: Copy + Clone + Send {
 
 // QuerierResponse is a short-hand alias as this type is long to write
 pub type QuerierResponse = Result<Result<Binary, ApiError>, ApiSystemError>;
+
+// ApiQuerierResponse is QuerierResponse converted to be serialized (short-hand for other modules)
+pub type ApiQuerierResponse = ApiResult<ApiResult<Binary, ApiError>, ApiSystemError>;
 
 pub trait Querier: Clone + Send {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.

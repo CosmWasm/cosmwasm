@@ -13,8 +13,8 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_canonical_address, do_human_address, do_read, do_remove, do_write, leave_storage,
-    setup_context, take_storage, with_storage_from_context,
+    do_canonical_address, do_human_address, do_query_chain, do_read, do_remove, do_write,
+    leave_storage, setup_context, take_storage, with_storage_from_context,
 };
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
@@ -111,7 +111,12 @@ where
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
-                // TODO: add querier callback
+                "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
+                    do_human_address(api, ctx, canonical_ptr, human_ptr)
+                }),
+                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> i32 {
+                    do_query_chain(api, ctx, request_ptr, response_ptr)
+                }),
             },
         };
         let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;

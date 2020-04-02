@@ -11,7 +11,7 @@ mod traits;
 mod transactions;
 mod types;
 
-pub use crate::api::{ApiError, ApiResult};
+pub use crate::api::{ApiError, ApiResult, ApiSystemError};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
@@ -23,7 +23,9 @@ pub use crate::init_handle::{
 pub use crate::query::{BalanceResponse, QueryRequest, QueryResponse, QueryResult};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::storage::MemoryStorage;
-pub use crate::traits::{Api, Extern, Querier, QuerierResponse, ReadonlyStorage, Storage};
+pub use crate::traits::{
+    Api, ApiQuerierResponse, Extern, Querier, QuerierResponse, ReadonlyStorage, Storage,
+};
 #[cfg(feature = "iterator")]
 pub use crate::traits::{Order, KV};
 pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
