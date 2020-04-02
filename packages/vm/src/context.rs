@@ -188,7 +188,7 @@ mod iter_support {
             let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
                 unsafe { mem::transmute(iter) };
             leave_iterator::<S, Q>(ctx, live_forever);
-            leave_storage(ctx, Some(store));
+            leave_storage::<S, Q>(ctx, Some(store));
             0
         } else {
             ERROR_NO_STORAGE
@@ -196,7 +196,7 @@ mod iter_support {
     }
 
     pub fn do_next<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-        let mut iter = match take_iterator::<T>(ctx) {
+        let mut iter = match take_iterator::<S, Q>(ctx) {
             Some(i) => i,
             None => return ERROR_NEXT_INVALID_ITERATOR,
         };

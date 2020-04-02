@@ -238,7 +238,7 @@ mod singlepass_tests {
     #[test]
     fn handle_panic_and_loops() {
         // Gas must be set so we die early on infinite loop
-        let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000);
+        let mut deps = mock_instance_with_gas_limit(WASM, vec![], 1_000_000);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
