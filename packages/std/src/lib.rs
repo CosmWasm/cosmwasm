@@ -29,7 +29,7 @@ pub use crate::traits::{
 #[cfg(feature = "iterator")]
 pub use crate::traits::{Order, KV};
 pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
-pub use crate::types::{coin, CanonicalAddr, Env, HumanAddr};
+pub use crate::types::{coin, CanonicalAddr, Coin, Env, HumanAddr};
 
 // Exposed in wasm build only
 

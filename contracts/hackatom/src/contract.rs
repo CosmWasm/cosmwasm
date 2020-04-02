@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, BalanceResponse, Binary,
-    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
-    Querier, QueryRequest, QueryResponse, Result, Storage,
+    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg,
+    Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryRequest,
+    QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -177,7 +177,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coin, transactional_deps, Error, ReadonlyStorage};
+    use cosmwasm_std::{coin, transactional_deps, BalanceResponse, Error, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {

@@ -10,6 +10,7 @@ static SUPPORTED_IMPORTS: &[&str] = &[
     "env.remove_db",
     "env.canonicalize_address",
     "env.humanize_address",
+    "env.query_chain",
     #[cfg(feature = "iterator")]
     "env.scan_db",
     #[cfg(feature = "iterator")]
