@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryResponse, Result, Storage,
+    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg,
+    Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryRequest,
+    QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -41,6 +42,8 @@ pub enum QueryMsg {
     // returns a human-readable representation of the verifier
     // use to ensure query path works in integration tests
     Verifier {},
+    // This returns cosmwasm_std::BalanceResponse to demo use of the querier
+    OtherBalance { address: HumanAddr },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -141,6 +144,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> Result<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => query_verifier(deps),
+        QueryMsg::OtherBalance { address } => query_other_balance(deps, address),
     }
 }
 
@@ -152,6 +156,20 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Res
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
     Ok(Binary(to_vec(&VerifierResponse { verifier: addr })?))
+}
+
+fn query_other_balance<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    address: HumanAddr,
+) -> Result<QueryResponse> {
+    let request = QueryRequest::Balance { address: address };
+    let response = match deps.querier.query(&request) {
+        Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
+        Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
+        Ok(Ok(res)) => Ok(res),
+    }?;
+    // in theory we would process the response, but here it is the same type, so just pass through
+    Ok(response)
 }
 
 #[cfg(test)]

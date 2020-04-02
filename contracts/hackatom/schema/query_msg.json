@@ -12,6 +12,30 @@
           "type": "object"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "other_balance"
+      ],
+      "properties": {
+        "other_balance": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
     }
-  ]
+  ],
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    }
+  }
 }
