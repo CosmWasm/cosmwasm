@@ -118,11 +118,11 @@ mod iter_support {
     use std::convert::TryInto;
 
     /// Invalid Order enum value passed into scan
-    pub static ERROR_SCAN_INVALID_ORDER: i32 = -2000001;
+    pub static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_001;
     // Iterator pointer not registered
-    pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2000002;
+    pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_002;
     /// Generic error - using context with no Storage attached
-    pub static ERROR_NO_STORAGE: i32 = -3000001;
+    pub static ERROR_NO_STORAGE: i32 = -3_000_001;
 
     pub fn do_scan<T: Storage + 'static>(
         ctx: &Ctx,
@@ -151,9 +151,9 @@ mod iter_support {
                 unsafe { mem::transmute(iter) };
             leave_iterator::<T>(ctx, live_forever);
             leave_storage(ctx, Some(store));
-            return 0;
+            0
         } else {
-            return ERROR_NO_STORAGE;
+            ERROR_NO_STORAGE
         }
     }
 

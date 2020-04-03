@@ -67,7 +67,7 @@ pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Optio
     if ptr == 0 {
         Ok(None)
     } else {
-        read_region(ctx, ptr, max_length).map(|data| Some(data))
+        read_region(ctx, ptr, max_length).map(Some)
     }
 }
 
