@@ -23,9 +23,10 @@ use crate::errors::Error;
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 
-static MAX_LENGTH_DB_KEY: usize = 100_000;
+static MAX_LENGTH_DB_KEY: usize = 2_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
 static MAX_LENGTH_ADDRESS: usize = 200;
+static MAX_LENGTH_QUERY: usize = 2_000;
 
 /// An unknown error occurred when writing to region
 static ERROR_WRITE_TO_REGION_UNKNOWN: i32 = -1_000_001;
@@ -120,7 +121,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
     request_ptr: u32,
     response_ptr: u32,
 ) -> i32 {
-    let request = match read_region(ctx, request_ptr, MAX_LENGTH_ADDRESS) {
+    let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY) {
         Ok(data) => data,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };

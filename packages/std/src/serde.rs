@@ -38,5 +38,5 @@ pub fn to_binary<T>(data: &T) -> Result<Binary>
 where
     T: Serialize + ?Sized,
 {
-    to_vec(data).map(|t| Binary(t))
+    to_vec(data).map(Binary)
 }

@@ -232,13 +232,10 @@ mod tests {
     fn querier_callbacks_work() {
         let rich_addr = HumanAddr::from("foobar");
         let rich_balance = coin("10000", "gold");
-        let deps =
-            mock_dependencies_with_balances(20, vec![(rich_addr.clone(), rich_balance.clone())]);
+        let deps = mock_dependencies_with_balances(20, &[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
-        let query_msg = QueryMsg::OtherBalance {
-            address: rich_addr.clone(),
-        };
+        let query_msg = QueryMsg::OtherBalance { address: rich_addr };
         let query_response = query(&deps, query_msg).unwrap();
         let bal: BalanceResponse = from_binary(&query_response).unwrap();
         assert_eq!(bal.amount, Some(rich_balance));

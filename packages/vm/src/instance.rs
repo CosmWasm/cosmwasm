@@ -109,9 +109,6 @@ where
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
-                    do_human_address(api, ctx, canonical_ptr, human_ptr)
-                }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> i32 {
                     do_query_chain::<_, S, Q>(api, ctx, request_ptr, response_ptr)
                 }),
@@ -329,7 +326,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift_noop() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, vec![], 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 1_000_000);
     }
@@ -337,7 +334,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn set_get_and_gas_singlepass_works() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, vec![], 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 123321);
     }
@@ -395,7 +392,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, vec![], 20_000);
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);

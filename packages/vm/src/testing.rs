@@ -19,19 +19,19 @@ use crate::instance::Instance;
 static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
 pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi, MockQuerier> {
-    mock_instance_with_gas_limit(wasm, vec![], DEFAULT_GAS_LIMIT)
+    mock_instance_with_gas_limit(wasm, &[], DEFAULT_GAS_LIMIT)
 }
 
 pub fn mock_instance_with_balances(
     wasm: &[u8],
-    balances: Vec<(HumanAddr, Vec<Coin>)>,
+    balances: &[(&HumanAddr, &[Coin])],
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
     mock_instance_with_gas_limit(wasm, balances, DEFAULT_GAS_LIMIT)
 }
 
 pub fn mock_instance_with_gas_limit(
     wasm: &[u8],
-    balances: Vec<(HumanAddr, Vec<Coin>)>,
+    balances: &[(&HumanAddr, &[Coin])],
     gas_limit: u64,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
     check_wasm(wasm).unwrap();

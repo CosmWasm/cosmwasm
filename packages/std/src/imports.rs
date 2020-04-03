@@ -15,8 +15,9 @@ use crate::types::{CanonicalAddr, HumanAddr};
 // this is the buffer we pre-allocate in get - we should configure this somehow later
 static MAX_READ: usize = 2000;
 
-// this should be plenty for any address representation
-static ADDR_BUFFER: usize = 100;
+// this is the maximum allowed size for bech32
+// https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
+static ADDR_BUFFER: usize = 90;
 
 // this is the space we allocate for query responses
 static QUERY_BUFFER: usize = 4000;

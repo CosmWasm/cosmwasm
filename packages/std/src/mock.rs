@@ -15,14 +15,14 @@ pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi
     Extern {
         storage: MockStorage::new(),
         api: MockApi::new(canonical_length),
-        querier: MockQuerier::new(vec![]),
+        querier: MockQuerier::new(&[]),
     }
 }
 
 // This initializes the querier along with the mock_dependencies
 pub fn mock_dependencies_with_balances(
     canonical_length: usize,
-    balances: Vec<(HumanAddr, Vec<Coin>)>,
+    balances: &[(&HumanAddr, &[Coin])],
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
     Extern {
         storage: MockStorage::new(),
@@ -129,10 +129,10 @@ pub struct MockQuerier {
 }
 
 impl MockQuerier {
-    pub fn new(balances: Vec<(HumanAddr, Vec<Coin>)>) -> Self {
+    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         let mut map = HashMap::new();
-        for (addr, coins) in balances.into_iter() {
-            map.insert(addr, coins);
+        for (addr, coins) in balances.iter() {
+            map.insert(HumanAddr::from(addr), coins.to_vec());
         }
         MockQuerier { balances: map }
     }
