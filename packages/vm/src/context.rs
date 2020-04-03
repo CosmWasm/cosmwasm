@@ -36,6 +36,10 @@ static ERROR_REGION_WRITE_TOO_SMALL: i32 = -1_000_002;
 static ERROR_REGION_READ_UNKNOWN: i32 = -1_000_101;
 /// The contract sent us a Region we're not willing to read because it is too big
 static ERROR_REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_102;
+/// An unknonw error when canonicalizing address
+static ERROR_CANONICALIZE_UNKNOWN: i32 = -1_000_201;
+/// The input address (human address) was invalid
+static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -95,7 +99,7 @@ pub fn do_canonicalize_address<A: Api>(
     };
     let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return -2,
+        Err(_) => return ERROR_CANONICALIZE_INVALID_INPUT,
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
@@ -103,7 +107,7 @@ pub fn do_canonicalize_address<A: Api>(
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
-        Err(_) => -1,
+        Err(_) => ERROR_CANONICALIZE_UNKNOWN,
     }
 }
 
