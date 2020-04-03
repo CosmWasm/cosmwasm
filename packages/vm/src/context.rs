@@ -82,7 +82,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
     0
 }
 
-pub fn do_canonical_address<A: Api>(
+pub fn do_canonicalize_address<A: Api>(
     api: A,
     ctx: &mut Ctx,
     human_ptr: u32,
@@ -107,7 +107,12 @@ pub fn do_canonical_address<A: Api>(
     }
 }
 
-pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
+pub fn do_humanize_address<A: Api>(
+    api: A,
+    ctx: &mut Ctx,
+    canonical_ptr: u32,
+    human_ptr: u32,
+) -> i32 {
     let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_ADDRESS) {
         Ok(data) => Binary(data),
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,

@@ -13,7 +13,7 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_canonical_address, do_human_address, do_query_chain, do_read, do_remove, do_write,
+    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
     leave_context_data, setup_context, take_context_data, with_storage_from_context,
 };
 #[cfg(feature = "iterator")]
@@ -100,14 +100,14 @@ where
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "canonicalize_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
-                    do_canonical_address(api, ctx, human_ptr, canonical_ptr)
+                    do_canonicalize_address(api, ctx, human_ptr, canonical_ptr)
                 }),
                 // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
                 // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
-                    do_human_address(api, ctx, canonical_ptr, human_ptr)
+                    do_humanize_address(api, ctx, canonical_ptr, human_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> i32 {
                     do_query_chain::<_, S, Q>(api, ctx, request_ptr, response_ptr)
