@@ -14,8 +14,8 @@ mod types;
 pub use crate::api::{ApiError, ApiResult, ApiSystemError};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
-    contract_err, dyn_contract_err, invalid, unauthorized, Error, NotFound, NullPointer, ParseErr,
-    Result, SerializeErr,
+    contract_err, dyn_contract_err, invalid, unauthorized, Error, InvalidRequest, NotFound,
+    NullPointer, ParseErr, Result, SerializeErr,
 };
 pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,

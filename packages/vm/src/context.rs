@@ -1,6 +1,7 @@
 /**
 Internal details to be used by instance.rs only
 **/
+use snafu::ResultExt;
 use std::ffi::c_void;
 use std::mem;
 
@@ -9,8 +10,8 @@ use wasmer_runtime_core::vm::Ctx;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
 use cosmwasm_std::{
-    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier,
-    QuerierResponse, QueryRequest, Storage,
+    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, InvalidRequest,
+    Querier, QuerierResponse, QueryRequest, Storage,
 };
 
 #[cfg(feature = "iterator")]
@@ -21,7 +22,7 @@ pub use iter_support::{
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
-use crate::serde::{from_slice, to_vec};
+use crate::serde::to_vec;
 
 static MAX_LENGTH_DB_KEY: usize = 2_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
@@ -125,17 +126,20 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
         Ok(data) => data,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
-    let parsed: QueryRequest = match from_slice(&request) {
-        Ok(p) => p,
-        // TODO: real error using API error handler
-        Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
-    };
 
     // default result, then try real querier callback
     let mut res: QuerierResponse = Err(ApiSystemError::InvalidRequest {
         source: "no querier registered".to_string(),
     });
-    with_querier_from_context::<S, Q, _>(ctx, |querier| res = querier.query(&parsed));
+    match serde_json_wasm::from_slice::<QueryRequest>(&request).context(InvalidRequest {}) {
+        // if we parse, try to execute the query
+        Ok(parsed) => {
+            with_querier_from_context::<S, Q, _>(ctx, |querier| res = querier.query(&parsed))
+        }
+        // otherwise, return the InvalidRequest error as ApiSystemError
+        Err(err) => res = Err(err.into()),
+    };
+
     let api_res: ApiQuerierResponse = res.into();
 
     match to_vec(&api_res) {
