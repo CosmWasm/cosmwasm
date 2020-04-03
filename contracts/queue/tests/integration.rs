@@ -28,8 +28,8 @@
 //!          _ => panic!("Must return unauthorized error"),
 //!      }
 
-use cosmwasm_std::testing::{mock_env, MockApi, MockStorage};
-use cosmwasm_std::{coin, from_slice, Env, HumanAddr};
+use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
+use cosmwasm_std::{coin, from_binary, from_slice, Env, HumanAddr};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 use cosmwasm_vm::Instance;
 
@@ -37,7 +37,7 @@ use queue::contract::{CountResponse, HandleMsg, InitMsg, Item, QueryMsg, SumResp
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
-fn create_contract() -> (Instance<MockStorage, MockApi>, Env) {
+fn create_contract() -> (Instance<MockStorage, MockApi, MockQuerier>, Env) {
     let mut deps = mock_instance(WASM);
     let creator = HumanAddr(String::from("creator"));
     let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
@@ -46,15 +46,15 @@ fn create_contract() -> (Instance<MockStorage, MockApi>, Env) {
     (deps, env)
 }
 
-fn get_count(deps: &mut Instance<MockStorage, MockApi>) -> u32 {
+fn get_count(deps: &mut Instance<MockStorage, MockApi, MockQuerier>) -> u32 {
     let data = query(deps, QueryMsg::Count {}).unwrap();
-    let res: CountResponse = from_slice(data.as_slice()).unwrap();
+    let res: CountResponse = from_binary(&data).unwrap();
     res.count
 }
 
-fn get_sum(deps: &mut Instance<MockStorage, MockApi>) -> i32 {
+fn get_sum(deps: &mut Instance<MockStorage, MockApi, MockQuerier>) -> i32 {
     let data = query(deps, QueryMsg::Sum {}).unwrap();
-    let res: SumResponse = from_slice(data.as_slice()).unwrap();
+    let res: SumResponse = from_binary(&data).unwrap();
     res.sum
 }
 

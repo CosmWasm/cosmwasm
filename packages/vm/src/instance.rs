@@ -9,12 +9,12 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use cosmwasm_std::{Api, Extern, Storage};
+use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_canonical_address, do_human_address, do_read, do_remove, do_write, leave_storage,
-    setup_context, take_storage, with_storage_from_context,
+    do_canonical_address, do_human_address, do_query_chain, do_read, do_remove, do_write,
+    leave_context_data, setup_context, take_context_data, with_storage_from_context,
 };
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
@@ -22,28 +22,30 @@ use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, Result, WasmerErr, WasmerRuntimeErr};
 use crate::memory::{read_region, write_region};
 
-pub struct Instance<S: Storage + 'static, A: Api + 'static> {
+pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
+    type_querier: PhantomData<Q>,
 }
 
-impl<S, A> Instance<S, A>
+impl<S, A, Q> Instance<S, A, Q>
 where
     S: Storage + 'static,
     A: Api + 'static,
+    Q: Querier + 'static,
 {
-    pub fn from_code(code: &[u8], deps: Extern<S, A>, gas_limit: u64) -> Result<Self> {
+    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
         let module = compile(code)?;
         Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A>, gas_limit: u64) -> Result<Self> {
+    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
         let import_obj = imports! {
-            || { setup_context::<S>() },
+            || { setup_context::<S, Q>() },
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
@@ -51,20 +53,20 @@ where
                 //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
                 "read_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
-                    do_read::<S>(ctx, key_ptr, value_ptr)
+                    do_read::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
                 "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
-                    do_write::<S>(ctx, key_ptr, value_ptr)
+                    do_write::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Removes the value at the given key. Different than writing &[] as future
                 // scans will not find this key.
                 // Ownership of both key pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
                 "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
-                    do_remove::<S>(ctx, key_ptr)
+                    do_remove::<S, Q>(ctx, key_ptr)
                 }),
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
@@ -78,7 +80,7 @@ where
                         0
                     }
                     #[cfg(feature = "iterator")]
-                    do_scan::<S>(ctx, start_ptr, end_ptr, order)
+                    do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
@@ -91,7 +93,7 @@ where
                         0
                     }
                     #[cfg(feature = "iterator")]
-                    do_next::<S>(ctx, key_ptr, value_ptr)
+                    do_next::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
@@ -107,6 +109,9 @@ where
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
                     do_human_address(api, ctx, canonical_ptr, human_ptr)
                 }),
+                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> i32 {
+                    do_query_chain::<_, S, Q>(api, ctx, request_ptr, response_ptr)
+                }),
             },
         };
         let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
@@ -115,25 +120,33 @@ where
 
     pub fn from_wasmer(
         mut wasmer_instance: wasmer_runtime_core::Instance,
-        deps: Extern<S, A>,
+        deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        leave_storage(wasmer_instance.context(), Some(deps.storage));
+        leave_context_data(
+            wasmer_instance.context(),
+            Some(deps.storage),
+            Some(deps.querier),
+        );
         Instance {
             wasmer_instance,
             api: deps.api,
             type_storage: PhantomData::<S> {},
+            type_querier: PhantomData::<Q> {},
         }
     }
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A>>) {
-        let ext = if let Some(storage) = take_storage(instance.wasmer_instance.context()) {
+    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+        let ext = if let (Some(storage), Some(querier)) =
+            take_context_data(instance.wasmer_instance.context())
+        {
             Some(Extern {
                 storage,
                 api: instance.api,
+                querier,
             })
         } else {
             None
@@ -147,7 +160,7 @@ where
     }
 
     pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
-        with_storage_from_context(self.wasmer_instance.context(), func)
+        with_storage_from_context::<S, Q, F>(self.wasmer_instance.context(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -313,7 +326,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift_noop() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 1_000_000);
     }
@@ -321,7 +334,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn set_get_and_gas_singlepass_works() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 123321);
     }
@@ -379,7 +392,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, 20_000);
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);

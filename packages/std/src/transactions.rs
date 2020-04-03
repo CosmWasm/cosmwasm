@@ -7,7 +7,7 @@ use std::iter::Peekable;
 use crate::errors::Result;
 #[cfg(feature = "iterator")]
 use crate::storage::range_bounds;
-use crate::traits::{Api, Extern, ReadonlyStorage, Storage};
+use crate::traits::{Api, Extern, Querier, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use crate::traits::{KVRef, Order, KV};
 
@@ -238,14 +238,15 @@ pub fn transactional<S: Storage, T>(
     Ok(res)
 }
 
-pub fn transactional_deps<S: Storage, A: Api, T>(
-    deps: &mut Extern<S, A>,
-    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A>) -> Result<T>,
+pub fn transactional_deps<S: Storage, A: Api, Q: Querier, T>(
+    deps: &mut Extern<S, A, Q>,
+    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A, Q>) -> Result<T>,
 ) -> Result<T> {
     let c = StorageTransaction::new(&deps.storage);
     let mut stx_deps = Extern {
         storage: c,
         api: deps.api,
+        querier: deps.querier.clone(),
     };
     let res = tx(&mut stx_deps);
     if res.is_ok() {

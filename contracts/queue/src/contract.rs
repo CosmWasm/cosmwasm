@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order,
+    from_slice, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order, Querier,
     QueryResponse, Result, Storage,
 };
 
@@ -48,16 +48,16 @@ pub struct SumResponse {
 }
 
 // init is a no-op, just empty data
-pub fn init<S: Storage, A: Api>(
-    _deps: &mut Extern<S, A>,
+pub fn init<S: Storage, A: Api, Q: Querier>(
+    _deps: &mut Extern<S, A, Q>,
     _env: Env,
     _msg: InitMsg,
 ) -> Result<InitResponse> {
     Ok(InitResponse::default())
 }
 
-pub fn handle<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn handle<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
 ) -> Result<HandleResponse> {
@@ -69,8 +69,8 @@ pub fn handle<S: Storage, A: Api>(
 
 const FIRST_KEY: u8 = 0;
 
-fn enqueue<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+fn enqueue<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     _env: Env,
     value: i32,
 ) -> Result<HandleResponse> {
@@ -92,7 +92,10 @@ fn enqueue<S: Storage, A: Api>(
     Ok(HandleResponse::default())
 }
 
-fn dequeue<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<HandleResponse> {
+fn dequeue<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    _env: Env,
+) -> Result<HandleResponse> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
 
@@ -107,19 +110,22 @@ fn dequeue<S: Storage, A: Api>(deps: &mut Extern<S, A>, _env: Env) -> Result<Han
     }
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<QueryResponse> {
+pub fn query<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    msg: QueryMsg,
+) -> Result<QueryResponse> {
     match msg {
         QueryMsg::Count {} => query_count(deps),
         QueryMsg::Sum {} => query_sum(deps),
     }
 }
 
-fn query_count<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
+fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
     Ok(Binary(to_vec(&CountResponse { count })?))
 }
 
-fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
+fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
     let values: Result<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)
@@ -132,10 +138,10 @@ fn query_sum<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<QueryResponse> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
-    use cosmwasm_std::{coin, HumanAddr};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{coin, from_binary, HumanAddr};
 
-    fn create_contract() -> (Extern<MockStorage, MockApi>, Env) {
+    fn create_contract() -> (Extern<MockStorage, MockApi, MockQuerier>, Env) {
         let mut deps = mock_dependencies(20);
         let creator = HumanAddr(String::from("creator"));
         let env = mock_env(&deps.api, creator.as_str(), &coin("1000", "earth"), &[]);
@@ -144,15 +150,15 @@ mod tests {
         (deps, env)
     }
 
-    fn get_count(deps: &Extern<MockStorage, MockApi>) -> u32 {
+    fn get_count(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> u32 {
         let data = query(deps, QueryMsg::Count {}).unwrap();
-        let res: CountResponse = from_slice(data.as_slice()).unwrap();
+        let res: CountResponse = from_binary(&data).unwrap();
         res.count
     }
 
-    fn get_sum(deps: &Extern<MockStorage, MockApi>) -> i32 {
+    fn get_sum(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> i32 {
         let data = query(deps, QueryMsg::Sum {}).unwrap();
-        let res: SumResponse = from_slice(data.as_slice()).unwrap();
+        let res: SumResponse = from_binary(&data).unwrap();
         res.sum
     }
 

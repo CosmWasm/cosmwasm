@@ -1,8 +1,8 @@
 use snafu::ResultExt;
 
 use cosmwasm_std::{
-    Api, ApiError, Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResponse,
-    QueryResult, Storage,
+    Api, ApiError, Env, HandleResponse, HandleResult, InitResponse, InitResult, Querier,
+    QueryResponse, QueryResult, Storage,
 };
 
 use crate::errors::{Error, RuntimeErr, WasmerRuntimeErr};
@@ -13,8 +13,8 @@ static MAX_LENGTH_INIT: usize = 100_000;
 static MAX_LENGTH_HANDLE: usize = 100_000;
 static MAX_LENGTH_QUERY: usize = 100_000;
 
-pub fn call_init<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+pub fn call_init<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
 ) -> Result<Result<InitResponse, ApiError>, Error> {
@@ -24,8 +24,8 @@ pub fn call_init<S: Storage + 'static, A: Api + 'static>(
     Ok(res.into())
 }
 
-pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+pub fn call_handle<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
 ) -> Result<Result<HandleResponse, ApiError>, Error> {
@@ -35,8 +35,8 @@ pub fn call_handle<S: Storage + 'static, A: Api + 'static>(
     Ok(res.into())
 }
 
-pub fn call_query<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     msg: &[u8],
 ) -> Result<Result<QueryResponse, ApiError>, Error> {
     let data = call_query_raw(instance, msg)?;
@@ -58,8 +58,8 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static>(
 
 /// Calls Wasm export "init" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
@@ -68,8 +68,8 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static>(
 
 /// Calls Wasm export "handle" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
@@ -78,15 +78,15 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static>(
 
 /// Calls Wasm export "query" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_query_raw<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     msg: &[u8],
 ) -> Result<Vec<u8>, Error> {
     call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
 }
 
-fn call_raw<S: Storage + 'static, A: Api + 'static>(
-    instance: &mut Instance<S, A>,
+fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
     name: &str,
     args: &[&[u8]],
     result_max_length: usize,

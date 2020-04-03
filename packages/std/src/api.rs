@@ -123,6 +123,7 @@ impl From<Error> for ApiError {
 pub enum ApiSystemError {
     InvalidRequest { source: String },
     NoSuchContract { addr: HumanAddr },
+    Unknown {},
 }
 
 impl std::error::Error for ApiSystemError {}
@@ -134,6 +135,7 @@ impl std::fmt::Display for ApiSystemError {
                 write!(f, "Cannot parse request: {}", source)
             }
             ApiSystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
+            ApiSystemError::Unknown {} => write!(f, "Unknown system error"),
         }
     }
 }
@@ -145,6 +147,7 @@ impl From<SystemError> for ApiSystemError {
                 source: format!("{}", source),
             },
             SystemError::NoSuchContract { addr, .. } => ApiSystemError::NoSuchContract { addr },
+            SystemError::Unknown { .. } => ApiSystemError::Unknown {},
         }
     }
 }

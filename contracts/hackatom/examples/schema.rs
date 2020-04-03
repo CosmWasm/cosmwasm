@@ -2,6 +2,7 @@ use std::env::current_dir;
 use std::fs::{create_dir_all, write};
 use std::path::PathBuf;
 
+use cosmwasm_std::BalanceResponse;
 use schemars::{schema::RootSchema, schema_for};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, VerifierResponse};
@@ -16,6 +17,7 @@ fn main() {
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
     export_schema(&schema_for!(VerifierResponse), &out_dir);
+    export_schema(&schema_for!(BalanceResponse), &out_dir);
 }
 
 /// Writes schema to file. Overwrites existing file.

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm_std::{Api, Extern, Storage};
+use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
@@ -24,7 +24,7 @@ struct Stats {
     misses: u32,
 }
 
-pub struct CosmCache<S: Storage + 'static, A: Api + 'static> {
+pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasm_path: PathBuf,
     modules: FileSystemCache,
     instances: Option<LruCache<WasmHash, wasmer_runtime_core::Instance>>,
@@ -32,12 +32,14 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static> {
     // Those two don't store data but only fix type information
     type_storage: PhantomData<S>,
     type_api: PhantomData<A>,
+    type_querier: PhantomData<Q>,
 }
 
-impl<S, A> CosmCache<S, A>
+impl<S, A, Q> CosmCache<S, A, Q>
 where
     S: Storage + 'static,
     A: Api + 'static,
+    Q: Querier + 'static,
 {
     /// new stores the data for cache under base_dir
     ///
@@ -61,8 +63,9 @@ where
             wasm_path,
             instances,
             stats: Stats::default(),
-            type_storage: PhantomData::<S> {},
-            type_api: PhantomData::<A> {},
+            type_storage: PhantomData::<S>,
+            type_api: PhantomData::<A>,
+            type_querier: PhantomData::<Q>,
         })
     }
 
@@ -91,9 +94,9 @@ where
     pub fn get_instance(
         &mut self,
         id: &[u8],
-        deps: Extern<S, A>,
+        deps: Extern<S, A, Q>,
         gas_limit: u64,
-    ) -> Result<Instance<S, A>, Error> {
+    ) -> Result<Instance<S, A, Q>, Error> {
         let hash = WasmHash::generate(&id);
 
         // pop from lru cache if present
@@ -117,7 +120,11 @@ where
         Instance::from_code(&wasm, deps, gas_limit)
     }
 
-    pub fn store_instance(&mut self, id: &[u8], instance: Instance<S, A>) -> Option<Extern<S, A>> {
+    pub fn store_instance(
+        &mut self,
+        id: &[u8],
+        instance: Instance<S, A, Q>,
+    ) -> Option<Extern<S, A, Q>> {
         if let Some(cache) = &mut self.instances {
             let hash = WasmHash::generate(&id);
             let (wasmer_instance, ext) = Instance::recycle(instance);
@@ -134,7 +141,7 @@ mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use cosmwasm_std::coin;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockStorage};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use tempfile::TempDir;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;
@@ -143,7 +150,7 @@ mod test {
     #[test]
     fn save_wasm_works() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi> =
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
     }
@@ -152,7 +159,7 @@ mod test {
     // This property is required when the same bytecode is uploaded multiple times
     fn save_wasm_allows_saving_multiple_times() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi> =
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
         cache.save_wasm(CONTRACT).unwrap();
@@ -175,7 +182,7 @@ mod test {
         let wasm = wat2wasm(WAT).unwrap();
 
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi> =
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result {

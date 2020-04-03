@@ -12,7 +12,7 @@ use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 
 use crate::errors::Error;
-use crate::imports::{ExternalApi, ExternalStorage};
+use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
@@ -45,7 +45,7 @@ extern "C" fn deallocate(pointer: *mut c_void) {
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_init<T: DeserializeOwned + JsonSchema>(
     init_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi>,
+        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
     ) -> Result<InitResponse, Error>,
@@ -60,7 +60,7 @@ pub fn do_init<T: DeserializeOwned + JsonSchema>(
 /// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi>,
+        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
     ) -> Result<HandleResponse, Error>,
@@ -74,7 +74,10 @@ pub fn do_handle<T: DeserializeOwned + JsonSchema>(
 
 /// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<QueryResponse, Error>,
+    query_fn: &dyn Fn(
+        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        T,
+    ) -> Result<QueryResponse, Error>,
     msg_ptr: *mut c_void,
 ) -> *mut c_void {
     let res: QueryResult = _do_query(query_fn, msg_ptr).into();
@@ -84,7 +87,7 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
 
 fn _do_init<T: DeserializeOwned + JsonSchema>(
     init_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi>,
+        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
     ) -> Result<InitResponse, Error>,
@@ -101,7 +104,7 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
 
 fn _do_handle<T: DeserializeOwned + JsonSchema>(
     handle_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi>,
+        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
     ) -> Result<HandleResponse, Error>,
@@ -118,7 +121,10 @@ fn _do_handle<T: DeserializeOwned + JsonSchema>(
 }
 
 fn _do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi>, T) -> Result<QueryResponse, Error>,
+    query_fn: &dyn Fn(
+        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        T,
+    ) -> Result<QueryResponse, Error>,
     msg_ptr: *mut c_void,
 ) -> Result<QueryResponse, Error> {
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
@@ -129,9 +135,10 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
-fn make_dependencies() -> Extern<ExternalStorage, ExternalApi> {
+fn make_dependencies() -> Extern<ExternalStorage, ExternalApi, ExternalQuerier> {
     Extern {
         storage: ExternalStorage::new(),
         api: ExternalApi::new(),
+        querier: ExternalQuerier::new(),
     }
 }

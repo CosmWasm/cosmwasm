@@ -1,4 +1,4 @@
-use crate::api::{ApiError, ApiSystemError};
+use crate::api::{ApiError, ApiResult, ApiSystemError};
 use crate::encoding::Binary;
 use crate::errors::Result;
 use crate::query::QueryRequest;
@@ -11,9 +11,10 @@ pub use iter_support::{KVRef, Order, KV};
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Extern<S: Storage, A: Api> {
+pub struct Extern<S: Storage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
+    pub querier: Q,
 }
 
 /// ReadonlyStorage is access to the contracts persistent data store
@@ -51,13 +52,19 @@ pub trait Api: Copy + Clone + Send {
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
 }
 
-pub trait Querier {
+// QuerierResponse is a short-hand alias as this type is long to write
+pub type QuerierResponse = Result<Result<Binary, ApiError>, ApiSystemError>;
+
+// ApiQuerierResponse is QuerierResponse converted to be serialized (short-hand for other modules)
+pub type ApiQuerierResponse = ApiResult<ApiResult<Binary, ApiError>, ApiSystemError>;
+
+pub trait Querier: Clone + Send {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
     // Since this is information that is returned from outside, we define it this way.
     //
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
-    fn query(&self, request: QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError>;
+    fn query(&self, request: &QueryRequest) -> QuerierResponse;
 }
 
 // put them here to avoid so many feature flags

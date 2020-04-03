@@ -5,9 +5,10 @@ use serde::Serialize;
 // JsonSchema is a flag for types meant to be publically exposed
 use schemars::JsonSchema;
 
-use cosmwasm_std::testing::{mock_dependencies, MockApi, MockStorage};
+use cosmwasm_std::testing::{mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{
-    to_vec, Api, ApiError, Env, HandleResponse, InitResponse, QueryResponse, Storage,
+    to_vec, Api, ApiError, Coin, Env, HandleResponse, HumanAddr, InitResponse, Querier,
+    QueryResponse, Storage,
 };
 
 use crate::calls::{call_handle, call_init, call_query};
@@ -17,21 +18,37 @@ use crate::instance::Instance;
 /// Gas limit for testing
 static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
-pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi> {
-    mock_instance_with_gas_limit(wasm, DEFAULT_GAS_LIMIT)
+pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi, MockQuerier> {
+    mock_instance_with_gas_limit(wasm, &[], DEFAULT_GAS_LIMIT)
 }
 
-pub fn mock_instance_with_gas_limit(wasm: &[u8], gas_limit: u64) -> Instance<MockStorage, MockApi> {
+pub fn mock_instance_with_balances(
+    wasm: &[u8],
+    balances: &[(&HumanAddr, &[Coin])],
+) -> Instance<MockStorage, MockApi, MockQuerier> {
+    mock_instance_with_gas_limit(wasm, balances, DEFAULT_GAS_LIMIT)
+}
+
+pub fn mock_instance_with_gas_limit(
+    wasm: &[u8],
+    balances: &[(&HumanAddr, &[Coin])],
+    gas_limit: u64,
+) -> Instance<MockStorage, MockApi, MockQuerier> {
     check_wasm(wasm).unwrap();
-    let deps = mock_dependencies(20);
+    let deps = mock_dependencies_with_balances(20, balances);
     Instance::from_code(wasm, deps, gas_limit).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
-    instance: &mut Instance<S, A>,
+pub fn init<
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    T: Serialize + JsonSchema,
+>(
+    instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
 ) -> Result<InitResponse, ApiError> {
@@ -44,8 +61,13 @@ pub fn init<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
 // handle mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
-    instance: &mut Instance<S, A>,
+pub fn handle<
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    T: Serialize + JsonSchema,
+>(
+    instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
 ) -> Result<HandleResponse, ApiError> {
@@ -58,8 +80,13 @@ pub fn handle<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>
 // query mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
-    instance: &mut Instance<S, A>,
+pub fn query<
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    T: Serialize + JsonSchema,
+>(
+    instance: &mut Instance<S, A, Q>,
     msg: T,
 ) -> Result<QueryResponse, ApiError> {
     match to_vec(&msg) {
@@ -70,7 +97,9 @@ pub fn query<S: Storage + 'static, A: Api + 'static, T: Serialize + JsonSchema>(
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
 /// This could be especially useful when run with some kind of leak detector.
-pub fn test_io<S: Storage + 'static, A: Api + 'static>(instance: &mut Instance<S, A>) {
+pub fn test_io<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
+) {
     let sizes: Vec<usize> = vec![0, 1, 3, 10, 200, 2000, 5 * 1024];
     let bytes: Vec<u8> = vec![0x00, 0xA5, 0xFF];
 

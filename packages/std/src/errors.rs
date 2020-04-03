@@ -81,6 +81,8 @@ pub enum SystemError {
         addr: HumanAddr,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Unknown system error"))]
+    Unknown { backtrace: snafu::Backtrace },
 }
 
 /// Result for init, handle and query. Since the error type cannot be serialized to JSON,

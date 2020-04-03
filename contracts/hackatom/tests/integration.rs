@@ -29,8 +29,13 @@
 //!      }
 
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{coin, from_slice, log, Api, ApiError, CosmosMsg, HumanAddr, ReadonlyStorage};
-use cosmwasm_vm::testing::{handle, init, mock_instance, query, test_io};
+use cosmwasm_std::{
+    coin, from_binary, from_slice, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr,
+    ReadonlyStorage,
+};
+use cosmwasm_vm::testing::{
+    handle, init, mock_instance, mock_instance_with_balances, query, test_io,
+};
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
 
@@ -89,6 +94,27 @@ fn init_and_query() {
         ApiError::ParseErr { .. } => {}
         _ => panic!("Expected parse error"),
     }
+}
+
+#[test]
+fn querier_callbacks_work() {
+    let rich_addr = HumanAddr::from("foobar");
+    let rich_balance = coin("10000", "gold");
+    let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr, &rich_balance)]);
+
+    // querying with balance gets the balance
+    let query_msg = QueryMsg::OtherBalance { address: rich_addr };
+    let query_response = query(&mut deps, query_msg).unwrap();
+    let bal: BalanceResponse = from_binary(&query_response).unwrap();
+    assert_eq!(bal.amount, Some(rich_balance));
+
+    // querying other accounts gets none
+    let query_msg = QueryMsg::OtherBalance {
+        address: HumanAddr::from("someone else"),
+    };
+    let query_response = query(&mut deps, query_msg).unwrap();
+    let bal: BalanceResponse = from_binary(&query_response).unwrap();
+    assert_eq!(bal.amount, None);
 }
 
 #[test]
@@ -210,7 +236,7 @@ mod singlepass_tests {
     #[test]
     fn handle_panic_and_loops() {
         // Gas must be set so we die early on infinite loop
-        let mut deps = mock_instance_with_gas_limit(WASM, 1_000_000);
+        let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
