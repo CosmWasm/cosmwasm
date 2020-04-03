@@ -162,7 +162,7 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
 ) -> Result<QueryResponse> {
-    let request = QueryRequest::Balance { address: address };
+    let request = QueryRequest::Balance { address };
     let response = match deps.querier.query(&request) {
         Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
         Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),

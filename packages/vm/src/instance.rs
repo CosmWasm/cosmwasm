@@ -149,7 +149,7 @@ where
             Some(Extern {
                 storage,
                 api: instance.api,
-                querier: querier,
+                querier,
             })
         } else {
             None
