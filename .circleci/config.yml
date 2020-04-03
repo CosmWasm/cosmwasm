@@ -323,7 +323,7 @@ jobs:
       - run:
           name: Clippy linting on vm (use flags for Rust stable support)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --no-default-features --features default-cranelift -- -D warnings
+          command: cargo clippy --no-default-features --features "default-cranelift iterator" -- -D warnings
       - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
