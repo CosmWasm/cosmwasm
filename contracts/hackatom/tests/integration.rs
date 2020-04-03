@@ -30,7 +30,8 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, from_slice, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr, ReadonlyStorage,
+    coin, from_binary, from_slice, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr,
+    ReadonlyStorage,
 };
 use cosmwasm_vm::testing::{
     handle, init, mock_instance, mock_instance_with_balances, query, test_io,
@@ -107,7 +108,7 @@ fn querier_callbacks_work() {
         address: rich_addr.clone(),
     };
     let query_response = query(&mut deps, query_msg).unwrap();
-    let bal: BalanceResponse = from_slice(query_response.as_slice()).unwrap();
+    let bal: BalanceResponse = from_binary(&query_response).unwrap();
     assert_eq!(bal.amount, Some(rich_balance));
 
     // querying other accounts gets none
@@ -115,7 +116,7 @@ fn querier_callbacks_work() {
         address: HumanAddr::from("someone else"),
     };
     let query_response = query(&mut deps, query_msg).unwrap();
-    let bal: BalanceResponse = from_slice(query_response.as_slice()).unwrap();
+    let bal: BalanceResponse = from_binary(&query_response).unwrap();
     assert_eq!(bal.amount, None);
 }
 

@@ -139,7 +139,7 @@ fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<Q
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coin, HumanAddr};
+    use cosmwasm_std::{coin, from_binary, HumanAddr};
 
     fn create_contract() -> (Extern<MockStorage, MockApi, MockQuerier>, Env) {
         let mut deps = mock_dependencies(20);
@@ -152,13 +152,13 @@ mod tests {
 
     fn get_count(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> u32 {
         let data = query(deps, QueryMsg::Count {}).unwrap();
-        let res: CountResponse = from_slice(data.as_slice()).unwrap();
+        let res: CountResponse = from_binary(&data).unwrap();
         res.count
     }
 
     fn get_sum(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> i32 {
         let data = query(deps, QueryMsg::Sum {}).unwrap();
-        let res: SumResponse = from_slice(data.as_slice()).unwrap();
+        let res: SumResponse = from_binary(&data).unwrap();
         res.sum
     }
 
