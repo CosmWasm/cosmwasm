@@ -34,11 +34,14 @@ static ERROR_WRITE_TO_REGION_UNKNOWN: i32 = -1_000_001;
 static ERROR_WRITE_TO_REGION_TOO_SMALL: i32 = -1_000_002;
 /// An unknown error occurred when reading region
 static ERROR_READ_FROM_REGION_UNKNOWN: i32 = -1_000_101;
+/// The contract sent us a Region we're not willing to read because it is too big
+static ERROR_READ_REGION_LENGTH_TOO_BIG: i32 = -1_000_102;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
     let mut value: Option<Vec<u8>> = None;
@@ -57,10 +60,12 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
 pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
     let value = match read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE) {
         Ok(data) => data,
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
     with_storage_from_context::<S, Q, _>(ctx, |store| store.set(&key, &value));
@@ -70,6 +75,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
     with_storage_from_context::<S, Q, _>(ctx, |store| store.remove(&key));
@@ -84,6 +90,7 @@ pub fn do_canonical_address<A: Api>(
 ) -> i32 {
     let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_ADDRESS) {
         Ok(data) => data,
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
     let human = match String::from_utf8(human_data) {
@@ -103,6 +110,7 @@ pub fn do_canonical_address<A: Api>(
 pub fn do_human_address<A: Api>(api: A, ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32) -> i32 {
     let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_ADDRESS) {
         Ok(data) => Binary(data),
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
     match api.human_address(&CanonicalAddr(canonical)) {
@@ -123,6 +131,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 ) -> i32 {
     let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY) {
         Ok(data) => data,
+        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
         Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
     };
 
@@ -178,10 +187,12 @@ mod iter_support {
     ) -> i32 {
         let start = match maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY) {
             Ok(data) => data,
+            Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
             Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
         };
         let end = match maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY) {
             Ok(data) => data,
+            Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_READ_REGION_LENGTH_TOO_BIG,
             Err(_) => return ERROR_READ_FROM_REGION_UNKNOWN,
         };
         let order: Order = match order.try_into() {
