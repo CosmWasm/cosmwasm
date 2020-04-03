@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::any::type_name;
 
+use crate::encoding::Binary;
 use crate::errors::{ParseErr, Result, SerializeErr};
 
 pub fn from_slice<'a, T>(value: &'a [u8]) -> Result<T>
@@ -17,6 +18,13 @@ where
     })
 }
 
+pub fn from_binary<'a, T>(value: &'a Binary) -> Result<T>
+where
+    T: Deserialize<'a>,
+{
+    from_slice(value.as_slice())
+}
+
 pub fn to_vec<T>(data: &T) -> Result<Vec<u8>>
 where
     T: Serialize + ?Sized,
@@ -24,4 +32,11 @@ where
     serde_json_wasm::to_vec(data).context(SerializeErr {
         kind: type_name::<T>(),
     })
+}
+
+pub fn to_binary<T>(data: &T) -> Result<Binary>
+where
+    T: Serialize + ?Sized,
+{
+    to_vec(data).map(|t| Binary(t))
 }

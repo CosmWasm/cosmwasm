@@ -21,7 +21,7 @@ pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
 pub use crate::query::{BalanceResponse, QueryRequest, QueryResponse, QueryResult};
-pub use crate::serde::{from_slice, to_vec};
+pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{
     Api, ApiQuerierResponse, Extern, Querier, QuerierResponse, ReadonlyStorage, Storage,

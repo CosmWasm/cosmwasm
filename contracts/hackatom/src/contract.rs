@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg,
-    Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryRequest,
-    QueryResponse, Result, Storage,
+    dyn_contract_err, from_binary, from_slice, log, to_vec, unauthorized, Api, Binary,
+    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
+    Querier, QueryRequest, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -246,7 +246,7 @@ mod tests {
             address: HumanAddr::from("someone else"),
         };
         let query_response = query(&deps, query_msg).unwrap();
-        let bal: BalanceResponse = from_slice(query_response.as_slice()).unwrap();
+        let bal: BalanceResponse = from_binary(&query_response).unwrap();
         assert_eq!(bal.amount, None);
     }
 
