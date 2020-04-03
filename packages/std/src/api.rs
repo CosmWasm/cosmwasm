@@ -121,7 +121,7 @@ impl From<Error> for ApiError {
 /// is an "api friendly" version of Error
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ApiSystemError {
-    InvalidRequest { source: String },
+    InvalidRequest { error: String },
     NoSuchContract { addr: HumanAddr },
     Unknown {},
 }
@@ -131,8 +131,8 @@ impl std::error::Error for ApiSystemError {}
 impl std::fmt::Display for ApiSystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiSystemError::InvalidRequest { source } => {
-                write!(f, "Cannot parse request: {}", source)
+            ApiSystemError::InvalidRequest { error } => {
+                write!(f, "Cannot parse request: {}", error)
             }
             ApiSystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
             ApiSystemError::Unknown {} => write!(f, "Unknown system error"),
@@ -143,9 +143,7 @@ impl std::fmt::Display for ApiSystemError {
 impl From<SystemError> for ApiSystemError {
     fn from(value: SystemError) -> Self {
         match value {
-            SystemError::InvalidRequest { source, .. } => ApiSystemError::InvalidRequest {
-                source: format!("{}", source),
-            },
+            SystemError::InvalidRequest { error, .. } => ApiSystemError::InvalidRequest { error },
             SystemError::NoSuchContract { addr, .. } => ApiSystemError::NoSuchContract { addr },
             SystemError::Unknown { .. } => ApiSystemError::Unknown {},
         }
@@ -337,7 +335,10 @@ mod test_errors {
 
     #[test]
     fn invalid_request_conversion() {
-        let err = Err(serde_json_wasm::de::Error::ExpectedSomeValue).context(InvalidRequest {});
+        let err = InvalidRequest {
+            error: "Unknown field `swap`".to_string(),
+        }
+        .fail();
         assert_system_conversion(err);
     }
 

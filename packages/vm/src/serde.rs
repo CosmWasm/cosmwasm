@@ -12,7 +12,7 @@ pub fn from_slice<'a, T>(value: &'a [u8]) -> Result<T>
 where
     T: Deserialize<'a>,
 {
-    serde_json_wasm::from_slice(value).context(ParseErr {
+    serde_json::from_slice(value).context(ParseErr {
         kind: type_name::<T>(),
     })
 }
@@ -21,7 +21,7 @@ pub fn to_vec<T>(data: &T) -> Result<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_vec(data).context(SerializeErr {
+    serde_json::to_vec(data).context(SerializeErr {
         kind: type_name::<T>(),
     })
 }
