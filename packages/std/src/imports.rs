@@ -224,14 +224,14 @@ impl ExternalQuerier {
 
 impl Querier for ExternalQuerier {
     fn query(&self, request: &QueryRequest) -> QuerierResponse {
-        let bin_request = to_vec(request).or(Err(ApiSystemError::UnknownError {}))?;
+        let bin_request = to_vec(request).or(Err(ApiSystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let req_ptr = &*req as *const Region as *const c_void;
         let resp = alloc(QUERY_BUFFER);
 
         let ret = unsafe { query_chain(req_ptr, resp) };
         if ret < 0 {
-            return Err(ApiSystemError::UnknownError {});
+            return Err(ApiSystemError::Unknown {});
         }
 
         let parse = |r| -> Result<QuerierResponse> {
