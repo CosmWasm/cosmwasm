@@ -9,8 +9,8 @@ use wasmer_runtime_core::vm::Ctx;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
 use cosmwasm_std::{
-    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr,
-    Querier, QuerierResponse, QueryRequest, Storage,
+    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier,
+    QuerierResponse, QueryRequest, Storage,
 };
 
 #[cfg(feature = "iterator")]

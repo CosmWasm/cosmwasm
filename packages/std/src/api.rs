@@ -337,7 +337,8 @@ mod test_errors {
     fn invalid_request_conversion() {
         let err = InvalidRequest {
             error: "Unknown field `swap`".to_string(),
-        }.fail();
+        }
+        .fail();
         assert_system_conversion(err);
     }
 
