@@ -17,11 +17,14 @@ Compatibility:
 
 ## Overview
 
-This crate provides the bindings and all imports needed to build a smart contract.
-However, to get that contract to interact with a system needs many moving parts.
+To get that contract to interact with a system needs many moving parts.
 To get oriented, here is a list of the various components of the CosmWasm ecosystem:
 
-* [cosmwasm](https://github.com/CosmWasm/cosmwasm) - This crate. All needed functionality and no more - to build a small, efficient wasm smart contract.
+**Standard library:**
+
+This code is compiled into Wasm bytecode as part of the smart contract.
+
+* [cosmwasm-std](https://github.com/CosmWasm/cosmwasm/tree/master/packages/std) - A crate in this workspace. Provides the bindings and all imports needed to build a smart contract.
 
 **Building contracts:**
 
@@ -36,8 +39,8 @@ around 40% of the code size.
 
 **Executing contracts:**
 
-* [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm) - A sub-crate. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
-to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts. Read more [here](packages/vm/README.md).
+* [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm) - A crate in this workspace. Uses the [wasmer](https://github.com/wasmerio/wasmer) engine
+to execute a given smart contract. Also contains code for gas metering, storing, and caching wasm artifacts.
 * [go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm) - High-level go bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload, instantiate and execute contracts,
 making use of all the optimizations and caching available inside `cosmwasm-vm`.
 * [wasmd](https://github.com/CosmWasm/wasmd) - A basic Cosmos SDK app to host WebAssembly smart contracts.
