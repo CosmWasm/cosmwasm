@@ -35,7 +35,7 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Vec<u8>> {
     if region.length > to_u32(max_length)? {
         return RegionLengthTooBigErr {
             length: region.length as usize,
-            max_length: max_length,
+            max_length,
         }
         .fail();
     }

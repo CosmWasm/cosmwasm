@@ -75,7 +75,7 @@ where
                     {
                         // get rid of unused argument warning
                         let (_, _, _, _) = (ctx, start_ptr, end_ptr, order);
-                        return 0;
+                        0
                     }
                     #[cfg(feature = "iterator")]
                     do_scan::<S>(ctx, start_ptr, end_ptr, order)
@@ -88,7 +88,7 @@ where
                     {
                         // get rid of unused argument warning
                         let (_, _, _) = (ctx, key_ptr, value_ptr);
-                        return 0;
+                        0
                     }
                     #[cfg(feature = "iterator")]
                     do_next::<S>(ctx, key_ptr, value_ptr)
@@ -121,7 +121,7 @@ where
         set_gas(&mut wasmer_instance, gas_limit);
         leave_storage(wasmer_instance.context(), Some(deps.storage));
         Instance {
-            wasmer_instance: wasmer_instance,
+            wasmer_instance,
             api: deps.api,
             type_storage: PhantomData::<S> {},
         }
@@ -132,7 +132,7 @@ where
     pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A>>) {
         let ext = if let Some(storage) = take_storage(instance.wasmer_instance.context()) {
             Some(Extern {
-                storage: storage,
+                storage,
                 api: instance.api,
             })
         } else {

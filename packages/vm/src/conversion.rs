@@ -7,12 +7,14 @@ use crate::errors::{ConversionErr, Result};
 /// Safely converts input of type T to u32.
 /// Errors with a cosmwasm_vm::errors::Error::ConversionErr if conversion cannot be done.
 pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> Result<u32> {
-    input.try_into().or(ConversionErr {
-        from_type: type_name::<T>(),
-        to_type: type_name::<u32>(),
-        input: format!("{}", input),
-    }
-    .fail())
+    input.try_into().or_else(|_| {
+        ConversionErr {
+            from_type: type_name::<T>(),
+            to_type: type_name::<u32>(),
+            input: format!("{}", input),
+        }
+        .fail()
+    })
 }
 
 #[cfg(test)]

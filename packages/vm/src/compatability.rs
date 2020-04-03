@@ -93,7 +93,7 @@ fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<Str
     let available_exports: Vec<String> = match module.export_section() {
         Some(export_section) => Vec::from(export_section.entries())
             .iter()
-            .map(|entry| format!("{}", entry.field()))
+            .map(|entry| entry.field().to_string())
             .collect(),
         None => vec![],
     };

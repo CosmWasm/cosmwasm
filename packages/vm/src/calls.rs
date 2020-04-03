@@ -45,10 +45,12 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static>(
 
     // Ensure query response is valid JSON
     if let Ok(binary_response) = &result {
-        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).or(RuntimeErr {
-            msg: "Query response must be valid JSON",
-        }
-        .fail())?;
+        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).or_else(|_| {
+            RuntimeErr {
+                msg: "Query response must be valid JSON",
+            }
+            .fail()
+        })?;
     }
 
     Ok(result)
