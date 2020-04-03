@@ -163,13 +163,12 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     address: HumanAddr,
 ) -> Result<QueryResponse> {
     let request = QueryRequest::Balance { address };
-    let response = match deps.querier.query(&request) {
+    match deps.querier.query(&request) {
         Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
         Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
+        // in theory we would process the response, but here it is the same type, so just pass through
         Ok(Ok(res)) => Ok(res),
-    }?;
-    // in theory we would process the response, but here it is the same type, so just pass through
-    Ok(response)
+    }
 }
 
 #[cfg(test)]
