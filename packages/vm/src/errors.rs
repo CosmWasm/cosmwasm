@@ -35,13 +35,13 @@ pub enum Error {
     #[snafu(display("Parse error: {}", source))]
     ParseErr {
         kind: &'static str,
-        source: serde_json_wasm::de::Error,
+        source: serde_json::Error,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Serialize error: {}", source))]
     SerializeErr {
         kind: &'static str,
-        source: serde_json_wasm::ser::Error,
+        source: serde_json::Error,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Resolving wasm function: {}", source))]

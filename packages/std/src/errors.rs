@@ -71,9 +71,9 @@ pub enum Error {
 /// the QueryRequest is malformated, etc. The second wrap will be an error message from
 /// the contract itself.
 pub enum SystemError {
-    #[snafu(display("Cannot parse request: {}", source))]
+    #[snafu(display("Cannot parse request: {}", error))]
     InvalidRequest {
-        source: serde_json_wasm::de::Error,
+        error: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("No such contract: {}", addr))]
