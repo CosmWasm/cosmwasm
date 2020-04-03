@@ -24,10 +24,10 @@ use crate::errors::Error;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
 
-static MAX_LENGTH_DB_KEY: usize = 2_000;
+static MAX_LENGTH_DB_KEY: usize = 100_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
 static MAX_LENGTH_ADDRESS: usize = 200;
-static MAX_LENGTH_QUERY: usize = 2_000;
+static MAX_LENGTH_QUERY: usize = 100_000;
 
 /// An unknown error occurred when writing to region
 static ERROR_WRITE_TO_REGION_UNKNOWN: i32 = -1_000_001;
