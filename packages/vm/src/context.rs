@@ -40,6 +40,8 @@ static ERROR_REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_102;
 static ERROR_CANONICALIZE_UNKNOWN: i32 = -1_000_201;
 /// The input address (human address) was invalid
 static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
+/// An unknonw error when humanizing address
+static ERROR_HUMANIZE_UNKNOWN: i32 = -1_000_301;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -128,7 +130,7 @@ pub fn do_humanize_address<A: Api>(
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
-        Err(_) => -1,
+        Err(_) => ERROR_HUMANIZE_UNKNOWN,
     }
 }
 
