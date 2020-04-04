@@ -241,18 +241,20 @@ mod iter_support {
         // prepare return values
         let (key, value) = match item {
             Some(item) => item,
-            None => return SUCCESS,
+            None => return SUCCESS, // Return early without writing key. Empty key will later be treated as _no more element_.
         };
+
         match write_region(ctx, key_ptr, &key) {
-            Ok(()) => SUCCESS,
+            Ok(()) => (),
             Err(Error::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
         };
         match write_region(ctx, value_ptr, &value) {
-            Ok(()) => SUCCESS,
-            Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
-            Err(_) => ERROR_REGION_WRITE_UNKNOWN,
-        }
+            Ok(()) => (),
+            Err(Error::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
+            Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
+        };
+        SUCCESS
     }
 
     // if ptr is None, find a new slot.
