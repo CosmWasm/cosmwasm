@@ -1,6 +1,4 @@
-/**
-Internal details to be used by instance.rs only
-**/
+//! Internal details to be used by instance.rs only
 use std::ffi::c_void;
 use std::mem;
 
