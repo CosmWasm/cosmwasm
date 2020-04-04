@@ -28,6 +28,7 @@ static MAX_LENGTH_DB_VALUE: usize = 100_000;
 static MAX_LENGTH_ADDRESS: usize = 200;
 static MAX_LENGTH_QUERY: usize = 100_000;
 
+static SUCCESS: i32 = 0;
 /// An unknown error occurred when writing to region
 static ERROR_REGION_WRITE_UNKNOWN: i32 = -1_000_001;
 /// Could not write to region because it is too small
@@ -58,11 +59,11 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
     with_storage_from_context::<S, Q, _>(ctx, |store| value = store.get(&key));
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
-            Ok(()) => 0,
+            Ok(()) => SUCCESS,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
-        None => 0,
+        None => SUCCESS,
     }
 }
 
@@ -79,7 +80,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     with_storage_from_context::<S, Q, _>(ctx, |store| store.set(&key, &value));
-    0
+    SUCCESS
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
@@ -89,7 +90,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     with_storage_from_context::<S, Q, _>(ctx, |store| store.remove(&key));
-    0
+    SUCCESS
 }
 
 pub fn do_canonicalize_address<A: Api>(
@@ -109,7 +110,7 @@ pub fn do_canonicalize_address<A: Api>(
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
-            Ok(()) => 0,
+            Ok(()) => SUCCESS,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
@@ -130,7 +131,7 @@ pub fn do_humanize_address<A: Api>(
     };
     match api.human_address(&CanonicalAddr(canonical)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
-            Ok(()) => 0,
+            Ok(()) => SUCCESS,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
@@ -171,7 +172,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 
     match to_vec(&api_res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
-            Ok(()) => 0,
+            Ok(()) => SUCCESS,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
@@ -222,7 +223,7 @@ mod iter_support {
                 unsafe { mem::transmute(iter) };
             leave_iterator::<S, Q>(ctx, live_forever);
             leave_storage::<S, Q>(ctx, Some(store));
-            0
+            SUCCESS
         } else {
             ERROR_NO_STORAGE
         }
@@ -240,17 +241,15 @@ mod iter_support {
         // prepare return values
         let (key, value) = match item {
             Some(item) => item,
-            None => {
-                return 0;
-            }
+            None => return SUCCESS,
         };
         match write_region(ctx, key_ptr, &key) {
-            Ok(()) => 0,
+            Ok(()) => SUCCESS,
             Err(Error::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
         };
         match write_region(ctx, value_ptr, &value) {
-            Ok(()) => 0,
+            Ok(()) => SUCCESS,
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         }
