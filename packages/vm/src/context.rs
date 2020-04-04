@@ -42,6 +42,10 @@ static ERROR_CANONICALIZE_UNKNOWN: i32 = -1_000_201;
 static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
 /// An unknonw error when humanizing address
 static ERROR_HUMANIZE_UNKNOWN: i32 = -1_000_301;
+/// An unknonw error when querying the chain
+// static ERROR_QUERY_CHAIN_UNKNOWN: i32 = -1_000_401;
+/// Cannot serialize query response
+static ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -171,8 +175,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
             Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
-        // TODO: other error code?
-        Err(_) => -1,
+        Err(_) => ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE,
     }
 }
 
