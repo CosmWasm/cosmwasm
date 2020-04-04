@@ -8,13 +8,13 @@
 **WebAssembly Smart Contracts for the Cosmos SDK**
 
 This repo provides a useful functionality to build smart contracts that
-are compatible with a Cosmos SDK based runtime, [`wasmd`](https://github.com/CosmWasm/wasmd).
+are compatible with a Cosmos SDK based runtime, [wasmd](https://github.com/CosmWasm/wasmd).
 
 Compatibility:
 
-* Contracts built with CosmWasm `v0.8.x` (unreleased) will run on `wasmd` `v0.8.x` (unreleased) (master branch)
-* Contracts built with CosmWasm `v0.7.x` will run on `wasmd` `v0.7.x` (0.7 branch)
-* Contracts built with CosmWasm `v0.6.3+` will run on `wasmd` `v0.6.x`
+* Contracts built with CosmWasm `v0.8.x` (unreleased) will run on wasmd `v0.8.x` (unreleased) (master branch)
+* Contracts built with CosmWasm `v0.7.x` will run on wasmd `v0.7.x` (0.7 branch)
+* Contracts built with CosmWasm `v0.6.3+` will run on wasmd `v0.6.x`
 
 ## Overview
 
