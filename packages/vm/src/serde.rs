@@ -1,7 +1,7 @@
-// This file simply re-exports some methods from serde_json
-// The reason is two fold:
-// 1. To easily ensure that all calling libraries use the same version (minimize code size)
-// 2. To allow us to switch out to eg. serde-json-core more easily
+//! This file simply re-exports some methods from serde_json
+//! The reason is two fold:
+//! 1. To easily ensure that all calling libraries use the same version (minimize code size)
+//! 2. To allow us to switch out to eg. serde-json-core more easily
 use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::any::type_name;

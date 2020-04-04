@@ -1,6 +1,6 @@
-// This file has some helpers for integration tests.
-// They should be imported via full path to ensure there is no confusion
-// use cosmwasm_vm::testing::X
+//! This file has some helpers for integration tests.
+//! They should be imported via full path to ensure there is no confusion
+//! use cosmwasm_vm::testing::X
 use serde::Serialize;
 // JsonSchema is a flag for types meant to be publically exposed
 use schemars::JsonSchema;
