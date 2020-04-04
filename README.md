@@ -30,9 +30,9 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 
 * [cosmwasm-template](https://github.com/CosmWasm/cosmwasm-template) - A starter-pack to get you quickly building your custom contract compatible with the cosmwasm system.
 * [cosmwasm-examples](https://github.com/CosmWasm/cosmwasm-examples) - Some sample contracts (build with cosmwasm-template) for use and inspiration. Please submit your contract via PR.
-* [cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt) - A docker image and scripts to take your rust code and produce the smallest possible wasm output. *Deterministically*
-This is designed both for preparing contracts for deployment as well as validating that a given deployed contract is based on some given rust code.,
-allow a [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945) as etherscan.
+* [cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt) - A docker image and scripts to take your Rust code and produce the smallest possible Wasm output, deterministically.
+This is designed both for preparing contracts for deployment as well as validating that a given deployed contract is based on some given source code,
+allowing a [similar contract verification algorithm](https://medium.com/coinmonks/how-to-verify-and-publish-on-etherscan-52cf25312945) as Etherscan.
 * [serde-json-wasm](https://github.com/CosmWasm/serde-json-wasm) - A custom json library, forked from `serde-json-core`. This provides an interface similar to
 `serde-json`, but without ay floating-point instructions (non-deterministic) and producing builds
 around 40% of the code size.
