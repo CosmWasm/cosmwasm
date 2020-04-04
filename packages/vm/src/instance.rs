@@ -77,7 +77,7 @@ where
                     {
                         // get rid of unused argument warning
                         let (_, _, _, _) = (ctx, start_ptr, end_ptr, order);
-                        0
+                        -1
                     }
                     #[cfg(feature = "iterator")]
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
@@ -90,7 +90,7 @@ where
                     {
                         // get rid of unused argument warning
                         let (_, _, _) = (ctx, key_ptr, value_ptr);
-                        0
+                        -1
                     }
                     #[cfg(feature = "iterator")]
                     do_next::<S, Q>(ctx, key_ptr, value_ptr)
