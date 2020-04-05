@@ -42,10 +42,12 @@ where
     }
 
     pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
+        let allow_db_write = true;
+
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
-        let import_obj = imports! {
-            || { setup_context::<S, Q>() },
+
+        let ro_imports = imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
@@ -54,19 +56,6 @@ where
                 // Ownership of both input and output pointer is not transferred to the host.
                 "read_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S, Q>(ctx, key_ptr, value_ptr)
-                }),
-                // Writes the given value into the database entry at the given key.
-                // Ownership of both input and output pointer is not transferred to the host.
-                // Returns 0 on success. Returns negative value on error.
-                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
-                    do_write::<S, Q>(ctx, key_ptr, value_ptr)
-                }),
-                // Removes the value at the given key. Different than writing &[] as future
-                // scans will not find this key.
-                // Ownership of both key pointer is not transferred to the host.
-                // Returns 0 on success. Returns negative value on error.
-                "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
-                    do_remove::<S, Q>(ctx, key_ptr)
                 }),
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
@@ -114,6 +103,31 @@ where
                 }),
             },
         };
+
+        let rw_imports = imports! {
+            "env" => {
+                // Writes the given value into the database entry at the given key.
+                // Ownership of both input and output pointer is not transferred to the host.
+                // Returns 0 on success. Returns negative value on error.
+                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                    do_write::<S, Q>(ctx, key_ptr, value_ptr)
+                }),
+                // Removes the value at the given key. Different than writing &[] as future
+                // scans will not find this key.
+                // Ownership of both key pointer is not transferred to the host.
+                // Returns 0 on success. Returns negative value on error.
+                "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
+                    do_remove::<S, Q>(ctx, key_ptr)
+                }),
+            },
+        };
+
+        let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
+        import_obj.extend(ro_imports);
+        if allow_db_write {
+            import_obj.extend(rw_imports);
+        }
+
         let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
