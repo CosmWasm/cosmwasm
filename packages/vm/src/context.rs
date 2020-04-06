@@ -278,7 +278,7 @@ mod iter_support {
 /** context data **/
 
 struct ContextData<S: Storage, Q: Querier> {
-    data: Option<S>,
+    storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
     iter: Option<Box<dyn Iterator<Item = KV>>>,
@@ -293,7 +293,7 @@ pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void))
 
 fn create_unmanaged_storage<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
-        data: None,
+        storage: None,
         querier: None,
         #[cfg(feature = "iterator")]
         iter: None,
@@ -345,20 +345,20 @@ pub fn take_storage<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<S> {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     // we do this to avoid cleanup
     let mut b = mem::ManuallyDrop::new(b);
-    b.data.take()
+    b.storage.take()
 }
 
 pub fn leave_storage<S: Storage, Q: Querier>(ctx: &Ctx, storage: Option<S>) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     // we do this to avoid cleanup
     let mut b = mem::ManuallyDrop::new(b);
-    b.data = storage;
+    b.storage = storage;
 }
 
 pub fn take_context_data<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>, Option<Q>) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b);
-    (b.data.take(), b.querier.take())
+    (b.storage.take(), b.querier.take())
 }
 
 pub fn leave_context_data<S: Storage, Q: Querier>(
@@ -368,6 +368,6 @@ pub fn leave_context_data<S: Storage, Q: Querier>(
 ) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-    b.data = storage;
+    b.storage = storage;
     b.querier = querier;
 }
