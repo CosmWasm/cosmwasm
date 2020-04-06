@@ -470,7 +470,9 @@ mod test {
     fn leave_default_data(instance: &Instance) {
         // create some mock data
         let mut storage = MockStorage::new();
-        storage.set(INIT_KEY, INIT_VALUE);
+        storage
+            .set(INIT_KEY, INIT_VALUE)
+            .expect("error setting value");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coin(INIT_AMOUNT, INIT_DENOM))]);
         move_from_context(instance.context(), storage, querier);
@@ -514,7 +516,7 @@ mod test {
         let set_value: &[u8] = b"data";
 
         with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-            store.set(set_key, set_value);
+            store.set(set_key, set_value).expect("error setting value");
             Ok(())
         })
         .unwrap();
@@ -547,7 +549,9 @@ mod test {
         // add some more data
         let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
         with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-            store.set(next_key, next_value);
+            store
+                .set(next_key, next_value)
+                .expect("error setting value");
             Ok(())
         })
         .unwrap();
@@ -596,7 +600,9 @@ mod test {
         // add some more data
         let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
         with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-            store.set(next_key, next_value);
+            store
+                .set(next_key, next_value)
+                .expect("error setting value");
             Ok(())
         })
         .unwrap();

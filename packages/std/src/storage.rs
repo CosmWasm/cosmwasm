@@ -2,6 +2,7 @@ use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
+use crate::errors::Result;
 #[cfg(feature = "iterator")]
 use crate::traits::{KVRef, Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
@@ -67,11 +68,14 @@ impl<'a, T: Iterator<Item = KVRef<'a>>> Iterator for IterVec<'a, T> {
 }
 
 impl Storage for MemoryStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
         self.data.insert(key.to_vec(), value.to_vec());
+        Ok(())
     }
-    fn remove(&mut self, key: &[u8]) {
+
+    fn remove(&mut self, key: &[u8]) -> Result<()> {
         self.data.remove(key);
+        Ok(())
     }
 }
 
@@ -88,12 +92,12 @@ pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
     assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
 
     // setup - add some data, and delete part of it as well
-    store.set(b"ant", b"hill");
-    store.set(b"ze", b"bra");
+    store.set(b"ant", b"hill").expect("error setting value");
+    store.set(b"ze", b"bra").expect("error setting value");
 
     // noise that should be ignored
-    store.set(b"bye", b"bye");
-    store.remove(b"bye");
+    store.set(b"bye", b"bye").expect("error setting value");
+    store.remove(b"bye").expect("error removing key");
 
     // open ended range
     {
@@ -172,7 +176,7 @@ mod test {
     fn get_and_set() {
         let mut store = MemoryStorage::new();
         assert_eq!(None, store.get(b"foo"));
-        store.set(b"foo", b"bar");
+        store.set(b"foo", b"bar").unwrap();
         assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
         assert_eq!(None, store.get(b"food"));
     }
@@ -180,9 +184,9 @@ mod test {
     #[test]
     fn delete() {
         let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar");
-        store.set(b"food", b"bank");
-        store.remove(b"foo");
+        store.set(b"foo", b"bar").unwrap();
+        store.set(b"food", b"bank").unwrap();
+        store.remove(b"foo").unwrap();
 
         assert_eq!(None, store.get(b"foo"));
         assert_eq!(Some(b"bank".to_vec()), store.get(b"food"));
@@ -192,7 +196,7 @@ mod test {
     #[cfg(feature = "iterator")]
     fn iterator() {
         let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar");
+        store.set(b"foo", b"bar").expect("error setting value");
         iterator_test_suite(&mut store);
     }
 }

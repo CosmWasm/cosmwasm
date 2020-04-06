@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::{ContractErr, Result};
+use crate::errors::{dyn_contract_err, ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
@@ -121,7 +121,7 @@ impl ReadonlyStorage for ExternalStorage {
 }
 
 impl Storage for ExternalStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
@@ -129,20 +129,23 @@ impl Storage for ExternalStorage {
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         let result = unsafe { db_write(key_ptr, value_ptr) };
         if result < 0 {
-            // TODO: convert to Result, but this requires changing the trait
-            panic!("Error writing to database");
+            return dyn_contract_err(format!("Error writing to database. Error code: {}", result));
         }
+        Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) {
+    fn remove(&mut self, key: &[u8]) -> Result<()> {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
         let result = unsafe { db_remove(key_ptr) };
         if result < 0 {
-            // TODO: convert to Result, but this requires changing the trait
-            panic!("Error deleting from database");
+            return dyn_contract_err(format!(
+                "Error deleting from database. Error code: {}",
+                result
+            ));
         }
+        Ok(())
     }
 }
 

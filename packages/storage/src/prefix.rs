@@ -1,4 +1,4 @@
-use cosmwasm_std::{ReadonlyStorage, Storage};
+use cosmwasm_std::{ReadonlyStorage, Result, Storage};
 
 use crate::namespace_helpers::{
     get_with_prefix, key_prefix, key_prefix_nested, remove_with_prefix, set_with_prefix,
@@ -76,11 +76,11 @@ impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
 }
 
 impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
         set_with_prefix(self.storage, &self.prefix, key, value)
     }
 
-    fn remove(&mut self, key: &[u8]) {
+    fn remove(&mut self, key: &[u8]) -> Result<()> {
         remove_with_prefix(self.storage, &self.prefix, key)
     }
 }
@@ -96,7 +96,7 @@ mod test {
 
         // we use a block scope here to release the &mut before we use it in the next storage
         let mut foo = PrefixedStorage::new(b"foo", &mut storage);
-        foo.set(b"bar", b"gotcha");
+        foo.set(b"bar", b"gotcha").unwrap();
         assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
 
         // try readonly correctly
@@ -119,7 +119,7 @@ mod test {
         // set with nested
         let mut foo = PrefixedStorage::new(b"foo", &mut storage);
         let mut bar = PrefixedStorage::new(b"bar", &mut foo);
-        bar.set(b"baz", b"winner");
+        bar.set(b"baz", b"winner").unwrap();
 
         // we can nest them the same encoding with one operation
         let loader = ReadonlyPrefixedStorage::multilevel(&[b"foo", b"bar"], &storage);
@@ -127,7 +127,7 @@ mod test {
 
         // set with multilevel
         let mut foobar = PrefixedStorage::multilevel(&[b"foo", b"bar"], &mut storage);
-        foobar.set(b"second", b"time");
+        foobar.set(b"second", b"time").unwrap();
 
         let a = ReadonlyPrefixedStorage::new(b"foo", &storage);
         let b = ReadonlyPrefixedStorage::new(b"bar", &a);

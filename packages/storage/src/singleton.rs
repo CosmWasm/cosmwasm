@@ -53,8 +53,7 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, data: &T) -> Result<()> {
-        self.storage.set(&self.key, &to_vec(data)?);
-        Ok(())
+        self.storage.set(&self.key, &to_vec(data)?)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
