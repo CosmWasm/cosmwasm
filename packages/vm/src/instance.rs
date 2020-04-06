@@ -36,14 +36,22 @@ where
     A: Api + 'static,
     Q: Querier + 'static,
 {
-    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
+    pub fn from_code(
+        code: &[u8],
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+        allow_db_write: bool,
+    ) -> Result<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, deps, gas_limit)
+        Instance::from_module(&module, deps, gas_limit, allow_db_write)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
-        let allow_db_write = true;
-
+    pub fn from_module(
+        module: &Module,
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+        allow_db_write: bool,
+    ) -> Result<Self> {
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
 

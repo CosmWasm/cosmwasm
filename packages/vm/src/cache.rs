@@ -96,6 +96,7 @@ where
         id: &[u8],
         deps: Extern<S, A, Q>,
         gas_limit: u64,
+        allow_db_write: bool,
     ) -> Result<Instance<S, A, Q>, Error> {
         let hash = WasmHash::generate(&id);
 
@@ -103,6 +104,7 @@ where
         if let Some(cache) = &mut self.instances {
             if let Some(cached_instance) = cache.pop(&hash) {
                 self.stats.hits_instance += 1;
+                // Cannot override db writable flag here
                 return Ok(Instance::from_wasmer(cached_instance, deps, gas_limit));
             }
         }
@@ -111,13 +113,13 @@ where
         let res = self.modules.load_with_backend(hash, backend());
         if let Ok(module) = res {
             self.stats.hits_module += 1;
-            return Instance::from_module(&module, deps, gas_limit);
+            return Instance::from_module(&module, deps, gas_limit, allow_db_write);
         }
 
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
         let wasm = self.load_wasm(id)?;
         self.stats.misses += 1;
-        Instance::from_code(&wasm, deps, gas_limit)
+        Instance::from_code(&wasm, deps, gas_limit, allow_db_write)
     }
 
     pub fn store_instance(
@@ -198,7 +200,9 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(20);
-        let _instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
+        let _instance = cache
+            .get_instance(&id, deps, TESTING_GAS_LIMIT, true)
+            .unwrap();
         assert_eq!(cache.stats.hits_instance, 0);
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.misses, 0);
@@ -212,11 +216,17 @@ mod test {
         let deps1 = mock_dependencies(20);
         let deps2 = mock_dependencies(20);
         let deps3 = mock_dependencies(20);
-        let instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
+        let instance1 = cache
+            .get_instance(&id, deps1, TESTING_GAS_LIMIT, true)
+            .unwrap();
         cache.store_instance(&id, instance1);
-        let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        let instance2 = cache
+            .get_instance(&id, deps2, TESTING_GAS_LIMIT, true)
+            .unwrap();
         cache.store_instance(&id, instance2);
-        let instance3 = cache.get_instance(&id, deps3, TESTING_GAS_LIMIT).unwrap();
+        let instance3 = cache
+            .get_instance(&id, deps3, TESTING_GAS_LIMIT, true)
+            .unwrap();
         cache.store_instance(&id, instance3);
         assert_eq!(cache.stats.hits_instance, 2);
         assert_eq!(cache.stats.hits_module, 1);
@@ -229,7 +239,9 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(20);
-        let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
+        let mut instance = cache
+            .get_instance(&id, deps, TESTING_GAS_LIMIT, true)
+            .unwrap();
 
         // run contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -247,7 +259,9 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(20);
-        let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
+        let mut instance = cache
+            .get_instance(&id, deps, TESTING_GAS_LIMIT, true)
+            .unwrap();
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
@@ -280,7 +294,9 @@ mod test {
         let deps2 = mock_dependencies(20);
 
         // init instance 1
-        let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
+        let mut instance = cache
+            .get_instance(&id, deps1, TESTING_GAS_LIMIT, true)
+            .unwrap();
         let env = mock_env(&instance.api, "owner1", &coin("1000", "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg).unwrap();
@@ -289,7 +305,9 @@ mod test {
         let deps1 = cache.store_instance(&id, instance).unwrap();
 
         // init instance 2
-        let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        let mut instance = cache
+            .get_instance(&id, deps2, TESTING_GAS_LIMIT, true)
+            .unwrap();
         let env = mock_env(&instance.api, "owner2", &coin("500", "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg).unwrap();
@@ -298,7 +316,9 @@ mod test {
         let deps2 = cache.store_instance(&id, instance).unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        let mut instance = cache
+            .get_instance(&id, deps2, TESTING_GAS_LIMIT, true)
+            .unwrap();
         let env = mock_env(
             &instance.api,
             "bob",
@@ -312,7 +332,9 @@ mod test {
         let _ = cache.store_instance(&id, instance).unwrap();
 
         // run contract 1 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
+        let mut instance = cache
+            .get_instance(&id, deps1, TESTING_GAS_LIMIT, true)
+            .unwrap();
         let env = mock_env(
             &instance.api,
             "sue",
@@ -337,7 +359,9 @@ mod test {
         let deps2 = mock_dependencies(20);
 
         // Init from module cache
-        let mut instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
+        let mut instance1 = cache
+            .get_instance(&id, deps1, TESTING_GAS_LIMIT, true)
+            .unwrap();
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 0);
         assert_eq!(cache.stats.misses, 0);
@@ -351,7 +375,9 @@ mod test {
         cache.store_instance(&id, instance1).unwrap();
 
         // Init from instance cache
-        let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        let instance2 = cache
+            .get_instance(&id, deps2, TESTING_GAS_LIMIT, true)
+            .unwrap();
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 1);
         assert_eq!(cache.stats.misses, 0);
@@ -369,7 +395,7 @@ mod test {
         let deps2 = mock_dependencies(20);
 
         // Init from module cache
-        let mut instance1 = cache.get_instance(&id, deps1, 10).unwrap();
+        let mut instance1 = cache.get_instance(&id, deps1, 10, true).unwrap();
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 0);
         assert_eq!(cache.stats.misses, 0);
@@ -386,7 +412,9 @@ mod test {
         cache.store_instance(&id, instance1).unwrap();
 
         // Init from instance cache
-        let mut instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        let mut instance2 = cache
+            .get_instance(&id, deps2, TESTING_GAS_LIMIT, true)
+            .unwrap();
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 1);
         assert_eq!(cache.stats.misses, 0);

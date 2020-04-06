@@ -34,9 +34,10 @@ pub fn mock_instance_with_gas_limit(
     balances: &[(&HumanAddr, &[Coin])],
     gas_limit: u64,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
+    let allow_db_write = true;
     check_wasm(wasm).unwrap();
     let deps = mock_dependencies_with_balances(20, balances);
-    Instance::from_code(wasm, deps, gas_limit).unwrap()
+    Instance::from_code(wasm, deps, gas_limit, allow_db_write).unwrap()
 }
 
 // init mimicks the call signature of the smart contracts.
