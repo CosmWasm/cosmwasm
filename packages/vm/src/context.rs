@@ -254,21 +254,17 @@ mod iter_support {
         SUCCESS
     }
 
-    // if ptr is None, find a new slot.
-    // otherwise, place in slot defined by ptr (only after take)
+    // set the iterator, overwriting any possible iterator previously set
     fn leave_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
-        let mut b = unsafe { get_data::<S, Q>(ctx.data) };
-        // clean up old one if there was one
-        let _ = b.iter.take();
+        let b = unsafe { get_data::<S, Q>(ctx.data) };
+        let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
         b.iter = Some(iter);
-        mem::forget(b); // we do this to avoid cleanup
     }
 
     fn take_iterator<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = KV>>> {
-        let mut b = unsafe { get_data::<S, Q>(ctx.data) };
-        let res = b.iter.take();
-        mem::forget(b); // we do this to avoid cleanup
-        res
+        let b = unsafe { get_data::<S, Q>(ctx.data) };
+        let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
+        b.iter.take()
     }
 }
 
@@ -338,14 +334,14 @@ pub fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(ctx: &Ctx
     b.querier = querier;
 }
 
-pub fn take_storage<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<S> {
+fn take_storage<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<S> {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     // we do this to avoid cleanup
     let mut b = mem::ManuallyDrop::new(b);
     b.storage.take()
 }
 
-pub fn leave_storage<S: Storage, Q: Querier>(ctx: &Ctx, storage: Option<S>) {
+fn leave_storage<S: Storage, Q: Querier>(ctx: &Ctx, storage: Option<S>) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     // we do this to avoid cleanup
     let mut b = mem::ManuallyDrop::new(b);
