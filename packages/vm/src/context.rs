@@ -211,19 +211,17 @@ mod iter_support {
             Ok(o) => o,
             Err(_) => return ERROR_SCAN_INVALID_ORDER,
         };
-        let storage = take_storage::<S, Q>(ctx);
-        if let Some(store) = storage {
+        let mut res = ERROR_NO_STORAGE;
+        with_storage_from_context::<S, Q, _>(ctx, |store| {
             let iter = store.range(start.as_deref(), end.as_deref(), order);
             // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
             // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
             let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
                 unsafe { mem::transmute(iter) };
             leave_iterator::<S, Q>(ctx, live_forever);
-            leave_storage::<S, Q>(ctx, Some(store));
-            SUCCESS
-        } else {
-            ERROR_NO_STORAGE
-        }
+            res = SUCCESS;
+        });
+        res
     }
 
     pub fn do_next<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -295,32 +293,34 @@ fn create_unmanaged_storage<S: Storage, Q: Querier>() -> *mut c_void {
     Box::into_raw(state) as *mut c_void
 }
 
+fn destroy_unmanaged_storage<S: Storage, Q: Querier>(ptr: *mut c_void) {
+    if !ptr.is_null() {
+        let mut dead = unsafe { get_data::<S, Q>(ptr) };
+        // ensure the iterator (if any) is dropped before the storage
+        free_iterator(&mut dead);
+    }
+}
+
 unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<S, Q>> {
     Box::from_raw(ptr as *mut ContextData<S, Q>)
 }
 
 #[cfg(feature = "iterator")]
-fn destroy_unmanaged_storage<S: Storage, Q: Querier>(ptr: *mut c_void) {
-    if !ptr.is_null() {
-        let mut dead = unsafe { get_data::<S, Q>(ptr) };
-        // ensure the iterator is dropped before the storage
-        let _ = dead.iter.take();
-    }
+fn free_iterator<S: Storage, Q: Querier>(context: &mut Box<ContextData<S, Q>>) {
+    let _ = context.iter.take();
 }
 
 #[cfg(not(feature = "iterator"))]
-fn destroy_unmanaged_storage<S: Storage, Q: Querier>(ptr: *mut c_void) {
-    if !ptr.is_null() {
-        let _ = unsafe { get_data::<S, Q>(ptr) };
-    }
-}
+fn free_iterator<S: Storage, Q: Querier>(_context: &mut Box<ContextData<S, Q>>) {}
 
 pub fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(ctx: &Ctx, mut func: F) {
-    let mut storage = take_storage::<S, Q>(ctx);
+    let b = unsafe { get_data::<S, Q>(ctx.data) };
+    let mut b = mem::ManuallyDrop::new(b);
+    let mut storage = b.storage.take();
     if let Some(data) = &mut storage {
         func(data);
     }
-    leave_storage::<S, Q>(ctx, storage);
+    b.storage = storage;
 }
 
 pub fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(ctx: &Ctx, mut func: F) {
@@ -334,33 +334,21 @@ pub fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(ctx: &Ctx
     b.querier = querier;
 }
 
-fn take_storage<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<S> {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
-    // we do this to avoid cleanup
-    let mut b = mem::ManuallyDrop::new(b);
-    b.storage.take()
-}
-
-fn leave_storage<S: Storage, Q: Querier>(ctx: &Ctx, storage: Option<S>) {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
-    // we do this to avoid cleanup
-    let mut b = mem::ManuallyDrop::new(b);
-    b.storage = storage;
-}
-
-pub fn take_context_data<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>, Option<Q>) {
+/// take_context_data will return the original storage and querier, and closes any remaining
+/// iterators. This is meant to be called when recycling the instance
+pub(crate) fn take_context_data<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>, Option<Q>) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b);
+    // free out the iterator as this finalizes the instance
+    free_iterator(&mut b);
     (b.storage.take(), b.querier.take())
 }
 
-pub fn leave_context_data<S: Storage, Q: Querier>(
-    ctx: &Ctx,
-    storage: Option<S>,
-    querier: Option<Q>,
-) {
+/// leave_context_data sets the original storage and querier. These must both be set.
+/// Should be followed by exactly one call to take_context_data when the instance is finished.
+pub(crate) fn leave_context_data<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, querier: Q) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-    b.storage = storage;
-    b.querier = querier;
+    b.storage = Some(storage);
+    b.querier = Some(querier);
 }

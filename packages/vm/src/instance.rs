@@ -118,11 +118,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        leave_context_data(
-            wasmer_instance.context(),
-            Some(deps.storage),
-            Some(deps.querier),
-        );
+        leave_context_data(wasmer_instance.context(), deps.storage, deps.querier);
         Instance {
             wasmer_instance,
             api: deps.api,
