@@ -41,7 +41,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
 }
 
 impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 }
@@ -70,7 +70,7 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
 }
 
 impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 }
@@ -97,15 +97,15 @@ mod test {
         // we use a block scope here to release the &mut before we use it in the next storage
         let mut foo = PrefixedStorage::new(b"foo", &mut storage);
         foo.set(b"bar", b"gotcha").unwrap();
-        assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar"));
+        assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar").unwrap());
 
         // try readonly correctly
         let rfoo = ReadonlyPrefixedStorage::new(b"foo", &storage);
-        assert_eq!(Some(b"gotcha".to_vec()), rfoo.get(b"bar"));
+        assert_eq!(Some(b"gotcha".to_vec()), rfoo.get(b"bar").unwrap());
 
         // no collisions with other prefixes
         let fo = ReadonlyPrefixedStorage::new(b"fo", &storage);
-        assert_eq!(None, fo.get(b"obar"));
+        assert_eq!(None, fo.get(b"obar").unwrap());
 
         // Note: explicit scoping is not required, but you must not refer to `foo` anytime after you
         // initialize a different PrefixedStorage. Uncomment this to see errors:
@@ -123,7 +123,7 @@ mod test {
 
         // we can nest them the same encoding with one operation
         let loader = ReadonlyPrefixedStorage::multilevel(&[b"foo", b"bar"], &storage);
-        assert_eq!(Some(b"winner".to_vec()), loader.get(b"baz"));
+        assert_eq!(Some(b"winner".to_vec()), loader.get(b"baz").unwrap());
 
         // set with multilevel
         let mut foobar = PrefixedStorage::multilevel(&[b"foo", b"bar"], &mut storage);
@@ -131,6 +131,6 @@ mod test {
 
         let a = ReadonlyPrefixedStorage::new(b"foo", &storage);
         let b = ReadonlyPrefixedStorage::new(b"bar", &a);
-        assert_eq!(Some(b"time".to_vec()), b.get(b"second"));
+        assert_eq!(Some(b"time".to_vec()), b.get(b"second").unwrap());
     }
 }

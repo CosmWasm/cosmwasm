@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, ContractErr, Result};
+use crate::errors::{contract_err, dyn_contract_err, ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
@@ -56,35 +56,33 @@ impl ExternalStorage {
         ExternalStorage {}
     }
 
-    pub fn get_with_result_length(&self, key: &[u8], result_length: usize) -> Option<Vec<u8>> {
+    pub fn get_with_result_length(
+        &self,
+        key: &[u8],
+        result_length: usize,
+    ) -> Result<Option<Vec<u8>>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
         let value_ptr = alloc(result_length);
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1000002 {
-            panic!("Allocated memory too small to hold the database value for the given key. \
+            return contract_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
         } else if read < 0 {
-            panic!("An unknown error occurred in the db_read call.")
+            return dyn_contract_err(format!("Error reading from database. Error code: {}", read));
         }
 
         match unsafe { consume_region(value_ptr) } {
-            Ok(data) => {
-                if data.len() == 0 {
-                    None
-                } else {
-                    Some(data)
-                }
-            }
-            // TODO: do we really want to convert errors to None?
-            Err(_) => None,
+            // TODO: how can we know if the key was available or not in the backend?
+            Ok(data) => Ok(if data.len() == 0 { None } else { Some(data) }),
+            Err(err) => Err(err),
         }
     }
 }
 
 impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
     }
 

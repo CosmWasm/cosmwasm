@@ -19,8 +19,8 @@ impl MemoryStorage {
 }
 
 impl ReadonlyStorage for MemoryStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.data.get(key).cloned()
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+        Ok(self.data.get(key).cloned())
     }
 
     #[cfg(feature = "iterator")]
@@ -88,7 +88,7 @@ impl Storage for MemoryStorage {
 // designed to be imported by other modules
 pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
     // ensure we had previously set "foo" = "bar"
-    assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+    assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
     assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
 
     // setup - add some data, and delete part of it as well
@@ -175,10 +175,10 @@ mod test {
     #[test]
     fn get_and_set() {
         let mut store = MemoryStorage::new();
-        assert_eq!(None, store.get(b"foo"));
+        assert_eq!(None, store.get(b"foo").unwrap());
         store.set(b"foo", b"bar").unwrap();
-        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
-        assert_eq!(None, store.get(b"food"));
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo").unwrap());
+        assert_eq!(None, store.get(b"food").unwrap());
     }
 
     #[test]
@@ -188,8 +188,8 @@ mod test {
         store.set(b"food", b"bank").unwrap();
         store.remove(b"foo").unwrap();
 
-        assert_eq!(None, store.get(b"foo"));
-        assert_eq!(Some(b"bank".to_vec()), store.get(b"food"));
+        assert_eq!(None, store.get(b"foo").unwrap());
+        assert_eq!(Some(b"bank".to_vec()), store.get(b"food").unwrap());
     }
 
     #[test]

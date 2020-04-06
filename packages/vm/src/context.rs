@@ -15,7 +15,7 @@ use cosmwasm_std::{
 
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{Error, Result, UninitializedContextData};
+use crate::errors::{Error, Result, RuntimeErr, UninitializedContextData};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 #[cfg(feature = "iterator")]
@@ -55,12 +55,18 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
-    let value: Option<Vec<u8>> =
-        match with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key))) {
-            Ok(v) => v,
-            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
-            Err(_) => return ERROR_DB_UNKNOWN,
-        };
+    let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        store.get(&key).or_else(|_| {
+            RuntimeErr {
+                msg: "Error reading from backend",
+            }
+            .fail()
+        })
+    }) {
+        Ok(v) => v,
+        Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
+        Err(_) => return ERROR_DB_UNKNOWN,
+    };
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
             Ok(()) => SUCCESS,
@@ -493,7 +499,7 @@ mod test {
         let (s, q) = move_into_context::<S, Q>(instance.context());
         assert!(s.is_some());
         assert!(q.is_some());
-        assert_eq!(s.unwrap().get(INIT_KEY), Some(INIT_VALUE.to_vec()));
+        assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
 
         // now is empty again
         let (ends, endq) = move_into_context::<S, Q>(instance.context());
@@ -508,8 +514,10 @@ mod test {
         leave_default_data(&instance);
         let ctx = instance.context();
 
-        let val =
-            with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(INIT_KEY))).unwrap();
+        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+            Ok(store.get(INIT_KEY).expect("error getting value"))
+        })
+        .unwrap();
         assert_eq!(val, Some(INIT_VALUE.to_vec()));
 
         let set_key: &[u8] = b"more";
@@ -522,8 +530,8 @@ mod test {
         .unwrap();
 
         with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-            assert_eq!(store.get(INIT_KEY), Some(INIT_VALUE.to_vec()));
-            assert_eq!(store.get(set_key), Some(set_value.to_vec()));
+            assert_eq!(store.get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
+            assert_eq!(store.get(set_key).unwrap(), Some(set_value.to_vec()));
             Ok(())
         })
         .unwrap();

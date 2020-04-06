@@ -46,14 +46,14 @@ where
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> Result<T> {
-        let value = self.storage.get(key);
+        let value = self.storage.get(key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> Result<Option<T>> {
-        let value = self.storage.get(key);
+        let value = self.storage.get(key)?;
         may_deserialize(&value)
     }
 
@@ -91,14 +91,14 @@ where
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> Result<T> {
-        let value = self.storage.get(key);
+        let value = self.storage.get(key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> Result<Option<T>> {
-        let value = self.storage.get(key);
+        let value = self.storage.get(key)?;
         may_deserialize(&value)
     }
 }

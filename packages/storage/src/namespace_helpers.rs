@@ -4,7 +4,7 @@ pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
     namespace: &[u8],
     key: &[u8],
-) -> Option<Vec<u8>> {
+) -> Result<Option<Vec<u8>>> {
     let mut k = namespace.to_vec();
     k.extend_from_slice(key);
     storage.get(&k)
@@ -130,12 +130,12 @@ mod test {
 
         // we use a block scope here to release the &mut before we use it in the next storage
         set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha").unwrap();
-        let rfoo = get_with_prefix(&storage, &prefix, b"bar");
+        let rfoo = get_with_prefix(&storage, &prefix, b"bar").unwrap();
         assert_eq!(Some(b"gotcha".to_vec()), rfoo);
 
         // no collisions with other prefixes
         let other_prefix = key_prefix(b"fo");
-        let collision = get_with_prefix(&storage, &other_prefix, b"obar");
+        let collision = get_with_prefix(&storage, &other_prefix, b"obar").unwrap();
         assert_eq!(None, collision);
     }
 }

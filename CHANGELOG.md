@@ -70,8 +70,8 @@
 - `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult`
   type.
 - Support results up to 128 KiB in `ExternalStorage.get`.
-- The `Storage` trait's `.set` and `.remove` now return a `Result<()>` to allow
-  propagation of errors.
+- The `Storage` trait's `.get`, `.set` and `.remove` now return a `Result` to
+  allow propagation of errors.
 
 **cosmwasm-vm**
 
