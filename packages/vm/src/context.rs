@@ -13,8 +13,7 @@ use cosmwasm_std::{
 
 #[cfg(feature = "iterator")]
 pub use iter_support::{
-    do_next, do_scan, leave_iterator, take_iterator, ERROR_NEXT_INVALID_ITERATOR, ERROR_NO_STORAGE,
-    ERROR_SCAN_INVALID_ORDER,
+    do_next, do_scan, ERROR_NEXT_INVALID_ITERATOR, ERROR_NO_STORAGE, ERROR_SCAN_INVALID_ORDER,
 };
 
 use crate::errors::Error;
@@ -257,7 +256,7 @@ mod iter_support {
 
     // if ptr is None, find a new slot.
     // otherwise, place in slot defined by ptr (only after take)
-    pub fn leave_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
+    fn leave_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
         let mut b = unsafe { get_data::<S, Q>(ctx.data) };
         // clean up old one if there was one
         let _ = b.iter.take();
@@ -265,9 +264,7 @@ mod iter_support {
         mem::forget(b); // we do this to avoid cleanup
     }
 
-    pub fn take_iterator<S: Storage, Q: Querier>(
-        ctx: &Ctx,
-    ) -> Option<Box<dyn Iterator<Item = KV>>> {
+    fn take_iterator<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = KV>>> {
         let mut b = unsafe { get_data::<S, Q>(ctx.data) };
         let res = b.iter.take();
         mem::forget(b); // we do this to avoid cleanup
