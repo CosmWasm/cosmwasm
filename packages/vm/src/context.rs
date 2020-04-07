@@ -6,8 +6,9 @@ use std::convert::TryInto;
 use std::ffi::c_void;
 #[cfg(not(feature = "iterator"))]
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
-use wasmer_runtime_core::vm::Ctx;
+use wasmer_runtime_core::{vm::Ctx, Instance as WasmerInstance};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
@@ -22,6 +23,8 @@ use crate::traits::{Querier, Storage};
 struct ContextData<'a, S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
+    /// A non-owning link to the wasmer instance
+    wasmer_instance: Option<NonNull<WasmerInstance>>,
     #[cfg(feature = "iterator")]
     iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<KV>> + 'a>>,
     #[cfg(not(feature = "iterator"))]
@@ -39,6 +42,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
         storage: None,
         querier: None,
+        wasmer_instance: None,
         #[cfg(feature = "iterator")]
         iterators: HashMap::new(),
         #[cfg(not(feature = "iterator"))]
@@ -84,6 +88,17 @@ fn get_context_data<'a, 'b, S: Storage, Q: Querier>(
         Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
     };
     Box::leak(owned) // give up ownership
+}
+
+/// Creates a back reference from a contact to its partent instance
+pub fn set_wasmer_instance<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    wasmer_instance: Option<NonNull<WasmerInstance>>,
+) {
+    let context_data = ctx.data as *mut ContextData<S, Q>;
+    unsafe {
+        (*context_data).wasmer_instance = wasmer_instance;
+    }
 }
 
 #[cfg(feature = "iterator")]
@@ -200,7 +215,7 @@ mod test {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };
-    use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
+    use wasmer_runtime_core::{imports, typed_func::Func};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 

@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
@@ -12,8 +13,8 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    move_into_context, move_out_of_context, setup_context, with_querier_from_context,
-    with_storage_from_context,
+    move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
+    with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
 use crate::errors::{make_instantiation_err, VmResult};
@@ -141,6 +142,8 @@ where
     ) -> Self {
         set_gas_limit(wasmer_instance.as_mut(), gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
+        let instance_ptr = NonNull::from(wasmer_instance.as_ref());
+        set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
             inner: wasmer_instance,
