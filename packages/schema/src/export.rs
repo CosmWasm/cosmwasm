@@ -5,6 +5,8 @@ use std::path::PathBuf;
 
 use schemars::schema::RootSchema;
 
+use crate::casing::to_snake_case;
+
 // Exports a schema, auto-generating filename based on the metadata title of the generated schema.
 pub fn export_schema(schema: &RootSchema, out_dir: &PathBuf) -> () {
     let title = schema
@@ -35,15 +37,4 @@ fn write_schema(schema: &RootSchema, out_dir: &PathBuf, title: &str) -> () {
     let json = serde_json::to_string_pretty(schema).unwrap();
     write(&path, json + "\n").unwrap();
     println!("Created {}", path.to_str().unwrap());
-}
-
-fn to_snake_case(name: &str) -> String {
-    let mut out = String::new();
-    for (index, ch) in name.char_indices() {
-        if index != 0 && ch.is_uppercase() {
-            out.push('_');
-        }
-        out.push(ch.to_ascii_lowercase());
-    }
-    out
 }
