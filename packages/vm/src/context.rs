@@ -12,9 +12,9 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "iterator")]
-pub use iter_support::{do_next, do_scan, ERROR_NO_STORAGE, ERROR_SCAN_INVALID_ORDER};
+pub(crate) use iter_support::{do_next, do_scan};
 
-use crate::errors::Error;
+use crate::errors::{Error, Result, UninitializedContextData};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 
@@ -32,7 +32,7 @@ static ERROR_REGION_WRITE_TOO_SMALL: i32 = -1_000_002;
 static ERROR_REGION_READ_UNKNOWN: i32 = -1_000_101;
 /// The contract sent us a Region we're not willing to read because it is too big
 static ERROR_REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_102;
-/// An unknonw error when canonicalizing address
+/// An unknown error when canonicalizing address
 static ERROR_CANONICALIZE_UNKNOWN: i32 = -1_000_201;
 /// The input address (human address) was invalid
 static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
@@ -42,6 +42,10 @@ static ERROR_HUMANIZE_UNKNOWN: i32 = -1_000_301;
 // static ERROR_QUERY_CHAIN_UNKNOWN: i32 = -1_000_401;
 /// Cannot serialize query response
 static ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
+/// Generic error - using context with no Storage attached
+pub static ERROR_NO_STORAGE: i32 = -1_000_501;
+/// Generic error - An unknown error accessing the DB
+static ERROR_DB_UNKNOWN: i32 = -1_000_502;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -50,8 +54,12 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
-    let mut value: Option<Vec<u8>> = None;
-    with_storage_from_context::<S, Q, _>(ctx, |store| value = store.get(&key));
+    let value: Option<Vec<u8>> =
+        match with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key))) {
+            Ok(v) => v,
+            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_STORAGE,
+            Err(_) => return ERROR_DB_UNKNOWN,
+        };
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
             Ok(()) => SUCCESS,
@@ -74,8 +82,14 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
-    with_storage_from_context::<S, Q, _>(ctx, |store| store.set(&key, &value));
-    SUCCESS
+    match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
+        store.set(&key, &value);
+        Ok(())
+    }) {
+        Ok(_) => SUCCESS,
+        Err(Error::UninitializedContextData { .. }) => ERROR_NO_STORAGE,
+        Err(_) => ERROR_DB_UNKNOWN,
+    }
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
@@ -84,8 +98,14 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
-    with_storage_from_context::<S, Q, _>(ctx, |store| store.remove(&key));
-    SUCCESS
+    match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
+        store.remove(&key);
+        Ok(())
+    }) {
+        Ok(_) => SUCCESS,
+        Err(Error::UninitializedContextData { .. }) => ERROR_NO_STORAGE,
+        Err(_) => ERROR_DB_UNKNOWN,
+    }
 }
 
 pub fn do_canonicalize_address<A: Api>(
@@ -186,8 +206,6 @@ mod iter_support {
     pub static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_001;
     // Iterator pointer not registered
     // pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_002;
-    /// Generic error - using context with no Storage attached
-    pub static ERROR_NO_STORAGE: i32 = -3_000_001;
 
     pub fn do_scan<S: Storage + 'static, Q: Querier>(
         ctx: &Ctx,
@@ -209,17 +227,19 @@ mod iter_support {
             Ok(o) => o,
             Err(_) => return ERROR_SCAN_INVALID_ORDER,
         };
-        let mut res = ERROR_NO_STORAGE;
-        with_storage_from_context::<S, Q, _>(ctx, |store| {
+        let res = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             let iter = store.range(start.as_deref(), end.as_deref(), order);
             // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
             // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
             let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
                 unsafe { mem::transmute(iter) };
             set_iterator::<S, Q>(ctx, live_forever);
-            res = SUCCESS;
+            Ok(())
         });
-        res
+        match res {
+            Ok(_) => SUCCESS,
+            Err(_) => ERROR_NO_STORAGE,
+        }
     }
 
     pub fn do_next<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
@@ -321,17 +341,21 @@ fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 #[cfg(not(feature = "iterator"))]
 fn free_iterator<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
-pub(crate) fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(
-    ctx: &Ctx,
-    mut func: F,
-) {
+pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> Result<T, Error>
+where
+    S: Storage,
+    Q: Querier,
+    F: FnMut(&mut S) -> Result<T, Error>,
+{
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b);
     let mut storage = b.storage.take();
-    if let Some(data) = &mut storage {
-        func(data);
-    }
+    let res = match &mut storage {
+        Some(data) => func(data),
+        None => UninitializedContextData { kind: "storage" }.fail(),
+    };
     b.storage = storage;
+    res
 }
 
 pub(crate) fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(
@@ -451,21 +475,25 @@ mod test {
         leave_default_data(&instance);
         let ctx = instance.context();
 
-        with_storage_from_context::<S, Q, _>(ctx, |store| {
-            assert_eq!(store.get(INIT_KEY), Some(INIT_VALUE.to_vec()));
-        });
+        let val =
+            with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(INIT_KEY))).unwrap();
+        assert_eq!(val, Some(INIT_VALUE.to_vec()));
 
         let set_key: &[u8] = b"more";
         let set_value: &[u8] = b"data";
 
-        with_storage_from_context::<S, Q, _>(ctx, |store| {
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             store.set(set_key, set_value);
-        });
+            Ok(())
+        })
+        .unwrap();
 
-        with_storage_from_context::<S, Q, _>(ctx, |store| {
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             assert_eq!(store.get(INIT_KEY), Some(INIT_VALUE.to_vec()));
             assert_eq!(store.get(set_key), Some(set_value.to_vec()));
-        });
+            Ok(())
+        })
+        .unwrap();
     }
 
     #[test]
@@ -481,7 +509,7 @@ mod test {
         });
 
         // set up itetator over all space
-        let scan = do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into());
+        let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
         assert_eq!(0, scan);
 
         with_iterator_from_context::<S, Q, _>(ctx, |iter| {
@@ -503,9 +531,10 @@ mod test {
         leave_default_data(&instance);
         let ctx = instance.context();
 
-        with_storage_from_context::<S, Q, _>(ctx, |_store| {
+        with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
             panic!("fails, but shouldn't cause segfault")
-        });
+        })
+        .unwrap();
     }
 
     #[test]

@@ -67,6 +67,11 @@ pub enum Error {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Uninitialized Context Data: {}", kind))]
+    UninitializedContextData {
+        kind: &'static str,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Validating Wasm: {}", msg))]
     ValidationErr {
         msg: String,

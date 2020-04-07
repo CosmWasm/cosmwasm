@@ -149,8 +149,8 @@ where
         get_gas(&self.wasmer_instance)
     }
 
-    pub fn with_storage<F: FnMut(&mut S)>(&self, func: F) {
-        with_storage_from_context::<S, Q, F>(self.wasmer_instance.context(), func)
+    pub fn with_storage<F: FnMut(&mut S) -> Result<T>, T>(&self, func: F) -> Result<T> {
+        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -334,7 +334,9 @@ mod test {
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
         let instance = mock_instance(&CONTRACT);
-        instance.with_storage(|_store| assert_eq!(1, 2));
+        instance
+            .with_storage::<_, ()>(|_store| panic!("trigger failure"))
+            .unwrap();
     }
 
     #[test]
