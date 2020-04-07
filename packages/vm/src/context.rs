@@ -12,9 +12,7 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "iterator")]
-pub use iter_support::{
-    do_next, do_scan, ERROR_NEXT_INVALID_ITERATOR, ERROR_NO_STORAGE, ERROR_SCAN_INVALID_ORDER,
-};
+pub use iter_support::{do_next, do_scan, ERROR_NO_STORAGE, ERROR_SCAN_INVALID_ORDER};
 
 use crate::errors::Error;
 use crate::memory::{read_region, write_region};
@@ -187,7 +185,7 @@ mod iter_support {
     /// Invalid Order enum value passed into scan
     pub static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_001;
     // Iterator pointer not registered
-    pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_002;
+    // pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_002;
     /// Generic error - using context with no Storage attached
     pub static ERROR_NO_STORAGE: i32 = -3_000_001;
 
@@ -218,20 +216,19 @@ mod iter_support {
             // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
             let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
                 unsafe { mem::transmute(iter) };
-            leave_iterator::<S, Q>(ctx, live_forever);
+            set_iterator::<S, Q>(ctx, live_forever);
             res = SUCCESS;
         });
         res
     }
 
     pub fn do_next<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-        let mut iter = match take_iterator::<S, Q>(ctx) {
-            Some(i) => i,
-            None => return ERROR_NEXT_INVALID_ITERATOR,
-        };
-        // get next item and return iterator
-        let item = iter.next();
-        leave_iterator::<S, Q>(ctx, iter);
+        let mut item: Option<KV> = None;
+        with_iterator_from_context::<S, Q, _>(ctx, |iter| {
+            item = iter.next();
+        });
+        // TODO: handle this as well
+        // None => return ERROR_NEXT_INVALID_ITERATOR,
 
         // prepare return values
         let (key, value) = match item {
@@ -253,16 +250,27 @@ mod iter_support {
     }
 
     // set the iterator, overwriting any possible iterator previously set
-    fn leave_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
+    fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
         b.iter = Some(iter);
     }
 
-    fn take_iterator<S: Storage, Q: Querier>(ctx: &Ctx) -> Option<Box<dyn Iterator<Item = KV>>> {
+    pub fn with_iterator_from_context<
+        S: Storage,
+        Q: Querier,
+        F: FnMut(&mut dyn Iterator<Item = KV>),
+    >(
+        ctx: &Ctx,
+        mut func: F,
+    ) {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
-        let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-        b.iter.take()
+        let mut b = mem::ManuallyDrop::new(b);
+        let mut iter = b.iter.take();
+        if let Some(data) = &mut iter {
+            func(data);
+        }
+        b.iter = iter;
     }
 }
 
