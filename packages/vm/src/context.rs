@@ -360,3 +360,58 @@ pub(crate) fn leave_context_data<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, 
     b.storage = Some(storage);
     b.querier = Some(querier);
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::backends::compile;
+    use cosmwasm_std::testing::{MockQuerier, MockStorage};
+    use cosmwasm_std::ReadonlyStorage;
+    use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    fn make_instance() -> Instance {
+        let module = compile(&CONTRACT).unwrap();
+        let mut import_obj =
+            imports! { || { setup_context::<MockStorage, MockQuerier>() }, "env" => {}, };
+        // we need stubs for all required imports
+        import_obj.extend(imports! {
+            "env" => {
+                "read_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "write_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "remove_db" => Func::new(|_a: i32| -> i32 { 0 }),
+                "scan_db" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
+                "next_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "query_chain" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+            },
+        });
+        let instance = module.instantiate(&import_obj).unwrap();
+        instance
+    }
+
+    #[test]
+    fn leave_and_take_context_data() {
+        // this creates an instance
+        let instance = make_instance();
+
+        // create some mock data
+        let mut storage = MockStorage::new();
+        storage.set(b"foo", b"bar");
+        let querier = MockQuerier::new(&[]);
+
+        // empty data on start
+        let (inits, initq) = take_context_data::<MockStorage, MockQuerier>(instance.context());
+        assert!(inits.is_none());
+        assert!(initq.is_none());
+
+        // store it on the instance
+        leave_context_data(instance.context(), storage, querier);
+        let (s, q) = take_context_data::<MockStorage, MockQuerier>(instance.context());
+        assert!(s.is_some());
+        assert!(q.is_some());
+        assert_eq!(s.unwrap().get(b"foo"), Some(b"bar".to_vec()));
+    }
+}
