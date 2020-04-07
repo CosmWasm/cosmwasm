@@ -366,10 +366,22 @@ mod test {
     use super::*;
     use crate::backends::compile;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
-    use cosmwasm_std::ReadonlyStorage;
+    use cosmwasm_std::{coin, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    // shorthand for function generics below
+    type S = MockStorage;
+    type Q = MockQuerier;
+
+    // prepared data
+    static INIT_KEY: &[u8] = b"foo";
+    static INIT_VALUE: &[u8] = b"bar";
+    // this account has some coins
+    static INIT_ADDR: &str = "someone";
+    static INIT_AMOUNT: &str = "500";
+    static INIT_DENOM: &str = "TOKEN";
 
     fn make_instance() -> Instance {
         let module = compile(&CONTRACT).unwrap();
@@ -392,26 +404,75 @@ mod test {
         instance
     }
 
+    fn leave_default_data(instance: &Instance) {
+        // create some mock data
+        let mut storage = MockStorage::new();
+        storage.set(INIT_KEY, INIT_VALUE);
+        let querier =
+            MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coin(INIT_AMOUNT, INIT_DENOM))]);
+        leave_context_data(instance.context(), storage, querier);
+    }
+
     #[test]
     fn leave_and_take_context_data() {
         // this creates an instance
         let instance = make_instance();
 
-        // create some mock data
-        let mut storage = MockStorage::new();
-        storage.set(b"foo", b"bar");
-        let querier = MockQuerier::new(&[]);
-
         // empty data on start
-        let (inits, initq) = take_context_data::<MockStorage, MockQuerier>(instance.context());
+        let (inits, initq) = take_context_data::<S, Q>(instance.context());
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
-        leave_context_data(instance.context(), storage, querier);
-        let (s, q) = take_context_data::<MockStorage, MockQuerier>(instance.context());
+        leave_default_data(&instance);
+        let (s, q) = take_context_data::<S, Q>(instance.context());
         assert!(s.is_some());
         assert!(q.is_some());
-        assert_eq!(s.unwrap().get(b"foo"), Some(b"bar".to_vec()));
+        assert_eq!(s.unwrap().get(INIT_KEY), Some(INIT_VALUE.to_vec()));
+
+        // now is empty again
+        let (ends, endq) = take_context_data::<S, Q>(instance.context());
+        assert!(ends.is_none());
+        assert!(endq.is_none());
     }
+
+    #[test]
+    fn with_storage_set_get() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+
+        with_storage_from_context::<S, Q, _>(ctx, |store| {
+            assert_eq!(store.get(INIT_KEY), Some(INIT_VALUE.to_vec()));
+        });
+
+        let set_key: &[u8] = b"more";
+        let set_value: &[u8] = b"data";
+
+        with_storage_from_context::<S, Q, _>(ctx, |store| {
+            store.set(set_key, set_value);
+        });
+
+        with_storage_from_context::<S, Q, _>(ctx, |store| {
+            assert_eq!(store.get(INIT_KEY), Some(INIT_VALUE.to_vec()));
+            assert_eq!(store.get(set_key), Some(set_value.to_vec()));
+        });
+
+    }
+
+    #[test]
+    #[should_panic]
+    fn with_storage_handles_panics() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+
+        with_storage_from_context::<S, Q, _>(ctx, |_store| {
+            panic!("fails, but shouldn't cause segfault")
+        });
+    }
+
+
 }
