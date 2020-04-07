@@ -3,9 +3,13 @@
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::mem;
-use std::ptr::null_mut;
+use std::ptr::{null_mut, NonNull};
 
-use wasmer_runtime_core::vm::Ctx;
+use snafu::ResultExt;
+use wasmer_runtime_core::{
+    typed_func::{Func, Wasm, WasmTypeList},
+    vm::Ctx,
+};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
@@ -16,7 +20,7 @@ use cosmwasm_std::{
 
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{Error, Result, UninitializedContextData};
+use crate::errors::{Error, ResolveErr, Result, UninitializedContextData};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 #[cfg(feature = "iterator")]
@@ -377,6 +381,31 @@ fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 #[cfg(not(feature = "iterator"))]
 fn free_iterator<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
+pub(crate) fn with_func_from_context<S, Q, Args, Rets, Callback, CallbackData>(
+    ctx: &Ctx,
+    name: &str,
+    mut callback: Callback,
+) -> Result<CallbackData, Error>
+where
+    S: Storage,
+    Q: Querier,
+    Args: WasmTypeList,
+    Rets: WasmTypeList,
+    Callback: FnMut(Func<Args, Rets, Wasm>) -> Result<CallbackData, Error>,
+{
+    let context_data = ctx.data as *mut ContextData<S, Q>;
+    match NonNull::new(unsafe { (*context_data).wasmer_instance }) {
+        Some(ptr) => {
+            let func = unsafe { ptr.as_ref().func(name).context(ResolveErr {}) }?;
+            callback(func)
+        }
+        None => UninitializedContextData {
+            kind: "wasmer_instance",
+        }
+        .fail(),
+    }
+}
+
 pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> Result<T, Error>
 where
     S: Storage,
@@ -438,6 +467,7 @@ pub(crate) fn move_from_context<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, q
 mod test {
     use super::*;
     use crate::backends::compile;
+    use crate::errors::WasmerRuntimeErr;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
     use cosmwasm_std::{coin, from_binary, BalanceResponse, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
@@ -509,6 +539,39 @@ mod test {
         let (ends, endq) = move_into_context::<S, Q>(instance.context());
         assert!(ends.is_none());
         assert!(endq.is_none());
+    }
+
+    #[test]
+    fn with_func_from_context_works() {
+        let mut instance = make_instance();
+        leave_default_data(&instance);
+        let instance_ptr = &mut instance as *mut Instance;
+        set_wasmer_instance::<S, Q>(instance.context(), instance_ptr);
+
+        let ctx = instance.context();
+        let _ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |alloc_func| {
+            alloc_func.call(10).context(WasmerRuntimeErr {})
+        })
+        .expect("with_func_from_context should not fail");
+    }
+
+    #[test]
+    fn with_func_from_context_fails_for_missing_instance() {
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+
+        let res = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |alloc_func| {
+            alloc_func.call(10).expect("error calling allocate");
+            Ok(())
+        });
+        match res {
+            Ok(_) => panic!("this must not succeed"),
+            Err(Error::UninitializedContextData { kind, .. }) => {
+                assert_eq!(kind, "wasmer_instance")
+            }
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
     }
 
     #[test]
