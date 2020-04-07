@@ -175,6 +175,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
     }
 }
 
+#[cfg(feature = "iterator")]
 mod iter_support {
     use super::*;
     use crate::memory::maybe_read_region;
@@ -371,7 +372,7 @@ mod test {
     use super::*;
     use crate::backends::compile;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
-    use cosmwasm_std::{coin, Order, ReadonlyStorage};
+    use cosmwasm_std::{coin, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     #[cfg(feature = "iterator")]
