@@ -42,10 +42,11 @@ where
     }
 
     pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
+        let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
+
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
-        let import_obj = imports! {
-            || { setup_context::<S, Q>() },
+        import_obj.extend(imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
@@ -68,33 +69,6 @@ where
                 "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
                     do_remove::<S, Q>(ctx, key_ptr)
                 }),
-                // Creates an iterator that will go from start to end
-                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
-                // Ownership of both start and end pointer is not transferred to the host.
-                // Returns negative code on error, 0 on success
-                "scan_db" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
-                    #[cfg(not(feature = "iterator"))]
-                    {
-                        // get rid of unused argument warning
-                        let (_, _, _, _) = (ctx, start_ptr, end_ptr, order);
-                        -1
-                    }
-                    #[cfg(feature = "iterator")]
-                    do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
-                }),
-                // Creates an iterator that will go from start to end
-                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
-                // Ownership of both start and end pointer is not transferred to the host.
-                "next_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
-                    #[cfg(not(feature = "iterator"))]
-                    {
-                        // get rid of unused argument warning
-                        let (_, _, _) = (ctx, key_ptr, value_ptr);
-                        -1
-                    }
-                    #[cfg(feature = "iterator")]
-                    do_next::<S, Q>(ctx, key_ptr, value_ptr)
-                }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
@@ -113,7 +87,27 @@ where
                     do_query_chain::<_, S, Q>(api, ctx, request_ptr, response_ptr)
                 }),
             },
-        };
+        });
+
+        #[cfg(feature = "iterator")]
+        import_obj.extend(imports! {
+            "env" => {
+                // Creates an iterator that will go from start to end
+                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
+                // Ownership of both start and end pointer is not transferred to the host.
+                // Returns negative code on error, 0 on success
+                "scan_db" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
+                    do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
+                }),
+                // Creates an iterator that will go from start to end
+                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
+                // Ownership of both start and end pointer is not transferred to the host.
+                "next_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                    do_next::<S, Q>(ctx, key_ptr, value_ptr)
+                }),
+            },
+        });
+
         let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
