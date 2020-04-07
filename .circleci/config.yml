@@ -3,6 +3,7 @@ workflows:
   version: 2
   test:
     jobs:
+      - schema
       - std
       - singlepass_vm
       - cranelift_vm
@@ -13,6 +14,33 @@ workflows:
       - clippy
 
 jobs:
+  schema:
+    docker:
+      - image: rust:1.41.1
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/schema
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/schema
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
+
   std:
     docker:
       - image: rust:1.41.1
