@@ -1,6 +1,6 @@
 [package]
 name = "queue"
-version = "0.7.2"
+version = "0.8.0-dev"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 publish = false

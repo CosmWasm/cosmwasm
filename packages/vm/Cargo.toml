@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.7.2"
+version = "0.8.0-dev"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -29,7 +29,7 @@ backtraces = ["snafu/backtraces"]
 iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
-cosmwasm-std = { path = "../std", version = "0.7.2" }
+cosmwasm-std = { path = "../std" }
 serde_json = "1.0"
 wasmer-runtime-core = "0.16"
 wasmer-middleware-common = "0.16"
