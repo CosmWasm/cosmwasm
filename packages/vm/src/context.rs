@@ -285,12 +285,12 @@ struct ContextData<S: Storage, Q: Querier> {
 
 pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
     (
-        create_unmanaged_storage::<S, Q>(),
-        destroy_unmanaged_storage::<S, Q>,
+        create_unmanaged_context_data::<S, Q>(),
+        destroy_unmanaged_context_data::<S, Q>,
     )
 }
 
-fn create_unmanaged_storage<S: Storage, Q: Querier>() -> *mut c_void {
+fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
         storage: None,
         querier: None,
@@ -301,7 +301,7 @@ fn create_unmanaged_storage<S: Storage, Q: Querier>() -> *mut c_void {
     Box::into_raw(state) as *mut c_void
 }
 
-fn destroy_unmanaged_storage<S: Storage, Q: Querier>(ptr: *mut c_void) {
+fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
     if !ptr.is_null() {
         let mut dead = unsafe { get_data::<S, Q>(ptr) };
         // ensure the iterator (if any) is dropped before the storage
@@ -350,7 +350,7 @@ pub(crate) fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(
 
 /// take_context_data will return the original storage and querier, and closes any remaining
 /// iterators. This is meant to be called when recycling the instance
-pub(crate) fn take_context_data<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>, Option<Q>) {
+pub(crate) fn move_into_context<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>, Option<Q>) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b);
     // free out the iterator as this finalizes the instance
@@ -360,7 +360,7 @@ pub(crate) fn take_context_data<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>
 
 /// leave_context_data sets the original storage and querier. These must both be set.
 /// Should be followed by exactly one call to take_context_data when the instance is finished.
-pub(crate) fn leave_context_data<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, querier: Q) {
+pub(crate) fn move_from_context<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, querier: Q) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
     b.storage = Some(storage);
@@ -394,10 +394,9 @@ mod test {
 
     fn make_instance() -> Instance {
         let module = compile(&CONTRACT).unwrap();
-        let mut import_obj =
-            imports! { || { setup_context::<MockStorage, MockQuerier>() }, "env" => {}, };
         // we need stubs for all required imports
-        import_obj.extend(imports! {
+        let import_obj = imports! {
+            || { setup_context::<MockStorage, MockQuerier>() },
             "env" => {
                 "read_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "write_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
@@ -408,7 +407,7 @@ mod test {
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
-        });
+        };
         let instance = module.instantiate(&import_obj).unwrap();
         instance
     }
@@ -419,7 +418,7 @@ mod test {
         storage.set(INIT_KEY, INIT_VALUE);
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coin(INIT_AMOUNT, INIT_DENOM))]);
-        leave_context_data(instance.context(), storage, querier);
+        move_from_context(instance.context(), storage, querier);
     }
 
     #[test]
@@ -428,19 +427,19 @@ mod test {
         let instance = make_instance();
 
         // empty data on start
-        let (inits, initq) = take_context_data::<S, Q>(instance.context());
+        let (inits, initq) = move_into_context::<S, Q>(instance.context());
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
         leave_default_data(&instance);
-        let (s, q) = take_context_data::<S, Q>(instance.context());
+        let (s, q) = move_into_context::<S, Q>(instance.context());
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(s.unwrap().get(INIT_KEY), Some(INIT_VALUE.to_vec()));
 
         // now is empty again
-        let (ends, endq) = take_context_data::<S, Q>(instance.context());
+        let (ends, endq) = move_into_context::<S, Q>(instance.context());
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
