@@ -38,12 +38,10 @@ static ERROR_CANONICALIZE_UNKNOWN: i32 = -1_000_201;
 static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
 /// An unknonw error when humanizing address
 static ERROR_HUMANIZE_UNKNOWN: i32 = -1_000_301;
-/// An unknonw error when querying the chain
-// static ERROR_QUERY_CHAIN_UNKNOWN: i32 = -1_000_401;
 /// Cannot serialize query response
 static ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
 /// Generic error - using context with no Storage attached
-pub static ERROR_NO_STORAGE: i32 = -1_000_501;
+pub static ERROR_NO_CONTEXT_DATA: i32 = -1_000_501;
 /// Generic error - An unknown error accessing the DB
 static ERROR_DB_UNKNOWN: i32 = -1_000_502;
 
@@ -57,7 +55,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
     let value: Option<Vec<u8>> =
         match with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key))) {
             Ok(v) => v,
-            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_STORAGE,
+            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
             Err(_) => return ERROR_DB_UNKNOWN,
         };
     match value {
@@ -87,7 +85,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
         Ok(())
     }) {
         Ok(_) => SUCCESS,
-        Err(Error::UninitializedContextData { .. }) => ERROR_NO_STORAGE,
+        Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
         Err(_) => ERROR_DB_UNKNOWN,
     }
 }
@@ -103,7 +101,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
         Ok(())
     }) {
         Ok(_) => SUCCESS,
-        Err(Error::UninitializedContextData { .. }) => ERROR_NO_STORAGE,
+        Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
         Err(_) => ERROR_DB_UNKNOWN,
     }
 }
@@ -201,7 +199,7 @@ mod iter_support {
     /// Invalid Order enum value passed into scan
     pub static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_001;
     // Iterator pointer not registered
-    // pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_002;
+    pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_002;
 
     pub fn do_scan<S: Storage + 'static, Q: Querier>(
         ctx: &Ctx,
@@ -234,17 +232,16 @@ mod iter_support {
         });
         match res {
             Ok(_) => SUCCESS,
-            Err(_) => ERROR_NO_STORAGE,
+            Err(_) => ERROR_NO_CONTEXT_DATA,
         }
     }
 
     pub fn do_next<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-        let mut item: Option<KV> = None;
-        with_iterator_from_context::<S, Q, _>(ctx, |iter| {
-            item = iter.next();
-        });
-        // TODO: handle this as well
-        // None => return ERROR_NEXT_INVALID_ITERATOR,
+        let item = match with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())) {
+            Ok(i) => i,
+            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
+            Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
+        };
 
         // prepare return values
         let (key, value) = match item {
@@ -265,21 +262,21 @@ mod iter_support {
         SUCCESS
     }
 
-    pub(crate) fn with_iterator_from_context<
+    pub(crate) fn with_iterator_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> Result<T, Error>
+    where
         S: Storage,
         Q: Querier,
-        F: FnMut(&mut dyn Iterator<Item = KV>),
-    >(
-        ctx: &Ctx,
-        mut func: F,
-    ) {
+        F: FnMut(&mut dyn Iterator<Item = KV>) -> Result<T, Error>,
+    {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b);
         let mut iter = b.iter.take();
-        if let Some(data) = &mut iter {
-            func(data);
-        }
+        let res = match &mut iter {
+            Some(data) => func(data),
+            None => UninitializedContextData { kind: "iterator" }.fail(),
+        };
         b.iter = iter;
+        res
     }
 
     // set the iterator, overwriting any possible iterator previously set
@@ -507,23 +504,24 @@ mod test {
         leave_default_data(&instance);
         let ctx = instance.context();
 
-        with_iterator_from_context::<S, Q, _>(ctx, |_iter| {
+        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, |_iter| {
             panic!("this should be empty / not callled");
         });
+        match miss {
+            Ok(_) => panic!("Expected error"),
+            Err(Error::UninitializedContextData { .. }) => assert!(true),
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
 
-        // set up itetator over all space
+        // set up iterator over all space
         let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
         assert_eq!(0, scan);
 
-        with_iterator_from_context::<S, Q, _>(ctx, |iter| {
-            let item = iter.next();
-            assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
-        });
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
-        with_iterator_from_context::<S, Q, _>(ctx, |iter| {
-            let item = iter.next();
-            assert_eq!(item, None);
-        });
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, None);
     }
 
     #[test]
