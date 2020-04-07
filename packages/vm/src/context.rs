@@ -306,12 +306,12 @@ unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<
 }
 
 #[cfg(feature = "iterator")]
-fn free_iterator<S: Storage, Q: Querier>(context: &mut Box<ContextData<S, Q>>) {
+fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
     let _ = context.iter.take();
 }
 
 #[cfg(not(feature = "iterator"))]
-fn free_iterator<S: Storage, Q: Querier>(_context: &mut Box<ContextData<S, Q>>) {}
+fn free_iterator<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
 pub fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(ctx: &Ctx, mut func: F) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
