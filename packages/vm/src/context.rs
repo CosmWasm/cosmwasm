@@ -166,21 +166,17 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
 
-    // default result, then try real querier callback
-    let mut res: QuerierResponse = Err(ApiSystemError::InvalidRequest {
-        error: "no querier registered".to_string(),
-    });
-    match from_slice::<QueryRequest>(&request) {
+    let res = match from_slice::<QueryRequest>(&request) {
         // if we parse, try to execute the query
         Ok(parsed) => {
-            with_querier_from_context::<S, Q, _>(ctx, |querier| res = querier.query(&parsed))
+            let qr: QuerierResponse =
+                with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| querier.query(&parsed));
+            qr
         }
         // otherwise, return the InvalidRequest error as ApiSystemError
-        Err(err) => {
-            res = Err(ApiSystemError::InvalidRequest {
-                error: err.to_string(),
-            })
-        }
+        Err(err) => Err(ApiSystemError::InvalidRequest {
+            error: err.to_string(),
+        }),
     };
 
     let api_res: ApiQuerierResponse = res.into();
@@ -358,18 +354,25 @@ where
     res
 }
 
-pub(crate) fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(
+pub(crate) fn with_querier_from_context<S, Q, F, T>(
     ctx: &Ctx,
     mut func: F,
-) {
+) -> Result<T, ApiSystemError>
+where
+    S: Storage,
+    Q: Querier,
+    F: FnMut(&Q) -> Result<T, ApiSystemError>,
+{
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     // we do this to avoid cleanup
     let mut b = mem::ManuallyDrop::new(b);
     let querier = b.querier.take();
-    if let Some(q) = &querier {
-        func(q);
-    }
+    let res = match &querier {
+        Some(q) => func(q),
+        None => Err(ApiSystemError::Unknown {}),
+    };
     b.querier = querier;
+    res
 }
 
 /// take_context_data will return the original storage and querier, and closes any remaining
@@ -396,7 +399,7 @@ mod test {
     use super::*;
     use crate::backends::compile;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
-    use cosmwasm_std::{coin, ReadonlyStorage};
+    use cosmwasm_std::{coin, from_binary, BalanceResponse, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     #[cfg(feature = "iterator")]
@@ -524,6 +527,26 @@ mod test {
     }
 
     #[test]
+    fn with_query_success() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+
+        let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+            let req = QueryRequest::Balance {
+                address: HumanAddr::from(INIT_ADDR),
+            };
+            querier.query(&req)
+        })
+        .unwrap()
+        .unwrap();
+        let balance: BalanceResponse = from_binary(&res).unwrap();
+
+        assert_eq!(balance.amount.unwrap(), coin(INIT_AMOUNT, INIT_DENOM));
+    }
+
+    #[test]
     #[should_panic]
     fn with_storage_handles_panics() {
         // this creates an instance
@@ -545,8 +568,9 @@ mod test {
         leave_default_data(&instance);
         let ctx = instance.context();
 
-        with_querier_from_context::<S, Q, _>(ctx, |_store| {
+        with_querier_from_context::<S, Q, _, ()>(ctx, |_querier| {
             panic!("fails, but shouldn't cause segfault")
-        });
+        })
+        .unwrap();
     }
 }
