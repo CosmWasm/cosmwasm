@@ -27,6 +27,12 @@
 - Return value from `env.write_db` and `env.remove_db` to allow error reporting.
 - Query responses are now required to contain valid JSON.
 
+**cosmwasm-schema**
+
+- This new crate now contains the implementations for generating JSON Schema
+  files from interface types. It exposes the functions `export_schema`,
+  `export_schema_with_title`, and `schema_for`.
+
 **cosmwasm-std**
 
 - Make all symbols from `cosmwasm::memory` crate internal, as those symbols are
