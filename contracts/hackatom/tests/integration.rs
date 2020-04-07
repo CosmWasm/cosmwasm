@@ -30,9 +30,9 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, from_binary, from_slice, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr,
-    ReadonlyStorage,
+    coin, from_binary, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr, ReadonlyStorage,
 };
+use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
     handle, init, mock_instance, mock_instance_with_balances, query, test_io,
 };
@@ -62,11 +62,13 @@ fn proper_initialization() {
     assert_eq!(0, res.messages.len());
 
     // it worked, let's check the state
-    deps.with_storage(|store| {
-        let data = store.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, expected_state);
-    });
+    let state: State = deps
+        .with_storage(|store| {
+            let data = store.get(CONFIG_KEY).expect("no data stored");
+            from_slice(&data)
+        })
+        .unwrap();
+    assert_eq!(state, expected_state);
 }
 
 #[test]
@@ -205,18 +207,20 @@ fn failed_handle() {
     }
 
     // state should not change
-    deps.with_storage(|store| {
-        let data = store.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(
-            state,
-            State {
-                verifier: deps.api.canonical_address(&verifier).unwrap(),
-                beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-                funder: deps.api.canonical_address(&creator).unwrap(),
-            }
-        );
-    });
+    let state: State = deps
+        .with_storage(|store| {
+            let data = store.get(CONFIG_KEY).expect("no data stored");
+            from_slice(&data)
+        })
+        .unwrap();
+    assert_eq!(
+        state,
+        State {
+            verifier: deps.api.canonical_address(&verifier).unwrap(),
+            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
+            funder: deps.api.canonical_address(&creator).unwrap(),
+        }
+    );
 }
 
 #[test]
