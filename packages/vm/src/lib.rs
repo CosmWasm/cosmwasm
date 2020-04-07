@@ -19,3 +19,4 @@ pub use crate::calls::{
 };
 pub use crate::instance::Instance;
 pub use crate::modules::FileSystemCache;
+pub use crate::serde::{from_slice, to_vec};
