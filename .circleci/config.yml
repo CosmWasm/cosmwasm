@@ -280,20 +280,16 @@ jobs:
           name: Add rustfmt component
           command: rustup component add rustfmt
       - run:
-          name: Cargo format
-          command: cargo fmt
+          name: Format and check workspace
+          command: cargo fmt -- --check
       - run:
-          name: Cargo format hackatom
-          command: cd contracts/hackatom && cargo fmt
+          name: Format and check hackatom
+          working_directory: ~/project/contracts/hackatom
+          command: cargo fmt -- --check
       - run:
-          name: Ensure checked-in source code is properly formatted
-          command: |
-            CHANGES_IN_REPO=$(git status --porcelain)
-            if [[ -n "$CHANGES_IN_REPO" ]]; then
-              echo "Repository is dirty. Showing 'git status' for debugging now:"
-              git status
-              exit 1
-            fi
+          name: Format and check queue
+          working_directory: ~/project/contracts/queue
+          command: cargo fmt -- --check
       - save_cache:
           paths:
             - /usr/local/cargo/registry
