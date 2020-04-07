@@ -27,7 +27,7 @@
 - Return value from `env.write_db` and `env.remove_db` to allow error reporting.
 - Query responses are now required to contain valid JSON.
 
-**cosmwasm**
+**cosmwasm-std**
 
 - Make all symbols from `cosmwasm::memory` crate internal, as those symbols are
   not needed by users of the library.
