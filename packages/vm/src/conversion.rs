@@ -17,6 +17,19 @@ pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> Result<u32> {
     })
 }
 
+/// Safely converts input of type T to i32.
+/// Errors with a cosmwasm_vm::errors::Error::ConversionErr if conversion cannot be done.
+pub fn to_i32<T: TryInto<i32> + Display + Copy>(input: T) -> Result<i32> {
+    input.try_into().or_else(|_| {
+        ConversionErr {
+            from_type: type_name::<T>(),
+            to_type: type_name::<i32>(),
+            input: format!("{}", input),
+        }
+        .fail()
+    })
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -86,6 +99,54 @@ mod test {
                 assert_eq!(from_type, "i32");
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "-1");
+            }
+            Err(err) => panic!("unexpected error: {:?}", err),
+            Ok(_) => panic!("must not succeed"),
+        };
+    }
+
+    #[test]
+    fn to_i32_works_for_usize() {
+        assert_eq!(to_i32(0usize).unwrap(), 0);
+        assert_eq!(to_i32(1usize).unwrap(), 1);
+        assert_eq!(to_i32(2147483647usize).unwrap(), 2147483647);
+
+        match to_i32(2147483648usize) {
+            Err(Error::ConversionErr {
+                from_type,
+                to_type,
+                input,
+                ..
+            }) => {
+                assert_eq!(from_type, "usize");
+                assert_eq!(to_type, "i32");
+                assert_eq!(input, "2147483648");
+            }
+            Err(err) => panic!("unexpected error: {:?}", err),
+            Ok(_) => panic!("must not succeed"),
+        };
+    }
+
+    #[test]
+    fn to_i32_works_for_i64() {
+        assert_eq!(to_i32(0i64).unwrap(), 0);
+        assert_eq!(to_i32(1i64).unwrap(), 1);
+        assert_eq!(to_i32(2147483647i64).unwrap(), 2147483647);
+
+        assert_eq!(to_i32(-1i64).unwrap(), -1);
+        assert_eq!(to_i32(-2147483647i64).unwrap(), -2147483647);
+        assert_eq!(to_i32(-2147483648i64).unwrap(), -2147483648);
+
+        match to_i32(-2147483649i64) {
+            Err(Error::ConversionErr {
+                from_type,
+                to_type,
+                input,
+                ..
+            }) => {
+                assert_eq!(from_type, "i64");
+                assert_eq!(to_type, "i32");
+                assert_eq!(input, "-2147483649");
             }
             Err(err) => panic!("unexpected error: {:?}", err),
             Ok(_) => panic!("must not succeed"),
