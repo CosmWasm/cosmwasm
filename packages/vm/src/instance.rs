@@ -14,7 +14,8 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
-    move_from_context, move_into_context, setup_context, with_storage_from_context,
+    move_from_context, move_into_context, set_wasmer_instance, setup_context,
+    with_storage_from_context,
 };
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
@@ -118,6 +119,8 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
+        let instance_ptr = &mut wasmer_instance as *mut wasmer_runtime_core::instance::Instance;
+        set_wasmer_instance::<S, Q>(wasmer_instance.context(), instance_ptr);
         move_from_context(wasmer_instance.context(), deps.storage, deps.querier);
         Instance {
             wasmer_instance,

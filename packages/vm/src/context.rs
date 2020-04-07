@@ -1,6 +1,7 @@
 //! Internal details to be used by instance.rs only
 use std::ffi::c_void;
 use std::mem;
+use std::ptr::null_mut;
 
 use wasmer_runtime_core::vm::Ctx;
 
@@ -292,6 +293,7 @@ mod iter_support {
 struct ContextData<S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
+    wasmer_instance: *mut wasmer_runtime_core::instance::Instance,
     #[cfg(feature = "iterator")]
     iter: Option<Box<dyn Iterator<Item = KV>>>,
 }
@@ -307,6 +309,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
         storage: None,
         querier: None,
+        wasmer_instance: null_mut(),
         #[cfg(feature = "iterator")]
         iter: None,
     };
@@ -319,6 +322,17 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
         let mut dead = unsafe { get_data::<S, Q>(ptr) };
         // ensure the iterator (if any) is dropped before the storage
         free_iterator(&mut dead);
+    }
+}
+
+/// Creates a back reference from a contact to its partent instance
+pub fn set_wasmer_instance<S: Storage, Q: Querier>(
+    ctx: &Ctx,
+    wasmer_instance: *mut wasmer_runtime_core::instance::Instance,
+) {
+    let context_data = ctx.data as *mut ContextData<S, Q>;
+    unsafe {
+        (*context_data).wasmer_instance = wasmer_instance;
     }
 }
 
