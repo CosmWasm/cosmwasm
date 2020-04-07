@@ -175,7 +175,6 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
     }
 }
 
-#[cfg(feature = "iterator")]
 mod iter_support {
     use super::*;
     use crate::memory::maybe_read_region;
@@ -249,14 +248,7 @@ mod iter_support {
         SUCCESS
     }
 
-    // set the iterator, overwriting any possible iterator previously set
-    fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
-        let b = unsafe { get_data::<S, Q>(ctx.data) };
-        let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-        b.iter = Some(iter);
-    }
-
-    pub fn with_iterator_from_context<
+    pub(crate) fn with_iterator_from_context<
         S: Storage,
         Q: Querier,
         F: FnMut(&mut dyn Iterator<Item = KV>),
@@ -271,6 +263,13 @@ mod iter_support {
             func(data);
         }
         b.iter = iter;
+    }
+
+    // set the iterator, overwriting any possible iterator previously set
+    fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
+        let b = unsafe { get_data::<S, Q>(ctx.data) };
+        let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
+        b.iter = Some(iter);
     }
 }
 
@@ -321,7 +320,10 @@ fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 #[cfg(not(feature = "iterator"))]
 fn free_iterator<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
-pub fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(ctx: &Ctx, mut func: F) {
+pub(crate) fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(
+    ctx: &Ctx,
+    mut func: F,
+) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b);
     let mut storage = b.storage.take();
@@ -331,7 +333,10 @@ pub fn with_storage_from_context<S: Storage, Q: Querier, F: FnMut(&mut S)>(ctx: 
     b.storage = storage;
 }
 
-pub fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(ctx: &Ctx, mut func: F) {
+pub(crate) fn with_querier_from_context<S: Storage, Q: Querier, F: FnMut(&Q)>(
+    ctx: &Ctx,
+    mut func: F,
+) {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     // we do this to avoid cleanup
     let mut b = mem::ManuallyDrop::new(b);
@@ -366,8 +371,11 @@ mod test {
     use super::*;
     use crate::backends::compile;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
-    use cosmwasm_std::{coin, ReadonlyStorage};
+    use cosmwasm_std::{coin, Order, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
+
+    #[cfg(feature = "iterator")]
+    use super::iter_support::with_iterator_from_context;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -458,7 +466,33 @@ mod test {
             assert_eq!(store.get(INIT_KEY), Some(INIT_VALUE.to_vec()));
             assert_eq!(store.get(set_key), Some(set_value.to_vec()));
         });
+    }
 
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn with_iterator_miss_and_hit() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+
+        with_iterator_from_context::<S, Q, _>(ctx, |_iter| {
+            panic!("this should be empty / not callled");
+        });
+
+        // set up itetator over all space
+        let scan = do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into());
+        assert_eq!(0, scan);
+
+        with_iterator_from_context::<S, Q, _>(ctx, |iter| {
+            let item = iter.next();
+            assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
+        });
+
+        with_iterator_from_context::<S, Q, _>(ctx, |iter| {
+            let item = iter.next();
+            assert_eq!(item, None);
+        });
     }
 
     #[test]
@@ -474,5 +508,16 @@ mod test {
         });
     }
 
+    #[test]
+    #[should_panic]
+    fn with_query_handles_panics() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
 
+        with_querier_from_context::<S, Q, _>(ctx, |_store| {
+            panic!("fails, but shouldn't cause segfault")
+        });
+    }
 }
