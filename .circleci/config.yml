@@ -5,8 +5,8 @@ workflows:
     jobs:
       - package_schema
       - package_std
-      - singlepass_vm
-      - cranelift_vm
+      - package_vm_cranelift
+      - package_vm_singlepass
       - hackatom
       - hackatom_in_singlepass_vm
       - queue
@@ -100,7 +100,7 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
-  singlepass_vm:
+  package_vm_singlepass:
     docker:
       - image: rustlang/rust:nightly
     steps:
@@ -113,7 +113,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -128,9 +128,9 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
 
-  cranelift_vm:
+  package_vm_cranelift:
     docker:
       - image: rust:1.41.1
     steps:
@@ -143,7 +143,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -158,7 +158,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   hackatom:
     docker:
