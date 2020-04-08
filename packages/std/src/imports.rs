@@ -158,10 +158,10 @@ impl Iterator for ExternalIterator {
         }
 
         let key = unsafe { consume_region(key_ptr).unwrap() };
+        let value = unsafe { consume_region(value_ptr).unwrap() };
         if key.is_empty() {
             return None;
         }
-        let value = unsafe { consume_region(value_ptr).unwrap() };
         Some((key, value))
     }
 }
