@@ -160,8 +160,16 @@ version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "cosmwasm-schema"
+version = "0.8.0-dev"
+dependencies = [
+ "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cosmwasm-std"
-version = "0.7.2"
+version = "0.8.0-dev"
 dependencies = [
  "base64 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -172,9 +180,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.7.2"
+version = "0.8.0-dev"
 dependencies = [
- "cosmwasm-std 0.7.2",
+ "cosmwasm-std 0.8.0-dev",
  "hex 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "lru 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "memmap 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -580,13 +588,13 @@ dependencies = [
 
 [[package]]
 name = "queue"
-version = "0.7.2"
+version = "0.8.0-dev"
 dependencies = [
- "cosmwasm-std 0.7.2",
- "cosmwasm-vm 0.7.2",
+ "cosmwasm-schema 0.8.0-dev",
+ "cosmwasm-std 0.8.0-dev",
+ "cosmwasm-vm 0.8.0-dev",
  "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

@@ -1,0 +1,16 @@
+[package]
+name = "cosmwasm-schema"
+version = "0.8.0-dev"
+authors = ["Simon Warta <webmaster128@users.noreply.github.com>", "Ethan Frey <ethanfrey@users.noreply.github.com>"]
+edition = "2018"
+description = "A dev-dependency for CosmWasm contracts to generate JSON Schema files."
+repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm"
+license = "Apache-2.0"
+
+[badges]
+circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
+maintenance = { status = "actively-developed" }
+
+[dependencies]
+schemars = "0.7"
+serde_json = "1.0"

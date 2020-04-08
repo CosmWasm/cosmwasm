@@ -1,6 +1,6 @@
 [package]
 name = "hackatom"
-version = "0.7.2"
+version = "0.8.0-dev"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 publish = false
@@ -40,5 +40,5 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = { version = "0.6.3" }
 
 [dev-dependencies]
+cosmwasm-schema = { path = "../../packages/schema" }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
-serde_json = "1.0"
