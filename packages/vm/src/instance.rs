@@ -413,6 +413,6 @@ mod test {
 
         let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 22584);
+        assert_eq!(query_used, 22662);
     }
 }
