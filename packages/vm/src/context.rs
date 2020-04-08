@@ -17,6 +17,7 @@ pub(crate) use iter_support::{do_next, do_scan};
 use crate::errors::{Error, Result, UninitializedContextData};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
+use std::collections::HashMap;
 
 static MAX_LENGTH_DB_KEY: usize = 100_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
@@ -221,27 +222,33 @@ mod iter_support {
             Ok(o) => o,
             Err(_) => return ERROR_SCAN_INVALID_ORDER,
         };
-        let res = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let res = with_storage_from_context::<S, Q, _, i32>(ctx, |store| {
             let iter = store.range(start.as_deref(), end.as_deref(), order);
             // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
             // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
             let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
                 unsafe { mem::transmute(iter) };
-            set_iterator::<S, Q>(ctx, live_forever);
-            Ok(())
+            let count = set_iterator::<S, Q>(ctx, live_forever);
+            Ok(count)
         });
         match res {
-            Ok(_) => SUCCESS,
+            Ok(cnt) => cnt,
             Err(_) => ERROR_NO_CONTEXT_DATA,
         }
     }
 
-    pub fn do_next<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-        let item = match with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())) {
-            Ok(i) => i,
-            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
-            Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
-        };
+    pub fn do_next<S: Storage, Q: Querier>(
+        ctx: &Ctx,
+        counter: i32,
+        key_ptr: u32,
+        value_ptr: u32,
+    ) -> i32 {
+        let item =
+            match with_iterator_from_context::<S, Q, _, _>(ctx, counter, |iter| Ok(iter.next())) {
+                Ok(i) => i,
+                Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
+                Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
+            };
 
         // prepare return values
         let (key, value) = match item {
@@ -262,7 +269,11 @@ mod iter_support {
         SUCCESS
     }
 
-    pub(crate) fn with_iterator_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> Result<T, Error>
+    pub(crate) fn with_iterator_from_context<S, Q, F, T>(
+        ctx: &Ctx,
+        counter: i32,
+        mut func: F,
+    ) -> Result<T, Error>
     where
         S: Storage,
         Q: Querier,
@@ -270,20 +281,25 @@ mod iter_support {
     {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b);
-        let mut iter = b.iter.take();
-        let res = match &mut iter {
-            Some(data) => func(data),
+        let iter = b.iter.remove(&counter);
+        match iter {
+            Some(mut data) => {
+                let res = func(&mut data);
+                b.iter.insert(counter, data);
+                res
+            }
             None => UninitializedContextData { kind: "iterator" }.fail(),
-        };
-        b.iter = iter;
-        res
+        }
     }
 
     // set the iterator, overwriting any possible iterator previously set
-    fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) {
+    fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) -> i32 {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-        b.iter = Some(iter);
+        b.iter_count += 1;
+        let counter = b.iter_count;
+        b.iter.insert(counter, iter);
+        counter
     }
 }
 
@@ -293,7 +309,9 @@ struct ContextData<S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
-    iter: Option<Box<dyn Iterator<Item = KV>>>,
+    iter: HashMap<i32, Box<dyn Iterator<Item = KV>>>,
+    #[cfg(feature = "iterator")]
+    iter_count: i32,
 }
 
 pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
@@ -308,7 +326,9 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
         storage: None,
         querier: None,
         #[cfg(feature = "iterator")]
-        iter: None,
+        iter: HashMap::new(),
+        #[cfg(feature = "iterator")]
+        iter_count: 0,
     };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
@@ -328,7 +348,10 @@ unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<
 
 #[cfg(feature = "iterator")]
 fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
-    let _ = context.iter.take();
+    let keys: Vec<i32> = context.iter.keys().cloned().collect();
+    for key in keys {
+        let _ = context.iter.remove(&key);
+    }
 }
 
 #[cfg(not(feature = "iterator"))]
@@ -426,7 +449,7 @@ mod test {
                 "write_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "remove_db" => Func::new(|_a: i32| -> i32 { 0 }),
                 "scan_db" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
-                "next_db" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "next_db" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
                 "query_chain" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
@@ -504,7 +527,7 @@ mod test {
         leave_default_data(&instance);
         let ctx = instance.context();
 
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, |_iter| {
+        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, 1, |_iter| {
             panic!("this should be empty / not callled");
         });
         match miss {
@@ -523,16 +546,29 @@ mod test {
 
         // set up iterator over all space
         let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
-        assert_eq!(0, scan);
+        assert_eq!(1, scan);
 
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
 
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, None);
+
+        // we also miss when using a non-registered counter
+        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, scan + 1, |_iter| {
+            panic!("this should be empty / not callled");
+        });
+        match miss {
+            Ok(_) => panic!("Expected error"),
+            Err(Error::UninitializedContextData { .. }) => assert!(true),
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
     }
 
     #[test]
@@ -553,27 +589,36 @@ mod test {
 
         // set up iterator over all space
         let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
-        assert_eq!(0, scan);
+        assert_eq!(1, scan);
 
         // first item, first iterator
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
         // set up second iterator over all space
         let scan2 = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
-        assert_eq!(0, scan2);
+        assert_eq!(2, scan2);
 
-        // second item, second iterator
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        // second item, first iterator
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
 
         // first item, second iterator
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
         // end, first iterator
-        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, None);
+
+        // second item, second iterator
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, scan2, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
     }
 
     #[test]
