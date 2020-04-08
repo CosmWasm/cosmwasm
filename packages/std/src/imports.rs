@@ -26,15 +26,15 @@ static QUERY_BUFFER: usize = 4000;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn read_db(key: *const c_void, value: *mut c_void) -> i32;
-    fn write_db(key: *const c_void, value: *mut c_void) -> i32;
-    fn remove_db(key: *const c_void) -> i32;
+    fn db_read(key: *const c_void, value: *mut c_void) -> i32;
+    fn db_write(key: *const c_void, value: *mut c_void) -> i32;
+    fn db_remove(key: *const c_void) -> i32;
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn scan_db(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn next_db(iterator_id: i32, key: *mut c_void, value: *mut c_void) -> i32;
+    fn db_next(iterator_id: i32, key: *mut c_void, value: *mut c_void) -> i32;
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
@@ -60,12 +60,12 @@ impl ReadonlyStorage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
         let value = alloc(MAX_READ);
 
-        let read = unsafe { read_db(key_ptr, value) };
+        let read = unsafe { db_read(key_ptr, value) };
         if read == -1000002 {
             panic!("Allocated memory too small to hold the database value for the given key. \
                 If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
         } else if read < 0 {
-            panic!("An unknown error occurred in the read_db call.")
+            panic!("An unknown error occurred in the db_read call.")
         }
 
         match unsafe { consume_region(value) } {
@@ -102,7 +102,7 @@ impl ReadonlyStorage for ExternalStorage {
         };
         let order = order as i32;
 
-        let iterator_id = unsafe { scan_db(start_ptr, end_ptr, order) };
+        let iterator_id = unsafe { db_scan(start_ptr, end_ptr, order) };
         if iterator_id < 0 {
             panic!(format!("Error creating iterator: {}", iterator_id));
         }
@@ -118,7 +118,7 @@ impl Storage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
         let mut value = build_region(value);
         let value_ptr = &mut *value as *mut Region as *mut c_void;
-        let result = unsafe { write_db(key_ptr, value_ptr) };
+        let result = unsafe { db_write(key_ptr, value_ptr) };
         if result < 0 {
             // TODO: convert to Result, but this requires changing the trait
             panic!("Error writing to database");
@@ -129,7 +129,7 @@ impl Storage for ExternalStorage {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let result = unsafe { remove_db(key_ptr) };
+        let result = unsafe { db_remove(key_ptr) };
         if result < 0 {
             // TODO: convert to Result, but this requires changing the trait
             panic!("Error deleting from database");
@@ -152,7 +152,7 @@ impl Iterator for ExternalIterator {
         let key_ptr = alloc(MAX_READ);
         let value_ptr = alloc(MAX_READ);
 
-        let read = unsafe { next_db(self.iterator_id, key_ptr, value_ptr) };
+        let read = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
         if read < 0 {
             panic!(format!("Unknown error on next: {}", read));
         }

@@ -53,20 +53,20 @@ where
                 // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
                 //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
-                "read_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
-                "write_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_write::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Removes the value at the given key. Different than writing &[] as future
                 // scans will not find this key.
                 // Ownership of both key pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
-                "remove_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
+                "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
                     do_remove::<S, Q>(ctx, key_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
@@ -96,13 +96,13 @@ where
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns negative code on error, 0 on success
-                "scan_db" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
+                "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                "next_db" => Func::new(move |ctx: &mut Ctx, counter: i32, key_ptr: u32, value_ptr: u32| -> i32 {
+                "db_next" => Func::new(move |ctx: &mut Ctx, counter: i32, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_next::<S, Q>(ctx, counter, key_ptr, value_ptr)
                 }),
             },

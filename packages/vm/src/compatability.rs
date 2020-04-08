@@ -5,16 +5,16 @@ use crate::errors::{Result, ValidationErr};
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
 static SUPPORTED_IMPORTS: &[&str] = &[
-    "env.read_db",
-    "env.write_db",
-    "env.remove_db",
+    "env.db_read",
+    "env.db_write",
+    "env.db_remove",
     "env.canonicalize_address",
     "env.humanize_address",
     "env.query_chain",
     #[cfg(feature = "iterator")]
-    "env.scan_db",
+    "env.db_scan",
     #[cfg(feature = "iterator")]
-    "env.next_db",
+    "env.db_next",
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.
