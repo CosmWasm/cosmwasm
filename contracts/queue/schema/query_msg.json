@@ -23,6 +23,17 @@
           "type": "object"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "reducer"
+      ],
+      "properties": {
+        "reducer": {
+          "type": "object"
+        }
+      }
     }
   ]
 }
