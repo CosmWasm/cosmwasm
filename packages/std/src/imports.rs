@@ -12,15 +12,18 @@ use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
 use crate::traits::{Order, KV};
 use crate::types::{CanonicalAddr, HumanAddr};
 
-// this is the buffer we pre-allocate in get - we should configure this somehow later
-static MAX_READ: usize = 2000;
-
+/// A kibi (kilo binary)
+static KI: usize = 1024;
+/// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
+static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
+/// The number of bytes of the memory region we pre-allocate for the result data in ExternalStorage.get
+/// and ExternalIterator.next
+static DB_READ_VALUE_BUFFER_LENGTH: usize = 128 * KI;
+/// The number of bytes of the memory region we pre-allocate for the result data in queries
+static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
 // this is the maximum allowed size for bech32
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
-static ADDR_BUFFER: usize = 90;
-
-// this is the space we allocate for query responses
-static QUERY_BUFFER: usize = 4000;
+static ADDR_BUFFER_LENGTH: usize = 90;
 
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
@@ -52,23 +55,21 @@ impl ExternalStorage {
     pub fn new() -> ExternalStorage {
         ExternalStorage {}
     }
-}
 
-impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    pub fn get_with_result_length(&self, key: &[u8], result_length: usize) -> Option<Vec<u8>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let value = alloc(MAX_READ);
+        let value_ptr = alloc(result_length);
 
-        let read = unsafe { db_read(key_ptr, value) };
+        let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1000002 {
             panic!("Allocated memory too small to hold the database value for the given key. \
-                If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
+                You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
         } else if read < 0 {
             panic!("An unknown error occurred in the db_read call.")
         }
 
-        match unsafe { consume_region(value) } {
+        match unsafe { consume_region(value_ptr) } {
             Ok(data) => {
                 if data.len() == 0 {
                     None
@@ -79,6 +80,12 @@ impl ReadonlyStorage for ExternalStorage {
             // TODO: do we really want to convert errors to None?
             Err(_) => None,
         }
+    }
+}
+
+impl ReadonlyStorage for ExternalStorage {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
     }
 
     #[cfg(feature = "iterator")]
@@ -151,8 +158,8 @@ impl Iterator for ExternalIterator {
     type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key_ptr = alloc(MAX_READ);
-        let value_ptr = alloc(MAX_READ);
+        let key_ptr = alloc(DB_READ_KEY_BUFFER_LENGTH);
+        let value_ptr = alloc(DB_READ_VALUE_BUFFER_LENGTH);
 
         let read = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
         if read < 0 {
@@ -182,7 +189,7 @@ impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
         let send_ptr = &*send as *const Region as *const c_void;
-        let canon = alloc(ADDR_BUFFER);
+        let canon = alloc(ADDR_BUFFER_LENGTH);
 
         let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
@@ -199,7 +206,7 @@ impl Api for ExternalApi {
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
         let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as *const c_void;
-        let human = alloc(ADDR_BUFFER);
+        let human = alloc(ADDR_BUFFER_LENGTH);
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
@@ -231,7 +238,7 @@ impl Querier for ExternalQuerier {
         let bin_request = to_vec(request).or(Err(ApiSystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let req_ptr = &*req as *const Region as *const c_void;
-        let resp = alloc(QUERY_BUFFER);
+        let resp = alloc(QUERY_RESULT_BUFFER_LENGTH);
 
         let ret = unsafe { query_chain(req_ptr, resp) };
         if ret < 0 {
