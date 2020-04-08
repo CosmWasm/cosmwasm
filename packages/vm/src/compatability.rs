@@ -49,20 +49,20 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
 
 /// This is called as part of check_wasm
 fn check_api_compatibility(module: &Module) -> Result<()> {
-    if let Some(missing) = find_missing_import(module, SUPPORTED_IMPORTS) {
-        return ValidationErr {
-            msg: format!(
-                "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
-                missing, SUPPORTED_IMPORTS
-            ),
-        }
-        .fail();
-    }
     if let Some(missing) = find_missing_export(module, REQUIRED_EXPORTS) {
         return ValidationErr {
             msg: format!(
                 "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
                 missing, REQUIRED_EXPORTS
+            ),
+        }
+        .fail();
+    }
+    if let Some(missing) = find_missing_import(module, SUPPORTED_IMPORTS) {
+        return ValidationErr {
+            msg: format!(
+                "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
+                missing, SUPPORTED_IMPORTS
             ),
         }
         .fail();
@@ -181,6 +181,12 @@ mod test {
     }
 
     #[test]
+    fn test_check_wasm() {
+        // this is our reference check, must pass
+        check_wasm(CONTRACT).unwrap();
+    }
+
+    #[test]
     fn test_check_wasm_corrupted_data() {
         match check_wasm(CORRUPTED) {
             Err(Error::ValidationErr { msg, .. }) => {
@@ -188,23 +194,6 @@ mod test {
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
-        }
-    }
-
-    #[test]
-    fn test_check_wasm_imports() {
-        // this is our reference check, must pass
-        check_wasm(CONTRACT).unwrap();
-
-        // Old 0.6 contract rejected since it requires outdated imports `c_read` and friends
-        match check_wasm(CONTRACT_0_6) {
-            Err(Error::ValidationErr { msg, .. }) => {
-                assert!(
-                    msg.starts_with("Wasm contract requires unsupported import: \"env.c_read\"")
-                );
-            }
-            Err(e) => panic!("Unexpected error {:?}", e),
-            Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
 
@@ -237,7 +226,6 @@ mod test {
 
     #[test]
     fn test_check_wasm_exports_of_old_contract() {
-        // This test only works well because required imports (checked before exports) did not change between 0.7 and 0.8
         match check_wasm(CONTRACT_0_7) {
             Err(Error::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
@@ -248,4 +236,7 @@ mod test {
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
+
+    // Note: we don't have test data that includes correct exports but has
+    // additional unsupported required imports. However, Wasmer will check this as well.
 }
