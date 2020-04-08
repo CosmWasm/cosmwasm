@@ -1,4 +1,5 @@
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
@@ -54,8 +55,8 @@ where
                 // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
                 //   value region too small: -1000002
                 // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
-                    do_read::<S, Q>(ctx, key_ptr, value_ptr)
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
+                    do_read::<S, Q>(ctx, key_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
@@ -120,7 +121,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        let instance_ptr = &mut wasmer_instance as *mut wasmer_runtime_core::instance::Instance;
+        let instance_ptr = NonNull::from(&mut wasmer_instance);
         set_wasmer_instance::<S, Q>(wasmer_instance.context(), instance_ptr);
         move_from_context(wasmer_instance.context(), deps.storage, deps.querier);
         Instance {

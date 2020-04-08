@@ -3,7 +3,7 @@
 use std::collections::HashMap;
 use std::ffi::c_void;
 use std::mem;
-use std::ptr::{null_mut, NonNull};
+use std::ptr::NonNull;
 
 use snafu::ResultExt;
 use wasmer_runtime_core::{
@@ -19,8 +19,8 @@ use cosmwasm_std::{
 };
 
 #[cfg(feature = "iterator")]
-use crate::conversion::to_i32;
-use crate::errors::{Error, ResolveErr, Result, UninitializedContextData};
+use crate::conversion::{to_i32, to_u32};
+use crate::errors::{Error, Result, UninitializedContextData, WasmerRuntimeErr};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 #[cfg(feature = "iterator")]
@@ -54,7 +54,7 @@ pub static ERROR_NO_CONTEXT_DATA: i32 = -1_000_501;
 static ERROR_DB_UNKNOWN: i32 = -1_000_502;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
@@ -66,13 +66,36 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
             Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
             Err(_) => return ERROR_DB_UNKNOWN,
         };
-    match value {
-        Some(buf) => match write_region(ctx, value_ptr, &buf) {
-            Ok(()) => SUCCESS,
-            Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
-            Err(_) => ERROR_REGION_WRITE_UNKNOWN,
+
+    let data = match value {
+        Some(d) => d,
+        None => return SUCCESS,
+    };
+
+    println!("Data len: {}", data.len());
+
+    let value_ptr =
+        match with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate_func| {
+            println!("Found allocate function");
+            let size = to_u32(data.len())?;
+            allocate_func.call(size).context(WasmerRuntimeErr {})
+        }) {
+            Ok(ptr) => ptr,
+            Err(_) => {
+                println!("Error executing allocate");
+                return -34567890; // error executing allocate
+            }
+        };
+
+    println!("value_ptr = {}", value_ptr);
+
+    match write_region(ctx, value_ptr, &data) {
+        Ok(()) => match to_i32(value_ptr) {
+            Ok(iptr) => iptr,
+            Err(_) => return -98765, // Error converting to i32 range
         },
-        None => SUCCESS,
+        Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
+        Err(_) => ERROR_REGION_WRITE_UNKNOWN,
     }
 }
 
@@ -323,7 +346,7 @@ mod iter_support {
 struct ContextData<S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
-    wasmer_instance: *mut wasmer_runtime_core::instance::Instance,
+    wasmer_instance: Option<NonNull<wasmer_runtime_core::instance::Instance>>,
     #[cfg(feature = "iterator")]
     iter: HashMap<u32, Box<dyn Iterator<Item = KV>>>,
 }
@@ -339,7 +362,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
         storage: None,
         querier: None,
-        wasmer_instance: null_mut(),
+        wasmer_instance: None,
         #[cfg(feature = "iterator")]
         iter: HashMap::new(),
     };
@@ -358,11 +381,11 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 /// Creates a back reference from a contact to its partent instance
 pub fn set_wasmer_instance<S: Storage, Q: Querier>(
     ctx: &Ctx,
-    wasmer_instance: *mut wasmer_runtime_core::instance::Instance,
+    wasmer_instance: NonNull<wasmer_runtime_core::instance::Instance>,
 ) {
     let context_data = ctx.data as *mut ContextData<S, Q>;
     unsafe {
-        (*context_data).wasmer_instance = wasmer_instance;
+        (*context_data).wasmer_instance = Some(wasmer_instance);
     }
 }
 
@@ -394,9 +417,25 @@ where
     Callback: FnMut(Func<Args, Rets, Wasm>) -> Result<CallbackData, Error>,
 {
     let context_data = ctx.data as *mut ContextData<S, Q>;
-    match NonNull::new(unsafe { (*context_data).wasmer_instance }) {
+    println!("Got context");
+    match unsafe { (*context_data).wasmer_instance } {
         Some(ptr) => {
-            let func = unsafe { ptr.as_ref().func(name).context(ResolveErr {}) }?;
+            println!("Got wasmer instance pointer");
+            let instance = unsafe { ptr.as_ref() };
+            println!("Got wasmer instance ref");
+            let _context = instance.context();
+            println!("Could execute context function on wasmer instance ref");
+            let func = match instance.func(name) {
+                Ok(func) => {
+                    println!("Found func");
+                    func
+                }
+                Err(e) => {
+                    println!("Error in func(): {:?}", e);
+                    panic!("Error in func(): {:?}", e);
+                }
+            }; // .context(ResolveErr {})?;
+            println!("Executing func ...");
             callback(func)
         }
         None => UninitializedContextData {
@@ -467,7 +506,6 @@ pub(crate) fn move_from_context<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, q
 mod test {
     use super::*;
     use crate::backends::compile;
-    use crate::errors::WasmerRuntimeErr;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
     use cosmwasm_std::{coin, from_binary, BalanceResponse, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
@@ -495,7 +533,7 @@ mod test {
         let import_obj = imports! {
             || { setup_context::<MockStorage, MockQuerier>() },
             "env" => {
-                "db_read" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "db_read" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
@@ -545,7 +583,7 @@ mod test {
     fn with_func_from_context_works() {
         let mut instance = make_instance();
         leave_default_data(&instance);
-        let instance_ptr = &mut instance as *mut Instance;
+        let instance_ptr = NonNull::from(&mut instance);
         set_wasmer_instance::<S, Q>(instance.context(), instance_ptr);
 
         let ctx = instance.context();
