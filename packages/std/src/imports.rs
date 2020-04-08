@@ -34,7 +34,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn scan_db(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn next_db(key: *mut c_void, value: *mut c_void) -> i32;
+    fn next_db(counter: i32, key: *mut c_void, value: *mut c_void) -> i32;
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
@@ -102,11 +102,11 @@ impl ReadonlyStorage for ExternalStorage {
         };
         let order = order as i32;
 
-        let iter_ptr = unsafe { scan_db(start_ptr, end_ptr, order) };
-        if iter_ptr < 0 {
-            panic!(format!("Error creating iterator: {}", iter_ptr));
+        let counter = unsafe { scan_db(start_ptr, end_ptr, order) };
+        if counter < 0 {
+            panic!(format!("Error creating iterator: {}", counter));
         }
-        let iter = ExternalIterator {};
+        let iter = ExternalIterator { counter };
         Box::new(iter)
     }
 }
@@ -141,7 +141,9 @@ impl Storage for ExternalStorage {
 /// ExternalIterator makes a call out to next
 /// We only allow one open iterator at a time, so no need to pass references
 /// it automatically refers to result of last range call
-struct ExternalIterator {}
+struct ExternalIterator {
+    counter: i32,
+}
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
@@ -151,7 +153,7 @@ impl Iterator for ExternalIterator {
         let key_ptr = alloc(MAX_READ);
         let value_ptr = alloc(MAX_READ);
 
-        let read = unsafe { next_db(key_ptr, value_ptr) };
+        let read = unsafe { next_db(self.counter, key_ptr, value_ptr) };
         if read < 0 {
             panic!(format!("Unknown error on next: {}", read));
         }
