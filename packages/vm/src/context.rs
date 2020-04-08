@@ -1,4 +1,6 @@
 //! Internal details to be used by instance.rs only
+#[cfg(feature = "iterator")]
+use std::collections::HashMap;
 use std::ffi::c_void;
 use std::mem;
 
@@ -11,13 +13,11 @@ use cosmwasm_std::{
     QuerierResponse, QueryRequest, Storage,
 };
 
-#[cfg(feature = "iterator")]
-pub(crate) use iter_support::{do_next, do_scan};
-
 use crate::errors::{Error, Result, UninitializedContextData};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
-use std::collections::HashMap;
+#[cfg(feature = "iterator")]
+pub(crate) use iter_support::{do_next, do_scan};
 
 static MAX_LENGTH_DB_KEY: usize = 100_000;
 static MAX_LENGTH_DB_VALUE: usize = 100_000;
@@ -296,8 +296,11 @@ mod iter_support {
     fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) -> i32 {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-        b.iter_count += 1;
-        let counter = b.iter_count;
+        let mut counter: i32 = match b.iter.len().try_into() {
+            Ok(v) => v,
+            Err(_) => return ERROR_DB_UNKNOWN,
+        };
+        counter += 1;
         b.iter.insert(counter, iter);
         counter
     }
@@ -310,8 +313,6 @@ struct ContextData<S: Storage, Q: Querier> {
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
     iter: HashMap<i32, Box<dyn Iterator<Item = KV>>>,
-    #[cfg(feature = "iterator")]
-    iter_count: i32,
 }
 
 pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
@@ -327,8 +328,6 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
         querier: None,
         #[cfg(feature = "iterator")]
         iter: HashMap::new(),
-        #[cfg(feature = "iterator")]
-        iter_count: 0,
     };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
