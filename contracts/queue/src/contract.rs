@@ -31,10 +31,8 @@ pub enum QueryMsg {
     Count {},
     // total of all values in the queue
     Sum {},
-    //    // first element in the queue
-    //    First {},
-    //    // last element in the queue
-    //    Last {},
+    // Reducer holds open two iterators at once
+    Reducer {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,6 +43,13 @@ pub struct CountResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SumResponse {
     pub sum: i32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+// the Vec contains pairs for every element in the queue
+// (value of item i, sum of all elements where value > value[i])
+pub struct ReducerResponse {
+    pub counters: Vec<(i32, i32)>,
 }
 
 // init is a no-op, just empty data
@@ -117,6 +122,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     match msg {
         QueryMsg::Count {} => query_count(deps),
         QueryMsg::Sum {} => query_sum(deps),
+        QueryMsg::Reducer {} => query_reducer(deps),
     }
 }
 
@@ -133,6 +139,29 @@ fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<Q
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
     Ok(Binary(to_vec(&SumResponse { sum })?))
+}
+
+fn query_reducer<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
+    let mut out: Vec<(i32, i32)> = vec![];
+    // val: Result<Item>
+    for val in deps
+        .storage
+        .range(None, None, Order::Ascending)
+        .map(|(_, v)| from_slice::<Item>(&v))
+    {
+        // this returns error on parse error
+        let my_val = val?.value;
+        // now, let's do second iterator
+        let sum: i32 = deps
+            .storage
+            .range(None, None, Order::Ascending)
+            // get value. ignore parse errors, just count as 0
+            .map(|(_, v)| from_slice::<Item>(&v).map(|v| v.value).unwrap_or(0))
+            .filter(|v| *v > my_val)
+            .sum();
+        out.push((my_val, sum))
+    }
+    Ok(Binary(to_vec(&ReducerResponse { counters: out })?))
 }
 
 #[cfg(test)]
@@ -201,5 +230,19 @@ mod tests {
 
         assert_eq!(get_count(&deps), 1);
         assert_eq!(get_sum(&deps), 17);
+    }
+
+    #[test]
+    fn push_and_reduce() {
+        let (mut deps, env) = create_contract();
+        handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 40 }).unwrap();
+        handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 15 }).unwrap();
+        handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 85 }).unwrap();
+        handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: -10 }).unwrap();
+        assert_eq!(get_count(&deps), 4);
+        assert_eq!(get_sum(&deps), 130);
+        let data = query(&deps, QueryMsg::Reducer {}).unwrap();
+        let counters = from_binary::<ReducerResponse>(&data).unwrap().counters;
+        assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
     }
 }

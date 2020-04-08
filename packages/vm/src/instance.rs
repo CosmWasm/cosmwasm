@@ -102,8 +102,8 @@ where
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                "next_db" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
-                    do_next::<S, Q>(ctx, key_ptr, value_ptr)
+                "next_db" => Func::new(move |ctx: &mut Ctx, counter: i32, key_ptr: u32, value_ptr: u32| -> i32 {
+                    do_next::<S, Q>(ctx, counter, key_ptr, value_ptr)
                 }),
             },
         });
