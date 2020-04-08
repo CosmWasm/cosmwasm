@@ -12,8 +12,11 @@ use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
 use crate::traits::{Order, KV};
 use crate::types::{CanonicalAddr, HumanAddr};
 
-// this is the buffer we pre-allocate in get - we should configure this somehow later
-static MAX_READ: usize = 2000;
+/// A kibi (kilo binary)
+static KI: usize = 1024;
+
+/// The number of bytes of the memory region we pre-allocate for the result data in Storage.get
+static RESULT_BUFFER_LENGTH: usize = 128 * KI;
 
 // this is the maximum allowed size for bech32
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
@@ -58,9 +61,9 @@ impl ReadonlyStorage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let value = alloc(MAX_READ);
+        let value_ptr = alloc(RESULT_BUFFER_LENGTH);
 
-        let read = unsafe { db_read(key_ptr, value) };
+        let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1000002 {
             panic!("Allocated memory too small to hold the database value for the given key. \
                 If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
@@ -68,7 +71,7 @@ impl ReadonlyStorage for ExternalStorage {
             panic!("An unknown error occurred in the db_read call.")
         }
 
-        match unsafe { consume_region(value) } {
+        match unsafe { consume_region(value_ptr) } {
             Ok(data) => {
                 if data.len() == 0 {
                     None
@@ -151,8 +154,8 @@ impl Iterator for ExternalIterator {
     type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key_ptr = alloc(MAX_READ);
-        let value_ptr = alloc(MAX_READ);
+        let key_ptr = alloc(RESULT_BUFFER_LENGTH);
+        let value_ptr = alloc(RESULT_BUFFER_LENGTH);
 
         let read = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
         if read < 0 {
