@@ -122,7 +122,7 @@ The imports provided to give the contract access to the environment are:
 // TODO: use feature switches to enable precompile dependencies in the future,
 // so contracts that need less
 extern "C" {
-    fn read_db(key: *const c_void, value: *mut c_void) -> i32;
+    fn read_db(key: *const c_void) -> i32;
     fn write_db(key: *const c_void, value: *mut c_void) -> i32;
     fn remove_db(key: *const c_void) -> i32;
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;

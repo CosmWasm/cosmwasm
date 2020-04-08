@@ -12,9 +12,6 @@ use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
 use crate::traits::{Order, KV};
 use crate::types::{CanonicalAddr, HumanAddr};
 
-// this is the buffer we pre-allocate in get - we should configure this somehow later
-static MAX_READ: usize = 2000;
-
 // this is the maximum allowed size for bech32
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
 static ADDR_BUFFER: usize = 90;
@@ -26,7 +23,7 @@ static QUERY_BUFFER: usize = 4000;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn read_db(key: *const c_void, value: *mut c_void) -> i32;
+    fn read_db(key: *const c_void) -> i32;
     fn write_db(key: *const c_void, value: *mut c_void) -> i32;
     fn remove_db(key: *const c_void) -> i32;
 
@@ -58,24 +55,17 @@ impl ReadonlyStorage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let value = alloc(MAX_READ);
 
-        let read = unsafe { read_db(key_ptr, value) };
-        if read == -1000002 {
-            panic!("Allocated memory too small to hold the database value for the given key. \
-                If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
-        } else if read < 0 {
-            panic!("An unknown error occurred in the read_db call.")
+        let read = unsafe { read_db(key_ptr) };
+        if read < 0 {
+            panic!("An unknown error occurred in the read_db call");
+        } else if read == 0 {
+            return None;
         }
 
-        match unsafe { consume_region(value) } {
-            Ok(data) => {
-                if data.len() == 0 {
-                    None
-                } else {
-                    Some(data)
-                }
-            }
+        let value_ptr = read as u32 ;
+        match unsafe { consume_region(value_ptr as *mut c_void) } {
+            Ok(data) => Some(data),
             // TODO: do we really want to convert errors to None?
             Err(_) => None,
         }
