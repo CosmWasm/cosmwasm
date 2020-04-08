@@ -19,7 +19,7 @@ static KI: usize = 1024;
 static RESULT_BUFFER_LENGTH: usize = 128 * KI;
 
 /// The number of bytes of the memory region we pre-allocate for the result data in queries
-static QUERY_BUFFER_LENGTH: usize = 4 * KI;
+static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
 
 // this is the maximum allowed size for bech32
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
@@ -238,7 +238,7 @@ impl Querier for ExternalQuerier {
         let bin_request = to_vec(request).or(Err(ApiSystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let req_ptr = &*req as *const Region as *const c_void;
-        let resp = alloc(QUERY_BUFFER_LENGTH);
+        let resp = alloc(QUERY_RESULT_BUFFER_LENGTH);
 
         let ret = unsafe { query_chain(req_ptr, resp) };
         if ret < 0 {
