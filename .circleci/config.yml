@@ -3,8 +3,8 @@ workflows:
   version: 2
   test:
     jobs:
-      - schema
-      - std
+      - package_schema
+      - package_std
       - singlepass_vm
       - cranelift_vm
       - hackatom
@@ -14,7 +14,7 @@ workflows:
       - clippy
 
 jobs:
-  schema:
+  package_schema:
     docker:
       - image: rust:1.41.1
     steps:
@@ -24,7 +24,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/schema
@@ -39,9 +39,9 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
-  std:
+  package_std:
     docker:
       - image: rust:1.41.1
     steps:
@@ -51,7 +51,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-std-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -98,7 +98,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-std-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   singlepass_vm:
     docker:
