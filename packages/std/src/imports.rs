@@ -55,18 +55,16 @@ impl ExternalStorage {
     pub fn new() -> ExternalStorage {
         ExternalStorage {}
     }
-}
 
-impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    pub fn get_with_result_length(&self, key: &[u8], result_length: usize) -> Option<Vec<u8>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let value_ptr = alloc(RESULT_BUFFER_LENGTH);
+        let value_ptr = alloc(result_length);
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1000002 {
             panic!("Allocated memory too small to hold the database value for the given key. \
-                If this is causing trouble for you, have a look at https://github.com/confio/cosmwasm/issues/126");
+                You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
         } else if read < 0 {
             panic!("An unknown error occurred in the db_read call.")
         }
@@ -82,6 +80,12 @@ impl ReadonlyStorage for ExternalStorage {
             // TODO: do we really want to convert errors to None?
             Err(_) => None,
         }
+    }
+}
+
+impl ReadonlyStorage for ExternalStorage {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.get_with_result_length(key, RESULT_BUFFER_LENGTH)
     }
 
     #[cfg(feature = "iterator")]
