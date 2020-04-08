@@ -248,14 +248,13 @@ mod iter_support {
         key_ptr: u32,
         value_ptr: u32,
     ) -> i32 {
-        let item =
-            match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id as usize, |iter| {
-                Ok(iter.next())
-            }) {
-                Ok(i) => i,
-                Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
-                Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
-            };
+        let item = match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| {
+            Ok(iter.next())
+        }) {
+            Ok(i) => i,
+            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
+            Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
+        };
 
         // prepare return values
         let (key, value) = match item {
@@ -278,7 +277,7 @@ mod iter_support {
 
     pub(crate) fn with_iterator_from_context<S, Q, F, T>(
         ctx: &Ctx,
-        iterator_id: usize,
+        iterator_id: u32,
         mut func: F,
     ) -> Result<T, Error>
     where
@@ -300,13 +299,15 @@ mod iter_support {
     }
 
     // set the iterator, overwriting any possible iterator previously set
-    fn set_iterator<S: Storage, Q: Querier>(
-        ctx: &Ctx,
-        iter: Box<dyn Iterator<Item = KV>>,
-    ) -> usize {
+    fn set_iterator<S: Storage, Q: Querier>(ctx: &Ctx, iter: Box<dyn Iterator<Item = KV>>) -> u32 {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
-        let new_id = b.iter.len() + 1;
+        let last_id: u32 = b
+            .iter
+            .len()
+            .try_into()
+            .expect("Found more iterator IDs than supported");
+        let new_id = last_id + 1;
         b.iter.insert(new_id, iter);
         new_id
     }
@@ -318,7 +319,7 @@ struct ContextData<S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
-    iter: HashMap<usize, Box<dyn Iterator<Item = KV>>>,
+    iter: HashMap<u32, Box<dyn Iterator<Item = KV>>>,
 }
 
 pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
@@ -353,7 +354,7 @@ unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<
 
 #[cfg(feature = "iterator")]
 fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
-    let keys: Vec<usize> = context.iter.keys().cloned().collect();
+    let keys: Vec<u32> = context.iter.keys().cloned().collect();
     for key in keys {
         let _ = context.iter.remove(&key);
     }
