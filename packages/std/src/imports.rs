@@ -34,7 +34,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn db_next(iterator_id: i32, key: *mut c_void, value: *mut c_void) -> i32;
+    fn db_next(iterator_id: u32, key: *mut c_void, value: *mut c_void) -> i32;
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
@@ -106,7 +106,9 @@ impl ReadonlyStorage for ExternalStorage {
         if iterator_id < 0 {
             panic!(format!("Error creating iterator: {}", iterator_id));
         }
-        let iter = ExternalIterator { iterator_id };
+        let iter = ExternalIterator {
+            iterator_id: iterator_id as u32, // Cast is safe since we tested for negative values above
+        };
         Box::new(iter)
     }
 }
@@ -141,7 +143,7 @@ impl Storage for ExternalStorage {
 /// ExternalIterator makes a call out to next.
 /// We use the pointer to differentiate between multiple open iterators.
 struct ExternalIterator {
-    iterator_id: i32,
+    iterator_id: u32,
 }
 
 #[cfg(feature = "iterator")]

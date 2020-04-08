@@ -99,11 +99,12 @@ where
                 "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
-                // Creates an iterator that will go from start to end
-                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
-                // Ownership of both start and end pointer is not transferred to the host.
-                "db_next" => Func::new(move |ctx: &mut Ctx, counter: i32, key_ptr: u32, value_ptr: u32| -> i32 {
-                    do_next::<S, Q>(ctx, counter, key_ptr, value_ptr)
+                // Get next element of iterator with ID `iterator_id`.
+                // Expectes Regions in key_ptr and value_ptr, in which the result is written.
+                // An empty key value (Region of length 0) means no more element.
+                // Ownership of both key and value pointer is not transferred to the host.
+                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32, key_ptr: u32, value_ptr: u32| -> i32 {
+                    do_next::<S, Q>(ctx, iterator_id, key_ptr, value_ptr)
                 }),
             },
         });
