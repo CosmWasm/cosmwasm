@@ -18,12 +18,12 @@ static KI: usize = 1024;
 /// The number of bytes of the memory region we pre-allocate for the result data in Storage.get
 static RESULT_BUFFER_LENGTH: usize = 128 * KI;
 
+/// The number of bytes of the memory region we pre-allocate for the result data in queries
+static QUERY_BUFFER_LENGTH: usize = 4 * KI;
+
 // this is the maximum allowed size for bech32
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
-static ADDR_BUFFER: usize = 90;
-
-// this is the space we allocate for query responses
-static QUERY_BUFFER: usize = 4000;
+static ADDR_BUFFER_LENGTH: usize = 90;
 
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
@@ -185,7 +185,7 @@ impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
         let send_ptr = &*send as *const Region as *const c_void;
-        let canon = alloc(ADDR_BUFFER);
+        let canon = alloc(ADDR_BUFFER_LENGTH);
 
         let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
@@ -202,7 +202,7 @@ impl Api for ExternalApi {
     fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
         let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as *const c_void;
-        let human = alloc(ADDR_BUFFER);
+        let human = alloc(ADDR_BUFFER_LENGTH);
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
@@ -234,7 +234,7 @@ impl Querier for ExternalQuerier {
         let bin_request = to_vec(request).or(Err(ApiSystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let req_ptr = &*req as *const Region as *const c_void;
-        let resp = alloc(QUERY_BUFFER);
+        let resp = alloc(QUERY_BUFFER_LENGTH);
 
         let ret = unsafe { query_chain(req_ptr, resp) };
         if ret < 0 {
