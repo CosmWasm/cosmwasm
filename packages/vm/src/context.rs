@@ -513,6 +513,14 @@ mod test {
             Err(e) => panic!("Unexpected error: {}", e),
         }
 
+        // add some more data
+        let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
+        with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
+            store.set(next_key, next_value);
+            Ok(())
+        })
+        .unwrap();
+
         // set up iterator over all space
         let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
         assert_eq!(0, scan);
@@ -520,6 +528,50 @@ mod test {
         let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
+
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, None);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn multiple_iterators() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+
+        // add some more data
+        let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
+        with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
+            store.set(next_key, next_value);
+            Ok(())
+        })
+        .unwrap();
+
+        // set up iterator over all space
+        let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
+        assert_eq!(0, scan);
+
+        // first item, first iterator
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
+
+        // set up second iterator over all space
+        let scan2 = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
+        assert_eq!(0, scan2);
+
+        // second item, second iterator
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
+
+        // first item, second iterator
+        let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
+
+        // end, first iterator
         let item = with_iterator_from_context::<S, Q, _, _>(ctx, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, None);
     }
