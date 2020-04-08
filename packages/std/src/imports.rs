@@ -14,13 +14,13 @@ use crate::types::{CanonicalAddr, HumanAddr};
 
 /// A kibi (kilo binary)
 static KI: usize = 1024;
-
-/// The number of bytes of the memory region we pre-allocate for the result data in Storage.get
-static RESULT_BUFFER_LENGTH: usize = 128 * KI;
-
+/// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
+static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
+/// The number of bytes of the memory region we pre-allocate for the result data in ExternalStorage.get
+/// and ExternalIterator.next
+static DB_READ_VALUE_BUFFER_LENGTH: usize = 128 * KI;
 /// The number of bytes of the memory region we pre-allocate for the result data in queries
 static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
-
 // this is the maximum allowed size for bech32
 // https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
 static ADDR_BUFFER_LENGTH: usize = 90;
@@ -85,7 +85,7 @@ impl ExternalStorage {
 
 impl ReadonlyStorage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
-        self.get_with_result_length(key, RESULT_BUFFER_LENGTH)
+        self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
     }
 
     #[cfg(feature = "iterator")]
@@ -158,8 +158,8 @@ impl Iterator for ExternalIterator {
     type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key_ptr = alloc(RESULT_BUFFER_LENGTH);
-        let value_ptr = alloc(RESULT_BUFFER_LENGTH);
+        let key_ptr = alloc(DB_READ_KEY_BUFFER_LENGTH);
+        let value_ptr = alloc(DB_READ_VALUE_BUFFER_LENGTH);
 
         let read = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
         if read < 0 {
