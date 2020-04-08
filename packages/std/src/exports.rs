@@ -30,16 +30,16 @@ extern "C" fn cosmwasm_vm_version_1() -> () {}
 /// to a Region defining this data. This space is managed by the calling process
 /// and should be accompanied by a corresponding deallocate
 #[no_mangle]
-extern "C" fn allocate(size: usize) -> *mut c_void {
-    alloc(size)
+extern "C" fn allocate(size: usize) -> u32 {
+    alloc(size) as u32
 }
 
 /// deallocate expects a pointer to a Region created with allocate.
 /// It will free both the Region and the memory referenced by the Region.
 #[no_mangle]
-extern "C" fn deallocate(pointer: *mut c_void) {
+extern "C" fn deallocate(pointer: u32) {
     // auto-drop Region on function end
-    let _ = unsafe { consume_region(pointer) };
+    let _ = unsafe { consume_region(pointer as *mut c_void) };
 }
 
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -49,12 +49,12 @@ pub fn do_init<T: DeserializeOwned + JsonSchema>(
         Env,
         T,
     ) -> Result<InitResponse, Error>,
-    env_ptr: *mut c_void,
-    msg_ptr: *mut c_void,
-) -> *mut c_void {
-    let res: InitResult = _do_init(init_fn, env_ptr, msg_ptr).into();
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32 {
+    let res: InitResult = _do_init(init_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void).into();
     let v = to_vec(&res).unwrap();
-    release_buffer(v)
+    release_buffer(v) as u32
 }
 
 /// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -64,12 +64,13 @@ pub fn do_handle<T: DeserializeOwned + JsonSchema>(
         Env,
         T,
     ) -> Result<HandleResponse, Error>,
-    env_ptr: *mut c_void,
-    msg_ptr: *mut c_void,
-) -> *mut c_void {
-    let res: HandleResult = _do_handle(handle_fn, env_ptr, msg_ptr).into();
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32 {
+    let res: HandleResult =
+        _do_handle(handle_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void).into();
     let v = to_vec(&res).unwrap();
-    release_buffer(v)
+    release_buffer(v) as u32
 }
 
 /// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -78,11 +79,11 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
         &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         T,
     ) -> Result<QueryResponse, Error>,
-    msg_ptr: *mut c_void,
-) -> *mut c_void {
-    let res: QueryResult = _do_query(query_fn, msg_ptr).into();
+    msg_ptr: u32,
+) -> u32 {
+    let res: QueryResult = _do_query(query_fn, msg_ptr as *mut c_void).into();
     let v = to_vec(&res).unwrap();
-    release_buffer(v)
+    release_buffer(v) as u32
 }
 
 fn _do_init<T: DeserializeOwned + JsonSchema>(

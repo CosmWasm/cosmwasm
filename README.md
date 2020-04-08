@@ -97,12 +97,12 @@ If you haven't worked with WebAssembly before, please read an overview on
 The required exports provided by the cosmwasm smart contract are:
 
 ```rust
-pub extern "C" fn allocate(size: usize) -> *mut c_void;
-pub extern "C" fn deallocate(pointer: *mut c_void);
+extern "C" fn allocate(size: usize) -> u32;
+extern "C" fn deallocate(pointer: u32);
 
-pub extern "C" fn init(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
-pub extern "C" fn handle(env_ptr: *mut c_void, msg_ptr: *mut c_void) -> *mut c_void;
-pub extern "C" fn query(msg_ptr: *mut c_void) -> *mut c_void;
+extern "C" fn init(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn handle(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn query(msg_ptr: u32) -> u32;
 ```
 
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
