@@ -33,7 +33,9 @@ use cosmwasm_std::{coin, from_binary, from_slice, Env, HumanAddr};
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 use cosmwasm_vm::Instance;
 
-use queue::contract::{CountResponse, HandleMsg, InitMsg, Item, QueryMsg, SumResponse};
+use queue::contract::{
+    CountResponse, HandleMsg, InitMsg, Item, QueryMsg, ReducerResponse, SumResponse,
+};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
@@ -97,4 +99,18 @@ fn push_and_pop() {
 
     assert_eq!(get_count(&mut deps), 1);
     assert_eq!(get_sum(&mut deps), 17);
+}
+
+#[test]
+fn push_and_reduce() {
+    let (mut deps, env) = create_contract();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 40 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 15 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 85 }).unwrap();
+    handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: -10 }).unwrap();
+    assert_eq!(get_count(&mut deps), 4);
+    assert_eq!(get_sum(&mut deps), 130);
+    let data = query(&mut deps, QueryMsg::Reducer {}).unwrap();
+    let counters = from_binary::<ReducerResponse>(&data).unwrap().counters;
+    assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
 }
