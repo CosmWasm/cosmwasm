@@ -145,6 +145,10 @@ _configuration_ information for a contract. For example, in the
 there is a `Bucket` to look up name to name data, but we also have a `Singleton`
 to store global configuration - namely the price of buying a name.
 
+Please note that in this context, the term "singleton" does not refer to
+[the singleton pattern](https://en.wikipedia.org/wiki/Singleton_pattern) but a
+container for a single element.
+
 ```rust
 use cosmwasm_std::{Coin, coin};
 use cosmwasm_std::testing::MockStorage;
