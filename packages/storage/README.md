@@ -94,14 +94,14 @@ again (if the operation was successful). It will also return any error that
 occurred, or the final state that was written if successful.
 
 ```rust
-let birthday = |mut m: Option<Data>| match m {
+let on_birthday = |mut m: Option<Data>| match m {
     Some(mut d) => {
         d.age += 1;
         Ok(d)
     },
-    None =>  NotFound{ kind: 'Data'}.fail(),
+    None => NotFound { kind: "Data" }.fail(),
 };
-let output = bucket.update(b"maria", &birthday).unwrap();
+let output = bucket.update(b"maria", &on_birthday).unwrap();
 let expected = Data {
     name: "Maria".to_string(),
     age: 43,
@@ -139,11 +139,15 @@ fn do_stuff() -> Result <()> {
 
 Singleton is another wrapper around the `TypedStorage` API. There are cases when
 we don't need a whole subspace to hold arbitrary key-value lookup for typed
-data, but rather one single instance. The simplest example is some
+data, but rather a single storage key. The simplest example is some
 _configuration_ information for a contract. For example, in the
 [name service example](https://github.com/CosmWasm/cosmwasm-examples/tree/master/nameservice),
 there is a `Bucket` to look up name to name data, but we also have a `Singleton`
 to store global configuration - namely the price of buying a name.
+
+Please note that in this context, the term "singleton" does not refer to
+[the singleton pattern](https://en.wikipedia.org/wiki/Singleton_pattern) but a
+container for a single element.
 
 ```rust
 use cosmwasm_std::{Coin, coin};
@@ -177,10 +181,10 @@ fn initialize() -> Result<()> {
 methods don't take a key, and `update` requires the object to already exist, so
 the closure takes type `T`, rather than `Option<T>`. (Use `save` to create the
 object the first time). For `Buckets`, we often don't know which keys exist, but
-`Singletons` should be initialized when the contract is instantiated.
+`Singleton`s should be initialized when the contract is instantiated.
 
 Since the heart of much of the smart contract code is simply transformations
-upon some stored state, We may be able to just code the state transitions and
+upon some stored state, we may be able to just code the state transitions and
 let the `TypedStorage` APIs take care of all the boilerplate.
 
 ## License
