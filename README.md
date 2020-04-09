@@ -30,6 +30,9 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 - [cosmwasm-std](https://github.com/CosmWasm/cosmwasm/tree/master/packages/std) -
   A crate in this workspace. Provides the bindings and all imports needed to
   build a smart contract.
+- [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/master/packages/storage) -
+  A crate in this workspace. This optional addition to `cosmwasm-std` includes
+  convenience helpers for interacting with storage.
 
 **Building contracts:**
 
