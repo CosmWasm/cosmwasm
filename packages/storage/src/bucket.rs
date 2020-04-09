@@ -357,5 +357,4 @@ mod test {
         assert_eq!(data[0], (b"jose".to_vec(), jose));
         assert_eq!(data[1], (b"maria".to_vec(), maria));
     }
-
 }
