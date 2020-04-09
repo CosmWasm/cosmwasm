@@ -15,7 +15,7 @@ use cosmwasm_std::{
 
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{Error, Result, RuntimeErr, UninitializedContextData};
+use crate::errors::{make_runtime_err, Error, Result, UninitializedContextData};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 #[cfg(feature = "iterator")]
@@ -56,12 +56,9 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-        store.get(&key).or_else(|_| {
-            RuntimeErr {
-                msg: "Error reading from backend",
-            }
-            .fail()
-        })
+        store
+            .get(&key)
+            .or_else(|_| make_runtime_err("Error reading from backend"))
     }) {
         Ok(v) => v,
         Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
