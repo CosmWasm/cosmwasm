@@ -1,3 +1,5 @@
+#[cfg(feature = "iterator")]
+use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, Result, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
@@ -26,10 +28,44 @@ pub(crate) fn remove_with_prefix<S: Storage>(
 }
 
 #[inline]
-pub(crate) fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
+fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
     let mut k = namespace.to_vec();
     k.extend_from_slice(key);
     k
+}
+
+#[cfg(feature = "iterator")]
+pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
+    storage: &'a S,
+    namespace: &[u8],
+    start: Option<&[u8]>,
+    end: Option<&[u8]>,
+    order: Order,
+) -> Box<dyn Iterator<Item = KV> + 'a> {
+    // prepare start, end with prefix
+    let start = match start {
+        Some(s) => concat(namespace, s),
+        // FIXME: performance improvement - without a clone on None??
+        None => namespace.to_vec(),
+    };
+    let end = match end {
+        Some(e) => concat(namespace, e),
+        // end is updating last byte by one
+        None => {
+            let mut copy = namespace.to_vec();
+            // TODO: handle if last item is 255 (or end of copy)
+            let mut last = copy.pop().unwrap();
+            last += 1;
+            copy.push(last);
+            copy
+        }
+    };
+
+    // get iterator from storage
+    let base_iterator = storage.range(Some(&start), Some(&end), order);
+
+    // TODO: map to trim key
+    base_iterator
 }
 
 // Calculates the raw key prefix for a given namespace

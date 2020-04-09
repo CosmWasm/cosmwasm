@@ -14,7 +14,8 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-iterator = []
+# This enables iterator functionality, as exposed in cosmwasm-std/iterator
+iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
 cosmwasm-std = { path = "../std" }
