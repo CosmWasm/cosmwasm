@@ -312,6 +312,7 @@ mod test {
         assert_eq!(data[0], (b"jose".to_vec(), jose.clone()));
         assert_eq!(data[1], (b"maria".to_vec(), maria.clone()));
 
+        // also works for readonly
         let read_bucket = typed_read::<_, Data>(&store);
         let res_data: Result<Vec<KV<Data>>> =
             read_bucket.range(None, None, Order::Ascending).collect();
