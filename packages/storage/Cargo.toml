@@ -1,0 +1,25 @@
+[package]
+name = "cosmwasm-storage"
+version = "0.8.0-dev"
+authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+edition = "2018"
+description = "CosmWasm library with useful helpers for Storage patterns"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/storage"
+license = "Apache-2.0"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[badges]
+circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
+maintenance = { status = "actively-developed" }
+
+[features]
+# TODO: enable cosmwasm-std/iterator
+iterator = []
+
+[dependencies]
+#cosmwasm-std = { path = "../std" }
+cosmwasm = "0.7"
+serde = { version = "~1.0.103", default-features = false, features = ["derive", "alloc"] }
+snafu = { version = "~0.5.0", default-features = false, features = ["rust_1_30"] }
+schemars = "~0.5"

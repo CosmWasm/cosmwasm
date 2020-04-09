@@ -27,6 +27,8 @@
 - Return value from `env.write_db` and `env.remove_db` to allow error reporting.
 - Query responses are now required to contain valid JSON.
 - Renamed all `*_db` wasm imports to `db_*`
+- Merge `cw-storage` repo as subpackage, now `cosmwasm-storage`
+- Add iterator support to `cosmwasm-storage`
 
 **cosmwasm-schema**
 
