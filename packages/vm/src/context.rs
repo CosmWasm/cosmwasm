@@ -87,8 +87,9 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-        store.set(&key, &value);
-        Ok(())
+        store
+            .set(&key, &value)
+            .or_else(|_| make_runtime_err("Error setting database value in backend"))
     }) {
         Ok(_) => SUCCESS,
         Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
@@ -103,8 +104,9 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-        store.remove(&key);
-        Ok(())
+        store
+            .remove(&key)
+            .or_else(|_| make_runtime_err("Error removing database key from backend"))
     }) {
         Ok(_) => SUCCESS,
         Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
