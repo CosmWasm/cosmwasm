@@ -5,9 +5,7 @@ pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     namespace: &[u8],
     key: &[u8],
 ) -> Result<Option<Vec<u8>>> {
-    let mut k = namespace.to_vec();
-    k.extend_from_slice(key);
-    storage.get(&k)
+    storage.get(&concat(namespace, key))
 }
 
 pub(crate) fn set_with_prefix<S: Storage>(
@@ -16,9 +14,7 @@ pub(crate) fn set_with_prefix<S: Storage>(
     key: &[u8],
     value: &[u8],
 ) -> Result<()> {
-    let mut k = namespace.to_vec();
-    k.extend_from_slice(key);
-    storage.set(&k, value)
+    storage.set(&concat(namespace, key), value)
 }
 
 pub(crate) fn remove_with_prefix<S: Storage>(
@@ -26,9 +22,14 @@ pub(crate) fn remove_with_prefix<S: Storage>(
     namespace: &[u8],
     key: &[u8],
 ) -> Result<()> {
+    storage.remove(&concat(namespace, key))
+}
+
+#[inline]
+pub(crate) fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
     let mut k = namespace.to_vec();
     k.extend_from_slice(key);
-    storage.remove(&k)
+    k
 }
 
 // Calculates the raw key prefix for a given namespace
