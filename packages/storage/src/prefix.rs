@@ -1,5 +1,9 @@
+#[cfg(feature = "iterator")]
+use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, Result, Storage};
 
+#[cfg(feature = "iterator")]
+use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{
     get_with_prefix, key_prefix, key_prefix_nested, remove_with_prefix, set_with_prefix,
 };
@@ -44,6 +48,17 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
+
+    #[cfg(feature = "iterator")]
+    /// range allows iteration over a set of keys, either forwards or backwards
+    fn range<'b>(
+        &'b self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = KV> + 'b> {
+        range_with_prefix(self.storage, &self.prefix, start, end, order)
+    }
 }
 
 pub struct PrefixedStorage<'a, T: Storage> {
@@ -72,6 +87,18 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
 impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         get_with_prefix(self.storage, &self.prefix, key)
+    }
+
+    #[cfg(feature = "iterator")]
+    /// range allows iteration over a set of keys, either forwards or backwards
+    /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
+    fn range<'b>(
+        &'b self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = KV> + 'b> {
+        range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
 
