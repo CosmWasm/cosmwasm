@@ -1,6 +1,6 @@
+use cosmwasm_std::{contract_err, ReadonlyStorage, Result, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{ReadonlyStorage, Result, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
@@ -34,6 +34,17 @@ fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
     k
 }
 
+fn trim(namespace: &[u8], key: &[u8]) -> Result<Vec<u8>> {
+    let name_len = namespace.len();
+    if key.len() < name_len {
+        return contract_err("key shorter than namespace");
+    }
+    if &key[..name_len] != namespace {
+        return contract_err("key doesn't begin with namespace");
+    }
+    Ok(key[name_len..].to_vec())
+}
+
 #[cfg(feature = "iterator")]
 pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     storage: &'a S,
@@ -45,7 +56,6 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     // prepare start, end with prefix
     let start = match start {
         Some(s) => concat(namespace, s),
-        // FIXME: performance improvement - without a clone on None??
         None => namespace.to_vec(),
     };
     let end = match end {
@@ -64,8 +74,16 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     // get iterator from storage
     let base_iterator = storage.range(Some(&start), Some(&end), order);
 
-    // TODO: map to trim key
-    base_iterator
+    // make a copy for the closure to handle lifetimes safely
+    let prefix = namespace.to_vec();
+    let mapped = base_iterator.map(move |(k, v)| {
+        match trim(&prefix, &k) {
+            Ok(trimmed) => (trimmed, v),
+            // TODO: return result when API updates
+            Err(e) => panic!("{}", e),
+        }
+    });
+    Box::new(mapped)
 }
 
 // Calculates the raw key prefix for a given namespace
@@ -165,7 +183,6 @@ mod test {
         let mut storage = MockStorage::new();
         let prefix = key_prefix(b"foo");
 
-        // we use a block scope here to release the &mut before we use it in the next storage
         set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha").unwrap();
         let rfoo = get_with_prefix(&storage, &prefix, b"bar").unwrap();
         assert_eq!(Some(b"gotcha".to_vec()), rfoo);
@@ -175,4 +192,39 @@ mod test {
         let collision = get_with_prefix(&storage, &other_prefix, b"obar").unwrap();
         assert_eq!(None, collision);
     }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn test_range() {
+        let mut storage = MockStorage::new();
+        let prefix = key_prefix(b"foo");
+        let other_prefix = key_prefix(b"food");
+
+        // set some values in this range
+        set_with_prefix(&mut storage, &prefix, b"bar", b"none");
+        set_with_prefix(&mut storage, &prefix, b"snowy", b"day");
+
+        // set some values outside this range
+        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
+
+        // ensure we get proper result from prefixed_range iterator
+        let mut iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending);
+        let first = iter.next().unwrap();
+        assert_eq!(first, (b"snowy".to_vec(), b"day".to_vec()));
+        let second = iter.next().unwrap();
+        assert_eq!(second, (b"bar".to_vec(), b"none".to_vec()));
+        assert_eq!(iter.next(), None);
+
+        // ensure we get raw result from base range
+        let iter = storage.range(None, None, Order::Ascending);
+        assert_eq!(3, iter.count());
+
+        // foo comes first
+        let mut iter = storage.range(None, None, Order::Ascending);
+        let first = iter.next().unwrap();
+        let expected_key = concat(&prefix, b"bar");
+        assert_eq!(first, (expected_key, b"none".to_vec()));
+    }
+
+    // TODO: test range with multiple (start, end) pairs
 }
