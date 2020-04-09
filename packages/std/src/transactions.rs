@@ -106,9 +106,7 @@ impl RepLog {
     /// applies the stored list of `Op`s to the provided `Storage`
     pub fn commit<S: Storage>(self, storage: &mut S) -> Result<()> {
         for op in self.ops_log {
-            if let Err(err) = op.apply(storage) {
-                return Err(err);
-            }
+            op.apply(storage)?;
         }
         Ok(())
     }
