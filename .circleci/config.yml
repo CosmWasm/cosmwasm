@@ -147,9 +147,17 @@ jobs:
       - run:
           name: Build
           working_directory: ~/project/packages/vm
+          command: cargo build --locked
+      - run:
+          name: Build with iterator
+          working_directory: ~/project/packages/vm
           command: cargo build --locked --features iterator
       - run:
           name: Test
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked
+      - run:
+          name: Test with iterator
           working_directory: ~/project/packages/vm
           command: cargo test --locked --features iterator
       - save_cache:
