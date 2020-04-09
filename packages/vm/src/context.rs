@@ -21,10 +21,19 @@ use crate::serde::{from_slice, to_vec};
 #[cfg(feature = "iterator")]
 pub(crate) use iter_support::{do_next, do_scan};
 
-static MAX_LENGTH_DB_KEY: usize = 100_000;
-static MAX_LENGTH_DB_VALUE: usize = 100_000;
-static MAX_LENGTH_ADDRESS: usize = 200;
-static MAX_LENGTH_QUERY: usize = 100_000;
+/// A kibi (kilo binary)
+static KI: usize = 1024;
+/// Max key length for db_write (i.e. when VM reads from Wasm memory). Should match the
+/// value for db_next (see DB_READ_KEY_BUFFER_LENGTH in packages/std/src/imports.rs)
+static MAX_LENGTH_DB_KEY: usize = 64 * KI;
+/// Max key length for db_write (i.e. when VM reads from Wasm memory). Should match the
+/// value for db_read/db_next (see DB_READ_VALUE_BUFFER_LENGTH in packages/std/src/imports.rs)
+static MAX_LENGTH_DB_VALUE: usize = 128 * KI;
+/// Typically 20 (Cosmos SDK, Ethereum) or 32 (Nano, Substrate)
+static MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
+/// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
+static MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
+static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
 static SUCCESS: i32 = 0;
 /// An unknown error occurred when writing to region
@@ -120,7 +129,7 @@ pub fn do_canonicalize_address<A: Api>(
     human_ptr: u32,
     canonical_ptr: u32,
 ) -> i32 {
-    let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_ADDRESS) {
+    let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS) {
         Ok(data) => data,
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
@@ -145,7 +154,7 @@ pub fn do_humanize_address<A: Api>(
     canonical_ptr: u32,
     human_ptr: u32,
 ) -> i32 {
-    let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_ADDRESS) {
+    let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_CANONICAL_ADDRESS) {
         Ok(data) => Binary(data),
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
@@ -166,7 +175,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
     request_ptr: u32,
     response_ptr: u32,
 ) -> i32 {
-    let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY) {
+    let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST) {
         Ok(data) => data,
         Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
