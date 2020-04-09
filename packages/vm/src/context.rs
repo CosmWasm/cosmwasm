@@ -430,6 +430,8 @@ mod test {
 
     #[cfg(feature = "iterator")]
     use super::iter_support::with_iterator_from_context;
+    #[cfg(feature = "iterator")]
+    use crate::conversion::to_u32;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -551,23 +553,29 @@ mod test {
         .unwrap();
 
         // set up iterator over all space
-        let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
-        assert_eq!(1, scan);
+        let id = to_u32(do_scan::<S, Q>(
+            ctx,
+            0,
+            0,
+            cosmwasm_std::Order::Ascending.into(),
+        ))
+        .expect("ID must not negative");
+        assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, None);
 
         // we also miss when using a non-registered counter
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, scan + 1, |_iter| {
+        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, id + 1, |_iter| {
             panic!("this should be empty / not callled");
         });
         match miss {
@@ -594,36 +602,48 @@ mod test {
         .unwrap();
 
         // set up iterator over all space
-        let scan = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
-        assert_eq!(1, scan);
+        let id1 = to_u32(do_scan::<S, Q>(
+            ctx,
+            0,
+            0,
+            cosmwasm_std::Order::Ascending.into(),
+        ))
+        .expect("ID must not negative");
+        assert_eq!(1, id1);
 
         // first item, first iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
         // set up second iterator over all space
-        let scan2 = do_scan::<S, Q>(ctx, 0, 0, cosmwasm_std::Order::Ascending.into());
-        assert_eq!(2, scan2);
+        let id2 = to_u32(do_scan::<S, Q>(
+            ctx,
+            0,
+            0,
+            cosmwasm_std::Order::Ascending.into(),
+        ))
+        .expect("ID must not negative");
+        assert_eq!(2, id2);
 
         // second item, first iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
 
         // first item, second iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan2, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((INIT_KEY.to_vec(), INIT_VALUE.to_vec())));
 
         // end, first iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, None);
 
         // second item, second iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, scan2, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item, Some((next_key.to_vec(), next_value.to_vec())));
     }
 
