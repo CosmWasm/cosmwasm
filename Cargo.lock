@@ -180,6 +180,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-storage"
+version = "0.8.0-dev"
+dependencies = [
+ "cosmwasm-std 0.8.0-dev",
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cosmwasm-vm"
 version = "0.8.0-dev"
 dependencies = [
