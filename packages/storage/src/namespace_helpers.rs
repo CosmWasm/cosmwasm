@@ -1,5 +1,5 @@
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{contract_err, Order, KV};
+use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, Result, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
@@ -47,27 +47,18 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
         Some(s) => concat(namespace, s),
         None => namespace.to_vec(),
     };
-    let end_vec = match end {
-        Some(e) => Some(concat(namespace, e)),
+    let end = match end {
+        Some(e) => concat(namespace, e),
         // end is updating last byte by one
         None => namespace_upper_bound(namespace),
     };
 
     // get iterator from storage
-    let base_iterator = match end_vec {
-        Some(v) => storage.range(Some(&start), Some(v.as_slice()), order),
-        None => storage.range(Some(&start), None, order),
-    };
+    let base_iterator = storage.range(Some(&start), Some(&end), order);
 
     // make a copy for the closure to handle lifetimes safely
     let prefix = namespace.to_vec();
-    let mapped = base_iterator.map(move |(k, v)| {
-        match trim(&prefix, &k) {
-            Ok(trimmed) => (trimmed, v),
-            // TODO: return result when API updates
-            Err(e) => panic!("{}", e),
-        }
-    });
+    let mapped = base_iterator.map(move |(k, v)| (trim(&prefix, &k), v));
     Box::new(mapped)
 }
 
@@ -111,39 +102,27 @@ fn key_len(prefix: &[u8]) -> [u8; 2] {
 }
 
 #[cfg(feature = "iterator")]
-fn trim(namespace: &[u8], key: &[u8]) -> Result<Vec<u8>> {
-    let name_len = namespace.len();
-    if key.len() < name_len {
-        return contract_err("key shorter than namespace");
-    }
-    if &key[..name_len] != namespace {
-        return contract_err("key doesn't begin with namespace");
-    }
-    Ok(key[name_len..].to_vec())
+#[inline]
+fn trim(namespace: &[u8], key: &[u8]) -> Vec<u8> {
+    key[namespace.len()..].to_vec()
 }
 
 /// Returns a new vec of same length and last byte incremented by one
 /// If last bytes are 255, we handle overflow up the chain.
-/// If all bytes are 255, then return None
+/// If all bytes are 255, this returns wrong data - but that is never possible as a namespace
 #[cfg(feature = "iterator")]
-fn namespace_upper_bound(input: &[u8]) -> Option<Vec<u8>> {
-    if input.len() == 0 {
-        return None;
-    }
+fn namespace_upper_bound(input: &[u8]) -> Vec<u8> {
     let mut copy = input.to_vec();
     // zero out all trailing 255, increment first that is not such
     for i in (0..input.len()).rev() {
         if copy[i] == 255 {
-            if i == 0 {
-                return None;
-            }
             copy[i] = 0;
         } else {
             copy[i] = copy[i] + 1;
             break;
         }
     }
-    Some(copy)
+    copy
 }
 
 #[cfg(test)]
@@ -314,13 +293,12 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn test_namespace_upper_bound() {
-        assert_eq!(namespace_upper_bound(b"bob"), Some(b"boc".to_vec()));
-        assert_eq!(namespace_upper_bound(b"fo\xfe"), Some(b"fo\xff".to_vec()));
-        assert_eq!(namespace_upper_bound(b"fo\xff"), Some(b"fp\x00".to_vec()));
-
-        // make sure wrap over works
-        assert_eq!(namespace_upper_bound(b"\xff"), None);
-        assert_eq!(namespace_upper_bound(b"\xff\xff\xff"), None);
-        assert_eq!(namespace_upper_bound(b""), None);
+        assert_eq!(namespace_upper_bound(b"bob"), b"boc".to_vec());
+        assert_eq!(namespace_upper_bound(b"fo\xfe"), b"fo\xff".to_vec());
+        assert_eq!(namespace_upper_bound(b"fo\xff"), b"fp\x00".to_vec());
+        assert_eq!(
+            namespace_upper_bound(b"fo\xff\xff\xff"),
+            b"fp\x00\x00\x00".to_vec()
+        );
     }
 }
