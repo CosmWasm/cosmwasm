@@ -26,7 +26,7 @@ where
 }
 
 /// Singleton effectively combines PrefixedStorage with TypedStorage to
-/// work on one single value. It performs the key_prefix transformation
+/// work on a single storage key. It performs the key_prefix transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
 pub struct Singleton<'a, S: Storage, T>
