@@ -1,5 +1,6 @@
 # cosmwasm-storage
 
+[![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage)
 [![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
 
 CosmWasm library with useful helpers for Storage patterns. You can use `Storage`
