@@ -5,6 +5,7 @@ workflows:
     jobs:
       - package_schema
       - package_std
+      - package_storage
       - package_vm_cranelift
       - package_vm_singlepass
       - hackatom
@@ -99,6 +100,37 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
+
+  package_storage:
+    docker:
+      - image: rust:1.41.1
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_storage-rust:1.41.1-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build library for native target
+          working_directory: ~/project/packages/storage
+          command: cargo build --locked
+      - run:
+          name: Run unit tests
+          working_directory: ~/project/packages/storage
+          command: cargo test --locked
+      - run:
+          name: Run unit tests (with iterator support)
+          working_directory: ~/project/packages/storage
+          command: cargo test --locked --features iterator
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_storage-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   package_vm_cranelift:
     docker:
@@ -351,6 +383,10 @@ jobs:
       - run:
           name: Clippy linting on std
           working_directory: ~/project/packages/std
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Clippy linting on storage
+          working_directory: ~/project/packages/storage
           command: cargo clippy -- -D warnings
       - run:
           name: Clippy linting on vm (use flags for Rust stable support)
