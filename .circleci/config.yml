@@ -100,36 +100,6 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
-  package_vm_singlepass:
-    docker:
-      - image: rustlang/rust:nightly
-    steps:
-      - checkout
-      - run:
-          name: Install CMake (required for compiling wabt-sys, a dev dependency of the VM)
-          command: 'apt-get update && apt-get install -y cmake'
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Build
-          working_directory: ~/project/packages/vm
-          command: cargo build --locked
-      - run:
-          name: Test
-          working_directory: ~/project/packages/vm
-          command: cargo test --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
-
   package_vm_cranelift:
     docker:
       - image: rust:1.41.1
@@ -159,6 +129,36 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
+
+  package_vm_singlepass:
+    docker:
+      - image: rustlang/rust:nightly
+    steps:
+      - checkout
+      - run:
+          name: Install CMake (required for compiling wabt-sys, a dev dependency of the VM)
+          command: 'apt-get update && apt-get install -y cmake'
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/vm
+          command: cargo build --locked
+      - run:
+          name: Test
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
 
   hackatom:
     docker:
