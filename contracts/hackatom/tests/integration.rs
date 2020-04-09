@@ -64,7 +64,10 @@ fn proper_initialization() {
     // it worked, let's check the state
     let state: State = deps
         .with_storage(|store| {
-            let data = store.get(CONFIG_KEY).expect("no data stored");
+            let data = store
+                .get(CONFIG_KEY)
+                .expect("error reading db")
+                .expect("no data stored");
             from_slice(&data)
         })
         .unwrap();
@@ -209,7 +212,10 @@ fn failed_handle() {
     // state should not change
     let state: State = deps
         .with_storage(|store| {
-            let data = store.get(CONFIG_KEY).expect("no data stored");
+            let data = store
+                .get(CONFIG_KEY)
+                .expect("error reading db")
+                .expect("no data stored");
             from_slice(&data)
         })
         .unwrap();
