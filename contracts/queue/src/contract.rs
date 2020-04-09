@@ -93,7 +93,7 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
     };
     let data = to_vec(&Item { value })?;
 
-    deps.storage.set(&[my_key], &data);
+    deps.storage.set(&[my_key], &data)?;
     Ok(HandleResponse::default())
 }
 
@@ -107,7 +107,7 @@ fn dequeue<S: Storage, A: Api, Q: Querier>(
     let mut res = HandleResponse::default();
     if let Some((k, v)) = first {
         // remove from storage and return old value
-        deps.storage.remove(&k);
+        deps.storage.remove(&k)?;
         res.data = Some(Binary(v));
         Ok(res)
     } else {
