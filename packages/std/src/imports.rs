@@ -15,6 +15,7 @@ use crate::types::{CanonicalAddr, HumanAddr};
 /// A kibi (kilo binary)
 static KI: usize = 1024;
 /// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
+#[cfg(feature = "iterator")]
 static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
 /// The number of bytes of the memory region we pre-allocate for the result data in ExternalStorage.get
 /// and ExternalIterator.next
