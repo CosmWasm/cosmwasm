@@ -95,7 +95,8 @@ where
                 // Creates an iterator that will go from start to end
                 // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
                 // Ownership of both start and end pointer is not transferred to the host.
-                // Returns negative code on error, 0 on success
+                // Returns negative code on error.
+                // Returns iterator ID > 0 on success.
                 "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
