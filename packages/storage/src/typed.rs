@@ -2,7 +2,11 @@ use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
 use cosmwasm_std::{to_vec, ReadonlyStorage, Result, Storage};
+#[cfg(feature = "iterator")]
+use cosmwasm_std::{Order, KV};
 
+#[cfg(feature = "iterator")]
+use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 pub fn typed<S: Storage, T>(storage: &mut S) -> TypedStorage<S, T>
@@ -57,6 +61,20 @@ where
         may_deserialize(&value)
     }
 
+    #[cfg(feature = "iterator")]
+    pub fn range<'b>(
+        &'b self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Result<KV<T>>> + 'b> {
+        let mapped = self
+            .storage
+            .range(start, end, order)
+            .map(deserialize_kv::<T>);
+        Box::new(mapped)
+    }
+
     /// update will load the data, perform the specified action, and store the result
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
@@ -100,6 +118,20 @@ where
     pub fn may_load(&self, key: &[u8]) -> Result<Option<T>> {
         let value = self.storage.get(key)?;
         may_deserialize(&value)
+    }
+
+    #[cfg(feature = "iterator")]
+    pub fn range<'b>(
+        &'b self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = Result<KV<T>>> + 'b> {
+        let mapped = self
+            .storage
+            .range(start, end, order)
+            .map(deserialize_kv::<T>);
+        Box::new(mapped)
     }
 }
 
@@ -254,5 +286,38 @@ mod test {
         // nothing stored
         let loaded = bucket.load(b"maria").unwrap();
         assert_eq!(loaded, init_value);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn range_over_data() {
+        let mut store = MockStorage::new();
+        let mut bucket = typed::<_, Data>(&mut store);
+
+        let jose = Data {
+            name: "Jose".to_string(),
+            age: 42,
+        };
+        let maria = Data {
+            name: "Maria".to_string(),
+            age: 27,
+        };
+
+        bucket.save(b"maria", &maria).unwrap();
+        bucket.save(b"jose", &jose).unwrap();
+
+        let res_data: Result<Vec<KV<Data>>> = bucket.range(None, None, Order::Ascending).collect();
+        let data = res_data.unwrap();
+        assert_eq!(data.len(), 2);
+        assert_eq!(data[0], (b"jose".to_vec(), jose.clone()));
+        assert_eq!(data[1], (b"maria".to_vec(), maria.clone()));
+
+        let read_bucket = typed_read::<_, Data>(&store);
+        let res_data: Result<Vec<KV<Data>>> =
+            read_bucket.range(None, None, Order::Ascending).collect();
+        let data = res_data.unwrap();
+        assert_eq!(data.len(), 2);
+        assert_eq!(data[0], (b"jose".to_vec(), jose));
+        assert_eq!(data[1], (b"maria".to_vec(), maria));
     }
 }
