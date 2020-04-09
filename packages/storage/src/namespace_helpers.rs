@@ -296,9 +296,12 @@ mod test {
         assert_eq!(namespace_upper_bound(b"bob"), b"boc".to_vec());
         assert_eq!(namespace_upper_bound(b"fo\xfe"), b"fo\xff".to_vec());
         assert_eq!(namespace_upper_bound(b"fo\xff"), b"fp\x00".to_vec());
+        // multiple \xff roll over
         assert_eq!(
             namespace_upper_bound(b"fo\xff\xff\xff"),
             b"fp\x00\x00\x00".to_vec()
         );
+        // \xff not at the end are ignored
+        assert_eq!(namespace_upper_bound(b"\xffabc"), b"\xffabd".to_vec());
     }
 }
