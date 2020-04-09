@@ -47,14 +47,17 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
         Some(s) => concat(namespace, s),
         None => namespace.to_vec(),
     };
-    let end = match end {
-        Some(e) => concat(namespace, e),
+    let end_vec = match end {
+        Some(e) => Some(concat(namespace, e)),
         // end is updating last byte by one
-        None => increment_last_byte(namespace),
+        None => namespace_upper_bound(namespace),
     };
 
     // get iterator from storage
-    let base_iterator = storage.range(Some(&start), Some(&end), order);
+    let base_iterator = match end_vec {
+        Some(v) => storage.range(Some(&start), Some(v.as_slice()), order),
+        None => storage.range(Some(&start), None, order),
+    };
 
     // make a copy for the closure to handle lifetimes safely
     let prefix = namespace.to_vec();
@@ -121,19 +124,26 @@ fn trim(namespace: &[u8], key: &[u8]) -> Result<Vec<u8>> {
 
 /// Returns a new vec of same length and last byte incremented by one
 /// If last bytes are 255, we handle overflow up the chain.
+/// If all bytes are 255, then return None
 #[cfg(feature = "iterator")]
-fn increment_last_byte(input: &[u8]) -> Vec<u8> {
+fn namespace_upper_bound(input: &[u8]) -> Option<Vec<u8>> {
+    if input.len() == 0 {
+        return None;
+    }
     let mut copy = input.to_vec();
     // zero out all trailing 255, increment first that is not such
     for i in (0..input.len()).rev() {
         if copy[i] == 255 {
+            if i == 0 {
+                return None;
+            }
             copy[i] = 0;
         } else {
             copy[i] = copy[i] + 1;
             break;
         }
     }
-    copy
+    Some(copy)
 }
 
 #[cfg(test)]
@@ -303,9 +313,14 @@ mod test {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn increment_bytes() {
-        assert_eq!(increment_last_byte(b"bob"), b"boc".to_vec());
-        assert_eq!(increment_last_byte(b"fo\xfe"), b"fo\xff".to_vec());
-        assert_eq!(increment_last_byte(b"fo\xff"), b"fp\x00".to_vec());
+    fn test_namespace_upper_bound() {
+        assert_eq!(namespace_upper_bound(b"bob"), Some(b"boc".to_vec()));
+        assert_eq!(namespace_upper_bound(b"fo\xfe"), Some(b"fo\xff".to_vec()));
+        assert_eq!(namespace_upper_bound(b"fo\xff"), Some(b"fp\x00".to_vec()));
+
+        // make sure wrap over works
+        assert_eq!(namespace_upper_bound(b"\xff"), None);
+        assert_eq!(namespace_upper_bound(b"\xff\xff\xff"), None);
+        assert_eq!(namespace_upper_bound(b""), None);
     }
 }
