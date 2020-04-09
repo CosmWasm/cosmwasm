@@ -181,3 +181,10 @@ object the first time). For `Buckets`, we often don't know which keys exist, but
 Since the heart of much of the smart contract code is simply transformations
 upon some stored state, We may be able to just code the state transitions and
 let the `TypedStorage` APIs take care of all the boilerplate.
+
+## License
+
+This package is part of the cosmwasm repository, licensed under the Apache
+License 2.0 (see
+[NOTICE](https://github.com/CosmWasm/cosmwasm/blob/master/NOTICE) and
+[LICENSE](https://github.com/CosmWasm/cosmwasm/blob/master/LICENSE)).
