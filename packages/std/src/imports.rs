@@ -74,11 +74,9 @@ impl ExternalStorage {
             return dyn_contract_err(format!("Error reading from database. Error code: {}", read));
         }
 
-        match unsafe { consume_region(value_ptr) } {
-            // TODO: how can we know if the key was available or not in the backend?
-            Ok(data) => Ok(if data.len() == 0 { None } else { Some(data) }),
-            Err(err) => Err(err),
-        }
+        let data = unsafe { consume_region(value_ptr) }?;
+        // TODO: how can we know if the key was available or not in the backend?
+        Ok(if data.len() == 0 { None } else { Some(data) })
     }
 }
 
