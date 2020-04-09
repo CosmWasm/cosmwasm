@@ -333,19 +333,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cw-mask"
-version = "0.1.0"
-dependencies = [
- "cosmwasm",
- "cosmwasm-vm",
- "cw-storage",
- "schemars",
- "serde",
- "serde_json",
- "snafu",
-]
-
-[[package]]
 name = "cw-storage"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -732,6 +719,19 @@ name = "redox_syscall"
 version = "0.1.56"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
+
+[[package]]
+name = "reflect"
+version = "0.1.0"
+dependencies = [
+ "cosmwasm",
+ "cosmwasm-vm",
+ "cw-storage",
+ "schemars",
+ "serde",
+ "serde_json",
+ "snafu",
+]
 
 [[package]]
 name = "rustc-demangle"

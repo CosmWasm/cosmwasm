@@ -5,13 +5,13 @@ use cosmwasm::types::{coin, ContractResult, CosmosMsg, HumanAddr};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use cw_mask::msg::{HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use reflect::msg::{HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 
 /**
 This integration test tries to run and call the generated wasm.
 It depends on a release build being available already. You can create that with:
 
-cargo wasm && wasm-gc ./target/wasm32-unknown-unknown/release/hackatom.wasm
+cargo wasm
 
 Then running `cargo test` will validate we can properly call into that generated data.
 

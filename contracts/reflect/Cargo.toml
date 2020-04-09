@@ -1,9 +1,10 @@
 [package]
-name = "cw-mask"
+name = "reflect"
 version = "0.1.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+publish = false
 edition = "2018"
-description = "A Mask for CosmWasm - allows you to reflect arbitrary messages with the contract's address"
+description = "Reflect messages to use for test cases - based on cw-mask"
 license = "Apache-2.0"
 
 exclude = [
