@@ -1,6 +1,6 @@
-use cosmwasm_std::{contract_err, ReadonlyStorage, Result, Storage};
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
+use cosmwasm_std::{contract_err, Order, Result, KV};
+use cosmwasm_std::{ReadonlyStorage, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
@@ -34,17 +34,6 @@ fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
     k
 }
 
-fn trim(namespace: &[u8], key: &[u8]) -> Result<Vec<u8>> {
-    let name_len = namespace.len();
-    if key.len() < name_len {
-        return contract_err("key shorter than namespace");
-    }
-    if &key[..name_len] != namespace {
-        return contract_err("key doesn't begin with namespace");
-    }
-    Ok(key[name_len..].to_vec())
-}
-
 #[cfg(feature = "iterator")]
 pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     storage: &'a S,
@@ -61,14 +50,7 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     let end = match end {
         Some(e) => concat(namespace, e),
         // end is updating last byte by one
-        None => {
-            let mut copy = namespace.to_vec();
-            // TODO: handle if last item is 255 (or end of copy)
-            let mut last = copy.pop().unwrap();
-            last += 1;
-            copy.push(last);
-            copy
-        }
+        None => increment_last_byte(namespace),
     };
 
     // get iterator from storage
@@ -123,6 +105,35 @@ fn key_len(prefix: &[u8]) -> [u8; 2] {
     }
     let length_bytes = (prefix.len() as u64).to_be_bytes();
     [length_bytes[6], length_bytes[7]]
+}
+
+#[cfg(feature = "iterator")]
+fn trim(namespace: &[u8], key: &[u8]) -> Result<Vec<u8>> {
+    let name_len = namespace.len();
+    if key.len() < name_len {
+        return contract_err("key shorter than namespace");
+    }
+    if &key[..name_len] != namespace {
+        return contract_err("key doesn't begin with namespace");
+    }
+    Ok(key[name_len..].to_vec())
+}
+
+/// Returns a new vec of same length and last byte incremented by one
+/// If last bytes are 255, we handle overflow up the chain.
+#[cfg(feature = "iterator")]
+fn increment_last_byte(input: &[u8]) -> Vec<u8> {
+    let mut copy = input.to_vec();
+    // zero out all trailing 255, increment first that is not such
+    for i in (0..input.len()).rev() {
+        if copy[i] == 255 {
+            copy[i] = 0;
+        } else {
+            copy[i] = copy[i] + 1;
+            break;
+        }
+    }
+    copy
 }
 
 #[cfg(test)]
@@ -226,5 +237,75 @@ mod test {
         assert_eq!(first, (expected_key, b"none".to_vec()));
     }
 
-    // TODO: test range with multiple (start, end) pairs
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn test_range_with_prefix_wrapover() {
+        let mut storage = MockStorage::new();
+        // if we don't properly wrap over there will be issues here (note 255+1 is used to calculate end)
+        let prefix = key_prefix(b"f\xff\xff");
+        let other_prefix = key_prefix(b"f\xff\x44");
+
+        // set some values in this range
+        set_with_prefix(&mut storage, &prefix, b"bar", b"none");
+        set_with_prefix(&mut storage, &prefix, b"snowy", b"day");
+
+        // set some values outside this range
+        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
+
+        // ensure we get proper result from prefixed_range iterator
+        let mut iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending);
+        let first = iter.next().unwrap();
+        assert_eq!(first, (b"snowy".to_vec(), b"day".to_vec()));
+        let second = iter.next().unwrap();
+        assert_eq!(second, (b"bar".to_vec(), b"none".to_vec()));
+        assert_eq!(iter.next(), None);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn test_range_with_start_end_set() {
+        let mut storage = MockStorage::new();
+        // if we don't properly wrap over there will be issues here (note 255+1 is used to calculate end)
+        let prefix = key_prefix(b"f\xff\xff");
+        let other_prefix = key_prefix(b"f\xff\x44");
+
+        // set some values in this range
+        set_with_prefix(&mut storage, &prefix, b"bar", b"none");
+        set_with_prefix(&mut storage, &prefix, b"snowy", b"day");
+
+        // set some values outside this range
+        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
+
+        // make sure start and end are applied properly
+        let res: Vec<KV> =
+            range_with_prefix(&storage, &prefix, Some(b"b"), Some(b"c"), Order::Ascending)
+                .collect();
+        assert_eq!(res.len(), 1);
+        assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
+
+        // make sure start and end are applied properly
+        let res: Vec<KV> = range_with_prefix(
+            &storage,
+            &prefix,
+            Some(b"bas"),
+            Some(b"sno"),
+            Order::Ascending,
+        )
+        .collect();
+        assert_eq!(res.len(), 0);
+
+        let res: Vec<KV> =
+            range_with_prefix(&storage, &prefix, Some(b"ant"), None, Order::Ascending).collect();
+        assert_eq!(res.len(), 2);
+        assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
+        assert_eq!(res[1], (b"snowy".to_vec(), b"day".to_vec()));
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn increment_bytes() {
+        assert_eq!(increment_last_byte(b"bob"), b"boc".to_vec());
+        assert_eq!(increment_last_byte(b"fo\xfe"), b"fo\xff".to_vec());
+        assert_eq!(increment_last_byte(b"fo\xff"), b"fp\x00".to_vec());
+    }
 }
