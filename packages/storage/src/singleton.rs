@@ -1,11 +1,10 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm::errors::Result;
-use cosmwasm::traits::{ReadonlyStorage, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, Result, Storage};
 
 use crate::namespace_helpers::key_prefix;
-use crate::type_helpers::{may_deserialize, must_deserialize, serialize};
+use crate::type_helpers::{may_deserialize, must_deserialize};
 
 // singleton is a helper function for less verbose usage
 pub fn singleton<'a, S: Storage, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
@@ -54,7 +53,7 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, data: &T) -> Result<()> {
-        self.storage.set(&self.key, &serialize(data)?);
+        self.storage.set(&self.key, &to_vec(data)?);
         Ok(())
     }
 
@@ -124,10 +123,10 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm::mock::MockStorage;
+    use cosmwasm_std::testing::MockStorage;
     use serde::{Deserialize, Serialize};
 
-    use cosmwasm::errors::{Error, Unauthorized};
+    use cosmwasm_std::{unauthorized, Error};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct Config {
@@ -204,7 +203,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| Unauthorized {}.fail());
+        let output = writer.update(&|_c| unauthorized());
         match output {
             Err(Error::Unauthorized { .. }) => {}
             _ => panic!("Unexpected output: {:?}", output),

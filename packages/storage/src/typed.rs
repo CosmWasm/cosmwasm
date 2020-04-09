@@ -1,10 +1,9 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm::errors::Result;
-use cosmwasm::traits::{ReadonlyStorage, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, Result, Storage};
 
-use crate::type_helpers::{may_deserialize, must_deserialize, serialize};
+use crate::type_helpers::{may_deserialize, must_deserialize};
 
 pub fn typed<S: Storage, T>(storage: &mut S) -> TypedStorage<S, T>
 where
@@ -42,7 +41,7 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, key: &[u8], data: &T) -> Result<()> {
-        self.storage.set(key, &serialize(data)?);
+        self.storage.set(key, &to_vec(data)?);
         Ok(())
     }
 
@@ -108,8 +107,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm::errors::{contract_err, NotFound};
-    use cosmwasm::mock::MockStorage;
+    use cosmwasm_std::testing::MockStorage;
+    use cosmwasm_std::{contract_err, NotFound};
     use serde::{Deserialize, Serialize};
     use snafu::OptionExt;
 

@@ -1,5 +1,4 @@
-use cosmwasm::errors::Result;
-use cosmwasm::traits::Storage;
+use cosmwasm_std::{Result, Storage};
 
 use crate::Singleton;
 
@@ -25,7 +24,7 @@ pub fn nextval<S: Storage>(seq: &mut Singleton<S, u64>) -> Result<u64> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm::mock::MockStorage;
+    use cosmwasm_std::testing::MockStorage;
 
     #[test]
     fn walk_through_sequence() {

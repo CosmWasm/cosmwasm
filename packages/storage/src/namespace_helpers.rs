@@ -1,4 +1,4 @@
-use cosmwasm::traits::{ReadonlyStorage, Storage};
+use cosmwasm_std::{ReadonlyStorage, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
@@ -19,6 +19,12 @@ pub(crate) fn set_with_prefix<S: Storage>(
     let mut k = namespace.to_vec();
     k.extend_from_slice(key);
     storage.set(&k, value)
+}
+
+pub(crate) fn remove_with_prefix<S: Storage>(storage: &mut S, namespace: &[u8], key: &[u8]) {
+    let mut k = namespace.to_vec();
+    k.extend_from_slice(key);
+    storage.remove(&k)
 }
 
 // Calculates the raw key prefix for a given namespace
@@ -63,7 +69,7 @@ fn key_len(prefix: &[u8]) -> [u8; 2] {
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm::mock::MockStorage;
+    use cosmwasm_std::testing::MockStorage;
 
     #[test]
     fn key_prefix_works() {

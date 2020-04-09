@@ -1,6 +1,8 @@
-use cosmwasm::traits::{ReadonlyStorage, Storage};
+use cosmwasm_std::{ReadonlyStorage, Storage};
 
-use crate::namespace_helpers::{get_with_prefix, key_prefix, key_prefix_nested, set_with_prefix};
+use crate::namespace_helpers::{
+    get_with_prefix, key_prefix, key_prefix_nested, remove_with_prefix, set_with_prefix,
+};
 
 // prefixed_read is a helper function for less verbose usage
 pub fn prefixed_read<'a, T: ReadonlyStorage>(
@@ -77,12 +79,16 @@ impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         set_with_prefix(self.storage, &self.prefix, key, value)
     }
+
+    fn remove(&mut self, key: &[u8]) {
+        remove_with_prefix(self.storage, &self.prefix, key)
+    }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm::mock::MockStorage;
+    use cosmwasm_std::testing::MockStorage;
 
     #[test]
     fn prefix_safe() {
