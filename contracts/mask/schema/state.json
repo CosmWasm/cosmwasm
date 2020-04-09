@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "State",
+  "type": "object",
+  "required": [
+    "owner"
+  ],
+  "properties": {
+    "owner": {
+      "$ref": "#/definitions/CanonicalAddr"
+    }
+  },
+  "definitions": {
+    "Binary": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "format": "uint8",
+        "minimum": 0.0
+      }
+    },
+    "CanonicalAddr": {
+      "$ref": "#/definitions/Binary"
+    }
+  }
+}

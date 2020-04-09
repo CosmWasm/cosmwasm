@@ -1,0 +1,48 @@
+[package]
+name = "cw-mask"
+version = "0.1.0"
+authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
+edition = "2018"
+description = "A Mask for CosmWasm - allows you to reflect arbitrary messages with the contract's address"
+license = "Apache-2.0"
+
+exclude = [
+  # Those files are cosmwasm-opt artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+default = ["cranelift"]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm/backtraces", "cosmwasm-vm/backtraces"]
+cranelift = ["cosmwasm-vm/default-cranelift"]
+singlepass = ["cosmwasm-vm/default-singlepass"]
+
+[dependencies]
+cosmwasm = { version = "0.7.0" }
+cw-storage = "0.2.0"
+schemars = "=0.5"
+serde = { version = "=1.0.103", default-features = false, features = ["derive"] }
+snafu = { version = "=0.5.0", default-features = false, features = ["rust_1_30"] }
+
+[dev-dependencies]
+cosmwasm-vm = { version = "0.7.0", default-features = false }
+serde_json = "1.0"
