@@ -19,7 +19,14 @@ pub struct Extern<S: Storage, A: Api, Q: Querier> {
 
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
+    /// Returns Err on error.
+    /// Returns Ok(None) when key does not exist.
+    /// Returns Ok(Some(Vec<u8>)) when key exists.
+    ///
+    /// Note: Support for differentiating between a non-existent key and a key with empty value
+    /// is not great yet and might not be possible in all backends. But we're trying to get there.
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>>;
+
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// start is inclusive and end is exclusive
@@ -34,8 +41,8 @@ pub trait ReadonlyStorage {
 
 // Storage extends ReadonlyStorage to give mutable access
 pub trait Storage: ReadonlyStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]);
-    fn remove(&mut self, key: &[u8]);
+    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()>;
+    fn remove(&mut self, key: &[u8]) -> Result<()>;
 }
 
 /// Api are callbacks to system functions defined outside of the wasm modules.

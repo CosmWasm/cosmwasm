@@ -53,20 +53,19 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, data: &T) -> Result<()> {
-        self.storage.set(&self.key, &to_vec(data)?);
-        Ok(())
+        self.storage.set(&self.key, &to_vec(data)?)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self) -> Result<T> {
-        let value = self.storage.get(&self.key);
+        let value = self.storage.get(&self.key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self) -> Result<Option<T>> {
-        let value = self.storage.get(&self.key);
+        let value = self.storage.get(&self.key)?;
         may_deserialize(&value)
     }
 
@@ -108,14 +107,14 @@ where
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self) -> Result<T> {
-        let value = self.storage.get(&self.key);
+        let value = self.storage.get(&self.key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self) -> Result<Option<T>> {
-        let value = self.storage.get(&self.key);
+        let value = self.storage.get(&self.key)?;
         may_deserialize(&value)
     }
 }

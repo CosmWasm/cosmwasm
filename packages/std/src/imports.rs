@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::{ContractErr, Result};
+use crate::errors::{contract_err, dyn_contract_err, ContractErr, Result};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
@@ -15,6 +15,7 @@ use crate::types::{CanonicalAddr, HumanAddr};
 /// A kibi (kilo binary)
 static KI: usize = 1024;
 /// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
+#[cfg(feature = "iterator")]
 static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
 /// The number of bytes of the memory region we pre-allocate for the result data in ExternalStorage.get
 /// and ExternalIterator.next
@@ -56,35 +57,31 @@ impl ExternalStorage {
         ExternalStorage {}
     }
 
-    pub fn get_with_result_length(&self, key: &[u8], result_length: usize) -> Option<Vec<u8>> {
+    pub fn get_with_result_length(
+        &self,
+        key: &[u8],
+        result_length: usize,
+    ) -> Result<Option<Vec<u8>>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
         let value_ptr = alloc(result_length);
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1000002 {
-            panic!("Allocated memory too small to hold the database value for the given key. \
+            return contract_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
         } else if read < 0 {
-            panic!("An unknown error occurred in the db_read call.")
+            return dyn_contract_err(format!("Error reading from database. Error code: {}", read));
         }
 
-        match unsafe { consume_region(value_ptr) } {
-            Ok(data) => {
-                if data.len() == 0 {
-                    None
-                } else {
-                    Some(data)
-                }
-            }
-            // TODO: do we really want to convert errors to None?
-            Err(_) => None,
-        }
+        let data = unsafe { consume_region(value_ptr) }?;
+        // TODO: how can we know if the key was available or not in the backend?
+        Ok(if data.len() == 0 { None } else { Some(data) })
     }
 }
 
 impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
     }
 
@@ -121,7 +118,7 @@ impl ReadonlyStorage for ExternalStorage {
 }
 
 impl Storage for ExternalStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
@@ -129,20 +126,23 @@ impl Storage for ExternalStorage {
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         let result = unsafe { db_write(key_ptr, value_ptr) };
         if result < 0 {
-            // TODO: convert to Result, but this requires changing the trait
-            panic!("Error writing to database");
+            return dyn_contract_err(format!("Error writing to database. Error code: {}", result));
         }
+        Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) {
+    fn remove(&mut self, key: &[u8]) -> Result<()> {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
         let result = unsafe { db_remove(key_ptr) };
         if result < 0 {
-            // TODO: convert to Result, but this requires changing the trait
-            panic!("Error deleting from database");
+            return dyn_contract_err(format!(
+                "Error deleting from database. Error code: {}",
+                result
+            ));
         }
+        Ok(())
     }
 }
 

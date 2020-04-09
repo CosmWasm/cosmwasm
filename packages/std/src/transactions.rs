@@ -39,12 +39,12 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
-    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
         match self.local_state.get(key) {
-            Some(val) => match val {
+            Some(val) => Ok(match val {
                 Delta::Set { value } => Some(value.clone()),
                 Delta::Delete {} => None,
-            },
+            }),
             None => self.storage.get(key),
         }
     }
@@ -70,19 +70,21 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
         let op = Op::Set {
             key: key.to_vec(),
             value: value.to_vec(),
         };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
+        Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) {
+    fn remove(&mut self, key: &[u8]) -> Result<()> {
         let op = Op::Delete { key: key.to_vec() };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
+        Ok(())
     }
 }
 
@@ -102,10 +104,11 @@ impl RepLog {
     }
 
     /// applies the stored list of `Op`s to the provided `Storage`
-    pub fn commit<S: Storage>(self, storage: &mut S) {
+    pub fn commit<S: Storage>(self, storage: &mut S) -> Result<()> {
         for op in self.ops_log {
-            op.apply(storage);
+            op.apply(storage)?;
         }
+        Ok(())
     }
 }
 
@@ -124,7 +127,7 @@ enum Op {
 
 impl Op {
     /// applies this `Op` to the provided storage
-    pub fn apply<S: Storage>(&self, storage: &mut S) {
+    pub fn apply<S: Storage>(&self, storage: &mut S) -> Result<()> {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
             Op::Delete { key } => storage.remove(&key),
@@ -234,7 +237,7 @@ pub fn transactional<S: Storage, T>(
 ) -> Result<T> {
     let mut stx = StorageTransaction::new(storage);
     let res = tx(&mut stx)?;
-    stx.prepare().commit(storage);
+    stx.prepare().commit(storage)?;
     Ok(res)
 }
 
@@ -250,7 +253,7 @@ pub fn transactional_deps<S: Storage, A: Api, Q: Querier, T>(
     };
     let res = tx(&mut stx_deps);
     if res.is_ok() {
-        stx_deps.storage.prepare().commit(&mut deps.storage);
+        stx_deps.storage.prepare().commit(&mut deps.storage)?;
     } else {
         stx_deps.storage.rollback();
     }
@@ -267,34 +270,34 @@ mod test {
     fn delete_local() {
         let mut base = MemoryStorage::new();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"foo", b"bar");
-        check.set(b"food", b"bank");
-        check.remove(b"foo");
+        check.set(b"foo", b"bar").unwrap();
+        check.set(b"food", b"bank").unwrap();
+        check.remove(b"foo").unwrap();
 
-        assert_eq!(None, check.get(b"foo"));
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food"));
+        assert_eq!(None, check.get(b"foo").unwrap());
+        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
 
         // now commit to base and query there
-        check.prepare().commit(&mut base);
-        assert_eq!(None, base.get(b"foo"));
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food"));
+        check.prepare().commit(&mut base).unwrap();
+        assert_eq!(None, base.get(b"foo").unwrap());
+        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
     }
 
     #[test]
     fn delete_from_base() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").unwrap();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"food", b"bank");
-        check.remove(b"foo");
+        check.set(b"food", b"bank").unwrap();
+        check.remove(b"foo").unwrap();
 
-        assert_eq!(None, check.get(b"foo"));
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food"));
+        assert_eq!(None, check.get(b"foo").unwrap());
+        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
 
         // now commit to base and query there
-        check.prepare().commit(&mut base);
-        assert_eq!(None, base.get(b"foo"));
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food"));
+        check.prepare().commit(&mut base).unwrap();
+        assert_eq!(None, base.get(b"foo").unwrap());
+        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
     }
 
     #[test]
@@ -302,7 +305,7 @@ mod test {
     fn storage_transaction_iterator_empty_base() {
         let base = MemoryStorage::new();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"foo", b"bar");
+        check.set(b"foo", b"bar").expect("error setting value");
         crate::storage::iterator_test_suite(&mut check);
     }
 
@@ -310,7 +313,7 @@ mod test {
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_with_base_data() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").expect("error setting value");
         let mut check = StorageTransaction::new(&base);
         crate::storage::iterator_test_suite(&mut check);
     }
@@ -319,96 +322,96 @@ mod test {
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_removed_items_from_base() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
-        base.set(b"food", b"bank");
+        base.set(b"foo", b"bar").expect("error setting value");
+        base.set(b"food", b"bank").expect("error setting value");
         let mut check = StorageTransaction::new(&base);
-        check.remove(b"food");
+        check.remove(b"food").expect("error removing key");
         crate::storage::iterator_test_suite(&mut check);
     }
 
     #[test]
     fn commit_writes_through() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works");
-        check.prepare().commit(&mut base);
+        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works").unwrap();
+        check.prepare().commit(&mut base).unwrap();
 
-        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
+        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
     }
 
     #[test]
     fn storage_remains_readable() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").unwrap();
 
         let mut stxn1 = StorageTransaction::new(&base);
 
-        assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
+        assert_eq!(stxn1.get(b"foo").unwrap(), Some(b"bar".to_vec()));
 
-        stxn1.set(b"subtx", b"works");
-        assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
+        stxn1.set(b"subtx", b"works").unwrap();
+        assert_eq!(stxn1.get(b"subtx").unwrap(), Some(b"works".to_vec()));
 
         // Can still read from base, txn is not yet committed
-        assert_eq!(base.get(b"subtx"), None);
+        assert_eq!(base.get(b"subtx").unwrap(), None);
 
-        stxn1.prepare().commit(&mut base);
-        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
+        stxn1.prepare().commit(&mut base).unwrap();
+        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
     }
 
     #[test]
     fn rollback_has_no_effect() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works");
+        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works").unwrap();
         check.rollback();
 
-        assert_eq!(base.get(b"subtx"), None);
+        assert_eq!(base.get(b"subtx").unwrap(), None);
     }
 
     #[test]
     fn ignore_same_as_rollback() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works");
+        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works").unwrap();
 
-        assert_eq!(base.get(b"subtx"), None);
+        assert_eq!(base.get(b"subtx").unwrap(), None);
     }
 
     #[test]
     fn transactional_works() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        base.set(b"foo", b"bar").unwrap();
 
         // writes on success
         let res: Result<i32> = transactional(&mut base, &|store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
             // we write in the Ok case
-            store.set(b"good", b"one");
+            store.set(b"good", b"one").unwrap();
             Ok(5)
         });
         assert_eq!(5, res.unwrap());
-        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
+        assert_eq!(base.get(b"good").unwrap(), Some(b"one".to_vec()));
 
         // rejects on error
         let res: Result<i32> = transactional(&mut base, &|store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
+            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));
             // we write in the Error case
-            store.set(b"bad", b"value");
+            store.set(b"bad", b"value").unwrap();
             Unauthorized.fail()
         });
         assert!(res.is_err());
-        assert_eq!(base.get(b"bad"), None);
+        assert_eq!(base.get(b"bad").unwrap(), None);
     }
 }

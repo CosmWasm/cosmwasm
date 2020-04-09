@@ -65,7 +65,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
             funder: env.message.signer,
         })?,
-    );
+    )?;
     Ok(InitResponse::default())
 }
 
@@ -88,7 +88,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
 ) -> Result<HandleResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)
+        .get(CONFIG_KEY)?
         .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data)?;
 
@@ -129,7 +129,7 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     let mut test_case = 0u64;
     loop {
         deps.storage
-            .set(b"test.key", test_case.to_string().as_bytes());
+            .set(b"test.key", test_case.to_string().as_bytes())?;
         test_case += 1;
     }
 }
@@ -151,7 +151,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 fn query_verifier<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)
+        .get(CONFIG_KEY)?
         .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
@@ -202,7 +202,11 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
+        let data = deps
+            .storage
+            .get(CONFIG_KEY)
+            .expect("error reading db")
+            .expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -275,7 +279,11 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
+        let data = deps
+            .storage
+            .get(CONFIG_KEY)
+            .expect("error reading db")
+            .expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -356,7 +364,11 @@ mod tests {
         }
 
         // state should not change
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
+        let data = deps
+            .storage
+            .get(CONFIG_KEY)
+            .expect("error reading db")
+            .expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(
             state,
