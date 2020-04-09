@@ -14,10 +14,11 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-# TODO: enable cosmwasm-std/iterator
 iterator = []
 
 [dependencies]
 cosmwasm-std = { path = "../std" }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
+
+[dev-dependencies]
 snafu = { version = "0.6.3" }
