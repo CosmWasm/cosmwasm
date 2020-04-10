@@ -41,17 +41,22 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
             ));
         }
     };
-    check_api_compatibility(&module)
+    check_wasm_exports(&module)?;
+    check_wasm_imports(&module)?;
+    Ok(())
 }
 
-/// This is called as part of check_wasm
-fn check_api_compatibility(module: &Module) -> Result<()> {
+fn check_wasm_exports(module: &Module) -> Result<()> {
     if let Some(missing) = find_missing_export(module, REQUIRED_EXPORTS) {
         return make_validation_err(format!(
                 "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
                 missing, REQUIRED_EXPORTS
             ));
     }
+    Ok(())
+}
+
+fn check_wasm_imports(module: &Module) -> Result<()> {
     if let Some(missing) = find_missing_import(module, SUPPORTED_IMPORTS) {
         return make_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
