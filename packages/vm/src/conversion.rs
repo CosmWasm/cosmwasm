@@ -19,6 +19,9 @@ pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> Result<u32> {
 
 /// Safely converts input of type T to i32.
 /// Errors with a cosmwasm_vm::errors::Error::ConversionErr if conversion cannot be done.
+///
+/// Used in tests and in iterator, but not with default build
+#[allow(dead_code)]
 pub fn to_i32<T: TryInto<i32> + Display + Copy>(input: T) -> Result<i32> {
     input.try_into().or_else(|_| {
         ConversionErr {
