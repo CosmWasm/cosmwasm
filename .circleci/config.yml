@@ -11,6 +11,7 @@ workflows:
       - hackatom
       - hackatom_in_singlepass_vm
       - queue
+      - reflect
       - fmt
       - clippy
 
@@ -333,6 +334,55 @@ jobs:
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
+  reflect:
+    docker:
+      - image: rust:1.41.1
+    working_directory: ~/cosmwasm/contracts/reflect
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Build wasm binary
+          command: cargo wasm --locked
+      - run:
+          name: Unit tests
+          env: RUST_BACKTRACE=1
+          command: cargo unit-test --locked
+      - run:
+          name: Integration tests
+          command: cargo integration-test --locked
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
+
   fmt:
     docker:
       - image: rust:1.41.1
@@ -353,6 +403,10 @@ jobs:
       - run:
           name: Format and check hackatom
           working_directory: ~/project/contracts/hackatom
+          command: cargo fmt -- --check
+      - run:
+          name: Format and check reflect
+          working_directory: ~/project/contracts/reflect
           command: cargo fmt -- --check
       - run:
           name: Format and check queue
@@ -395,6 +449,10 @@ jobs:
       - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Clippy linting on reflect
+          working_directory: ~/project/contracts/reflect
           command: cargo clippy -- -D warnings
       - run:
           name: Clippy linting on queue
