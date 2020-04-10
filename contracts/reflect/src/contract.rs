@@ -1,43 +1,41 @@
-use snafu::ResultExt;
-
-use cosmwasm::errors::{contract_err, unauthorized, Result, SerializeErr};
-use cosmwasm::serde::to_vec;
-use cosmwasm::traits::{Api, Extern, Storage};
-use cosmwasm::types::{log, CosmosMsg, Env, HumanAddr, Response};
+use cosmwasm_std::{
+    contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
+    HandleResponse, HumanAddr, InitResponse, Querier, Result, Storage,
+};
 
 use crate::msg::{HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 use crate::state::{config, config_read, State};
 
-pub fn init<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn init<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     _msg: InitMsg,
-) -> Result<Response> {
+) -> Result<InitResponse> {
     let state = State {
         owner: env.message.signer,
     };
 
     config(&mut deps.storage).save(&state)?;
 
-    Ok(Response::default())
+    Ok(InitResponse::default())
 }
 
-pub fn handle<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn handle<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> Result<Response> {
+) -> Result<HandleResponse> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, owner),
     }
 }
 
-pub fn try_reflect<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     msgs: Vec<CosmosMsg>,
-) -> Result<Response> {
+) -> Result<HandleResponse> {
     let state = config(&mut deps.storage).load()?;
     if env.message.signer != state.owner {
         return unauthorized();
@@ -45,7 +43,7 @@ pub fn try_reflect<S: Storage, A: Api>(
     if msgs.is_empty() {
         return contract_err("Must reflect at least one message");
     }
-    let res = Response {
+    let res = HandleResponse {
         messages: msgs,
         log: vec![log("action", "reflect")],
         data: None,
@@ -53,11 +51,11 @@ pub fn try_reflect<S: Storage, A: Api>(
     Ok(res)
 }
 
-pub fn try_change_owner<S: Storage, A: Api>(
-    deps: &mut Extern<S, A>,
+pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
     env: Env,
     owner: HumanAddr,
-) -> Result<Response> {
+) -> Result<HandleResponse> {
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
         if env.message.signer != state.owner {
@@ -66,37 +64,35 @@ pub fn try_change_owner<S: Storage, A: Api>(
         state.owner = api.canonical_address(&owner)?;
         Ok(state)
     })?;
-    Ok(Response {
+    Ok(HandleResponse {
         log: vec![log("action", "change_owner"), log("owner", owner.as_str())],
-        ..Response::default()
+        ..HandleResponse::default()
     })
 }
 
-pub fn query<S: Storage, A: Api>(deps: &Extern<S, A>, msg: QueryMsg) -> Result<Vec<u8>> {
+pub fn query<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    msg: QueryMsg,
+) -> Result<Binary> {
     match msg {
         QueryMsg::Owner {} => query_owner(deps),
     }
 }
 
-fn query_owner<S: Storage, A: Api>(deps: &Extern<S, A>) -> Result<Vec<u8>> {
+fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<Binary> {
     let state = config_read(&deps.storage).load()?;
 
     let resp = OwnerResponse {
         owner: deps.api.human_address(&state.owner)?,
     };
-    to_vec(&resp).context(SerializeErr {
-        kind: "OwnerResponse",
-    })
+    to_binary(&resp)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::encoding::Binary;
-    use cosmwasm::errors::Error;
-    use cosmwasm::mock::{dependencies, mock_env};
-    use cosmwasm::serde::from_slice;
-    use cosmwasm::types::coin;
+    use cosmwasm::testing::{dependencies, mock_env};
+    use cosmwasm_std::{coin, from_slice, Binary, Error};
 
     #[test]
     fn proper_initialization() {
