@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
-use std::fmt;
+use std::{fmt, ops};
 
 use crate::dyn_contract_err;
 use crate::errors::Error;
@@ -27,7 +27,7 @@ pub fn coin_str(amount: &str, denom: &str) -> Result<Vec<Coin>, Error> {
     }])
 }
 
-#[derive(Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
 pub struct BigInt(#[schemars(with = "String")] pub u128);
 
 impl BigInt {
@@ -68,6 +68,22 @@ impl Into<u128> for BigInt {
 impl fmt::Display for BigInt {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
+    }
+}
+
+impl ops::Add for BigInt {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        BigInt(self.u128() + other.u128())
+    }
+}
+
+impl ops::Sub for BigInt {
+    type Output = BigInt;
+
+    fn sub(self, other: Self) -> Self {
+        BigInt(self.u128() - other.u128())
     }
 }
 
@@ -137,5 +153,33 @@ mod test {
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
         let parsed: BigInt = from_slice(&serialized).unwrap();
         assert_eq!(parsed, orig);
+    }
+
+    #[test]
+    fn bigint_compare() {
+        let a = BigInt(12345);
+        let b = BigInt(23456);
+
+        assert!(a < b);
+        assert!(b > a);
+        assert_eq!(a, BigInt(12345));
+    }
+
+    #[test]
+    fn bigint_math() {
+        let a = BigInt(12345);
+        let b = BigInt(23456);
+
+        assert_eq!(a + b, BigInt(35801));
+        assert_eq!(b - a, BigInt(11111));
+    }
+
+    #[test]
+    #[should_panic]
+    fn bigint_math_prevents_overflow() {
+        let a = BigInt(12345);
+        let b = BigInt(23456);
+        // this will underflow, should panic
+        let _ = a - b;
     }
 }
