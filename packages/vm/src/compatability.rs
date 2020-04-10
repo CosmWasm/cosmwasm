@@ -189,8 +189,19 @@ mod test {
         }
     }
 
-    // Note: we don't have test data that includes correct exports but has
-    // additional unsupported required imports. However, Wasmer will check this as well.
+    #[test]
+    fn test_check_wasm_imports_of_old_contract() {
+        let module = deserialize_buffer(CONTRACT_0_7).unwrap();
+        match check_wasm_imports(&module) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(
+                    msg.starts_with("Wasm contract requires unsupported import: \"env.read_db\"")
+                );
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
 
     #[test]
     fn test_find_missing_export() {
