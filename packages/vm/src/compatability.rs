@@ -29,6 +29,8 @@ static REQUIRED_EXPORTS: &[&str] = &[
     "deallocate",
 ];
 
+static MEMORY_LIMIT: u32 = 512; // in pages
+
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
     let module = match deserialize_buffer(&wasm_code) {
@@ -40,8 +42,43 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
             ));
         }
     };
+    check_wasm_memories(&module)?;
     check_wasm_exports(&module)?;
     check_wasm_imports(&module)?;
+    Ok(())
+}
+
+fn check_wasm_memories(module: &Module) -> Result<()> {
+    let section = match module.memory_section() {
+        Some(section) => section,
+        None => {
+            return make_validation_err("Wasm contract doesn't have a memory section".to_string());
+        }
+    };
+
+    let memories = section.entries();
+    if memories.len() != 1 {
+        return make_validation_err("Wasm contract must contain exactly one memory".to_string());
+    }
+
+    for memory in memories {
+        // println!("Memory: {:?}", memory);
+        let limits = memory.limits();
+
+        if limits.initial() > MEMORY_LIMIT {
+            return make_validation_err(format!(
+                "Wasm contract memory's minimum must not exceed {} pages.",
+                MEMORY_LIMIT
+            ));
+        }
+
+        if limits.maximum() != None {
+            return make_validation_err(
+                "Wasm contract memory's maximum must be unset. The host will set it for you."
+                    .to_string(),
+            );
+        }
+    }
     Ok(())
 }
 
@@ -139,6 +176,8 @@ mod test {
             Ok(_) => panic!("This must not succeeed"),
         }
     }
+
+    // TODO: test check_wasm_memories
 
     #[test]
     fn test_check_wasm_exports() {
