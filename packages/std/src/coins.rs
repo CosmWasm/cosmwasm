@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::{fmt, ops};
 
 use crate::dyn_contract_err;
@@ -14,17 +14,24 @@ pub struct Coin {
 
 // coin is a shortcut constructor for a set of one denomination of coins
 pub fn coin(amount: u128, denom: &str) -> Vec<Coin> {
-    vec![Coin {
-        amount: BigInt(amount),
-        denom: denom.to_string(),
-    }]
+    vec![one_coin(amount, denom)]
 }
 
-pub fn coin_str(amount: &str, denom: &str) -> Result<Vec<Coin>, Error> {
-    Ok(vec![Coin {
-        amount: amount.try_into()?,
+// one_coin makes a singular coin
+pub fn one_coin(amount: u128, denom: &str) -> Coin {
+    Coin {
+        amount: BigInt(amount),
         denom: denom.to_string(),
-    }])
+    }
+}
+
+/// has_coins returns true if the list of coins has at least the required amount
+pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
+    coins
+        .iter()
+        .find(|c| c.denom == required.denom)
+        .map(|m| m.amount >= required.amount)
+        .unwrap_or(false)
 }
 
 #[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
@@ -131,6 +138,15 @@ impl<'de> de::Visitor<'de> for BigIntVisitor {
 mod test {
     use super::*;
     use crate::{from_slice, to_vec};
+    use std::convert::TryInto;
+
+    #[test]
+    fn has_coins_matches() {
+        let wallet = vec![one_coin(12345, "ETH"), one_coin(555, "BTC")];
+
+        // less than same type
+        assert!(has_coins(&wallet, &one_coin(777, "ETH")));
+    }
 
     #[test]
     fn to_and_from_bigint() {
