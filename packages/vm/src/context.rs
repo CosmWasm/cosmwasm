@@ -458,7 +458,7 @@ mod test {
     static INIT_VALUE: &[u8] = b"bar";
     // this account has some coins
     static INIT_ADDR: &str = "someone";
-    static INIT_AMOUNT: &str = "500";
+    static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
     fn make_instance() -> Instance {

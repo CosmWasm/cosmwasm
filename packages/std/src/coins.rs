@@ -31,10 +31,6 @@ pub fn coin_str(amount: &str, denom: &str) -> Result<Vec<Coin>, Error> {
 pub struct BigInt(#[schemars(with = "String")] pub u128);
 
 impl BigInt {
-    pub fn to_string(&self) -> String {
-        self.0.to_string()
-    }
-
     pub fn u128(&self) -> u128 {
         self.0
     }
@@ -59,7 +55,7 @@ impl TryFrom<&str> for BigInt {
 
 impl Into<String> for BigInt {
     fn into(self) -> String {
-        self.to_string()
+        self.0.to_string()
     }
 }
 

@@ -348,7 +348,7 @@ mod test {
         let orig_gas = instance.get_gas();
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         call_init(&mut instance, &env, msg).unwrap().unwrap();
 
@@ -363,7 +363,7 @@ mod test {
         let mut instance = mock_instance(&CONTRACT);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         call_init(&mut instance, &env, msg).unwrap().unwrap();
 
@@ -372,8 +372,8 @@ mod test {
         let env = mock_env(
             &instance.api,
             "verifies",
-            &coin("15", "earth"),
-            &coin("1015", "earth"),
+            &coin(15, "earth"),
+            &coin(1015, "earth"),
         );
         let msg = br#"{"release":{}}"#;
         call_handle(&mut instance, &env, msg).unwrap().unwrap();
@@ -389,7 +389,7 @@ mod test {
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg);
         assert!(res.is_err());
@@ -401,7 +401,7 @@ mod test {
         let mut instance = mock_instance(&CONTRACT);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coin(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &env, msg).unwrap().unwrap();
 

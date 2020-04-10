@@ -236,6 +236,9 @@
         }
       ]
     },
+    "BigInt": {
+      "type": "string"
+    },
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
       "type": "string"
@@ -248,7 +251,7 @@
       ],
       "properties": {
         "amount": {
-          "type": "string"
+          "$ref": "#/definitions/BigInt"
         },
         "denom": {
           "type": "string"
