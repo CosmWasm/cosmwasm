@@ -220,6 +220,27 @@ mod test {
     }
 
     #[test]
+    fn test_check_wasm_memories_zero_memories() {
+        // Generated manually because wat2wasm would not create an empty memory section
+        let wasm = hex::decode(concat!(
+            "0061736d", // magic bytes
+            "01000000", // binary version (uint32)
+            "05",       // section type (memory)
+            "01",       // section length
+            "00",       // number of memories
+        ))
+        .unwrap();
+
+        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
     fn test_check_wasm_memories_initial_size() {
         let wasm_ok = wat2wasm("(module (memory 512))").unwrap();
         check_wasm_memories(&deserialize_buffer(&wasm_ok).unwrap()).unwrap();
