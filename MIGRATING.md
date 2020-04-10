@@ -67,3 +67,18 @@ Integration Tests:
     * After: `match err { Err(ApiError::Unauthorized{ ..})  => {}, ... }`
 * Remove all imports / use of `ContractResult`
 
+### Update schema code
+
+All helper functions have been moved into a new `cosmwasm_schema` package.
+
+* Add `cosmwasm_schema = "0.8"` to `[dev-dependencies]` in `Cargo.toml`
+* Update `examples/schema.rs` to look [more like queue](https://github.com/CosmWasm/cosmwasm/blob/master/contracts/queue/examples/schema.rs),
+but replacing all the imports and type names with those you currently have.
+* Regenerate schemas with `cargo schema`
+
+### Polishing
+
+After so many changes, remember to let the linters do their jobs.
+
+* `cargo fmt`
+* `cargo clippy`
