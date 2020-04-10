@@ -40,6 +40,12 @@ impl BigInt {
     }
 }
 
+impl From<u128> for BigInt {
+    fn from(val: u128) -> Self {
+        BigInt(val)
+    }
+}
+
 impl TryFrom<&str> for BigInt {
     type Error = Error;
 
@@ -106,5 +112,34 @@ impl<'de> de::Visitor<'de> for BigIntVisitor {
             Ok(u) => Ok(BigInt(u)),
             Err(e) => Err(E::custom(format!("invalid BigInt '{}' - {}", v, e))),
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::{from_slice, to_vec};
+
+    #[test]
+    fn to_and_from_bigint() {
+        let a: BigInt = 12345.into();
+        assert_eq!(12345, a.u128());
+        assert_eq!("12345", a.to_string());
+
+        let a: BigInt = "34567".try_into().unwrap();
+        assert_eq!(34567, a.u128());
+        assert_eq!("34567", a.to_string());
+
+        let a: Result<BigInt, Error> = "1.23".try_into();
+        assert!(a.is_err());
+    }
+
+    #[test]
+    fn bigint_json() {
+        let orig = BigInt(1234567890987654321);
+        let serialized = to_vec(&orig).unwrap();
+        assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
+        let parsed: BigInt = from_slice(&serialized).unwrap();
+        assert_eq!(parsed, orig);
     }
 }

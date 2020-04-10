@@ -85,7 +85,7 @@ mod test {
             messages: vec![CosmosMsg::Send {
                 from_address: HumanAddr("me".to_string()),
                 to_address: HumanAddr("you".to_string()),
-                amount: coin("1015", "earth"),
+                amount: coin(1015, "earth"),
             }],
             log: vec![LogAttribute {
                 key: "action".to_string(),
