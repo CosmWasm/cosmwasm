@@ -3,6 +3,7 @@ use std::fmt;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
+use crate::coins::Coin;
 use crate::encoding::Binary;
 
 // Added Eq and Hash to allow this to be a key in a HashMap (MockQuerier)
@@ -93,18 +94,4 @@ pub struct ContractInfo {
     pub address: CanonicalAddr,
     // go likes to return null for empty array, make sure we can parse it (use option)
     pub balance: Option<Vec<Coin>>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct Coin {
-    pub denom: String,
-    pub amount: String,
-}
-
-// coin is a shortcut constructor for a set of one denomination of coins
-pub fn coin(amount: &str, denom: &str) -> Vec<Coin> {
-    vec![Coin {
-        amount: amount.to_string(),
-        denom: denom.to_string(),
-    }]
 }

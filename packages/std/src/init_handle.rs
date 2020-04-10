@@ -4,8 +4,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::api::ApiResult;
+use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::types::{Coin, HumanAddr};
+use crate::types::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

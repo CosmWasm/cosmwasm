@@ -2,13 +2,14 @@ use snafu::ResultExt;
 use std::collections::HashMap;
 
 use crate::api::{ApiError, ApiSystemError};
+use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
 use crate::query::{BalanceResponse, QueryRequest};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier};
-use crate::types::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
+use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
 
 /// All external requirements that can be injected for unit tests
 pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi, MockQuerier> {
