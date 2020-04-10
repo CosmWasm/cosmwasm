@@ -11,6 +11,11 @@ license = "Apache-2.0"
 circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
+# speed up integration tests
+[profile.dev.package.wasmer-clif-backend]
+debug-assertions = false
+opt-level = 1
+
 [features]
 default = ["default-singlepass"]
 # multiple backends may be activated here (available through eg. backends::cranelift::*)
