@@ -61,6 +61,23 @@ fn check_api_compatibility(module: &Module) -> Result<()> {
     Ok(())
 }
 
+fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<String> {
+    let available_exports: Vec<String> = match module.export_section() {
+        Some(export_section) => Vec::from(export_section.entries())
+            .iter()
+            .map(|entry| entry.field().to_string())
+            .collect(),
+        None => vec![],
+    };
+
+    for required_export in required_exports {
+        if !available_exports.iter().any(|x| x == required_export) {
+            return Some(String::from(*required_export));
+        }
+    }
+    None
+}
+
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
@@ -81,23 +98,6 @@ fn find_missing_import(module: &Module, supported_imports: &[&str]) -> Option<St
     None
 }
 
-fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<String> {
-    let available_exports: Vec<String> = match module.export_section() {
-        Some(export_section) => Vec::from(export_section.entries())
-            .iter()
-            .map(|entry| entry.field().to_string())
-            .collect(),
-        None => vec![],
-    };
-
-    for required_export in required_exports {
-        if !available_exports.iter().any(|x| x == required_export) {
-            return Some(String::from(*required_export));
-        }
-    }
-    None
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -107,69 +107,6 @@ mod test {
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
-
-    #[test]
-    fn test_supported_imports() {
-        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
-        let module = Module::deserialize(&mut reader).unwrap();
-
-        // if contract has more than we provide, bad
-        let imports_good = find_missing_import(&module, &["env.c_read", "env.c_write"]);
-        assert_eq!(imports_good, Some(String::from("env.c_canonical_address")));
-
-        // exact match good
-        let imports_good = find_missing_import(
-            &module,
-            &[
-                "env.c_read",
-                "env.c_write",
-                "env.c_canonical_address",
-                "env.c_human_address",
-            ],
-        );
-        assert_eq!(imports_good, None);
-
-        // if we provide more, also good
-        let imports_good = find_missing_import(
-            &module,
-            &[
-                "env.c_read",
-                "env.c_write",
-                "env.c_canonical_address",
-                "env.c_human_address",
-                "env.future_function",
-            ],
-        );
-        assert_eq!(imports_good, None);
-    }
-
-    #[test]
-    fn test_required_exports() {
-        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
-        let module = Module::deserialize(&mut reader).unwrap();
-
-        // subset okay
-        let exports_good = find_missing_export(&module, &["init", "handle", "allocate"]);
-        assert_eq!(exports_good, None);
-
-        // match okay
-        let exports_good = find_missing_export(
-            &module,
-            &[
-                "query",
-                "init",
-                "handle",
-                "allocate",
-                "deallocate",
-                "cosmwasm_api_0_6",
-            ],
-        );
-        assert_eq!(exports_good, None);
-
-        // missing one from list not okay
-        let missing_extra = find_missing_export(&module, &["init", "handle", "extra"]);
-        assert_eq!(missing_extra, Some(String::from("extra")));
-    }
 
     #[test]
     fn test_check_wasm() {
@@ -230,4 +167,67 @@ mod test {
 
     // Note: we don't have test data that includes correct exports but has
     // additional unsupported required imports. However, Wasmer will check this as well.
+
+    #[test]
+    fn test_find_missing_export() {
+        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
+        let module = Module::deserialize(&mut reader).unwrap();
+
+        // subset okay
+        let exports_good = find_missing_export(&module, &["init", "handle", "allocate"]);
+        assert_eq!(exports_good, None);
+
+        // match okay
+        let exports_good = find_missing_export(
+            &module,
+            &[
+                "query",
+                "init",
+                "handle",
+                "allocate",
+                "deallocate",
+                "cosmwasm_api_0_6",
+            ],
+        );
+        assert_eq!(exports_good, None);
+
+        // missing one from list not okay
+        let missing_extra = find_missing_export(&module, &["init", "handle", "extra"]);
+        assert_eq!(missing_extra, Some(String::from("extra")));
+    }
+
+    #[test]
+    fn test_find_missing_import() {
+        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
+        let module = Module::deserialize(&mut reader).unwrap();
+
+        // if contract has more than we provide, bad
+        let imports_good = find_missing_import(&module, &["env.c_read", "env.c_write"]);
+        assert_eq!(imports_good, Some(String::from("env.c_canonical_address")));
+
+        // exact match good
+        let imports_good = find_missing_import(
+            &module,
+            &[
+                "env.c_read",
+                "env.c_write",
+                "env.c_canonical_address",
+                "env.c_human_address",
+            ],
+        );
+        assert_eq!(imports_good, None);
+
+        // if we provide more, also good
+        let imports_good = find_missing_import(
+            &module,
+            &[
+                "env.c_read",
+                "env.c_write",
+                "env.c_canonical_address",
+                "env.c_human_address",
+                "env.future_function",
+            ],
+        );
+        assert_eq!(imports_good, None);
+    }
 }
