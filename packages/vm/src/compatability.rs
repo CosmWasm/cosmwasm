@@ -196,15 +196,23 @@ mod test {
     }
 
     #[test]
-    #[ignore]
     fn test_check_wasm_memories_two_memories() {
-        // we cannot create thi wasm using wat2wasm because
+        // Generated manually because wat2wasm protects us from creating such Wasm:
         // "error: only one memory block allowed"
-        // How can we create such test data?
-        let wasm = wat2wasm("(module (memory 1) (memory 1))").unwrap();
+        let wasm = hex::decode(concat!(
+            "0061736d", // magic bytes
+            "01000000", // binary version (uint32)
+            "05",       // section type (memory)
+            "05",       // section length
+            "02",       // number of memories
+            "0009",     // element of type "resizable_limits", min=9, max=unset
+            "0009",     // element of type "resizable_limits", min=9, max=unset
+        ))
+        .unwrap();
+
         match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
             Err(Error::ValidationErr { msg, .. }) => {
-                assert!(msg.starts_with("Wasm contract doesn't have a memory section"));
+                assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
