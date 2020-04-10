@@ -115,6 +115,25 @@ mod test {
     }
 
     #[test]
+    fn test_check_wasm_old_contract() {
+        match check_wasm(CONTRACT_0_7) {
+            Err(Error::ValidationErr { msg, .. }) => assert!(msg.starts_with(
+                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
+            )),
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("This must not succeeed"),
+        };
+
+        match check_wasm(CONTRACT_0_6) {
+            Err(Error::ValidationErr { msg, .. }) => assert!(msg.starts_with(
+                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
+            )),
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("This must not succeeed"),
+        };
+    }
+
+    #[test]
     fn test_check_wasm_corrupted_data() {
         match check_wasm(CORRUPTED) {
             Err(Error::ValidationErr { msg, .. }) => {
