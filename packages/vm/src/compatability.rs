@@ -1,4 +1,4 @@
-use parity_wasm::elements::{Deserialize, Module};
+use parity_wasm::elements::{deserialize_buffer, Module};
 
 use crate::errors::{make_validation_err, Result};
 
@@ -31,8 +31,7 @@ static REQUIRED_EXPORTS: &[&str] = &[
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
-    let mut reader = std::io::Cursor::new(wasm_code);
-    let module = match Module::deserialize(&mut reader) {
+    let module = match deserialize_buffer(&wasm_code) {
         Ok(deserialized) => deserialized,
         Err(err) => {
             return make_validation_err(format!(
@@ -194,8 +193,7 @@ mod test {
 
     #[test]
     fn test_find_missing_export() {
-        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
-        let module = Module::deserialize(&mut reader).unwrap();
+        let module = deserialize_buffer(CONTRACT_0_6).unwrap();
 
         // subset okay
         let exports_good = find_missing_export(&module, &["init", "handle", "allocate"]);
@@ -222,8 +220,7 @@ mod test {
 
     #[test]
     fn test_find_missing_import() {
-        let mut reader = std::io::Cursor::new(CONTRACT_0_6);
-        let module = Module::deserialize(&mut reader).unwrap();
+        let module = deserialize_buffer(CONTRACT_0_6).unwrap();
 
         // if contract has more than we provide, bad
         let imports_good = find_missing_import(&module, &["env.c_read", "env.c_write"]);
