@@ -93,6 +93,10 @@ pub fn make_runtime_err<T>(msg: &'static str) -> Result<T> {
     RuntimeErr { msg }.fail()
 }
 
+pub fn make_validation_err<T>(msg: String) -> Result<T> {
+    ValidationErr { msg }.fail()
+}
+
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 pub trait CacheExt<T: Debug> {

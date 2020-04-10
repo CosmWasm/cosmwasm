@@ -1,6 +1,6 @@
 use parity_wasm::elements::{Deserialize, Module};
 
-use crate::errors::{Result, ValidationErr};
+use crate::errors::{make_validation_err, Result};
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
@@ -35,13 +35,10 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
     let module = match Module::deserialize(&mut reader) {
         Ok(deserialized) => deserialized,
         Err(err) => {
-            return ValidationErr {
-                msg: format!(
-                    "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
-                    err
-                ),
-            }
-            .fail()
+            return make_validation_err(format!(
+                "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
+                err
+            ));
         }
     };
     check_api_compatibility(&module)
@@ -50,22 +47,16 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
 /// This is called as part of check_wasm
 fn check_api_compatibility(module: &Module) -> Result<()> {
     if let Some(missing) = find_missing_export(module, REQUIRED_EXPORTS) {
-        return ValidationErr {
-            msg: format!(
+        return make_validation_err(format!(
                 "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
                 missing, REQUIRED_EXPORTS
-            ),
-        }
-        .fail();
+            ));
     }
     if let Some(missing) = find_missing_import(module, SUPPORTED_IMPORTS) {
-        return ValidationErr {
-            msg: format!(
+        return make_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
                 missing, SUPPORTED_IMPORTS
-            ),
-        }
-        .fail();
+            ));
     }
     Ok(())
 }
