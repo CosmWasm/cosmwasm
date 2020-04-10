@@ -161,10 +161,10 @@ mod test {
                 i32.const 1
                 i32.add))
         "#;
-
         let wasm_missing_exports = wat2wasm(WAT_MISSING_EXPORTS).unwrap();
 
-        match check_wasm(&wasm_missing_exports) {
+        let module = deserialize_buffer(&wasm_missing_exports).unwrap();
+        match check_wasm_exports(&module) {
             Err(Error::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
                     "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
@@ -177,7 +177,8 @@ mod test {
 
     #[test]
     fn test_check_wasm_exports_of_old_contract() {
-        match check_wasm(CONTRACT_0_7) {
+        let module = deserialize_buffer(CONTRACT_0_7).unwrap();
+        match check_wasm_exports(&module) {
             Err(Error::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
                     "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
