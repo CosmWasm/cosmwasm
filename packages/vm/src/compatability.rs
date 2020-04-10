@@ -61,23 +61,22 @@ fn check_wasm_memories(module: &Module) -> Result<()> {
         return make_validation_err("Wasm contract must contain exactly one memory".to_string());
     }
 
-    for memory in memories {
-        // println!("Memory: {:?}", memory);
-        let limits = memory.limits();
+    let memory = memories[0];
+    // println!("Memory: {:?}", memory);
+    let limits = memory.limits();
 
-        if limits.initial() > MEMORY_LIMIT {
-            return make_validation_err(format!(
-                "Wasm contract memory's minimum must not exceed {} pages.",
-                MEMORY_LIMIT
-            ));
-        }
+    if limits.initial() > MEMORY_LIMIT {
+        return make_validation_err(format!(
+            "Wasm contract memory's minimum must not exceed {} pages.",
+            MEMORY_LIMIT
+        ));
+    }
 
-        if limits.maximum() != None {
-            return make_validation_err(
-                "Wasm contract memory's maximum must be unset. The host will set it for you."
-                    .to_string(),
-            );
-        }
+    if limits.maximum() != None {
+        return make_validation_err(
+            "Wasm contract memory's maximum must be unset. The host will set it for you."
+                .to_string(),
+        );
     }
     Ok(())
 }
