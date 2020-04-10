@@ -1,7 +1,5 @@
-use cosmwasm::mock::mock_env;
-use cosmwasm::serde::from_slice;
-use cosmwasm::traits::Api;
-use cosmwasm::types::{coin, ContractResult, CosmosMsg, HumanAddr};
+use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::{coin, from_binary, Api, ApiError, CosmosMsg, HumanAddr};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
@@ -62,7 +60,7 @@ fn proper_initialization() {
 
     // it worked, let's query the state
     let res = query(&mut deps, QueryMsg::Owner {}).unwrap();
-    let value: OwnerResponse = from_slice(res.as_slice()).unwrap();
+    let value: OwnerResponse = from_binary(&res).unwrap();
     assert_eq!("creator", value.owner.as_str());
 }
 
@@ -120,7 +118,7 @@ fn reflect_requires_owner() {
 
     let res = handle(&mut deps, env, msg);
     match res {
-        ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"),
+        Err(ApiError::Unauthorized {}) => {}
         _ => panic!("Must return unauthorized error"),
     }
 }
@@ -148,7 +146,7 @@ fn transfer() {
     // should change state
     assert_eq!(0, res.messages.len());
     let res = query(&mut deps, QueryMsg::Owner {}).unwrap();
-    let value: OwnerResponse = from_slice(res.as_slice()).unwrap();
+    let value: OwnerResponse = from_binary(&res).unwrap();
     assert_eq!("friend", value.owner.as_str());
 }
 
@@ -173,7 +171,7 @@ fn transfer_requires_owner() {
 
     let res = handle(&mut deps, env, msg);
     match res {
-        ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"),
+        Err(ApiError::Unauthorized {}) => {}
         _ => panic!("Must return unauthorized error"),
     }
 }

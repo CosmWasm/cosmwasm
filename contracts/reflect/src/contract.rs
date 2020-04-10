@@ -91,12 +91,12 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm::testing::{dependencies, mock_env};
-    use cosmwasm_std::{coin, from_slice, Binary, Error};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use cosmwasm_std::{coin, from_binary, Binary, Error};
 
     #[test]
     fn proper_initialization() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
@@ -107,13 +107,13 @@ mod tests {
 
         // it worked, let's query the state
         let res = query(&deps, QueryMsg::Owner {}).unwrap();
-        let value: OwnerResponse = from_slice(&res).unwrap();
+        let value: OwnerResponse = from_binary(&res).unwrap();
         assert_eq!("creator", value.owner.as_str());
     }
 
     #[test]
     fn reflect() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(
@@ -140,7 +140,7 @@ mod tests {
 
     #[test]
     fn reflect_requires_owner() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(
@@ -171,7 +171,7 @@ mod tests {
 
     #[test]
     fn reflect_reject_empty_msgs() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn reflect_multiple_messages() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn transfer() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(
@@ -252,13 +252,13 @@ mod tests {
         // should change state
         assert_eq!(0, res.messages.len());
         let res = query(&deps, QueryMsg::Owner {}).unwrap();
-        let value: OwnerResponse = from_slice(&res).unwrap();
+        let value: OwnerResponse = from_binary(&res).unwrap();
         assert_eq!("friend", value.owner.as_str());
     }
 
     #[test]
     fn transfer_requires_owner() {
-        let mut deps = dependencies(20);
+        let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
         let env = mock_env(

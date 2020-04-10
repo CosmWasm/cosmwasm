@@ -6,6 +6,8 @@ understand the differences.
 
 ## 0.7.2 -> 0.8
 
+### Update wasm code
+
 `Cargo.toml` dependencies:
 
 * Update to `schemars = "0.7"`
@@ -43,3 +45,25 @@ Contract Code:
 * `query` now returns `Result<Binary>` not `Result<Vec<u8>>`
     * You can also replace `to_vec(...)` with `to_binary(...)`
 * No `.context(...)` is required after `from_slice` and `to_vec`, they return proper `cosmwasm_std::Error` variants on errors.
+
+At this point `cargo wasm` should pass.
+
+### Update test code
+
+Both:
+
+* Update all imports from `cosmwasm::mock::*` to `cosmwasm_std::testing::*`
+* Use `from_binary` not `from_slice` on all query responses (update imports)
+    * `from_slice(res.as_slice())` -> `from_binary(&res)`
+
+Unit Tests:
+
+* Replace `dependencies` with `mock_dependencies`
+
+Integration Tests:
+
+* We no longer check errors as strings but have rich types:
+    * Before: `match err { ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"), ... }`
+    * After: `match err { Err(ApiError::Unauthorized{ ..})  => {}, ... }`
+* Remove all imports / use of `ContractResult`
+
