@@ -1,4 +1,4 @@
-use parity_wasm::elements::{deserialize_buffer, Module};
+use parity_wasm::elements::{deserialize_buffer, External, ImportEntry, Module};
 
 use crate::errors::{make_validation_err, Result};
 
@@ -69,21 +69,26 @@ fn check_wasm_exports(module: &Module) -> Result<()> {
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
 fn check_wasm_imports(module: &Module) -> Result<()> {
-    let required_imports: Vec<String> = module.import_section().map_or(vec![], |import_section| {
-        import_section
-            .entries()
-            .iter()
-            .map(|entry| format!("{}.{}", entry.module(), entry.field()))
-            .collect()
-    });
+    let required_imports: Vec<ImportEntry> = module
+        .import_section()
+        .map_or(vec![], |import_section| import_section.entries().to_vec());
 
     for required_import in required_imports {
-        if !SUPPORTED_IMPORTS.contains(&required_import.as_str()) {
+        let full_name = format!("{}.{}", required_import.module(), required_import.field());
+        if !SUPPORTED_IMPORTS.contains(&full_name.as_str()) {
             return make_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
-                required_import, SUPPORTED_IMPORTS
+                full_name, SUPPORTED_IMPORTS
             ));
         }
+
+        match required_import.external() {
+            External::Function(_) => {}, // ok
+            _ => return make_validation_err(format!(
+                "Wasm contract requires non-function import: \"{}\". Right now, all supported imports are functions.",
+                full_name
+            )),
+        };
     }
     Ok(())
 }
@@ -196,6 +201,20 @@ mod test {
             Err(Error::ValidationErr { msg, .. }) => {
                 assert!(
                     msg.starts_with("Wasm contract requires unsupported import: \"env.read_db\"")
+                );
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_imports_wrong_type() {
+        let wasm = wat2wasm(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
+        match check_wasm_imports(&deserialize_buffer(&wasm).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(
+                    msg.starts_with("Wasm contract requires non-function import: \"env.db_read\"")
                 );
             }
             Err(e) => panic!("Unexpected error {:?}", e),
