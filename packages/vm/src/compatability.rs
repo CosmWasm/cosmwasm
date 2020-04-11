@@ -66,13 +66,13 @@ fn check_wasm_imports(module: &Module) -> Result<()> {
 }
 
 fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<String> {
-    let available_exports: Vec<String> = match module.export_section() {
-        Some(export_section) => Vec::from(export_section.entries())
+    let available_exports: Vec<String> = module.export_section().map_or(vec![], |export_section| {
+        export_section
+            .entries()
             .iter()
             .map(|entry| entry.field().to_string())
-            .collect(),
-        None => vec![],
-    };
+            .collect()
+    });
 
     for required_export in required_exports {
         if !available_exports.iter().any(|x| x == required_export) {
@@ -86,13 +86,13 @@ fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<Str
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
 fn find_missing_import(module: &Module, supported_imports: &[&str]) -> Option<String> {
-    let required_imports: Vec<String> = match module.import_section() {
-        Some(import_section) => Vec::from(import_section.entries())
+    let required_imports: Vec<String> = module.import_section().map_or(vec![], |import_section| {
+        import_section
+            .entries()
             .iter()
             .map(|entry| format!("{}.{}", entry.module(), entry.field()))
-            .collect(),
-        None => vec![],
-    };
+            .collect()
+    });
 
     for required_import in required_imports {
         if !supported_imports.contains(&required_import.as_str()) {
