@@ -46,26 +46,6 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
 }
 
 fn check_wasm_exports(module: &Module) -> Result<()> {
-    if let Some(missing) = find_missing_export(module, REQUIRED_EXPORTS) {
-        return make_validation_err(format!(
-                "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
-                missing, REQUIRED_EXPORTS
-            ));
-    }
-    Ok(())
-}
-
-fn check_wasm_imports(module: &Module) -> Result<()> {
-    if let Some(missing) = find_missing_import(module, SUPPORTED_IMPORTS) {
-        return make_validation_err(format!(
-                "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
-                missing, SUPPORTED_IMPORTS
-            ));
-    }
-    Ok(())
-}
-
-fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<String> {
     let available_exports: Vec<String> = module.export_section().map_or(vec![], |export_section| {
         export_section
             .entries()
@@ -74,18 +54,21 @@ fn find_missing_export(module: &Module, required_exports: &[&str]) -> Option<Str
             .collect()
     });
 
-    for required_export in required_exports {
+    for required_export in REQUIRED_EXPORTS {
         if !available_exports.iter().any(|x| x == required_export) {
-            return Some(String::from(*required_export));
+            return make_validation_err(format!(
+                "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
+                required_export, REQUIRED_EXPORTS
+            ));
         }
     }
-    None
+    Ok(())
 }
 
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
-fn find_missing_import(module: &Module, supported_imports: &[&str]) -> Option<String> {
+fn check_wasm_imports(module: &Module) -> Result<()> {
     let required_imports: Vec<String> = module.import_section().map_or(vec![], |import_section| {
         import_section
             .entries()
@@ -95,17 +78,21 @@ fn find_missing_import(module: &Module, supported_imports: &[&str]) -> Option<St
     });
 
     for required_import in required_imports {
-        if !supported_imports.contains(&required_import.as_str()) {
-            return Some(required_import);
+        if !SUPPORTED_IMPORTS.contains(&required_import.as_str()) {
+            return make_validation_err(format!(
+                "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
+                required_import, SUPPORTED_IMPORTS
+            ));
         }
     }
-    None
+    Ok(())
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::errors::Error;
+    use wabt::wat2wasm;
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
@@ -150,8 +137,6 @@ mod test {
 
     #[test]
     fn test_check_wasm_exports() {
-        use wabt::wat2wasm;
-
         // this is invalid, as it doesn't contain all required exports
         static WAT_MISSING_EXPORTS: &'static str = r#"
             (module
@@ -190,6 +175,21 @@ mod test {
     }
 
     #[test]
+    fn check_wasm_imports_ok() {
+        let wasm = wat2wasm(
+            r#"(module
+            (import "env" "db_read" (func (param i32 i32) (result i32)))
+            (import "env" "db_write" (func (param i32 i32) (result i32)))
+            (import "env" "db_remove" (func (param i32) (result i32)))
+            (import "env" "canonicalize_address" (func (param i32 i32) (result i32)))
+            (import "env" "humanize_address" (func (param i32 i32) (result i32)))
+        )"#,
+        )
+        .unwrap();
+        check_wasm_imports(&deserialize_buffer(&wasm).unwrap()).unwrap();
+    }
+
+    #[test]
     fn test_check_wasm_imports_of_old_contract() {
         let module = deserialize_buffer(CONTRACT_0_7).unwrap();
         match check_wasm_imports(&module) {
@@ -201,66 +201,5 @@ mod test {
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
-    }
-
-    #[test]
-    fn test_find_missing_export() {
-        let module = deserialize_buffer(CONTRACT_0_6).unwrap();
-
-        // subset okay
-        let exports_good = find_missing_export(&module, &["init", "handle", "allocate"]);
-        assert_eq!(exports_good, None);
-
-        // match okay
-        let exports_good = find_missing_export(
-            &module,
-            &[
-                "query",
-                "init",
-                "handle",
-                "allocate",
-                "deallocate",
-                "cosmwasm_api_0_6",
-            ],
-        );
-        assert_eq!(exports_good, None);
-
-        // missing one from list not okay
-        let missing_extra = find_missing_export(&module, &["init", "handle", "extra"]);
-        assert_eq!(missing_extra, Some(String::from("extra")));
-    }
-
-    #[test]
-    fn test_find_missing_import() {
-        let module = deserialize_buffer(CONTRACT_0_6).unwrap();
-
-        // if contract has more than we provide, bad
-        let imports_good = find_missing_import(&module, &["env.c_read", "env.c_write"]);
-        assert_eq!(imports_good, Some(String::from("env.c_canonical_address")));
-
-        // exact match good
-        let imports_good = find_missing_import(
-            &module,
-            &[
-                "env.c_read",
-                "env.c_write",
-                "env.c_canonical_address",
-                "env.c_human_address",
-            ],
-        );
-        assert_eq!(imports_good, None);
-
-        // if we provide more, also good
-        let imports_good = find_missing_import(
-            &module,
-            &[
-                "env.c_read",
-                "env.c_write",
-                "env.c_canonical_address",
-                "env.c_human_address",
-                "env.future_function",
-            ],
-        );
-        assert_eq!(imports_good, None);
     }
 }
