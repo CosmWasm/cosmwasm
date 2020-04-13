@@ -55,17 +55,19 @@ impl Wallet {
     fn find(&self, denom: &str) -> Option<(usize, &Coin)> {
         self.0.iter().enumerate().find(|(_i, c)| c.denom == denom)
     }
+
+    // TODO: normalize (sorted by denom, no 2 of same denom, no 0 elements)
 }
 
 impl ops::Add<Coin> for Wallet {
     type Output = Self;
 
-    fn add(mut self, mut other: Coin) -> Self {
+    fn add(mut self, other: Coin) -> Self {
         match self.find(&other.denom) {
             Some((i, c)) => {
-                other.amount += c.amount;
-                self.0[i] = other;
+                self.0[i].amount = c.amount + other.amount;
             }
+            // TODO: place this in proper sorted order
             None => self.0.push(other),
         };
         self
@@ -75,12 +77,15 @@ impl ops::Add<Coin> for Wallet {
 impl ops::Sub<Coin> for Wallet {
     type Output = Result<Self, Error>;
 
-    fn sub(mut self, mut other: Coin) -> Result<Self, Error> {
+    fn sub(mut self, other: Coin) -> Result<Self, Error> {
         match self.find(&other.denom) {
             Some((i, c)) => {
-                // throws error on underflow
-                other.amount = (c.amount - other.amount)?;
-                self.0[i] = other;
+                let remainder = (c.amount - other.amount)?;
+                if remainder.u128() == 0 {
+                    self.0.remove(i);
+                } else {
+                    self.0[i].amount = remainder;
+                }
             }
             // error if no tokens
             None => return underflow(0, other.amount.u128()),
@@ -249,9 +254,9 @@ mod test {
         let less_eth = (wallet.clone() - coin(2345, "ETH")).unwrap();
         assert_eq!(less_eth, Wallet(vec![coin(10000, "ETH"), coin(555, "BTC")]));
 
-        // subtract all of one coin (TODO: should remove element)
+        // subtract all of one coin (and remove with 0 amount)
         let no_btc = (wallet.clone() - coin(555, "BTC")).unwrap();
-        assert_eq!(no_btc, Wallet(vec![coin(12345, "ETH"), coin(0, "BTC")]));
+        assert_eq!(no_btc, Wallet(vec![coin(12345, "ETH")]));
 
         // subtract more than we have
         let underflow = wallet.clone() - coin(666, "BTC");
