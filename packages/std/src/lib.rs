@@ -11,7 +11,6 @@ mod query;
 mod serde;
 mod storage;
 mod traits;
-mod transactions;
 mod types;
 
 pub use crate::api::{ApiError, ApiResult, ApiSystemError};
@@ -32,7 +31,6 @@ pub use crate::storage::MemoryStorage;
 pub use crate::traits::{
     Api, ApiQuerierResponse, Extern, Querier, QuerierResponse, ReadonlyStorage, Storage,
 };
-pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
 pub use crate::types::{CanonicalAddr, Env, HumanAddr};
 
 // Exposed in wasm build only
