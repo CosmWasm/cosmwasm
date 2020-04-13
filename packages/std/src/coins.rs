@@ -51,18 +51,17 @@ impl Wallet {
             .map(|m| m.amount >= required.amount)
             .unwrap_or(false)
     }
+
+    fn find(&self, denom: &str) -> Option<(usize, &Coin)> {
+        self.0.iter().enumerate().find(|(_i, c)| c.denom == denom)
+    }
 }
 
 impl ops::Add<Coin> for Wallet {
     type Output = Self;
 
     fn add(mut self, mut other: Coin) -> Self {
-        let existing = self
-            .0
-            .iter()
-            .enumerate()
-            .find(|(_i, c)| c.denom == other.denom);
-        match existing {
+        match self.find(&other.denom) {
             Some((i, c)) => {
                 other.amount += c.amount;
                 self.0[i] = other;
@@ -73,25 +72,22 @@ impl ops::Add<Coin> for Wallet {
     }
 }
 
-// impl ops::Sub<Coin> for Wallet {
-//     type Output = Result<Self, Error>;
-//
-//     fn sub(mut self, mut other: Coin) -> Result<Self, Error> {
-//         let existing = self
-//             .0
-//             .iter()
-//             .enumerate()
-//             .find(|(_i, c)| c.denom == other.denom);
-//         match existing {
-//             Some((i, c)) => {
-//                 other.amount += c.amount;
-//                 self.0[i] = other;
-//             }
-//             None => self.0.push(other),
-//         };
-//         self
-//     }
-// }
+impl ops::Sub<Coin> for Wallet {
+    type Output = Result<Self, Error>;
+
+    fn sub(mut self, mut other: Coin) -> Result<Self, Error> {
+        match self.find(&other.denom) {
+            Some((i, c)) => {
+                // throws error on underflow
+                other.amount = (c.amount - other.amount)?;
+                self.0[i] = other;
+            }
+            // error if no tokens
+            None => return underflow(0, other.amount.u128()),
+        };
+        Ok(self)
+    }
+}
 
 #[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
 pub struct Uint128(#[schemars(with = "String")] pub u128);
@@ -246,6 +242,27 @@ mod test {
     }
 
     #[test]
+    fn wallet_subtract_works() {
+        let wallet = Wallet(vec![coin(12345, "ETH"), coin(555, "BTC")]);
+
+        // subtract less than we have
+        let less_eth = (wallet.clone() - coin(2345, "ETH")).unwrap();
+        assert_eq!(less_eth, Wallet(vec![coin(10000, "ETH"), coin(555, "BTC")]));
+
+        // subtract all of one coin (TODO: should remove element)
+        let no_btc = (wallet.clone() - coin(555, "BTC")).unwrap();
+        assert_eq!(no_btc, Wallet(vec![coin(12345, "ETH"), coin(0, "BTC")]));
+
+        // subtract more than we have
+        let underflow = wallet.clone() - coin(666, "BTC");
+        assert!(underflow.is_err());
+
+        // subtract non-existent denom
+        let missing = wallet.clone() - coin(1, "ATOM");
+        assert!(missing.is_err());
+    }
+
+    #[test]
     fn to_and_from_uint128() {
         let a: Uint128 = 12345.into();
         assert_eq!(12345, a.u128());
@@ -297,5 +314,13 @@ mod test {
             }) => assert_eq!((minuend, subtrahend), (a.u128(), b.u128())),
             _ => panic!("expected underflow error"),
         }
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_math_overflow_panics() {
+        // almost_max is 2^128 - 10
+        let almost_max = Uint128(340282366920938463463374607431768211446);
+        let _ = almost_max + Uint128(12);
     }
 }
