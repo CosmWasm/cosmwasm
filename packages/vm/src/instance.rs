@@ -354,7 +354,7 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 46517);
+        assert_eq!(init_used, 47360);
     }
 
     #[test]
@@ -380,7 +380,7 @@ mod test {
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 59555);
+        assert_eq!(handle_used, 61527);
     }
 
     #[test]
