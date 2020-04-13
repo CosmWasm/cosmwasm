@@ -68,7 +68,7 @@ pub type HandleResult = ApiResult<HandleResponse>;
 mod test {
     use super::*;
     use crate::api::ApiError;
-    use crate::{coin, from_slice, to_vec};
+    use crate::{coins, from_slice, to_vec};
 
     #[test]
     fn can_deser_error_result() {
@@ -85,7 +85,7 @@ mod test {
             messages: vec![CosmosMsg::Send {
                 from_address: HumanAddr("me".to_string()),
                 to_address: HumanAddr("you".to_string()),
-                amount: coin(1015, "earth"),
+                amount: coins(1015, "earth"),
             }],
             log: vec![LogAttribute {
                 key: "action".to_string(),

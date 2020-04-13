@@ -13,7 +13,7 @@ mod transactions;
 mod types;
 
 pub use crate::api::{ApiError, ApiResult, ApiSystemError};
-pub use crate::coins::{coin, has_coins, one_coin, BigInt, Coin};
+pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, Error, InvalidRequest, NotFound,

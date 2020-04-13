@@ -14,9 +14,6 @@
     }
   },
   "definitions": {
-    "BigInt": {
-      "type": "string"
-    },
     "Coin": {
       "type": "object",
       "required": [
@@ -25,12 +22,15 @@
       ],
       "properties": {
         "amount": {
-          "$ref": "#/definitions/BigInt"
+          "$ref": "#/definitions/Uint128"
         },
         "denom": {
           "type": "string"
         }
       }
+    },
+    "Uint128": {
+      "type": "string"
     }
   }
 }

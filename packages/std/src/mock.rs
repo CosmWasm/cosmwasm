@@ -161,7 +161,7 @@ impl Querier for MockQuerier {
 mod test {
     use super::*;
 
-    use crate::coin;
+    use crate::coins;
 
     #[test]
     fn mock_env_arguments() {
@@ -169,9 +169,9 @@ mod test {
         let api = MockApi::new(20);
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env(&api, "my name", &[], &coin(100, "atom"));
-        let b = mock_env(&api, &name, &[], &coin(100, "atom"));
-        let c = mock_env(&api, name, &[], &coin(100, "atom"));
+        let a = mock_env(&api, "my name", &[], &coins(100, "atom"));
+        let b = mock_env(&api, &name, &[], &coins(100, "atom"));
+        let c = mock_env(&api, name, &[], &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

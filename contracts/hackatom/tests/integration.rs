@@ -30,7 +30,7 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, from_binary, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr, ReadonlyStorage,
+    coins, from_binary, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr, ReadonlyStorage,
 };
 use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
@@ -57,7 +57,7 @@ fn proper_initialization() {
         verifier,
         beneficiary,
     };
-    let env = mock_env(&deps.api, "creator", &coin(1000, "earth"), &[]);
+    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"), &[]);
     let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
@@ -85,7 +85,7 @@ fn init_and_query() {
         verifier: verifier.clone(),
         beneficiary,
     };
-    let env = mock_env(&deps.api, creator.as_str(), &coin(1000, "earth"), &[]);
+    let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"), &[]);
     let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
@@ -104,7 +104,7 @@ fn init_and_query() {
 #[test]
 fn querier_callbacks_work() {
     let rich_addr = HumanAddr::from("foobar");
-    let rich_balance = coin(10000, "gold");
+    let rich_balance = coins(10000, "gold");
     let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr, &rich_balance)]);
 
     // querying with balance gets the balance
@@ -125,7 +125,7 @@ fn querier_callbacks_work() {
 #[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM);
-    let env = mock_env(&deps.api, "creator", &coin(1000, "earth"), &[]);
+    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"), &[]);
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res = init(&mut deps, env, HandleMsg::Release {});
     match res.unwrap_err() {
@@ -149,8 +149,8 @@ fn proper_handle() {
     let init_env = mock_env(
         &deps.api,
         "creator",
-        &coin(1000, "earth"),
-        &coin(1000, "earth"),
+        &coins(1000, "earth"),
+        &coins(1000, "earth"),
     );
     let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
@@ -159,8 +159,8 @@ fn proper_handle() {
     let handle_env = mock_env(
         &deps.api,
         verifier.as_str(),
-        &coin(15, "earth"),
-        &coin(1015, "earth"),
+        &coins(15, "earth"),
+        &coins(1015, "earth"),
     );
     let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
     assert_eq!(1, handle_res.messages.len());
@@ -170,7 +170,7 @@ fn proper_handle() {
         &CosmosMsg::Send {
             from_address: HumanAddr("cosmos2contract".to_string()),
             to_address: beneficiary,
-            amount: coin(1015, "earth"),
+            amount: coins(1015, "earth"),
         }
     );
     assert_eq!(
@@ -195,14 +195,14 @@ fn failed_handle() {
     let init_env = mock_env(
         &deps.api,
         creator.as_str(),
-        &coin(1000, "earth"),
-        &coin(1000, "earth"),
+        &coins(1000, "earth"),
+        &coins(1000, "earth"),
     );
     let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary cannot release it
-    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin(1000, "earth"));
+    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
     let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
     match handle_res.unwrap_err() {
         ApiError::Unauthorized {} => {}
@@ -260,14 +260,14 @@ mod singlepass_tests {
         let init_env = mock_env(
             &deps.api,
             creator.as_str(),
-            &coin(1000, "earth"),
-            &coin(1000, "earth"),
+            &coins(1000, "earth"),
+            &coins(1000, "earth"),
         );
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // TRY PANIC
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coin(1000, "earth"));
+        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
         // panic inside contract should not panic out here
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
