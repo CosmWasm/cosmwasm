@@ -31,13 +31,47 @@ pub fn coin(amount: u128, denom: &str) -> Coin {
     Coin::new(amount, denom)
 }
 
-/// has_coins returns true if the list of coins has at least the required amount
-pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
-    coins
-        .iter()
-        .find(|c| c.denom == required.denom)
-        .map(|m| m.amount >= required.amount)
-        .unwrap_or(false)
+// Wallet wraps Vec<Coin> and provides some nice helpers. It mutates the Vec and can be
+// unwrapped when done.
+//
+// This is meant to be used for calculations and not serialized.
+// (FIXME: we can add derives if we want to include this in serialization)
+#[derive(Clone, Default, Debug, PartialEq)]
+pub struct Wallet(pub Vec<Coin>);
+
+impl Wallet {
+    pub fn to_vec(self) -> Vec<Coin> {
+        self.0
+    }
+
+    /// returns true if the list of coins has at least the required amount
+    pub fn has(&self, required: &Coin) -> bool {
+        self.0
+            .iter()
+            .find(|c| c.denom == required.denom)
+            .map(|m| m.amount >= required.amount)
+            .unwrap_or(false)
+    }
+}
+
+impl ops::Add<Coin> for Wallet {
+    type Output = Self;
+
+    fn add(mut self, mut other: Coin) -> Self {
+        let existing = self
+            .0
+            .iter()
+            .enumerate()
+            .find(|(_i, c)| c.denom == other.denom);
+        match existing {
+            Some((i, c)) => {
+                other.amount += c.amount;
+                self.0[i] = other;
+            }
+            None => self.0.push(other),
+        };
+        self
+    }
 }
 
 #[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
@@ -89,6 +123,12 @@ impl ops::Add for Uint128 {
 
     fn add(self, other: Self) -> Self {
         Uint128(self.u128() + other.u128())
+    }
+}
+
+impl ops::AddAssign for Uint128 {
+    fn add_assign(&mut self, other: Self) {
+        self.0 += other.u128();
     }
 }
 
@@ -147,11 +187,38 @@ mod test {
     use std::convert::TryInto;
 
     #[test]
-    fn has_coins_matches() {
-        let wallet = vec![coin(12345, "ETH"), coin(555, "BTC")];
+    fn wallet_has_works() {
+        let wallet = Wallet(vec![coin(12345, "ETH"), coin(555, "BTC")]);
 
         // less than same type
-        assert!(has_coins(&wallet, &coin(777, "ETH")));
+        assert!(wallet.has(&coin(777, "ETH")));
+        // equal to same type
+        assert!(wallet.has(&coin(555, "BTC")));
+
+        // too high
+        assert!(!wallet.has(&coin(12346, "ETH")));
+        // wrong type
+        assert!(!wallet.has(&coin(456, "ETC")));
+    }
+
+    #[test]
+    fn wallet_add_works() {
+        let wallet = Wallet(vec![coin(12345, "ETH"), coin(555, "BTC")]);
+
+        // add an existing coin
+        let more_eth = wallet.clone() + coin(54321, "ETH");
+        assert_eq!(more_eth, Wallet(vec![coin(66666, "ETH"), coin(555, "BTC")]));
+
+        // add an new coin
+        let add_atom = wallet.clone() + coin(777, "ATOM");
+        assert_eq!(
+            add_atom,
+            Wallet(vec![
+                coin(12345, "ETH"),
+                coin(555, "BTC"),
+                coin(777, "ATOM")
+            ])
+        );
     }
 
     #[test]
