@@ -32,11 +32,7 @@ pub fn coin(amount: u128, denom: &str) -> Coin {
 
 // Wallet wraps Vec<Coin> and provides some nice helpers. It mutates the Vec and can be
 // unwrapped when done.
-//
-// This is meant to be used for calculations and not serialized.
-// (Note: we can add derives if we want to include this in serialization
-// but then we have to think about normalization a bit more)
-#[derive(Clone, Default, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Wallet(pub Vec<Coin>);
 
 impl Wallet {
@@ -243,13 +239,13 @@ impl<'de> Deserialize<'de> for Uint128 {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(BigIntVisitor)
+        deserializer.deserialize_str(Uint128Visitor)
     }
 }
 
-struct BigIntVisitor;
+struct Uint128Visitor;
 
-impl<'de> de::Visitor<'de> for BigIntVisitor {
+impl<'de> de::Visitor<'de> for Uint128Visitor {
     type Value = Uint128;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
