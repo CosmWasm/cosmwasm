@@ -244,7 +244,40 @@ mod singlepass_tests {
     use cosmwasm_vm::testing::mock_instance_with_gas_limit;
 
     #[test]
-    fn handle_panic_and_loops() {
+    fn handle_panic() {
+        let mut deps = mock_instance(WASM);
+
+        // initialize the store
+        let verifier = HumanAddr(String::from("verifies"));
+        let beneficiary = HumanAddr(String::from("benefits"));
+        let creator = HumanAddr(String::from("creator"));
+
+        let init_msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary: beneficiary.clone(),
+        };
+        let init_env = mock_env(
+            &deps.api,
+            creator.as_str(),
+            &coins(1000, "earth"),
+            &coins(1000, "earth"),
+        );
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        // panic inside contract should not panic out here
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::Panic {}).unwrap(),
+        );
+        assert!(handle_res.is_err());
+    }
+
+    #[test]
+    fn handle_cpu_loop() {
         // Gas must be set so we die early on infinite loop
         let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
 
@@ -266,18 +299,7 @@ mod singlepass_tests {
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        // TRY PANIC
         let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
-        // panic inside contract should not panic out here
-        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle(
-            &mut deps,
-            &handle_env,
-            &to_vec(&HandleMsg::Panic {}).unwrap(),
-        );
-        assert!(handle_res.is_err());
-
-        // TRY INFINITE LOOP
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
