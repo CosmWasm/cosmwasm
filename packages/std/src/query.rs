@@ -2,8 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::api::ApiResult;
+use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::types::{Coin, HumanAddr};
+use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
 

@@ -22,12 +22,15 @@
       ],
       "properties": {
         "amount": {
-          "type": "string"
+          "$ref": "#/definitions/Uint128"
         },
         "denom": {
           "type": "string"
         }
       }
+    },
+    "Uint128": {
+      "type": "string"
     }
   }
 }

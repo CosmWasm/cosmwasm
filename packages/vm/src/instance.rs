@@ -196,7 +196,7 @@ where
 mod test {
     use super::*;
 
-    use cosmwasm_std::coin;
+    use cosmwasm_std::coins;
     use cosmwasm_std::testing::mock_env;
     use wasmer_runtime_core::error::ResolveError;
 
@@ -348,13 +348,13 @@ mod test {
         let orig_gas = instance.get_gas();
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         call_init(&mut instance, &env, msg).unwrap().unwrap();
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 46517);
+        assert_eq!(init_used, 47360);
     }
 
     #[test]
@@ -363,7 +363,7 @@ mod test {
         let mut instance = mock_instance(&CONTRACT);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         call_init(&mut instance, &env, msg).unwrap().unwrap();
 
@@ -372,15 +372,15 @@ mod test {
         let env = mock_env(
             &instance.api,
             "verifies",
-            &coin("15", "earth"),
-            &coin("1015", "earth"),
+            &coins(15, "earth"),
+            &coins(1015, "earth"),
         );
         let msg = br#"{"release":{}}"#;
         call_handle(&mut instance, &env, msg).unwrap().unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 59555);
+        assert_eq!(handle_used, 61527);
     }
 
     #[test]
@@ -389,7 +389,7 @@ mod test {
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg);
         assert!(res.is_err());
@@ -401,7 +401,7 @@ mod test {
         let mut instance = mock_instance(&CONTRACT);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &env, msg).unwrap().unwrap();
 

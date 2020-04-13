@@ -140,7 +140,7 @@ where
 mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
-    use cosmwasm_std::coin;
+    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use tempfile::TempDir;
 
@@ -232,7 +232,7 @@ mod test {
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // run contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
@@ -250,7 +250,7 @@ mod test {
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -260,8 +260,8 @@ mod test {
         let env = mock_env(
             &instance.api,
             "verifies",
-            &coin("15", "earth"),
-            &coin("1015", "earth"),
+            &coins(15, "earth"),
+            &coins(1015, "earth"),
         );
         let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &env, msg).unwrap();
@@ -281,7 +281,7 @@ mod test {
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env(&instance.api, "owner1", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance.api, "owner1", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -290,7 +290,7 @@ mod test {
 
         // init instance 2
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env(&instance.api, "owner2", &coin("500", "earth"), &[]);
+        let env = mock_env(&instance.api, "owner2", &coins(500, "earth"), &[]);
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -302,8 +302,8 @@ mod test {
         let env = mock_env(
             &instance.api,
             "bob",
-            &coin("15", "earth"),
-            &coin("1015", "earth"),
+            &coins(15, "earth"),
+            &coins(1015, "earth"),
         );
         let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &env, msg).unwrap();
@@ -316,8 +316,8 @@ mod test {
         let env = mock_env(
             &instance.api,
             "sue",
-            &coin("15", "earth"),
-            &coin("1015", "earth"),
+            &coins(15, "earth"),
+            &coins(1015, "earth"),
         );
         let msg = br#"{"release":{}}"#;
         let res = call_handle(&mut instance, &env, msg).unwrap();
@@ -344,7 +344,7 @@ mod test {
         let original_gas = instance1.get_gas();
 
         // Consume some gas
-        let env = mock_env(&instance1.api, "owner1", &coin("1000", "earth"), &[]);
+        let env = mock_env(&instance1.api, "owner1", &coins(1000, "earth"), &[]);
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         call_init(&mut instance1, &env, msg).unwrap().unwrap();
         assert!(instance1.get_gas() < original_gas);
@@ -375,7 +375,7 @@ mod test {
         assert_eq!(cache.stats.misses, 0);
 
         // Consume some gas. This fails
-        let env1 = mock_env(&instance1.api, "owner1", &coin("1000", "earth"), &[]);
+        let env1 = mock_env(&instance1.api, "owner1", &coins(1000, "earth"), &[]);
         let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         match call_init(&mut instance1, &env1, msg1) {
             Err(Error::WasmerRuntimeErr { .. }) => (), // all good, continue
@@ -393,7 +393,7 @@ mod test {
         assert_eq!(instance2.get_gas(), TESTING_GAS_LIMIT);
 
         // Now it works
-        let env2 = mock_env(&instance2.api, "owner2", &coin("500", "earth"), &[]);
+        let env2 = mock_env(&instance2.api, "owner2", &coins(500, "earth"), &[]);
         let msg2 = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         call_init(&mut instance2, &env2, msg2).unwrap().unwrap();
     }

@@ -439,7 +439,7 @@ mod test {
     use super::*;
     use crate::backends::compile;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
-    use cosmwasm_std::{coin, from_binary, BalanceResponse, ReadonlyStorage};
+    use cosmwasm_std::{coins, from_binary, BalanceResponse, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     #[cfg(feature = "iterator")]
@@ -458,7 +458,7 @@ mod test {
     static INIT_VALUE: &[u8] = b"bar";
     // this account has some coins
     static INIT_ADDR: &str = "someone";
-    static INIT_AMOUNT: &str = "500";
+    static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
     fn make_instance() -> Instance {
@@ -488,7 +488,7 @@ mod test {
             .set(INIT_KEY, INIT_VALUE)
             .expect("error setting value");
         let querier =
-            MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coin(INIT_AMOUNT, INIT_DENOM))]);
+            MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_from_context(instance.context(), storage, querier);
     }
 
@@ -686,7 +686,7 @@ mod test {
         .unwrap();
         let balance: BalanceResponse = from_binary(&res).unwrap();
 
-        assert_eq!(balance.amount.unwrap(), coin(INIT_AMOUNT, INIT_DENOM));
+        assert_eq!(balance.amount.unwrap(), coins(INIT_AMOUNT, INIT_DENOM));
     }
 
     #[test]

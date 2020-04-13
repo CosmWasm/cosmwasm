@@ -1,6 +1,7 @@
 // Exposed on all platforms
 
 mod api;
+mod coins;
 mod encoding;
 mod errors;
 mod init_handle;
@@ -12,6 +13,7 @@ mod transactions;
 mod types;
 
 pub use crate::api::{ApiError, ApiResult, ApiSystemError};
+pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, Error, InvalidRequest, NotFound,
@@ -29,7 +31,7 @@ pub use crate::traits::{
 #[cfg(feature = "iterator")]
 pub use crate::traits::{Order, KV};
 pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
-pub use crate::types::{coin, CanonicalAddr, Coin, Env, HumanAddr};
+pub use crate::types::{CanonicalAddr, Env, HumanAddr};
 
 // Exposed in wasm build only
 
