@@ -29,6 +29,10 @@
 - Renamed all `*_db` wasm imports to `db_*`
 - Merge `cw-storage` repo as subpackage, now `cosmwasm-storage`
 - Add iterator support to `cosmwasm-storage`
+- `Coin.amount` is now `Uint128` rather than `String`. Uint128 serializes as a
+  string in JSON, but parses into a u128 data in memory. It also has some
+  operator overloads to allow easy math operations on `Coin` types, as well as
+  enforcing valid amounts.
 
 **cosmwasm-schema**
 

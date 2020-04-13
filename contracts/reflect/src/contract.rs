@@ -92,14 +92,14 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coin, from_binary, Binary, Error};
+    use cosmwasm_std::{coins, from_binary, Binary, Error};
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coin("1000", "earth"), &[]);
+        let env = mock_env(&deps.api, "creator", &coins(1000, "earth"), &[]);
 
         // we can just call .unwrap() to assert this was a success
         let res = init(&mut deps, env, msg).unwrap();
@@ -116,19 +116,14 @@ mod tests {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("2", "token"),
-            &coin("2", "token"),
-        );
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coin("2", "token"));
+        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
         let payload = vec![CosmosMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
-            amount: coin("1", "token"),
+            amount: coins(1, "token"),
         }];
 
         let msg = HandleMsg::ReflectMsg {
@@ -143,20 +138,15 @@ mod tests {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("2", "token"),
-            &coin("2", "token"),
-        );
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
         // signer is not owner
-        let env = mock_env(&deps.api, "someone", &[], &coin("2", "token"));
+        let env = mock_env(&deps.api, "someone", &[], &coins(2, "token"));
         let payload = vec![CosmosMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
-            amount: coin("1", "token"),
+            amount: coins(1, "token"),
         }];
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
@@ -174,15 +164,10 @@ mod tests {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("2", "token"),
-            &coin("2", "token"),
-        );
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coin("2", "token"));
+        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
         let payload = vec![];
 
         let msg = HandleMsg::ReflectMsg {
@@ -202,20 +187,15 @@ mod tests {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("2", "token"),
-            &coin("2", "token"),
-        );
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coin("2", "token"));
+        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
         let payload = vec![
             CosmosMsg::Send {
                 from_address: deps.api.human_address(&env.contract.address).unwrap(),
                 to_address: HumanAddr::from("friend"),
-                amount: coin("1", "token"),
+                amount: coins(1, "token"),
             },
             CosmosMsg::Opaque {
                 data: Binary(b"{\"foo\":123}".to_vec()),
@@ -234,15 +214,10 @@ mod tests {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("2", "token"),
-            &coin("2", "token"),
-        );
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coin("2", "token"));
+        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),
@@ -261,15 +236,10 @@ mod tests {
         let mut deps = mock_dependencies(20);
 
         let msg = InitMsg {};
-        let env = mock_env(
-            &deps.api,
-            "creator",
-            &coin("2", "token"),
-            &coin("2", "token"),
-        );
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "random", &[], &coin("2", "token"));
+        let env = mock_env(&deps.api, "random", &[], &coins(2, "token"));
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),

@@ -61,6 +61,10 @@ Both:
 - Update all imports from `cosmwasm::mock::*` to `cosmwasm_std::testing::*`
 - Use `from_binary` not `from_slice` on all query responses (update imports)
   - `from_slice(res.as_slice())` -> `from_binary(&res)`
+- Replace `coin("123", "FOO")` with `coins(123, "FOO")`. We renamed it to coins
+  to be more explicit that it returns `Vec<Coin>`, and now accept a `u128` as
+  the first argument for better type-safety. `coin` is now an alias to
+  `Coin::new` and returns one `Coin`.
 
 Unit Tests:
 
