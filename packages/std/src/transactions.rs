@@ -3,10 +3,10 @@ use std::cmp::Ordering;
 use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
 use std::iter::Peekable;
+#[cfg(feature = "iterator")]
+use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
-#[cfg(feature = "iterator")]
-use crate::storage::range_bounds;
 use crate::traits::{Api, Extern, Querier, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use crate::traits::{KVRef, Order, KV};
@@ -258,6 +258,14 @@ pub fn transactional_deps<S: Storage, A: Api, Q: Querier, T>(
         stx_deps.storage.rollback();
     }
     res
+}
+
+#[cfg(feature = "iterator")]
+fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
+    (
+        start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
+        end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
+    )
 }
 
 #[cfg(test)]

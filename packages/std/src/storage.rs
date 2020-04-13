@@ -42,7 +42,7 @@ impl ReadonlyStorage for MemoryStorage {
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
+fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
     (
         start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
         end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
