@@ -4,7 +4,7 @@ use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
 #[cfg(feature = "iterator")]
-use crate::traits::{KVRef, Order, KV};
+use crate::iterator::{KVRef, Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]

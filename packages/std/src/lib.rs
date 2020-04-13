@@ -5,6 +5,8 @@ mod coins;
 mod encoding;
 mod errors;
 mod init_handle;
+#[cfg(feature = "iterator")]
+mod iterator;
 mod query;
 mod serde;
 mod storage;
@@ -22,14 +24,14 @@ pub use crate::errors::{
 pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
+#[cfg(feature = "iterator")]
+pub use crate::iterator::{KVRef, Order, KV};
 pub use crate::query::{BalanceResponse, QueryRequest, QueryResponse, QueryResult};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{
     Api, ApiQuerierResponse, Extern, Querier, QuerierResponse, ReadonlyStorage, Storage,
 };
-#[cfg(feature = "iterator")]
-pub use crate::traits::{Order, KV};
 pub use crate::transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
 pub use crate::types::{CanonicalAddr, Env, HumanAddr};
 

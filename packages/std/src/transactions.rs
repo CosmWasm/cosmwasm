@@ -7,9 +7,9 @@ use std::iter::Peekable;
 use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
-use crate::traits::{Api, Extern, Querier, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
-use crate::traits::{KVRef, Order, KV};
+use crate::iterator::{KVRef, Order, KV};
+use crate::traits::{Api, Extern, Querier, ReadonlyStorage, Storage};
 
 pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     /// read-only access to backing storage
