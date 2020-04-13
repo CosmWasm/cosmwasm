@@ -34,7 +34,8 @@ pub fn coin(amount: u128, denom: &str) -> Coin {
 // unwrapped when done.
 //
 // This is meant to be used for calculations and not serialized.
-// (FIXME: we can add derives if we want to include this in serialization)
+// (Note: we can add derives if we want to include this in serialization
+// but then we have to think about normalization a bit more)
 #[derive(Clone, Default, Debug, PartialEq)]
 pub struct Wallet(pub Vec<Coin>);
 
@@ -58,7 +59,28 @@ impl Wallet {
         self.0.retain(|c| c.amount.u128() != 0);
         // sort
         self.0.sort_unstable_by(|a, b| a.denom.cmp(&b.denom));
-        // merge duplicates (now neighbors)
+
+        // find all i where (self[i-1].denom == self[i].denom).
+        let mut dups: Vec<usize> = self
+            .0
+            .iter()
+            .enumerate()
+            .filter_map(|(i, c)| {
+                if i != 0 && c.denom == self.0[i - 1].denom {
+                    Some(i)
+                } else {
+                    None
+                }
+            })
+            .collect();
+        dups.reverse();
+
+        // we go through the dups in reverse order (to avoid shifting indexes of other ones)
+        for dup in dups {
+            let add = self.0[dup].amount;
+            self.0[dup - 1].amount += add;
+            self.0.remove(dup);
+        }
     }
 
     fn find(&self, denom: &str) -> Option<(usize, &Coin)> {
@@ -286,11 +308,20 @@ mod test {
 
     #[test]
     fn normalize_wallet() {
+        // remove 0 value items and sort
         let mut wallet = Wallet(vec![coin(123, "ETH"), coin(0, "BTC"), coin(8990, "ATOM")]);
         wallet.normalize();
         assert_eq!(wallet, Wallet(vec![coin(8990, "ATOM"), coin(123, "ETH")]));
 
-        // TODO: handle duplicate entries of same denom
+        // merge duplicate entries of same denom
+        let mut wallet = Wallet(vec![
+            coin(123, "ETH"),
+            coin(789, "BTC"),
+            coin(321, "ETH"),
+            coin(11, "BTC"),
+        ]);
+        wallet.normalize();
+        assert_eq!(wallet, Wallet(vec![coin(800, "BTC"), coin(444, "ETH")]));
     }
 
     #[test]
