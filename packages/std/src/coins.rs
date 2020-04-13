@@ -3,8 +3,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::TryFrom;
 use std::{fmt, ops};
 
-use crate::dyn_contract_err;
-use crate::errors::Error;
+use crate::errors::{dyn_contract_err, underflow, Error};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Coin {
@@ -40,7 +39,7 @@ pub fn coin(amount: u128, denom: &str) -> Coin {
 pub struct Wallet(pub Vec<Coin>);
 
 impl Wallet {
-    pub fn to_vec(self) -> Vec<Coin> {
+    pub fn into_vec(self) -> Vec<Coin> {
         self.0
     }
 
@@ -73,6 +72,26 @@ impl ops::Add<Coin> for Wallet {
         self
     }
 }
+
+// impl ops::Sub<Coin> for Wallet {
+//     type Output = Result<Self, Error>;
+//
+//     fn sub(mut self, mut other: Coin) -> Result<Self, Error> {
+//         let existing = self
+//             .0
+//             .iter()
+//             .enumerate()
+//             .find(|(_i, c)| c.denom == other.denom);
+//         match existing {
+//             Some((i, c)) => {
+//                 other.amount += c.amount;
+//                 self.0[i] = other;
+//             }
+//             None => self.0.push(other),
+//         };
+//         self
+//     }
+// }
 
 #[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
 pub struct Uint128(#[schemars(with = "String")] pub u128);
@@ -133,10 +152,15 @@ impl ops::AddAssign for Uint128 {
 }
 
 impl ops::Sub for Uint128 {
-    type Output = Uint128;
+    type Output = Result<Self, Error>;
 
-    fn sub(self, other: Self) -> Self {
-        Uint128(self.u128() - other.u128())
+    fn sub(self, other: Self) -> Result<Self, Error> {
+        let (min, sub) = (self.u128(), other.u128());
+        if sub > min {
+            underflow(min, sub)
+        } else {
+            Ok(Uint128(min - sub))
+        }
     }
 }
 
@@ -222,7 +246,7 @@ mod test {
     }
 
     #[test]
-    fn to_and_from_bigint() {
+    fn to_and_from_uint128() {
         let a: Uint128 = 12345.into();
         assert_eq!(12345, a.u128());
         assert_eq!("12345", a.to_string());
@@ -236,7 +260,7 @@ mod test {
     }
 
     #[test]
-    fn bigint_json() {
+    fn uint128_json() {
         let orig = Uint128(1234567890987654321);
         let serialized = to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
@@ -245,7 +269,7 @@ mod test {
     }
 
     #[test]
-    fn bigint_compare() {
+    fn uint128_compare() {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
@@ -255,20 +279,23 @@ mod test {
     }
 
     #[test]
-    fn bigint_math() {
+    fn uint128_math() {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
         assert_eq!(a + b, Uint128(35801));
-        assert_eq!(b - a, Uint128(11111));
-    }
+        assert_eq!((b - a).unwrap(), Uint128(11111));
 
-    #[test]
-    #[should_panic]
-    fn bigint_math_prevents_overflow() {
-        let a = Uint128(12345);
-        let b = Uint128(23456);
-        // this will underflow, should panic
-        let _ = a - b;
+        // error result on underflow
+        let underflow = a - b;
+        match underflow {
+            Ok(_) => panic!("should error"),
+            Err(Error::Underflow {
+                minuend,
+                subtrahend,
+                ..
+            }) => assert_eq!((minuend, subtrahend), (a.u128(), b.u128())),
+            _ => panic!("expected underflow error"),
+        }
     }
 }
