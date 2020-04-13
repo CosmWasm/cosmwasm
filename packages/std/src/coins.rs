@@ -52,6 +52,18 @@ impl Wallet {
             .unwrap_or(false)
     }
 
+    /// normalize Wallet (sorted by denom, no 0 elements, no duplicate denoms)
+    pub fn normalize(self) -> Self {
+        let mut cleaned: Vec<Coin> = self
+            .0
+            .into_iter()
+            .filter(|c| c.amount.u128() != 0)
+            .collect();
+        cleaned.sort_unstable_by(|a, b| a.denom.cmp(&b.denom));
+        // TODO: join together multiple of same denom
+        Wallet(cleaned)
+    }
+
     fn find(&self, denom: &str) -> Option<(usize, &Coin)> {
         self.0.iter().enumerate().find(|(_i, c)| c.denom == denom)
     }
@@ -62,8 +74,6 @@ impl Wallet {
     fn insert_pos(&self, denom: &str) -> Option<usize> {
         self.0.iter().position(|c| c.denom.as_str() >= denom)
     }
-
-    // TODO: normalize (sorted by denom, no 2 of same denom, no 0 elements)
 }
 
 impl ops::Add<Coin> for Wallet {
@@ -275,6 +285,14 @@ mod test {
         // subtract non-existent denom
         let missing = wallet.clone() - coin(1, "ATOM");
         assert!(missing.is_err());
+    }
+
+    #[test]
+    fn normalize_wallet() {
+        let sorted = Wallet(vec![coin(123, "ETH"), coin(0, "BTC"), coin(8990, "ATOM")]).normalize();
+        assert_eq!(sorted, Wallet(vec![coin(8990, "ATOM"), coin(123, "ETH")]));
+
+        // TODO: handle duplicate entries of same denom
     }
 
     #[test]
