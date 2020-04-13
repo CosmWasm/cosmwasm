@@ -76,6 +76,8 @@
 - Support results up to 128 KiB in `ExternalStorage.get`.
 - The `Storage` trait's `.get`, `.set` and `.remove` now return a `Result` to
   allow propagation of errors.
+- Move `transactional`, `transactional_deps`, `RepLog`, `StorageTransaction`
+  into crate `cosmwasm-storage`.
 
 **cosmwasm-vm**
 

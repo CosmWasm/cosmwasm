@@ -176,9 +176,8 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{
-        coins, from_binary, transactional_deps, BalanceResponse, Error, ReadonlyStorage,
-    };
+    use cosmwasm_std::{coins, from_binary, BalanceResponse, Error, ReadonlyStorage};
+    use cosmwasm_storage::transactional_deps;
 
     #[test]
     fn proper_initialization() {

@@ -4,7 +4,7 @@ use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
 #[cfg(feature = "iterator")]
-use crate::traits::{KVRef, Order, KV};
+use crate::iterator::{KVRef, Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]
@@ -42,7 +42,7 @@ impl ReadonlyStorage for MemoryStorage {
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
+fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
     (
         start.map_or(Bound::Unbounded, |x| Bound::Included(x.to_vec())),
         end.map_or(Bound::Unbounded, |x| Bound::Excluded(x.to_vec())),
@@ -80,97 +80,94 @@ impl Storage for MemoryStorage {
 }
 
 #[cfg(test)]
-#[cfg(feature = "iterator")]
-// iterator_test_suite takes a storage, adds data and runs iterator tests
-// the storage must previously have exactly one key: "foo" = "bar"
-// (this allows us to test StorageTransaction and other wrapped storage better)
-//
-// designed to be imported by other modules
-pub(crate) fn iterator_test_suite<S: Storage>(store: &mut S) {
-    // ensure we had previously set "foo" = "bar"
-    assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-    assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
-
-    // setup - add some data, and delete part of it as well
-    store.set(b"ant", b"hill").expect("error setting value");
-    store.set(b"ze", b"bra").expect("error setting value");
-
-    // noise that should be ignored
-    store.set(b"bye", b"bye").expect("error setting value");
-    store.remove(b"bye").expect("error removing key");
-
-    // open ended range
-    {
-        let iter = store.range(None, None, Order::Ascending);
-        assert_eq!(3, iter.count());
-        let mut iter = store.range(None, None, Order::Ascending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
-        let mut iter = store.range(None, None, Order::Descending);
-        let last = iter.next().unwrap();
-        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
-    }
-
-    // closed range
-    {
-        let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-        assert_eq!(1, iter.count());
-        let mut iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-    }
-
-    // closed range reverse
-    {
-        let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-        assert_eq!(2, iter.count());
-        let mut iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-        let second = iter.next().unwrap();
-        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
-    }
-
-    // end open iterator
-    {
-        let iter = store.range(Some(b"f"), None, Order::Ascending);
-        assert_eq!(2, iter.count());
-        let mut iter = store.range(Some(b"f"), None, Order::Ascending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-    }
-
-    // end open iterator reverse
-    {
-        let iter = store.range(Some(b"f"), None, Order::Descending);
-        assert_eq!(2, iter.count());
-        let mut iter = store.range(Some(b"f"), None, Order::Descending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
-    }
-
-    // start open iterator
-    {
-        let iter = store.range(None, Some(b"f"), Order::Ascending);
-        assert_eq!(1, iter.count());
-        let mut iter = store.range(None, Some(b"f"), Order::Ascending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
-    }
-
-    // start open iterator
-    {
-        let iter = store.range(None, Some(b"no"), Order::Descending);
-        assert_eq!(2, iter.count());
-        let mut iter = store.range(None, Some(b"no"), Order::Descending);
-        let first = iter.next().unwrap();
-        assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-    }
-}
-
-#[cfg(test)]
 mod test {
     use super::*;
+
+    #[cfg(feature = "iterator")]
+    // iterator_test_suite takes a storage, adds data and runs iterator tests
+    // the storage must previously have exactly one key: "foo" = "bar"
+    // (this allows us to test StorageTransaction and other wrapped storage better)
+    fn iterator_test_suite<S: Storage>(store: &mut S) {
+        // ensure we had previously set "foo" = "bar"
+        assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
+
+        // setup - add some data, and delete part of it as well
+        store.set(b"ant", b"hill").expect("error setting value");
+        store.set(b"ze", b"bra").expect("error setting value");
+
+        // noise that should be ignored
+        store.set(b"bye", b"bye").expect("error setting value");
+        store.remove(b"bye").expect("error removing key");
+
+        // open ended range
+        {
+            let iter = store.range(None, None, Order::Ascending);
+            assert_eq!(3, iter.count());
+            let mut iter = store.range(None, None, Order::Ascending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+            let mut iter = store.range(None, None, Order::Descending);
+            let last = iter.next().unwrap();
+            assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
+        }
+
+        // closed range
+        {
+            let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
+            assert_eq!(1, iter.count());
+            let mut iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+        }
+
+        // closed range reverse
+        {
+            let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
+            assert_eq!(2, iter.count());
+            let mut iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let second = iter.next().unwrap();
+            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
+        }
+
+        // end open iterator
+        {
+            let iter = store.range(Some(b"f"), None, Order::Ascending);
+            assert_eq!(2, iter.count());
+            let mut iter = store.range(Some(b"f"), None, Order::Ascending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+        }
+
+        // end open iterator reverse
+        {
+            let iter = store.range(Some(b"f"), None, Order::Descending);
+            assert_eq!(2, iter.count());
+            let mut iter = store.range(Some(b"f"), None, Order::Descending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
+        }
+
+        // start open iterator
+        {
+            let iter = store.range(None, Some(b"f"), Order::Ascending);
+            assert_eq!(1, iter.count());
+            let mut iter = store.range(None, Some(b"f"), Order::Ascending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+        }
+
+        // start open iterator
+        {
+            let iter = store.range(None, Some(b"no"), Order::Descending);
+            assert_eq!(2, iter.count());
+            let mut iter = store.range(None, Some(b"no"), Order::Descending);
+            let first = iter.next().unwrap();
+            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+        }
+    }
 
     #[test]
     fn get_and_set() {

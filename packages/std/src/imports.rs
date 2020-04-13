@@ -4,12 +4,12 @@ use std::vec::Vec;
 use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
 use crate::errors::{contract_err, dyn_contract_err, ContractErr, Result};
+#[cfg(feature = "iterator")]
+use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
 use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
-#[cfg(feature = "iterator")]
-use crate::traits::{Order, KV};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 /// A kibi (kilo binary)

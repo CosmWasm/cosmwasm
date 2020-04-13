@@ -179,6 +179,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "cosmwasm-storage"
+version = "0.8.0-dev"
+dependencies = [
+ "cosmwasm-std 0.8.0-dev",
+ "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
 name = "cosmwasm-vm"
 version = "0.8.0-dev"
 dependencies = [
@@ -407,6 +415,7 @@ version = "0.8.0-dev"
 dependencies = [
  "cosmwasm-schema 0.8.0-dev",
  "cosmwasm-std 0.8.0-dev",
+ "cosmwasm-storage 0.8.0-dev",
  "cosmwasm-vm 0.8.0-dev",
  "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
