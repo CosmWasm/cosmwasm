@@ -95,10 +95,8 @@ impl Wallet {
     }
 }
 
-impl ops::Add<Coin> for Wallet {
-    type Output = Self;
-
-    fn add(mut self, other: Coin) -> Self {
+impl ops::AddAssign<Coin> for Wallet {
+    fn add_assign(&mut self, other: Coin) {
         match self.find(&other.denom) {
             Some((i, c)) => {
                 self.0[i].amount = c.amount + other.amount;
@@ -109,6 +107,31 @@ impl ops::Add<Coin> for Wallet {
                 None => self.0.push(other),
             },
         };
+    }
+}
+
+impl ops::Add<Coin> for Wallet {
+    type Output = Self;
+
+    fn add(mut self, other: Coin) -> Self {
+        self += other;
+        self
+    }
+}
+
+impl ops::AddAssign<Wallet> for Wallet {
+    fn add_assign(&mut self, other: Wallet) {
+        for coin in other.0.into_iter() {
+            self.add_assign(coin);
+        }
+    }
+}
+
+impl ops::Add<Wallet> for Wallet {
+    type Output = Self;
+
+    fn add(mut self, other: Wallet) -> Self {
+        self += other;
         self
     }
 }
@@ -282,6 +305,25 @@ mod test {
                 coin(555, "BTC"),
                 coin(12345, "ETH"),
             ])
+        );
+    }
+
+    #[test]
+    fn wallet_in_place_addition() {
+        let mut wallet = Wallet(vec![coin(555, "BTC")]);
+        wallet += coin(777, "ATOM");
+        assert_eq!(&wallet, &Wallet(vec![coin(777, "ATOM"), coin(555, "BTC")]));
+
+        wallet += Wallet(vec![coin(666, "ETH"), coin(123, "ATOM")]);
+        assert_eq!(
+            &wallet,
+            &Wallet(vec![coin(900, "ATOM"), coin(555, "BTC"), coin(666, "ETH")])
+        );
+
+        let foo = wallet + Wallet(vec![coin(234, "BTC")]);
+        assert_eq!(
+            &foo,
+            &Wallet(vec![coin(900, "ATOM"), coin(789, "BTC"), coin(666, "ETH")])
         );
     }
 
