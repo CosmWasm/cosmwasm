@@ -56,6 +56,13 @@ impl Wallet {
         self.0.iter().enumerate().find(|(_i, c)| c.denom == denom)
     }
 
+    /// insert_pos should only be called when denom is not in the Wallet.
+    /// it returns the position where denom should be inserted at (via splice).
+    /// It returns None if this should be appended
+    fn insert_pos(&self, denom: &str) -> Option<usize> {
+        self.0.iter().position(|c| c.denom.as_str() >= denom)
+    }
+
     // TODO: normalize (sorted by denom, no 2 of same denom, no 0 elements)
 }
 
@@ -67,8 +74,11 @@ impl ops::Add<Coin> for Wallet {
             Some((i, c)) => {
                 self.0[i].amount = c.amount + other.amount;
             }
-            // TODO: place this in proper sorted order
-            None => self.0.push(other),
+            // place this in proper sorted order
+            None => match self.insert_pos(&other.denom) {
+                Some(idx) => self.0.insert(idx, other),
+                None => self.0.push(other),
+            },
         };
         self
     }
@@ -213,7 +223,7 @@ mod test {
 
     #[test]
     fn wallet_has_works() {
-        let wallet = Wallet(vec![coin(12345, "ETH"), coin(555, "BTC")]);
+        let wallet = Wallet(vec![coin(555, "BTC"), coin(12345, "ETH")]);
 
         // less than same type
         assert!(wallet.has(&coin(777, "ETH")));
@@ -228,31 +238,31 @@ mod test {
 
     #[test]
     fn wallet_add_works() {
-        let wallet = Wallet(vec![coin(12345, "ETH"), coin(555, "BTC")]);
+        let wallet = Wallet(vec![coin(555, "BTC"), coin(12345, "ETH")]);
 
         // add an existing coin
         let more_eth = wallet.clone() + coin(54321, "ETH");
-        assert_eq!(more_eth, Wallet(vec![coin(66666, "ETH"), coin(555, "BTC")]));
+        assert_eq!(more_eth, Wallet(vec![coin(555, "BTC"), coin(66666, "ETH")]));
 
         // add an new coin
         let add_atom = wallet.clone() + coin(777, "ATOM");
         assert_eq!(
             add_atom,
             Wallet(vec![
-                coin(12345, "ETH"),
+                coin(777, "ATOM"),
                 coin(555, "BTC"),
-                coin(777, "ATOM")
+                coin(12345, "ETH"),
             ])
         );
     }
 
     #[test]
     fn wallet_subtract_works() {
-        let wallet = Wallet(vec![coin(12345, "ETH"), coin(555, "BTC")]);
+        let wallet = Wallet(vec![coin(555, "BTC"), coin(12345, "ETH")]);
 
         // subtract less than we have
         let less_eth = (wallet.clone() - coin(2345, "ETH")).unwrap();
-        assert_eq!(less_eth, Wallet(vec![coin(10000, "ETH"), coin(555, "BTC")]));
+        assert_eq!(less_eth, Wallet(vec![coin(555, "BTC"), coin(10000, "ETH")]));
 
         // subtract all of one coin (and remove with 0 amount)
         let no_btc = (wallet.clone() - coin(555, "BTC")).unwrap();
