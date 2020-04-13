@@ -53,15 +53,12 @@ impl Wallet {
     }
 
     /// normalize Wallet (sorted by denom, no 0 elements, no duplicate denoms)
-    pub fn normalize(self) -> Self {
-        let mut cleaned: Vec<Coin> = self
-            .0
-            .into_iter()
-            .filter(|c| c.amount.u128() != 0)
-            .collect();
-        cleaned.sort_unstable_by(|a, b| a.denom.cmp(&b.denom));
-        // TODO: join together multiple of same denom
-        Wallet(cleaned)
+    pub fn normalize(&mut self) {
+        // drop 0's
+        self.0.retain(|c| c.amount.u128() != 0);
+        // sort
+        self.0.sort_unstable_by(|a, b| a.denom.cmp(&b.denom));
+        // merge duplicates (now neighbors)
     }
 
     fn find(&self, denom: &str) -> Option<(usize, &Coin)> {
@@ -289,8 +286,9 @@ mod test {
 
     #[test]
     fn normalize_wallet() {
-        let sorted = Wallet(vec![coin(123, "ETH"), coin(0, "BTC"), coin(8990, "ATOM")]).normalize();
-        assert_eq!(sorted, Wallet(vec![coin(8990, "ATOM"), coin(123, "ETH")]));
+        let mut wallet = Wallet(vec![coin(123, "ETH"), coin(0, "BTC"), coin(8990, "ATOM")]);
+        wallet.normalize();
+        assert_eq!(wallet, Wallet(vec![coin(8990, "ATOM"), coin(123, "ETH")]));
 
         // TODO: handle duplicate entries of same denom
     }
