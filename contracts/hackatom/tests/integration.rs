@@ -241,7 +241,6 @@ mod singlepass_tests {
 
     use cosmwasm_std::to_vec;
     use cosmwasm_vm::call_handle;
-    use cosmwasm_vm::testing::mock_instance_with_gas_limit;
 
     fn make_init_msg() -> (InitMsg, HumanAddr) {
         let verifier = HumanAddr::from("verifies");
@@ -278,8 +277,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_cpu_loop() {
-        // Gas must be set so we die early on infinite loop
-        let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
+        let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
@@ -299,8 +297,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_storage_loop() {
-        // Gas must be set so we die early on infinite loop
-        let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
+        let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
@@ -320,8 +317,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_memory_loop() {
-        // Gas must be set so we die early on infinite loop
-        let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
+        let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
