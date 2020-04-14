@@ -220,7 +220,7 @@ mod test {
 
     #[test]
     fn func_works() {
-        let instance = mock_instance(&CONTRACT);
+        let instance = mock_instance(&CONTRACT, &[]);
 
         // can get func
         let allocate: Func<u32, u32> = instance.func("allocate").expect("error getting func");
@@ -233,7 +233,7 @@ mod test {
 
     #[test]
     fn func_errors_for_non_existent_function() {
-        let instance = mock_instance(&CONTRACT);
+        let instance = mock_instance(&CONTRACT, &[]);
         let missing_function = "bar_foo345";
         match instance.func::<(), ()>(missing_function) {
             Err(Error::ResolveErr { source, .. }) => match source {
@@ -247,7 +247,7 @@ mod test {
 
     #[test]
     fn allocate_deallocate_works() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -269,7 +269,7 @@ mod test {
 
     #[test]
     fn write_and_read_memory_works() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
 
         let sizes: Vec<usize> = vec![
             0,
@@ -302,7 +302,7 @@ mod test {
     fn read_memory_errors_when_when_length_is_too_long() {
         let length = 6;
         let max_length = 5;
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
 
         // Allocate sets length to 0. Write some data to increase length.
         let region_ptr = instance.allocate(length).expect("error allocating");
@@ -327,7 +327,7 @@ mod test {
 
     #[test]
     fn get_memory_size_works() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
 
         assert_eq!(instance.get_memory_size(), 17 * WASM_PAGE_SIZE);
 
@@ -361,7 +361,7 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let instance = mock_instance(&CONTRACT);
+        let instance = mock_instance(&CONTRACT, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
@@ -370,7 +370,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas_init() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
         let orig_gas = instance.get_gas();
 
         // init contract
@@ -386,7 +386,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas_handle() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
@@ -419,7 +419,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
-        let mut instance = mock_instance(&CONTRACT);
+        let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));

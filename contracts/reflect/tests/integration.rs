@@ -18,7 +18,7 @@ You can easily convert unit tests to integration tests.
 2. Then change
     let mut deps = dependencies(20);
 To
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 3. If you access raw storage, where ever you see something like:
     deps.storage.get(CONFIG_KEY).expect("no data stored");
  replace it with:
@@ -49,7 +49,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 
 #[test]
 fn proper_initialization() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
@@ -66,7 +66,7 @@ fn proper_initialization() {
 
 #[test]
 fn reflect() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -89,7 +89,7 @@ fn reflect() {
 
 #[test]
 fn reflect_requires_owner() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -115,7 +115,7 @@ fn reflect_requires_owner() {
 
 #[test]
 fn transfer() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -137,7 +137,7 @@ fn transfer() {
 
 #[test]
 fn transfer_requires_owner() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));

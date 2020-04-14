@@ -7,7 +7,7 @@
 //! 2. Then change
 //!      let mut deps = mock_dependencies(20);
 //!    to
-//!      let mut deps = mock_instance(WASM);
+//!      let mut deps = mock_instance(WASM, &[]);
 //! 3. If you access raw storage, where ever you see something like:
 //!      deps.storage.get(CONFIG_KEY).expect("no data stored");
 //!    replace it with:
@@ -44,7 +44,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/ha
 
 #[test]
 fn proper_initialization() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
     let verifier = HumanAddr(String::from("verifies"));
     let beneficiary = HumanAddr(String::from("benefits"));
     let creator = HumanAddr(String::from("creator"));
@@ -77,7 +77,7 @@ fn proper_initialization() {
 
 #[test]
 fn init_and_query() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
 
     let verifier = HumanAddr(String::from("verifies"));
     let beneficiary = HumanAddr(String::from("benefits"));
@@ -125,7 +125,7 @@ fn querier_callbacks_work() {
 
 #[test]
 fn fails_on_bad_init() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res = init(&mut deps, env, HandleMsg::Release {});
@@ -137,10 +137,7 @@ fn fails_on_bad_init() {
 
 #[test]
 fn proper_handle() {
-    let mut deps = mock_instance_with_balances(
-        WASM,
-        &[(&HumanAddr::from("cosmos2contract"), &coins(1015, "earth"))],
-    );
+    let mut deps = mock_instance(WASM, &coins(1015, "earth"));
 
     // initialize the store
     let verifier = HumanAddr(String::from("verifies"));
@@ -175,10 +172,7 @@ fn proper_handle() {
 
 #[test]
 fn failed_handle() {
-    let mut deps = mock_instance_with_balances(
-        WASM,
-        &[(&HumanAddr::from("cosmos2contract"), &coins(1000, "earth"))],
-    );
+    let mut deps = mock_instance(WASM, &coins(1000, "earth"));
 
     // initialize the store
     let verifier = HumanAddr(String::from("verifies"));
@@ -223,7 +217,7 @@ fn failed_handle() {
 
 #[test]
 fn passes_io_tests() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
     test_io(&mut deps);
 }
 
@@ -249,7 +243,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_panic() {
-        let mut deps = mock_instance(WASM);
+        let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -269,10 +263,10 @@ mod singlepass_tests {
 
     #[test]
     fn handle_cpu_loop() {
-        let mut deps = mock_instance(WASM);
+        let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
-        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_env = mock_env(&deps.api, creator.as_str(), &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
@@ -289,7 +283,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_storage_loop() {
-        let mut deps = mock_instance(WASM);
+        let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -309,7 +303,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_memory_loop() {
-        let mut deps = mock_instance(WASM);
+        let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -332,7 +326,7 @@ mod singlepass_tests {
 
     #[test]
     fn handle_allocate_large_memory() {
-        let mut deps = mock_instance(WASM);
+        let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);

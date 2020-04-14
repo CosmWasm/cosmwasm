@@ -40,7 +40,7 @@ use queue::contract::{
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
 fn create_contract() -> (Instance<MockStorage, MockApi, MockQuerier>, Env) {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance(WASM, &[]);
     let creator = HumanAddr(String::from("creator"));
     let env = mock_env(&deps.api, creator.as_str(), &[]);
     let res = init(&mut deps, env.clone(), InitMsg {}).unwrap();
