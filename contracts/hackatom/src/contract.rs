@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg,
-    Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryRequest,
-    QueryResponse, Result, Storage,
+    contract_err, dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary,
+    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
+    Querier, QueryRequest, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -157,12 +157,15 @@ fn do_allocate_large_memory() -> Result<HandleResponse> {
     {
         use core::arch::wasm32;
         let pages = 1_600; // 100 MiB
-        let _ptr = wasm32::memory_grow(0, pages);
+        let ptr = wasm32::memory_grow(0, pages);
+        if ptr == usize::max_value() {
+            return contract_err("Error in memory.grow instruction");
+        }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    panic!("Unsupported architecture");
+    contract_err("Unsupported architecture")
 }
 
 fn do_panic() -> Result<HandleResponse> {

@@ -361,7 +361,7 @@ mod singlepass_tests {
         assert_eq!(handle_res.is_err(), false);
 
         // Gas consumtion is relatively small
-        assert_eq!(gas_used, 28866);
+        assert_eq!(gas_used, 28880);
 
         // Used between 100 and 102 MiB of memory
         assert!(deps.get_memory_size() > 100 * 1024 * 1024);
