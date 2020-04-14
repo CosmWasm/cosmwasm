@@ -36,6 +36,18 @@
       }
     },
     {
+      "description": "Infinite loop reading and writing memory",
+      "type": "object",
+      "required": [
+        "memory_loop"
+      ],
+      "properties": {
+        "memory_loop": {
+          "type": "object"
+        }
+      }
+    },
+    {
       "type": "object",
       "required": [
         "panic"

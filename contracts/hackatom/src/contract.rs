@@ -32,6 +32,8 @@ pub enum HandleMsg {
     CpuLoop {},
     // Infinite loop making storage calls (to test when their limit hits)
     StorageLoop {},
+    /// Infinite loop reading and writing memory
+    MemoryLoop {},
     // Trigger a panic to ensure framework handles gracefully
     Panic {},
 }
@@ -78,6 +80,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::Release {} => do_release(deps, env),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
+        HandleMsg::MemoryLoop {} => do_memory_loop(),
         HandleMsg::Panic {} => do_panic(),
     }
 }
@@ -131,6 +134,20 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
         deps.storage
             .set(b"test.key", test_case.to_string().as_bytes())?;
         test_case += 1;
+    }
+}
+
+fn do_memory_loop() -> Result<HandleResponse> {
+    let mut data = vec![1usize];
+    loop {
+        // increase by one element
+        data.push(*data.last().expect("must not be empty"));
+
+        // Override all entries
+        let value = data.len();
+        let _overrides = data.iter_mut().map(|x| *x = value).count();
+
+        println!("{:?}", data);
     }
 }
 
