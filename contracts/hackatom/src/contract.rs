@@ -34,6 +34,8 @@ pub enum HandleMsg {
     StorageLoop {},
     /// Infinite loop reading and writing memory
     MemoryLoop {},
+    /// Allocate large amounts of memory without consuming much gas
+    AllocateLargeMemory {},
     // Trigger a panic to ensure framework handles gracefully
     Panic {},
 }
@@ -81,6 +83,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
         HandleMsg::MemoryLoop {} => do_memory_loop(),
+        HandleMsg::AllocateLargeMemory {} => do_allocate_large_memory(),
         HandleMsg::Panic {} => do_panic(),
     }
 }
@@ -143,6 +146,23 @@ fn do_memory_loop() -> Result<HandleResponse> {
         // add one element
         data.push((*data.last().expect("must not be empty")) + 1);
     }
+}
+
+fn do_allocate_large_memory() -> Result<HandleResponse> {
+    // We create memory pages explicitely since Rust's default allocator seems to be clever enough
+    // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
+    // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use core::arch::wasm32;
+        let pages = 1_600; // 100 MiB
+        let _ptr = wasm32::memory_grow(0, pages);
+        Ok(HandleResponse::default())
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    panic!("Unsupported architecture");
 }
 
 fn do_panic() -> Result<HandleResponse> {

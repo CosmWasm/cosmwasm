@@ -337,4 +337,34 @@ mod singlepass_tests {
         // Ran out of gas before consuming a significant amount of memory
         assert!(deps.get_memory_size() < 2 * 1024 * 1024);
     }
+
+    #[test]
+    fn handle_allocate_large_memory() {
+        let mut deps = mock_instance(WASM);
+
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let gas_before = deps.get_gas();
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
+        );
+        let gas_used = gas_before - deps.get_gas();
+
+        // TODO: this must fail, see https://github.com/CosmWasm/cosmwasm/issues/81
+        assert_eq!(handle_res.is_err(), false);
+
+        // Gas consumtion is relatively small
+        assert_eq!(gas_used, 28866);
+
+        // Used between 100 and 102 MiB of memory
+        assert!(deps.get_memory_size() > 100 * 1024 * 1024);
+        assert!(deps.get_memory_size() < 102 * 1024 * 1024);
+    }
 }

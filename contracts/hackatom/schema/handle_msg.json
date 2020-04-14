@@ -48,6 +48,18 @@
       }
     },
     {
+      "description": "Allocate large amounts of memory without consuming much gas",
+      "type": "object",
+      "required": [
+        "allocate_large_memory"
+      ],
+      "properties": {
+        "allocate_large_memory": {
+          "type": "object"
+        }
+      }
+    },
+    {
       "type": "object",
       "required": [
         "panic"
