@@ -51,6 +51,17 @@ Contract Code:
   - You can also replace `to_vec(...)` with `to_binary(...)`
 - No `.context(...)` is required after `from_slice` and `to_vec`, they return
   proper `cosmwasm_std::Error` variants on errors.
+- If you used `env.contract.balance`, you must now use the querier.
+  The following code block should work:
+  ```rust
+  // before (in env)
+  let foo = env.contract.balance;
+
+  // after (query my balance)
+  let contract_addr = deps.api.human_address(&env.contract.address)?;
+  let balance = deps.querier.query_all_balances(&contract_addr)?;
+  let foo = balance.amount;
+  ```
 
 At this point `cargo wasm` should pass.
 
@@ -65,6 +76,20 @@ Both:
   to be more explicit that it returns `Vec<Coin>`, and now accept a `u128` as
   the first argument for better type-safety. `coin` is now an alias to
   `Coin::new` and returns one `Coin`.
+- Remove the 4th argument (contract balance) from all calls to `mock_env`, this
+  is no longer stored in the environment.
+- `mock_dependencies` and `mock_instance` take a 2nd argument to set the contract
+   balance (visible for the querier). If you need to set more balances, use
+   `mock_XX_with_balances`.  The follow code block explains:
+  ```rust
+  // before: balance as last arg in mock_env
+  let mut deps = mock_dependencies(20);
+  let env = mock_env(&deps.api, "creator", &coins(15, "earth"), &coins(1015, "earth"));
+
+  // after: balance as last arg in mock_dependencies
+  let mut deps = mock_dependencies(20, &coins(1015, "earth"));
+  let env = mock_env(&deps.api, "creator", &coins(15, "earth"));
+  ```
 
 Unit Tests:
 

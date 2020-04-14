@@ -96,10 +96,10 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(1000, "earth"), &[]);
+        let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
         let res = init(&mut deps, env, msg).unwrap();
@@ -113,13 +113,13 @@ mod tests {
 
     #[test]
     fn reflect() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &[]);
         let payload = vec![CosmosMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
@@ -135,14 +135,14 @@ mod tests {
 
     #[test]
     fn reflect_requires_owner() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
         // signer is not owner
-        let env = mock_env(&deps.api, "someone", &[], &coins(2, "token"));
+        let env = mock_env(&deps.api, "someone", &[]);
         let payload = vec![CosmosMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
@@ -161,13 +161,13 @@ mod tests {
 
     #[test]
     fn reflect_reject_empty_msgs() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &[]);
         let payload = vec![];
 
         let msg = HandleMsg::ReflectMsg {
@@ -184,13 +184,13 @@ mod tests {
 
     #[test]
     fn reflect_multiple_messages() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &[]);
         let payload = vec![
             CosmosMsg::Send {
                 from_address: deps.api.human_address(&env.contract.address).unwrap(),
@@ -211,13 +211,13 @@ mod tests {
 
     #[test]
     fn transfer() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "creator", &[], &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),
@@ -233,13 +233,13 @@ mod tests {
 
     #[test]
     fn transfer_requires_owner() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
-        let env = mock_env(&deps.api, "creator", &coins(2, "token"), &coins(2, "token"));
+        let env = mock_env(&deps.api, "creator", &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env(&deps.api, "random", &[], &coins(2, "token"));
+        let env = mock_env(&deps.api, "random", &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),

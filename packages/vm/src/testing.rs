@@ -5,7 +5,9 @@ use serde::Serialize;
 // JsonSchema is a flag for types meant to be publically exposed
 use schemars::JsonSchema;
 
-use cosmwasm_std::testing::{mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage};
+use cosmwasm_std::testing::{
+    mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
+};
 use cosmwasm_std::{
     to_vec, Api, ApiError, Coin, Env, HandleResponse, HumanAddr, InitResponse, Querier,
     QueryResponse, Storage,
@@ -18,24 +20,31 @@ use crate::instance::Instance;
 /// Gas limit for testing
 static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
-pub fn mock_instance(wasm: &[u8]) -> Instance<MockStorage, MockApi, MockQuerier> {
-    mock_instance_with_gas_limit(wasm, &[], DEFAULT_GAS_LIMIT)
+pub fn mock_instance(
+    wasm: &[u8],
+    contract_balance: &[Coin],
+) -> Instance<MockStorage, MockApi, MockQuerier> {
+    check_wasm(wasm).unwrap();
+    let deps = mock_dependencies(20, contract_balance);
+    Instance::from_code(wasm, deps, DEFAULT_GAS_LIMIT).unwrap()
 }
 
 pub fn mock_instance_with_balances(
     wasm: &[u8],
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    mock_instance_with_gas_limit(wasm, balances, DEFAULT_GAS_LIMIT)
+    check_wasm(wasm).unwrap();
+    let deps = mock_dependencies_with_balances(20, balances);
+    Instance::from_code(wasm, deps, DEFAULT_GAS_LIMIT).unwrap()
 }
 
 pub fn mock_instance_with_gas_limit(
     wasm: &[u8],
-    balances: &[(&HumanAddr, &[Coin])],
+    contract_balance: &[Coin],
     gas_limit: u64,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
     check_wasm(wasm).unwrap();
-    let deps = mock_dependencies_with_balances(20, balances);
+    let deps = mock_dependencies(20, contract_balance);
     Instance::from_code(wasm, deps, gas_limit).unwrap()
 }
 

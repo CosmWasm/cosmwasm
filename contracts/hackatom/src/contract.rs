@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    contract_err, dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary,
-    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
-    Querier, QueryRequest, QueryResponse, Result, Storage,
+    contract_err, from_slice, log, to_binary, to_vec, unauthorized, Api, Binary, CanonicalAddr,
+    CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier,
+    QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -46,7 +46,7 @@ pub enum QueryMsg {
     // returns a human-readable representation of the verifier
     // use to ensure query path works in integration tests
     Verifier {},
-    // This returns cosmwasm_std::BalanceResponse to demo use of the querier
+    // This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
     OtherBalance { address: HumanAddr },
 }
 
@@ -101,6 +101,8 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
     if env.message.signer == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&env.contract.address)?;
+        let balance = deps.querier.query_all_balances(&from_addr)?;
+
         let res = HandleResponse {
             log: vec![
                 log("action", "release"),
@@ -109,7 +111,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
             messages: vec![CosmosMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
-                amount: env.contract.balance.unwrap_or_default(),
+                amount: balance.amount,
             }],
             data: None,
         };
@@ -196,13 +198,8 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
 ) -> Result<QueryResponse> {
-    let request = QueryRequest::Balance { address };
-    match deps.querier.query(&request) {
-        Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
-        Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
-        // in theory we would process the response, but here it is the same type, so just pass through
-        Ok(Ok(res)) => Ok(res),
-    }
+    let res = deps.querier.query_all_balances(address)?;
+    to_binary(&res)
 }
 
 #[cfg(test)]
@@ -210,12 +207,12 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, from_binary, BalanceResponse, Error, ReadonlyStorage};
+    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, Error, ReadonlyStorage};
     use cosmwasm_storage::transactional_deps;
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -230,7 +227,7 @@ mod tests {
             verifier,
             beneficiary,
         };
-        let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"), &[]);
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
         let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -246,7 +243,7 @@ mod tests {
 
     #[test]
     fn init_and_query() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -255,7 +252,7 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"), &[]);
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
         let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -273,21 +270,21 @@ mod tests {
         // querying with balance gets the balance
         let query_msg = QueryMsg::OtherBalance { address: rich_addr };
         let query_response = query(&deps, query_msg).unwrap();
-        let bal: BalanceResponse = from_binary(&query_response).unwrap();
-        assert_eq!(bal.amount, Some(rich_balance));
+        let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+        assert_eq!(bal.amount, rich_balance);
 
         // querying other accounts gets none
         let query_msg = QueryMsg::OtherBalance {
             address: HumanAddr::from("someone else"),
         };
         let query_response = query(&deps, query_msg).unwrap();
-        let bal: BalanceResponse = from_binary(&query_response).unwrap();
-        assert_eq!(bal.amount, None);
+        let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+        assert_eq!(bal.amount, vec![]);
     }
 
     #[test]
     fn checkpointing_works_on_contract() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &coins(1000, "earth"));
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -304,7 +301,7 @@ mod tests {
                 verifier: verifier.clone(),
                 beneficiary: beneficiary.clone(),
             };
-            let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"), &[]);
+            let env = mock_env(&deps.api, creator.as_str(), &[]);
 
             init(deps, env, msg)
         })
@@ -323,7 +320,7 @@ mod tests {
 
     #[test]
     fn proper_handle() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &coins(1015, "earth"));
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -333,22 +330,12 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_env = mock_env(
-            &deps.api,
-            "creator",
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let init_env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary can release it
-        let handle_env = mock_env(
-            &deps.api,
-            verifier.as_str(),
-            &coins(15, "earth"),
-            &coins(1015, "earth"),
-        );
+        let handle_env = mock_env(&deps.api, verifier.as_str(), &coins(15, "earth"));
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
         assert_eq!(1, handle_res.messages.len());
         let msg = handle_res.messages.get(0).expect("no message");
@@ -368,7 +355,7 @@ mod tests {
 
     #[test]
     fn failed_handle() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &coins(1000, "earth"));
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -379,17 +366,12 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let init_env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         // beneficiary cannot release it
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
         match handle_res.unwrap_err() {
             Error::Unauthorized { .. } => {}
@@ -416,7 +398,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "This page intentionally faulted")]
     fn handle_panic() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -427,16 +409,11 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let init_env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
         // this should panic
         let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
     }

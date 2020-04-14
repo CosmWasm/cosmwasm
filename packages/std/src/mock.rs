@@ -5,22 +5,30 @@ use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
-use crate::query::{BalanceResponse, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, QueryRequest};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier};
 use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
 
-/// All external requirements that can be injected for unit tests
-pub fn mock_dependencies(canonical_length: usize) -> Extern<MockStorage, MockApi, MockQuerier> {
+static CONTRACT_ADDR: &str = "cosmos2contract";
+
+/// All external requirements that can be injected for unit tests.
+/// It sets the given balance for the contract itself, nothing else
+pub fn mock_dependencies(
+    canonical_length: usize,
+    contract_balance: &[Coin],
+) -> Extern<MockStorage, MockApi, MockQuerier> {
+    let contract_addr = HumanAddr::from(CONTRACT_ADDR);
     Extern {
         storage: MockStorage::new(),
         api: MockApi::new(canonical_length),
-        querier: MockQuerier::new(&[]),
+        querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
     }
 }
 
-// This initializes the querier along with the mock_dependencies
+/// Initializes the querier along with the mock_dependencies.
+/// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
     canonical_length: usize,
     balances: &[(&HumanAddr, &[Coin])],
@@ -88,12 +96,7 @@ impl Api for MockApi {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_env<T: Api, U: Into<HumanAddr>>(
-    api: &T,
-    signer: U,
-    sent: &[Coin],
-    balance: &[Coin],
-) -> Env {
+pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, signer: U, sent: &[Coin]) -> Env {
     let signer = signer.into();
     Env {
         block: BlockInfo {
@@ -103,21 +106,12 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
         },
         message: MessageInfo {
             signer: api.canonical_address(&signer).unwrap(),
-            sent_funds: if sent.is_empty() {
-                None
-            } else {
-                Some(sent.to_vec())
-            },
+            sent_funds: sent.to_vec(),
         },
         contract: ContractInfo {
             address: api
-                .canonical_address(&HumanAddr("cosmos2contract".to_string()))
+                .canonical_address(&HumanAddr::from(CONTRACT_ADDR))
                 .unwrap(),
-            balance: if balance.is_empty() {
-                None
-            } else {
-                Some(balance.to_vec())
-            },
         },
     }
 }
@@ -142,10 +136,26 @@ impl MockQuerier {
 impl Querier for MockQuerier {
     fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
-            QueryRequest::Balance { address } => {
+            QueryRequest::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
+                let amount = self
+                    .balances
+                    .get(address)
+                    .and_then(|v| v.iter().find(|c| &c.denom == denom).map(|c| c.amount))
+                    .unwrap_or_default();
                 let bank_res = BalanceResponse {
-                    amount: self.balances.get(address).cloned(),
+                    amount: Coin {
+                        amount,
+                        denom: denom.to_string(),
+                    },
+                };
+                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
+                Ok(api_res)
+            }
+            QueryRequest::AllBalances { address } => {
+                // proper error on not found, serialize result on found
+                let bank_res = AllBalanceResponse {
+                    amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
@@ -169,9 +179,9 @@ mod test {
         let api = MockApi::new(20);
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env(&api, "my name", &[], &coins(100, "atom"));
-        let b = mock_env(&api, &name, &[], &coins(100, "atom"));
-        let c = mock_env(&api, name, &[], &coins(100, "atom"));
+        let a = mock_env(&api, "my name", &coins(100, "atom"));
+        let b = mock_env(&api, &name, &coins(100, "atom"));
+        let c = mock_env(&api, name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

@@ -1,3 +1,5 @@
+use serde::de::DeserializeOwned;
+
 use crate::api::{ApiError, ApiResult, ApiSystemError};
 use crate::encoding::Binary;
 use crate::errors::Result;
@@ -5,6 +7,7 @@ use crate::errors::Result;
 use crate::iterator::{Order, KV};
 use crate::query::QueryRequest;
 use crate::types::{CanonicalAddr, HumanAddr};
+use crate::{dyn_contract_err, from_binary, AllBalanceResponse, BalanceResponse};
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -49,7 +52,7 @@ pub trait Storage: ReadonlyStorage {
 ///
 /// Currently it just supports address conversion, we could add eg. crypto functions here.
 /// These should all be pure (stateless) functions. If you need state, you probably want
-/// to use the Querier (TODO)
+/// to use the Querier.
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
@@ -71,4 +74,38 @@ pub trait Querier: Clone + Send {
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
     fn query(&self, request: &QueryRequest) -> QuerierResponse;
+
+    /// Makes the query and parses the response.
+    /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
+    /// one level. Only use this if you don't have checks on other side.
+    ///
+    /// eg. When querying another contract, you will often want some way to detect/handle if there
+    /// is no contract there.
+    fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> Result<T> {
+        match self.query(&request) {
+            Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
+            Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
+            // in theory we would process the response, but here it is the same type, so just pass through
+            Ok(Ok(res)) => from_binary(&res),
+        }
+    }
+
+    fn query_balance<U: Into<HumanAddr>>(
+        &self,
+        address: U,
+        denom: &str,
+    ) -> Result<BalanceResponse> {
+        let request = QueryRequest::Balance {
+            address: address.into(),
+            denom: denom.to_string(),
+        };
+        self.parse_query(&request)
+    }
+
+    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> Result<AllBalanceResponse> {
+        let request = QueryRequest::AllBalances {
+            address: address.into(),
+        };
+        self.parse_query(&request)
+    }
 }

@@ -2,15 +2,12 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "BalanceResponse",
   "type": "object",
+  "required": [
+    "amount"
+  ],
   "properties": {
     "amount": {
-      "type": [
-        "array",
-        "null"
-      ],
-      "items": {
-        "$ref": "#/definitions/Coin"
-      }
+      "$ref": "#/definitions/Coin"
     }
   },
   "definitions": {
