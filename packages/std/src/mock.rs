@@ -130,12 +130,11 @@ impl Querier for MockQuerier {
         match request {
             QueryRequest::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
-                let all = self.balances.get(address);
-                let amount = match all {
-                    Some(v) => v.iter().find(|c| &c.denom == denom).map(|c| c.amount),
-                    None => None,
-                }
-                .unwrap_or_default();
+                let amount = self
+                    .balances
+                    .get(address)
+                    .and_then(|v| v.iter().find(|c| &c.denom == denom).map(|c| c.amount))
+                    .unwrap_or_default();
                 let bank_res = BalanceResponse {
                     amount: Coin {
                         amount,
@@ -172,9 +171,9 @@ mod test {
         let api = MockApi::new(20);
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env(&api, "my name", &[], &coins(100, "atom"));
-        let b = mock_env(&api, &name, &[], &coins(100, "atom"));
-        let c = mock_env(&api, name, &[], &coins(100, "atom"));
+        let a = mock_env(&api, "my name", &coins(100, "atom"));
+        let b = mock_env(&api, &name, &coins(100, "atom"));
+        let c = mock_env(&api, name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);
