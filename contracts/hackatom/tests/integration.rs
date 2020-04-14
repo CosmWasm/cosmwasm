@@ -243,29 +243,29 @@ mod singlepass_tests {
     use cosmwasm_vm::call_handle;
     use cosmwasm_vm::testing::mock_instance_with_gas_limit;
 
+    fn make_init_msg() -> (InitMsg, HumanAddr) {
+        let verifier = HumanAddr::from("verifies");
+        let beneficiary = HumanAddr::from("benefits");
+        let creator = HumanAddr::from("creator");
+        (
+            InitMsg {
+                verifier: verifier.clone(),
+                beneficiary: beneficiary.clone(),
+            },
+            creator,
+        )
+    }
+
     #[test]
     fn handle_panic() {
         let mut deps = mock_instance(WASM);
 
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         // panic inside contract should not panic out here
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
@@ -281,25 +281,12 @@ mod singlepass_tests {
         // Gas must be set so we die early on infinite loop
         let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
 
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
@@ -315,25 +302,12 @@ mod singlepass_tests {
         // Gas must be set so we die early on infinite loop
         let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
 
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
