@@ -439,7 +439,7 @@ mod test {
     use super::*;
     use crate::backends::compile;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, from_binary, BalanceResponse, ReadonlyStorage};
+    use cosmwasm_std::{coin, coins, from_binary, AllBalanceResponse, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     #[cfg(feature = "iterator")]
@@ -677,16 +677,39 @@ mod test {
         let ctx = instance.context();
 
         let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
-            let req = QueryRequest::Balance {
+            let req = QueryRequest::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             };
             querier.query(&req)
         })
         .unwrap()
         .unwrap();
-        let balance: BalanceResponse = from_binary(&res).unwrap();
+        let balance: AllBalanceResponse = from_binary(&res).unwrap();
 
-        assert_eq!(balance.amount.unwrap(), coins(INIT_AMOUNT, INIT_DENOM));
+        assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
+    }
+
+    #[test]
+    fn with_query_parse_success() {
+        // this creates an instance
+        let instance = make_instance();
+        leave_default_data(&instance);
+        let ctx = instance.context();
+        let contract = HumanAddr::from(INIT_ADDR);
+
+        let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+            Ok(querier.query_balance(&contract, INIT_DENOM))
+        })
+        .unwrap()
+        .unwrap();
+        assert_eq!(balance.amount, coin(INIT_AMOUNT, INIT_DENOM));
+
+        let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+            Ok(querier.query_balance(&contract, "foo"))
+        })
+        .unwrap()
+        .unwrap();
+        assert_eq!(balance.amount, coin(0, "foo"));
     }
 
     #[test]

@@ -51,8 +51,17 @@ Contract Code:
   - You can also replace `to_vec(...)` with `to_binary(...)`
 - No `.context(...)` is required after `from_slice` and `to_vec`, they return
   proper `cosmwasm_std::Error` variants on errors.
-- If you need to access `env.contract.balance`, you must now use the querier.
-  The following code block should work: **TODO**
+- If you used `env.contract.balance`, you must now use the querier.
+  The following code block should work:
+  ```rust
+  // before (in env)
+  let foo = env.contract.balance;
+
+  // after (query my balance)
+  let contract_addr = deps.api.human_address(&env.contract.address)?;
+  let balance = deps.querier.query_all_balances(&contract_addr)?;
+  let foo = balance.amount;
+  ```
 
 At this point `cargo wasm` should pass.
 

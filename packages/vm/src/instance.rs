@@ -374,7 +374,7 @@ mod test {
         let orig_gas = instance.get_gas();
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         call_init(&mut instance, &env, msg).unwrap().unwrap();
 
@@ -389,18 +389,13 @@ mod test {
         let mut instance = mock_instance(&CONTRACT);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         call_init(&mut instance, &env, msg).unwrap().unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_handle = instance.get_gas();
-        let env = mock_env(
-            &instance.api,
-            "verifies",
-            &coins(15, "earth"),
-            &coins(1015, "earth"),
-        );
+        let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         call_handle(&mut instance, &env, msg).unwrap().unwrap();
 
@@ -415,7 +410,7 @@ mod test {
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init(&mut instance, &env, msg);
         assert!(res.is_err());
@@ -427,7 +422,7 @@ mod test {
         let mut instance = mock_instance(&CONTRACT);
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"), &[]);
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let _res = call_init(&mut instance, &env, msg).unwrap().unwrap();
 
