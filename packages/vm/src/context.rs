@@ -415,20 +415,20 @@ where
     res
 }
 
-/// take_context_data will return the original storage and querier, and closes any remaining
-/// iterators. This is meant to be called when recycling the instance
-pub(crate) fn move_into_context<S: Storage, Q: Querier>(ctx: &Ctx) -> (Option<S>, Option<Q>) {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
+/// Returns the original storage and querier as owned instances, and closes any remaining
+/// iterators. This is meant to be called when recycling the instance.
+pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(source: &Ctx) -> (Option<S>, Option<Q>) {
+    let b = unsafe { get_data::<S, Q>(source.data) };
     let mut b = mem::ManuallyDrop::new(b);
     // free out the iterator as this finalizes the instance
     free_iterator(&mut b);
     (b.storage.take(), b.querier.take())
 }
 
-/// leave_context_data sets the original storage and querier. These must both be set.
-/// Should be followed by exactly one call to take_context_data when the instance is finished.
-pub(crate) fn move_from_context<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, querier: Q) {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
+/// Moves owned instances of storage and querier into the context.
+/// Should be followed by exactly one call to move_out_of_context when the instance is finished.
+pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &Ctx, storage: S, querier: Q) {
+    let b = unsafe { get_data::<S, Q>(target.data) };
     let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
     b.storage = Some(storage);
     b.querier = Some(querier);
@@ -489,7 +489,7 @@ mod test {
             .expect("error setting value");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_from_context(instance.context(), storage, querier);
+        move_into_context(instance.context(), storage, querier);
     }
 
     #[test]
@@ -498,19 +498,19 @@ mod test {
         let instance = make_instance();
 
         // empty data on start
-        let (inits, initq) = move_into_context::<S, Q>(instance.context());
+        let (inits, initq) = move_out_of_context::<S, Q>(instance.context());
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
         leave_default_data(&instance);
-        let (s, q) = move_into_context::<S, Q>(instance.context());
+        let (s, q) = move_out_of_context::<S, Q>(instance.context());
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
 
         // now is empty again
-        let (ends, endq) = move_into_context::<S, Q>(instance.context());
+        let (ends, endq) = move_out_of_context::<S, Q>(instance.context());
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
