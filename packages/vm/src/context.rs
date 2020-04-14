@@ -425,10 +425,10 @@ pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(source: &Ctx) -> (Opti
     (b.storage.take(), b.querier.take())
 }
 
-/// leave_context_data sets the original storage and querier. These must both be set.
-/// Should be followed by exactly one call to take_context_data when the instance is finished.
-pub(crate) fn move_from_context<S: Storage, Q: Querier>(ctx: &Ctx, storage: S, querier: Q) {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
+/// Moves owned instances of storage and querier into the context.
+/// Should be followed by exactly one call to move_out_of_context when the instance is finished.
+pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &Ctx, storage: S, querier: Q) {
+    let b = unsafe { get_data::<S, Q>(target.data) };
     let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
     b.storage = Some(storage);
     b.querier = Some(querier);
@@ -489,7 +489,7 @@ mod test {
             .expect("error setting value");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_from_context(instance.context(), storage, querier);
+        move_into_context(instance.context(), storage, querier);
     }
 
     #[test]
