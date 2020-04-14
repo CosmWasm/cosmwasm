@@ -333,5 +333,8 @@ mod singlepass_tests {
         );
         assert!(handle_res.is_err());
         assert_eq!(deps.get_gas(), 0);
+
+        // Ran out of gas before consuming a significant amount of memory
+        assert!(deps.get_memory_size() < 2 * 1024 * 1024);
     }
 }

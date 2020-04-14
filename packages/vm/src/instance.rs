@@ -20,7 +20,9 @@ use crate::context::{
 use crate::context::{do_next, do_scan};
 use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, Result, WasmerErr, WasmerRuntimeErr};
-use crate::memory::{read_region, write_region};
+use crate::memory::{get_memory_info, read_region, write_region};
+
+static WASM_PAGE_SIZE: u64 = 64 * 1024;
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
@@ -144,6 +146,14 @@ where
             None
         };
         (instance.wasmer_instance, ext)
+    }
+
+    /// Returns the size of the default memory in bytes.
+    /// This provides a rough idea of the peak memory consumption. Note that
+    /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
+    /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
+    pub fn get_memory_size(&self) -> u64 {
+        (get_memory_info(self.wasmer_instance.context()).size as u64) * WASM_PAGE_SIZE
     }
 
     /// Returns the currently remaining gas
@@ -313,6 +323,22 @@ mod test {
         };
 
         instance.deallocate(region_ptr).expect("error deallocating");
+    }
+
+    #[test]
+    fn get_memory_size_works() {
+        let mut instance = mock_instance(&CONTRACT);
+
+        assert_eq!(instance.get_memory_size(), 17 * WASM_PAGE_SIZE);
+
+        // 100 KiB require two more pages
+        let region_ptr = instance.allocate(100 * 1024).expect("error allocating");
+
+        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+
+        // Deallocating does not shrink memory
+        instance.deallocate(region_ptr).expect("error deallocating");
+        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
     }
 
     #[test]

@@ -26,6 +26,38 @@ struct Region {
 
 unsafe impl ValueType for Region {}
 
+/// A Wasm memory descriptor
+#[derive(Debug, Clone)]
+pub struct MemoryDescriptor {
+    /// The minimum number of allowed pages
+    pub minimum: u32,
+    /// The maximum number of allowed pages
+    pub maximum: Option<u32>,
+    /// This memory can be shared between Wasm threads
+    pub shared: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct MemoryInfo {
+    pub descriptor: MemoryDescriptor,
+    /// Current memory size in pages
+    pub size: u32,
+}
+
+/// Get information about the default memory `memory(0)`
+pub fn get_memory_info(ctx: &Ctx) -> MemoryInfo {
+    let memory = ctx.memory(0);
+    let descriptor = memory.descriptor();
+    MemoryInfo {
+        descriptor: MemoryDescriptor {
+            minimum: descriptor.minimum.0,
+            maximum: descriptor.maximum.map(|pages| pages.0),
+            shared: descriptor.shared,
+        },
+        size: memory.size().0,
+    }
+}
+
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
