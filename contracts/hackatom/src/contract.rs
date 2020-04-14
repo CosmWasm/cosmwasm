@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    contract_err, dyn_contract_err, from_binary, from_slice, log, to_binary, to_vec, unauthorized,
-    AllBalanceResponse, Api, Binary, CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse,
-    HumanAddr, InitResponse, NotFound, Querier, QueryRequest, QueryResponse, Result, Storage,
+    contract_err, from_slice, log, to_binary, to_vec, unauthorized, Api, Binary, CanonicalAddr,
+    CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier,
+    QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
