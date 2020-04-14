@@ -29,6 +29,8 @@ static REQUIRED_EXPORTS: &[&str] = &[
     "deallocate",
 ];
 
+static MEMORY_LIMIT: u32 = 512; // in pages
+
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
     let module = match deserialize_buffer(&wasm_code) {
@@ -40,8 +42,42 @@ pub fn check_wasm(wasm_code: &[u8]) -> Result<()> {
             ));
         }
     };
+    check_wasm_memories(&module)?;
     check_wasm_exports(&module)?;
     check_wasm_imports(&module)?;
+    Ok(())
+}
+
+fn check_wasm_memories(module: &Module) -> Result<()> {
+    let section = match module.memory_section() {
+        Some(section) => section,
+        None => {
+            return make_validation_err("Wasm contract doesn't have a memory section".to_string());
+        }
+    };
+
+    let memories = section.entries();
+    if memories.len() != 1 {
+        return make_validation_err("Wasm contract must contain exactly one memory".to_string());
+    }
+
+    let memory = memories[0];
+    // println!("Memory: {:?}", memory);
+    let limits = memory.limits();
+
+    if limits.initial() > MEMORY_LIMIT {
+        return make_validation_err(format!(
+            "Wasm contract memory's minimum must not exceed {} pages.",
+            MEMORY_LIMIT
+        ));
+    }
+
+    if limits.maximum() != None {
+        return make_validation_err(
+            "Wasm contract memory's maximum must be unset. The host will set it for you."
+                .to_string(),
+        );
+    }
     Ok(())
 }
 
@@ -137,6 +173,96 @@ mod test {
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_memories_ok() {
+        let wasm = wat2wasm("(module (memory 1))").unwrap();
+        check_wasm_memories(&deserialize_buffer(&wasm).unwrap()).unwrap()
+    }
+
+    #[test]
+    fn test_check_wasm_memories_no_memory() {
+        let wasm = wat2wasm("(module)").unwrap();
+        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(msg.starts_with("Wasm contract doesn't have a memory section"));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_memories_two_memories() {
+        // Generated manually because wat2wasm protects us from creating such Wasm:
+        // "error: only one memory block allowed"
+        let wasm = hex::decode(concat!(
+            "0061736d", // magic bytes
+            "01000000", // binary version (uint32)
+            "05",       // section type (memory)
+            "05",       // section length
+            "02",       // number of memories
+            "0009",     // element of type "resizable_limits", min=9, max=unset
+            "0009",     // element of type "resizable_limits", min=9, max=unset
+        ))
+        .unwrap();
+
+        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_memories_zero_memories() {
+        // Generated manually because wat2wasm would not create an empty memory section
+        let wasm = hex::decode(concat!(
+            "0061736d", // magic bytes
+            "01000000", // binary version (uint32)
+            "05",       // section type (memory)
+            "01",       // section length
+            "00",       // number of memories
+        ))
+        .unwrap();
+
+        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_memories_initial_size() {
+        let wasm_ok = wat2wasm("(module (memory 512))").unwrap();
+        check_wasm_memories(&deserialize_buffer(&wasm_ok).unwrap()).unwrap();
+
+        let wasm_too_big = wat2wasm("(module (memory 513))").unwrap();
+        match check_wasm_memories(&deserialize_buffer(&wasm_too_big).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(msg.starts_with("Wasm contract memory's minimum must not exceed 512 pages"));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn test_check_wasm_memories_maximum_size() {
+        let wasm_max = wat2wasm("(module (memory 1 5))").unwrap();
+        match check_wasm_memories(&deserialize_buffer(&wasm_max).unwrap()) {
+            Err(Error::ValidationErr { msg, .. }) => {
+                assert!(msg.starts_with("Wasm contract memory's maximum must be unset"));
+            }
+            Err(e) => panic!("Unexpected error {:?}", e),
+            Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
     }
 

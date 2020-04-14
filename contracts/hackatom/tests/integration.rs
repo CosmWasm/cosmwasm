@@ -241,33 +241,30 @@ mod singlepass_tests {
 
     use cosmwasm_std::to_vec;
     use cosmwasm_vm::call_handle;
-    use cosmwasm_vm::testing::mock_instance_with_gas_limit;
+
+    fn make_init_msg() -> (InitMsg, HumanAddr) {
+        let verifier = HumanAddr::from("verifies");
+        let beneficiary = HumanAddr::from("benefits");
+        let creator = HumanAddr::from("creator");
+        (
+            InitMsg {
+                verifier: verifier.clone(),
+                beneficiary: beneficiary.clone(),
+            },
+            creator,
+        )
+    }
 
     #[test]
-    fn handle_panic_and_loops() {
-        // Gas must be set so we die early on infinite loop
-        let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
+    fn handle_panic() {
+        let mut deps = mock_instance(WASM);
 
-        // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-
-        let init_msg = InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
-        };
-        let init_env = mock_env(
-            &deps.api,
-            creator.as_str(),
-            &coins(1000, "earth"),
-            &coins(1000, "earth"),
-        );
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        // TRY PANIC
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         // panic inside contract should not panic out here
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
@@ -276,8 +273,18 @@ mod singlepass_tests {
             &to_vec(&HandleMsg::Panic {}).unwrap(),
         );
         assert!(handle_res.is_err());
+    }
 
-        // TRY INFINITE LOOP
+    #[test]
+    fn handle_cpu_loop() {
+        let mut deps = mock_instance(WASM);
+
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
@@ -286,5 +293,81 @@ mod singlepass_tests {
         );
         assert!(handle_res.is_err());
         assert_eq!(deps.get_gas(), 0);
+    }
+
+    #[test]
+    fn handle_storage_loop() {
+        let mut deps = mock_instance(WASM);
+
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
+        );
+        assert!(handle_res.is_err());
+        assert_eq!(deps.get_gas(), 0);
+    }
+
+    #[test]
+    fn handle_memory_loop() {
+        let mut deps = mock_instance(WASM);
+
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
+        );
+        assert!(handle_res.is_err());
+        assert_eq!(deps.get_gas(), 0);
+
+        // Ran out of gas before consuming a significant amount of memory
+        assert!(deps.get_memory_size() < 2 * 1024 * 1024);
+    }
+
+    #[test]
+    fn handle_allocate_large_memory() {
+        let mut deps = mock_instance(WASM);
+
+        let (init_msg, creator) = make_init_msg();
+        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let gas_before = deps.get_gas();
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
+        );
+        let gas_used = gas_before - deps.get_gas();
+
+        // TODO: this must fail, see https://github.com/CosmWasm/cosmwasm/issues/81
+        assert_eq!(handle_res.is_err(), false);
+
+        // Gas consumtion is relatively small
+        // Note: the exact gas usage depends on the Rust version used to compile WASM,
+        // which we only fix when using cosmwasm-opt, not integration tests.
+        assert!(gas_used > 28000);
+        assert!(gas_used < 32000);
+
+        // Used between 100 and 102 MiB of memory
+        assert!(deps.get_memory_size() > 100 * 1024 * 1024);
+        assert!(deps.get_memory_size() < 102 * 1024 * 1024);
     }
 }

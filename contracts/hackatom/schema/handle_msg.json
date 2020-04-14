@@ -36,6 +36,30 @@
       }
     },
     {
+      "description": "Infinite loop reading and writing memory",
+      "type": "object",
+      "required": [
+        "memory_loop"
+      ],
+      "properties": {
+        "memory_loop": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "description": "Allocate large amounts of memory without consuming much gas",
+      "type": "object",
+      "required": [
+        "allocate_large_memory"
+      ],
+      "properties": {
+        "allocate_large_memory": {
+          "type": "object"
+        }
+      }
+    },
+    {
       "type": "object",
       "required": [
         "panic"

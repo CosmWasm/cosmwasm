@@ -98,6 +98,8 @@
   standard `Result` types now, eg. `Result<HandleResponse, ApiError>`.
 - Add length limit when reading memory from the instance to protect against
   malicious contracts creating overly large `Region`s.
+- Add `Instance.get_memory_size`, giving you the peak memory consumption of an
+  instance.
 
 ## 0.7.2 (2020-03-23)
 

@@ -3,9 +3,9 @@ use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary, CanonicalAddr, CosmosMsg,
-    Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier, QueryRequest,
-    QueryResponse, Result, Storage,
+    contract_err, dyn_contract_err, from_slice, log, to_vec, unauthorized, Api, Binary,
+    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
+    Querier, QueryRequest, QueryResponse, Result, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -32,6 +32,10 @@ pub enum HandleMsg {
     CpuLoop {},
     // Infinite loop making storage calls (to test when their limit hits)
     StorageLoop {},
+    /// Infinite loop reading and writing memory
+    MemoryLoop {},
+    /// Allocate large amounts of memory without consuming much gas
+    AllocateLargeMemory {},
     // Trigger a panic to ensure framework handles gracefully
     Panic {},
 }
@@ -78,6 +82,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::Release {} => do_release(deps, env),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
+        HandleMsg::MemoryLoop {} => do_memory_loop(),
+        HandleMsg::AllocateLargeMemory {} => do_allocate_large_memory(),
         HandleMsg::Panic {} => do_panic(),
     }
 }
@@ -132,6 +138,34 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
             .set(b"test.key", test_case.to_string().as_bytes())?;
         test_case += 1;
     }
+}
+
+fn do_memory_loop() -> Result<HandleResponse> {
+    let mut data = vec![1usize];
+    loop {
+        // add one element
+        data.push((*data.last().expect("must not be empty")) + 1);
+    }
+}
+
+fn do_allocate_large_memory() -> Result<HandleResponse> {
+    // We create memory pages explicitely since Rust's default allocator seems to be clever enough
+    // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
+    // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
+
+    #[cfg(target_arch = "wasm32")]
+    {
+        use core::arch::wasm32;
+        let pages = 1_600; // 100 MiB
+        let ptr = wasm32::memory_grow(0, pages);
+        if ptr == usize::max_value() {
+            return contract_err("Error in memory.grow instruction");
+        }
+        Ok(HandleResponse::default())
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    contract_err("Unsupported architecture")
 }
 
 fn do_panic() -> Result<HandleResponse> {
