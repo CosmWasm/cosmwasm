@@ -14,7 +14,7 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
-    move_from_context, move_into_context, setup_context, with_storage_from_context,
+    move_from_context, move_out_of_context, setup_context, with_storage_from_context,
 };
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
@@ -135,7 +135,7 @@ where
     /// The components we want to preserve are returned, the rest is dropped.
     pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
-            move_into_context(instance.wasmer_instance.context())
+            move_out_of_context(instance.wasmer_instance.context())
         {
             Some(Extern {
                 storage,
