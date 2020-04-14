@@ -1,5 +1,5 @@
 use schemars::JsonSchema;
-use serde::{de::DeserializeOwned, Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
@@ -101,13 +101,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
     if env.message.signer == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&env.contract.address)?;
-
-        let balance: AllBalanceResponse = parse_querier(
-            &deps.querier,
-            &QueryRequest::AllBalances {
-                address: from_addr.clone(),
-            },
-        )?;
+        let balance = deps.querier.query_all_balances(&from_addr)?;
 
         let res = HandleResponse {
             log: vec![
@@ -204,29 +198,8 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
 ) -> Result<QueryResponse> {
-    let res: AllBalanceResponse =
-        parse_querier(&deps.querier, &QueryRequest::AllBalances { address })?;
-    // we could avoid parsing (and pass raw bytes through), but this is a nice test case
+    let res = deps.querier.query_all_balances(address)?;
     to_binary(&res)
-}
-
-// TODO: move to std
-/// Makes the query and parses the response.
-/// Any error (System Error, Error or called contract, or Parse Error) are flattened into
-/// one level. Only use this if you don't have checks on other side.
-///
-/// When querying another contract, you will often want some way to detect/handle if there
-/// is no contract there.
-fn parse_querier<Q: Querier, T: DeserializeOwned>(
-    querier: &Q,
-    request: &QueryRequest,
-) -> Result<T> {
-    match querier.query(&request) {
-        Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
-        Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
-        // in theory we would process the response, but here it is the same type, so just pass through
-        Ok(Ok(res)) => from_binary(&res),
-    }
 }
 
 #[cfg(test)]
@@ -234,7 +207,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, from_binary, Error, ReadonlyStorage};
+    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, Error, ReadonlyStorage};
     use cosmwasm_storage::transactional_deps;
 
     #[test]
