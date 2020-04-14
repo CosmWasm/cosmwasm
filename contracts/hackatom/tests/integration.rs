@@ -361,7 +361,10 @@ mod singlepass_tests {
         assert_eq!(handle_res.is_err(), false);
 
         // Gas consumtion is relatively small
-        assert_eq!(gas_used, 28880);
+        // Note: the exact gas usage depends on the Rust version used to compile WASM,
+        // which we only fix when using cosmwasm-opt, not integration tests.
+        assert!(gas_used > 28000);
+        assert!(gas_used < 32000);
 
         // Used between 100 and 102 MiB of memory
         assert!(deps.get_memory_size() > 100 * 1024 * 1024);
