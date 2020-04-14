@@ -140,14 +140,8 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
 fn do_memory_loop() -> Result<HandleResponse> {
     let mut data = vec![1usize];
     loop {
-        // increase by one element
-        data.push(*data.last().expect("must not be empty"));
-
-        // Override all entries
-        let value = data.len();
-        let _overrides = data.iter_mut().map(|x| *x = value).count();
-
-        println!("{:?}", data);
+        // add one element
+        data.push((*data.last().expect("must not be empty")) + 1);
     }
 }
 
