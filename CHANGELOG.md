@@ -33,6 +33,13 @@
   string in JSON, but parses into a u128 data in memory. It also has some
   operator overloads to allow easy math operations on `Coin` types, as well as
   enforcing valid amounts.
+- `Env` no longer has a `contract.balance` element. If you need this info,
+  please use the `Querier` to get this info. As of Cosmos-SDK 0.39 this needs
+  extra storage queries to get the balance, so we only do those queries when
+  needed.
+- `Env.message.sent_funds` is a `Vec<Coin>` not `Option<Vec<Coin>>`. We will
+  normalize the go response in `go-cosmwasm` before sending it to the contract.
+- `Env.block.{height,time}` are now `u64` rather than `i64`.
 
 **cosmwasm-schema**
 

@@ -25,7 +25,9 @@ pub use crate::init_handle::{
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{KVRef, Order, KV};
-pub use crate::query::{BalanceResponse, QueryRequest, QueryResponse, QueryResult};
+pub use crate::query::{
+    AllBalanceResponse, BalanceResponse, QueryRequest, QueryResponse, QueryResult,
+};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{

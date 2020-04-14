@@ -102,7 +102,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, signer: U, sent: &[Coin]) -
         },
         contract: ContractInfo {
             address: api
-                .canonical_address(&HumanAddr("cosmos2contract".to_string()))
+                .canonical_address(&HumanAddr::from("cosmos2contract"))
                 .unwrap(),
         },
     }
