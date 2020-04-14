@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Deserialize, Serialize};
 use snafu::OptionExt;
 
 use cosmwasm_std::{
-    contract_err, dyn_contract_err, from_binary, from_slice, log, to_vec, unauthorized,
+    contract_err, dyn_contract_err, from_binary, from_slice, log, to_binary, to_vec, unauthorized,
     AllBalanceResponse, Api, Binary, CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse,
     HumanAddr, InitResponse, NotFound, Querier, QueryRequest, QueryResponse, Result, Storage,
 };
@@ -102,15 +102,12 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&env.contract.address)?;
 
-        let response = deps
-            .querier
-            .query(&QueryRequest::AllBalances {
+        let balance: AllBalanceResponse = parse_querier(
+            &deps.querier,
+            &QueryRequest::AllBalances {
                 address: from_addr.clone(),
-            })
-            // TODO: we need better error handling here!
-            .unwrap()
-            .unwrap();
-        let balance: AllBalanceResponse = from_binary(&response)?;
+            },
+        )?;
 
         let res = HandleResponse {
             log: vec![
@@ -207,12 +204,28 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
 ) -> Result<QueryResponse> {
-    let request = QueryRequest::AllBalances { address };
-    match deps.querier.query(&request) {
+    let res: AllBalanceResponse =
+        parse_querier(&deps.querier, &QueryRequest::AllBalances { address })?;
+    // we could avoid parsing (and pass raw bytes through), but this is a nice test case
+    to_binary(&res)
+}
+
+// TODO: move to std
+/// Makes the query and parses the response.
+/// Any error (System Error, Error or called contract, or Parse Error) are flattened into
+/// one level. Only use this if you don't have checks on other side.
+///
+/// When querying another contract, you will often want some way to detect/handle if there
+/// is no contract there.
+fn parse_querier<Q: Querier, T: DeserializeOwned>(
+    querier: &Q,
+    request: &QueryRequest,
+) -> Result<T> {
+    match querier.query(&request) {
         Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
         Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
         // in theory we would process the response, but here it is the same type, so just pass through
-        Ok(Ok(res)) => Ok(res),
+        Ok(Ok(res)) => from_binary(&res),
     }
 }
 

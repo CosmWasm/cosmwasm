@@ -30,7 +30,8 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, log, Api, ApiError, BalanceResponse, CosmosMsg, HumanAddr, ReadonlyStorage,
+    coins, from_binary, log, AllBalanceResponse, Api, ApiError, CosmosMsg, HumanAddr,
+    ReadonlyStorage,
 };
 use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
@@ -57,7 +58,7 @@ fn proper_initialization() {
         verifier,
         beneficiary,
     };
-    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"), &[]);
+    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
@@ -85,7 +86,7 @@ fn init_and_query() {
         verifier: verifier.clone(),
         beneficiary,
     };
-    let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"), &[]);
+    let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
     let res = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
@@ -110,22 +111,22 @@ fn querier_callbacks_work() {
     // querying with balance gets the balance
     let query_msg = QueryMsg::OtherBalance { address: rich_addr };
     let query_response = query(&mut deps, query_msg).unwrap();
-    let bal: BalanceResponse = from_binary(&query_response).unwrap();
-    assert_eq!(bal.amount, Some(rich_balance));
+    let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+    assert_eq!(bal.amount, rich_balance);
 
     // querying other accounts gets none
     let query_msg = QueryMsg::OtherBalance {
         address: HumanAddr::from("someone else"),
     };
     let query_response = query(&mut deps, query_msg).unwrap();
-    let bal: BalanceResponse = from_binary(&query_response).unwrap();
-    assert_eq!(bal.amount, None);
+    let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+    assert_eq!(bal.amount, vec![]);
 }
 
 #[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM);
-    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"), &[]);
+    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res = init(&mut deps, env, HandleMsg::Release {});
     match res.unwrap_err() {
@@ -136,7 +137,10 @@ fn fails_on_bad_init() {
 
 #[test]
 fn proper_handle() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance_with_balances(
+        WASM,
+        &[(&HumanAddr::from("cosmos2contract"), &coins(1015, "earth"))],
+    );
 
     // initialize the store
     let verifier = HumanAddr(String::from("verifies"));
@@ -146,22 +150,12 @@ fn proper_handle() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_env = mock_env(
-        &deps.api,
-        "creator",
-        &coins(1000, "earth"),
-        &coins(1000, "earth"),
-    );
+    let init_env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary can release it
-    let handle_env = mock_env(
-        &deps.api,
-        verifier.as_str(),
-        &coins(15, "earth"),
-        &coins(1015, "earth"),
-    );
+    let handle_env = mock_env(&deps.api, verifier.as_str(), &coins(15, "earth"));
     let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
     assert_eq!(1, handle_res.messages.len());
     let msg = handle_res.messages.get(0).expect("no message");
@@ -181,7 +175,10 @@ fn proper_handle() {
 
 #[test]
 fn failed_handle() {
-    let mut deps = mock_instance(WASM);
+    let mut deps = mock_instance_with_balances(
+        WASM,
+        &[(&HumanAddr::from("cosmos2contract"), &coins(1000, "earth"))],
+    );
 
     // initialize the store
     let verifier = HumanAddr(String::from("verifies"));
@@ -192,17 +189,12 @@ fn failed_handle() {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_env = mock_env(
-        &deps.api,
-        creator.as_str(),
-        &coins(1000, "earth"),
-        &coins(1000, "earth"),
-    );
+    let init_env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
     let init_res = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary cannot release it
-    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+    let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
     let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
     match handle_res.unwrap_err() {
         ApiError::Unauthorized {} => {}
