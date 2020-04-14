@@ -197,7 +197,7 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let deps = mock_dependencies(20);
+        let deps = mock_dependencies(20, &[]);
         let _instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
         assert_eq!(cache.stats.hits_instance, 0);
         assert_eq!(cache.stats.hits_module, 1);
@@ -209,9 +209,9 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let deps1 = mock_dependencies(20);
-        let deps2 = mock_dependencies(20);
-        let deps3 = mock_dependencies(20);
+        let deps1 = mock_dependencies(20, &[]);
+        let deps2 = mock_dependencies(20, &[]);
+        let deps3 = mock_dependencies(20, &[]);
         let instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
         cache.store_instance(&id, instance1);
         let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
@@ -228,7 +228,7 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let deps = mock_dependencies(20);
+        let deps = mock_dependencies(20, &[]);
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // run contract
@@ -247,7 +247,7 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         // TODO: contract balance
-        let deps = mock_dependencies(20);
+        let deps = mock_dependencies(20, &[]);
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // init contract
@@ -272,8 +272,8 @@ mod test {
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         // these differentiate the two instances of the same contract
-        let deps1 = mock_dependencies(20);
-        let deps2 = mock_dependencies(20);
+        let deps1 = mock_dependencies(20, &[]);
+        let deps2 = mock_dependencies(20, &[]);
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
@@ -319,8 +319,8 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
-        let deps1 = mock_dependencies(20);
-        let deps2 = mock_dependencies(20);
+        let deps1 = mock_dependencies(20, &[]);
+        let deps2 = mock_dependencies(20, &[]);
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
@@ -351,8 +351,8 @@ mod test {
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
-        let deps1 = mock_dependencies(20);
-        let deps2 = mock_dependencies(20);
+        let deps1 = mock_dependencies(20, &[]);
+        let deps2 = mock_dependencies(20, &[]);
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, 10).unwrap();

@@ -212,7 +212,7 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -243,7 +243,7 @@ mod tests {
 
     #[test]
     fn init_and_query() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -284,7 +284,7 @@ mod tests {
 
     #[test]
     fn checkpointing_works_on_contract() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &coins(1000, "earth"));
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -320,10 +320,7 @@ mod tests {
 
     #[test]
     fn proper_handle() {
-        let mut deps = mock_dependencies_with_balances(
-            20,
-            &[(&HumanAddr::from("cosmos2contract"), &coins(1015, "earth"))],
-        );
+        let mut deps = mock_dependencies(20, &coins(1015, "earth"));
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -358,10 +355,7 @@ mod tests {
 
     #[test]
     fn failed_handle() {
-        let mut deps = mock_dependencies_with_balances(
-            20,
-            &[(&HumanAddr::from("cosmos2contract"), &coins(1000, "earth"))],
-        );
+        let mut deps = mock_dependencies(20, &coins(1000, "earth"));
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -404,7 +398,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "This page intentionally faulted")]
     fn handle_panic() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));

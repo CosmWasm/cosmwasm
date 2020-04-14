@@ -252,11 +252,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
-        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_env = mock_env(&deps.api, creator.as_str(), &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // panic inside contract should not panic out here
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
@@ -276,7 +276,7 @@ mod singlepass_tests {
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
@@ -292,11 +292,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
-        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_env = mock_env(&deps.api, creator.as_str(), &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
@@ -312,11 +312,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
-        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_env = mock_env(&deps.api, creator.as_str(), &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(
             &mut deps,
@@ -335,11 +335,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM);
 
         let (init_msg, creator) = make_init_msg();
-        let init_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let init_env = mock_env(&deps.api, creator.as_str(), &[]);
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, creator.as_str(), &[], &[]);
+        let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         let gas_before = deps.get_gas();
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle(

@@ -96,7 +96,7 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn reflect() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -135,7 +135,7 @@ mod tests {
 
     #[test]
     fn reflect_requires_owner() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn reflect_reject_empty_msgs() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -184,7 +184,7 @@ mod tests {
 
     #[test]
     fn reflect_multiple_messages() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -211,7 +211,7 @@ mod tests {
 
     #[test]
     fn transfer() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -233,7 +233,7 @@ mod tests {
 
     #[test]
     fn transfer_requires_owner() {
-        let mut deps = mock_dependencies(20);
+        let mut deps = mock_dependencies(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));

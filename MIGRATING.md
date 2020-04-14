@@ -78,17 +78,17 @@ Both:
   `Coin::new` and returns one `Coin`.
 - Remove the 4th argument (contract balance) from all calls to `mock_env`, this
   is no longer stored in the environment.
-- If you care about contract balance, you need to modify `mock_dependencies` or
-  `mock_instance` to `mock_XX_with_balances`, where the extra argument contains
-  the contract balance. The follow code block explains:
+- `mock_dependencies` and `mock_instance` take a 2nd argument to set the contract
+   balance (visible for the querier). If you need to set more balances, use
+   `mock_XX_with_balances`.  The follow code block explains:
   ```rust
   // before: balance as last arg in mock_env
   let mut deps = mock_dependencies(20);
-  let env = mock_env(&deps.api, creator, &coins(15, "earth"), &coins(1015, "earth"));
+  let env = mock_env(&deps.api, "creator", &coins(15, "earth"), &coins(1015, "earth"));
 
-  // after: store balance in dependencies ("cosmos2contract" is the hardcoded contract address for all tests)
-  let mut deps = mock_dependencies_with_balances(20, &[(&HumanAddr::from("cosmos2contract"), &coins(1015, "earth"))]);
-  let env = mock_env(&deps.api, creator, &coins(15, "earth"));
+  // after: balance as last arg in mock_dependencies
+  let mut deps = mock_dependencies(20, &coins(1015, "earth"));
+  let env = mock_env(&deps.api, "creator", &coins(15, "earth"));
   ```
 
 Unit Tests:
