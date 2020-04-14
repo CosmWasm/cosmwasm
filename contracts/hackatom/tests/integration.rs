@@ -309,4 +309,38 @@ mod singlepass_tests {
         assert!(handle_res.is_err());
         assert_eq!(deps.get_gas(), 0);
     }
+
+    #[test]
+    fn handle_storage_loop() {
+        // Gas must be set so we die early on infinite loop
+        let mut deps = mock_instance_with_gas_limit(WASM, &[], 1_000_000);
+
+        // initialize the store
+        let verifier = HumanAddr(String::from("verifies"));
+        let beneficiary = HumanAddr(String::from("benefits"));
+        let creator = HumanAddr(String::from("creator"));
+
+        let init_msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary: beneficiary.clone(),
+        };
+        let init_env = mock_env(
+            &deps.api,
+            creator.as_str(),
+            &coins(1000, "earth"),
+            &coins(1000, "earth"),
+        );
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[], &coins(1000, "earth"));
+        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+        let handle_res = call_handle(
+            &mut deps,
+            &handle_env,
+            &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
+        );
+        assert!(handle_res.is_err());
+        assert_eq!(deps.get_gas(), 0);
+    }
 }
