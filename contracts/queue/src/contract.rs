@@ -167,13 +167,15 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Resu
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::testing::{
+        mock_dependencies_with_balances, mock_env, MockApi, MockQuerier, MockStorage,
+    };
     use cosmwasm_std::{coins, from_binary, HumanAddr};
 
     fn create_contract() -> (Extern<MockStorage, MockApi, MockQuerier>, Env) {
-        let mut deps = mock_dependencies(20);
         let creator = HumanAddr(String::from("creator"));
-        let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"), &[]);
+        let mut deps = mock_dependencies_with_balances(20, &[(&creator, &coins(1000, "earth"))]);
+        let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
         let res = init(&mut deps, env.clone(), InitMsg {}).unwrap();
         assert_eq!(0, res.messages.len());
         (deps, env)
