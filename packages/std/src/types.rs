@@ -76,22 +76,19 @@ pub struct Env {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct BlockInfo {
-    pub height: i64,
+    pub height: u64,
     // time is seconds since epoch begin (Jan. 1, 1970)
-    pub time: i64,
+    pub time: u64,
     pub chain_id: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
     pub signer: CanonicalAddr,
-    // go likes to return null for empty array, make sure we can parse it (use option)
-    pub sent_funds: Option<Vec<Coin>>,
+    pub sent_funds: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct ContractInfo {
     pub address: CanonicalAddr,
-    // go likes to return null for empty array, make sure we can parse it (use option)
-    pub balance: Option<Vec<Coin>>,
 }

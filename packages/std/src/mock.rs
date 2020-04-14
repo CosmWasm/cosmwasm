@@ -5,7 +5,7 @@ use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{ContractErr, Result, Utf8StringErr};
-use crate::query::{BalanceResponse, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, QueryRequest};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier};
@@ -88,12 +88,7 @@ impl Api for MockApi {
 
 // just set signer, sent funds, and balance - rest given defaults
 // this is intended for use in testcode only
-pub fn mock_env<T: Api, U: Into<HumanAddr>>(
-    api: &T,
-    signer: U,
-    sent: &[Coin],
-    balance: &[Coin],
-) -> Env {
+pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, signer: U, sent: &[Coin]) -> Env {
     let signer = signer.into();
     Env {
         block: BlockInfo {
@@ -103,21 +98,12 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(
         },
         message: MessageInfo {
             signer: api.canonical_address(&signer).unwrap(),
-            sent_funds: if sent.is_empty() {
-                None
-            } else {
-                Some(sent.to_vec())
-            },
+            sent_funds: sent.to_vec(),
         },
         contract: ContractInfo {
             address: api
                 .canonical_address(&HumanAddr("cosmos2contract".to_string()))
                 .unwrap(),
-            balance: if balance.is_empty() {
-                None
-            } else {
-                Some(balance.to_vec())
-            },
         },
     }
 }
@@ -142,10 +128,27 @@ impl MockQuerier {
 impl Querier for MockQuerier {
     fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
-            QueryRequest::Balance { address } => {
+            QueryRequest::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
+                let all = self.balances.get(address);
+                let amount = match all {
+                    Some(v) => v.iter().find(|c| &c.denom == denom).map(|c| c.amount),
+                    None => None,
+                }
+                .unwrap_or_default();
                 let bank_res = BalanceResponse {
-                    amount: self.balances.get(address).cloned(),
+                    amount: Coin {
+                        amount,
+                        denom: denom.to_string(),
+                    },
+                };
+                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
+                Ok(api_res)
+            }
+            QueryRequest::AllBalances { address } => {
+                // proper error on not found, serialize result on found
+                let bank_res = AllBalanceResponse {
+                    amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
