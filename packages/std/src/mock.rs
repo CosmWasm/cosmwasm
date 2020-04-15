@@ -134,7 +134,10 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
+    fn query(
+        &self,
+        request: &QueryRequest,
+    ) -> core::result::Result<core::result::Result<Binary, ApiError>, ApiSystemError> {
         match request {
             QueryRequest::Balance { address, denom } => {
                 // proper error on not found, serialize result on found

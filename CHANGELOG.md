@@ -85,6 +85,8 @@
   allow propagation of errors.
 - Move `transactional`, `transactional_deps`, `RepLog`, `StorageTransaction`
   into crate `cosmwasm-storage`.
+- Remove generic error from `Result` and fix it to `Error`. For other error
+  types, use `core::result::Result`.
 
 **cosmwasm-vm**
 

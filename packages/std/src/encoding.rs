@@ -50,7 +50,7 @@ impl From<&[u8]> for Binary {
 
 /// Serializes as a base64 string
 impl Serialize for Binary {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    fn serialize<S>(&self, serializer: S) -> core::result::Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
     {
@@ -60,7 +60,7 @@ impl Serialize for Binary {
 
 /// Deserializes as a base64 string
 impl<'de> Deserialize<'de> for Binary {
-    fn deserialize<D>(deserializer: D) -> Result<Binary, D::Error>
+    fn deserialize<D>(deserializer: D) -> core::result::Result<Binary, D::Error>
     where
         D: Deserializer<'de>,
     {
@@ -77,7 +77,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
         formatter.write_str("valid base64 encoded string")
     }
 
-    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    fn visit_borrowed_str<E>(self, v: &'de str) -> core::result::Result<Self::Value, E>
     where
         E: de::Error,
     {

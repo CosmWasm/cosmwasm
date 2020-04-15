@@ -62,7 +62,8 @@ pub trait Api: Copy + Clone + Send {
 }
 
 // QuerierResponse is a short-hand alias as this type is long to write
-pub type QuerierResponse = Result<Result<Binary, ApiError>, ApiSystemError>;
+pub type QuerierResponse =
+    core::result::Result<core::result::Result<Binary, ApiError>, ApiSystemError>;
 
 // ApiQuerierResponse is QuerierResponse converted to be serialized (short-hand for other modules)
 pub type ApiQuerierResponse = ApiResult<ApiResult<Binary, ApiError>, ApiSystemError>;

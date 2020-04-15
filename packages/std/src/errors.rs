@@ -87,7 +87,7 @@ pub enum SystemError {
 
 /// Result for init, handle and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+pub type Result<T> = core::result::Result<T, Error>;
 
 pub fn invalid<T>(field: &'static str, msg: &'static str) -> Result<T> {
     ValidationErr { field, msg }.fail()
