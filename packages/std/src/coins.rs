@@ -116,13 +116,13 @@ impl<'de> Deserialize<'de> for Uint128 {
     where
         D: Deserializer<'de>,
     {
-        deserializer.deserialize_str(BigIntVisitor)
+        deserializer.deserialize_str(Uint128Visitor)
     }
 }
 
-struct BigIntVisitor;
+struct Uint128Visitor;
 
-impl<'de> de::Visitor<'de> for BigIntVisitor {
+impl<'de> de::Visitor<'de> for Uint128Visitor {
     type Value = Uint128;
 
     fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -135,7 +135,7 @@ impl<'de> de::Visitor<'de> for BigIntVisitor {
     {
         match v.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(E::custom(format!("invalid BigInt '{}' - {}", v, e))),
+            Err(e) => Err(E::custom(format!("invalid Uint128 '{}' - {}", v, e))),
         }
     }
 }
@@ -155,7 +155,7 @@ mod test {
     }
 
     #[test]
-    fn to_and_from_bigint() {
+    fn to_and_from_uint128() {
         let a: Uint128 = 12345.into();
         assert_eq!(12345, a.u128());
         assert_eq!("12345", a.to_string());
@@ -169,7 +169,7 @@ mod test {
     }
 
     #[test]
-    fn bigint_json() {
+    fn uint128_json() {
         let orig = Uint128(1234567890987654321);
         let serialized = to_vec(&orig).unwrap();
         assert_eq!(serialized.as_slice(), b"\"1234567890987654321\"");
@@ -178,7 +178,7 @@ mod test {
     }
 
     #[test]
-    fn bigint_compare() {
+    fn uint128_compare() {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
@@ -188,7 +188,7 @@ mod test {
     }
 
     #[test]
-    fn bigint_math() {
+    fn uint128_math() {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
@@ -198,7 +198,7 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn bigint_math_prevents_overflow() {
+    fn uint128_math_prevents_overflow() {
         let a = Uint128(12345);
         let b = Uint128(23456);
         // this will underflow, should panic
