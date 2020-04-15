@@ -107,6 +107,12 @@ mod test {
             let mut iter = store.range(None, None, Order::Ascending);
             let first = iter.next().unwrap();
             assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+        }
+
+        // open ended range (descending)
+        {
+            let iter = store.range(None, None, Order::Descending);
+            assert_eq!(3, iter.count());
             let mut iter = store.range(None, None, Order::Descending);
             let last = iter.next().unwrap();
             assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
@@ -121,7 +127,7 @@ mod test {
             assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
         }
 
-        // closed range reverse
+        // closed range (descending)
         {
             let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
             assert_eq!(2, iter.count());
@@ -141,7 +147,7 @@ mod test {
             assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
         }
 
-        // end open iterator reverse
+        // end open iterator (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending);
             assert_eq!(2, iter.count());
@@ -159,7 +165,7 @@ mod test {
             assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
         }
 
-        // start open iterator
+        // start open iterator (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending);
             assert_eq!(2, iter.count());
