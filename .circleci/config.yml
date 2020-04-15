@@ -437,11 +437,11 @@ jobs:
       - run:
           name: Clippy linting on std
           working_directory: ~/project/packages/std
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --features iterator -- -D warnings
       - run:
           name: Clippy linting on storage
           working_directory: ~/project/packages/storage
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --features iterator -- -D warnings
       - run:
           name: Clippy linting on vm (use flags for Rust stable support)
           working_directory: ~/project/packages/vm
