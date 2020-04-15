@@ -100,7 +100,7 @@ mod test {
         store.set(b"bye", b"bye").expect("error setting value");
         store.remove(b"bye").expect("error removing key");
 
-        // open ended range
+        // unbounded
         {
             let iter = store.range(None, None, Order::Ascending);
             let elements: Vec<KV> = iter.collect();
@@ -114,7 +114,7 @@ mod test {
             );
         }
 
-        // open ended range (descending)
+        // unbounded (descending)
         {
             let iter = store.range(None, None, Order::Descending);
             let elements: Vec<KV> = iter.collect();
@@ -128,14 +128,14 @@ mod test {
             );
         }
 
-        // closed range
+        // bounded
         {
             let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
-        // closed range (descending)
+        // bounded (descending)
         {
             let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
             let elements: Vec<KV> = iter.collect();
@@ -148,7 +148,7 @@ mod test {
             );
         }
 
-        // end open iterator
+        // right unbounded
         {
             let iter = store.range(Some(b"f"), None, Order::Ascending);
             let elements: Vec<KV> = iter.collect();
@@ -161,7 +161,7 @@ mod test {
             );
         }
 
-        // end open iterator (descending)
+        // right unbounded (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending);
             let elements: Vec<KV> = iter.collect();
@@ -174,14 +174,14 @@ mod test {
             );
         }
 
-        // start open iterator
+        // left unbounded
         {
             let iter = store.range(None, Some(b"f"), Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
-        // start open iterator (descending)
+        // left unbounded (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending);
             let elements: Vec<KV> = iter.collect();
