@@ -292,75 +292,95 @@ mod test {
         // open ended range
         {
             let iter = store.range(None, None, Order::Ascending);
-            assert_eq!(3, iter.count());
-            let mut iter = store.range(None, None, Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                ]
+            );
         }
 
         // open ended range (descending)
         {
             let iter = store.range(None, None, Order::Descending);
-            assert_eq!(3, iter.count());
-            let mut iter = store.range(None, None, Order::Descending);
-            let last = iter.next().unwrap();
-            assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                ]
+            );
         }
 
         // closed range
         {
             let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-            assert_eq!(1, iter.count());
-            let mut iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
         // closed range (descending)
         {
             let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-            let second = iter.next().unwrap();
-            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                ]
+            );
         }
 
         // end open iterator
         {
             let iter = store.range(Some(b"f"), None, Order::Ascending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(Some(b"f"), None, Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                ]
+            );
         }
 
         // end open iterator (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(Some(b"f"), None, Order::Descending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                ]
+            );
         }
 
         // start open iterator
         {
             let iter = store.range(None, Some(b"f"), Order::Ascending);
-            assert_eq!(1, iter.count());
-            let mut iter = store.range(None, Some(b"f"), Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // start open iterator (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(None, Some(b"no"), Order::Descending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                ]
+            );
         }
     }
 
