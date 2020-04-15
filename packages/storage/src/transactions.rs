@@ -8,7 +8,7 @@ use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
-use cosmwasm_std::{Api, Extern, Querier, ReadonlyStorage, Result, Storage};
+use cosmwasm_std::{Api, Extern, Querier, ReadonlyStorage, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
@@ -45,7 +45,7 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
-    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
         match self.local_state.get(key) {
             Some(val) => Ok(match val {
                 Delta::Set { value } => Some(value.clone()),
@@ -63,7 +63,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = KV> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -89,7 +89,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
         let op = Op::Set {
             key: key.to_vec(),
             value: value.to_vec(),
@@ -99,7 +99,7 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
         Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) -> Result<()> {
+    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
         let op = Op::Delete { key: key.to_vec() };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
@@ -123,7 +123,7 @@ impl RepLog {
     }
 
     /// applies the stored list of `Op`s to the provided `Storage`
-    pub fn commit<S: Storage>(self, storage: &mut S) -> Result<()> {
+    pub fn commit<S: Storage>(self, storage: &mut S) -> StdResult<()> {
         for op in self.ops_log {
             op.apply(storage)?;
         }
@@ -146,7 +146,7 @@ enum Op {
 
 impl Op {
     /// applies this `Op` to the provided storage
-    pub fn apply<S: Storage>(&self, storage: &mut S) -> Result<()> {
+    pub fn apply<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
             Op::Delete { key } => storage.remove(&key),
@@ -252,8 +252,8 @@ where
 
 pub fn transactional<S: Storage, T>(
     storage: &mut S,
-    tx: &dyn Fn(&mut StorageTransaction<S>) -> Result<T>,
-) -> Result<T> {
+    tx: &dyn Fn(&mut StorageTransaction<S>) -> StdResult<T>,
+) -> StdResult<T> {
     let mut stx = StorageTransaction::new(storage);
     let res = tx(&mut stx)?;
     stx.prepare().commit(storage)?;
@@ -262,8 +262,8 @@ pub fn transactional<S: Storage, T>(
 
 pub fn transactional_deps<S: Storage, A: Api, Q: Querier, T>(
     deps: &mut Extern<S, A, Q>,
-    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A, Q>) -> Result<T>,
-) -> Result<T> {
+    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A, Q>) -> StdResult<T>,
+) -> StdResult<T> {
     let c = StorageTransaction::new(&deps.storage);
     let mut stx_deps = Extern {
         storage: c,
@@ -573,7 +573,7 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         // writes on success
-        let res: Result<i32> = transactional(&mut base, &|store| {
+        let res: StdResult<i32> = transactional(&mut base, &|store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
             // we write in the Ok case
@@ -584,7 +584,7 @@ mod test {
         assert_eq!(base.get(b"good").unwrap(), Some(b"one".to_vec()));
 
         // rejects on error
-        let res: Result<i32> = transactional(&mut base, &|store| {
+        let res: StdResult<i32> = transactional(&mut base, &|store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
             assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));

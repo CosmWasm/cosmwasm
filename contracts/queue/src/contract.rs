@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     from_slice, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order, Querier,
-    QueryResponse, Result, Storage,
+    QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -57,7 +57,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     _deps: &mut Extern<S, A, Q>,
     _env: Env,
     _msg: InitMsg,
-) -> Result<InitResponse> {
+) -> StdResult<InitResponse> {
     Ok(InitResponse::default())
 }
 
@@ -65,7 +65,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Enqueue { value } => enqueue(deps, env, value),
         HandleMsg::Dequeue {} => dequeue(deps, env),
@@ -78,7 +78,7 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
     value: i32,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
     let last_key = deps
         .storage
@@ -100,7 +100,7 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
 fn dequeue<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending)?.next();
 
@@ -118,7 +118,7 @@ fn dequeue<S: Storage, A: Api, Q: Querier>(
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     msg: QueryMsg,
-) -> Result<QueryResponse> {
+) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Count {} => query_count(deps),
         QueryMsg::Sum {} => query_sum(deps),
@@ -126,13 +126,13 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
+fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
     let count = deps.storage.range(None, None, Order::Ascending)?.count() as u32;
     Ok(Binary(to_vec(&CountResponse { count })?))
 }
 
-fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
-    let values: Result<Vec<Item>> = deps
+fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
+    let values: StdResult<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)?
         .map(|(_, v)| from_slice(&v))
@@ -141,9 +141,11 @@ fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<Q
     Ok(Binary(to_vec(&SumResponse { sum })?))
 }
 
-fn query_reducer<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
+fn query_reducer<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+) -> StdResult<QueryResponse> {
     let mut out: Vec<(i32, i32)> = vec![];
-    // val: Result<Item>
+    // val: StdResult<Item>
     for val in deps
         .storage
         .range(None, None, Order::Ascending)?

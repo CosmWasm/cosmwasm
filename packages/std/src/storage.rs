@@ -4,7 +4,7 @@ use std::iter;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
-use crate::errors::Result;
+use crate::errors::StdResult;
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
@@ -21,7 +21,7 @@ impl MemoryStorage {
 }
 
 impl ReadonlyStorage for MemoryStorage {
-    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
         Ok(self.data.get(key).cloned())
     }
 
@@ -33,7 +33,7 @@ impl ReadonlyStorage for MemoryStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = KV> + 'a>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -73,12 +73,12 @@ fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
 }
 
 impl Storage for MemoryStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
         Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) -> Result<()> {
+    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
         self.data.remove(key);
         Ok(())
     }

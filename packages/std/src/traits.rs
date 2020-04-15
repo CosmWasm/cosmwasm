@@ -2,7 +2,7 @@ use serde::de::DeserializeOwned;
 
 use crate::api::{ApiError, ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::Result;
+use crate::errors::StdResult;
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::QueryRequest;
@@ -27,7 +27,7 @@ pub trait ReadonlyStorage {
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
-    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>>;
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>>;
 
     #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
@@ -40,13 +40,13 @@ pub trait ReadonlyStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = KV> + 'a>>;
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
 pub trait Storage: ReadonlyStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()>;
-    fn remove(&mut self, key: &[u8]) -> Result<()>;
+    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()>;
+    fn remove(&mut self, key: &[u8]) -> StdResult<()>;
 }
 
 /// Api are callbacks to system functions defined outside of the wasm modules.
@@ -59,8 +59,8 @@ pub trait Storage: ReadonlyStorage {
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api: Copy + Clone + Send {
-    fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr>;
-    fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr>;
+    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
+    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
 }
 
 // QuerierResponse is a short-hand alias as this type is long to write
@@ -83,7 +83,7 @@ pub trait Querier: Clone + Send {
     ///
     /// eg. When querying another contract, you will often want some way to detect/handle if there
     /// is no contract there.
-    fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> Result<T> {
+    fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> StdResult<T> {
         match self.query(&request) {
             Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
             Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
@@ -96,7 +96,7 @@ pub trait Querier: Clone + Send {
         &self,
         address: U,
         denom: &str,
-    ) -> Result<BalanceResponse> {
+    ) -> StdResult<BalanceResponse> {
         let request = QueryRequest::Balance {
             address: address.into(),
             denom: denom.to_string(),
@@ -104,7 +104,7 @@ pub trait Querier: Clone + Send {
         self.parse_query(&request)
     }
 
-    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> Result<AllBalanceResponse> {
+    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
         let request = QueryRequest::AllBalances {
             address: address.into(),
         };

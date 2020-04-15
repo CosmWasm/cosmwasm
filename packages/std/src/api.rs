@@ -153,19 +153,19 @@ impl From<SystemError> for ApiSystemError {
 #[cfg(test)]
 mod test_result {
     use super::*;
-    use crate::errors::{contract_err, NoSuchContract, Result};
+    use crate::errors::{contract_err, NoSuchContract, StdResult};
     use crate::serde::{from_slice, to_vec};
 
     #[test]
     fn convert_ok_result() {
-        let input: Result<Vec<u8>> = Ok(b"foo".to_vec());
+        let input: StdResult<Vec<u8>> = Ok(b"foo".to_vec());
         let convert: ApiResult<Vec<u8>> = input.into();
         assert_eq!(convert, ApiResult::Ok(b"foo".to_vec()));
     }
 
     #[test]
     fn check_ok_into_conversion() {
-        let input: Result<bool> = Ok(true);
+        let input: StdResult<bool> = Ok(true);
         let convert: ApiResult<i32> = input.into();
         assert_eq!(convert, ApiResult::Ok(1i32));
         let expanded: Result<i64, ApiError> = convert.into();
@@ -175,7 +175,7 @@ mod test_result {
 
     #[test]
     fn convert_err_result() {
-        let input: Result<()> = contract_err("sample error");
+        let input: StdResult<()> = contract_err("sample error");
         let convert: ApiResult<()> = input.into();
         assert_eq!(
             convert,
@@ -213,7 +213,7 @@ mod test_result {
     #[test]
     // this tests Ok(Err(_)) case for SystemError, Error
     fn convert_nested_ok_err_result() {
-        let input: Result<Result<()>, SystemError> = Ok(contract_err("nested error"));
+        let input: Result<StdResult<()>, SystemError> = Ok(contract_err("nested error"));
         let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
         assert_eq!(
             convert,
@@ -226,7 +226,7 @@ mod test_result {
     #[test]
     // this tests Ok(Ok(_)) case for SystemError, Error
     fn convert_nested_ok_ok_result() {
-        let input: Result<Result<i32>, SystemError> = Ok(Ok(123));
+        let input: Result<StdResult<i32>, SystemError> = Ok(Ok(123));
         let convert: ApiResult<ApiResult<i32>, ApiSystemError> = input.into();
         assert_eq!(convert, ApiResult::Ok(ApiResult::Ok(123)),);
     }
@@ -234,7 +234,7 @@ mod test_result {
     #[test]
     // make sure we can shove this all over API boundaries
     fn serialize_and_recover_nested_result() {
-        let input: Result<Result<()>, SystemError> = Ok(contract_err("over ffi"));
+        let input: Result<StdResult<()>, SystemError> = Ok(contract_err("over ffi"));
         let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
         let recovered: ApiResult<ApiResult<(), ApiError>, ApiSystemError> =
             from_slice(&to_vec(&convert).unwrap()).unwrap();
@@ -263,11 +263,11 @@ mod test_errors {
     use super::*;
     use crate::errors::{
         contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, InvalidRequest,
-        NoSuchContract, NotFound, NullPointer, Result, SerializeErr,
+        NoSuchContract, NotFound, NullPointer, SerializeErr, StdResult,
     };
     use crate::serde::{from_slice, to_vec};
 
-    fn assert_conversion(r: Result<()>) {
+    fn assert_conversion(r: StdResult<()>) {
         let error = r.unwrap_err();
         let msg = format!("{}", error);
         let converted: ApiError = error.into();

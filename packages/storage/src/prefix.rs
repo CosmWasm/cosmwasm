@@ -1,6 +1,6 @@
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{ReadonlyStorage, Result, Storage};
+use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
 
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
@@ -45,7 +45,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
 }
 
 impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> {
-    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
@@ -56,7 +56,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = KV> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
@@ -85,7 +85,7 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
 }
 
 impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
-    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
@@ -97,17 +97,17 @@ impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = KV> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
 
 impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
         set_with_prefix(self.storage, &self.prefix, key, value)
     }
 
-    fn remove(&mut self, key: &[u8]) -> Result<()> {
+    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
         remove_with_prefix(self.storage, &self.prefix, key)
     }
 }

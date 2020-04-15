@@ -7,9 +7,9 @@ use snafu::ResultExt;
 use std::any::type_name;
 
 use crate::encoding::Binary;
-use crate::errors::{ParseErr, Result, SerializeErr};
+use crate::errors::{ParseErr, SerializeErr, StdResult};
 
-pub fn from_slice<'a, T>(value: &'a [u8]) -> Result<T>
+pub fn from_slice<'a, T>(value: &'a [u8]) -> StdResult<T>
 where
     T: Deserialize<'a>,
 {
@@ -18,14 +18,14 @@ where
     })
 }
 
-pub fn from_binary<'a, T>(value: &'a Binary) -> Result<T>
+pub fn from_binary<'a, T>(value: &'a Binary) -> StdResult<T>
 where
     T: Deserialize<'a>,
 {
     from_slice(value.as_slice())
 }
 
-pub fn to_vec<T>(data: &T) -> Result<Vec<u8>>
+pub fn to_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
@@ -34,7 +34,7 @@ where
     })
 }
 
-pub fn to_binary<T>(data: &T) -> Result<Binary>
+pub fn to_binary<T>(data: &T) -> StdResult<Binary>
 where
     T: Serialize + ?Sized,
 {

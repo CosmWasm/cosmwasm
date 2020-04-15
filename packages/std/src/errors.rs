@@ -87,21 +87,21 @@ pub enum SystemError {
 
 /// Result for init, handle and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+pub type StdResult<T> = core::result::Result<T, Error>;
 
-pub fn invalid<T>(field: &'static str, msg: &'static str) -> Result<T> {
+pub fn invalid<T>(field: &'static str, msg: &'static str) -> StdResult<T> {
     ValidationErr { field, msg }.fail()
 }
 
-pub fn contract_err<T>(msg: &'static str) -> Result<T> {
+pub fn contract_err<T>(msg: &'static str) -> StdResult<T> {
     ContractErr { msg }.fail()
 }
 
-pub fn dyn_contract_err<T>(msg: String) -> Result<T> {
+pub fn dyn_contract_err<T>(msg: String) -> StdResult<T> {
     DynContractErr { msg }.fail()
 }
 
-pub fn unauthorized<T>() -> Result<T> {
+pub fn unauthorized<T>() -> StdResult<T> {
     Unauthorized {}.fail()
 }
 
@@ -111,7 +111,7 @@ mod test {
 
     #[test]
     fn use_invalid() {
-        let e: Result<()> = invalid("demo", "not implemented");
+        let e: StdResult<()> = invalid("demo", "not implemented");
         match e {
             Err(Error::ValidationErr { field, msg, .. }) => {
                 assert_eq!(field, "demo");
@@ -125,7 +125,7 @@ mod test {
     #[test]
     // example of reporting static contract errors
     fn contract_helper() {
-        let e: Result<()> = contract_err("not implemented");
+        let e: StdResult<()> = contract_err("not implemented");
         match e {
             Err(Error::ContractErr { msg, .. }) => {
                 assert_eq!(msg, "not implemented");
@@ -139,7 +139,7 @@ mod test {
     // example of reporting contract errors with format!
     fn dyn_contract_helper() {
         let guess = 7;
-        let e: Result<()> = dyn_contract_err(format!("{} is too low", guess));
+        let e: StdResult<()> = dyn_contract_err(format!("{} is too low", guess));
         match e {
             Err(Error::DynContractErr { msg, .. }) => {
                 assert_eq!(msg, String::from("7 is too low"));

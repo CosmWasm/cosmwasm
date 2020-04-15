@@ -11,7 +11,7 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 
-use crate::errors::Error;
+use crate::errors::StdResult;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
@@ -48,7 +48,7 @@ pub fn do_init<T: DeserializeOwned + JsonSchema>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> Result<InitResponse, Error>,
+    ) -> StdResult<InitResponse>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32 {
@@ -63,7 +63,7 @@ pub fn do_handle<T: DeserializeOwned + JsonSchema>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> Result<HandleResponse, Error>,
+    ) -> StdResult<HandleResponse>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32 {
@@ -78,7 +78,7 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
     query_fn: &dyn Fn(
         &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         T,
-    ) -> Result<QueryResponse, Error>,
+    ) -> StdResult<QueryResponse>,
     msg_ptr: u32,
 ) -> u32 {
     let res: QueryResult = _do_query(query_fn, msg_ptr as *mut c_void).into();
@@ -91,10 +91,10 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> Result<InitResponse, Error>,
+    ) -> StdResult<InitResponse>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> Result<InitResponse, Error> {
+) -> StdResult<InitResponse> {
     let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
     let env: Env = from_slice(&env)?;
@@ -108,10 +108,10 @@ fn _do_handle<T: DeserializeOwned + JsonSchema>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> Result<HandleResponse, Error>,
+    ) -> StdResult<HandleResponse>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> Result<HandleResponse, Error> {
+) -> StdResult<HandleResponse> {
     let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
@@ -125,9 +125,9 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
     query_fn: &dyn Fn(
         &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         T,
-    ) -> Result<QueryResponse, Error>,
+    ) -> StdResult<QueryResponse>,
     msg_ptr: *mut c_void,
-) -> Result<QueryResponse, Error> {
+) -> StdResult<QueryResponse> {
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 
     let msg: T = from_slice(&msg)?;

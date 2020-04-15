@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{ContractErr, Result, Utf8StringErr};
+use crate::errors::{ContractErr, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, QueryRequest};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
@@ -65,7 +65,7 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
+    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         if human.len() > self.canonical_length {
             return ContractErr {
                 msg: "human encoding too long",
@@ -80,7 +80,7 @@ impl Api for MockApi {
         Ok(CanonicalAddr(Binary(out)))
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         // remove trailing 0's (TODO: fix this - but fine for first tests)
         let trimmed: Vec<u8> = canonical
             .as_slice()

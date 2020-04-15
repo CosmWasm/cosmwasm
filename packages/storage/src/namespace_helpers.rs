@@ -1,12 +1,12 @@
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{ReadonlyStorage, Result, Storage};
+use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
     namespace: &[u8],
     key: &[u8],
-) -> Result<Option<Vec<u8>>> {
+) -> StdResult<Option<Vec<u8>>> {
     storage.get(&concat(namespace, key))
 }
 
@@ -15,7 +15,7 @@ pub(crate) fn set_with_prefix<S: Storage>(
     namespace: &[u8],
     key: &[u8],
     value: &[u8],
-) -> Result<()> {
+) -> StdResult<()> {
     storage.set(&concat(namespace, key), value)
 }
 
@@ -23,7 +23,7 @@ pub(crate) fn remove_with_prefix<S: Storage>(
     storage: &mut S,
     namespace: &[u8],
     key: &[u8],
-) -> Result<()> {
+) -> StdResult<()> {
     storage.remove(&concat(namespace, key))
 }
 
@@ -41,7 +41,7 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     start: Option<&[u8]>,
     end: Option<&[u8]>,
     order: Order,
-) -> Result<Box<dyn Iterator<Item = KV> + 'a>> {
+) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>> {
     // prepare start, end with prefix
     let start = match start {
         Some(s) => concat(namespace, s),

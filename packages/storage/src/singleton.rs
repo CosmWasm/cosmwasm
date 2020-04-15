@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, Result, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
 
 use crate::namespace_helpers::key_prefix;
 use crate::type_helpers::{may_deserialize, must_deserialize};
@@ -52,19 +52,19 @@ where
     }
 
     /// save will serialize the model and store, returns an error on serialization issues
-    pub fn save(&mut self, data: &T) -> Result<()> {
+    pub fn save(&mut self, data: &T) -> StdResult<()> {
         self.storage.set(&self.key, &to_vec(data)?)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self) -> Result<T> {
+    pub fn load(&self) -> StdResult<T> {
         let value = self.storage.get(&self.key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
-    pub fn may_load(&self) -> Result<Option<T>> {
+    pub fn may_load(&self) -> StdResult<Option<T>> {
         let value = self.storage.get(&self.key)?;
         may_deserialize(&value)
     }
@@ -73,7 +73,7 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update(&mut self, action: &dyn Fn(T) -> Result<T>) -> Result<T> {
+    pub fn update(&mut self, action: &dyn Fn(T) -> StdResult<T>) -> StdResult<T> {
         let input = self.load()?;
         let output = action(input)?;
         self.save(&output)?;
@@ -106,14 +106,14 @@ where
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self) -> Result<T> {
+    pub fn load(&self) -> StdResult<T> {
         let value = self.storage.get(&self.key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
-    pub fn may_load(&self) -> Result<Option<T>> {
+    pub fn may_load(&self) -> StdResult<Option<T>> {
         let value = self.storage.get(&self.key)?;
         may_deserialize(&value)
     }

@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use snafu::ResultExt;
 
-use crate::errors::{Base64Err, Result};
+use crate::errors::{Base64Err, StdResult};
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -16,7 +16,7 @@ pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 impl Binary {
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
-    pub fn from_base64(encoded: &str) -> Result<Self> {
+    pub fn from_base64(encoded: &str) -> StdResult<Self> {
         let binary = base64::decode(&encoded).context(Base64Err {})?;
         Ok(Binary(binary))
     }
