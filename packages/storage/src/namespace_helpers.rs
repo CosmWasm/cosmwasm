@@ -118,7 +118,7 @@ fn namespace_upper_bound(input: &[u8]) -> Vec<u8> {
         if copy[i] == 255 {
             copy[i] = 0;
         } else {
-            copy[i] = copy[i] + 1;
+            copy[i] += 1;
             break;
         }
     }
