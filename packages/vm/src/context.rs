@@ -239,7 +239,11 @@ mod iter_support {
             Err(_) => return ERROR_SCAN_INVALID_ORDER,
         };
         let res = with_storage_from_context::<S, Q, _, i32>(ctx, |store| {
-            let iter = store.range(start.as_deref(), end.as_deref(), order);
+            let iter = match store.range(start.as_deref(), end.as_deref(), order) {
+                Ok(iter) => iter,
+                Err(_) => return make_runtime_err("An error occurred in range call"),
+            };
+
             // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
             // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
             let live_forever: Box<dyn Iterator<Item = KV> + 'static> =
@@ -251,8 +255,9 @@ mod iter_support {
             })
         });
         match res {
-            Ok(cnt) => cnt,
-            Err(_) => ERROR_NO_CONTEXT_DATA,
+            Ok(callback_result) => callback_result,
+            Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
+            Err(_) => ERROR_DB_UNKNOWN,
         }
     }
 
