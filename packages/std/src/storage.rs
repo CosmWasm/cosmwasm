@@ -1,5 +1,7 @@
 use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
+use std::iter;
+#[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
@@ -33,6 +35,18 @@ impl ReadonlyStorage for MemoryStorage {
         order: Order,
     ) -> Box<dyn Iterator<Item = KV> + 'a> {
         let bounds = range_bounds(start, end);
+
+        // BTreeMap.range panics if range is start > end.
+        // However, this cases represent just empty range and we treat it as such.
+        match (bounds.start_bound(), bounds.end_bound()) {
+            (Bound::Included(start), Bound::Excluded(end)) if start > end => {
+                return Box::new(IterVec {
+                    iter: iter::empty(),
+                });
+            }
+            _ => {}
+        }
+
         let iter = self.data.range(bounds);
         match order {
             Order::Ascending => Box::new(IterVec { iter }),
@@ -146,6 +160,34 @@ mod test {
                     (b"ant".to_vec(), b"hill".to_vec()),
                 ]
             );
+        }
+
+        // bounded empty [a, a)
+        {
+            let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Ascending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, a) (descending)
+        {
+            let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Descending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, b) with b < a
+        {
+            let iter = store.range(Some(b"z"), Some(b"a"), Order::Ascending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, b) with b < a (descending)
+        {
+            let iter = store.range(Some(b"z"), Some(b"a"), Order::Descending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
         }
 
         // right unbounded

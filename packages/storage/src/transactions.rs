@@ -2,6 +2,8 @@
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
+use std::iter;
+#[cfg(feature = "iterator")]
 use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
@@ -57,11 +59,24 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = KV> + 'b> {
-        let local_raw = self.local_state.range(range_bounds(start, end));
-        let local: Box<dyn Iterator<Item = KVRef<Delta>>> = match order {
-            Order::Ascending => Box::new(local_raw),
-            Order::Descending => Box::new(local_raw.rev()),
-        };
+        let bounds = range_bounds(start, end);
+
+        // BTreeMap.range panics if range is start > end.
+        // However, this cases represent just empty range and we treat it as such.
+        let local: Box<dyn Iterator<Item = KVRef<Delta>>> =
+            match (bounds.start_bound(), bounds.end_bound()) {
+                (Bound::Included(start), Bound::Excluded(end)) if start > end => {
+                    Box::new(iter::empty())
+                }
+                _ => {
+                    let local_raw = self.local_state.range(bounds);
+                    match order {
+                        Order::Ascending => Box::new(local_raw),
+                        Order::Descending => Box::new(local_raw.rev()),
+                    }
+                }
+            };
+
         let base = self.storage.range(start, end, order);
         let merged = MergeOverlay::new(local, base, order);
         Box::new(merged)
@@ -335,6 +350,34 @@ mod test {
                     (b"ant".to_vec(), b"hill".to_vec()),
                 ]
             );
+        }
+
+        // bounded empty [a, a)
+        {
+            let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Ascending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, a) (descending)
+        {
+            let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Descending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, b) with b < a
+        {
+            let iter = store.range(Some(b"z"), Some(b"a"), Order::Ascending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, b) with b < a (descending)
+        {
+            let iter = store.range(Some(b"z"), Some(b"a"), Order::Descending);
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
         }
 
         // right unbounded
