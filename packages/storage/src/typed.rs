@@ -71,7 +71,7 @@ where
         let mapped = self
             .storage
             .range(start, end, order)?
-            .map(deserialize_kv::<T>);
+            .map(|item| item.and_then(deserialize_kv::<T>));
         Ok(Box::new(mapped))
     }
 
@@ -134,7 +134,7 @@ where
         let mapped = self
             .storage
             .range(start, end, order)?
-            .map(deserialize_kv::<T>);
+            .map(|item| item.and_then(deserialize_kv::<T>));
         Ok(Box::new(mapped))
     }
 }

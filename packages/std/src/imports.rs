@@ -91,7 +91,7 @@ impl ReadonlyStorage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = KV>>> {
+    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>>>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -158,7 +158,7 @@ struct ExternalIterator {
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
-    type Item = KV;
+    type Item = StdResult<KV>;
 
     fn next(&mut self) -> Option<Self::Item> {
         let key_ptr = alloc(DB_READ_KEY_BUFFER_LENGTH);
@@ -166,7 +166,10 @@ impl Iterator for ExternalIterator {
 
         let read = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
         if read < 0 {
-            panic!(format!("Unknown error on next: {}", read));
+            return Some(dyn_contract_err(format!(
+                "Unknown error from db_next: {}",
+                read
+            )));
         }
 
         let key = unsafe { consume_region(key_ptr).unwrap() };
@@ -174,7 +177,7 @@ impl Iterator for ExternalIterator {
         if key.is_empty() {
             return None;
         }
-        Some((key, value))
+        Some(Ok((key, value)))
     }
 }
 
