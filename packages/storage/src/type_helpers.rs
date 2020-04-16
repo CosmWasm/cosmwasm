@@ -3,13 +3,15 @@ use std::any::type_name;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
-use cosmwasm_std::{from_slice, NotFound, Result};
+use cosmwasm_std::{from_slice, NotFound, StdResult};
 
 /// may_deserialize parses json bytes from storage (Option), returning Ok(None) if no data present
 ///
 /// value is an odd type, but this is meant to be easy to use with output from storage.get (Option<Vec<u8>>)
 /// and value.map(|s| s.as_slice()) seems trickier than &value
-pub(crate) fn may_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> Result<Option<T>> {
+pub(crate) fn may_deserialize<T: DeserializeOwned>(
+    value: &Option<Vec<u8>>,
+) -> StdResult<Option<T>> {
     match value {
         Some(d) => Ok(Some(from_slice(d.as_slice())?)),
         None => Ok(None),
@@ -17,7 +19,7 @@ pub(crate) fn may_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> R
 }
 
 /// must_deserialize parses json bytes from storage (Option), returning NotFound error if no data present
-pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> Result<T> {
+pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> StdResult<T> {
     match value {
         Some(d) => from_slice(&d),
         None => NotFound {
@@ -28,7 +30,7 @@ pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> 
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: KV) -> Result<KV<T>> {
+pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: KV) -> StdResult<KV<T>> {
     let (k, v) = kv;
     let t = from_slice::<T>(&v)?;
     Ok((k, t))
@@ -37,7 +39,7 @@ pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: KV) -> Result<KV<T>> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::{to_vec, Error};
+    use cosmwasm_std::{to_vec, StdError};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -73,7 +75,7 @@ mod test {
         let parsed = must_deserialize::<Data>(&None);
         match parsed {
             // if we used short_type_name, this would just be Data
-            Err(Error::NotFound { kind, .. }) => {
+            Err(StdError::NotFound { kind, .. }) => {
                 assert_eq!(kind, "cosmwasm_storage::type_helpers::test::Data")
             }
             Err(e) => panic!("Unexpected error {}", e),

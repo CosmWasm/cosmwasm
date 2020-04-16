@@ -3,7 +3,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
-use crate::errors::{Error, NullPointer};
+use crate::errors::{NullPointer, StdResult};
 
 /// Refers to some heap allocated data in Wasm.
 /// A pointer to an instance of this can be returned over FFI boundaries.
@@ -56,7 +56,7 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// Naturally, calling this function twice on the same pointer will double deallocate data
 /// and lead to a crash. Make sure to call it exactly once (either consuming the input in
 /// the wasm code OR deallocating the buffer from the caller).
-pub unsafe fn consume_region(ptr: *mut c_void) -> Result<Vec<u8>, Error> {
+pub unsafe fn consume_region(ptr: *mut c_void) -> StdResult<Vec<u8>> {
     if ptr.is_null() {
         return NullPointer {}.fail();
     }

@@ -85,6 +85,9 @@
   allow propagation of errors.
 - Move `transactional`, `transactional_deps`, `RepLog`, `StorageTransaction`
   into crate `cosmwasm-storage`.
+- Rename `Result` to `StdResult` to differentiate between the auto-`use`d
+  `core::result::Result`. Fix error argument to `Error`.
+- Rename `Error` to `StdError`.
 
 **cosmwasm-vm**
 

@@ -5,7 +5,7 @@ use snafu::OptionExt;
 use cosmwasm_std::{
     contract_err, from_slice, log, to_binary, to_vec, unauthorized, Api, Binary, CanonicalAddr,
     CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier,
-    QueryResponse, Result, Storage,
+    QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -61,7 +61,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: InitMsg,
-) -> Result<InitResponse> {
+) -> StdResult<InitResponse> {
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
@@ -77,7 +77,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Release {} => do_release(deps, env),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
@@ -91,7 +91,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 fn do_release<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)?
@@ -121,7 +121,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn do_cpu_loop() -> Result<HandleResponse> {
+fn do_cpu_loop() -> StdResult<HandleResponse> {
     let mut counter = 0u64;
     loop {
         counter += 1;
@@ -133,7 +133,7 @@ fn do_cpu_loop() -> Result<HandleResponse> {
 
 fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -142,7 +142,7 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn do_memory_loop() -> Result<HandleResponse> {
+fn do_memory_loop() -> StdResult<HandleResponse> {
     let mut data = vec![1usize];
     loop {
         // add one element
@@ -150,7 +150,7 @@ fn do_memory_loop() -> Result<HandleResponse> {
     }
 }
 
-fn do_allocate_large_memory() -> Result<HandleResponse> {
+fn do_allocate_large_memory() -> StdResult<HandleResponse> {
     // We create memory pages explicitely since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
@@ -170,21 +170,23 @@ fn do_allocate_large_memory() -> Result<HandleResponse> {
     contract_err("Unsupported architecture")
 }
 
-fn do_panic() -> Result<HandleResponse> {
+fn do_panic() -> StdResult<HandleResponse> {
     panic!("This page intentionally faulted");
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     msg: QueryMsg,
-) -> Result<QueryResponse> {
+) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => query_verifier(deps),
         QueryMsg::OtherBalance { address } => query_other_balance(deps, address),
     }
 }
 
-fn query_verifier<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<QueryResponse> {
+fn query_verifier<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+) -> StdResult<QueryResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)?
@@ -197,7 +199,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Res
 fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
-) -> Result<QueryResponse> {
+) -> StdResult<QueryResponse> {
     let res = deps.querier.query_all_balances(address)?;
     to_binary(&res)
 }
@@ -207,7 +209,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, Error, ReadonlyStorage};
+    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
     use cosmwasm_storage::transactional_deps;
 
     #[test]
@@ -374,7 +376,7 @@ mod tests {
         let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
         match handle_res.unwrap_err() {
-            Error::Unauthorized { .. } => {}
+            StdError::Unauthorized { .. } => {}
             _ => panic!("Expect unauthorized error"),
         }
 

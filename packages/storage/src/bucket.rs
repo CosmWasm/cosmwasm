@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, Result, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
@@ -60,19 +60,19 @@ where
     }
 
     /// save will serialize the model and store, returns an error on serialization issues
-    pub fn save(&mut self, key: &[u8], data: &T) -> Result<()> {
+    pub fn save(&mut self, key: &[u8], data: &T) -> StdResult<()> {
         set_with_prefix(self.storage, &self.prefix, key, &to_vec(data)?)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self, key: &[u8]) -> Result<T> {
+    pub fn load(&self, key: &[u8]) -> StdResult<T> {
         let value = get_with_prefix(self.storage, &self.prefix, key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
-    pub fn may_load(&self, key: &[u8]) -> Result<Option<T>> {
+    pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
         let value = get_with_prefix(self.storage, &self.prefix, key)?;
         may_deserialize(&value)
     }
@@ -83,7 +83,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = Result<KV<T>>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b>> {
         let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)?
             .map(deserialize_kv::<T>);
         Ok(Box::new(mapped))
@@ -95,7 +95,11 @@ where
     /// non-existent values, please use `may_update`
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update(&mut self, key: &[u8], action: &dyn Fn(Option<T>) -> Result<T>) -> Result<T> {
+    pub fn update(
+        &mut self,
+        key: &[u8],
+        action: &dyn Fn(Option<T>) -> StdResult<T>,
+    ) -> StdResult<T> {
         let input = self.may_load(key)?;
         let output = action(input)?;
         self.save(key, &output)?;
@@ -134,14 +138,14 @@ where
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self, key: &[u8]) -> Result<T> {
+    pub fn load(&self, key: &[u8]) -> StdResult<T> {
         let value = get_with_prefix(self.storage, &self.prefix, key)?;
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
-    pub fn may_load(&self, key: &[u8]) -> Result<Option<T>> {
+    pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
         let value = get_with_prefix(self.storage, &self.prefix, key)?;
         may_deserialize(&value)
     }
@@ -152,7 +156,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = Result<KV<T>>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b>> {
         let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)?
             .map(deserialize_kv::<T>);
         Ok(Box::new(mapped))
@@ -262,7 +266,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let birthday = |mayd: Option<Data>| -> Result<Data> {
+        let birthday = |mayd: Option<Data>| -> StdResult<Data> {
             let mut d = mayd.context(NotFound { kind: "Data" })?;
             d.age += 1;
             Ok(d)
@@ -342,7 +346,7 @@ mod test {
         bucket.save(b"maria", &maria).unwrap();
         bucket.save(b"jose", &jose).unwrap();
 
-        let res_data: Result<Vec<KV<Data>>> = bucket
+        let res_data: StdResult<Vec<KV<Data>>> = bucket
             .range(None, None, Order::Ascending)
             .unwrap()
             .collect();
@@ -353,7 +357,7 @@ mod test {
 
         // also works for readonly
         let read_bucket = bucket_read::<_, Data>(b"data", &store);
-        let res_data: Result<Vec<KV<Data>>> = read_bucket
+        let res_data: StdResult<Vec<KV<Data>>> = read_bucket
             .range(None, None, Order::Ascending)
             .unwrap()
             .collect();

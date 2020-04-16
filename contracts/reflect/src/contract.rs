@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, Querier, Result, Storage,
+    HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
 use crate::msg::{HandleMsg, InitMsg, OwnerResponse, QueryMsg};
@@ -10,7 +10,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     _msg: InitMsg,
-) -> Result<InitResponse> {
+) -> StdResult<InitResponse> {
     let state = State {
         owner: env.message.signer,
     };
@@ -24,7 +24,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, owner),
@@ -35,7 +35,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msgs: Vec<CosmosMsg>,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     let state = config(&mut deps.storage).load()?;
     if env.message.signer != state.owner {
         return unauthorized();
@@ -55,7 +55,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     owner: HumanAddr,
-) -> Result<HandleResponse> {
+) -> StdResult<HandleResponse> {
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
         if env.message.signer != state.owner {
@@ -73,13 +73,13 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     msg: QueryMsg,
-) -> Result<Binary> {
+) -> StdResult<Binary> {
     match msg {
         QueryMsg::Owner {} => query_owner(deps),
     }
 }
 
-fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result<Binary> {
+fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<Binary> {
     let state = config_read(&deps.storage).load()?;
 
     let resp = OwnerResponse {
@@ -92,7 +92,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> Result
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, Binary, Error};
+    use cosmwasm_std::{coins, from_binary, Binary, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -154,7 +154,7 @@ mod tests {
 
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(Error::Unauthorized { .. }) => {}
+            Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Must return unauthorized error"),
         }
     }
@@ -175,7 +175,7 @@ mod tests {
         };
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(Error::ContractErr { msg, .. }) => {
+            Err(StdError::ContractErr { msg, .. }) => {
                 assert_eq!(msg, "Must reflect at least one message")
             }
             _ => panic!("Must return contract error"),
@@ -247,7 +247,7 @@ mod tests {
 
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(Error::Unauthorized { .. }) => {}
+            Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Must return unauthorized error"),
         }
     }

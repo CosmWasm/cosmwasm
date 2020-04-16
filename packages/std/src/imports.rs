@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use crate::api::{ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::{contract_err, dyn_contract_err, ContractErr, Result};
+use crate::errors::{contract_err, dyn_contract_err, ContractErr, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -61,7 +61,7 @@ impl ExternalStorage {
         &self,
         key: &[u8],
         result_length: usize,
-    ) -> Result<Option<Vec<u8>>> {
+    ) -> StdResult<Option<Vec<u8>>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
         let value_ptr = alloc(result_length);
@@ -81,7 +81,7 @@ impl ExternalStorage {
 }
 
 impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
         self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
     }
 
@@ -91,7 +91,7 @@ impl ReadonlyStorage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Result<Box<dyn Iterator<Item = KV>>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV>>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -121,7 +121,7 @@ impl ReadonlyStorage for ExternalStorage {
 }
 
 impl Storage for ExternalStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> Result<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
@@ -134,7 +134,7 @@ impl Storage for ExternalStorage {
         Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) -> Result<()> {
+    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
@@ -189,7 +189,7 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
-    fn canonical_address(&self, human: &HumanAddr) -> Result<CanonicalAddr> {
+    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
         let send_ptr = &*send as *const Region as *const c_void;
         let canon = alloc(ADDR_BUFFER_LENGTH);
@@ -206,7 +206,7 @@ impl Api for ExternalApi {
         Ok(CanonicalAddr(Binary(out)))
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> Result<HumanAddr> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as *const c_void;
         let human = alloc(ADDR_BUFFER_LENGTH);
@@ -248,7 +248,7 @@ impl Querier for ExternalQuerier {
             return Err(ApiSystemError::Unknown {});
         }
 
-        let parse = |r| -> Result<QuerierResponse> {
+        let parse = |r| -> StdResult<QuerierResponse> {
             let out = unsafe { consume_region(r)? };
             let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> = from_slice(&out)?;
             Ok(parsed.into())

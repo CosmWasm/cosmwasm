@@ -118,6 +118,7 @@ often combined into a `Bucket`. A Bucket works just like the example above,
 except the creation can be in another function:
 
 ```rust
+use cosmwasm_std::StdResult;
 use cosmwasm_std::testing::MockStorage;
 use cosmwasm_storage::{bucket, Bucket};
 
@@ -125,7 +126,7 @@ fn people<'a, S: Storage>(storage: &'a mut S) -> Bucket<'a, S, Data> {
     bucket(b"people", storage)
 }
 
-fn do_stuff() -> Result <()> {
+fn do_stuff() -> StdResult<()> {
     let mut store = MockStorage::new();
     people(&mut store).save(b"john", &Data{
         name: "John",
@@ -150,7 +151,7 @@ Please note that in this context, the term "singleton" does not refer to
 container for a single element.
 
 ```rust
-use cosmwasm_std::{Coin, coin};
+use cosmwasm_std::{Coin, coin, StdResult};
 use cosmwasm_std::testing::MockStorage;
 
 use cosmwasm_storage::{singleton};
@@ -161,7 +162,7 @@ pub struct Config {
     pub transfer_price: Option<Coin>,
 }
 
-fn initialize() -> Result<()> {
+fn initialize() -> StdResult<()> {
     let mut store = MockStorage::new();
     let config = singleton(&mut store, b"config");
     config.save(&Config{

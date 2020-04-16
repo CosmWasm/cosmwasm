@@ -1,4 +1,4 @@
-use cosmwasm_std::{Result, Storage};
+use cosmwasm_std::{StdResult, Storage};
 
 use crate::Singleton;
 
@@ -9,13 +9,13 @@ pub fn sequence<'a, S: Storage>(storage: &'a mut S, key: &[u8]) -> Singleton<'a,
 
 /// currval returns the last value returned by nextval. If the sequence has never been used,
 /// then it will return 0.
-pub fn currval<S: Storage>(seq: &Singleton<S, u64>) -> Result<u64> {
+pub fn currval<S: Storage>(seq: &Singleton<S, u64>) -> StdResult<u64> {
     Ok(seq.may_load()?.unwrap_or_default())
 }
 
 /// nextval increments the counter by 1 and returns the new value.
 /// On the first time it is called (no sequence info in db) it will return 1.
-pub fn nextval<S: Storage>(seq: &mut Singleton<S, u64>) -> Result<u64> {
+pub fn nextval<S: Storage>(seq: &mut Singleton<S, u64>) -> StdResult<u64> {
     let val = currval(&seq)? + 1;
     seq.save(&val)?;
     Ok(val)

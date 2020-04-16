@@ -173,10 +173,10 @@ custom `InitMsg` and `HandleMsg` structs for parsing your custom message types
 
 ```rust
 pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8> ->
-  Result<Vec<CosmosMsg>, Error> { }
+  StdResult<Vec<CosmosMsg>> { }
 
 pub fn handle<T: Storage>(store: &mut T, params: Params, msg: Vec<u8> ->
-  Result<Vec<CosmosMsg>, Error> { }
+  StdResult<Vec<CosmosMsg>> { }
 ```
 
 The low-level `c_read` and `c_write` imports are nicely wrapped for you by a
