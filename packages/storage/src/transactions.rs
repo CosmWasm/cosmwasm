@@ -10,7 +10,12 @@ use std::ops::{Bound, RangeBounds};
 
 use cosmwasm_std::{Api, Extern, Querier, ReadonlyStorage, Result, Storage};
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{KVRef, Order, KV};
+use cosmwasm_std::{Order, KV};
+
+#[cfg(feature = "iterator")]
+/// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
+/// This is internal as it can change any time if the map implementation is swapped out.
+type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     /// read-only access to backing storage
@@ -63,7 +68,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
 
         // BTreeMap.range panics if range is start > end.
         // However, this cases represent just empty range and we treat it as such.
-        let local: Box<dyn Iterator<Item = KVRef<Delta>>> =
+        let local: Box<dyn Iterator<Item = BTreeMapPairRef<Delta>>> =
             match (bounds.start_bound(), bounds.end_bound()) {
                 (Bound::Included(start), Bound::Excluded(end)) if start > end => {
                     Box::new(iter::empty())
@@ -170,7 +175,7 @@ enum Delta {
 #[cfg(feature = "iterator")]
 struct MergeOverlay<'a, L, R>
 where
-    L: Iterator<Item = KVRef<'a, Delta>>,
+    L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
     R: Iterator<Item = KV>,
 {
     left: Peekable<L>,
@@ -181,7 +186,7 @@ where
 #[cfg(feature = "iterator")]
 impl<'a, L, R> MergeOverlay<'a, L, R>
 where
-    L: Iterator<Item = KVRef<'a, Delta>>,
+    L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
     R: Iterator<Item = KV>,
 {
     fn new(left: L, right: R, order: Order) -> Self {
@@ -224,7 +229,7 @@ where
 #[cfg(feature = "iterator")]
 impl<'a, L, R> Iterator for MergeOverlay<'a, L, R>
 where
-    L: Iterator<Item = KVRef<'a, Delta>>,
+    L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
     R: Iterator<Item = KV>,
 {
     type Item = KV;

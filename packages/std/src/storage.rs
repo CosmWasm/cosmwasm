@@ -6,7 +6,7 @@ use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
 #[cfg(feature = "iterator")]
-use crate::iterator::{KVRef, Order, KV};
+use crate::iterator::{Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]
@@ -64,12 +64,17 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 }
 
 #[cfg(feature = "iterator")]
-struct IterVec<'a, T: Iterator<Item = KVRef<'a>>> {
+/// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
+/// This is internal as it can change any time if the map implementation is swapped out.
+type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
+
+#[cfg(feature = "iterator")]
+struct IterVec<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> {
     iter: T,
 }
 
 #[cfg(feature = "iterator")]
-impl<'a, T: Iterator<Item = KVRef<'a>>> Iterator for IterVec<'a, T> {
+impl<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> Iterator for IterVec<'a, T> {
     type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {

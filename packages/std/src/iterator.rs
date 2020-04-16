@@ -4,9 +4,6 @@ use std::convert::TryFrom;
 /// KV is a Key-Value pair, returned from our iterators
 pub type KV<T = Vec<u8>> = (Vec<u8>, T);
 
-/// KVRef is a Key-Value pair reference, returned from underlying btree iterators
-pub type KVRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
-
 #[derive(Copy, Clone)]
 // We assign these to integers to provide a stable API for passing over FFI (to wasm and Go)
 pub enum Order {
