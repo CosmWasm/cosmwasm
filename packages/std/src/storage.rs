@@ -40,7 +40,7 @@ impl ReadonlyStorage for MemoryStorage {
         // However, this cases represent just empty range and we treat it as such.
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Excluded(end)) if start > end => {
-                return Ok(Box::new(IterVec {
+                return Ok(Box::new(Cloner {
                     iter: iter::empty(),
                 }));
             }
@@ -49,8 +49,8 @@ impl ReadonlyStorage for MemoryStorage {
 
         let iter = self.data.range(bounds);
         Ok(match order {
-            Order::Ascending => Box::new(IterVec { iter }),
-            Order::Descending => Box::new(IterVec { iter: iter.rev() }),
+            Order::Ascending => Box::new(Cloner { iter }),
+            Order::Descending => Box::new(Cloner { iter: iter.rev() }),
         })
     }
 }
@@ -69,12 +69,13 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 #[cfg(feature = "iterator")]
-struct IterVec<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> {
+/// An iterator that reaches out to `iter` and clones items
+struct Cloner<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> {
     iter: T,
 }
 
 #[cfg(feature = "iterator")]
-impl<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> Iterator for IterVec<'a, T> {
+impl<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> Iterator for Cloner<'a, T> {
     type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
