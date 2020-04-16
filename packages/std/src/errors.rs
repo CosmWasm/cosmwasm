@@ -62,6 +62,13 @@ pub enum Error {
     },
 }
 
+/// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
+/// this is only available within the contract and its unit tests.
+///
+/// The prefix "Std" means "the standard result within the standard library". This is not the only
+/// result/error type in cosmwasm-std.
+pub type StdResult<T> = core::result::Result<T, Error>;
+
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
 /// SystemError is used for errors inside the runtime.
@@ -84,10 +91,6 @@ pub enum SystemError {
     #[snafu(display("Unknown system error"))]
     Unknown { backtrace: snafu::Backtrace },
 }
-
-/// Result for init, handle and query. Since the error type cannot be serialized to JSON,
-/// this is only available within the contract and its unit tests.
-pub type StdResult<T> = core::result::Result<T, Error>;
 
 pub fn invalid<T>(field: &'static str, msg: &'static str) -> StdResult<T> {
     ValidationErr { field, msg }.fail()
