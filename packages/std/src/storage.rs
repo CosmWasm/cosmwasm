@@ -40,9 +40,7 @@ impl ReadonlyStorage for MemoryStorage {
         // However, this cases represent just empty range and we treat it as such.
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Excluded(end)) if start > end => {
-                return Ok(Box::new(Cloner {
-                    iter: iter::empty(),
-                }));
+                return Ok(Box::new(iter::empty()));
             }
             _ => {}
         }
