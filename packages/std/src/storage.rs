@@ -47,8 +47,8 @@ impl ReadonlyStorage for MemoryStorage {
 
         let iter = self.data.range(bounds);
         Ok(match order {
-            Order::Ascending => Box::new(Cloner { iter }),
-            Order::Descending => Box::new(Cloner { iter: iter.rev() }),
+            Order::Ascending => Box::new(iter.map(clone_item)),
+            Order::Descending => Box::new(iter.rev().map(clone_item)),
         })
     }
 }
@@ -67,22 +67,9 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 #[cfg(feature = "iterator")]
-/// An iterator that reaches out to `iter` and clones items
-struct Cloner<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> {
-    iter: T,
-}
-
-#[cfg(feature = "iterator")]
-impl<'a, T: Iterator<Item = BTreeMapPairRef<'a>>> Iterator for Cloner<'a, T> {
-    type Item = KV;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let n = self.iter.next();
-        match n {
-            Some((k, v)) => Some((k.clone(), v.clone())),
-            None => None,
-        }
-    }
+fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
+    let (key, value) = item_ref;
+    (key.clone(), value.clone())
 }
 
 impl Storage for MemoryStorage {
