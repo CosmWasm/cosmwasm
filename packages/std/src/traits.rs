@@ -30,15 +30,17 @@ pub trait ReadonlyStorage {
     fn get(&self, key: &[u8]) -> Result<Option<Vec<u8>>>;
 
     #[cfg(feature = "iterator")]
-    /// range allows iteration over a set of keys, either forwards or backwards
-    /// start is inclusive and end is exclusive
-    /// start must be lexicographically before end
+    /// Allows iteration over a set of key/value pairs, either forwards or backwards.
+    ///
+    /// The bound `start` is inclusive and `end` is exclusive.
+    ///
+    /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
     fn range<'a>(
         &'a self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = KV> + 'a>;
+    ) -> Result<Box<dyn Iterator<Item = KV> + 'a>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

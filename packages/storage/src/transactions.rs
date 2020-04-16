@@ -2,6 +2,8 @@
 use std::cmp::Ordering;
 use std::collections::BTreeMap;
 #[cfg(feature = "iterator")]
+use std::iter;
+#[cfg(feature = "iterator")]
 use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
@@ -56,15 +58,28 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = KV> + 'b> {
-        let local_raw = self.local_state.range(range_bounds(start, end));
-        let local: Box<dyn Iterator<Item = KVRef<Delta>>> = match order {
-            Order::Ascending => Box::new(local_raw),
-            Order::Descending => Box::new(local_raw.rev()),
-        };
-        let base = self.storage.range(start, end, order);
+    ) -> Result<Box<dyn Iterator<Item = KV> + 'b>> {
+        let bounds = range_bounds(start, end);
+
+        // BTreeMap.range panics if range is start > end.
+        // However, this cases represent just empty range and we treat it as such.
+        let local: Box<dyn Iterator<Item = KVRef<Delta>>> =
+            match (bounds.start_bound(), bounds.end_bound()) {
+                (Bound::Included(start), Bound::Excluded(end)) if start > end => {
+                    Box::new(iter::empty())
+                }
+                _ => {
+                    let local_raw = self.local_state.range(bounds);
+                    match order {
+                        Order::Ascending => Box::new(local_raw),
+                        Order::Descending => Box::new(local_raw.rev()),
+                    }
+                }
+            };
+
+        let base = self.storage.range(start, end, order)?;
         let merged = MergeOverlay::new(local, base, order);
-        Box::new(merged)
+        Ok(Box::new(merged))
     }
 }
 
@@ -279,7 +294,10 @@ mod test {
     fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-        assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
+        assert_eq!(
+            store.range(None, None, Order::Ascending).unwrap().count(),
+            1
+        );
 
         // setup - add some data, and delete part of it as well
         store.set(b"ant", b"hill").expect("error setting value");
@@ -289,72 +307,138 @@ mod test {
         store.set(b"bye", b"bye").expect("error setting value");
         store.remove(b"bye").expect("error removing key");
 
-        // open ended range
+        // unbounded
         {
-            let iter = store.range(None, None, Order::Ascending);
-            assert_eq!(3, iter.count());
-            let mut iter = store.range(None, None, Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
-            let mut iter = store.range(None, None, Order::Descending);
-            let last = iter.next().unwrap();
-            assert_eq!((b"ze".to_vec(), b"bra".to_vec()), last);
+            let iter = store.range(None, None, Order::Ascending).unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                ]
+            );
         }
 
-        // closed range
+        // unbounded (descending)
         {
-            let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-            assert_eq!(1, iter.count());
-            let mut iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let iter = store.range(None, None, Order::Descending).unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                ]
+            );
         }
 
-        // closed range reverse
+        // bounded
         {
-            let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
-            let second = iter.next().unwrap();
-            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), second);
+            let iter = store
+                .range(Some(b"f"), Some(b"n"), Order::Ascending)
+                .unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
-        // end open iterator
+        // bounded (descending)
         {
-            let iter = store.range(Some(b"f"), None, Order::Ascending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(Some(b"f"), None, Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let iter = store
+                .range(Some(b"air"), Some(b"loop"), Order::Descending)
+                .unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                ]
+            );
         }
 
-        // end open iterator reverse
+        // bounded empty [a, a)
         {
-            let iter = store.range(Some(b"f"), None, Order::Descending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(Some(b"f"), None, Order::Descending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"ze".to_vec(), b"bra".to_vec()), first);
+            let iter = store
+                .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
+                .unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
         }
 
-        // start open iterator
+        // bounded empty [a, a) (descending)
         {
-            let iter = store.range(None, Some(b"f"), Order::Ascending);
-            assert_eq!(1, iter.count());
-            let mut iter = store.range(None, Some(b"f"), Order::Ascending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"ant".to_vec(), b"hill".to_vec()), first);
+            let iter = store
+                .range(Some(b"foo"), Some(b"foo"), Order::Descending)
+                .unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
         }
 
-        // start open iterator
+        // bounded empty [a, b) with b < a
         {
-            let iter = store.range(None, Some(b"no"), Order::Descending);
-            assert_eq!(2, iter.count());
-            let mut iter = store.range(None, Some(b"no"), Order::Descending);
-            let first = iter.next().unwrap();
-            assert_eq!((b"foo".to_vec(), b"bar".to_vec()), first);
+            let iter = store
+                .range(Some(b"z"), Some(b"a"), Order::Ascending)
+                .unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // bounded empty [a, b) with b < a (descending)
+        {
+            let iter = store
+                .range(Some(b"z"), Some(b"a"), Order::Descending)
+                .unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![]);
+        }
+
+        // right unbounded
+        {
+            let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                ]
+            );
+        }
+
+        // right unbounded (descending)
+        {
+            let iter = store.range(Some(b"f"), None, Order::Descending).unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"ze".to_vec(), b"bra".to_vec()),
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                ]
+            );
+        }
+
+        // left unbounded
+        {
+            let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
+        }
+
+        // left unbounded (descending)
+        {
+            let iter = store.range(None, Some(b"no"), Order::Descending).unwrap();
+            let elements: Vec<KV> = iter.collect();
+            assert_eq!(
+                elements,
+                vec![
+                    (b"foo".to_vec(), b"bar".to_vec()),
+                    (b"ant".to_vec(), b"hill".to_vec()),
+                ]
+            );
         }
     }
 

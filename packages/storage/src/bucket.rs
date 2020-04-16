@@ -83,10 +83,10 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Result<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
+    ) -> Result<Box<dyn Iterator<Item = Result<KV<T>>> + 'b>> {
+        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)?
             .map(deserialize_kv::<T>);
-        Box::new(mapped)
+        Ok(Box::new(mapped))
     }
 
     /// update will load the data, perform the specified action, and store the result
@@ -152,10 +152,10 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = Result<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
+    ) -> Result<Box<dyn Iterator<Item = Result<KV<T>>> + 'b>> {
+        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)?
             .map(deserialize_kv::<T>);
-        Box::new(mapped)
+        Ok(Box::new(mapped))
     }
 }
 
@@ -342,7 +342,10 @@ mod test {
         bucket.save(b"maria", &maria).unwrap();
         bucket.save(b"jose", &jose).unwrap();
 
-        let res_data: Result<Vec<KV<Data>>> = bucket.range(None, None, Order::Ascending).collect();
+        let res_data: Result<Vec<KV<Data>>> = bucket
+            .range(None, None, Order::Ascending)
+            .unwrap()
+            .collect();
         let data = res_data.unwrap();
         assert_eq!(data.len(), 2);
         assert_eq!(data[0], (b"jose".to_vec(), jose.clone()));
@@ -350,8 +353,10 @@ mod test {
 
         // also works for readonly
         let read_bucket = bucket_read::<_, Data>(b"data", &store);
-        let res_data: Result<Vec<KV<Data>>> =
-            read_bucket.range(None, None, Order::Ascending).collect();
+        let res_data: Result<Vec<KV<Data>>> = read_bucket
+            .range(None, None, Order::Ascending)
+            .unwrap()
+            .collect();
         let data = res_data.unwrap();
         assert_eq!(data.len(), 2);
         assert_eq!(data[0], (b"jose".to_vec(), jose));
