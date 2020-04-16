@@ -8,7 +8,7 @@ fn is_hidden(path: &path::Path) -> bool {
     path.file_name()
         .and_then(|os_str| os_str.to_str())
         .unwrap_or("")
-        .starts_with(".")
+        .starts_with('.')
 }
 
 fn is_json(path: &path::Path) -> bool {
