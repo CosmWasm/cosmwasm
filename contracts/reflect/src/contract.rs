@@ -92,7 +92,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, Binary, Error};
+    use cosmwasm_std::{coins, from_binary, Binary, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -154,7 +154,7 @@ mod tests {
 
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(Error::Unauthorized { .. }) => {}
+            Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Must return unauthorized error"),
         }
     }
@@ -175,7 +175,7 @@ mod tests {
         };
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(Error::ContractErr { msg, .. }) => {
+            Err(StdError::ContractErr { msg, .. }) => {
                 assert_eq!(msg, "Must reflect at least one message")
             }
             _ => panic!("Must return contract error"),
@@ -247,7 +247,7 @@ mod tests {
 
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(Error::Unauthorized { .. }) => {}
+            Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Must return unauthorized error"),
         }
     }

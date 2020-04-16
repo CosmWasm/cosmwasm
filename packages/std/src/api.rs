@@ -3,7 +3,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::{Error, SystemError};
+use crate::errors::{StdError, SystemError};
 use crate::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -80,36 +80,36 @@ impl std::fmt::Display for ApiError {
     }
 }
 
-impl From<Error> for ApiError {
-    fn from(value: Error) -> Self {
+impl From<StdError> for ApiError {
+    fn from(value: StdError) -> Self {
         match value {
-            Error::Base64Err { source, .. } => ApiError::Base64Err {
+            StdError::Base64Err { source, .. } => ApiError::Base64Err {
                 source: format!("{}", source),
             },
-            Error::ContractErr { msg, .. } => ApiError::ContractErr {
+            StdError::ContractErr { msg, .. } => ApiError::ContractErr {
                 msg: msg.to_string(),
             },
-            Error::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
-            Error::NotFound { kind, .. } => ApiError::NotFound {
+            StdError::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
+            StdError::NotFound { kind, .. } => ApiError::NotFound {
                 kind: kind.to_string(),
             },
-            Error::NullPointer { .. } => ApiError::NullPointer {},
-            Error::ParseErr { kind, source, .. } => ApiError::ParseErr {
-                kind: kind.to_string(),
-                source: format!("{}", source),
-            },
-            Error::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
+            StdError::NullPointer { .. } => ApiError::NullPointer {},
+            StdError::ParseErr { kind, source, .. } => ApiError::ParseErr {
                 kind: kind.to_string(),
                 source: format!("{}", source),
             },
-            Error::Utf8Err { source, .. } => ApiError::Utf8Err {
+            StdError::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
+                kind: kind.to_string(),
                 source: format!("{}", source),
             },
-            Error::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
+            StdError::Utf8Err { source, .. } => ApiError::Utf8Err {
                 source: format!("{}", source),
             },
-            Error::Unauthorized { .. } => ApiError::Unauthorized {},
-            Error::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
+            StdError::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
+                source: format!("{}", source),
+            },
+            StdError::Unauthorized { .. } => ApiError::Unauthorized {},
+            StdError::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
                 field: field.to_string(),
                 msg: msg.to_string(),
             },

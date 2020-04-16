@@ -125,7 +125,7 @@ mod test {
     use cosmwasm_std::testing::MockStorage;
     use serde::{Deserialize, Serialize};
 
-    use cosmwasm_std::{unauthorized, Error};
+    use cosmwasm_std::{unauthorized, StdError};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct Config {
@@ -204,7 +204,7 @@ mod test {
 
         let output = writer.update(&|_c| unauthorized());
         match output {
-            Err(Error::Unauthorized { .. }) => {}
+            Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Unexpected output: {:?}", output),
         }
         assert_eq!(writer.load().unwrap(), cfg);

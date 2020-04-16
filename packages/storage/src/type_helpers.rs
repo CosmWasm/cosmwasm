@@ -39,7 +39,7 @@ pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: KV) -> StdResult<KV<T>> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::{to_vec, Error};
+    use cosmwasm_std::{to_vec, StdError};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
@@ -75,7 +75,7 @@ mod test {
         let parsed = must_deserialize::<Data>(&None);
         match parsed {
             // if we used short_type_name, this would just be Data
-            Err(Error::NotFound { kind, .. }) => {
+            Err(StdError::NotFound { kind, .. }) => {
                 assert_eq!(kind, "cosmwasm_storage::type_helpers::test::Data")
             }
             Err(e) => panic!("Unexpected error {}", e),

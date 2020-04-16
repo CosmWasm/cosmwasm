@@ -4,7 +4,7 @@ use std::convert::TryFrom;
 use std::{fmt, ops};
 
 use crate::dyn_contract_err;
-use crate::errors::Error;
+use crate::errors::StdError;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Coin {
@@ -56,7 +56,7 @@ impl From<u128> for Uint128 {
 }
 
 impl TryFrom<&str> for Uint128 {
-    type Error = Error;
+    type Error = StdError;
 
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u128>() {

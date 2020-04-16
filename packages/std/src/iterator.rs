@@ -1,4 +1,4 @@
-use crate::errors::{contract_err, Error};
+use crate::errors::{contract_err, StdError};
 use std::convert::TryFrom;
 
 /// KV is a Key-Value pair, returned from our iterators
@@ -12,7 +12,7 @@ pub enum Order {
 }
 
 impl TryFrom<i32> for Order {
-    type Error = Error;
+    type Error = StdError;
 
     fn try_from(value: i32) -> Result<Self, Self::Error> {
         match value {

@@ -5,7 +5,10 @@ use snafu::Snafu;
 #[snafu(visibility = "pub")]
 /// Structured error type for init, handle and query. This cannot be serialized to JSON, such that
 /// it is only available within the contract and its unit tests.
-pub enum Error {
+///
+/// The prefix "Std" means "the standard error within the standard library". This is not the only
+/// result/error type in cosmwasm-std.
+pub enum StdError {
     #[snafu(display("Invalid Base64 string: {}", source))]
     Base64Err {
         source: base64::DecodeError,
@@ -67,7 +70,7 @@ pub enum Error {
 ///
 /// The prefix "Std" means "the standard result within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
-pub type StdResult<T> = core::result::Result<T, Error>;
+pub type StdResult<T> = core::result::Result<T, StdError>;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
@@ -116,7 +119,7 @@ mod test {
     fn use_invalid() {
         let e: StdResult<()> = invalid("demo", "not implemented");
         match e {
-            Err(Error::ValidationErr { field, msg, .. }) => {
+            Err(StdError::ValidationErr { field, msg, .. }) => {
                 assert_eq!(field, "demo");
                 assert_eq!(msg, "not implemented");
             }
@@ -130,7 +133,7 @@ mod test {
     fn contract_helper() {
         let e: StdResult<()> = contract_err("not implemented");
         match e {
-            Err(Error::ContractErr { msg, .. }) => {
+            Err(StdError::ContractErr { msg, .. }) => {
                 assert_eq!(msg, "not implemented");
             }
             Err(e) => panic!("unexpected error, {:?}", e),
@@ -144,7 +147,7 @@ mod test {
         let guess = 7;
         let e: StdResult<()> = dyn_contract_err(format!("{} is too low", guess));
         match e {
-            Err(Error::DynContractErr { msg, .. }) => {
+            Err(StdError::DynContractErr { msg, .. }) => {
                 assert_eq!(msg, String::from("7 is too low"));
             }
             Err(e) => panic!("unexpected error, {:?}", e),

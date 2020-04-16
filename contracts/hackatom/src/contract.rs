@@ -209,7 +209,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, Error, ReadonlyStorage};
+    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
     use cosmwasm_storage::transactional_deps;
 
     #[test]
@@ -376,7 +376,7 @@ mod tests {
         let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
         match handle_res.unwrap_err() {
-            Error::Unauthorized { .. } => {}
+            StdError::Unauthorized { .. } => {}
             _ => panic!("Expect unauthorized error"),
         }
 
