@@ -76,7 +76,7 @@ pub type StdResult<T> = core::result::Result<T, StdError>;
 #[snafu(visibility = "pub")]
 /// SystemError is used for errors inside the runtime.
 /// This is used on return values for Querier as a nested Result -
-/// Result<Result<T, Error>, SystemError>
+/// Result<StdResult<T>, SystemError>
 /// The first wrap (SystemError) will trigger if the contract address doesn't exist,
 /// the QueryRequest is malformated, etc. The second wrap will be an error message from
 /// the contract itself.
