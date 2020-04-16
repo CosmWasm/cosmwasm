@@ -98,14 +98,19 @@ pub struct SimulateSwapResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 /// ValidatorsResponse is data format returned from StakingRequest::Validators query
 pub struct ValidatorsResponse {
-    pub validators: Option<Vec<Validator>>,
+    pub validators: Vec<Validator>,
 }
 
 #[cfg(feature = "staking")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Validator {
     pub address: HumanAddr,
-    // TODO: what other info do we want to expose?
+    // rates are denominated in 10^-6 - 1_000_000 (max) = 100%, 10_000 = 1%
+    // TODO: capture this in some Dec type?
+    pub commission: u64,
+    pub max_commission: u64,
+    // what units are these (in terms of time)?
+    pub max_change_rate: u64,
 }
 
 #[cfg(feature = "staking")]
@@ -113,7 +118,7 @@ pub struct Validator {
 #[serde(rename_all = "snake_case")]
 /// DelegationsResponse is data format returned from StakingRequest::Delegations query
 pub struct DelegationsResponse {
-    pub delegations: Option<Vec<Delegation>>,
+    pub delegations: Vec<Delegation>,
 }
 
 #[cfg(feature = "staking")]
@@ -123,5 +128,7 @@ pub struct Delegation {
     pub validator: HumanAddr,
     pub amount: Coin,
     pub can_redelegate: bool,
+    // Review this: this is how much we can withdraw
+    pub accumulated_rewards: Coin,
     // TODO: do we want to expose more info?
 }
