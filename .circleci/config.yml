@@ -434,6 +434,13 @@ jobs:
       - run:
           name: Add clippy component
           command: rustup component add clippy
+      #
+      # Workspace packages
+      #
+      - run:
+          name: Clippy linting on schema
+          working_directory: ~/project/packages/schema
+          command: cargo clippy -- -D warnings
       - run:
           name: Clippy linting on std
           working_directory: ~/project/packages/std
@@ -446,6 +453,9 @@ jobs:
           name: Clippy linting on vm (use flags for Rust stable support)
           working_directory: ~/project/packages/vm
           command: cargo clippy --no-default-features --features "default-cranelift iterator" -- -D warnings
+      #
+      # Contracts
+      #
       - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
