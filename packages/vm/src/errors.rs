@@ -2,7 +2,6 @@ use std::fmt::Debug;
 use std::io;
 
 use snafu::Snafu;
-use wasmer_runtime_core::cache::Error as CacheError;
 use wasmer_runtime_core::error as core_error;
 
 #[derive(Debug, Snafu)]
@@ -98,18 +97,3 @@ pub fn make_validation_err<T>(msg: String) -> Result<T> {
 }
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
-
-pub trait CacheExt<T: Debug> {
-    fn convert_cache(self) -> Result<T>;
-}
-
-impl<T: Debug> CacheExt<T> for Result<T, CacheError> {
-    fn convert_cache(self) -> Result<T> {
-        self.map_err(|err| {
-            let msg = format!("{:?}", err);
-            // construct like this (not just Err(Error::CacheErr)) to allow backtraces
-            let res: Result<T> = CacheErr { msg }.fail();
-            res.unwrap_err()
-        })
-    }
-}

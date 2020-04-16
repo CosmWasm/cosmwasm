@@ -107,6 +107,7 @@
   malicious contracts creating overly large `Region`s.
 - Add `Instance.get_memory_size`, giving you the peak memory consumption of an
   instance.
+- Remove `cosmwasm_vm::errors::CacheExt`.
 
 ## 0.7.2 (2020-03-23)
 
