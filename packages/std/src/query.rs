@@ -70,7 +70,10 @@ pub enum StakingRequest {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SwapRequest {
+    // ExchangeRate will return the rate between just this pair.
     ExchangeRate { offer: String, ask: String },
+    // ExchangeRates will return the exchange rate between offer denom and all supported asks
+    ExchangeRates { offer: String },
     // Delegations will return all delegations by the delegator,
     // or just those to the given validator (if set)
     Simulate { offer: Coin, ask: String },
@@ -80,11 +83,19 @@ pub enum SwapRequest {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 /// ExchangeRateResponse is data format returned from SwapRequest::ExchangeRate query
 pub struct ExchangeRateResponse {
+    pub ask: String,
     // rate is denominated in 10^-6
     // 1_000_000 means 1 ask for 1 offer
     // 10_000_000 means 10 ask for 1 offer
     // 1_000 means 1 ask for 1000 offer
     pub rate: u64,
+}
+
+#[cfg(feature = "swap")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+/// ExchangeRatesResponse is data format returned from SwapRequest::ExchangeRates query
+pub struct ExchangeRatesResponse {
+    pub rates: Vec<ExchangeRateResponse>,
 }
 
 #[cfg(feature = "swap")]

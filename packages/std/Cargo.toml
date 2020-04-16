@@ -29,6 +29,9 @@ staking = []
 # standing orders and possibly cancel them later. It assumes the swap is executed (or fails)
 # in the same transaction.
 swap = []
+# terra exposes all query/messages for the terra chain - this includes staking and swap,
+# as well as some custom terra modules
+terra = ["staking", "swap"]
 # backtraces provides much better context at runtime errors (in non-wasm code)
 # at the cost of a bit of code size and performance.
 backtraces = ["snafu/backtraces"]
