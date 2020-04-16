@@ -51,8 +51,9 @@ Contract Code:
   - You can also replace `to_vec(...)` with `to_binary(...)`
 - No `.context(...)` is required after `from_slice` and `to_vec`, they return
   proper `cosmwasm_std::Error` variants on errors.
-- If you used `env.contract.balance`, you must now use the querier.
-  The following code block should work:
+- If you used `env.contract.balance`, you must now use the querier. The
+  following code block should work:
+
   ```rust
   // before (in env)
   let foo = env.contract.balance;
@@ -78,9 +79,10 @@ Both:
   `Coin::new` and returns one `Coin`.
 - Remove the 4th argument (contract balance) from all calls to `mock_env`, this
   is no longer stored in the environment.
-- `mock_dependencies` and `mock_instance` take a 2nd argument to set the contract
-   balance (visible for the querier). If you need to set more balances, use
-   `mock_XX_with_balances`.  The follow code block explains:
+- `mock_dependencies` and `mock_instance` take a 2nd argument to set the
+  contract balance (visible for the querier). If you need to set more balances,
+  use `mock_XX_with_balances`. The follow code block explains:
+
   ```rust
   // before: balance as last arg in mock_env
   let mut deps = mock_dependencies(20);
