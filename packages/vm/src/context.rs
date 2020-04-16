@@ -15,7 +15,7 @@ use cosmwasm_std::{
 
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{make_runtime_err, Error, Result, UninitializedContextData};
+use crate::errors::{make_runtime_err, UninitializedContextData, VmError, VmResult};
 use crate::memory::{read_region, write_region};
 use crate::serde::{from_slice, to_vec};
 #[cfg(feature = "iterator")]
@@ -61,7 +61,7 @@ static ERROR_DB_UNKNOWN: i32 = -1_000_502;
 pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
@@ -70,13 +70,13 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
             .or_else(|_| make_runtime_err("Error reading from backend"))
     }) {
         Ok(v) => v,
-        Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
+        Err(VmError::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
         Err(_) => return ERROR_DB_UNKNOWN,
     };
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
             Ok(()) => SUCCESS,
-            Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
         None => SUCCESS,
@@ -87,12 +87,12 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
 pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     let value = match read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE) {
         Ok(data) => data,
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
@@ -101,7 +101,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
             .or_else(|_| make_runtime_err("Error setting database value in backend"))
     }) {
         Ok(_) => SUCCESS,
-        Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
+        Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
         Err(_) => ERROR_DB_UNKNOWN,
     }
 }
@@ -109,7 +109,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
@@ -118,7 +118,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
             .or_else(|_| make_runtime_err("Error removing database key from backend"))
     }) {
         Ok(_) => SUCCESS,
-        Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
+        Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
         Err(_) => ERROR_DB_UNKNOWN,
     }
 }
@@ -131,7 +131,7 @@ pub fn do_canonicalize_address<A: Api>(
 ) -> i32 {
     let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS) {
         Ok(data) => data,
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     let human = match String::from_utf8(human_data) {
@@ -141,7 +141,7 @@ pub fn do_canonicalize_address<A: Api>(
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
             Ok(()) => SUCCESS,
-            Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
         Err(_) => ERROR_CANONICALIZE_UNKNOWN,
@@ -156,13 +156,13 @@ pub fn do_humanize_address<A: Api>(
 ) -> i32 {
     let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_CANONICAL_ADDRESS) {
         Ok(data) => Binary(data),
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
     match api.human_address(&CanonicalAddr(canonical)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(()) => SUCCESS,
-            Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
         Err(_) => ERROR_HUMANIZE_UNKNOWN,
@@ -177,7 +177,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 ) -> i32 {
     let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST) {
         Ok(data) => data,
-        Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return ERROR_REGION_READ_UNKNOWN,
     };
 
@@ -199,7 +199,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
     match to_vec(&api_res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
             Ok(()) => SUCCESS,
-            Err(Error::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
         Err(_) => ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE,
@@ -226,12 +226,12 @@ mod iter_support {
     ) -> i32 {
         let start = match maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY) {
             Ok(data) => data,
-            Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+            Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
             Err(_) => return ERROR_REGION_READ_UNKNOWN,
         };
         let end = match maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY) {
             Ok(data) => data,
-            Err(Error::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
+            Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
             Err(_) => return ERROR_REGION_READ_UNKNOWN,
         };
         let order: Order = match order.try_into() {
@@ -256,7 +256,7 @@ mod iter_support {
         });
         match res {
             Ok(callback_result) => callback_result,
-            Err(Error::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
+            Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
             Err(_) => ERROR_DB_UNKNOWN,
         }
     }
@@ -271,7 +271,7 @@ mod iter_support {
             Ok(iter.next())
         }) {
             Ok(i) => i,
-            Err(Error::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
+            Err(VmError::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
             Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
         };
 
@@ -283,12 +283,12 @@ mod iter_support {
 
         match write_region(ctx, key_ptr, &key) {
             Ok(()) => (),
-            Err(Error::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
         };
         match write_region(ctx, value_ptr, &value) {
             Ok(()) => (),
-            Err(Error::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
         };
         SUCCESS
@@ -298,11 +298,11 @@ mod iter_support {
         ctx: &Ctx,
         iterator_id: u32,
         mut func: F,
-    ) -> Result<T, Error>
+    ) -> VmResult<T>
     where
         S: Storage,
         Q: Querier,
-        F: FnMut(&mut dyn Iterator<Item = KV>) -> Result<T, Error>,
+        F: FnMut(&mut dyn Iterator<Item = KV>) -> VmResult<T>,
     {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b);
@@ -382,11 +382,11 @@ fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 #[cfg(not(feature = "iterator"))]
 fn free_iterator<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
-pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> Result<T, Error>
+pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&mut S) -> Result<T, Error>,
+    F: FnMut(&mut S) -> VmResult<T>,
 {
     let b = unsafe { get_data::<S, Q>(ctx.data) };
     let mut b = mem::ManuallyDrop::new(b);
@@ -563,7 +563,7 @@ mod test {
         });
         match miss {
             Ok(_) => panic!("Expected error"),
-            Err(Error::UninitializedContextData { .. }) => assert!(true),
+            Err(VmError::UninitializedContextData { .. }) => assert!(true),
             Err(e) => panic!("Unexpected error: {}", e),
         }
 
@@ -605,7 +605,7 @@ mod test {
         });
         match miss {
             Ok(_) => panic!("Expected error"),
-            Err(Error::UninitializedContextData { .. }) => assert!(true),
+            Err(VmError::UninitializedContextData { .. }) => assert!(true),
             Err(e) => panic!("Unexpected error: {}", e),
         }
     }

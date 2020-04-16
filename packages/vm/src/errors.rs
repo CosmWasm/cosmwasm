@@ -6,7 +6,7 @@ use wasmer_runtime_core::error as core_error;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
-pub enum Error {
+pub enum VmError {
     #[snafu(display("Cache error: {}", msg))]
     CacheErr {
         msg: String,
@@ -88,12 +88,12 @@ pub enum Error {
     },
 }
 
-pub fn make_runtime_err<T>(msg: &'static str) -> Result<T> {
+pub type VmResult<T> = core::result::Result<T, VmError>;
+
+pub fn make_runtime_err<T>(msg: &'static str) -> VmResult<T> {
     RuntimeErr { msg }.fail()
 }
 
-pub fn make_validation_err<T>(msg: String) -> Result<T> {
+pub fn make_validation_err<T>(msg: String) -> VmResult<T> {
     ValidationErr { msg }.fail()
 }
-
-pub type Result<T, E = Error> = core::result::Result<T, E>;

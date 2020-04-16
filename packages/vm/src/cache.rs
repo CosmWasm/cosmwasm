@@ -9,7 +9,7 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
-use crate::errors::{Error, IntegrityErr, IoErr};
+use crate::errors::{IntegrityErr, IoErr, VmResult};
 use crate::instance::Instance;
 use crate::modules::{FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
@@ -48,7 +48,7 @@ where
     /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
     /// assumes the disk contents are correct, and there's no way to ensure the artifacts
     //  stored in the cache haven't been corrupted or tampered with.
-    pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> Result<Self, Error> {
+    pub unsafe fn new<P: Into<PathBuf>>(base_dir: P, cache_size: usize) -> VmResult<Self> {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
         create_dir_all(&wasm_path).context(IoErr {})?;
@@ -69,7 +69,7 @@ where
         })
     }
 
-    pub fn save_wasm(&mut self, wasm: &[u8]) -> Result<Vec<u8>, Error> {
+    pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Vec<u8>> {
         check_wasm(wasm)?;
         let id = save(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
@@ -79,7 +79,7 @@ where
         Ok(id)
     }
 
-    pub fn load_wasm(&self, id: &[u8]) -> Result<Vec<u8>, Error> {
+    pub fn load_wasm(&self, id: &[u8]) -> VmResult<Vec<u8>> {
         let code = load(&self.wasm_path, id)?;
         // verify hash matches (integrity check)
         let hash = wasm_hash(&code);
@@ -96,7 +96,7 @@ where
         id: &[u8],
         deps: Extern<S, A, Q>,
         gas_limit: u64,
-    ) -> Result<Instance<S, A, Q>, Error> {
+    ) -> VmResult<Instance<S, A, Q>> {
         let hash = WasmHash::generate(&id);
 
         // pop from lru cache if present
@@ -140,6 +140,7 @@ where
 mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
+    use crate::errors::VmError;
     use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use tempfile::TempDir;
@@ -186,7 +187,7 @@ mod test {
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result {
-            Err(Error::ValidationErr { .. }) => {}
+            Err(VmError::ValidationErr { .. }) => {}
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
         }
@@ -364,7 +365,7 @@ mod test {
         let env1 = mock_env(&instance1.api, "owner1", &coins(1000, "earth"));
         let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         match call_init(&mut instance1, &env1, msg1) {
-            Err(Error::WasmerRuntimeErr { .. }) => (), // all good, continue
+            Err(VmError::WasmerRuntimeErr { .. }) => (), // all good, continue
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("call_init must run out of gas"),
         }

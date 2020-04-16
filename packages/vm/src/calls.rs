@@ -5,7 +5,7 @@ use cosmwasm_std::{
     QueryResponse, QueryResult, Storage,
 };
 
-use crate::errors::{Error, RuntimeErr, WasmerRuntimeErr};
+use crate::errors::{RuntimeErr, VmResult, WasmerRuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 
@@ -17,7 +17,7 @@ pub fn call_init<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> Result<Result<InitResponse, ApiError>, Error> {
+) -> VmResult<Result<InitResponse, ApiError>> {
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
     let res: InitResult = from_slice(&data)?;
@@ -28,7 +28,7 @@ pub fn call_handle<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> Result<Result<HandleResponse, ApiError>, Error> {
+) -> VmResult<Result<HandleResponse, ApiError>> {
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
     let res: HandleResult = from_slice(&data)?;
@@ -38,7 +38,7 @@ pub fn call_handle<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>
 pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
-) -> Result<Result<QueryResponse, ApiError>, Error> {
+) -> VmResult<Result<QueryResponse, ApiError>> {
     let data = call_query_raw(instance, msg)?;
     let api_result: QueryResult = from_slice(&data)?;
     let result: Result<QueryResponse, ApiError> = api_result.into();
@@ -62,7 +62,7 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
-) -> Result<Vec<u8>, Error> {
+) -> VmResult<Vec<u8>> {
     call_raw(instance, "init", &[env, msg], MAX_LENGTH_INIT)
 }
 
@@ -72,7 +72,7 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'sta
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
-) -> Result<Vec<u8>, Error> {
+) -> VmResult<Vec<u8>> {
     call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
 }
 
@@ -81,7 +81,7 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'sta
 pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
-) -> Result<Vec<u8>, Error> {
+) -> VmResult<Vec<u8>> {
     call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
 }
 
@@ -90,7 +90,7 @@ fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     name: &str,
     args: &[&[u8]],
     result_max_length: usize,
-) -> Result<Vec<u8>, Error> {
+) -> VmResult<Vec<u8>> {
     let mut arg_region_ptrs = Vec::<u32>::with_capacity(args.len());
     for arg in args {
         let region_ptr = instance.allocate(arg.len())?;

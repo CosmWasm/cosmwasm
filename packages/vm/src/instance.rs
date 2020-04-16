@@ -19,7 +19,7 @@ use crate::context::{
 #[cfg(feature = "iterator")]
 use crate::context::{do_next, do_scan};
 use crate::conversion::to_u32;
-use crate::errors::{ResolveErr, Result, WasmerErr, WasmerRuntimeErr};
+use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
 use crate::memory::{get_memory_info, read_region, write_region};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
@@ -38,12 +38,12 @@ where
     A: Api + 'static,
     Q: Querier + 'static,
 {
-    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
+    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
         let module = compile(code)?;
         Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> Result<Self> {
+    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
         let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
@@ -161,13 +161,13 @@ where
         get_gas(&self.wasmer_instance)
     }
 
-    pub fn with_storage<F: FnMut(&mut S) -> Result<T>, T>(&self, func: F) -> Result<T> {
+    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&self, func: F) -> VmResult<T> {
         with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
-    pub(crate) fn allocate(&mut self, size: usize) -> Result<u32> {
+    pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(to_u32(size)?).context(WasmerRuntimeErr {})?;
         Ok(ptr)
@@ -176,24 +176,24 @@ where
     // deallocate frees memory in the instance and that was either previously
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
-    pub(crate) fn deallocate(&mut self, ptr: u32) -> Result<()> {
+    pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
         dealloc.call(ptr).context(WasmerRuntimeErr {})?;
         Ok(())
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
-    pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> Result<Vec<u8>> {
+    pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
         read_region(self.wasmer_instance.context(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
-    pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> Result<()> {
+    pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
         write_region(self.wasmer_instance.context(), region_ptr, data)?;
         Ok(())
     }
 
-    pub(crate) fn func<Args, Rets>(&self, name: &str) -> Result<Func<Args, Rets, Wasm>>
+    pub(crate) fn func<Args, Rets>(&self, name: &str) -> VmResult<Func<Args, Rets, Wasm>>
     where
         Args: WasmTypeList,
         Rets: WasmTypeList,
@@ -211,7 +211,7 @@ mod test {
     use wasmer_runtime_core::error::ResolveError;
 
     use crate::calls::{call_handle, call_init, call_query};
-    use crate::errors::Error;
+    use crate::errors::VmError;
     use crate::testing::{mock_instance, mock_instance_with_gas_limit};
 
     static KIB: usize = 1024;
@@ -236,7 +236,7 @@ mod test {
         let instance = mock_instance(&CONTRACT, &[]);
         let missing_function = "bar_foo345";
         match instance.func::<(), ()>(missing_function) {
-            Err(Error::ResolveErr { source, .. }) => match source {
+            Err(VmError::ResolveErr { source, .. }) => match source {
                 ResolveError::ExportNotFound { name } => assert_eq!(name, missing_function),
                 _ => panic!("found unexpected source error"),
             },
@@ -312,7 +312,7 @@ mod test {
             .expect("error writing");
 
         match instance.read_memory(region_ptr, max_length) {
-            Err(Error::RegionLengthTooBigErr {
+            Err(VmError::RegionLengthTooBigErr {
                 length, max_length, ..
             }) => {
                 assert_eq!(length, 6);

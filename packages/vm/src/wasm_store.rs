@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use sha2::{Digest, Sha256};
 use snafu::ResultExt;
 
-use crate::errors::{Error, IoErr};
+use crate::errors::{IoErr, VmResult};
 
 /// A collision resistent hash function
 pub fn wasm_hash(wasm: &[u8]) -> Vec<u8> {
@@ -15,7 +15,7 @@ pub fn wasm_hash(wasm: &[u8]) -> Vec<u8> {
 /// save stores the wasm code in the given directory and returns an ID for lookup.
 /// It will create the directory if it doesn't exist.
 /// Saving the same byte code multiple times is allowed.
-pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
+pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Vec<u8>> {
     // calculate filename
     let id = wasm_hash(wasm);
     let filename = hex::encode(&id);
@@ -34,7 +34,7 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> Result<Vec<u8>, Error> {
     Ok(id)
 }
 
-pub fn load<P: Into<PathBuf>>(dir: P, id: &[u8]) -> Result<Vec<u8>, Error> {
+pub fn load<P: Into<PathBuf>>(dir: P, id: &[u8]) -> VmResult<Vec<u8>> {
     // this requires the directory and file to exist
     let path = dir.into().join(hex::encode(id));
     let mut file = File::open(path).context(IoErr {})?;

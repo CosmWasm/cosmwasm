@@ -6,9 +6,9 @@ use serde::{Deserialize, Serialize};
 use snafu::ResultExt;
 use std::any::type_name;
 
-use crate::errors::{ParseErr, Result, SerializeErr};
+use crate::errors::{ParseErr, SerializeErr, VmResult};
 
-pub fn from_slice<'a, T>(value: &'a [u8]) -> Result<T>
+pub fn from_slice<'a, T>(value: &'a [u8]) -> VmResult<T>
 where
     T: Deserialize<'a>,
 {
@@ -17,7 +17,7 @@ where
     })
 }
 
-pub fn to_vec<T>(data: &T) -> Result<Vec<u8>>
+pub fn to_vec<T>(data: &T) -> VmResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {

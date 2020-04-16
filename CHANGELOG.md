@@ -111,6 +111,8 @@
 - Add `Instance.get_memory_size`, giving you the peak memory consumption of an
   instance.
 - Remove `cosmwasm_vm::errors::CacheExt`.
+- Move `cosmwasm_vm::errors::{Error, Result}` to
+  `cosmwasm_vm::{VmError, VmResult}` and remove generic error type from result.
 
 ## 0.7.2 (2020-03-23)
 
