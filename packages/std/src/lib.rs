@@ -24,7 +24,7 @@ pub use crate::init_handle::{
     log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
 #[cfg(feature = "iterator")]
-pub use crate::iterator::{KVRef, Order, KV};
+pub use crate::iterator::{Order, KV};
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, QueryRequest, QueryResponse, QueryResult,
 };

@@ -6,7 +6,7 @@ use std::ops::{Bound, RangeBounds};
 
 use crate::errors::Result;
 #[cfg(feature = "iterator")]
-use crate::iterator::{KVRef, Order, KV};
+use crate::iterator::{Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
 
 #[derive(Default)]
@@ -40,17 +40,15 @@ impl ReadonlyStorage for MemoryStorage {
         // However, this cases represent just empty range and we treat it as such.
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Excluded(end)) if start > end => {
-                return Ok(Box::new(IterVec {
-                    iter: iter::empty(),
-                }));
+                return Ok(Box::new(iter::empty()));
             }
             _ => {}
         }
 
         let iter = self.data.range(bounds);
         Ok(match order {
-            Order::Ascending => Box::new(IterVec { iter }),
-            Order::Descending => Box::new(IterVec { iter: iter.rev() }),
+            Order::Ascending => Box::new(iter.map(clone_item)),
+            Order::Descending => Box::new(iter.rev().map(clone_item)),
         })
     }
 }
@@ -64,21 +62,14 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 }
 
 #[cfg(feature = "iterator")]
-struct IterVec<'a, T: Iterator<Item = KVRef<'a>>> {
-    iter: T,
-}
+/// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
+/// This is internal as it can change any time if the map implementation is swapped out.
+type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
 #[cfg(feature = "iterator")]
-impl<'a, T: Iterator<Item = KVRef<'a>>> Iterator for IterVec<'a, T> {
-    type Item = KV;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let n = self.iter.next();
-        match n {
-            Some((k, v)) => Some((k.clone(), v.clone())),
-            None => None,
-        }
-    }
+fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
+    let (key, value) = item_ref;
+    (key.clone(), value.clone())
 }
 
 impl Storage for MemoryStorage {
