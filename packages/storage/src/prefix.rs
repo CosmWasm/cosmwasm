@@ -56,7 +56,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
@@ -97,7 +97,7 @@ impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }

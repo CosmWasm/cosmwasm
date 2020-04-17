@@ -80,20 +80,18 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
     value: i32,
 ) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
-    let last_key = deps
-        .storage
-        .range(None, None, Order::Descending)?
-        .next()
-        .map(|(k, _)| k);
+    let last_item = deps.storage.range(None, None, Order::Descending)?.next();
 
-    // all keys are one byte
-    let my_key = match last_key {
-        Some(k) => k[0] + 1,
+    let new_key = match last_item {
         None => FIRST_KEY,
+        Some(item) => {
+            let (key, _) = item?;
+            key[0] + 1 // all keys are one byte
+        }
     };
-    let data = to_vec(&Item { value })?;
+    let new_value = to_vec(&Item { value })?;
 
-    deps.storage.set(&[my_key], &data)?;
+    deps.storage.set(&[new_key], &new_value)?;
     Ok(HandleResponse::default())
 }
 
@@ -105,7 +103,8 @@ fn dequeue<S: Storage, A: Api, Q: Querier>(
     let first = deps.storage.range(None, None, Order::Ascending)?.next();
 
     let mut res = HandleResponse::default();
-    if let Some((k, v)) = first {
+    if let Some(item) = first {
+        let (k, v) = item?;
         // remove from storage and return old value
         deps.storage.remove(&k)?;
         res.data = Some(Binary(v));
@@ -135,7 +134,7 @@ fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResul
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)?
-        .map(|(_, v)| from_slice(&v))
+        .map(|item| item.and_then(|(_, v)| from_slice(&v)))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
     Ok(Binary(to_vec(&SumResponse { sum })?))
@@ -149,7 +148,7 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     for val in deps
         .storage
         .range(None, None, Order::Ascending)?
-        .map(|(_, v)| from_slice::<Item>(&v))
+        .map(|item| item.and_then(|(_, v)| from_slice::<Item>(&v)))
     {
         // this returns error on parse error
         let my_val = val?.value;
@@ -158,7 +157,10 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
             .storage
             .range(None, None, Order::Ascending)?
             // get value. ignore parse errors, just count as 0
-            .map(|(_, v)| from_slice::<Item>(&v).map(|v| v.value).unwrap_or(0))
+            .map(|item| {
+                item.and_then(|(_, v)| from_slice::<Item>(&v).map(|v| v.value))
+                    .expect("error in item")
+            })
             .filter(|v| *v > my_val)
             .sum();
         out.push((my_val, sum))

@@ -85,7 +85,7 @@ where
         order: Order,
     ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b>> {
         let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)?
-            .map(deserialize_kv::<T>);
+            .map(|item| item.and_then(deserialize_kv::<T>));
         Ok(Box::new(mapped))
     }
 
@@ -158,7 +158,7 @@ where
         order: Order,
     ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b>> {
         let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)?
-            .map(deserialize_kv::<T>);
+            .map(|item| item.and_then(deserialize_kv::<T>));
         Ok(Box::new(mapped))
     }
 }
