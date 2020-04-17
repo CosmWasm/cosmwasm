@@ -3,8 +3,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::TryFrom;
 use std::{fmt, ops};
 
-use crate::dyn_contract_err;
-use crate::errors::StdError;
+use crate::errors::{dyn_contract_err, underflow, StdError, StdResult};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Coin {
@@ -92,11 +91,22 @@ impl ops::Add for Uint128 {
     }
 }
 
-impl ops::Sub for Uint128 {
-    type Output = Uint128;
+impl ops::AddAssign for Uint128 {
+    fn add_assign(&mut self, other: Self) {
+        self.0 += other.u128();
+    }
+}
 
-    fn sub(self, other: Self) -> Self {
-        Uint128(self.u128() - other.u128())
+impl ops::Sub for Uint128 {
+    type Output = StdResult<Self>;
+
+    fn sub(self, other: Self) -> StdResult<Self> {
+        let (min, sub) = (self.u128(), other.u128());
+        if sub > min {
+            underflow(min, sub)
+        } else {
+            Ok(Uint128(min - sub))
+        }
     }
 }
 
@@ -143,7 +153,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::errors::StdResult;
+    use crate::errors::{StdError, StdResult};
     use crate::{from_slice, to_vec};
     use std::convert::TryInto;
 
@@ -194,15 +204,26 @@ mod test {
         let b = Uint128(23456);
 
         assert_eq!(a + b, Uint128(35801));
-        assert_eq!(b - a, Uint128(11111));
+        assert_eq!((b - a).unwrap(), Uint128(11111));
+
+        // error result on underflow
+        let underflow = a - b;
+        match underflow {
+            Ok(_) => panic!("should error"),
+            Err(StdError::Underflow {
+                minuend,
+                subtrahend,
+                ..
+            }) => assert_eq!((minuend, subtrahend), (a.u128(), b.u128())),
+            _ => panic!("expected underflow error"),
+        }
     }
 
     #[test]
     #[should_panic]
-    fn uint128_math_prevents_overflow() {
-        let a = Uint128(12345);
-        let b = Uint128(23456);
-        // this will underflow, should panic
-        let _ = a - b;
+    fn uint128_math_overflow_panics() {
+        // almost_max is 2^128 - 10
+        let almost_max = Uint128(340282366920938463463374607431768211446);
+        let _ = almost_max + Uint128(12);
     }
 }

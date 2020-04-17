@@ -43,6 +43,14 @@ pub enum StdError {
         source: serde_json_wasm::ser::Error,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Unauthorized"))]
+    Unauthorized { backtrace: snafu::Backtrace },
+    #[snafu(display("Cannot subtract {} from {}", subtrahend, minuend))]
+    Underflow {
+        minuend: u128,
+        subtrahend: u128,
+        backtrace: snafu::Backtrace,
+    },
     // This is used for std::str::from_utf8, which we may well deprecate
     #[snafu(display("UTF8 encoding error: {}", source))]
     Utf8Err {
@@ -55,8 +63,6 @@ pub enum StdError {
         source: std::string::FromUtf8Error,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Unauthorized"))]
-    Unauthorized { backtrace: snafu::Backtrace },
     #[snafu(display("Invalid {}: {}", field, msg))]
     ValidationErr {
         field: &'static str,
@@ -105,6 +111,14 @@ pub fn contract_err<T>(msg: &'static str) -> StdResult<T> {
 
 pub fn dyn_contract_err<T>(msg: String) -> StdResult<T> {
     DynContractErr { msg }.fail()
+}
+
+pub fn underflow<T>(minuend: u128, subtrahend: u128) -> StdResult<T> {
+    Underflow {
+        minuend,
+        subtrahend,
+    }
+    .fail()
 }
 
 pub fn unauthorized<T>() -> StdResult<T> {
