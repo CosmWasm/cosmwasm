@@ -203,10 +203,16 @@ mod test {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
+        // test + and - for valid values
         assert_eq!(a + b, Uint128(35801));
         assert_eq!((b - a).unwrap(), Uint128(11111));
 
-        // error result on underflow
+        // test +=
+        let mut c = Uint128(300000);
+        c += b;
+        assert_eq!(c, Uint128(323456));
+
+        // error result on underflow (- would produce negative result)
         let underflow = a - b;
         match underflow {
             Ok(_) => panic!("should error"),
