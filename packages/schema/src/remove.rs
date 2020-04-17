@@ -12,10 +12,10 @@ fn is_hidden(path: &path::Path) -> bool {
 }
 
 fn is_json(path: &path::Path) -> bool {
-    path.file_name()
-        .and_then(|os_str| os_str.to_str())
-        .unwrap_or("")
-        .ends_with(".json")
+    match path.file_name() {
+        Some(name) => name.to_os_string().to_string_lossy().ends_with(".json"),
+        None => false, // a path without filename is no *.json
+    }
 }
 
 pub fn remove_schemas(schemas_dir: &path::Path) -> Result<(), io::Error> {
@@ -65,6 +65,35 @@ mod test {
             assert_eq!(is_hidden(Path::new(non_hidden)), false);
             let hidden = OsStr::from_bytes(&[0x2e, 0x66, 0x6f, 0x80, 0x6f]); // .fo�o
             assert_eq!(is_hidden(Path::new(hidden)), true);
+        }
+    }
+
+    #[test]
+    fn is_json_works() {
+        assert_eq!(is_json(Path::new("/foo")), false);
+        assert_eq!(is_json(Path::new("/foo/bar")), false);
+        assert_eq!(is_json(Path::new("/foo/bar.txt")), false);
+        assert_eq!(is_json(Path::new("~foo")), false);
+        assert_eq!(is_json(Path::new("foo")), false);
+        assert_eq!(is_json(Path::new("foo.json5")), false);
+
+        assert_eq!(is_json(Path::new("/.json")), true);
+        assert_eq!(is_json(Path::new("/foo/.bar.json")), true);
+        assert_eq!(is_json(Path::new("/foo/bar.json")), true);
+        assert_eq!(is_json(Path::new("foo.json")), true);
+
+        // no filename
+        assert_eq!(is_json(Path::new("/")), false);
+        assert_eq!(is_json(Path::new("")), false);
+
+        // invalid UTF-8
+        #[cfg(any(unix, target_os = "redox"))]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o
+            assert_eq!(is_json(Path::new(non_hidden)), false);
+            let hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f, 0x2e, 0x6a, 0x73, 0x6f, 0x6e]); // fo�o.json
+            assert_eq!(is_json(Path::new(hidden)), true);
         }
     }
 }
