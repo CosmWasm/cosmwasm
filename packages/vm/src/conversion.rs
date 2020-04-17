@@ -2,11 +2,11 @@ use std::any::type_name;
 use std::convert::TryInto;
 use std::fmt::Display;
 
-use crate::errors::{ConversionErr, Result};
+use crate::errors::{ConversionErr, VmResult};
 
 /// Safely converts input of type T to u32.
-/// Errors with a cosmwasm_vm::errors::Error::ConversionErr if conversion cannot be done.
-pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> Result<u32> {
+/// Errors with a cosmwasm_vm::errors::VmError::ConversionErr if conversion cannot be done.
+pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> VmResult<u32> {
     input.try_into().or_else(|_| {
         ConversionErr {
             from_type: type_name::<T>(),
@@ -18,11 +18,11 @@ pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> Result<u32> {
 }
 
 /// Safely converts input of type T to i32.
-/// Errors with a cosmwasm_vm::errors::Error::ConversionErr if conversion cannot be done.
+/// Errors with a cosmwasm_vm::errors::VmError::ConversionErr if conversion cannot be done.
 ///
 /// Used in tests and in iterator, but not with default build
 #[allow(dead_code)]
-pub fn to_i32<T: TryInto<i32> + Display + Copy>(input: T) -> Result<i32> {
+pub fn to_i32<T: TryInto<i32> + Display + Copy>(input: T) -> VmResult<i32> {
     input.try_into().or_else(|_| {
         ConversionErr {
             from_type: type_name::<T>(),
@@ -36,7 +36,7 @@ pub fn to_i32<T: TryInto<i32> + Display + Copy>(input: T) -> Result<i32> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::errors::Error;
+    use crate::errors::VmError;
 
     #[test]
     fn to_u32_works_for_usize() {
@@ -47,7 +47,7 @@ mod test {
         assert_eq!(to_u32(4294967295usize).unwrap(), 4294967295);
 
         match to_u32(4294967296usize) {
-            Err(Error::ConversionErr {
+            Err(VmError::ConversionErr {
                 from_type,
                 to_type,
                 input,
@@ -71,7 +71,7 @@ mod test {
         assert_eq!(to_u32(4294967295u64).unwrap(), 4294967295);
 
         match to_u32(4294967296u64) {
-            Err(Error::ConversionErr {
+            Err(VmError::ConversionErr {
                 from_type,
                 to_type,
                 input,
@@ -93,7 +93,7 @@ mod test {
         assert_eq!(to_u32(2147483647i32).unwrap(), 2147483647);
 
         match to_u32(-1i32) {
-            Err(Error::ConversionErr {
+            Err(VmError::ConversionErr {
                 from_type,
                 to_type,
                 input,
@@ -115,7 +115,7 @@ mod test {
         assert_eq!(to_i32(2147483647usize).unwrap(), 2147483647);
 
         match to_i32(2147483648usize) {
-            Err(Error::ConversionErr {
+            Err(VmError::ConversionErr {
                 from_type,
                 to_type,
                 input,
@@ -141,7 +141,7 @@ mod test {
         assert_eq!(to_i32(-2147483648i64).unwrap(), -2147483648);
 
         match to_i32(-2147483649i64) {
-            Err(Error::ConversionErr {
+            Err(VmError::ConversionErr {
                 from_type,
                 to_type,
                 input,

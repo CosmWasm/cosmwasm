@@ -5,7 +5,7 @@ use wasmer_runtime_core::{
 };
 
 use crate::conversion::to_u32;
-use crate::errors::{Error, RegionLengthTooBigErr, RegionTooSmallErr, Result};
+use crate::errors::{RegionLengthTooBigErr, RegionTooSmallErr, VmResult};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -61,7 +61,7 @@ pub fn get_memory_info(ctx: &Ctx) -> MemoryInfo {
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
-pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Vec<u8>> {
+pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
     let region = get_region(ctx, ptr);
 
     if region.length > to_u32(max_length)? {
@@ -95,7 +95,7 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Vec<u8>> {
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]
-pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Option<Vec<u8>>> {
+pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Option<Vec<u8>>> {
     if ptr == 0 {
         Ok(None)
     } else {
@@ -106,7 +106,7 @@ pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> Result<Optio
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.
-pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> Result<(), Error> {
+pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
     let mut region = get_region(ctx, ptr);
 
     let region_capacity = region.capacity as usize;

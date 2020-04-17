@@ -9,13 +9,13 @@ use wasmer_runtime_core::{
 };
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
-use crate::errors::{CompileErr, Error};
+use crate::errors::{CompileErr, VmResult};
 use crate::middleware::DeterministicMiddleware;
 use snafu::ResultExt;
 
 static GAS_LIMIT: u64 = 10_000_000_000;
 
-pub fn compile(code: &[u8]) -> Result<Module, Error> {
+pub fn compile(code: &[u8]) -> VmResult<Module> {
     compile_with(code, compiler().as_ref()).context(CompileErr {})
 }
 

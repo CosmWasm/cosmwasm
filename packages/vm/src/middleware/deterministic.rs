@@ -167,7 +167,7 @@ mod tests {
     use wasmer_runtime_core::{imports, typed_func::Func};
 
     use crate::backends::compile;
-    use crate::errors::Error;
+    use crate::errors::VmError;
 
     #[test]
     #[cfg(feature = "default-singlepass")]
@@ -206,7 +206,7 @@ mod tests {
 
         let failure = res.err().expect("compile should have failed");
 
-        if let Error::CompileErr { source, .. } = &failure {
+        if let VmError::CompileErr { source, .. } = &failure {
             if let CompileError::InternalError { msg } = source {
                 assert_eq!(
                     "Codegen(\"ValidationError { msg: \\\"non-deterministic opcode: F32ConvertI32U\\\" }\")",
