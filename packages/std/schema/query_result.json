@@ -165,6 +165,40 @@
         {
           "type": "object",
           "required": [
+            "Unauthorized"
+          ],
+          "properties": {
+            "Unauthorized": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "Underflow"
+          ],
+          "properties": {
+            "Underflow": {
+              "type": "object",
+              "required": [
+                "minuend",
+                "subtrahend"
+              ],
+              "properties": {
+                "minuend": {
+                  "type": "string"
+                },
+                "subtrahend": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
             "Utf8Err"
           ],
           "properties": {
@@ -197,17 +231,6 @@
                   "type": "string"
                 }
               }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "Unauthorized"
-          ],
-          "properties": {
-            "Unauthorized": {
-              "type": "object"
             }
           }
         },

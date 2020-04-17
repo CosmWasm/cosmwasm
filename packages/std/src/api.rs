@@ -50,11 +50,12 @@ pub enum ApiError {
     NullPointer {},
     ParseErr { kind: String, source: String },
     SerializeErr { kind: String, source: String },
+    Unauthorized {},
+    Underflow { minuend: String, subtrahend: String },
     // This is used for std::str::from_utf8, which we may well deprecate
     Utf8Err { source: String },
     // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
     Utf8StringErr { source: String },
-    Unauthorized {},
     ValidationErr { field: String, msg: String },
 }
 
@@ -72,9 +73,13 @@ impl std::fmt::Display for ApiError {
             ApiError::SerializeErr { kind, source } => {
                 write!(f, "Error serializing {}: {}", kind, source)
             }
+            ApiError::Unauthorized {} => write!(f, "Unauthorized"),
+            ApiError::Underflow {
+                minuend,
+                subtrahend,
+            } => write!(f, "Cannot subtract {} from {}", subtrahend, minuend),
             ApiError::Utf8Err { source } => write!(f, "UTF8 encoding error: {}", source),
             ApiError::Utf8StringErr { source } => write!(f, "UTF8 encoding error: {}", source),
-            ApiError::Unauthorized {} => write!(f, "Unauthorized"),
             ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
         }
     }
@@ -102,13 +107,21 @@ impl From<StdError> for ApiError {
                 kind: kind.to_string(),
                 source: format!("{}", source),
             },
+            StdError::Unauthorized { .. } => ApiError::Unauthorized {},
+            StdError::Underflow {
+                minuend,
+                subtrahend,
+                ..
+            } => ApiError::Underflow {
+                minuend,
+                subtrahend,
+            },
             StdError::Utf8Err { source, .. } => ApiError::Utf8Err {
                 source: format!("{}", source),
             },
             StdError::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
                 source: format!("{}", source),
             },
-            StdError::Unauthorized { .. } => ApiError::Unauthorized {},
             StdError::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
                 field: field.to_string(),
                 msg: msg.to_string(),
