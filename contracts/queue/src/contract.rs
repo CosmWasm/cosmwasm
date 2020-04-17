@@ -81,20 +81,17 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
     let last_item = deps.storage.range(None, None, Order::Descending)?.next();
-    let last_key = match last_item {
-        None => None,
-        Some(Err(e)) => return Err(e),
-        Some(Ok((key, _))) => Some(key),
-    };
 
-    // all keys are one byte
-    let my_key = match last_key {
-        Some(k) => k[0] + 1,
+    let new_key = match last_item {
         None => FIRST_KEY,
+        Some(item) => {
+            let (key, _) = item?;
+            key[0] + 1 // all keys are one byte
+        }
     };
-    let data = to_vec(&Item { value })?;
+    let new_value = to_vec(&Item { value })?;
 
-    deps.storage.set(&[my_key], &data)?;
+    deps.storage.set(&[new_key], &new_value)?;
     Ok(HandleResponse::default())
 }
 
