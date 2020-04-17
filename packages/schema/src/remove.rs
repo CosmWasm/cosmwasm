@@ -5,10 +5,10 @@ fn is_regular_file(path: &path::Path) -> Result<bool, io::Error> {
 }
 
 fn is_hidden(path: &path::Path) -> bool {
-    path.file_name()
-        .and_then(|os_str| os_str.to_str())
-        .unwrap_or("")
-        .starts_with('.')
+    match path.file_name() {
+        Some(name) => name.to_os_string().to_string_lossy().starts_with('.'),
+        None => false, // a path without filename is no .*
+    }
 }
 
 fn is_json(path: &path::Path) -> bool {
@@ -32,4 +32,39 @@ pub fn remove_schemas(schemas_dir: &path::Path) -> Result<(), io::Error> {
         fs::remove_file(file_path)?;
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use std::ffi::OsStr;
+    use std::path::Path;
+
+    #[test]
+    fn is_hidden_works() {
+        assert_eq!(is_hidden(Path::new("/foo")), false);
+        assert_eq!(is_hidden(Path::new("/foo/bar")), false);
+        assert_eq!(is_hidden(Path::new("/foo/bar.txt")), false);
+        assert_eq!(is_hidden(Path::new("~foo")), false);
+        assert_eq!(is_hidden(Path::new("foo")), false);
+
+        assert_eq!(is_hidden(Path::new("/.foo")), true);
+        assert_eq!(is_hidden(Path::new("/foo/.bar")), true);
+        assert_eq!(is_hidden(Path::new("/foo/.bar.txt")), true);
+        assert_eq!(is_hidden(Path::new(".foo")), true);
+
+        // no filename
+        assert_eq!(is_hidden(Path::new("/")), false);
+        assert_eq!(is_hidden(Path::new("")), false);
+
+        // invalid UTF-8
+        #[cfg(any(unix, target_os = "redox"))]
+        {
+            use std::os::unix::ffi::OsStrExt;
+            let non_hidden = OsStr::from_bytes(&[0x66, 0x6f, 0x80, 0x6f]); // fo�o
+            assert_eq!(is_hidden(Path::new(non_hidden)), false);
+            let hidden = OsStr::from_bytes(&[0x2e, 0x66, 0x6f, 0x80, 0x6f]); // .fo�o
+            assert_eq!(is_hidden(Path::new(hidden)), true);
+        }
+    }
 }
