@@ -47,8 +47,8 @@ pub enum StdError {
     Unauthorized { backtrace: snafu::Backtrace },
     #[snafu(display("Cannot subtract {} from {}", subtrahend, minuend))]
     Underflow {
-        minuend: u128,
-        subtrahend: u128,
+        minuend: String,
+        subtrahend: String,
         backtrace: snafu::Backtrace,
     },
     // This is used for std::str::from_utf8, which we may well deprecate
@@ -113,10 +113,10 @@ pub fn dyn_contract_err<T>(msg: String) -> StdResult<T> {
     DynContractErr { msg }.fail()
 }
 
-pub fn underflow<T>(minuend: u128, subtrahend: u128) -> StdResult<T> {
+pub fn underflow<T, U: ToString>(minuend: U, subtrahend: U) -> StdResult<T> {
     Underflow {
-        minuend,
-        subtrahend,
+        minuend: minuend.to_string(),
+        subtrahend: subtrahend.to_string(),
     }
     .fail()
 }
@@ -166,6 +166,35 @@ mod test {
             }
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("dyn_contract_err must return error"),
+        }
+    }
+
+    #[test]
+    fn use_underflow() {
+        let e: StdResult<()> = underflow(123u128, 456u128);
+        match e.unwrap_err() {
+            StdError::Underflow {
+                minuend,
+                subtrahend,
+                ..
+            } => {
+                assert_eq!(minuend, "123");
+                assert_eq!(subtrahend, "456");
+            }
+            _ => panic!("expect underflow error"),
+        }
+
+        let e: StdResult<()> = underflow(777i64, 1234i64);
+        match e.unwrap_err() {
+            StdError::Underflow {
+                minuend,
+                subtrahend,
+                ..
+            } => {
+                assert_eq!(minuend, "777");
+                assert_eq!(subtrahend, "1234");
+            }
+            _ => panic!("expect underflow error"),
         }
     }
 }

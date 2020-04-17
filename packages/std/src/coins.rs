@@ -214,7 +214,7 @@ mod test {
                 minuend,
                 subtrahend,
                 ..
-            }) => assert_eq!((minuend, subtrahend), (a.u128(), b.u128())),
+            }) => assert_eq!((minuend, subtrahend), (a.to_string(), b.to_string())),
             _ => panic!("expected underflow error"),
         }
     }

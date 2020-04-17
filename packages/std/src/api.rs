@@ -51,7 +51,7 @@ pub enum ApiError {
     ParseErr { kind: String, source: String },
     SerializeErr { kind: String, source: String },
     Unauthorized {},
-    Underflow { minuend: u128, subtrahend: u128 },
+    Underflow { minuend: String, subtrahend: String },
     // This is used for std::str::from_utf8, which we may well deprecate
     Utf8Err { source: String },
     // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
