@@ -309,11 +309,11 @@ mod iter_support {
     {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b);
-        let iter = b.iter.remove(&iterator_id);
+        let iter = b.iterators.remove(&iterator_id);
         match iter {
             Some(mut data) => {
                 let res = func(&mut data);
-                b.iter.insert(iterator_id, data);
+                b.iterators.insert(iterator_id, data);
                 res
             }
             None => UninitializedContextData { kind: "iterator" }.fail(),
@@ -328,12 +328,12 @@ mod iter_support {
         let b = unsafe { get_data::<S, Q>(ctx.data) };
         let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
         let last_id: u32 = b
-            .iter
+            .iterators
             .len()
             .try_into()
             .expect("Found more iterator IDs than supported");
         let new_id = last_id + 1;
-        b.iter.insert(new_id, iter);
+        b.iterators.insert(new_id, iter);
         new_id
     }
 }
@@ -344,7 +344,7 @@ struct ContextData<S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
-    iter: HashMap<u32, Box<dyn Iterator<Item = StdResult<KV>>>>,
+    iterators: HashMap<u32, Box<dyn Iterator<Item = StdResult<KV>>>>,
 }
 
 pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
@@ -359,7 +359,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
         storage: None,
         querier: None,
         #[cfg(feature = "iterator")]
-        iter: HashMap::new(),
+        iterators: HashMap::new(),
     };
     let state = Box::new(data);
     Box::into_raw(state) as *mut c_void
@@ -379,7 +379,7 @@ unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<
 
 #[cfg(feature = "iterator")]
 fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
-    context.iter.clear();
+    context.iterators.clear();
 }
 
 #[cfg(not(feature = "iterator"))]
