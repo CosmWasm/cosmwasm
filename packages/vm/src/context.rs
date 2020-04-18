@@ -367,9 +367,9 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
 
 fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
     if !ptr.is_null() {
-        let mut dead = unsafe { get_data::<S, Q>(ptr) };
-        // ensure the iterator (if any) is dropped before the storage
-        free_iterator(&mut dead);
+        let mut dying = unsafe { get_data::<S, Q>(ptr) };
+        // Ensure all iterators are dropped before the storage
+        destroy_iterators(&mut dying);
     }
 }
 
@@ -378,7 +378,7 @@ unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<
 }
 
 #[cfg(feature = "iterator")]
-fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
+fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
     let keys: Vec<u32> = context.iter.keys().cloned().collect();
     for key in keys {
         let _ = context.iter.remove(&key);
@@ -386,7 +386,7 @@ fn free_iterator<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 }
 
 #[cfg(not(feature = "iterator"))]
-fn free_iterator<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
+fn destroy_iterators<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
 pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> VmResult<T>
 where
@@ -431,8 +431,9 @@ where
 pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(source: &Ctx) -> (Option<S>, Option<Q>) {
     let b = unsafe { get_data::<S, Q>(source.data) };
     let mut b = mem::ManuallyDrop::new(b);
-    // free out the iterator as this finalizes the instance
-    free_iterator(&mut b);
+    // Destroy all existing iterators which are (in contrast to the storage)
+    // not reused between different instances.
+    destroy_iterators(&mut b);
     (b.storage.take(), b.querier.take())
 }
 
