@@ -20,18 +20,19 @@ pub enum QueryRequest {
         contract_addr: HumanAddr,
         msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
     },
+    Bank(BankQuery),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BankQuery {
     // This calls into the native bank module for one denomination
     // Return value is BalanceResponse
-    Balance {
-        address: HumanAddr,
-        denom: String,
-    },
+    Balance { address: HumanAddr, denom: String },
     // This calls into the native bank module for all denominations.
     // Note that this may be much more expensive than Balance and should be avoided if possible.
     // Return value is AllBalanceResponse.
-    AllBalances {
-        address: HumanAddr,
-    },
+    AllBalances { address: HumanAddr },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

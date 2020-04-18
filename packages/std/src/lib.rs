@@ -21,12 +21,12 @@ pub use crate::errors::{
     NullPointer, ParseErr, SerializeErr, StdError, StdResult,
 };
 pub use crate::init_handle::{
-    log, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
+    log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, QueryRequest, QueryResponse, QueryResult,
+    AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, QueryResponse, QueryResult,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;

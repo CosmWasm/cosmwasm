@@ -2,12 +2,12 @@ use serde::de::DeserializeOwned;
 
 use crate::api::{ApiError, ApiResult, ApiSystemError};
 use crate::encoding::Binary;
-use crate::errors::StdResult;
+use crate::errors::{dyn_contract_err, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::query::QueryRequest;
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
+use crate::serde::from_binary;
 use crate::types::{CanonicalAddr, HumanAddr};
-use crate::{dyn_contract_err, from_binary, AllBalanceResponse, BalanceResponse};
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -101,17 +101,17 @@ pub trait Querier: Clone + Send {
         address: U,
         denom: &str,
     ) -> StdResult<BalanceResponse> {
-        let request = QueryRequest::Balance {
+        let request = QueryRequest::Bank(BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
-        };
+        });
         self.parse_query(&request)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
-        let request = QueryRequest::AllBalances {
+        let request = QueryRequest::Bank(BankQuery::AllBalances {
             address: address.into(),
-        };
+        });
         self.parse_query(&request)
     }
 }

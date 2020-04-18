@@ -11,12 +11,7 @@ use crate::types::HumanAddr;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CosmosMsg {
-    // this moves tokens in the underlying sdk
-    Send {
-        from_address: HumanAddr,
-        to_address: HumanAddr,
-        amount: Vec<Coin>,
-    },
+    Bank(BankMsg),
     // this dispatches a call to another contract at a known address (with known ABI)
     // msg is the json-encoded HandleMsg struct
     Contract {
@@ -34,6 +29,17 @@ pub enum CosmosMsg {
 pub struct LogAttribute {
     pub key: String,
     pub value: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BankMsg {
+    // this moves tokens in the underlying sdk
+    Send {
+        from_address: HumanAddr,
+        to_address: HumanAddr,
+        amount: Vec<Coin>,
+    },
 }
 
 /// A shorthand to produce log messages
@@ -82,11 +88,11 @@ mod test {
     #[test]
     fn can_deser_ok_result() {
         let send = InitResult::Ok(InitResponse {
-            messages: vec![CosmosMsg::Send {
+            messages: vec![CosmosMsg::Bank(BankMsg::Send {
                 from_address: HumanAddr("me".to_string()),
                 to_address: HumanAddr("you".to_string()),
                 amount: coins(1015, "earth"),
-            }],
+            })],
             log: vec![LogAttribute {
                 key: "action".to_string(),
                 value: "release".to_string(),

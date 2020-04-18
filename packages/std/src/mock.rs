@@ -5,7 +5,7 @@ use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
-use crate::query::{AllBalanceResponse, BalanceResponse, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier};
@@ -142,30 +142,32 @@ impl MockQuerier {
 impl Querier for MockQuerier {
     fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
-            QueryRequest::Balance { address, denom } => {
-                // proper error on not found, serialize result on found
-                let amount = self
-                    .balances
-                    .get(address)
-                    .and_then(|v| v.iter().find(|c| &c.denom == denom).map(|c| c.amount))
-                    .unwrap_or_default();
-                let bank_res = BalanceResponse {
-                    amount: Coin {
-                        amount,
-                        denom: denom.to_string(),
-                    },
-                };
-                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
-                Ok(api_res)
-            }
-            QueryRequest::AllBalances { address } => {
-                // proper error on not found, serialize result on found
-                let bank_res = AllBalanceResponse {
-                    amount: self.balances.get(address).cloned().unwrap_or_default(),
-                };
-                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
-                Ok(api_res)
-            }
+            QueryRequest::Bank(bank) => match bank {
+                BankQuery::Balance { address, denom } => {
+                    // proper error on not found, serialize result on found
+                    let amount = self
+                        .balances
+                        .get(address)
+                        .and_then(|v| v.iter().find(|c| &c.denom == denom).map(|c| c.amount))
+                        .unwrap_or_default();
+                    let bank_res = BalanceResponse {
+                        amount: Coin {
+                            amount,
+                            denom: denom.to_string(),
+                        },
+                    };
+                    let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
+                    Ok(api_res)
+                }
+                BankQuery::AllBalances { address } => {
+                    // proper error on not found, serialize result on found
+                    let bank_res = AllBalanceResponse {
+                        amount: self.balances.get(address).cloned().unwrap_or_default(),
+                    };
+                    let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
+                    Ok(api_res)
+                }
+            },
             QueryRequest::Contract { contract_addr, .. } => Err(ApiSystemError::NoSuchContract {
                 addr: contract_addr.clone(),
             }),
