@@ -2,7 +2,6 @@
 #[cfg(feature = "iterator")]
 use std::collections::HashMap;
 use std::ffi::c_void;
-use std::mem;
 
 use wasmer_runtime_core::vm::Ctx;
 
@@ -58,7 +57,7 @@ pub static ERROR_NO_CONTEXT_DATA: i32 = -1_000_501;
 static ERROR_DB_UNKNOWN: i32 = -1_000_502;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
         Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
@@ -84,7 +83,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) 
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+pub fn do_write<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
         Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
@@ -106,7 +105,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32, value_ptr: u32)
     }
 }
 
-pub fn do_remove<S: Storage, Q: Querier>(ctx: &Ctx, key_ptr: u32) -> i32 {
+pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
         Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
@@ -212,6 +211,7 @@ mod iter_support {
     use crate::memory::maybe_read_region;
     use cosmwasm_std::{Order, KV};
     use std::convert::TryInto;
+    use std::mem;
 
     /// Invalid Order enum value passed into scan
     pub static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_001;
@@ -221,7 +221,7 @@ mod iter_support {
     pub static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_102;
 
     pub fn do_scan<S: Storage + 'static, Q: Querier>(
-        ctx: &Ctx,
+        ctx: &mut Ctx,
         start_ptr: u32,
         end_ptr: u32,
         order: i32,
@@ -240,7 +240,7 @@ mod iter_support {
             Ok(o) => o,
             Err(_) => return ERROR_SCAN_INVALID_ORDER,
         };
-        let res = with_storage_from_context::<S, Q, _, i32>(ctx, |store| {
+        let range_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             let iter = match store.range(start.as_deref(), end.as_deref(), order) {
                 Ok(iter) => iter,
                 Err(_) => return make_runtime_err("An error occurred in range call"),
@@ -250,21 +250,24 @@ mod iter_support {
             // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
             let live_forever: Box<dyn Iterator<Item = StdResult<KV>> + 'static> =
                 unsafe { mem::transmute(iter) };
-            let new_id = set_iterator::<S, Q>(ctx, live_forever);
-            Ok(match to_i32(new_id) {
-                Ok(new_id_signed) => new_id_signed,
-                Err(_) => ERROR_DB_UNKNOWN,
-            })
+            Ok(live_forever)
         });
-        match res {
-            Ok(callback_result) => callback_result,
+
+        match range_result {
+            Ok(iterator) => {
+                let new_id = set_iterator::<S, Q>(ctx, iterator);
+                match to_i32(new_id) {
+                    Ok(new_id_signed) => new_id_signed,
+                    Err(_) => ERROR_DB_UNKNOWN,
+                }
+            }
             Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
             Err(_) => ERROR_DB_UNKNOWN,
         }
     }
 
     pub fn do_next<S: Storage, Q: Querier>(
-        ctx: &Ctx,
+        ctx: &mut Ctx,
         iterator_id: u32,
         key_ptr: u32,
         value_ptr: u32,
@@ -298,7 +301,7 @@ mod iter_support {
     }
 
     pub(crate) fn with_iterator_from_context<S, Q, F, T>(
-        ctx: &Ctx,
+        ctx: &mut Ctx,
         iterator_id: u32,
         mut func: F,
     ) -> VmResult<T>
@@ -307,8 +310,7 @@ mod iter_support {
         Q: Querier,
         F: FnMut(&mut dyn Iterator<Item = StdResult<KV>>) -> VmResult<T>,
     {
-        let b = unsafe { get_data::<S, Q>(ctx.data) };
-        let mut b = mem::ManuallyDrop::new(b);
+        let b = get_context_data::<S, Q>(ctx);
         let iter = b.iterators.remove(&iterator_id);
         match iter {
             Some(mut data) => {
@@ -322,11 +324,10 @@ mod iter_support {
 
     // set the iterator, overwriting any possible iterator previously set
     fn set_iterator<S: Storage, Q: Querier>(
-        ctx: &Ctx,
+        ctx: &mut Ctx,
         iter: Box<dyn Iterator<Item = StdResult<KV>>>,
     ) -> u32 {
-        let b = unsafe { get_data::<S, Q>(ctx.data) };
-        let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
+        let b = get_context_data::<S, Q>(ctx);
         let last_id: u32 = b
             .iterators
             .len()
@@ -361,20 +362,25 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
         #[cfg(feature = "iterator")]
         iterators: HashMap::new(),
     };
-    let state = Box::new(data);
-    Box::into_raw(state) as *mut c_void
+    let heap_data = Box::new(data); // move from stack to heap
+    Box::into_raw(heap_data) as *mut c_void // give up ownership
 }
 
 fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
     if !ptr.is_null() {
-        let mut dying = unsafe { get_data::<S, Q>(ptr) };
+        // obtain ownership and drop instance of ContextData when box gets out of scope
+        let mut dying = unsafe { Box::from_raw(ptr as *mut ContextData<S, Q>) };
         // Ensure all iterators are dropped before the storage
         destroy_iterators(&mut dying);
     }
 }
 
-unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<S, Q>> {
-    Box::from_raw(ptr as *mut ContextData<S, Q>)
+/// Get a mutable reference to the context's data. Ownership remains in the Context.
+fn get_context_data<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut ContextData<S, Q> {
+    let owned = unsafe {
+        Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
+    };
+    Box::leak(owned) // give up ownership
 }
 
 #[cfg(feature = "iterator")]
@@ -385,14 +391,13 @@ fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 #[cfg(not(feature = "iterator"))]
 fn destroy_iterators<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
-pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &Ctx, mut func: F) -> VmResult<T>
+pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &mut Ctx, mut func: F) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
     F: FnMut(&mut S) -> VmResult<T>,
 {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
-    let mut b = mem::ManuallyDrop::new(b);
+    let b = get_context_data::<S, Q>(ctx);
     let mut storage = b.storage.take();
     let res = match &mut storage {
         Some(data) => func(data),
@@ -403,7 +408,7 @@ where
 }
 
 pub(crate) fn with_querier_from_context<S, Q, F, T>(
-    ctx: &Ctx,
+    ctx: &mut Ctx,
     mut func: F,
 ) -> Result<T, ApiSystemError>
 where
@@ -411,9 +416,7 @@ where
     Q: Querier,
     F: FnMut(&Q) -> Result<T, ApiSystemError>,
 {
-    let b = unsafe { get_data::<S, Q>(ctx.data) };
-    // we do this to avoid cleanup
-    let mut b = mem::ManuallyDrop::new(b);
+    let b = get_context_data::<S, Q>(ctx);
     let querier = b.querier.take();
     let res = match &querier {
         Some(q) => func(q),
@@ -425,9 +428,10 @@ where
 
 /// Returns the original storage and querier as owned instances, and closes any remaining
 /// iterators. This is meant to be called when recycling the instance.
-pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(source: &Ctx) -> (Option<S>, Option<Q>) {
-    let b = unsafe { get_data::<S, Q>(source.data) };
-    let mut b = mem::ManuallyDrop::new(b);
+pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
+    source: &mut Ctx,
+) -> (Option<S>, Option<Q>) {
+    let mut b = get_context_data::<S, Q>(source);
     // Destroy all existing iterators which are (in contrast to the storage)
     // not reused between different instances.
     destroy_iterators(&mut b);
@@ -436,9 +440,8 @@ pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(source: &Ctx) -> (Opti
 
 /// Moves owned instances of storage and querier into the context.
 /// Should be followed by exactly one call to move_out_of_context when the instance is finished.
-pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &Ctx, storage: S, querier: Q) {
-    let b = unsafe { get_data::<S, Q>(target.data) };
-    let mut b = mem::ManuallyDrop::new(b); // we do this to avoid cleanup
+pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storage: S, querier: Q) {
+    let b = get_context_data::<S, Q>(target);
     b.storage = Some(storage);
     b.querier = Some(querier);
 }
@@ -490,7 +493,7 @@ mod test {
         instance
     }
 
-    fn leave_default_data(instance: &Instance) {
+    fn leave_default_data(instance: &mut Instance) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage
@@ -498,28 +501,28 @@ mod test {
             .expect("error setting value");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_context(instance.context(), storage, querier);
+        move_into_context(instance.context_mut(), storage, querier);
     }
 
     #[test]
     fn leave_and_take_context_data() {
         // this creates an instance
-        let instance = make_instance();
+        let mut instance = make_instance();
 
         // empty data on start
-        let (inits, initq) = move_out_of_context::<S, Q>(instance.context());
+        let (inits, initq) = move_out_of_context::<S, Q>(instance.context_mut());
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
-        leave_default_data(&instance);
-        let (s, q) = move_out_of_context::<S, Q>(instance.context());
+        leave_default_data(&mut instance);
+        let (s, q) = move_out_of_context::<S, Q>(instance.context_mut());
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
 
         // now is empty again
-        let (ends, endq) = move_out_of_context::<S, Q>(instance.context());
+        let (ends, endq) = move_out_of_context::<S, Q>(instance.context_mut());
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
@@ -527,9 +530,9 @@ mod test {
     #[test]
     fn with_storage_set_get() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(INIT_KEY).expect("error getting value"))
@@ -558,9 +561,9 @@ mod test {
     #[cfg(feature = "iterator")]
     fn with_iterator_miss_and_hit() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
 
         let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, 1, |_iter| {
             panic!("this should be empty / not callled");
@@ -624,9 +627,9 @@ mod test {
     #[cfg(feature = "iterator")]
     fn multiple_iterators() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
 
         // add some more data
         let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
@@ -699,9 +702,9 @@ mod test {
     #[test]
     fn with_query_success() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
 
         let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
             let req = QueryRequest::AllBalances {
@@ -719,9 +722,9 @@ mod test {
     #[test]
     fn with_query_parse_success() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
         let contract = HumanAddr::from(INIT_ADDR);
 
         let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
@@ -743,9 +746,9 @@ mod test {
     #[should_panic]
     fn with_storage_handles_panics() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
 
         with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
             panic!("fails, but shouldn't cause segfault")
@@ -757,9 +760,9 @@ mod test {
     #[should_panic]
     fn with_query_handles_panics() {
         // this creates an instance
-        let instance = make_instance();
-        leave_default_data(&instance);
-        let ctx = instance.context();
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
 
         with_querier_from_context::<S, Q, _, ()>(ctx, |_querier| {
             panic!("fails, but shouldn't cause segfault")

@@ -122,7 +122,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        move_into_context(wasmer_instance.context(), deps.storage, deps.querier);
+        move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
             wasmer_instance,
             api: deps.api,
@@ -133,9 +133,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+    pub fn recycle(mut instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
-            move_out_of_context(instance.wasmer_instance.context())
+            move_out_of_context(instance.wasmer_instance.context_mut())
         {
             Some(Extern {
                 storage,
@@ -161,8 +161,8 @@ where
         get_gas(&self.wasmer_instance)
     }
 
-    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context(), func)
+    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -361,7 +361,7 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(&CONTRACT, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
