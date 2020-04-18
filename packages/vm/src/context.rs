@@ -379,10 +379,7 @@ unsafe fn get_data<S: Storage, Q: Querier>(ptr: *mut c_void) -> Box<ContextData<
 
 #[cfg(feature = "iterator")]
 fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
-    let keys: Vec<u32> = context.iter.keys().cloned().collect();
-    for key in keys {
-        let _ = context.iter.remove(&key);
-    }
+    context.iter.clear();
 }
 
 #[cfg(not(feature = "iterator"))]
