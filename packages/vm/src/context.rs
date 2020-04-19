@@ -264,8 +264,7 @@ mod test {
     }
 
     #[test]
-    fn with_storage_set_get() {
-        // this creates an instance
+    fn with_storage_from_context_set_get() {
         let mut instance = make_instance();
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
@@ -294,8 +293,20 @@ mod test {
     }
 
     #[test]
-    fn with_query_success() {
-        // this creates an instance
+    #[should_panic]
+    fn with_storage_from_context_handles_panics() {
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
+
+        with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
+            panic!("fails, but shouldn't cause segfault")
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn with_querier_from_context_works() {
         let mut instance = make_instance();
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
@@ -314,8 +325,7 @@ mod test {
     }
 
     #[test]
-    fn with_query_parse_success() {
-        // this creates an instance
+    fn with_querier_from_context_parse_works() {
         let mut instance = make_instance();
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
@@ -338,22 +348,7 @@ mod test {
 
     #[test]
     #[should_panic]
-    fn with_storage_handles_panics() {
-        // this creates an instance
-        let mut instance = make_instance();
-        leave_default_data(&mut instance);
-        let ctx = instance.context_mut();
-
-        with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
-            panic!("fails, but shouldn't cause segfault")
-        })
-        .unwrap();
-    }
-
-    #[test]
-    #[should_panic]
-    fn with_query_handles_panics() {
-        // this creates an instance
+    fn with_querier_from_context_handles_panics() {
         let mut instance = make_instance();
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
