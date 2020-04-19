@@ -65,6 +65,43 @@ fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
 #[cfg(not(feature = "iterator"))]
 fn destroy_iterators<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
+/// Returns the original storage and querier as owned instances, and closes any remaining
+/// iterators. This is meant to be called when recycling the instance.
+pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
+    source: &mut Ctx,
+) -> (Option<S>, Option<Q>) {
+    let mut b = get_context_data::<S, Q>(source);
+    // Destroy all existing iterators which are (in contrast to the storage)
+    // not reused between different instances.
+    destroy_iterators(&mut b);
+    (b.storage.take(), b.querier.take())
+}
+
+/// Moves owned instances of storage and querier into the context.
+/// Should be followed by exactly one call to move_out_of_context when the instance is finished.
+pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storage: S, querier: Q) {
+    let b = get_context_data::<S, Q>(target);
+    b.storage = Some(storage);
+    b.querier = Some(querier);
+}
+
+// set the iterator, overwriting any possible iterator previously
+#[cfg(feature = "iterator")]
+pub fn set_iterator<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    iter: Box<dyn Iterator<Item = StdResult<KV>>>,
+) -> u32 {
+    let b = get_context_data::<S, Q>(ctx);
+    let last_id: u32 = b
+        .iterators
+        .len()
+        .try_into()
+        .expect("Found more iterator IDs than supported");
+    let new_id = last_id + 1;
+    b.iterators.insert(new_id, iter);
+    new_id
+}
+
 pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &mut Ctx, mut func: F) -> VmResult<T>
 where
     S: Storage,
@@ -100,26 +137,6 @@ where
     res
 }
 
-/// Returns the original storage and querier as owned instances, and closes any remaining
-/// iterators. This is meant to be called when recycling the instance.
-pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
-    source: &mut Ctx,
-) -> (Option<S>, Option<Q>) {
-    let mut b = get_context_data::<S, Q>(source);
-    // Destroy all existing iterators which are (in contrast to the storage)
-    // not reused between different instances.
-    destroy_iterators(&mut b);
-    (b.storage.take(), b.querier.take())
-}
-
-/// Moves owned instances of storage and querier into the context.
-/// Should be followed by exactly one call to move_out_of_context when the instance is finished.
-pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storage: S, querier: Q) {
-    let b = get_context_data::<S, Q>(target);
-    b.storage = Some(storage);
-    b.querier = Some(querier);
-}
-
 #[cfg(feature = "iterator")]
 pub(crate) fn with_iterator_from_context<S, Q, F, T>(
     ctx: &mut Ctx,
@@ -141,23 +158,6 @@ where
         }
         None => UninitializedContextData { kind: "iterator" }.fail(),
     }
-}
-
-// set the iterator, overwriting any possible iterator previously
-#[cfg(feature = "iterator")]
-pub fn set_iterator<S: Storage, Q: Querier>(
-    ctx: &mut Ctx,
-    iter: Box<dyn Iterator<Item = StdResult<KV>>>,
-) -> u32 {
-    let b = get_context_data::<S, Q>(ctx);
-    let last_id: u32 = b
-        .iterators
-        .len()
-        .try_into()
-        .expect("Found more iterator IDs than supported");
-    let new_id = last_id + 1;
-    b.iterators.insert(new_id, iter);
-    new_id
 }
 
 #[cfg(test)]
