@@ -67,16 +67,18 @@ impl ExternalStorage {
         let value_ptr = alloc(result_length);
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
-        if read == -1000002 {
+        if read == -1_000_002 {
             return contract_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
+        } else if read == -1_000_502 {
+            // key does not exist in external storage
+            return Ok(None);
         } else if read < 0 {
             return dyn_contract_err(format!("Error reading from database. Error code: {}", read));
         }
 
         let data = unsafe { consume_region(value_ptr) }?;
-        // TODO: how can we know if the key was available or not in the backend?
-        Ok(if data.len() == 0 { None } else { Some(data) })
+        Ok(Some(data))
     }
 }
 

@@ -57,6 +57,8 @@ static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
 static ERROR_HUMANIZE_UNKNOWN: i32 = -1_000_301;
 /// Cannot serialize query response
 static ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
+/// The given key does not exist in storage
+static ERROR_DB_READ_KEY_DOES_NOT_EXIST: i32 = -1_000_502;
 /// Generic error - using context with no Storage attached
 static ERROR_NO_CONTEXT_DATA: i32 = -1_000_501;
 /// Generic error - An unknown error accessing the DB
@@ -99,7 +101,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
             Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
             Err(_) => ERROR_REGION_WRITE_UNKNOWN,
         },
-        None => SUCCESS,
+        None => ERROR_DB_READ_KEY_DOES_NOT_EXIST,
     }
 }
 
@@ -412,8 +414,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        // TODO: What if we had an error code for this?
-        assert_eq!(result, SUCCESS);
+        assert_eq!(result, ERROR_DB_READ_KEY_DOES_NOT_EXIST);
         assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
     }
 
