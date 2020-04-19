@@ -169,6 +169,8 @@ where
 mod test {
     use super::*;
     use crate::backends::compile;
+    #[cfg(feature = "iterator")]
+    use crate::errors::VmError;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, HumanAddr, QueryRequest, ReadonlyStorage,
@@ -218,6 +220,8 @@ mod test {
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(instance.context_mut(), storage, querier);
+        #[cfg(feature = "iterator")]
+        add_iterator::<S, Q>(instance.context_mut(), Box::new(std::iter::empty()));
     }
 
     #[test]
@@ -342,5 +346,36 @@ mod test {
             panic!("fails, but shouldn't cause segfault")
         })
         .unwrap();
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn with_iterator_from_context_works() {
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
+
+        with_iterator_from_context::<S, Q, _, ()>(ctx, 1, |iter| {
+            assert!(iter.next().is_none());
+            Ok(())
+        })
+        .expect("must not error");
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn with_iterator_from_context_errors_for_non_existent_iterator_id() {
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
+
+        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, 42, |_iter| {
+            panic!("this should not be called");
+        });
+        match miss {
+            Ok(_) => panic!("Expected error"),
+            Err(VmError::UninitializedContextData { kind, .. }) => assert_eq!(kind, "iterator"),
+            Err(e) => panic!("Unexpected error: {}", e),
+        }
     }
 }

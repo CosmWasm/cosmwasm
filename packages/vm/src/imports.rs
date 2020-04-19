@@ -373,15 +373,6 @@ mod test {
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
 
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, 1, |_iter| {
-            panic!("this should be empty / not callled");
-        });
-        match miss {
-            Ok(_) => panic!("Expected error"),
-            Err(VmError::UninitializedContextData { .. }) => assert!(true),
-            Err(e) => panic!("Unexpected error: {}", e),
-        }
-
         // add some more data
         let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
         with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
@@ -414,16 +405,6 @@ mod test {
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert!(item.is_none());
-
-        // we also miss when using a non-registered counter
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, id + 1, |_iter| {
-            panic!("this should be empty / not callled");
-        });
-        match miss {
-            Ok(_) => panic!("Expected error"),
-            Err(VmError::UninitializedContextData { .. }) => assert!(true),
-            Err(e) => panic!("Unexpected error: {}", e),
-        }
     }
 
     #[test]
