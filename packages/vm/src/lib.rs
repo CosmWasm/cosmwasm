@@ -5,6 +5,7 @@ mod compatability;
 mod context;
 mod conversion;
 mod errors;
+mod imports;
 mod instance;
 mod memory;
 mod middleware;

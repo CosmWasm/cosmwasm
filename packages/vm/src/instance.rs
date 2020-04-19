@@ -13,13 +13,15 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
     move_into_context, move_out_of_context, setup_context, with_storage_from_context,
 };
-#[cfg(feature = "iterator")]
-use crate::context::{do_next, do_scan};
 use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::imports::{
+    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
+};
+#[cfg(feature = "iterator")]
+use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
