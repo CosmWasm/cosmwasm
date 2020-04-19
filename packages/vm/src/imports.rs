@@ -327,8 +327,11 @@ mod test {
     type Q = MockQuerier;
 
     // prepared data
-    static INIT_KEY: &[u8] = b"foo";
-    static INIT_VALUE: &[u8] = b"bar";
+    static KEY1: &[u8] = b"ant";
+    static VALUE1: &[u8] = b"insect";
+    static KEY2: &[u8] = b"tree";
+    static VALUE2: &[u8] = b"plant";
+
     // this account has some coins
     static INIT_ADDR: &str = "someone";
     static INIT_AMOUNT: u128 = 500;
@@ -357,9 +360,8 @@ mod test {
     fn leave_default_data(ctx: &mut Ctx) {
         // create some mock data
         let mut storage = MockStorage::new();
-        storage
-            .set(INIT_KEY, INIT_VALUE)
-            .expect("error setting value");
+        storage.set(KEY1, VALUE1).expect("error setting");
+        storage.set(KEY2, VALUE2).expect("error setting");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(ctx, storage, querier);
@@ -367,21 +369,10 @@ mod test {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_with_iterator_miss_and_hit() {
-        // this creates an instance
+    fn do_scan_unbound_works() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
         leave_default_data(ctx);
-
-        // add some more data
-        let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
-        with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-            store
-                .set(next_key, next_value)
-                .expect("error setting value");
-            Ok(())
-        })
-        .unwrap();
 
         // set up iterator over all space
         let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
@@ -390,17 +381,36 @@ mod test {
 
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(
-            item.unwrap().unwrap(),
-            (INIT_KEY.to_vec(), INIT_VALUE.to_vec())
-        );
+        assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(
-            item.unwrap().unwrap(),
-            (next_key.to_vec(), next_value.to_vec())
-        );
+        assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        assert!(item.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_scan_unbound_descending_works() {
+        let mut instance = make_instance();
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        // set up iterator over all space
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()))
+            .expect("ID must not be negative");
+        assert_eq!(1, id);
+
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
@@ -410,54 +420,32 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_multiple_iterators() {
-        // this creates an instance
         let mut instance = make_instance();
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        // add some more data
-        let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
-        with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-            store
-                .set(next_key, next_value)
-                .expect("error setting value");
-            Ok(())
-        })
-        .unwrap();
-
-        // set up iterator over all space
+        // unbounded, ascending and descending
         let id1 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
             .expect("ID must not be negative");
-        assert_eq!(1, id1);
+        let id2 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()))
+            .expect("ID must not be negative");
+        assert_eq!(id1, 1);
+        assert_eq!(id2, 2);
 
         // first item, first iterator
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(
-            item.unwrap().unwrap(),
-            (INIT_KEY.to_vec(), INIT_VALUE.to_vec())
-        );
-
-        // set up second iterator over all space
-        let id2 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
-            .expect("ID must not be negative");
-        assert_eq!(2, id2);
+        assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(
-            item.unwrap().unwrap(),
-            (next_key.to_vec(), next_value.to_vec())
-        );
+        assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(
-            item.unwrap().unwrap(),
-            (INIT_KEY.to_vec(), INIT_VALUE.to_vec())
-        );
+        assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
         let item =
@@ -467,9 +455,6 @@ mod test {
         // second item, second iterator
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(
-            item.unwrap().unwrap(),
-            (next_key.to_vec(), next_value.to_vec())
-        );
+        assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
 }
