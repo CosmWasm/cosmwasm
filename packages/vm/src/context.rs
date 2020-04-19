@@ -86,6 +86,7 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
 }
 
 /// Add the iterator to the context's data. A new ID is assigned and returned.
+/// IDs are guaranteed to be in the range [0, 2**31-1], i.e. fit in the non-negative part if type i32.
 #[cfg(feature = "iterator")]
 pub fn add_iterator<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
@@ -98,6 +99,10 @@ pub fn add_iterator<S: Storage, Q: Querier>(
         .try_into()
         .expect("Found more iterator IDs than supported");
     let new_id = last_id + 1;
+    static INT32_MAX_VALUE: u32 = 2_147_483_647;
+    if new_id > INT32_MAX_VALUE {
+        panic!("Iterator ID exceeded INT32_MAX_VALUE. This must not happen.");
+    }
     b.iterators.insert(new_id, iter);
     new_id
 }
