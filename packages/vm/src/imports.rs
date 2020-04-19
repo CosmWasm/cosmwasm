@@ -378,6 +378,60 @@ mod test {
         region_ptr
     }
 
+    fn create_empty(wasmer_instance: &mut Instance, size: u32) -> u32 {
+        let allocate: Func<u32, u32> = wasmer_instance
+            .func("allocate")
+            .expect("error getting function");
+        let region_ptr = allocate.call(size).expect("error calling allocate");
+        region_ptr
+    }
+
+    #[test]
+    fn do_read_works() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, KEY1);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        assert_eq!(result, SUCCESS);
+        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+    }
+
+    #[test]
+    fn do_read_works_for_non_existent_key() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, b"I do not exist in storage");
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        // TODO: What if we had an error code for this?
+        assert_eq!(result, SUCCESS);
+        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+    }
+
+    #[test]
+    fn do_read_fails_for_small_result_region() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, KEY1);
+        let value_ptr = create_empty(&mut instance, 3);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        assert_eq!(result, ERROR_REGION_WRITE_TOO_SMALL);
+        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+    }
+
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_works() {
