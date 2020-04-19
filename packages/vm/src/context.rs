@@ -221,8 +221,6 @@ mod test {
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(instance.context_mut(), storage, querier);
-        #[cfg(feature = "iterator")]
-        let _ = add_iterator::<S, Q>(instance.context_mut(), Box::new(std::iter::empty()));
     }
 
     #[test]
@@ -246,6 +244,23 @@ mod test {
         let (ends, endq) = move_out_of_context::<S, Q>(instance.context_mut());
         assert!(ends.is_none());
         assert!(endq.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn add_iterator_works() {
+        let mut instance = make_instance();
+        leave_default_data(&mut instance);
+        let ctx = instance.context_mut();
+
+        assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 0);
+        let id1 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
+        let id2 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
+        let id3 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
+        assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 3);
+        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id1));
+        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id2));
+        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id3));
     }
 
     #[test]
@@ -356,7 +371,8 @@ mod test {
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
 
-        with_iterator_from_context::<S, Q, _, ()>(ctx, 1, |iter| {
+        let id = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
+        with_iterator_from_context::<S, Q, _, ()>(ctx, id, |iter| {
             assert!(iter.next().is_none());
             Ok(())
         })
