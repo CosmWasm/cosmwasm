@@ -367,6 +367,17 @@ mod test {
         move_into_context(ctx, storage, querier);
     }
 
+    fn write_data(wasmer_instance: &mut Instance, data: &[u8]) -> u32 {
+        let allocate: Func<u32, u32> = wasmer_instance
+            .func("allocate")
+            .expect("error getting function");
+        let region_ptr = allocate
+            .call(data.len() as u32)
+            .expect("error calling allocate");
+        write_region(wasmer_instance.context_mut(), region_ptr, data).expect("error writing");
+        region_ptr
+    }
+
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_works() {
@@ -407,6 +418,29 @@ mod test {
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+
+        let item =
+            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        assert!(item.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_scan_bound_works() {
+        let mut instance = make_instance();
+
+        let start = write_data(&mut instance, b"anna");
+        let end = write_data(&mut instance, b"bert");
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, start, end, Order::Ascending.into()))
+            .expect("ID must not be negative");
 
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
