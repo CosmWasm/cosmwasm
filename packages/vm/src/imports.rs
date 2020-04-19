@@ -390,13 +390,8 @@ mod test {
         .unwrap();
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<S, Q>(
-            ctx,
-            0,
-            0,
-            cosmwasm_std::Order::Ascending.into(),
-        ))
-        .expect("ID must not negative");
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
         assert_eq!(1, id);
 
         let item =
@@ -447,13 +442,8 @@ mod test {
         .unwrap();
 
         // set up iterator over all space
-        let id1 = to_u32(do_scan::<S, Q>(
-            ctx,
-            0,
-            0,
-            cosmwasm_std::Order::Ascending.into(),
-        ))
-        .expect("ID must not negative");
+        let id1 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
         assert_eq!(1, id1);
 
         // first item, first iterator
@@ -465,13 +455,8 @@ mod test {
         );
 
         // set up second iterator over all space
-        let id2 = to_u32(do_scan::<S, Q>(
-            ctx,
-            0,
-            0,
-            cosmwasm_std::Order::Ascending.into(),
-        ))
-        .expect("ID must not negative");
+        let id2 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
         assert_eq!(2, id2);
 
         // second item, first iterator
