@@ -212,7 +212,7 @@ mod test {
         instance
     }
 
-    fn leave_default_data(instance: &mut Instance) {
+    fn leave_default_data(ctx: &mut Ctx) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage
@@ -220,28 +220,29 @@ mod test {
             .expect("error setting value");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_context(instance.context_mut(), storage, querier);
+        move_into_context(ctx, storage, querier);
     }
 
     #[test]
     fn leave_and_take_context_data() {
         // this creates an instance
         let mut instance = make_instance();
+        let ctx = instance.context_mut();
 
         // empty data on start
-        let (inits, initq) = move_out_of_context::<S, Q>(instance.context_mut());
+        let (inits, initq) = move_out_of_context::<S, Q>(ctx);
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
-        leave_default_data(&mut instance);
-        let (s, q) = move_out_of_context::<S, Q>(instance.context_mut());
+        leave_default_data(ctx);
+        let (s, q) = move_out_of_context::<S, Q>(ctx);
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
 
         // now is empty again
-        let (ends, endq) = move_out_of_context::<S, Q>(instance.context_mut());
+        let (ends, endq) = move_out_of_context::<S, Q>(ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
@@ -250,8 +251,8 @@ mod test {
     #[cfg(feature = "iterator")]
     fn add_iterator_works() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 0);
         let id1 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
@@ -266,8 +267,8 @@ mod test {
     #[test]
     fn with_storage_from_context_set_get() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(INIT_KEY).expect("error getting value"))
@@ -296,8 +297,8 @@ mod test {
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
             panic!("A panic occurred in the callback.")
@@ -308,8 +309,8 @@ mod test {
     #[test]
     fn with_querier_from_context_works() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
             let req = QueryRequest::AllBalances {
@@ -327,8 +328,8 @@ mod test {
     #[test]
     fn with_querier_from_context_parse_works() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
         let contract = HumanAddr::from(INIT_ADDR);
 
         let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
@@ -350,8 +351,8 @@ mod test {
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         with_querier_from_context::<S, Q, _, ()>(ctx, |_querier| {
             panic!("A panic occurred in the callback.")
@@ -363,8 +364,8 @@ mod test {
     #[cfg(feature = "iterator")]
     fn with_iterator_from_context_works() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         let id = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
         with_iterator_from_context::<S, Q, _, ()>(ctx, id, |iter| {
@@ -378,8 +379,8 @@ mod test {
     #[cfg(feature = "iterator")]
     fn with_iterator_from_context_errors_for_non_existent_iterator_id() {
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, 42, |_iter| {
             panic!("this should not be called");

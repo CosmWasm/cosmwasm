@@ -354,7 +354,7 @@ mod test {
         instance
     }
 
-    fn leave_default_data(instance: &mut Instance) {
+    fn leave_default_data(ctx: &mut Ctx) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage
@@ -362,7 +362,7 @@ mod test {
             .expect("error setting value");
         let querier =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_context(instance.context_mut(), storage, querier);
+        move_into_context(ctx, storage, querier);
     }
 
     #[test]
@@ -370,8 +370,8 @@ mod test {
     fn do_scan_with_iterator_miss_and_hit() {
         // this creates an instance
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         // add some more data
         let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
@@ -412,8 +412,8 @@ mod test {
     fn do_scan_multiple_iterators() {
         // this creates an instance
         let mut instance = make_instance();
-        leave_default_data(&mut instance);
         let ctx = instance.context_mut();
+        leave_default_data(ctx);
 
         // add some more data
         let (next_key, next_value): (&[u8], &[u8]) = (b"second", b"point");
