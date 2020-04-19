@@ -64,9 +64,12 @@ static ERROR_DB_UNKNOWN: i32 = -1_000_502;
 
 // The 2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
 
+/// An unknown error in the db_scan implementation
+#[cfg(feature = "iterator")]
+static ERROR_SCAN_UNKNOWN: i32 = -2_000_001;
 /// Invalid Order enum value passed into scan
 #[cfg(feature = "iterator")]
-static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_001;
+static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_002;
 /// An unknown error in the db_next implementation
 #[cfg(feature = "iterator")]
 static ERROR_NEXT_UNKNOWN: i32 = -2_000_101;
@@ -262,11 +265,11 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
             let new_id = set_iterator::<S, Q>(ctx, iterator);
             match to_i32(new_id) {
                 Ok(new_id_signed) => new_id_signed,
-                Err(_) => ERROR_DB_UNKNOWN,
+                Err(_) => ERROR_SCAN_UNKNOWN,
             }
         }
         Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
-        Err(_) => ERROR_DB_UNKNOWN,
+        Err(_) => ERROR_SCAN_UNKNOWN,
     }
 }
 
