@@ -293,14 +293,14 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
         let mut instance = make_instance();
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
 
         with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
-            panic!("fails, but shouldn't cause segfault")
+            panic!("A panic occurred in the callback.")
         })
         .unwrap();
     }
@@ -347,14 +347,14 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
+    #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
         let mut instance = make_instance();
         leave_default_data(&mut instance);
         let ctx = instance.context_mut();
 
         with_querier_from_context::<S, Q, _, ()>(ctx, |_querier| {
-            panic!("fails, but shouldn't cause segfault")
+            panic!("A panic occurred in the callback.")
         })
         .unwrap();
     }
