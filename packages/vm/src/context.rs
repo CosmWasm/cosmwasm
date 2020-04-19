@@ -85,9 +85,9 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
-// set the iterator, overwriting any possible iterator previously
+/// Add the iterator to the context's data. A new ID is assigned and returned.
 #[cfg(feature = "iterator")]
-pub fn set_iterator<S: Storage, Q: Querier>(
+pub fn add_iterator<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     iter: Box<dyn Iterator<Item = StdResult<KV>>>,
 ) -> u32 {

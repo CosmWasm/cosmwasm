@@ -16,7 +16,7 @@ use cosmwasm_std::{Order, KV};
 use wasmer_runtime_core::vm::Ctx;
 
 #[cfg(feature = "iterator")]
-use crate::context::{set_iterator, with_iterator_from_context};
+use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{with_querier_from_context, with_storage_from_context};
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
@@ -262,7 +262,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 
     match range_result {
         Ok(iterator) => {
-            let new_id = set_iterator::<S, Q>(ctx, iterator);
+            let new_id = add_iterator::<S, Q>(ctx, iterator);
             match to_i32(new_id) {
                 Ok(new_id_signed) => new_id_signed,
                 Err(_) => ERROR_SCAN_UNKNOWN,
