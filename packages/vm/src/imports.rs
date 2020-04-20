@@ -44,27 +44,54 @@ mod errors {
     /// Success
     pub static NONE: i32 = 0;
     /// An unknown error occurred when writing to region
-    pub static REGION_WRITE_UNKNOWN: i32 = -1_000_001;
+    pub static REGION_WRITE_UNKNOWN: i32 = -1_000_000;
     /// Could not write to region because it is too small
-    pub static REGION_WRITE_TOO_SMALL: i32 = -1_000_002;
+    pub static REGION_WRITE_TOO_SMALL: i32 = -1_000_001;
     /// An unknown error occurred when reading region
-    pub static REGION_READ_UNKNOWN: i32 = -1_000_101;
+    pub static REGION_READ_UNKNOWN: i32 = -1_000_100;
     /// The contract sent us a Region we're not willing to read because it is too big
-    pub static REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_102;
-    /// An unknown error when canonicalizing address
-    pub static CANONICALIZE_UNKNOWN: i32 = -1_000_201;
-    /// The input address (human address) was invalid
-    pub static CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
-    /// An unknonw error when humanizing address
-    pub static HUMANIZE_UNKNOWN: i32 = -1_000_301;
-    /// Cannot serialize query response
-    pub static QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
-    /// The given key does not exist in storage
-    pub static DB_READ_KEY_DOES_NOT_EXIST: i32 = -1_000_502;
+    pub static REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_101;
+
+    // unused block (-1_000_2xx)
+    // unused block (-1_000_3xx)
+    // unused block (-1_000_4xx)
+
     /// Generic error - using context with no Storage attached
-    pub static NO_CONTEXT_DATA: i32 = -1_000_501;
+    pub static NO_CONTEXT_DATA: i32 = -1_000_500;
     /// Generic error - An unknown error accessing the DB
-    pub static DB_UNKNOWN: i32 = -1_000_502;
+    pub static DB_UNKNOWN: i32 = -1_000_501;
+
+    /// db_read erros (-1_001_0xx)
+    pub mod read {
+        // pub static UNKNOWN: i32 = -1_001_000;
+        /// The given key does not exist in storage
+        pub static KEY_DOES_NOT_EXIST: i32 = -1_001_001;
+    }
+
+    /// db_write erros (-1_001_1xx)
+    /// db_remove erros (-1_001_2xx)
+
+    /// canonicalize_address erros (-1_002_0xx)
+    pub mod canonicalize {
+        /// An unknown error when canonicalizing address
+        pub static UNKNOWN: i32 = -1_002_000;
+        /// The input address (human address) was invalid
+        pub static INVALID_INPUT: i32 = -1_002_001;
+    }
+
+    /// humanize_address erros (-1_002_1xx)
+    pub mod humanize {
+        /// An unknonw error when humanizing address
+        pub static UNKNOWN: i32 = -1_002_100;
+    }
+
+    /// query_chain errors (-1_003_0xx)
+    pub mod query_chain {
+        /// An unknown error in query_chain
+        // pub static UNKNOWN: i32 = -1_003_000;
+        /// Cannot serialize query response
+        pub static CANNOT_SERIALIZE_RESPONSE: i32 = -1_003_001;
+    }
 
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
 
@@ -109,7 +136,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
             Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        None => errors::DB_READ_KEY_DOES_NOT_EXIST,
+        None => errors::read::KEY_DOES_NOT_EXIST,
     }
 }
 
@@ -166,7 +193,7 @@ pub fn do_canonicalize_address<A: Api>(
     };
     let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return errors::CANONICALIZE_INVALID_INPUT,
+        Err(_) => return errors::canonicalize::INVALID_INPUT,
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
@@ -174,7 +201,7 @@ pub fn do_canonicalize_address<A: Api>(
             Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        Err(_) => errors::CANONICALIZE_UNKNOWN,
+        Err(_) => errors::canonicalize::UNKNOWN,
     }
 }
 
@@ -195,7 +222,7 @@ pub fn do_humanize_address<A: Api>(
             Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        Err(_) => errors::HUMANIZE_UNKNOWN,
+        Err(_) => errors::humanize::UNKNOWN,
     }
 }
 
@@ -232,7 +259,7 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
             Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        Err(_) => errors::QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE,
+        Err(_) => errors::query_chain::CANNOT_SERIALIZE_RESPONSE,
     }
 }
 
@@ -422,7 +449,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::DB_READ_KEY_DOES_NOT_EXIST);
+        assert_eq!(result, errors::read::KEY_DOES_NOT_EXIST);
         assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
     }
 

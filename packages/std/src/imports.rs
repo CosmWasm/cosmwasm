@@ -67,10 +67,10 @@ impl ExternalStorage {
         let value_ptr = alloc(result_length);
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
-        if read == -1_000_002 {
+        if read == -1_000_001 {
             return contract_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
-        } else if read == -1_000_502 {
+        } else if read == -1_001_001 {
             // key does not exist in external storage
             return Ok(None);
         } else if read < 0 {
