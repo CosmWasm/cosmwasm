@@ -419,6 +419,21 @@ mod test {
     }
 
     #[test]
+    fn do_read_fails_for_large_key() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, &vec![7u8; 300 * 1024]);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        assert_eq!(result, ERROR_REGION_READ_LENGTH_TOO_BIG);
+        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+    }
+
+    #[test]
     fn do_read_fails_for_small_result_region() {
         let mut instance = make_instance();
 
