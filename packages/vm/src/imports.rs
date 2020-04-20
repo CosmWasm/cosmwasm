@@ -777,4 +777,40 @@ mod test {
         assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), b"");
         // API makes no guarantees for value_ptr in this case
     }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_fails_for_key_region_too_small() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 1);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
+
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_fails_for_value_region_too_small() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 50);
+        let value_ptr = create_empty(&mut instance, 1);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
+
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+    }
 }
