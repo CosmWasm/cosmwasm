@@ -276,7 +276,7 @@ cargo fmt \
   && (cd packages/std && cargo wasm-debug --features iterator && cargo test --features iterator && cargo clippy -- -D warnings) \
   && (cd packages/storage && cargo build && cargo test --features iterator && cargo clippy -- -D warnings) \
   && (cd packages/schema && cargo build && cargo test && cargo clippy -- -D warnings) \
-  && (cd packages/vm && cargo +nightly build --features iterator && cargo +nightly test --features iterator)
+  && (cd packages/vm && cargo +nightly build --features iterator && cargo +nightly test --features iterator && cargo +nightly clippy --features iterator -- -D warnings)
 ```
 
 **Contracts**
