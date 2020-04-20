@@ -61,17 +61,17 @@ mod errors {
     /// Generic error - An unknown error accessing the DB
     pub static DB_UNKNOWN: i32 = -1_000_501;
 
-    /// db_read erros (-1_001_0xx)
+    /// db_read errors (-1_001_0xx)
     pub mod read {
         // pub static UNKNOWN: i32 = -1_001_000;
         /// The given key does not exist in storage
         pub static KEY_DOES_NOT_EXIST: i32 = -1_001_001;
     }
 
-    /// db_write erros (-1_001_1xx)
-    /// db_remove erros (-1_001_2xx)
+    /// db_write errors (-1_001_1xx)
+    /// db_remove errors (-1_001_2xx)
 
-    /// canonicalize_address erros (-1_002_0xx)
+    /// canonicalize_address errors (-1_002_0xx)
     pub mod canonicalize {
         /// An unknown error when canonicalizing address
         pub static UNKNOWN: i32 = -1_002_000;
@@ -79,7 +79,7 @@ mod errors {
         pub static INVALID_INPUT: i32 = -1_002_001;
     }
 
-    /// humanize_address erros (-1_002_1xx)
+    /// humanize_address errors (-1_002_1xx)
     pub mod humanize {
         /// An unknonw error when humanizing address
         pub static UNKNOWN: i32 = -1_002_100;
@@ -95,7 +95,7 @@ mod errors {
 
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
 
-    /// db_scan erros (-2_000_0xx)
+    /// db_scan errors (-2_000_0xx)
     #[cfg(feature = "iterator")]
     pub mod scan {
         /// An unknown error in the db_scan implementation
