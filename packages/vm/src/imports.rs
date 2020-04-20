@@ -324,23 +324,29 @@ pub fn do_next<S: Storage, Q: Querier>(
             Err(_) => return errors::next::INVALID_ITERATOR,
         };
 
-    // prepare return values
+    // Prepare return values. Both key and value are Options and will be written if set.
     let (key, value) = match item {
-        Some(Ok(item)) => item,
+        Some(Ok(item)) => (Some(item.0), Some(item.1)),
         Some(Err(_)) => return errors::next::UNKNOWN,
-        None => return errors::NONE, // Return early without writing key. Empty key will later be treated as _no more element_.
+        None => (Some(Vec::<u8>::new()), None), // Empty key will later be treated as _no more element_.
     };
 
-    match write_region(ctx, key_ptr, &key) {
-        Ok(()) => (),
-        Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
-        Err(_) => return errors::REGION_WRITE_UNKNOWN,
-    };
-    match write_region(ctx, value_ptr, &value) {
-        Ok(()) => (),
-        Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
-        Err(_) => return errors::REGION_WRITE_UNKNOWN,
-    };
+    if let Some(key) = key {
+        match write_region(ctx, key_ptr, &key) {
+            Ok(()) => (),
+            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => return errors::REGION_WRITE_UNKNOWN,
+        };
+    }
+
+    if let Some(value) = value {
+        match write_region(ctx, value_ptr, &value) {
+            Ok(()) => (),
+            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => return errors::REGION_WRITE_UNKNOWN,
+        };
+    }
+
     errors::NONE
 }
 
@@ -737,5 +743,38 @@ mod test {
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_works() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 50);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
+
+        // Entry 1
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY1);
+        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+
+        // Entry 2
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY2);
+        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE2);
+
+        // End
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), b"");
+        // API makes no guarantees for value_ptr in this case
     }
 }

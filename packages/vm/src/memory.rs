@@ -118,13 +118,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
         .fail();
     }
 
-    // A performance optimization
-    if data.is_empty() {
-        return Ok(());
-    }
-
     let memory = ctx.memory(0);
-
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
