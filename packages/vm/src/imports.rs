@@ -40,51 +40,59 @@ static MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 static MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
-static SUCCESS: i32 = 0;
-/// An unknown error occurred when writing to region
-static ERROR_REGION_WRITE_UNKNOWN: i32 = -1_000_001;
-/// Could not write to region because it is too small
-static ERROR_REGION_WRITE_TOO_SMALL: i32 = -1_000_002;
-/// An unknown error occurred when reading region
-static ERROR_REGION_READ_UNKNOWN: i32 = -1_000_101;
-/// The contract sent us a Region we're not willing to read because it is too big
-static ERROR_REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_102;
-/// An unknown error when canonicalizing address
-static ERROR_CANONICALIZE_UNKNOWN: i32 = -1_000_201;
-/// The input address (human address) was invalid
-static ERROR_CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
-/// An unknonw error when humanizing address
-static ERROR_HUMANIZE_UNKNOWN: i32 = -1_000_301;
-/// Cannot serialize query response
-static ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
-/// The given key does not exist in storage
-static ERROR_DB_READ_KEY_DOES_NOT_EXIST: i32 = -1_000_502;
-/// Generic error - using context with no Storage attached
-static ERROR_NO_CONTEXT_DATA: i32 = -1_000_501;
-/// Generic error - An unknown error accessing the DB
-static ERROR_DB_UNKNOWN: i32 = -1_000_502;
+mod errors {
+    /// Success
+    pub static NONE: i32 = 0;
+    /// An unknown error occurred when writing to region
+    pub static REGION_WRITE_UNKNOWN: i32 = -1_000_001;
+    /// Could not write to region because it is too small
+    pub static REGION_WRITE_TOO_SMALL: i32 = -1_000_002;
+    /// An unknown error occurred when reading region
+    pub static REGION_READ_UNKNOWN: i32 = -1_000_101;
+    /// The contract sent us a Region we're not willing to read because it is too big
+    pub static REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_102;
+    /// An unknown error when canonicalizing address
+    pub static CANONICALIZE_UNKNOWN: i32 = -1_000_201;
+    /// The input address (human address) was invalid
+    pub static CANONICALIZE_INVALID_INPUT: i32 = -1_000_202;
+    /// An unknonw error when humanizing address
+    pub static HUMANIZE_UNKNOWN: i32 = -1_000_301;
+    /// Cannot serialize query response
+    pub static QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE: i32 = -1_000_402;
+    /// The given key does not exist in storage
+    pub static DB_READ_KEY_DOES_NOT_EXIST: i32 = -1_000_502;
+    /// Generic error - using context with no Storage attached
+    pub static NO_CONTEXT_DATA: i32 = -1_000_501;
+    /// Generic error - An unknown error accessing the DB
+    pub static DB_UNKNOWN: i32 = -1_000_502;
 
-// The 2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
+    // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
 
-/// An unknown error in the db_scan implementation
-#[cfg(feature = "iterator")]
-static ERROR_SCAN_UNKNOWN: i32 = -2_000_001;
-/// Invalid Order enum value passed into scan
-#[cfg(feature = "iterator")]
-static ERROR_SCAN_INVALID_ORDER: i32 = -2_000_002;
-/// An unknown error in the db_next implementation
-#[cfg(feature = "iterator")]
-static ERROR_NEXT_UNKNOWN: i32 = -2_000_101;
-/// Iterator pointer not registered
-#[cfg(feature = "iterator")]
-static ERROR_NEXT_INVALID_ITERATOR: i32 = -2_000_102;
+    /// db_scan erros (-2_000_0xx)
+    #[cfg(feature = "iterator")]
+    pub mod scan {
+        /// An unknown error in the db_scan implementation
+        pub static UNKNOWN: i32 = -2_000_001;
+        /// Invalid Order enum value passed into scan
+        pub static INVALID_ORDER: i32 = -2_000_002;
+    }
+
+    /// db_next errors (-2_000_1xx)
+    #[cfg(feature = "iterator")]
+    pub mod next {
+        /// An unknown error in the db_next implementation
+        pub static UNKNOWN: i32 = -2_000_101;
+        /// Iterator pointer not registered
+        pub static INVALID_ITERATOR: i32 = -2_000_102;
+    }
+}
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         store
@@ -92,16 +100,16 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
             .or_else(|_| make_runtime_err("Error reading from backend"))
     }) {
         Ok(v) => v,
-        Err(VmError::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
-        Err(_) => return ERROR_DB_UNKNOWN,
+        Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
+        Err(_) => return errors::DB_UNKNOWN,
     };
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
-            Ok(()) => SUCCESS,
-            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
-            Err(_) => ERROR_REGION_WRITE_UNKNOWN,
+            Ok(()) => errors::NONE,
+            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        None => ERROR_DB_READ_KEY_DOES_NOT_EXIST,
+        None => errors::DB_READ_KEY_DOES_NOT_EXIST,
     }
 }
 
@@ -109,39 +117,39 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
 pub fn do_write<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let value = match read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
         store
             .set(&key, &value)
             .or_else(|_| make_runtime_err("Error setting database value in backend"))
     }) {
-        Ok(_) => SUCCESS,
-        Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
-        Err(_) => ERROR_DB_UNKNOWN,
+        Ok(_) => errors::NONE,
+        Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
+        Err(_) => errors::DB_UNKNOWN,
     }
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
         store
             .remove(&key)
             .or_else(|_| make_runtime_err("Error removing database key from backend"))
     }) {
-        Ok(_) => SUCCESS,
-        Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
-        Err(_) => ERROR_DB_UNKNOWN,
+        Ok(_) => errors::NONE,
+        Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
+        Err(_) => errors::DB_UNKNOWN,
     }
 }
 
@@ -153,20 +161,20 @@ pub fn do_canonicalize_address<A: Api>(
 ) -> i32 {
     let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return ERROR_CANONICALIZE_INVALID_INPUT,
+        Err(_) => return errors::CANONICALIZE_INVALID_INPUT,
     };
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
-            Ok(()) => SUCCESS,
-            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
-            Err(_) => ERROR_REGION_WRITE_UNKNOWN,
+            Ok(()) => errors::NONE,
+            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        Err(_) => ERROR_CANONICALIZE_UNKNOWN,
+        Err(_) => errors::CANONICALIZE_UNKNOWN,
     }
 }
 
@@ -178,16 +186,16 @@ pub fn do_humanize_address<A: Api>(
 ) -> i32 {
     let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_CANONICAL_ADDRESS) {
         Ok(data) => Binary(data),
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     match api.human_address(&CanonicalAddr(canonical)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
-            Ok(()) => SUCCESS,
-            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
-            Err(_) => ERROR_REGION_WRITE_UNKNOWN,
+            Ok(()) => errors::NONE,
+            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        Err(_) => ERROR_HUMANIZE_UNKNOWN,
+        Err(_) => errors::HUMANIZE_UNKNOWN,
     }
 }
 
@@ -199,8 +207,8 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 ) -> i32 {
     let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
 
     let res = match from_slice::<QueryRequest>(&request) {
@@ -220,11 +228,11 @@ pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 
     match to_vec(&api_res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
-            Ok(()) => SUCCESS,
-            Err(VmError::RegionTooSmallErr { .. }) => ERROR_REGION_WRITE_TOO_SMALL,
-            Err(_) => ERROR_REGION_WRITE_UNKNOWN,
+            Ok(()) => errors::NONE,
+            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
-        Err(_) => ERROR_QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE,
+        Err(_) => errors::QUERY_CHAIN_CANNOT_SERIALIZE_RESPONSE,
     }
 }
 
@@ -237,17 +245,17 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 ) -> i32 {
     let start = match maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let end = match maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return ERROR_REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return ERROR_REGION_READ_UNKNOWN,
+        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let order: Order = match order.try_into() {
         Ok(o) => o,
-        Err(_) => return ERROR_SCAN_INVALID_ORDER,
+        Err(_) => return errors::scan::INVALID_ORDER,
     };
     let range_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         let iter = match store.range(start.as_deref(), end.as_deref(), order) {
@@ -267,11 +275,11 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
             let new_id = add_iterator::<S, Q>(ctx, iterator);
             match to_i32(new_id) {
                 Ok(new_id_signed) => new_id_signed,
-                Err(_) => ERROR_SCAN_UNKNOWN,
+                Err(_) => errors::scan::UNKNOWN,
             }
         }
-        Err(VmError::UninitializedContextData { .. }) => ERROR_NO_CONTEXT_DATA,
-        Err(_) => ERROR_SCAN_UNKNOWN,
+        Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
+        Err(_) => errors::scan::UNKNOWN,
     }
 }
 
@@ -285,28 +293,28 @@ pub fn do_next<S: Storage, Q: Querier>(
     let item =
         match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next())) {
             Ok(i) => i,
-            Err(VmError::UninitializedContextData { .. }) => return ERROR_NO_CONTEXT_DATA,
-            Err(_) => return ERROR_NEXT_INVALID_ITERATOR,
+            Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
+            Err(_) => return errors::next::INVALID_ITERATOR,
         };
 
     // prepare return values
     let (key, value) = match item {
         Some(Ok(item)) => item,
-        Some(Err(_)) => return ERROR_NEXT_UNKNOWN,
-        None => return SUCCESS, // Return early without writing key. Empty key will later be treated as _no more element_.
+        Some(Err(_)) => return errors::next::UNKNOWN,
+        None => return errors::NONE, // Return early without writing key. Empty key will later be treated as _no more element_.
     };
 
     match write_region(ctx, key_ptr, &key) {
         Ok(()) => (),
-        Err(VmError::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
-        Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
+        Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+        Err(_) => return errors::REGION_WRITE_UNKNOWN,
     };
     match write_region(ctx, value_ptr, &value) {
         Ok(()) => (),
-        Err(VmError::RegionTooSmallErr { .. }) => return ERROR_REGION_WRITE_TOO_SMALL,
-        Err(_) => return ERROR_REGION_WRITE_UNKNOWN,
+        Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+        Err(_) => return errors::REGION_WRITE_UNKNOWN,
     };
-    SUCCESS
+    errors::NONE
 }
 
 #[cfg(test)]
@@ -399,7 +407,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, SUCCESS);
+        assert_eq!(result, errors::NONE);
         assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
     }
 
@@ -414,7 +422,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, ERROR_DB_READ_KEY_DOES_NOT_EXIST);
+        assert_eq!(result, errors::DB_READ_KEY_DOES_NOT_EXIST);
         assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
     }
 
@@ -429,7 +437,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, ERROR_REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
         assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
     }
 
@@ -444,7 +452,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, ERROR_REGION_WRITE_TOO_SMALL);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
         assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
     }
 
@@ -459,7 +467,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, SUCCESS);
+        assert_eq!(result, errors::NONE);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -479,7 +487,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, SUCCESS);
+        assert_eq!(result, errors::NONE);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -499,7 +507,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, ERROR_REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -513,7 +521,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, ERROR_REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -527,7 +535,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, SUCCESS);
+        assert_eq!(result, errors::NONE);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(KEY1).expect("error getting value"))
