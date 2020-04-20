@@ -421,11 +421,11 @@ mod test {
         region_ptr
     }
 
-    fn create_empty(wasmer_instance: &mut Instance, size: u32) -> u32 {
+    fn create_empty(wasmer_instance: &mut Instance, capacity: u32) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
             .func("allocate")
             .expect("error getting function");
-        let region_ptr = allocate.call(size).expect("error calling allocate");
+        let region_ptr = allocate.call(capacity).expect("error calling allocate");
         region_ptr
     }
 
