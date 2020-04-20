@@ -538,6 +538,60 @@ mod test {
     }
 
     #[test]
+    fn do_remove_works() {
+        let mut instance = make_instance();
+
+        let existing_key = KEY1;
+        let key_ptr = write_data(&mut instance, existing_key);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_remove::<S, Q>(ctx, key_ptr);
+        assert_eq!(result, errors::NONE);
+
+        let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+            Ok(store.get(existing_key).expect("error getting value"))
+        })
+        .unwrap();
+        assert_eq!(value, None);
+    }
+
+    #[test]
+    fn do_remove_works_for_non_existent_key() {
+        let mut instance = make_instance();
+
+        let non_existent_key = b"I do not exist";
+        let key_ptr = write_data(&mut instance, non_existent_key);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_remove::<S, Q>(ctx, key_ptr);
+        // Note: right now we cannot differnetiate between an existent and a non-existent key
+        assert_eq!(result, errors::NONE);
+
+        let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+            Ok(store.get(non_existent_key).expect("error getting value"))
+        })
+        .unwrap();
+        assert_eq!(value, None);
+    }
+
+    #[test]
+    fn do_remove_fails_for_large_key() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, &vec![26u8; 300 * 1024]);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_remove::<S, Q>(ctx, key_ptr);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
     fn do_write_fails_for_large_value() {
         let mut instance = make_instance();
 
