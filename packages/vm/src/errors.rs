@@ -29,6 +29,11 @@ pub enum VmError {
         source: io::Error,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Iterator with ID {} does not exist", id))]
+    IteratorDoesNotExist {
+        id: u32,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Hash doesn't match stored data"))]
     IntegrityErr { backtrace: snafu::Backtrace },
     #[snafu(display("Parse error: {}", source))]

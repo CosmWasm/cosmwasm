@@ -11,6 +11,8 @@ use cosmwasm_std::{ApiSystemError, Querier, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{StdResult, KV};
 
+#[cfg(feature = "iterator")]
+use crate::errors::IteratorDoesNotExist;
 use crate::errors::{UninitializedContextData, VmResult};
 
 /** context data **/
@@ -162,7 +164,7 @@ where
             b.iterators.insert(iterator_id, data);
             res
         }
-        None => UninitializedContextData { kind: "iterator" }.fail(),
+        None => IteratorDoesNotExist { id: iterator_id }.fail(),
     }
 }
 
@@ -382,12 +384,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, 42, |_iter| {
+        let missing_id = 42u32;
+        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
             panic!("this should not be called");
         });
         match miss {
             Ok(_) => panic!("Expected error"),
-            Err(VmError::UninitializedContextData { kind, .. }) => assert_eq!(kind, "iterator"),
+            Err(VmError::IteratorDoesNotExist { id, .. }) => assert_eq!(id, missing_id),
             Err(e) => panic!("Unexpected error: {}", e),
         }
     }

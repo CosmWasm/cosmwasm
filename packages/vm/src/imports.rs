@@ -109,8 +109,8 @@ mod errors {
     pub mod next {
         /// An unknown error in the db_next implementation
         pub static UNKNOWN: i32 = -2_000_101;
-        /// Iterator pointer not registered
-        pub static INVALID_ITERATOR: i32 = -2_000_102;
+        /// Iterator with the given ID is not registered
+        pub static ITERATOR_DOES_NOT_EXIST: i32 = -2_000_102;
     }
 }
 
@@ -317,12 +317,14 @@ pub fn do_next<S: Storage, Q: Querier>(
     key_ptr: u32,
     value_ptr: u32,
 ) -> i32 {
-    let item =
-        match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next())) {
-            Ok(i) => i,
-            Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
-            Err(_) => return errors::next::INVALID_ITERATOR,
-        };
+    let item = match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| {
+        Ok(iter.next())
+    }) {
+        Ok(i) => i,
+        Err(VmError::IteratorDoesNotExist { .. }) => return errors::next::ITERATOR_DOES_NOT_EXIST,
+        Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
+        Err(_) => return errors::next::UNKNOWN,
+    };
 
     // Prepare return values. Both key and value are Options and will be written if set.
     let (key, value) = match item {
@@ -776,6 +778,22 @@ mod test {
         assert_eq!(result, errors::NONE);
         assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), b"");
         // API makes no guarantees for value_ptr in this case
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_fails_for_non_existent_id() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 50);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let non_existent_id = 42u32;
+        let result = do_next::<S, Q>(ctx, non_existent_id, key_ptr, value_ptr);
+        assert_eq!(result, errors::next::ITERATOR_DOES_NOT_EXIST);
     }
 
     #[test]
