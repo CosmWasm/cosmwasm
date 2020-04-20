@@ -88,6 +88,8 @@
 - Rename `Result` to `StdResult` to differentiate between the auto-`use`d
   `core::result::Result`. Fix error argument to `Error`.
 - Rename `Error` to `StdError`.
+- `ExternalStorage.get` now returns an empty vector if a storage entry exists
+  but has an empty value. Before, this was normalized to `None`.
 
 **cosmwasm-vm**
 
@@ -113,6 +115,9 @@
 - Remove `cosmwasm_vm::errors::CacheExt`.
 - Move `cosmwasm_vm::errors::{Error, Result}` to
   `cosmwasm_vm::{VmError, VmResult}` and remove generic error type from result.
+- The import `db_read` now returns an error code if the storage key does not
+  exist. The latest standard library converts this error code back to a `None`
+  value. This allows differentiating non-existent and empty storage entries.
 
 ## 0.7.2 (2020-03-23)
 

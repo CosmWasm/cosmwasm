@@ -13,13 +13,15 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
     move_into_context, move_out_of_context, setup_context, with_storage_from_context,
 };
-#[cfg(feature = "iterator")]
-use crate::context::{do_next, do_scan};
 use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::imports::{
+    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
+};
+#[cfg(feature = "iterator")]
+use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
@@ -53,7 +55,8 @@ where
                 // Reads the database entry at the given key into the the value.
                 // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
-                //   value region too small: -1000002
+                //   value region too small: -1_000_002
+                //   key does not exist: -1_000_502
                 // Ownership of both input and output pointer is not transferred to the host.
                 "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
                     do_read::<S, Q>(ctx, key_ptr, value_ptr)
@@ -122,7 +125,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        move_into_context(wasmer_instance.context(), deps.storage, deps.querier);
+        move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
             wasmer_instance,
             api: deps.api,
@@ -133,9 +136,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+    pub fn recycle(mut instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
-            move_out_of_context(instance.wasmer_instance.context())
+            move_out_of_context(instance.wasmer_instance.context_mut())
         {
             Some(Extern {
                 storage,
@@ -161,8 +164,8 @@ where
         get_gas(&self.wasmer_instance)
     }
 
-    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context(), func)
+    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -361,7 +364,7 @@ mod test {
     #[should_panic]
     fn with_context_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
-        let instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance(&CONTRACT, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
