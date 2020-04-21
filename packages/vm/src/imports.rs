@@ -356,7 +356,7 @@ pub fn do_next<S: Storage, Q: Querier>(
 mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage};
+    use cosmwasm_std::{coins, ApiResult, HumanAddr, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     use crate::backends::compile;
@@ -428,6 +428,11 @@ mod test {
             .expect("error getting function");
         let region_ptr = allocate.call(capacity).expect("error calling allocate");
         region_ptr
+    }
+
+    /// A Region reader that is just good enough for the tests in this file
+    fn force_read(ctx: &mut Ctx, region_ptr: u32) -> Vec<u8> {
+        read_region(ctx, region_ptr, 5000).unwrap()
     }
 
     #[test]
@@ -762,6 +767,32 @@ mod test {
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+    }
+
+    #[test]
+    fn do_query_chain_fails_for_broken_request() {
+        let mut instance = make_instance();
+
+        let request_ptr = write_data(&mut instance, b"Not valid JSON for sure");
+        let response_ptr = create_empty(&mut instance, 1000);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        assert_eq!(result, errors::NONE);
+        let response = force_read(ctx, response_ptr);
+
+        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
+            cosmwasm_std::from_slice(&response).unwrap();
+        let query_response: QuerierResponse = parsed.into();
+        match query_response {
+            Ok(_) => panic!("This must not succeed"),
+            Err(ApiSystemError::InvalidRequest { error }) => {
+                assert!(error.starts_with("Parse error"))
+            }
+            Err(error) => panic!("Unexpeted error: {:?}", error),
+        }
     }
 
     #[test]
