@@ -90,7 +90,7 @@ where
                     do_humanize_address(api, ctx, canonical_ptr, human_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> i32 {
-                    do_query_chain::<_, S, Q>(api, ctx, request_ptr, response_ptr)
+                    do_query_chain::<S, Q>(ctx, request_ptr, response_ptr)
                 }),
             },
         });

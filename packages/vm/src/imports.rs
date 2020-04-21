@@ -226,8 +226,7 @@ pub fn do_humanize_address<A: Api>(
     }
 }
 
-pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
-    _api: A,
+pub fn do_query_chain<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     request_ptr: u32,
     response_ptr: u32,
