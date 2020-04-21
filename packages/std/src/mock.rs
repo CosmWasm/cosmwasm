@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{ContractErr, StdResult, Utf8StringErr};
+use crate::errors::{contract_err, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, QueryRequest};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
@@ -66,12 +66,14 @@ impl Default for MockApi {
 
 impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
-        if human.len() > self.canonical_length {
-            return ContractErr {
-                msg: "human encoding too long",
-            }
-            .fail();
+        // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
+        if human.len() < 3 {
+            return contract_err("Invalid input: human address too short");
         }
+        if human.len() > self.canonical_length {
+            return contract_err("Invalid input: human address too long");
+        }
+
         let mut out = Vec::from(human.as_str());
         let append = self.canonical_length - out.len();
         if append > 0 {
@@ -202,8 +204,16 @@ mod test {
     }
 
     #[test]
-    #[should_panic]
-    fn canonical_length_enforced() {
+    #[should_panic(expected = "address too short")]
+    fn canonical_address_min_input_length() {
+        let api = MockApi::new(10);
+        let human = HumanAddr("1".to_string());
+        let _ = api.canonical_address(&human).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "address too long")]
+    fn canonical_address_max_input_length() {
         let api = MockApi::new(10);
         let human = HumanAddr("longer-than-10".to_string());
         let _ = api.canonical_address(&human).unwrap();
