@@ -83,6 +83,10 @@ impl Api for MockApi {
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
+        if canonical.len() != self.canonical_length {
+            return contract_err("Invalid input: canonical address length not correct");
+        }
+
         // remove trailing 0's (TODO: fix this - but fine for first tests)
         let trimmed: Vec<u8> = canonical
             .as_slice()
@@ -201,6 +205,14 @@ mod test {
 
         let recovered = api.human_address(&canon).unwrap();
         assert_eq!(human, recovered);
+    }
+
+    #[test]
+    #[should_panic(expected = "length not correct")]
+    fn human_address_input_length() {
+        let api = MockApi::new(10);
+        let input = CanonicalAddr(Binary(vec![61; 11]));
+        api.human_address(&input).unwrap();
     }
 
     #[test]
