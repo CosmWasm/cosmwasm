@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{coins, from_binary, Api, ApiError, CosmosMsg, HumanAddr};
+use cosmwasm_std::{coins, from_binary, Api, ApiError, BankMsg, CosmosMsg, HumanAddr};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
@@ -73,11 +73,11 @@ fn reflect() {
     let _res = init(&mut deps, env, msg).unwrap();
 
     let env = mock_env(&deps.api, "creator", &[]);
-    let payload = vec![CosmosMsg::Send {
+    let payload = vec![CosmosMsg::Bank(BankMsg::Send {
         from_address: deps.api.human_address(&env.contract.address).unwrap(),
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
-    }];
+    })];
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };
@@ -97,11 +97,11 @@ fn reflect_requires_owner() {
 
     // signer is not owner
     let env = mock_env(&deps.api, "someone", &[]);
-    let payload = vec![CosmosMsg::Send {
+    let payload = vec![CosmosMsg::Bank(BankMsg::Send {
         from_address: deps.api.human_address(&env.contract.address).unwrap(),
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
-    }];
+    })];
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };

@@ -64,6 +64,11 @@ Contract Code:
   let foo = balance.amount;
   ```
 
+- Update the `CosmosMsg` enums used:
+  - `CosmosMsg::Send{}` => `CosmosMsg::Bank(BankMsg::Send{})`
+  - `CosmosMsg::Opaque{ data }` => `CosmosMsg::Native{ msg }`
+  - `CosmosMsg::Contract` => `CosmosMsg::Wasm(WasmMsg::Execute{})`
+
 At this point `cargo wasm` should pass.
 
 ### Update test code

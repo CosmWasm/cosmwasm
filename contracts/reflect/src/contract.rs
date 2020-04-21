@@ -92,7 +92,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, Binary, StdError};
+    use cosmwasm_std::{coins, from_binary, BankMsg, Binary, NativeMsg, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -120,11 +120,11 @@ mod tests {
         let _res = init(&mut deps, env, msg).unwrap();
 
         let env = mock_env(&deps.api, "creator", &[]);
-        let payload = vec![CosmosMsg::Send {
+        let payload = vec![CosmosMsg::Bank(BankMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
-        }];
+        })];
 
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
@@ -143,11 +143,11 @@ mod tests {
 
         // signer is not owner
         let env = mock_env(&deps.api, "someone", &[]);
-        let payload = vec![CosmosMsg::Send {
+        let payload = vec![CosmosMsg::Bank(BankMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
-        }];
+        })];
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
@@ -192,14 +192,12 @@ mod tests {
 
         let env = mock_env(&deps.api, "creator", &[]);
         let payload = vec![
-            CosmosMsg::Send {
+            CosmosMsg::Bank(BankMsg::Send {
                 from_address: deps.api.human_address(&env.contract.address).unwrap(),
                 to_address: HumanAddr::from("friend"),
                 amount: coins(1, "token"),
-            },
-            CosmosMsg::Opaque {
-                data: Binary(b"{\"foo\":123}".to_vec()),
-            },
+            }),
+            CosmosMsg::Native(NativeMsg::Raw(Binary(b"{\"foo\":123}".to_vec()))),
         ];
 
         let msg = HandleMsg::ReflectMsg {

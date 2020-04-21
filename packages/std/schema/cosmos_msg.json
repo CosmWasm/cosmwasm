@@ -5,86 +5,72 @@
     {
       "type": "object",
       "required": [
-        "send"
+        "bank"
       ],
       "properties": {
-        "send": {
-          "type": "object",
-          "required": [
-            "amount",
-            "from_address",
-            "to_address"
-          ],
-          "properties": {
-            "amount": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/Coin"
-              }
-            },
-            "from_address": {
-              "$ref": "#/definitions/HumanAddr"
-            },
-            "to_address": {
-              "$ref": "#/definitions/HumanAddr"
-            }
-          }
+        "bank": {
+          "$ref": "#/definitions/BankMsg"
         }
       }
     },
     {
       "type": "object",
       "required": [
-        "contract"
+        "native"
       ],
       "properties": {
-        "contract": {
-          "type": "object",
-          "required": [
-            "contract_addr",
-            "msg"
-          ],
-          "properties": {
-            "contract_addr": {
-              "$ref": "#/definitions/HumanAddr"
-            },
-            "msg": {
-              "$ref": "#/definitions/Binary"
-            },
-            "send": {
-              "type": [
-                "array",
-                "null"
-              ],
-              "items": {
-                "$ref": "#/definitions/Coin"
-              }
-            }
-          }
+        "native": {
+          "$ref": "#/definitions/NativeMsg"
         }
       }
     },
     {
       "type": "object",
       "required": [
-        "opaque"
+        "wasm"
       ],
       "properties": {
-        "opaque": {
-          "type": "object",
-          "required": [
-            "data"
-          ],
-          "properties": {
-            "data": {
-              "$ref": "#/definitions/Binary"
-            }
-          }
+        "wasm": {
+          "$ref": "#/definitions/WasmMsg"
         }
       }
     }
   ],
   "definitions": {
+    "BankMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "send"
+          ],
+          "properties": {
+            "send": {
+              "type": "object",
+              "required": [
+                "amount",
+                "from_address",
+                "to_address"
+              ],
+              "properties": {
+                "amount": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
+                },
+                "from_address": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "to_address": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
       "type": "string"
@@ -107,8 +93,93 @@
     "HumanAddr": {
       "type": "string"
     },
+    "NativeMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "raw"
+          ],
+          "properties": {
+            "raw": {
+              "$ref": "#/definitions/Binary"
+            }
+          }
+        }
+      ]
+    },
     "Uint128": {
       "type": "string"
+    },
+    "WasmMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "execute"
+          ],
+          "properties": {
+            "execute": {
+              "type": "object",
+              "required": [
+                "contract_addr",
+                "msg"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "msg": {
+                  "$ref": "#/definitions/Binary"
+                },
+                "send": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "instantiate"
+          ],
+          "properties": {
+            "instantiate": {
+              "type": "object",
+              "required": [
+                "code_id",
+                "msg"
+              ],
+              "properties": {
+                "code_id": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                },
+                "msg": {
+                  "$ref": "#/definitions/Binary"
+                },
+                "send": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

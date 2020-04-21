@@ -11,22 +11,45 @@ use crate::types::HumanAddr;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CosmosMsg {
+    Bank(BankMsg),
+    // this is dangerous to use, as it ties you to one particular runtime format.
+    // this makes the contract non-portable, and also fragile to break upon a hardfork
+    // only safe way is to receive it from a user and hold it temporarily.
+    Native(NativeMsg),
+    Wasm(WasmMsg),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BankMsg {
     // this moves tokens in the underlying sdk
     Send {
         from_address: HumanAddr,
         to_address: HumanAddr,
         amount: Vec<Coin>,
     },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NativeMsg {
+    Raw(Binary),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum WasmMsg {
     // this dispatches a call to another contract at a known address (with known ABI)
     // msg is the json-encoded HandleMsg struct
-    Contract {
+    Execute {
         contract_addr: HumanAddr,
         msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
         send: Option<Vec<Coin>>,
     },
-    // this should never be created here, just passed in from the user and later dispatched
-    Opaque {
-        data: Binary,
+    Instantiate {
+        code_id: u64,
+        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
+        send: Option<Vec<Coin>>,
     },
 }
 
@@ -82,11 +105,11 @@ mod test {
     #[test]
     fn can_deser_ok_result() {
         let send = InitResult::Ok(InitResponse {
-            messages: vec![CosmosMsg::Send {
+            messages: vec![CosmosMsg::Bank(BankMsg::Send {
                 from_address: HumanAddr("me".to_string()),
                 to_address: HumanAddr("you".to_string()),
                 amount: coins(1015, "earth"),
-            }],
+            })],
             log: vec![LogAttribute {
                 key: "action".to_string(),
                 value: "release".to_string(),

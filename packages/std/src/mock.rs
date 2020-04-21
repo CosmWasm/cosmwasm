@@ -5,7 +5,7 @@ use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
-use crate::query::{AllBalanceResponse, BalanceResponse, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier};
@@ -142,7 +142,7 @@ impl MockQuerier {
 impl Querier for MockQuerier {
     fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
-            QueryRequest::Balance { address, denom } => {
+            QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
                 // proper error on not found, serialize result on found
                 let amount = self
                     .balances
@@ -158,7 +158,7 @@ impl Querier for MockQuerier {
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
-            QueryRequest::AllBalances { address } => {
+            QueryRequest::Bank(BankQuery::AllBalances { address }) => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
@@ -166,9 +166,14 @@ impl Querier for MockQuerier {
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
-            QueryRequest::Contract { contract_addr, .. } => Err(ApiSystemError::NoSuchContract {
-                addr: contract_addr.clone(),
-            }),
+            QueryRequest::Wasm(msg) => {
+                let addr = match msg {
+                    WasmQuery::Smart { contract_addr, .. } => contract_addr,
+                    WasmQuery::Raw { contract_addr, .. } => contract_addr,
+                }
+                .clone();
+                Err(ApiSystemError::NoSuchContract { addr })
+            }
         }
     }
 }
