@@ -40,6 +40,9 @@
 - `Env.message.sent_funds` is a `Vec<Coin>` not `Option<Vec<Coin>>`. We will
   normalize the go response in `go-cosmwasm` before sending it to the contract.
 - `Env.block.{height,time}` are now `u64` rather than `i64`.
+- Reorganize `CosmosMsg` enum types. They are now split by modules:
+  `CosmosMsg::Bank(BankMsg)`, `CosmosMsg::Native { msg }`,
+  `CosmosMsg::Wasm(WasmMsg)`
 
 **cosmwasm-schema**
 
