@@ -13,14 +13,8 @@ pub type QueryResult = ApiResult<QueryResponse>;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest {
-    // this queries the public API of another contract at a known address (with known ABI)
-    // msg is the json-encoded QueryMsg struct
-    // return value is whatever the contract returns (caller should know)
-    Contract {
-        contract_addr: HumanAddr,
-        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
-    },
     Bank(BankQuery),
+    Contract(ContractQuery),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,6 +27,24 @@ pub enum BankQuery {
     // Note that this may be much more expensive than Balance and should be avoided if possible.
     // Return value is AllBalanceResponse.
     AllBalances { address: HumanAddr },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum ContractQuery {
+    // this queries the public API of another contract at a known address (with known ABI)
+    // msg is the json-encoded QueryMsg struct
+    // return value is whatever the contract returns (caller should know)
+    Smart {
+        contract_addr: HumanAddr,
+        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
+    },
+    // this queries the raw kv-store of the contract.
+    // returns the raw, unparsed data stored at that key (or `Ok(Err(ApiError:NotFound{}))` if missing)
+    Raw {
+        contract_addr: HumanAddr,
+        key: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
