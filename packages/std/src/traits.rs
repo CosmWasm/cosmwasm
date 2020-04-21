@@ -46,6 +46,10 @@ pub trait ReadonlyStorage {
 // Storage extends ReadonlyStorage to give mutable access
 pub trait Storage: ReadonlyStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()>;
+    /// Removes a database entry at `key`.
+    ///
+    /// The current interface does not allow to differentiate between a key that existed
+    /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
     fn remove(&mut self, key: &[u8]) -> StdResult<()>;
 }
 

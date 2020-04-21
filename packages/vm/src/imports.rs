@@ -61,17 +61,17 @@ mod errors {
     /// Generic error - An unknown error accessing the DB
     pub static DB_UNKNOWN: i32 = -1_000_501;
 
-    /// db_read erros (-1_001_0xx)
+    /// db_read errors (-1_001_0xx)
     pub mod read {
         // pub static UNKNOWN: i32 = -1_001_000;
         /// The given key does not exist in storage
         pub static KEY_DOES_NOT_EXIST: i32 = -1_001_001;
     }
 
-    /// db_write erros (-1_001_1xx)
-    /// db_remove erros (-1_001_2xx)
+    /// db_write errors (-1_001_1xx)
+    /// db_remove errors (-1_001_2xx)
 
-    /// canonicalize_address erros (-1_002_0xx)
+    /// canonicalize_address errors (-1_002_0xx)
     pub mod canonicalize {
         /// An unknown error when canonicalizing address
         pub static UNKNOWN: i32 = -1_002_000;
@@ -79,7 +79,7 @@ mod errors {
         pub static INVALID_INPUT: i32 = -1_002_001;
     }
 
-    /// humanize_address erros (-1_002_1xx)
+    /// humanize_address errors (-1_002_1xx)
     pub mod humanize {
         /// An unknonw error when humanizing address
         pub static UNKNOWN: i32 = -1_002_100;
@@ -95,7 +95,7 @@ mod errors {
 
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
 
-    /// db_scan erros (-2_000_0xx)
+    /// db_scan errors (-2_000_0xx)
     #[cfg(feature = "iterator")]
     pub mod scan {
         /// An unknown error in the db_scan implementation
@@ -109,8 +109,8 @@ mod errors {
     pub mod next {
         /// An unknown error in the db_next implementation
         pub static UNKNOWN: i32 = -2_000_101;
-        /// Iterator pointer not registered
-        pub static INVALID_ITERATOR: i32 = -2_000_102;
+        /// Iterator with the given ID is not registered
+        pub static ITERATOR_DOES_NOT_EXIST: i32 = -2_000_102;
     }
 }
 
@@ -317,30 +317,38 @@ pub fn do_next<S: Storage, Q: Querier>(
     key_ptr: u32,
     value_ptr: u32,
 ) -> i32 {
-    let item =
-        match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next())) {
-            Ok(i) => i,
-            Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
-            Err(_) => return errors::next::INVALID_ITERATOR,
-        };
+    let item = match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| {
+        Ok(iter.next())
+    }) {
+        Ok(i) => i,
+        Err(VmError::IteratorDoesNotExist { .. }) => return errors::next::ITERATOR_DOES_NOT_EXIST,
+        Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
+        Err(_) => return errors::next::UNKNOWN,
+    };
 
-    // prepare return values
+    // Prepare return values. Both key and value are Options and will be written if set.
     let (key, value) = match item {
-        Some(Ok(item)) => item,
+        Some(Ok(item)) => (Some(item.0), Some(item.1)),
         Some(Err(_)) => return errors::next::UNKNOWN,
-        None => return errors::NONE, // Return early without writing key. Empty key will later be treated as _no more element_.
+        None => (Some(Vec::<u8>::new()), None), // Empty key will later be treated as _no more element_.
     };
 
-    match write_region(ctx, key_ptr, &key) {
-        Ok(()) => (),
-        Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
-        Err(_) => return errors::REGION_WRITE_UNKNOWN,
-    };
-    match write_region(ctx, value_ptr, &value) {
-        Ok(()) => (),
-        Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
-        Err(_) => return errors::REGION_WRITE_UNKNOWN,
-    };
+    if let Some(key) = key {
+        match write_region(ctx, key_ptr, &key) {
+            Ok(()) => (),
+            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => return errors::REGION_WRITE_UNKNOWN,
+        };
+    }
+
+    if let Some(value) = value {
+        match write_region(ctx, value_ptr, &value) {
+            Ok(()) => (),
+            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+            Err(_) => return errors::REGION_WRITE_UNKNOWN,
+        };
+    }
+
     errors::NONE
 }
 
@@ -415,11 +423,11 @@ mod test {
         region_ptr
     }
 
-    fn create_empty(wasmer_instance: &mut Instance, size: u32) -> u32 {
+    fn create_empty(wasmer_instance: &mut Instance, capacity: u32) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
             .func("allocate")
             .expect("error getting function");
-        let region_ptr = allocate.call(size).expect("error calling allocate");
+        let region_ptr = allocate.call(capacity).expect("error calling allocate");
         region_ptr
     }
 
@@ -534,6 +542,60 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
+    fn do_remove_works() {
+        let mut instance = make_instance();
+
+        let existing_key = KEY1;
+        let key_ptr = write_data(&mut instance, existing_key);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_remove::<S, Q>(ctx, key_ptr);
+        assert_eq!(result, errors::NONE);
+
+        let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+            Ok(store.get(existing_key).expect("error getting value"))
+        })
+        .unwrap();
+        assert_eq!(value, None);
+    }
+
+    #[test]
+    fn do_remove_works_for_non_existent_key() {
+        let mut instance = make_instance();
+
+        let non_existent_key = b"I do not exist";
+        let key_ptr = write_data(&mut instance, non_existent_key);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_remove::<S, Q>(ctx, key_ptr);
+        // Note: right now we cannot differnetiate between an existent and a non-existent key
+        assert_eq!(result, errors::NONE);
+
+        let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+            Ok(store.get(non_existent_key).expect("error getting value"))
+        })
+        .unwrap();
+        assert_eq!(value, None);
+    }
+
+    #[test]
+    fn do_remove_fails_for_large_key() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, &vec![26u8; 300 * 1024]);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_remove::<S, Q>(ctx, key_ptr);
         assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
@@ -683,5 +745,90 @@ mod test {
         let item =
             with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_works() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 50);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
+
+        // Entry 1
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY1);
+        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+
+        // Entry 2
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY2);
+        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE2);
+
+        // End
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), b"");
+        // API makes no guarantees for value_ptr in this case
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_fails_for_non_existent_id() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 50);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let non_existent_id = 42u32;
+        let result = do_next::<S, Q>(ctx, non_existent_id, key_ptr, value_ptr);
+        assert_eq!(result, errors::next::ITERATOR_DOES_NOT_EXIST);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_fails_for_key_region_too_small() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 1);
+        let value_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
+
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_next_fails_for_value_region_too_small() {
+        let mut instance = make_instance();
+
+        let key_ptr = create_empty(&mut instance, 50);
+        let value_ptr = create_empty(&mut instance, 1);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+            .expect("ID must not be negative");
+
+        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
     }
 }
