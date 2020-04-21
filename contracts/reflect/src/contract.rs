@@ -92,7 +92,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, BankMsg, Binary, StdError};
+    use cosmwasm_std::{coins, from_binary, BankMsg, Binary, NativeMsg, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -197,9 +197,7 @@ mod tests {
                 to_address: HumanAddr::from("friend"),
                 amount: coins(1, "token"),
             }),
-            CosmosMsg::Native {
-                msg: Binary(b"{\"foo\":123}".to_vec()),
-            },
+            CosmosMsg::Native(NativeMsg::Raw(Binary(b"{\"foo\":123}".to_vec()))),
         ];
 
         let msg = HandleMsg::ReflectMsg {
