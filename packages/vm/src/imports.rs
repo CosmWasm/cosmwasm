@@ -705,6 +705,67 @@ mod test {
     }
 
     #[test]
+    fn do_humanize_address_works() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo\0\0\0\0\0");
+        let dest_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, dest_ptr, 500).unwrap(), b"foo");
+    }
+
+    #[test]
+    fn do_humanize_address_fails_for_invalid_canonical_length() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo\0\0");
+        let dest_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::humanize::UNKNOWN);
+    }
+
+    #[test]
+    fn do_humanize_address_fails_for_input_too_long() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, &vec![61; 33]);
+        let dest_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
+    fn do_humanize_address_fails_for_destination_region_too_small() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo\0\0\0\0\0");
+        let dest_ptr = create_empty(&mut instance, 2);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+    }
+
+    #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_works() {
         let mut instance = make_instance();
