@@ -142,32 +142,30 @@ impl MockQuerier {
 impl Querier for MockQuerier {
     fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
         match request {
-            QueryRequest::Bank(bank) => match bank {
-                BankQuery::Balance { address, denom } => {
-                    // proper error on not found, serialize result on found
-                    let amount = self
-                        .balances
-                        .get(address)
-                        .and_then(|v| v.iter().find(|c| &c.denom == denom).map(|c| c.amount))
-                        .unwrap_or_default();
-                    let bank_res = BalanceResponse {
-                        amount: Coin {
-                            amount,
-                            denom: denom.to_string(),
-                        },
-                    };
-                    let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
-                    Ok(api_res)
-                }
-                BankQuery::AllBalances { address } => {
-                    // proper error on not found, serialize result on found
-                    let bank_res = AllBalanceResponse {
-                        amount: self.balances.get(address).cloned().unwrap_or_default(),
-                    };
-                    let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
-                    Ok(api_res)
-                }
-            },
+            QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
+                // proper error on not found, serialize result on found
+                let amount = self
+                    .balances
+                    .get(address)
+                    .and_then(|v| v.iter().find(|c| &c.denom == denom).map(|c| c.amount))
+                    .unwrap_or_default();
+                let bank_res = BalanceResponse {
+                    amount: Coin {
+                        amount,
+                        denom: denom.to_string(),
+                    },
+                };
+                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
+                Ok(api_res)
+            }
+            QueryRequest::Bank(BankQuery::AllBalances { address }) => {
+                // proper error on not found, serialize result on found
+                let bank_res = AllBalanceResponse {
+                    amount: self.balances.get(address).cloned().unwrap_or_default(),
+                };
+                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
+                Ok(api_res)
+            }
             QueryRequest::Wasm(msg) => {
                 let addr = match msg {
                     WasmQuery::Smart { contract_addr, .. } => contract_addr,
