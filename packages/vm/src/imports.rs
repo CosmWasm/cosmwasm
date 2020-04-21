@@ -512,6 +512,26 @@ mod test {
     }
 
     #[test]
+    fn do_write_can_override() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, KEY1);
+        let value_ptr = write_data(&mut instance, VALUE2);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        assert_eq!(result, errors::NONE);
+
+        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+            Ok(store.get(KEY1).expect("error getting value"))
+        })
+        .unwrap();
+        assert_eq!(val, Some(VALUE2.to_vec()));
+    }
+
+    #[test]
     fn do_write_works_for_empty_value() {
         let mut instance = make_instance();
 
@@ -537,6 +557,20 @@ mod test {
 
         let key_ptr = write_data(&mut instance, &vec![4u8; 300 * 1024]);
         let value_ptr = write_data(&mut instance, b"new value");
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
+    fn do_write_fails_for_large_value() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, b"new storage key");
+        let value_ptr = write_data(&mut instance, &vec![5u8; 300 * 1024]);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
@@ -597,40 +631,6 @@ mod test {
 
         let result = do_remove::<S, Q>(ctx, key_ptr);
         assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
-    }
-
-    #[test]
-    fn do_write_fails_for_large_value() {
-        let mut instance = make_instance();
-
-        let key_ptr = write_data(&mut instance, b"new storage key");
-        let value_ptr = write_data(&mut instance, &vec![5u8; 300 * 1024]);
-
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
-    }
-
-    #[test]
-    fn do_write_can_override() {
-        let mut instance = make_instance();
-
-        let key_ptr = write_data(&mut instance, KEY1);
-        let value_ptr = write_data(&mut instance, VALUE2);
-
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
-
-        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-            Ok(store.get(KEY1).expect("error getting value"))
-        })
-        .unwrap();
-        assert_eq!(val, Some(VALUE2.to_vec()));
     }
 
     #[test]
