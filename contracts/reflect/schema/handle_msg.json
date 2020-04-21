@@ -45,26 +45,7 @@
     }
   ],
   "definitions": {
-    "Binary": {
-      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
-      "type": "string"
-    },
-    "Coin": {
-      "type": "object",
-      "required": [
-        "amount",
-        "denom"
-      ],
-      "properties": {
-        "amount": {
-          "$ref": "#/definitions/Uint128"
-        },
-        "denom": {
-          "type": "string"
-        }
-      }
-    },
-    "CosmosMsg": {
+    "BankMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -95,14 +76,88 @@
               }
             }
           }
+        }
+      ]
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "CosmosMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "bank"
+          ],
+          "properties": {
+            "bank": {
+              "$ref": "#/definitions/BankMsg"
+            }
+          }
         },
         {
           "type": "object",
           "required": [
-            "contract"
+            "native"
           ],
           "properties": {
-            "contract": {
+            "native": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "$ref": "#/definitions/Binary"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "wasm"
+          ],
+          "properties": {
+            "wasm": {
+              "$ref": "#/definitions/WasmMsg"
+            }
+          }
+        }
+      ]
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    },
+    "WasmMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "execute"
+          ],
+          "properties": {
+            "execute": {
               "type": "object",
               "required": [
                 "contract_addr",
@@ -131,29 +186,38 @@
         {
           "type": "object",
           "required": [
-            "opaque"
+            "instantiate"
           ],
           "properties": {
-            "opaque": {
+            "instantiate": {
               "type": "object",
               "required": [
-                "data"
+                "code_id",
+                "msg"
               ],
               "properties": {
-                "data": {
+                "code_id": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                },
+                "msg": {
                   "$ref": "#/definitions/Binary"
+                },
+                "send": {
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
                 }
               }
             }
           }
         }
       ]
-    },
-    "HumanAddr": {
-      "type": "string"
-    },
-    "Uint128": {
-      "type": "string"
     }
   }
 }
