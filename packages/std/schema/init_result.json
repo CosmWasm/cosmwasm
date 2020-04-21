@@ -332,15 +332,7 @@
           ],
           "properties": {
             "native": {
-              "type": "object",
-              "required": [
-                "msg"
-              ],
-              "properties": {
-                "msg": {
-                  "$ref": "#/definitions/Binary"
-                }
-              }
+              "$ref": "#/definitions/NativeMsg"
             }
           }
         },
@@ -405,6 +397,21 @@
           "type": "string"
         }
       }
+    },
+    "NativeMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "raw"
+          ],
+          "properties": {
+            "raw": {
+              "$ref": "#/definitions/Binary"
+            }
+          }
+        }
+      ]
     },
     "Uint128": {
       "type": "string"

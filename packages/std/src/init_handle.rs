@@ -15,8 +15,25 @@ pub enum CosmosMsg {
     // this is dangerous to use, as it ties you to one particular runtime format.
     // this makes the contract non-portable, and also fragile to break upon a hardfork
     // only safe way is to receive it from a user and hold it temporarily.
-    Native { msg: Binary },
+    Native(NativeMsg),
     Wasm(WasmMsg),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum BankMsg {
+    // this moves tokens in the underlying sdk
+    Send {
+        from_address: HumanAddr,
+        to_address: HumanAddr,
+        amount: Vec<Coin>,
+    },
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum NativeMsg {
+    Raw(Binary),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,17 +50,6 @@ pub enum WasmMsg {
         code_id: u64,
         msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
         send: Option<Vec<Coin>>,
-    },
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum BankMsg {
-    // this moves tokens in the underlying sdk
-    Send {
-        from_address: HumanAddr,
-        to_address: HumanAddr,
-        amount: Vec<Coin>,
     },
 }
 
