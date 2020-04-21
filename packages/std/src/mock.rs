@@ -5,7 +5,7 @@ use crate::api::{ApiError, ApiSystemError};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, ContractQuery, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier};
@@ -168,10 +168,10 @@ impl Querier for MockQuerier {
                     Ok(api_res)
                 }
             },
-            QueryRequest::Contract(msg) => {
+            QueryRequest::Wasm(msg) => {
                 let addr = match msg {
-                    ContractQuery::Smart { contract_addr, .. } => contract_addr,
-                    ContractQuery::Raw { contract_addr, .. } => contract_addr,
+                    WasmQuery::Smart { contract_addr, .. } => contract_addr,
+                    WasmQuery::Raw { contract_addr, .. } => contract_addr,
                 }
                 .clone();
                 Err(ApiSystemError::NoSuchContract { addr })

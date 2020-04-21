@@ -16,17 +16,6 @@
     {
       "type": "object",
       "required": [
-        "contract"
-      ],
-      "properties": {
-        "contract": {
-          "$ref": "#/definitions/ContractMsg"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
         "native"
       ],
       "properties": {
@@ -40,6 +29,17 @@
               "$ref": "#/definitions/Binary"
             }
           }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "wasm"
+      ],
+      "properties": {
+        "wasm": {
+          "$ref": "#/definitions/WasmMsg"
         }
       }
     }
@@ -98,7 +98,13 @@
         }
       }
     },
-    "ContractMsg": {
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    },
+    "WasmMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -167,12 +173,6 @@
           }
         }
       ]
-    },
-    "HumanAddr": {
-      "type": "string"
-    },
-    "Uint128": {
-      "type": "string"
     }
   }
 }

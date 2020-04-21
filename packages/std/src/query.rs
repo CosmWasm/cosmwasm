@@ -14,7 +14,7 @@ pub type QueryResult = ApiResult<QueryResponse>;
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest {
     Bank(BankQuery),
-    Contract(ContractQuery),
+    Wasm(WasmQuery),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -31,7 +31,7 @@ pub enum BankQuery {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ContractQuery {
+pub enum WasmQuery {
     // this queries the public API of another contract at a known address (with known ABI)
     // msg is the json-encoded QueryMsg struct
     // return value is whatever the contract returns (caller should know)

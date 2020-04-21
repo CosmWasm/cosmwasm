@@ -312,7 +312,104 @@
         }
       }
     },
-    "ContractMsg": {
+    "CosmosMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "bank"
+          ],
+          "properties": {
+            "bank": {
+              "$ref": "#/definitions/BankMsg"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "native"
+          ],
+          "properties": {
+            "native": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "$ref": "#/definitions/Binary"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "wasm"
+          ],
+          "properties": {
+            "wasm": {
+              "$ref": "#/definitions/WasmMsg"
+            }
+          }
+        }
+      ]
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "InitResponse": {
+      "type": "object",
+      "required": [
+        "log",
+        "messages"
+      ],
+      "properties": {
+        "data": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Binary"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "log": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/LogAttribute"
+          }
+        },
+        "messages": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/CosmosMsg"
+          }
+        }
+      }
+    },
+    "LogAttribute": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "Uint128": {
+      "type": "string"
+    },
+    "WasmMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -381,103 +478,6 @@
           }
         }
       ]
-    },
-    "CosmosMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "bank"
-          ],
-          "properties": {
-            "bank": {
-              "$ref": "#/definitions/BankMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "contract"
-          ],
-          "properties": {
-            "contract": {
-              "$ref": "#/definitions/ContractMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "native"
-          ],
-          "properties": {
-            "native": {
-              "type": "object",
-              "required": [
-                "msg"
-              ],
-              "properties": {
-                "msg": {
-                  "$ref": "#/definitions/Binary"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
-    "HumanAddr": {
-      "type": "string"
-    },
-    "InitResponse": {
-      "type": "object",
-      "required": [
-        "log",
-        "messages"
-      ],
-      "properties": {
-        "data": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Binary"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        "log": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/LogAttribute"
-          }
-        },
-        "messages": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/CosmosMsg"
-          }
-        }
-      }
-    },
-    "LogAttribute": {
-      "type": "object",
-      "required": [
-        "key",
-        "value"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      }
-    },
-    "Uint128": {
-      "type": "string"
     }
   }
 }

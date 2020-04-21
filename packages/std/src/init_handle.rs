@@ -12,16 +12,16 @@ use crate::types::HumanAddr;
 #[serde(rename_all = "snake_case")]
 pub enum CosmosMsg {
     Bank(BankMsg),
-    Contract(ContractMsg),
     // this is dangerous to use, as it ties you to one particular runtime format.
     // this makes the contract non-portable, and also fragile to break upon a hardfork
     // only safe way is to receive it from a user and hold it temporarily.
     Native { msg: Binary },
+    Wasm(WasmMsg),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ContractMsg {
+pub enum WasmMsg {
     // this dispatches a call to another contract at a known address (with known ABI)
     // msg is the json-encoded HandleMsg struct
     Execute {
