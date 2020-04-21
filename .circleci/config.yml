@@ -150,11 +150,11 @@ jobs:
       - run:
           name: Build
           working_directory: ~/project/packages/vm
-          command: cargo build --locked --no-default-features --features "default-cranelift iterator"
+          command: cargo build --locked --no-default-features --features default-cranelift,iterator
       - run:
           name: Test
           working_directory: ~/project/packages/vm
-          command: cargo test --locked --no-default-features --features "default-cranelift iterator"
+          command: cargo test --locked --no-default-features --features default-cranelift,iterator
       - save_cache:
           paths:
             - /usr/local/cargo/registry

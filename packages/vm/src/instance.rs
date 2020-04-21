@@ -210,13 +210,10 @@ where
 mod test {
     use super::*;
 
-    use cosmwasm_std::coins;
-    use cosmwasm_std::testing::mock_env;
     use wasmer_runtime_core::error::ResolveError;
 
-    use crate::calls::{call_handle, call_init, call_query};
     use crate::errors::VmError;
-    use crate::testing::{mock_instance, mock_instance_with_gas_limit};
+    use crate::testing::mock_instance;
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
@@ -348,17 +345,9 @@ mod test {
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift_noop() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
+        let instance = crate::testing::mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 1_000_000);
-    }
-
-    #[test]
-    #[cfg(feature = "default-singlepass")]
-    fn set_get_and_gas_singlepass_works() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
-        let orig_gas = instance.get_gas();
-        assert_eq!(orig_gas, 123321);
     }
 
     #[test]
@@ -370,9 +359,27 @@ mod test {
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
             .unwrap();
     }
+}
+
+#[cfg(test)]
+#[cfg(feature = "default-singlepass")]
+mod singlepass_test {
+    use cosmwasm_std::coins;
+    use cosmwasm_std::testing::mock_env;
+
+    use crate::calls::{call_handle, call_init, call_query};
+    use crate::testing::{mock_instance, mock_instance_with_gas_limit};
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
+    fn set_get_and_gas_singlepass_works() {
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
+        let orig_gas = instance.get_gas();
+        assert_eq!(orig_gas, 123321);
+    }
+
+    #[test]
     fn contract_deducts_gas_init() {
         let mut instance = mock_instance(&CONTRACT, &[]);
         let orig_gas = instance.get_gas();
@@ -384,11 +391,10 @@ mod test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 45528);
+        assert_eq!(init_used, 45608);
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn contract_deducts_gas_handle() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
@@ -405,11 +411,10 @@ mod test {
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 62523);
+        assert_eq!(handle_used, 63560);
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn contract_enforces_gas_limit() {
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
 
@@ -421,7 +426,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn query_works_with_metering() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
@@ -440,6 +444,6 @@ mod test {
 
         let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 22839);
+        assert_eq!(query_used, 23018);
     }
 }
