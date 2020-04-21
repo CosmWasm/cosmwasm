@@ -356,7 +356,7 @@ pub fn do_next<S: Storage, Q: Querier>(
 #[cfg(feature = "iterator")]
 mod test {
     use super::*;
-    use cosmwasm_std::testing::{MockQuerier, MockStorage};
+    use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage};
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -631,6 +631,77 @@ mod test {
 
         let result = do_remove::<S, Q>(ctx, key_ptr);
         assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
+    fn do_canonicalize_address_works() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo");
+        let dest_ptr = create_empty(&mut instance, 8);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::NONE);
+        assert_eq!(read_region(ctx, dest_ptr, 500).unwrap(), b"foo\0\0\0\0\0");
+    }
+
+    #[test]
+    fn do_canonicalize_address_fails_for_invalid_input() {
+        let mut instance = make_instance();
+
+        let source_ptr1 = write_data(&mut instance, b"fo\x80o"); // invalid UTF-8 (fo�o)
+        let source_ptr2 = write_data(&mut instance, b""); // empty
+        let source_ptr3 = write_data(&mut instance, b"addressexceedingaddressspace"); // too long
+        let dest_ptr = create_empty(&mut instance, 8);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+        let api = MockApi::new(8);
+
+        let result = do_canonicalize_address(api, ctx, source_ptr1, dest_ptr);
+        assert_eq!(result, errors::canonicalize::INVALID_INPUT);
+
+        // TODO: would be nice if do_canonicalize_address could differentiate between different errors
+        // from Api.canonical_address and return INVALID_INPUT for those cases as well.
+        let result = do_canonicalize_address(api, ctx, source_ptr2, dest_ptr);
+        assert_eq!(result, errors::canonicalize::UNKNOWN);
+
+        let result = do_canonicalize_address(api, ctx, source_ptr3, dest_ptr);
+        assert_eq!(result, errors::canonicalize::UNKNOWN);
+    }
+
+    #[test]
+    fn do_canonicalize_address_fails_for_large_inputs() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, &vec![61; 100]);
+        let dest_ptr = create_empty(&mut instance, 8);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
+    fn do_canonicalize_address_fails_for_small_destination_region() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo");
+        let dest_ptr = create_empty(&mut instance, 7);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new(8);
+        let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
+        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
     }
 
     #[test]
