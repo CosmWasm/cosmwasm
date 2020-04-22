@@ -30,8 +30,8 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, CosmosMsg, HumanAddr,
-    NativeMsg, ReadonlyStorage,
+    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, HumanAddr, NativeMsg,
+    ReadonlyStorage,
 };
 use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
@@ -159,11 +159,12 @@ fn proper_handle() {
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
         msg,
-        &CosmosMsg::Bank(BankMsg::Send {
+        &BankMsg::Send {
             from_address: HumanAddr("cosmos2contract".to_string()),
             to_address: beneficiary,
             amount: coins(1015, "earth"),
-        }),
+        }
+        .into(),
     );
     assert_eq!(
         handle_res.log,

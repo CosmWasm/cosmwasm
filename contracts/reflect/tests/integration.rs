@@ -1,11 +1,7 @@
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{
-    coins, from_binary, Api, ApiError, BankMsg, Binary, CosmosMsg, HandleResponse, HumanAddr,
-};
+use cosmwasm_std::{coins, from_binary, Api, ApiError, BankMsg, Binary, HumanAddr};
 
-use cosmwasm_vm::testing::{
-    handle, init, mock_instance, query, HandleOk, HandleRes, InitOk, InitRes,
-};
+use cosmwasm_vm::testing::{handle, init, mock_instance, query, HandleOk, HandleRes, InitOk};
 
 use reflect::msg::{CustomNativeMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 
@@ -78,14 +74,15 @@ fn reflect() {
 
     let env = mock_env(&deps.api, "creator", &[]);
     let payload = vec![
-        CosmosMsg::Bank(BankMsg::Send {
+        BankMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
-        }),
+        }
+        .into(),
         // make sure we can pass through custom native messages
-        CosmosMsg::Native(CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec()))),
-        CosmosMsg::Native(CustomNativeMsg::Debug("Hi, Dad!".to_string())),
+        CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec())).into(),
+        CustomNativeMsg::Debug("Hi, Dad!".to_string()).into(),
     ];
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
@@ -106,11 +103,12 @@ fn reflect_requires_owner() {
 
     // signer is not owner
     let env = mock_env(&deps.api, "someone", &[]);
-    let payload = vec![CosmosMsg::Bank(BankMsg::Send {
+    let payload = vec![BankMsg::Send {
         from_address: deps.api.human_address(&env.contract.address).unwrap(),
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
-    })];
+    }
+    .into()];
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };

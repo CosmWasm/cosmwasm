@@ -120,11 +120,12 @@ mod tests {
         let _res = init(&mut deps, env, msg).unwrap();
 
         let env = mock_env(&deps.api, "creator", &[]);
-        let payload = vec![CosmosMsg::Bank(BankMsg::Send {
+        let payload = vec![BankMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
-        })];
+        }
+        .into()];
 
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
@@ -143,11 +144,12 @@ mod tests {
 
         // signer is not owner
         let env = mock_env(&deps.api, "someone", &[]);
-        let payload = vec![CosmosMsg::Bank(BankMsg::Send {
+        let payload = vec![BankMsg::Send {
             from_address: deps.api.human_address(&env.contract.address).unwrap(),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
-        })];
+        }
+        .into()];
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
@@ -192,14 +194,15 @@ mod tests {
 
         let env = mock_env(&deps.api, "creator", &[]);
         let payload = vec![
-            CosmosMsg::Bank(BankMsg::Send {
+            BankMsg::Send {
                 from_address: deps.api.human_address(&env.contract.address).unwrap(),
                 to_address: HumanAddr::from("friend"),
                 amount: coins(1, "token"),
-            }),
+            }
+            .into(),
             // make sure we can pass through custom native messages
-            CosmosMsg::Native(CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec()))),
-            CosmosMsg::Native(CustomNativeMsg::Debug("Hi, Dad!".to_string())),
+            CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec())).into(),
+            CustomNativeMsg::Debug("Hi, Dad!".to_string()).into(),
         ];
 
         let msg = HandleMsg::ReflectMsg {

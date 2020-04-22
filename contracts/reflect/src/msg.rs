@@ -36,3 +36,9 @@ pub enum CustomNativeMsg {
     Custom(Binary),
     Debug(String),
 }
+
+impl Into<CosmosMsg<CustomNativeMsg>> for CustomNativeMsg {
+    fn into(self) -> CosmosMsg<CustomNativeMsg> {
+        CosmosMsg::Native(self)
+    }
+}
