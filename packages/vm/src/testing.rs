@@ -18,10 +18,8 @@ use crate::compatability::check_wasm;
 use crate::instance::Instance;
 
 // some helper types for parsing handle/init responses
-pub type HandleOk<U = NativeMsg> = HandleResponse<U>;
-pub type HandleRes<U = NativeMsg> = Result<HandleOk<U>, ApiError>;
-pub type InitOk<U = NativeMsg> = InitResponse<U>;
-pub type InitRes<U = NativeMsg> = Result<InitOk<U>, ApiError>;
+pub type HandleResult<U = NativeMsg> = Result<HandleResponse<U>, ApiError>;
+pub type InitResult<U = NativeMsg> = Result<InitResponse<U>, ApiError>;
 
 /// Gas limit for testing
 static DEFAULT_GAS_LIMIT: u64 = 500_000;
@@ -67,7 +65,7 @@ pub fn init<
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
-) -> InitRes<U> {
+) -> InitResult<U> {
     match to_vec(&msg) {
         Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
@@ -87,7 +85,7 @@ pub fn handle<
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
-) -> HandleRes<U> {
+) -> HandleResult<U> {
     match to_vec(&msg) {
         Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),

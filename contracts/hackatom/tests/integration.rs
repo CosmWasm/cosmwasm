@@ -30,13 +30,13 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, HumanAddr, NativeMsg,
-    ReadonlyStorage,
+    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, HandleResponse, HumanAddr,
+    InitResponse, NativeMsg, ReadonlyStorage,
 };
 use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
-    handle, init, mock_instance, mock_instance_with_balances, query, test_io, HandleOk, HandleRes,
-    InitOk, InitRes,
+    handle, init, mock_instance, mock_instance_with_balances, query, test_io, HandleResult,
+    InitResult,
 };
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -60,7 +60,7 @@ fn proper_initialization() {
         beneficiary,
     };
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
-    let res: InitOk = init(&mut deps, env, msg).unwrap();
+    let res: InitResponse = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's check the state
@@ -88,7 +88,7 @@ fn init_and_query() {
         beneficiary,
     };
     let env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
-    let res: InitOk = init(&mut deps, env, msg).unwrap();
+    let res: InitResponse = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
@@ -129,7 +129,7 @@ fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res: InitRes = init(&mut deps, env, HandleMsg::Release {});
+    let res: InitResult = init(&mut deps, env, HandleMsg::Release {});
     match res.unwrap_err() {
         ApiError::ParseErr { .. } => {}
         _ => panic!("Expected parse error"),
@@ -149,12 +149,12 @@ fn proper_handle() {
         beneficiary: beneficiary.clone(),
     };
     let init_env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
-    let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+    let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary can release it
     let handle_env = mock_env(&deps.api, verifier.as_str(), &coins(15, "earth"));
-    let handle_res: HandleOk = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
+    let handle_res: HandleResponse = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
     assert_eq!(1, handle_res.messages.len());
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
@@ -186,12 +186,12 @@ fn failed_handle() {
         beneficiary: beneficiary.clone(),
     };
     let init_env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
-    let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+    let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     // beneficiary cannot release it
     let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
-    let handle_res: HandleRes = handle(&mut deps, handle_env, HandleMsg::Release {});
+    let handle_res: HandleResult = handle(&mut deps, handle_env, HandleMsg::Release {});
     match handle_res.unwrap_err() {
         ApiError::Unauthorized {} => {}
         _ => panic!("Expect unauthorized error"),
@@ -249,7 +249,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
-        let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -269,7 +269,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
-        let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -289,7 +289,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
-        let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -309,7 +309,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
-        let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
@@ -332,7 +332,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_env = mock_env(&deps.api, creator.as_str(), &[]);
-        let init_res: InitOk = init(&mut deps, init_env, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
