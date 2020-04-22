@@ -352,7 +352,6 @@ pub fn do_next<S: Storage, Q: Querier>(
 }
 
 #[cfg(test)]
-#[cfg(feature = "iterator")]
 mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
