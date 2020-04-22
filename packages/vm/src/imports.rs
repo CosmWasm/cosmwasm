@@ -449,7 +449,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+        assert_eq!(force_read(ctx, value_ptr), VALUE1);
     }
 
     #[test]
@@ -464,7 +464,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::read::KEY_DOES_NOT_EXIST);
-        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
@@ -479,7 +479,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
-        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
@@ -494,7 +494,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
-        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
@@ -652,7 +652,7 @@ mod test {
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, dest_ptr, 500).unwrap(), b"foo\0\0\0\0\0");
+        assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
     }
 
     #[test]
@@ -723,7 +723,7 @@ mod test {
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, dest_ptr, 500).unwrap(), b"foo");
+        assert_eq!(force_read(ctx, dest_ptr), b"foo");
     }
 
     #[test]
@@ -986,19 +986,19 @@ mod test {
         // Entry 1
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY1);
-        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+        assert_eq!(force_read(ctx, key_ptr), KEY1);
+        assert_eq!(force_read(ctx, value_ptr), VALUE1);
 
         // Entry 2
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY2);
-        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE2);
+        assert_eq!(force_read(ctx, key_ptr), KEY2);
+        assert_eq!(force_read(ctx, value_ptr), VALUE2);
 
         // End
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), b"");
+        assert_eq!(force_read(ctx, key_ptr), b"");
         // API makes no guarantees for value_ptr in this case
     }
 
