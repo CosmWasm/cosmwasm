@@ -3,7 +3,9 @@ use cosmwasm_std::{
     coins, from_binary, Api, ApiError, BankMsg, Binary, CosmosMsg, HandleResponse, HumanAddr,
 };
 
-use cosmwasm_vm::testing::{handle, init, mock_instance, query};
+use cosmwasm_vm::testing::{
+    handle, init, mock_instance, query, HandleOk, HandleRes, InitOk, InitRes,
+};
 
 use reflect::msg::{CustomNativeMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 
@@ -49,10 +51,6 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 // You can uncomment this line instead to test productionified build from cosmwasm-opt
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
-// define your proper result parser here:
-type HandleOk = HandleResponse<CustomNativeMsg>;
-type HandleRes = Result<HandleOk, ApiError>;
-
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
@@ -61,7 +59,7 @@ fn proper_initialization() {
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
-    let res = init(&mut deps, env, msg).unwrap();
+    let res: InitOk<CustomNativeMsg> = init(&mut deps, env, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
@@ -76,7 +74,7 @@ fn reflect() {
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let _res = init(&mut deps, env, msg).unwrap();
+    let _res: InitOk<CustomNativeMsg> = init(&mut deps, env, msg).unwrap();
 
     let env = mock_env(&deps.api, "creator", &[]);
     let payload = vec![
@@ -92,7 +90,7 @@ fn reflect() {
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };
-    let res: HandleOk = handle(&mut deps, env, msg).unwrap();
+    let res: HandleOk<CustomNativeMsg> = handle(&mut deps, env, msg).unwrap();
 
     // should return payload
     assert_eq!(payload, res.messages);
@@ -104,7 +102,7 @@ fn reflect_requires_owner() {
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let _res = init(&mut deps, env, msg).unwrap();
+    let _res: InitOk<CustomNativeMsg> = init(&mut deps, env, msg).unwrap();
 
     // signer is not owner
     let env = mock_env(&deps.api, "someone", &[]);
@@ -117,7 +115,7 @@ fn reflect_requires_owner() {
         msgs: payload.clone(),
     };
 
-    let res: HandleRes = handle(&mut deps, env, msg);
+    let res: HandleRes<CustomNativeMsg> = handle(&mut deps, env, msg);
     match res {
         Err(ApiError::Unauthorized {}) => {}
         _ => panic!("Must return unauthorized error"),
@@ -130,7 +128,7 @@ fn transfer() {
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let _res = init(&mut deps, env, msg).unwrap();
+    let _res: InitOk<CustomNativeMsg> = init(&mut deps, env, msg).unwrap();
 
     let env = mock_env(&deps.api, "creator", &[]);
     let new_owner = HumanAddr::from("friend");
@@ -152,7 +150,7 @@ fn transfer_requires_owner() {
 
     let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let _res = init(&mut deps, env, msg).unwrap();
+    let _res: InitOk<CustomNativeMsg> = init(&mut deps, env, msg).unwrap();
 
     let env = mock_env(&deps.api, "random", &[]);
     let new_owner = HumanAddr::from("friend");

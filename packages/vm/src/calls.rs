@@ -16,14 +16,20 @@ static MAX_LENGTH_INIT: usize = 100_000;
 static MAX_LENGTH_HANDLE: usize = 100_000;
 static MAX_LENGTH_QUERY: usize = 100_000;
 
-pub fn call_init<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<Result<InitResponse, ApiError>> {
+) -> VmResult<Result<InitResponse<U>, ApiError>>
+where
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+{
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let res: InitResult = from_slice(&data)?;
+    let res: InitResult<U> = from_slice(&data)?;
     Ok(res.into())
 }
 
