@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CosmosMsg_for_NativeMsg",
+  "title": "CosmosMsg_for_RawMsg",
   "anyOf": [
     {
       "type": "object",
@@ -16,11 +16,11 @@
     {
       "type": "object",
       "required": [
-        "native"
+        "custom"
       ],
       "properties": {
-        "native": {
-          "$ref": "#/definitions/NativeMsg"
+        "custom": {
+          "$ref": "#/definitions/RawMsg"
         }
       }
     },
@@ -93,7 +93,7 @@
     "HumanAddr": {
       "type": "string"
     },
-    "NativeMsg": {
+    "RawMsg": {
       "anyOf": [
         {
           "type": "object",

@@ -3,14 +3,14 @@ use cosmwasm_std::{
     HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
-use crate::msg::{CustomNativeMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use crate::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     _msg: InitMsg,
-) -> StdResult<InitResponse<CustomNativeMsg>> {
+) -> StdResult<InitResponse<CustomMsg>> {
     let state = State {
         owner: env.message.signer,
     };
@@ -24,7 +24,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> StdResult<HandleResponse<CustomNativeMsg>> {
+) -> StdResult<HandleResponse<CustomMsg>> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, owner),
@@ -34,8 +34,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    msgs: Vec<CosmosMsg<CustomNativeMsg>>,
-) -> StdResult<HandleResponse<CustomNativeMsg>> {
+    msgs: Vec<CosmosMsg<CustomMsg>>,
+) -> StdResult<HandleResponse<CustomMsg>> {
     let state = config(&mut deps.storage).load()?;
     if env.message.signer != state.owner {
         return unauthorized();
@@ -55,7 +55,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     owner: HumanAddr,
-) -> StdResult<HandleResponse<CustomNativeMsg>> {
+) -> StdResult<HandleResponse<CustomMsg>> {
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
         if env.message.signer != state.owner {
@@ -201,8 +201,8 @@ mod tests {
             }
             .into(),
             // make sure we can pass through custom native messages
-            CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec())).into(),
-            CustomNativeMsg::Debug("Hi, Dad!".to_string()).into(),
+            CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
+            CustomMsg::Debug("Hi, Dad!".to_string()).into(),
         ];
 
         let msg = HandleMsg::ReflectMsg {

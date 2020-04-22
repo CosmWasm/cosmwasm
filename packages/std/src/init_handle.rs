@@ -11,15 +11,15 @@ use crate::types::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-// See https://github.com/serde-rs/serde/issues/1296 why we cannot add trait bounds to T
-pub enum CosmosMsg<T = NativeMsg>
+// See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
+pub enum CosmosMsg<T = RawMsg>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     Bank(BankMsg),
-    // by default we use NativeMsg, but a contract can override that
+    // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
-    Native(T),
+    Custom(T),
     Wasm(WasmMsg),
 }
 
@@ -36,10 +36,10 @@ pub enum BankMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum NativeMsg {
-    // this is dangerous to use, as it ties you to one particular runtime format.
-    // this makes the contract non-portable, and also fragile to break upon a hardfork
-    // only safe way is to receive it from a user and hold it temporarily.
+/// this is dangerous to use, as it ties you to one particular runtime format.
+/// this makes the contract non-portable, and also fragile to break upon a hardfork
+/// only safe way is to receive it from a user and hold it temporarily.
+pub enum RawMsg {
     Raw(Binary),
 }
 
@@ -87,7 +87,7 @@ pub fn log(key: &str, value: &str) -> LogAttribute {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitResponse<T = NativeMsg>
+pub struct InitResponse<T = RawMsg>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -97,7 +97,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type InitResult<U = NativeMsg> = ApiResult<InitResponse<U>>;
+pub type InitResult<U = RawMsg> = ApiResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -113,7 +113,7 @@ where
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct HandleResponse<T = NativeMsg>
+pub struct HandleResponse<T = RawMsg>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -123,7 +123,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type HandleResult<U = NativeMsg> = ApiResult<HandleResponse<U>>;
+pub type HandleResult<U = RawMsg> = ApiResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where

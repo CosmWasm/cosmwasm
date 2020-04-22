@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/InitResponse_for_NativeMsg"
+          "$ref": "#/definitions/InitResponse_for_RawMsg"
         }
       }
     },
@@ -312,7 +312,7 @@
         }
       }
     },
-    "CosmosMsg_for_NativeMsg": {
+    "CosmosMsg_for_RawMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -328,11 +328,11 @@
         {
           "type": "object",
           "required": [
-            "native"
+            "custom"
           ],
           "properties": {
-            "native": {
-              "$ref": "#/definitions/NativeMsg"
+            "custom": {
+              "$ref": "#/definitions/RawMsg"
             }
           }
         },
@@ -352,7 +352,7 @@
     "HumanAddr": {
       "type": "string"
     },
-    "InitResponse_for_NativeMsg": {
+    "InitResponse_for_RawMsg": {
       "type": "object",
       "required": [
         "log",
@@ -378,7 +378,7 @@
         "messages": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CosmosMsg_for_NativeMsg"
+            "$ref": "#/definitions/CosmosMsg_for_RawMsg"
           }
         }
       }
@@ -398,7 +398,7 @@
         }
       }
     },
-    "NativeMsg": {
+    "RawMsg": {
       "anyOf": [
         {
           "type": "object",

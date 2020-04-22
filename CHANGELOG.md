@@ -91,9 +91,9 @@
 - `ExternalStorage.get` now returns an empty vector if a storage entry exists
   but has an empty value. Before, this was normalized to `None`.
 - Reorganize `CosmosMsg` enum types. They are now split by modules:
-  `CosmosMsg::Bank(BankMsg)`, `CosmosMsg::Native { msg }`,
+  `CosmosMsg::Bank(BankMsg)`, `CosmosMsg::Custom(T)`,
   `CosmosMsg::Wasm(WasmMsg)`
-- CosmosMsg is now generic over the content of `Native` variant. This allows
+- CosmosMsg is now generic over the content of `Custom` variant. This allows
   blockchains to support custom native calls in their Cosmos-SDK apps and
   developers to make use of them in CosmWasm apps without forking the
   `cosmwasm-vm` and `go-cosmwasm` runtime.

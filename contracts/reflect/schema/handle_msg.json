@@ -17,7 +17,7 @@
             "msgs": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/CosmosMsg_for_CustomNativeMsg"
+                "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
               }
             }
           }
@@ -98,7 +98,7 @@
         }
       }
     },
-    "CosmosMsg_for_CustomNativeMsg": {
+    "CosmosMsg_for_CustomMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -114,11 +114,11 @@
         {
           "type": "object",
           "required": [
-            "native"
+            "custom"
           ],
           "properties": {
-            "native": {
-              "$ref": "#/definitions/CustomNativeMsg"
+            "custom": {
+              "$ref": "#/definitions/CustomMsg"
             }
           }
         },
@@ -135,20 +135,9 @@
         }
       ]
     },
-    "CustomNativeMsg": {
-      "description": "CustomNativeMsg is an override of CosmosMsg::Native to show this works and can be extended in the contract",
+    "CustomMsg": {
+      "description": "CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract",
       "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "custom"
-          ],
-          "properties": {
-            "custom": {
-              "$ref": "#/definitions/Binary"
-            }
-          }
-        },
         {
           "type": "object",
           "required": [
@@ -157,6 +146,17 @@
           "properties": {
             "debug": {
               "type": "string"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "raw"
+          ],
+          "properties": {
+            "raw": {
+              "$ref": "#/definitions/Binary"
             }
           }
         }

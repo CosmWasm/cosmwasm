@@ -1,41 +1,35 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CosmosMsg",
-  "anyOf": [
-    {
-      "type": "object",
-      "required": [
-        "bank"
-      ],
-      "properties": {
-        "bank": {
-          "$ref": "#/definitions/BankMsg"
+  "title": "HandleResponse_for_CustomMsg",
+  "type": "object",
+  "required": [
+    "log",
+    "messages"
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        },
+        {
+          "type": "null"
         }
+      ]
+    },
+    "log": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/LogAttribute"
       }
     },
-    {
-      "type": "object",
-      "required": [
-        "native"
-      ],
-      "properties": {
-        "native": {
-          "$ref": "#/definitions/NativeMsg"
-        }
-      }
-    },
-    {
-      "type": "object",
-      "required": [
-        "wasm"
-      ],
-      "properties": {
-        "wasm": {
-          "$ref": "#/definitions/WasmMsg"
-        }
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
       }
     }
-  ],
+  },
   "definitions": {
     "BankMsg": {
       "anyOf": [
@@ -90,11 +84,57 @@
         }
       }
     },
-    "HumanAddr": {
-      "type": "string"
-    },
-    "NativeMsg": {
+    "CosmosMsg_for_CustomMsg": {
       "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "bank"
+          ],
+          "properties": {
+            "bank": {
+              "$ref": "#/definitions/BankMsg"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "custom"
+          ],
+          "properties": {
+            "custom": {
+              "$ref": "#/definitions/CustomMsg"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "wasm"
+          ],
+          "properties": {
+            "wasm": {
+              "$ref": "#/definitions/WasmMsg"
+            }
+          }
+        }
+      ]
+    },
+    "CustomMsg": {
+      "description": "CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract",
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "debug"
+          ],
+          "properties": {
+            "debug": {
+              "type": "string"
+            }
+          }
+        },
         {
           "type": "object",
           "required": [
@@ -107,6 +147,24 @@
           }
         }
       ]
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "LogAttribute": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
     },
     "Uint128": {
       "type": "string"

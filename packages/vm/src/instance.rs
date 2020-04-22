@@ -365,7 +365,7 @@ mod test {
 #[cfg(feature = "default-singlepass")]
 mod singlepass_test {
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{coins, NativeMsg};
+    use cosmwasm_std::{coins, RawMsg};
 
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_instance, mock_instance_with_gas_limit};
@@ -387,7 +387,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, NativeMsg>(&mut instance, &env, msg)
+        call_init::<_, _, _, RawMsg>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
@@ -403,7 +403,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, NativeMsg>(&mut instance, &env, msg)
+        call_init::<_, _, _, RawMsg>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
@@ -411,7 +411,7 @@ mod singlepass_test {
         let gas_before_handle = instance.get_gas();
         let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_handle::<_, _, _, NativeMsg>(&mut instance, &env, msg)
+        call_handle::<_, _, _, RawMsg>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
@@ -427,7 +427,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init::<_, _, _, NativeMsg>(&mut instance, &env, msg);
+        let res = call_init::<_, _, _, RawMsg>(&mut instance, &env, msg);
         assert!(res.is_err());
     }
 
@@ -438,7 +438,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let _res = call_init::<_, _, _, NativeMsg>(&mut instance, &env, msg)
+        let _res = call_init::<_, _, _, RawMsg>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 

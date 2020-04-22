@@ -9,12 +9,8 @@ pub struct InitMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum HandleMsg {
-    ReflectMsg {
-        msgs: Vec<CosmosMsg<CustomNativeMsg>>,
-    },
-    ChangeOwner {
-        owner: HumanAddr,
-    },
+    ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
+    ChangeOwner { owner: HumanAddr },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -31,14 +27,14 @@ pub struct OwnerResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-/// CustomNativeMsg is an override of CosmosMsg::Native to show this works and can be extended in the contract
-pub enum CustomNativeMsg {
-    Custom(Binary),
+/// CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract
+pub enum CustomMsg {
     Debug(String),
+    Raw(Binary),
 }
 
-impl Into<CosmosMsg<CustomNativeMsg>> for CustomNativeMsg {
-    fn into(self) -> CosmosMsg<CustomNativeMsg> {
-        CosmosMsg::Native(self)
+impl Into<CosmosMsg<CustomMsg>> for CustomMsg {
+    fn into(self) -> CosmosMsg<CustomMsg> {
+        CosmosMsg::Custom(self)
     }
 }
