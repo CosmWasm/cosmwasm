@@ -245,21 +245,21 @@ impl Querier for ExternalQuerier {
     fn query(&self, request: &QueryRequest) -> QuerierResponse {
         let bin_request = to_vec(request).or(Err(ApiSystemError::Unknown {}))?;
         let req = build_region(&bin_request);
-        let req_ptr = &*req as *const Region as *const c_void;
-        let resp = alloc(QUERY_RESULT_BUFFER_LENGTH);
+        let request_ptr = &*req as *const Region as *const c_void;
+        let response_ptr = alloc(QUERY_RESULT_BUFFER_LENGTH);
 
-        let ret = unsafe { query_chain(req_ptr, resp) };
-        if ret < 0 {
+        let result_code = unsafe { query_chain(request_ptr, response_ptr) };
+        if result_code < 0 {
             return Err(ApiSystemError::Unknown {});
         }
 
-        let parse = |r| -> StdResult<QuerierResponse> {
-            let out = unsafe { consume_region(r)? };
+        let process = |region_ptr| -> StdResult<QuerierResponse> {
+            let out = unsafe { consume_region(region_ptr)? };
             let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> = from_slice(&out)?;
             Ok(parsed.into())
         };
 
-        match parse(resp) {
+        match process(response_ptr) {
             Ok(api_response) => api_response,
             Err(err) => Ok(Err(err.into())),
         }

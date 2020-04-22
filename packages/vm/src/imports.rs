@@ -226,8 +226,7 @@ pub fn do_humanize_address<A: Api>(
     }
 }
 
-pub fn do_query_chain<A: Api, S: Storage, Q: Querier>(
-    _api: A,
+pub fn do_query_chain<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     request_ptr: u32,
     response_ptr: u32,
@@ -353,11 +352,13 @@ pub fn do_next<S: Storage, Q: Querier>(
 }
 
 #[cfg(test)]
-#[cfg(feature = "iterator")]
 mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage};
+    use cosmwasm_std::{
+        coins, from_binary, AllBalanceResponse, ApiResult, BankQuery, HumanAddr, ReadonlyStorage,
+        WasmQuery,
+    };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     use crate::backends::compile;
@@ -431,6 +432,11 @@ mod test {
         region_ptr
     }
 
+    /// A Region reader that is just good enough for the tests in this file
+    fn force_read(ctx: &mut Ctx, region_ptr: u32) -> Vec<u8> {
+        read_region(ctx, region_ptr, 5000).unwrap()
+    }
+
     #[test]
     fn do_read_works() {
         let mut instance = make_instance();
@@ -443,7 +449,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+        assert_eq!(force_read(ctx, value_ptr), VALUE1);
     }
 
     #[test]
@@ -458,7 +464,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::read::KEY_DOES_NOT_EXIST);
-        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
@@ -473,7 +479,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
-        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
@@ -488,7 +494,7 @@ mod test {
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
         assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
-        assert!(read_region(ctx, value_ptr, 500).unwrap().is_empty());
+        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
@@ -646,7 +652,7 @@ mod test {
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, dest_ptr, 500).unwrap(), b"foo\0\0\0\0\0");
+        assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
     }
 
     #[test]
@@ -717,7 +723,7 @@ mod test {
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, dest_ptr, 500).unwrap(), b"foo");
+        assert_eq!(force_read(ctx, dest_ptr), b"foo");
     }
 
     #[test]
@@ -763,6 +769,90 @@ mod test {
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+    }
+
+    #[test]
+    fn do_query_chain_works() {
+        let mut instance = make_instance();
+
+        let request = QueryRequest::Bank(BankQuery::AllBalances {
+            address: HumanAddr::from(INIT_ADDR),
+        });
+        let request_data = cosmwasm_std::to_vec(&request).unwrap();
+        let request_ptr = write_data(&mut instance, &request_data);
+        let response_ptr = create_empty(&mut instance, 1000);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        assert_eq!(result, errors::NONE);
+        let response = force_read(ctx, response_ptr);
+
+        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
+            cosmwasm_std::from_slice(&response).unwrap();
+        let query_response: QuerierResponse = parsed.into();
+        let query_response_inner = query_response.unwrap();
+        let query_response_inner_inner = query_response_inner.unwrap();
+        let parsed_again: AllBalanceResponse = from_binary(&query_response_inner_inner).unwrap();
+        assert_eq!(parsed_again.amount, coins(INIT_AMOUNT, INIT_DENOM));
+    }
+
+    #[test]
+    fn do_query_chain_fails_for_broken_request() {
+        let mut instance = make_instance();
+
+        let request_ptr = write_data(&mut instance, b"Not valid JSON for sure");
+        let response_ptr = create_empty(&mut instance, 1000);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        assert_eq!(result, errors::NONE);
+        let response = force_read(ctx, response_ptr);
+
+        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
+            cosmwasm_std::from_slice(&response).unwrap();
+        let query_response: QuerierResponse = parsed.into();
+        match query_response {
+            Ok(_) => panic!("This must not succeed"),
+            Err(ApiSystemError::InvalidRequest { error }) => {
+                assert!(error.starts_with("Parse error"))
+            }
+            Err(error) => panic!("Unexpeted error: {:?}", error),
+        }
+    }
+
+    #[test]
+    fn do_query_chain_fails_for_missing_contract() {
+        let mut instance = make_instance();
+
+        let request = QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: HumanAddr::from("non-existent"),
+            msg: Binary::from(b"{}" as &[u8]),
+        });
+        let request_data = cosmwasm_std::to_vec(&request).unwrap();
+        let request_ptr = write_data(&mut instance, &request_data);
+        let response_ptr = create_empty(&mut instance, 1000);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        assert_eq!(result, errors::NONE);
+        let response = force_read(ctx, response_ptr);
+
+        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
+            cosmwasm_std::from_slice(&response).unwrap();
+        let query_response: QuerierResponse = parsed.into();
+        match query_response {
+            Ok(_) => panic!("This must not succeed"),
+            Err(ApiSystemError::NoSuchContract { addr }) => {
+                assert_eq!(addr, HumanAddr::from("non-existent"))
+            }
+            Err(error) => panic!("Unexpeted error: {:?}", error),
+        }
     }
 
     #[test]
@@ -896,19 +986,19 @@ mod test {
         // Entry 1
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY1);
-        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE1);
+        assert_eq!(force_read(ctx, key_ptr), KEY1);
+        assert_eq!(force_read(ctx, value_ptr), VALUE1);
 
         // Entry 2
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), KEY2);
-        assert_eq!(read_region(ctx, value_ptr, 500).unwrap(), VALUE2);
+        assert_eq!(force_read(ctx, key_ptr), KEY2);
+        assert_eq!(force_read(ctx, value_ptr), VALUE2);
 
         // End
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result, errors::NONE);
-        assert_eq!(read_region(ctx, key_ptr, 500).unwrap(), b"");
+        assert_eq!(force_read(ctx, key_ptr), b"");
         // API makes no guarantees for value_ptr in this case
     }
 
