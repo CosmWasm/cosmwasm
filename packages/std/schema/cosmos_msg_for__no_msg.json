@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "CosmosMsg_for_RawMsg",
+  "title": "CosmosMsg_for_NoMsg",
   "anyOf": [
     {
       "type": "object",
@@ -20,7 +20,7 @@
       ],
       "properties": {
         "custom": {
-          "$ref": "#/definitions/RawMsg"
+          "$ref": "#/definitions/NoMsg"
         }
       }
     },
@@ -93,20 +93,9 @@
     "HumanAddr": {
       "type": "string"
     },
-    "RawMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "raw"
-          ],
-          "properties": {
-            "raw": {
-              "$ref": "#/definitions/Binary"
-            }
-          }
-        }
-      ]
+    "NoMsg": {
+      "description": "NoMsg can never be instantiated and is a no-op placeholder for those contracts that don't explicitly set a custom message.",
+      "enum": []
     },
     "Uint128": {
       "type": "string"

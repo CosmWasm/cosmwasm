@@ -12,7 +12,7 @@ use crate::types::HumanAddr;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
-pub enum CosmosMsg<T = RawMsg>
+pub enum CosmosMsg<T = NoMsg>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -35,13 +35,9 @@ pub enum BankMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-/// this is dangerous to use, as it ties you to one particular runtime format.
-/// this makes the contract non-portable, and also fragile to break upon a hardfork
-/// only safe way is to receive it from a user and hold it temporarily.
-pub enum RawMsg {
-    Raw(Binary),
-}
+/// NoMsg can never be instantiated and is a no-op placeholder for
+/// those contracts that don't explicitly set a custom message.
+pub enum NoMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -87,7 +83,7 @@ pub fn log(key: &str, value: &str) -> LogAttribute {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitResponse<T = RawMsg>
+pub struct InitResponse<T = NoMsg>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -97,7 +93,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type InitResult<U = RawMsg> = ApiResult<InitResponse<U>>;
+pub type InitResult<U = NoMsg> = ApiResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -113,7 +109,7 @@ where
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct HandleResponse<T = RawMsg>
+pub struct HandleResponse<T = NoMsg>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -123,7 +119,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type HandleResult<U = RawMsg> = ApiResult<HandleResponse<U>>;
+pub type HandleResult<U = NoMsg> = ApiResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where

@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/HandleResponse_for_RawMsg"
+          "$ref": "#/definitions/HandleResponse_for_NoMsg"
         }
       }
     },
@@ -312,7 +312,7 @@
         }
       }
     },
-    "CosmosMsg_for_RawMsg": {
+    "CosmosMsg_for_NoMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -332,7 +332,7 @@
           ],
           "properties": {
             "custom": {
-              "$ref": "#/definitions/RawMsg"
+              "$ref": "#/definitions/NoMsg"
             }
           }
         },
@@ -349,7 +349,7 @@
         }
       ]
     },
-    "HandleResponse_for_RawMsg": {
+    "HandleResponse_for_NoMsg": {
       "type": "object",
       "required": [
         "log",
@@ -375,7 +375,7 @@
         "messages": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CosmosMsg_for_RawMsg"
+            "$ref": "#/definitions/CosmosMsg_for_NoMsg"
           }
         }
       }
@@ -398,20 +398,9 @@
         }
       }
     },
-    "RawMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "raw"
-          ],
-          "properties": {
-            "raw": {
-              "$ref": "#/definitions/Binary"
-            }
-          }
-        }
-      ]
+    "NoMsg": {
+      "description": "NoMsg can never be instantiated and is a no-op placeholder for those contracts that don't explicitly set a custom message.",
+      "enum": []
     },
     "Uint128": {
       "type": "string"
