@@ -3,14 +3,14 @@ use cosmwasm_std::{
     HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
-use crate::msg::{HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use crate::msg::{CustomNativeMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     _msg: InitMsg,
-) -> StdResult<InitResponse> {
+) -> StdResult<InitResponse<CustomNativeMsg>> {
     let state = State {
         owner: env.message.signer,
     };
@@ -24,7 +24,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+) -> StdResult<HandleResponse<CustomNativeMsg>> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, owner),
@@ -34,8 +34,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    msgs: Vec<CosmosMsg>,
-) -> StdResult<HandleResponse> {
+    msgs: Vec<CosmosMsg<CustomNativeMsg>>,
+) -> StdResult<HandleResponse<CustomNativeMsg>> {
     let state = config(&mut deps.storage).load()?;
     if env.message.signer != state.owner {
         return unauthorized();
@@ -55,7 +55,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     owner: HumanAddr,
-) -> StdResult<HandleResponse> {
+) -> StdResult<HandleResponse<CustomNativeMsg>> {
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
         if env.message.signer != state.owner {
@@ -92,7 +92,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, BankMsg, Binary, NativeMsg, StdError};
+    use cosmwasm_std::{coins, from_binary, BankMsg, Binary, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -197,7 +197,9 @@ mod tests {
                 to_address: HumanAddr::from("friend"),
                 amount: coins(1, "token"),
             }),
-            CosmosMsg::Native(NativeMsg::Raw(Binary(b"{\"foo\":123}".to_vec()))),
+            // make sure we can pass through custom native messages
+            CosmosMsg::Native(CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec()))),
+            CosmosMsg::Native(CustomNativeMsg::Debug("Hi, Dad!".to_string())),
         ];
 
         let msg = HandleMsg::ReflectMsg {

@@ -1,9 +1,9 @@
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{coins, from_binary, Api, ApiError, BankMsg, CosmosMsg, HumanAddr};
+use cosmwasm_std::{coins, from_binary, Api, ApiError, BankMsg, Binary, CosmosMsg, HumanAddr};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
-use reflect::msg::{HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use reflect::msg::{CustomNativeMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -73,11 +73,16 @@ fn reflect() {
     let _res = init(&mut deps, env, msg).unwrap();
 
     let env = mock_env(&deps.api, "creator", &[]);
-    let payload = vec![CosmosMsg::Bank(BankMsg::Send {
-        from_address: deps.api.human_address(&env.contract.address).unwrap(),
-        to_address: HumanAddr::from("friend"),
-        amount: coins(1, "token"),
-    })];
+    let payload = vec![
+        CosmosMsg::Bank(BankMsg::Send {
+            from_address: deps.api.human_address(&env.contract.address).unwrap(),
+            to_address: HumanAddr::from("friend"),
+            amount: coins(1, "token"),
+        }),
+        // make sure we can pass through custom native messages
+        CosmosMsg::Native(CustomNativeMsg::Custom(Binary(b"{\"foo\":123}".to_vec()))),
+        CosmosMsg::Native(CustomNativeMsg::Debug("Hi, Dad!".to_string())),
+    ];
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };

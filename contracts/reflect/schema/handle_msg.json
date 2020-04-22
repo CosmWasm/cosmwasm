@@ -17,7 +17,7 @@
             "msgs": {
               "type": "array",
               "items": {
-                "$ref": "#/definitions/CosmosMsg_for_NativeMsg"
+                "$ref": "#/definitions/CosmosMsg_for_CustomNativeMsg"
               }
             }
           }
@@ -98,7 +98,7 @@
         }
       }
     },
-    "CosmosMsg_for_NativeMsg": {
+    "CosmosMsg_for_CustomNativeMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -118,7 +118,7 @@
           ],
           "properties": {
             "native": {
-              "$ref": "#/definitions/NativeMsg"
+              "$ref": "#/definitions/CustomNativeMsg"
             }
           }
         },
@@ -135,23 +135,35 @@
         }
       ]
     },
-    "HumanAddr": {
-      "type": "string"
-    },
-    "NativeMsg": {
+    "CustomNativeMsg": {
+      "description": "CustomNativeMsg is an override of CosmosMsg::Native to show this works and can be extended in the contract",
       "anyOf": [
         {
           "type": "object",
           "required": [
-            "raw"
+            "custom"
           ],
           "properties": {
-            "raw": {
+            "custom": {
               "$ref": "#/definitions/Binary"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "debug"
+          ],
+          "properties": {
+            "debug": {
+              "type": "string"
             }
           }
         }
       ]
+    },
+    "HumanAddr": {
+      "type": "string"
     },
     "Uint128": {
       "type": "string"
