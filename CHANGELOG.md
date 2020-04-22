@@ -40,9 +40,6 @@
 - `Env.message.sent_funds` is a `Vec<Coin>` not `Option<Vec<Coin>>`. We will
   normalize the go response in `go-cosmwasm` before sending it to the contract.
 - `Env.block.{height,time}` are now `u64` rather than `i64`.
-- Reorganize `CosmosMsg` enum types. They are now split by modules:
-  `CosmosMsg::Bank(BankMsg)`, `CosmosMsg::Native { msg }`,
-  `CosmosMsg::Wasm(WasmMsg)`
 
 **cosmwasm-schema**
 
@@ -93,6 +90,13 @@
 - Rename `Error` to `StdError`.
 - `ExternalStorage.get` now returns an empty vector if a storage entry exists
   but has an empty value. Before, this was normalized to `None`.
+- Reorganize `CosmosMsg` enum types. They are now split by modules:
+  `CosmosMsg::Bank(BankMsg)`, `CosmosMsg::Native { msg }`,
+  `CosmosMsg::Wasm(WasmMsg)`
+- CosmosMsg is now generic over the content of `Native` variant. This allows
+  blockchains to support custom native calls in their Cosmos-SDK apps and
+  developers to make use of them in CosmWasm apps without forking the
+  `cosmwasm-vm` and `go-cosmwasm` runtime.
 
 **cosmwasm-vm**
 
