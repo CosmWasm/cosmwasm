@@ -2,6 +2,7 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 use crate::api::ApiResult;
 use crate::coins::Coin;
@@ -11,7 +12,10 @@ use crate::types::HumanAddr;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add trait bounds to T
-pub enum CosmosMsg<T = NativeMsg> {
+pub enum CosmosMsg<T = NativeMsg>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     Bank(BankMsg),
     // by default we use NativeMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
@@ -70,25 +74,57 @@ pub fn log(key: &str, value: &str) -> LogAttribute {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct InitResponse {
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct InitResponse<T = NativeMsg>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
-    pub messages: Vec<CosmosMsg>,
+    pub messages: Vec<CosmosMsg<T>>,
     pub log: Vec<LogAttribute>, // abci defines this as string
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
 pub type InitResult = ApiResult<InitResponse>;
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct HandleResponse {
+impl<T> Default for InitResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn default() -> Self {
+        InitResponse {
+            messages: vec![],
+            log: vec![],
+            data: None,
+        }
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct HandleResponse<T = NativeMsg>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
-    pub messages: Vec<CosmosMsg>,
+    pub messages: Vec<CosmosMsg<T>>,
     pub log: Vec<LogAttribute>, // abci defines this as string
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
 pub type HandleResult = ApiResult<HandleResponse>;
+
+impl<T> Default for HandleResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn default() -> Self {
+        HandleResponse {
+            messages: vec![],
+            log: vec![],
+            data: None,
+        }
+    }
+}
 
 #[cfg(test)]
 mod test {

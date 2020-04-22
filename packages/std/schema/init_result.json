@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/InitResponse"
+          "$ref": "#/definitions/InitResponse_for_NativeMsg"
         }
       }
     },
@@ -352,7 +352,7 @@
     "HumanAddr": {
       "type": "string"
     },
-    "InitResponse": {
+    "InitResponse_for_NativeMsg": {
       "type": "object",
       "required": [
         "log",

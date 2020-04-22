@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/HandleResponse"
+          "$ref": "#/definitions/HandleResponse_for_NativeMsg"
         }
       }
     },
@@ -349,7 +349,7 @@
         }
       ]
     },
-    "HandleResponse": {
+    "HandleResponse_for_NativeMsg": {
       "type": "object",
       "required": [
         "log",
