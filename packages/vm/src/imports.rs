@@ -355,7 +355,10 @@ pub fn do_next<S: Storage, Q: Querier>(
 mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, ApiResult, HumanAddr, ReadonlyStorage};
+    use cosmwasm_std::{
+        coins, from_binary, AllBalanceResponse, ApiResult, BankQuery, HumanAddr, ReadonlyStorage,
+        WasmQuery,
+    };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
     use crate::backends::compile;
@@ -769,6 +772,33 @@ mod test {
     }
 
     #[test]
+    fn do_query_chain_works() {
+        let mut instance = make_instance();
+
+        let request = QueryRequest::Bank(BankQuery::AllBalances {
+            address: HumanAddr::from(INIT_ADDR),
+        });
+        let request_data = cosmwasm_std::to_vec(&request).unwrap();
+        let request_ptr = write_data(&mut instance, &request_data);
+        let response_ptr = create_empty(&mut instance, 1000);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        assert_eq!(result, errors::NONE);
+        let response = force_read(ctx, response_ptr);
+
+        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
+            cosmwasm_std::from_slice(&response).unwrap();
+        let query_response: QuerierResponse = parsed.into();
+        let query_response_inner = query_response.unwrap();
+        let query_response_inner_inner = query_response_inner.unwrap();
+        let parsed_again: AllBalanceResponse = from_binary(&query_response_inner_inner).unwrap();
+        assert_eq!(parsed_again.amount, coins(INIT_AMOUNT, INIT_DENOM));
+    }
+
+    #[test]
     fn do_query_chain_fails_for_broken_request() {
         let mut instance = make_instance();
 
@@ -789,6 +819,37 @@ mod test {
             Ok(_) => panic!("This must not succeed"),
             Err(ApiSystemError::InvalidRequest { error }) => {
                 assert!(error.starts_with("Parse error"))
+            }
+            Err(error) => panic!("Unexpeted error: {:?}", error),
+        }
+    }
+
+    #[test]
+    fn do_query_chain_fails_for_missing_contract() {
+        let mut instance = make_instance();
+
+        let request = QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: HumanAddr::from("non-existent"),
+            msg: Binary::from(b"{}" as &[u8]),
+        });
+        let request_data = cosmwasm_std::to_vec(&request).unwrap();
+        let request_ptr = write_data(&mut instance, &request_data);
+        let response_ptr = create_empty(&mut instance, 1000);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        assert_eq!(result, errors::NONE);
+        let response = force_read(ctx, response_ptr);
+
+        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
+            cosmwasm_std::from_slice(&response).unwrap();
+        let query_response: QuerierResponse = parsed.into();
+        match query_response {
+            Ok(_) => panic!("This must not succeed"),
+            Err(ApiSystemError::NoSuchContract { addr }) => {
+                assert_eq!(addr, HumanAddr::from("non-existent"))
             }
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
