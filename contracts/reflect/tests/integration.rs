@@ -1,5 +1,7 @@
 use cosmwasm_std::testing::mock_env;
-use cosmwasm_std::{coins, from_binary, Api, ApiError, BankMsg, Binary, CosmosMsg, HumanAddr};
+use cosmwasm_std::{
+    coins, from_binary, Api, ApiError, BankMsg, Binary, CosmosMsg, HandleResponse, HumanAddr,
+};
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
@@ -47,6 +49,10 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 // You can uncomment this line instead to test productionified build from cosmwasm-opt
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
+// define your proper result parser here:
+type HandleOk = HandleResponse<CustomNativeMsg>;
+type HandleRes = Result<HandleOk, ApiError>;
+
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
@@ -86,7 +92,7 @@ fn reflect() {
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };
-    let res = handle(&mut deps, env, msg).unwrap();
+    let res: HandleOk = handle(&mut deps, env, msg).unwrap();
 
     // should return payload
     assert_eq!(payload, res.messages);
@@ -111,7 +117,7 @@ fn reflect_requires_owner() {
         msgs: payload.clone(),
     };
 
-    let res = handle(&mut deps, env, msg);
+    let res: HandleRes = handle(&mut deps, env, msg);
     match res {
         Err(ApiError::Unauthorized {}) => {}
         _ => panic!("Must return unauthorized error"),
@@ -131,7 +137,7 @@ fn transfer() {
     let msg = HandleMsg::ChangeOwner {
         owner: new_owner.clone(),
     };
-    let res = handle(&mut deps, env, msg).unwrap();
+    let res: HandleOk = handle(&mut deps, env, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
@@ -154,7 +160,7 @@ fn transfer_requires_owner() {
         owner: new_owner.clone(),
     };
 
-    let res = handle(&mut deps, env, msg);
+    let res: HandleRes = handle(&mut deps, env, msg);
     match res {
         Err(ApiError::Unauthorized {}) => {}
         _ => panic!("Must return unauthorized error"),

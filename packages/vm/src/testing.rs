@@ -1,9 +1,9 @@
 //! This file has some helpers for integration tests.
 //! They should be imported via full path to ensure there is no confusion
 //! use cosmwasm_vm::testing::X
-use serde::Serialize;
-// JsonSchema is a flag for types meant to be publically exposed
 use schemars::JsonSchema;
+use serde::{de::DeserializeOwned, Serialize};
+use std::fmt;
 
 use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
@@ -75,11 +75,12 @@ pub fn handle<
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,
+    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 >(
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
-) -> Result<HandleResponse, ApiError> {
+) -> Result<HandleResponse<U>, ApiError> {
     match to_vec(&msg) {
         Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),
