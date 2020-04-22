@@ -60,6 +60,18 @@ pub enum WasmMsg {
     },
 }
 
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {
+    fn from(msg: BankMsg) -> Self {
+        CosmosMsg::Bank(msg)
+    }
+}
+
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg<T> {
+    fn from(msg: WasmMsg) -> Self {
+        CosmosMsg::Wasm(msg)
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct LogAttribute {
     pub key: String,
@@ -144,11 +156,12 @@ mod test {
     #[test]
     fn can_deser_ok_result() {
         let send = InitResult::Ok(InitResponse {
-            messages: vec![CosmosMsg::Bank(BankMsg::Send {
+            messages: vec![BankMsg::Send {
                 from_address: HumanAddr("me".to_string()),
                 to_address: HumanAddr("you".to_string()),
                 amount: coins(1015, "earth"),
-            })],
+            }
+            .into()],
             log: vec![LogAttribute {
                 key: "action".to_string(),
                 value: "release".to_string(),
@@ -159,5 +172,22 @@ mod test {
         println!("ok: {}", std::str::from_utf8(&bin).unwrap());
         let back: InitResult = from_slice(&bin).expect("decode contract result");
         assert_eq!(send, back);
+    }
+
+    #[test]
+    fn msg_from_works() {
+        let from_address = HumanAddr("me".to_string());
+        let to_address = HumanAddr("you".to_string());
+        let amount = coins(1015, "earth");
+        let bank = BankMsg::Send {
+            from_address,
+            to_address,
+            amount,
+        };
+        let msg: CosmosMsg = bank.clone().into();
+        match msg {
+            CosmosMsg::Bank(msg) => assert_eq!(bank, msg),
+            _ => panic!("must encode in Bank variant"),
+        }
     }
 }
