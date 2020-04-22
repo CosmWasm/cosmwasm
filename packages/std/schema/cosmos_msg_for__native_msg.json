@@ -1,45 +1,37 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "HandleMsg",
+  "title": "CosmosMsg_for_NativeMsg",
   "anyOf": [
     {
       "type": "object",
       "required": [
-        "reflectmsg"
+        "bank"
       ],
       "properties": {
-        "reflectmsg": {
-          "type": "object",
-          "required": [
-            "msgs"
-          ],
-          "properties": {
-            "msgs": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CosmosMsg_for_NativeMsg"
-              }
-            }
-          }
+        "bank": {
+          "$ref": "#/definitions/BankMsg"
         }
       }
     },
     {
       "type": "object",
       "required": [
-        "changeowner"
+        "native"
       ],
       "properties": {
-        "changeowner": {
-          "type": "object",
-          "required": [
-            "owner"
-          ],
-          "properties": {
-            "owner": {
-              "$ref": "#/definitions/HumanAddr"
-            }
-          }
+        "native": {
+          "$ref": "#/definitions/NativeMsg"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "wasm"
+      ],
+      "properties": {
+        "wasm": {
+          "$ref": "#/definitions/WasmMsg"
         }
       }
     }
@@ -97,43 +89,6 @@
           "type": "string"
         }
       }
-    },
-    "CosmosMsg_for_NativeMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "bank"
-          ],
-          "properties": {
-            "bank": {
-              "$ref": "#/definitions/BankMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "native"
-          ],
-          "properties": {
-            "native": {
-              "$ref": "#/definitions/NativeMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "wasm"
-          ],
-          "properties": {
-            "wasm": {
-              "$ref": "#/definitions/WasmMsg"
-            }
-          }
-        }
-      ]
     },
     "HumanAddr": {
       "type": "string"

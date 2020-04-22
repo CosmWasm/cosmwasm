@@ -10,12 +10,12 @@ use crate::types::HumanAddr;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum CosmosMsg {
+// See https://github.com/serde-rs/serde/issues/1296 why we cannot add trait bounds to T
+pub enum CosmosMsg<T = NativeMsg> {
     Bank(BankMsg),
-    // this is dangerous to use, as it ties you to one particular runtime format.
-    // this makes the contract non-portable, and also fragile to break upon a hardfork
-    // only safe way is to receive it from a user and hold it temporarily.
-    Native(NativeMsg),
+    // by default we use NativeMsg, but a contract can override that
+    // to call into more app-specific code (whatever they define)
+    Native(T),
     Wasm(WasmMsg),
 }
 
@@ -33,6 +33,9 @@ pub enum BankMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum NativeMsg {
+    // this is dangerous to use, as it ties you to one particular runtime format.
+    // this makes the contract non-portable, and also fragile to break upon a hardfork
+    // only safe way is to receive it from a user and hold it temporarily.
     Raw(Binary),
 }
 

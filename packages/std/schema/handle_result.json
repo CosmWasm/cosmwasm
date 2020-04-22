@@ -312,7 +312,7 @@
         }
       }
     },
-    "CosmosMsg": {
+    "CosmosMsg_for_NativeMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -375,7 +375,7 @@
         "messages": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CosmosMsg"
+            "$ref": "#/definitions/CosmosMsg_for_NativeMsg"
           }
         }
       }
