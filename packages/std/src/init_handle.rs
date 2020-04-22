@@ -85,7 +85,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type InitResult = ApiResult<InitResponse>;
+pub type InitResult<U = NativeMsg> = ApiResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -111,7 +111,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type HandleResult = ApiResult<HandleResponse>;
+pub type HandleResult<U = NativeMsg> = ApiResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where
