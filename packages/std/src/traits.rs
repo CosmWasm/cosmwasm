@@ -79,6 +79,7 @@ pub trait Querier: Clone + Send {
     fn query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
         match to_vec(request) {
             Ok(raw) => self.raw_query(&raw),
+            // TODO: maybe I want to make this a SystemError::InvalidRequest ?
             Err(e) => Ok(Err(e.into())),
         }
     }
