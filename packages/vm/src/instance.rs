@@ -364,8 +364,8 @@ mod test {
 #[cfg(test)]
 #[cfg(feature = "default-singlepass")]
 mod singlepass_test {
-    use cosmwasm_std::coins;
     use cosmwasm_std::testing::mock_env;
+    use cosmwasm_std::{coins, NoMsg};
 
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_instance, mock_instance_with_gas_limit};
@@ -387,11 +387,13 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init(&mut instance, &env, msg).unwrap().unwrap();
+        call_init::<_, _, _, NoMsg>(&mut instance, &env, msg)
+            .unwrap()
+            .unwrap();
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 45608);
+        assert_eq!(init_used, 45607);
     }
 
     #[test]
@@ -401,17 +403,21 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init(&mut instance, &env, msg).unwrap().unwrap();
+        call_init::<_, _, _, NoMsg>(&mut instance, &env, msg)
+            .unwrap()
+            .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_handle = instance.get_gas();
         let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_handle(&mut instance, &env, msg).unwrap().unwrap();
+        call_handle::<_, _, _, NoMsg>(&mut instance, &env, msg)
+            .unwrap()
+            .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 63560);
+        assert_eq!(handle_used, 63554);
     }
 
     #[test]
@@ -421,7 +427,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init(&mut instance, &env, msg);
+        let res = call_init::<_, _, _, NoMsg>(&mut instance, &env, msg);
         assert!(res.is_err());
     }
 
@@ -432,7 +438,9 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let _res = call_init(&mut instance, &env, msg).unwrap().unwrap();
+        let _res = call_init::<_, _, _, NoMsg>(&mut instance, &env, msg)
+            .unwrap()
+            .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_query = instance.get_gas();
@@ -444,6 +452,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 23018);
+        assert_eq!(query_used, 23050);
     }
 }

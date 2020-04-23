@@ -109,6 +109,17 @@ Integration Tests:
     `match err { ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"), ... }`
   - After: `match err { Err(ApiError::Unauthorized{ ..}) => {}, ... }`
 - Remove all imports / use of `ContractResult`
+- You must specify `CosmosMsg::Native` type when calling
+  `cosmwasm_vm::testing::{handle, init}`. You will want to
+  `use cosmwasm_vm::testing::{HandleResult, InitResult}` or
+  `use cosmwasm_std::{HandleResponse, InitResponse}`. If you don't use custom
+  native types, simply update calls as follows:
+  - `let res = init(...)` => `let res: InitResult = init(...)`
+  - `let res = init(...).unwrap()` =>
+    `let res: InitResponse = init(...).unwrap()`
+  - `let res = handle(...)` => `let res: HandleResult = handle(...)`
+  - `let res = handle(...).unwrap()` =>
+    `let res: HandleResponse = handle(...).unwrap()`
 
 ### Update schema code
 

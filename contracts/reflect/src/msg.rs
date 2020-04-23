@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CosmosMsg, HumanAddr};
+use cosmwasm_std::{Binary, CosmosMsg, HumanAddr};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
@@ -9,7 +9,7 @@ pub struct InitMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum HandleMsg {
-    ReflectMsg { msgs: Vec<CosmosMsg> },
+    ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
     ChangeOwner { owner: HumanAddr },
 }
 
@@ -23,4 +23,18 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OwnerResponse {
     pub owner: HumanAddr,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+/// CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract
+pub enum CustomMsg {
+    Debug(String),
+    Raw(Binary),
+}
+
+impl Into<CosmosMsg<CustomMsg>> for CustomMsg {
+    fn into(self) -> CosmosMsg<CustomMsg> {
+        CosmosMsg::Custom(self)
+    }
 }

@@ -4,8 +4,8 @@ use snafu::OptionExt;
 
 use cosmwasm_std::{
     contract_err, from_slice, log, to_binary, to_vec, unauthorized, Api, BankMsg, Binary,
-    CanonicalAddr, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound,
-    Querier, QueryResponse, StdResult, Storage,
+    CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier,
+    QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -108,11 +108,12 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
                 log("action", "release"),
                 log("destination", to_addr.as_str()),
             ],
-            messages: vec![CosmosMsg::Bank(BankMsg::Send {
+            messages: vec![BankMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
                 amount: balance.amount,
-            })],
+            }
+            .into()],
             data: None,
         };
         Ok(res)
@@ -343,11 +344,12 @@ mod tests {
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
             msg,
-            &CosmosMsg::Bank(BankMsg::Send {
+            &BankMsg::Send {
                 from_address: HumanAddr("cosmos2contract".to_string()),
                 to_address: beneficiary,
                 amount: coins(1015, "earth"),
-            }),
+            }
+            .into(),
         );
         assert_eq!(
             handle_res.log,

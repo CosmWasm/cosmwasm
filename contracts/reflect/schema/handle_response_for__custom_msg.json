@@ -1,49 +1,35 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "HandleMsg",
-  "anyOf": [
-    {
-      "type": "object",
-      "required": [
-        "reflectmsg"
-      ],
-      "properties": {
-        "reflectmsg": {
-          "type": "object",
-          "required": [
-            "msgs"
-          ],
-          "properties": {
-            "msgs": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
-              }
-            }
-          }
+  "title": "HandleResponse_for_CustomMsg",
+  "type": "object",
+  "required": [
+    "log",
+    "messages"
+  ],
+  "properties": {
+    "data": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        },
+        {
+          "type": "null"
         }
+      ]
+    },
+    "log": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/LogAttribute"
       }
     },
-    {
-      "type": "object",
-      "required": [
-        "changeowner"
-      ],
-      "properties": {
-        "changeowner": {
-          "type": "object",
-          "required": [
-            "owner"
-          ],
-          "properties": {
-            "owner": {
-              "$ref": "#/definitions/HumanAddr"
-            }
-          }
-        }
+    "messages": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
       }
     }
-  ],
+  },
   "definitions": {
     "BankMsg": {
       "anyOf": [
@@ -164,6 +150,21 @@
     },
     "HumanAddr": {
       "type": "string"
+    },
+    "LogAttribute": {
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
     },
     "Uint128": {
       "type": "string"

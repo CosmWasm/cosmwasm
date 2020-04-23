@@ -9,7 +9,7 @@
       ],
       "properties": {
         "ok": {
-          "$ref": "#/definitions/InitResponse"
+          "$ref": "#/definitions/InitResponse_for_NoMsg"
         }
       }
     },
@@ -312,7 +312,7 @@
         }
       }
     },
-    "CosmosMsg": {
+    "CosmosMsg_for_NoMsg": {
       "anyOf": [
         {
           "type": "object",
@@ -328,11 +328,11 @@
         {
           "type": "object",
           "required": [
-            "native"
+            "custom"
           ],
           "properties": {
-            "native": {
-              "$ref": "#/definitions/NativeMsg"
+            "custom": {
+              "$ref": "#/definitions/NoMsg"
             }
           }
         },
@@ -352,7 +352,7 @@
     "HumanAddr": {
       "type": "string"
     },
-    "InitResponse": {
+    "InitResponse_for_NoMsg": {
       "type": "object",
       "required": [
         "log",
@@ -378,7 +378,7 @@
         "messages": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CosmosMsg"
+            "$ref": "#/definitions/CosmosMsg_for_NoMsg"
           }
         }
       }
@@ -398,20 +398,9 @@
         }
       }
     },
-    "NativeMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "raw"
-          ],
-          "properties": {
-            "raw": {
-              "$ref": "#/definitions/Binary"
-            }
-          }
-        }
-      ]
+    "NoMsg": {
+      "description": "NoMsg can never be instantiated and is a no-op placeholder for those contracts that don't explicitly set a custom message.",
+      "enum": []
     },
     "Uint128": {
       "type": "string"

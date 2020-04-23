@@ -1,21 +1,25 @@
 //! This file has some helpers for integration tests.
 //! They should be imported via full path to ensure there is no confusion
 //! use cosmwasm_vm::testing::X
-use serde::Serialize;
-// JsonSchema is a flag for types meant to be publically exposed
 use schemars::JsonSchema;
+use serde::{de::DeserializeOwned, Serialize};
+use std::fmt;
 
 use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_std::{
-    to_vec, Api, ApiError, Coin, Env, HandleResponse, HumanAddr, InitResponse, Querier,
+    to_vec, Api, ApiError, Coin, Env, HandleResponse, HumanAddr, InitResponse, NoMsg, Querier,
     QueryResponse, Storage,
 };
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::compatability::check_wasm;
 use crate::instance::Instance;
+
+// some helper types for parsing handle/init responses
+pub type HandleResult<U = NoMsg> = Result<HandleResponse<U>, ApiError>;
+pub type InitResult<U = NoMsg> = Result<InitResponse<U>, ApiError>;
 
 /// Gas limit for testing
 static DEFAULT_GAS_LIMIT: u64 = 500_000;
@@ -56,11 +60,12 @@ pub fn init<
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,
+    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 >(
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
-) -> Result<InitResponse, ApiError> {
+) -> InitResult<U> {
     match to_vec(&msg) {
         Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
@@ -75,11 +80,12 @@ pub fn handle<
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,
+    U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 >(
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
-) -> Result<HandleResponse, ApiError> {
+) -> HandleResult<U> {
     match to_vec(&msg) {
         Err(e) => Err(e.into()),
         Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),

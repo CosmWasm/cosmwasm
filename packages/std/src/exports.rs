@@ -5,11 +5,12 @@
 //!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
+use std::fmt;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
 use schemars::JsonSchema;
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::errors::StdResult;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
@@ -43,31 +44,40 @@ extern "C" fn deallocate(pointer: u32) {
 }
 
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_init<T: DeserializeOwned + JsonSchema>(
+pub fn do_init<T, U>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<InitResponse>,
+    ) -> StdResult<InitResponse<U>>,
     env_ptr: u32,
     msg_ptr: u32,
-) -> u32 {
-    let res: InitResult = _do_init(init_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void).into();
+) -> u32
+where
+    T: DeserializeOwned + JsonSchema,
+    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    let res: InitResult<U> =
+        _do_init(init_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void).into();
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
 
 /// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_handle<T: DeserializeOwned + JsonSchema>(
+pub fn do_handle<T, U>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<HandleResponse>,
+    ) -> StdResult<HandleResponse<U>>,
     env_ptr: u32,
     msg_ptr: u32,
-) -> u32 {
-    let res: HandleResult =
+) -> u32
+where
+    T: DeserializeOwned + JsonSchema,
+    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    let res: HandleResult<U> =
         _do_handle(handle_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void).into();
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -86,15 +96,19 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
     release_buffer(v) as u32
 }
 
-fn _do_init<T: DeserializeOwned + JsonSchema>(
+fn _do_init<T, U>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<InitResponse>,
+    ) -> StdResult<InitResponse<U>>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> StdResult<InitResponse> {
+) -> StdResult<InitResponse<U>>
+where
+    T: DeserializeOwned + JsonSchema,
+    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
     let env: Env = from_slice(&env)?;
@@ -103,15 +117,19 @@ fn _do_init<T: DeserializeOwned + JsonSchema>(
     init_fn(&mut deps, env, msg)
 }
 
-fn _do_handle<T: DeserializeOwned + JsonSchema>(
+fn _do_handle<T, U>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<HandleResponse>,
+    ) -> StdResult<HandleResponse<U>>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> StdResult<HandleResponse> {
+) -> StdResult<HandleResponse<U>>
+where
+    T: DeserializeOwned + JsonSchema,
+    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
 

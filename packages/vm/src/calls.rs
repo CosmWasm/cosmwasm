@@ -1,4 +1,6 @@
+use serde::de::DeserializeOwned;
 use snafu::ResultExt;
+use std::fmt;
 
 use cosmwasm_std::{
     Api, ApiError, Env, HandleResponse, HandleResult, InitResponse, InitResult, Querier,
@@ -8,30 +10,43 @@ use cosmwasm_std::{
 use crate::errors::{RuntimeErr, VmResult, WasmerRuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
+use schemars::JsonSchema;
 
 static MAX_LENGTH_INIT: usize = 100_000;
 static MAX_LENGTH_HANDLE: usize = 100_000;
 static MAX_LENGTH_QUERY: usize = 100_000;
 
-pub fn call_init<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<Result<InitResponse, ApiError>> {
+) -> VmResult<Result<InitResponse<U>, ApiError>>
+where
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+{
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let res: InitResult = from_slice(&data)?;
+    let res: InitResult<U> = from_slice(&data)?;
     Ok(res.into())
 }
 
-pub fn call_handle<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_handle<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<Result<HandleResponse, ApiError>> {
+) -> VmResult<Result<HandleResponse<U>, ApiError>>
+where
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+{
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
-    let res: HandleResult = from_slice(&data)?;
+    let res: HandleResult<U> = from_slice(&data)?;
     Ok(res.into())
 }
 
