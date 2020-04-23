@@ -1,9 +1,10 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HumanAddr, InitResponse,
+    coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HandleResult, HumanAddr,
+    InitResponse,
 };
 
-use cosmwasm_vm::testing::{handle, init, mock_instance, query, HandleResult};
+use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 
 use reflect::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 
