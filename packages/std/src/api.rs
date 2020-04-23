@@ -11,7 +11,6 @@ pub type ApiResult<T> = Result<T, ApiError>;
 /// We neither "own" StdResult nor ApiResult, since those are just aliases to the external
 /// std::result::Result. For this reason, we cannot add trait implementations like Into or From.
 /// But we can achive all we need from outside interfaces of StdResult and ApiResult.
-#[cfg(target_arch = "wasm32")]
 pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
     result.map_err(|std_err| std_err.into())
 }
@@ -147,116 +146,9 @@ impl From<SystemError> for ApiSystemError {
         }
     }
 }
-/*
-#[cfg(test)]
-mod test_result {
-    use super::*;
-    use crate::errors::{contract_err, NoSuchContract, StdResult};
-    use crate::serde::{from_slice, to_vec};
-
-    #[test]
-    fn convert_ok_result() {
-        let input: StdResult<Vec<u8>> = Ok(b"foo".to_vec());
-        let convert: ApiResult<Vec<u8>> = input.into();
-        assert_eq!(convert, ApiResult::Ok(b"foo".to_vec()));
-    }
-
-    #[test]
-    fn check_ok_into_conversion() {
-        let input: StdResult<bool> = Ok(true);
-        let convert: ApiResult<i32> = input.into();
-        assert_eq!(convert, ApiResult::Ok(1i32));
-        let expanded: Result<i64, ApiError> = convert.into();
-        assert!(expanded.is_ok());
-        assert_eq!(expanded.unwrap(), 1i64);
-    }
-
-    #[test]
-    fn convert_err_result() {
-        let input: StdResult<()> = contract_err("sample error");
-        let convert: ApiResult<()> = input.into();
-        assert_eq!(
-            convert,
-            ApiResult::Err(ApiError::ContractErr {
-                msg: "sample error".to_string()
-            })
-        );
-        let reconvert: Result<(), ApiError> = convert.into();
-        match reconvert {
-            Ok(_) => panic!("must be error"),
-            Err(e) => assert_eq!(
-                e,
-                ApiError::ContractErr {
-                    msg: "sample error".to_string()
-                }
-            ),
-        }
-    }
-
-    #[test]
-    fn convert_sys_err_result() {
-        let input: Result<(), SystemError> = NoSuchContract {
-            addr: HumanAddr::from("bad_address"),
-        }
-        .fail();
-        let convert: ApiResult<(), ApiSystemError> = input.into();
-        assert_eq!(
-            convert,
-            ApiResult::Err(ApiSystemError::NoSuchContract {
-                addr: HumanAddr::from("bad_address"),
-            })
-        );
-    }
-
-    #[test]
-    // this tests Ok(Err(_)) case for SystemError, Error
-    fn convert_nested_ok_err_result() {
-        let input: Result<StdResult<()>, SystemError> = Ok(contract_err("nested error"));
-        let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
-        assert_eq!(
-            convert,
-            ApiResult::Ok(ApiResult::Err(ApiError::ContractErr {
-                msg: "nested error".to_string()
-            }))
-        );
-    }
-
-    #[test]
-    // this tests Ok(Ok(_)) case for SystemError, Error
-    fn convert_nested_ok_ok_result() {
-        let input: Result<StdResult<i32>, SystemError> = Ok(Ok(123));
-        let convert: ApiResult<ApiResult<i32>, ApiSystemError> = input.into();
-        assert_eq!(convert, ApiResult::Ok(ApiResult::Ok(123)),);
-    }
-
-    #[test]
-    // make sure we can shove this all over API boundaries
-    fn serialize_and_recover_nested_result() {
-        let input: Result<StdResult<()>, SystemError> = Ok(contract_err("over ffi"));
-        let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
-        let recovered: ApiResult<ApiResult<(), ApiError>, ApiSystemError> =
-            from_slice(&to_vec(&convert).unwrap()).unwrap();
-        assert_eq!(
-            recovered,
-            ApiResult::Ok(ApiResult::Err(ApiError::ContractErr {
-                msg: "over ffi".to_string()
-            }))
-        );
-        // into handles nested errors
-        let recovered_result: Result<Result<(), ApiError>, ApiSystemError> = recovered.into();
-        let wrapped_err = recovered_result.unwrap().unwrap_err();
-        assert_eq!(
-            wrapped_err,
-            ApiError::ContractErr {
-                msg: "over ffi".to_string()
-            }
-        );
-    }
-}
-*/
 
 #[cfg(test)]
-mod test_errors {
+mod test {
     use snafu::ResultExt;
 
     use super::*;
@@ -273,6 +165,23 @@ mod test_errors {
         assert_eq!(msg, format!("{}", converted));
         let round_trip: ApiError = from_slice(&to_vec(&converted).unwrap()).unwrap();
         assert_eq!(round_trip, converted);
+    }
+
+    #[test]
+    fn to_api_result_works_for_ok() {
+        let input: StdResult<Vec<u8>> = Ok(b"foo".to_vec());
+        assert_eq!(to_api_result(input), ApiResult::Ok(b"foo".to_vec()));
+    }
+
+    #[test]
+    fn to_api_result_works_for_err() {
+        let input: StdResult<()> = contract_err("sample error");
+        assert_eq!(
+            to_api_result(input),
+            ApiResult::Err(ApiError::ContractErr {
+                msg: "sample error".to_string()
+            })
+        );
     }
 
     #[test]
