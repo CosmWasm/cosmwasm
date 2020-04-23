@@ -114,32 +114,30 @@ impl From<StdError> for ApiError {
     }
 }
 
-/// ApiSystemError is used for errors inside the VM and is API frindly (i.e. serializable).
+/// SystemError is used for errors inside the VM and is API frindly (i.e. serializable).
 ///
-/// This is used on return values for Querier as a nested result: Result<ApiResult<T>, ApiSystemError>
-/// The first wrap (ApiSystemError) will trigger if the contract address doesn't exist,
+/// This is used on return values for Querier as a nested result: Result<ApiResult<T>, SystemError>
+/// The first wrap (SystemError) will trigger if the contract address doesn't exist,
 /// the QueryRequest is malformated, etc. The second wrap will be an error message from
 /// the contract itself.
 ///
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum ApiSystemError {
+pub enum SystemError {
     InvalidRequest { error: String },
     NoSuchContract { addr: HumanAddr },
     Unknown {},
 }
 
-impl std::error::Error for ApiSystemError {}
+impl std::error::Error for SystemError {}
 
-impl std::fmt::Display for ApiSystemError {
+impl std::fmt::Display for SystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiSystemError::InvalidRequest { error } => {
-                write!(f, "Cannot parse request: {}", error)
-            }
-            ApiSystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
-            ApiSystemError::Unknown {} => write!(f, "Unknown system error"),
+            SystemError::InvalidRequest { error } => write!(f, "Cannot parse request: {}", error),
+            SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
+            SystemError::Unknown {} => write!(f, "Unknown system error"),
         }
     }
 }

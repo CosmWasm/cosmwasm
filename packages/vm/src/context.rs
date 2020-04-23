@@ -7,7 +7,7 @@ use std::ffi::c_void;
 
 use wasmer_runtime_core::vm::Ctx;
 
-use cosmwasm_std::{ApiSystemError, Querier, Storage};
+use cosmwasm_std::{Querier, Storage, SystemError};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{StdResult, KV};
 
@@ -129,17 +129,17 @@ where
 pub(crate) fn with_querier_from_context<S, Q, F, T>(
     ctx: &mut Ctx,
     mut func: F,
-) -> Result<T, ApiSystemError>
+) -> Result<T, SystemError>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&Q) -> Result<T, ApiSystemError>,
+    F: FnMut(&Q) -> Result<T, SystemError>,
 {
     let b = get_context_data::<S, Q>(ctx);
     let querier = b.querier.take();
     let res = match &querier {
         Some(q) => func(q),
-        None => Err(ApiSystemError::Unknown {}),
+        None => Err(SystemError::Unknown {}),
     };
     b.querier = querier;
     res

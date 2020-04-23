@@ -8,8 +8,8 @@ use std::mem;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::StdResult;
 use cosmwasm_std::{
-    Api, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResponse, QueryRequest,
-    Storage,
+    Api, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResponse, QueryRequest, Storage,
+    SystemError,
 };
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
@@ -244,8 +244,8 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
                 with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| querier.query(&parsed));
             qr
         }
-        // otherwise, return the InvalidRequest error as ApiSystemError
-        Err(err) => Err(ApiSystemError::InvalidRequest {
+        // otherwise, return the InvalidRequest error as SystemError
+        Err(err) => Err(SystemError::InvalidRequest {
             error: err.to_string(),
         }),
     };
@@ -810,9 +810,7 @@ mod test {
         let query_response: QuerierResponse = cosmwasm_std::from_slice(&response).unwrap();
         match query_response {
             Ok(_) => panic!("This must not succeed"),
-            Err(ApiSystemError::InvalidRequest { error }) => {
-                assert!(error.starts_with("Parse error"))
-            }
+            Err(SystemError::InvalidRequest { error }) => assert!(error.starts_with("Parse error")),
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
@@ -839,7 +837,7 @@ mod test {
         let query_response: QuerierResponse = cosmwasm_std::from_slice(&response).unwrap();
         match query_response {
             Ok(_) => panic!("This must not succeed"),
-            Err(ApiSystemError::NoSuchContract { addr }) => {
+            Err(SystemError::NoSuchContract { addr }) => {
                 assert_eq!(addr, HumanAddr::from("non-existent"))
             }
             Err(error) => panic!("Unexpeted error: {:?}", error),

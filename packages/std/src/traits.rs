@@ -1,6 +1,6 @@
 use serde::de::DeserializeOwned;
 
-use crate::api::{ApiResult, ApiSystemError};
+use crate::api::{ApiResult, SystemError};
 use crate::encoding::Binary;
 use crate::errors::{dyn_contract_err, StdResult};
 #[cfg(feature = "iterator")]
@@ -68,7 +68,7 @@ pub trait Api: Copy + Clone + Send {
 }
 
 // QuerierResponse is a short-hand alias as this type is long to write
-pub type QuerierResponse = Result<ApiResult<Binary>, ApiSystemError>;
+pub type QuerierResponse = Result<ApiResult<Binary>, SystemError>;
 
 pub trait Querier: Clone + Send {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
