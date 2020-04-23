@@ -100,10 +100,10 @@ impl Api for MockApi {
     }
 }
 
-// just set signer, sent funds, and balance - rest given defaults
-// this is intended for use in testcode only
-pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, signer: U, sent: &[Coin]) -> Env {
-    let signer = signer.into();
+/// Just set sender and sent funds for the message. The rest uses defaults.
+/// The sender will be canonicalized internally to allow developers pasing in human readable senders.
+/// This is intended for use in test code only.
+pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -> Env {
     Env {
         block: BlockInfo {
             height: 12_345,
@@ -111,7 +111,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, signer: U, sent: &[Coin]) -
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            signer: api.canonical_address(&signer).unwrap(),
+            sender: api.canonical_address(&sender.into()).unwrap(),
             sent_funds: sent.to_vec(),
         },
         contract: ContractInfo {

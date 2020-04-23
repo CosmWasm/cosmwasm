@@ -67,7 +67,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         &to_vec(&State {
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: env.message.signer,
+            funder: env.message.sender,
         })?,
     )?;
     Ok(InitResponse::default())
@@ -98,7 +98,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         .context(NotFound { kind: "State" })?;
     let state: State = from_slice(&data)?;
 
-    if env.message.signer == state.verifier {
+    if env.message.sender == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let from_addr = deps.api.human_address(&env.contract.address)?;
         let balance = deps.querier.query_all_balances(&from_addr)?;

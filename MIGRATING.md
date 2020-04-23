@@ -51,6 +51,7 @@ Contract Code:
   - You can also replace `to_vec(...)` with `to_binary(...)`
 - No `.context(...)` is required after `from_slice` and `to_vec`, they return
   proper `cosmwasm_std::Error` variants on errors.
+- `env.message.signer` becomes `env.message.sender`.
 - If you used `env.contract.balance`, you must now use the querier. The
   following code block should work:
 
