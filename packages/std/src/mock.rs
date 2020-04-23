@@ -201,12 +201,11 @@ impl BankQuerier {
 
 #[cfg(feature = "staking")]
 mod staking {
-    use crate::api::{ApiError, ApiSystemError};
-    use crate::encoding::Binary;
     use crate::query::{
         Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
     };
-    use crate::to_binary;
+    use crate::serde::to_binary;
+    use crate::traits::QuerierResult;
 
     #[derive(Clone)]
     pub struct StakingQuerier {
@@ -222,10 +221,7 @@ mod staking {
             }
         }
 
-        pub fn query(
-            &self,
-            request: &StakingQuery,
-        ) -> Result<Result<Binary, ApiError>, ApiSystemError> {
+        pub fn query(&self, request: &StakingQuery) -> QuerierResult {
             match request {
                 StakingQuery::Validators {} => {
                     let val_res = ValidatorsResponse {
