@@ -126,23 +126,34 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 /// TODO: also allow querying contracts
 #[derive(Clone)]
 pub struct MockQuerier {
-    balances: HashMap<HumanAddr, Vec<Coin>>,
+    bank: BankQuerier,
 }
 
 impl MockQuerier {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
+        MockQuerier {
+            bank: BankQuerier::new(balances),
+        }
+    }
+}
+
+#[derive(Clone)]
+struct BankQuerier {
+    balances: HashMap<HumanAddr, Vec<Coin>>,
+}
+
+impl BankQuerier {
+    fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         let mut map = HashMap::new();
         for (addr, coins) in balances.iter() {
             map.insert(HumanAddr::from(addr), coins.to_vec());
         }
-        MockQuerier { balances: map }
+        BankQuerier { balances: map }
     }
-}
 
-impl Querier for MockQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResult {
+    fn query(&self, request: &BankQuery) -> QuerierResult {
         match request {
-            QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
+            BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
                 let amount = self
                     .balances
@@ -158,7 +169,7 @@ impl Querier for MockQuerier {
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
-            QueryRequest::Bank(BankQuery::AllBalances { address }) => {
+            BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
@@ -166,6 +177,14 @@ impl Querier for MockQuerier {
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
+        }
+    }
+}
+
+impl Querier for MockQuerier {
+    fn query(&self, request: &QueryRequest) -> QuerierResult {
+        match request {
+            QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(_) => Err(ApiSystemError::InvalidRequest {
                 error: "staking not yet implemented".to_string(),
