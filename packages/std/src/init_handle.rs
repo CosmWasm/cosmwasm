@@ -7,7 +7,7 @@ use std::fmt;
 use crate::api::ApiResult;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::types::HumanAddr;
+use crate::types::{HumanAddr, NoMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -35,11 +35,6 @@ pub enum BankMsg {
         amount: Vec<Coin>,
     },
 }
-
-/// NoMsg can never be instantiated and is a no-op placeholder for
-/// those contracts that don't explicitly set a custom message.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum NoMsg {}
 
 #[cfg(feature = "staking")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

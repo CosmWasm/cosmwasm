@@ -22,7 +22,7 @@ pub use crate::errors::{
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
-    NoMsg, WasmMsg,
+    WasmMsg,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
@@ -33,7 +33,7 @@ pub use crate::query::{
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
-pub use crate::types::{CanonicalAddr, Env, HumanAddr};
+pub use crate::types::{CanonicalAddr, Env, HumanAddr, NoMsg};
 
 #[cfg(feature = "staking")]
 pub use crate::init_handle::StakingMsg;

@@ -102,3 +102,8 @@ pub struct MessageInfo {
 pub struct ContractInfo {
     pub address: CanonicalAddr,
 }
+
+/// NoMsg can never be instantiated and is a no-op placeholder for
+/// those contracts that don't explicitly set a custom message.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum NoMsg {}
