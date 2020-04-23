@@ -8,7 +8,7 @@ use crate::errors::{contract_err, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
-use crate::traits::{Api, Extern, Querier, QuerierResponse};
+use crate::traits::{Api, Extern, Querier, QuerierResult};
 use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
@@ -140,7 +140,7 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResponse {
+    fn query(&self, request: &QueryRequest) -> QuerierResult {
         match request {
             QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
                 // proper error on not found, serialize result on found

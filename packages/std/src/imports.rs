@@ -9,7 +9,7 @@ use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
-use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
+use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 /// A kibi (kilo binary)
@@ -242,7 +242,7 @@ impl ExternalQuerier {
 }
 
 impl Querier for ExternalQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResponse {
+    fn query(&self, request: &QueryRequest) -> QuerierResult {
         let bin_request = to_vec(request).or(Err(SystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let request_ptr = &*req as *const Region as *const c_void;
@@ -253,9 +253,9 @@ impl Querier for ExternalQuerier {
             return Err(SystemError::Unknown {});
         }
 
-        let process = |region_ptr| -> StdResult<QuerierResponse> {
+        let process = |region_ptr| -> StdResult<QuerierResult> {
             let out = unsafe { consume_region(region_ptr)? };
-            let parsed: QuerierResponse = from_slice(&out)?;
+            let parsed: QuerierResult = from_slice(&out)?;
             Ok(parsed)
         };
 
