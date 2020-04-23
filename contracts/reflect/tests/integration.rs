@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HandleResult, HumanAddr,
-    InitResponse,
+    coin, coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HandleResult,
+    HumanAddr, InitResponse, StakingMsg,
 };
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
@@ -86,6 +86,11 @@ fn reflect() {
         // make sure we can pass through custom native messages
         CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
         CustomMsg::Debug("Hi, Dad!".to_string()).into(),
+        StakingMsg::Delegate {
+            validator: HumanAddr::from("validator"),
+            amount: coin(100, "stake"),
+        }
+        .into(),
     ];
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),

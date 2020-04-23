@@ -93,6 +93,13 @@ impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg
     }
 }
 
+#[cfg(feature = "staking")]
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<StakingMsg> for CosmosMsg<T> {
+    fn from(msg: StakingMsg) -> Self {
+        CosmosMsg::Staking(msg)
+    }
+}
+
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg<T> {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)

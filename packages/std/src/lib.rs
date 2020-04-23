@@ -22,13 +22,13 @@ pub use crate::errors::{
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
-    NoMsg, WasmMsg,
+    NoMsg, StakingMsg, WasmMsg,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, QueryResponse, QueryResult,
-    WasmQuery,
+    StakingQuery, WasmQuery,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
