@@ -273,7 +273,7 @@ impl Querier for MockQuerier {
 mod test {
     use super::*;
 
-    use crate::coins;
+    use crate::{coin, coins, from_binary};
 
     #[test]
     fn mock_env_arguments() {
@@ -325,5 +325,79 @@ mod test {
         let api = MockApi::new(10);
         let human = HumanAddr("longer-than-10".to_string());
         let _ = api.canonical_address(&human).unwrap();
+    }
+
+    #[test]
+    fn bank_querier_all_balances() {
+        let addr = HumanAddr::from("foobar");
+        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
+        let bank = BankQuerier::new(&[(&addr, &balance)]);
+
+        // all
+        let all = bank
+            .query(&BankQuery::AllBalances {
+                address: addr.clone(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: AllBalanceResponse = from_binary(&all).unwrap();
+        assert_eq!(&res.amount, &balance);
+    }
+
+    #[test]
+    fn bank_querier_one_balance() {
+        let addr = HumanAddr::from("foobar");
+        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
+        let bank = BankQuerier::new(&[(&addr, &balance)]);
+
+        // one match
+        let fly = bank
+            .query(&BankQuery::Balance {
+                address: addr.clone(),
+                denom: "FLY".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: BalanceResponse = from_binary(&fly).unwrap();
+        assert_eq!(res.amount, coin(777, "FLY"));
+
+        // missing denom
+        let miss = bank
+            .query(&BankQuery::Balance {
+                address: addr.clone(),
+                denom: "MISS".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: BalanceResponse = from_binary(&miss).unwrap();
+        assert_eq!(res.amount, coin(0, "MISS"));
+    }
+
+    #[test]
+    fn bank_querier_missing_account() {
+        let addr = HumanAddr::from("foobar");
+        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
+        let bank = BankQuerier::new(&[(&addr, &balance)]);
+
+        // all balances on empty account is empty vec
+        let all = bank
+            .query(&BankQuery::AllBalances {
+                address: HumanAddr::from("elsewhere"),
+            })
+            .unwrap()
+            .unwrap();
+        let res: AllBalanceResponse = from_binary(&all).unwrap();
+        assert_eq!(res.amount, vec![]);
+
+        // any denom on balances on empty account is empty coin
+        let miss = bank
+            .query(&BankQuery::Balance {
+                address: HumanAddr::from("elsewhere"),
+                denom: "ELF".to_string(),
+            })
+            .unwrap()
+            .unwrap();
+        let res: BalanceResponse = from_binary(&miss).unwrap();
+        assert_eq!(res.amount, coin(0, "ELF"));
     }
 }
