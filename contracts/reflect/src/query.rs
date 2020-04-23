@@ -24,7 +24,7 @@ impl Into<QueryRequest<CustomQuery>> for CustomQuery {
 #[serde(rename_all = "snake_case")]
 // All return values of CustomQuery are CustomResponse
 pub struct CustomResponse {
-    msg: String,
+    pub msg: String,
 }
 
 impl CustomQuery {

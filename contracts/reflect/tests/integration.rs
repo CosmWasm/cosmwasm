@@ -1,12 +1,14 @@
-use cosmwasm_std::testing::mock_env;
+use cosmwasm_std::testing::{mock_dependencies, mock_env};
 use cosmwasm_std::{
-    coin, coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HandleResult,
+    coin, coins, from_binary, Api, ApiError, BankMsg, Binary, Extern, HandleResponse, HandleResult,
     HumanAddr, InitResponse, StakingMsg,
 };
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
+use cosmwasm_vm::Instance;
 
 use reflect::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use reflect::query::{CustomQuerier, CustomResponse};
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -169,4 +171,28 @@ fn transfer_requires_owner() {
         Err(ApiError::Unauthorized {}) => {}
         _ => panic!("Must return unauthorized error"),
     }
+}
+
+#[test]
+fn dispatch_custom_query() {
+    // stub gives us defaults. Consume it and override...
+    let stub = mock_dependencies(20, &[]);
+    let custom = Extern {
+        api: stub.api,
+        storage: stub.storage,
+        querier: CustomQuerier {},
+    };
+    // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
+    let mut deps = Instance::from_code(WASM, custom, 500_000).unwrap();
+
+    // we don't even initialize, just trigger a query
+    let res = query(
+        &mut deps,
+        QueryMsg::ReflectCustom {
+            text: "demo one".to_string(),
+        },
+    )
+    .unwrap();
+    let value: CustomResponse = from_binary(&res).unwrap();
+    assert_eq!("DEMO ONE", value.msg.as_str());
 }

@@ -1,9 +1,10 @@
 use cosmwasm_std::{
     contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
+    HandleResponse, HumanAddr, InitResponse, Querier, QueryRequest, StdResult, Storage,
 };
 
 use crate::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use crate::query::{CustomQuery, CustomResponse};
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -76,6 +77,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Owner {} => query_owner(deps),
+        QueryMsg::ReflectCustom { text } => query_reflect(deps, text),
     }
 }
 
@@ -88,9 +90,19 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
     to_binary(&resp)
 }
 
+fn query_reflect<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    text: String,
+) -> StdResult<Binary> {
+    let req: QueryRequest<_> = CustomQuery::Capital { text }.into();
+    let resp: CustomResponse = deps.querier.parse_query(&req)?;
+    to_binary(&resp)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::query::CustomQuerier;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
     use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
 
@@ -258,5 +270,27 @@ mod tests {
             Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Must return unauthorized error"),
         }
+    }
+
+    #[test]
+    fn dispatch_custom_query() {
+        // stub gives us defaults. Consume it and override...
+        let stub = mock_dependencies(20, &[]);
+        let deps = Extern {
+            api: stub.api,
+            storage: stub.storage,
+            querier: CustomQuerier {},
+        };
+
+        // we don't even initialize, just trigger a query
+        let res = query(
+            &deps,
+            QueryMsg::ReflectCustom {
+                text: "demo one".to_string(),
+            },
+        )
+        .unwrap();
+        let value: CustomResponse = from_binary(&res).unwrap();
+        assert_eq!("DEMO ONE", value.msg.as_str());
     }
 }
