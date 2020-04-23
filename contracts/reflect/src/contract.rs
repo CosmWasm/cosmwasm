@@ -12,7 +12,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     _msg: InitMsg,
 ) -> StdResult<InitResponse<CustomMsg>> {
     let state = State {
-        owner: env.message.signer,
+        owner: env.message.sender,
     };
 
     config(&mut deps.storage).save(&state)?;
@@ -37,7 +37,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     msgs: Vec<CosmosMsg<CustomMsg>>,
 ) -> StdResult<HandleResponse<CustomMsg>> {
     let state = config(&mut deps.storage).load()?;
-    if env.message.signer != state.owner {
+    if env.message.sender != state.owner {
         return unauthorized();
     }
     if msgs.is_empty() {
@@ -58,7 +58,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse<CustomMsg>> {
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
-        if env.message.signer != state.owner {
+        if env.message.sender != state.owner {
             return unauthorized();
         }
         state.owner = api.canonical_address(&owner)?;

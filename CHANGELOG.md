@@ -39,6 +39,7 @@
   needed.
 - `Env.message.sent_funds` is a `Vec<Coin>` not `Option<Vec<Coin>>`. We will
   normalize the go response in `go-cosmwasm` before sending it to the contract.
+- `Env.message.signer` was renamed to `Env.message.sender`.
 - `Env.block.{height,time}` are now `u64` rather than `i64`.
 
 **cosmwasm-schema**
