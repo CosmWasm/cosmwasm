@@ -1,14 +1,14 @@
 use snafu::ResultExt;
 use std::collections::HashMap;
 
-use crate::api::{ApiError, ApiSystemError};
+use crate::api::SystemError;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::to_vec;
 use crate::storage::MemoryStorage;
-use crate::traits::{Api, Extern, Querier};
+use crate::traits::{Api, Extern, Querier, QuerierResult};
 use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
@@ -140,7 +140,7 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query(&self, request: &QueryRequest) -> Result<Result<Binary, ApiError>, ApiSystemError> {
+    fn query(&self, request: &QueryRequest) -> QuerierResult {
         match request {
             QueryRequest::Bank(BankQuery::Balance { address, denom }) => {
                 // proper error on not found, serialize result on found
@@ -172,7 +172,7 @@ impl Querier for MockQuerier {
                     WasmQuery::Raw { contract_addr, .. } => contract_addr,
                 }
                 .clone();
-                Err(ApiSystemError::NoSuchContract { addr })
+                Err(SystemError::NoSuchContract { addr })
             }
         }
     }

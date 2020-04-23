@@ -13,12 +13,12 @@ mod storage;
 mod traits;
 mod types;
 
-pub use crate::api::{ApiError, ApiResult, ApiSystemError};
+pub use crate::api::{to_api_result, ApiError, ApiResult, SystemError, SystemResult};
 pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
-    contract_err, dyn_contract_err, invalid, unauthorized, underflow, InvalidRequest, NotFound,
-    NullPointer, ParseErr, SerializeErr, StdError, StdResult,
+    contract_err, dyn_contract_err, invalid, unauthorized, underflow, NotFound, NullPointer,
+    ParseErr, SerializeErr, StdError, StdResult,
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
@@ -32,9 +32,7 @@ pub use crate::query::{
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
-pub use crate::traits::{
-    Api, ApiQuerierResponse, Extern, Querier, QuerierResponse, ReadonlyStorage, Storage,
-};
+pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
 pub use crate::types::{CanonicalAddr, Env, HumanAddr};
 
 // Exposed in wasm build only

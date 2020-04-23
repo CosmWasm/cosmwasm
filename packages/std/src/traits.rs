@@ -1,6 +1,6 @@
 use serde::de::DeserializeOwned;
 
-use crate::api::{ApiError, ApiResult, ApiSystemError};
+use crate::api::{ApiResult, SystemResult};
 use crate::encoding::Binary;
 use crate::errors::{dyn_contract_err, StdResult};
 #[cfg(feature = "iterator")]
@@ -67,11 +67,8 @@ pub trait Api: Copy + Clone + Send {
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
 }
 
-// QuerierResponse is a short-hand alias as this type is long to write
-pub type QuerierResponse = Result<Result<Binary, ApiError>, ApiSystemError>;
-
-// ApiQuerierResponse is QuerierResponse converted to be serialized (short-hand for other modules)
-pub type ApiQuerierResponse = ApiResult<ApiResult<Binary, ApiError>, ApiSystemError>;
+/// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
+pub type QuerierResult = SystemResult<ApiResult<Binary>>;
 
 pub trait Querier: Clone + Send {
     // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
@@ -79,7 +76,7 @@ pub trait Querier: Clone + Send {
     //
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
-    fn query(&self, request: &QueryRequest) -> QuerierResponse;
+    fn query(&self, request: &QueryRequest) -> QuerierResult;
 
     /// Makes the query and parses the response.
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
@@ -89,8 +86,8 @@ pub trait Querier: Clone + Send {
     /// is no contract there.
     fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> StdResult<T> {
         match self.query(&request) {
-            Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
-            Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
+            Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
+            Ok(Err(err)) => dyn_contract_err(format!("Querier contract error: {}", err)),
             // in theory we would process the response, but here it is the same type, so just pass through
             Ok(Ok(res)) => from_binary(&res),
         }

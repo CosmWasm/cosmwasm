@@ -9,17 +9,13 @@ use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_std::{
-    to_vec, Api, ApiError, Coin, Env, HandleResponse, HumanAddr, InitResponse, NoMsg, Querier,
-    QueryResponse, Storage,
+    to_vec, Api, ApiError, Coin, Env, HandleResult, HumanAddr, InitResult, Querier, QueryResponse,
+    Storage,
 };
 
 use crate::calls::{call_handle, call_init, call_query};
 use crate::compatability::check_wasm;
 use crate::instance::Instance;
-
-// some helper types for parsing handle/init responses
-pub type HandleResult<U = NoMsg> = Result<HandleResponse<U>, ApiError>;
-pub type InitResult<U = NoMsg> = Result<InitResponse<U>, ApiError>;
 
 /// Gas limit for testing
 static DEFAULT_GAS_LIMIT: u64 = 500_000;

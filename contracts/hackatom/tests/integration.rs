@@ -30,13 +30,12 @@
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, HandleResponse, HumanAddr,
-    InitResponse, NoMsg, ReadonlyStorage,
+    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, HandleResponse,
+    HandleResult, HumanAddr, InitResponse, InitResult, ReadonlyStorage,
 };
 use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
-    handle, init, mock_instance, mock_instance_with_balances, query, test_io, HandleResult,
-    InitResult,
+    handle, init, mock_instance, mock_instance_with_balances, query, test_io,
 };
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
@@ -227,7 +226,7 @@ fn passes_io_tests() {
 mod singlepass_tests {
     use super::*;
 
-    use cosmwasm_std::to_vec;
+    use cosmwasm_std::{to_vec, NoMsg};
     use cosmwasm_vm::call_handle;
 
     fn make_init_msg() -> (InitMsg, HumanAddr) {

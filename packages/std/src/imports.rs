@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 use std::vec::Vec;
 
-use crate::api::{ApiResult, ApiSystemError};
+use crate::api::SystemError;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, dyn_contract_err, ContractErr, StdResult};
 #[cfg(feature = "iterator")]
@@ -9,7 +9,7 @@ use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
-use crate::traits::{Api, Querier, QuerierResponse, ReadonlyStorage, Storage};
+use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
 /// A kibi (kilo binary)
@@ -242,21 +242,21 @@ impl ExternalQuerier {
 }
 
 impl Querier for ExternalQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResponse {
-        let bin_request = to_vec(request).or(Err(ApiSystemError::Unknown {}))?;
+    fn query(&self, request: &QueryRequest) -> QuerierResult {
+        let bin_request = to_vec(request).or(Err(SystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let request_ptr = &*req as *const Region as *const c_void;
         let response_ptr = alloc(QUERY_RESULT_BUFFER_LENGTH);
 
         let result_code = unsafe { query_chain(request_ptr, response_ptr) };
         if result_code < 0 {
-            return Err(ApiSystemError::Unknown {});
+            return Err(SystemError::Unknown {});
         }
 
-        let process = |region_ptr| -> StdResult<QuerierResponse> {
+        let process = |region_ptr| -> StdResult<QuerierResult> {
             let out = unsafe { consume_region(region_ptr)? };
-            let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> = from_slice(&out)?;
-            Ok(parsed.into())
+            let parsed: QuerierResult = from_slice(&out)?;
+            Ok(parsed)
         };
 
         match process(response_ptr) {

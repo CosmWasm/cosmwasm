@@ -8,8 +8,8 @@ use std::mem;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::StdResult;
 use cosmwasm_std::{
-    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier,
-    QuerierResponse, QueryRequest, Storage,
+    Api, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResult, QueryRequest, Storage,
+    SystemError,
 };
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
@@ -240,19 +240,17 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
     let res = match from_slice::<QueryRequest>(&request) {
         // if we parse, try to execute the query
         Ok(parsed) => {
-            let qr: QuerierResponse =
+            let qr: QuerierResult =
                 with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| querier.query(&parsed));
             qr
         }
-        // otherwise, return the InvalidRequest error as ApiSystemError
-        Err(err) => Err(ApiSystemError::InvalidRequest {
+        // otherwise, return the InvalidRequest error as SystemError
+        Err(err) => Err(SystemError::InvalidRequest {
             error: err.to_string(),
         }),
     };
 
-    let api_res: ApiQuerierResponse = res.into();
-
-    match to_vec(&api_res) {
+    match to_vec(&res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
             Ok(()) => errors::NONE,
             Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
@@ -356,8 +354,7 @@ mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, ApiResult, BankQuery, HumanAddr, ReadonlyStorage,
-        WasmQuery,
+        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, ReadonlyStorage, WasmQuery,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -789,12 +786,10 @@ mod test {
         assert_eq!(result, errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
-            cosmwasm_std::from_slice(&response).unwrap();
-        let query_response: QuerierResponse = parsed.into();
-        let query_response_inner = query_response.unwrap();
-        let query_response_inner_inner = query_response_inner.unwrap();
-        let parsed_again: AllBalanceResponse = from_binary(&query_response_inner_inner).unwrap();
+        let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
+        let query_result_inner = query_result.unwrap();
+        let query_result_inner_inner = query_result_inner.unwrap();
+        let parsed_again: AllBalanceResponse = from_binary(&query_result_inner_inner).unwrap();
         assert_eq!(parsed_again.amount, coins(INIT_AMOUNT, INIT_DENOM));
     }
 
@@ -812,14 +807,10 @@ mod test {
         assert_eq!(result, errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
-            cosmwasm_std::from_slice(&response).unwrap();
-        let query_response: QuerierResponse = parsed.into();
-        match query_response {
+        let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
+        match query_result {
             Ok(_) => panic!("This must not succeed"),
-            Err(ApiSystemError::InvalidRequest { error }) => {
-                assert!(error.starts_with("Parse error"))
-            }
+            Err(SystemError::InvalidRequest { error }) => assert!(error.starts_with("Parse error")),
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
@@ -843,12 +834,10 @@ mod test {
         assert_eq!(result, errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
-            cosmwasm_std::from_slice(&response).unwrap();
-        let query_response: QuerierResponse = parsed.into();
-        match query_response {
+        let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
+        match query_result {
             Ok(_) => panic!("This must not succeed"),
-            Err(ApiSystemError::NoSuchContract { addr }) => {
+            Err(SystemError::NoSuchContract { addr }) => {
                 assert_eq!(addr, HumanAddr::from("non-existent"))
             }
             Err(error) => panic!("Unexpeted error: {:?}", error),

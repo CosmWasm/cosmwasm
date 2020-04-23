@@ -3,32 +3,16 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::{StdError, SystemError};
+use crate::errors::StdError;
 use crate::HumanAddr;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ApiResult<T, E: std::error::Error = ApiError> {
-    Ok(T),
-    Err(E),
-}
+pub type ApiResult<T> = Result<T, ApiError>;
 
-impl<T: Into<U>, U, E: std::error::Error> Into<Result<U, E>> for ApiResult<T, E> {
-    fn into(self) -> Result<U, E> {
-        match self {
-            ApiResult::Ok(t) => Ok(t.into()),
-            ApiResult::Err(e) => Err(e),
-        }
-    }
-}
-
-impl<T, U: Into<T>, E: std::error::Error, F: Into<E>> From<Result<U, F>> for ApiResult<T, E> {
-    fn from(res: Result<U, F>) -> Self {
-        match res {
-            Ok(t) => ApiResult::Ok(t.into()),
-            Err(e) => ApiResult::Err(e.into()),
-        }
-    }
+/// We neither "own" StdResult nor ApiResult, since those are just aliases to the external
+/// std::result::Result. For this reason, we cannot add trait implementations like Into or From.
+/// But we can achive all we need from outside interfaces of StdResult and ApiResult.
+pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
+    result.map_err(|std_err| std_err.into())
 }
 
 /// ApiError is a "converted" Error that can be serialized and deserialized.
@@ -130,153 +114,44 @@ impl From<StdError> for ApiError {
     }
 }
 
-/// ApiSystemError is an "api friendly" version of SystemError, just as ApiError
-/// is an "api friendly" version of Error
+/// SystemError is used for errors inside the VM and is API frindly (i.e. serializable).
+///
+/// This is used on return values for Querier as a nested result: Result<ApiResult<T>, SystemError>
+/// The first wrap (SystemError) will trigger if the contract address doesn't exist,
+/// the QueryRequest is malformated, etc. The second wrap will be an error message from
+/// the contract itself.
+///
+/// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
+/// the contract understands the error format without creating a dependency on cosmwasm-vm.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub enum ApiSystemError {
+pub enum SystemError {
     InvalidRequest { error: String },
     NoSuchContract { addr: HumanAddr },
     Unknown {},
 }
 
-impl std::error::Error for ApiSystemError {}
+impl std::error::Error for SystemError {}
 
-impl std::fmt::Display for ApiSystemError {
+impl std::fmt::Display for SystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiSystemError::InvalidRequest { error } => {
-                write!(f, "Cannot parse request: {}", error)
-            }
-            ApiSystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
-            ApiSystemError::Unknown {} => write!(f, "Unknown system error"),
+            SystemError::InvalidRequest { error } => write!(f, "Cannot parse request: {}", error),
+            SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
+            SystemError::Unknown {} => write!(f, "Unknown system error"),
         }
     }
 }
 
-impl From<SystemError> for ApiSystemError {
-    fn from(value: SystemError) -> Self {
-        match value {
-            SystemError::InvalidRequest { error, .. } => ApiSystemError::InvalidRequest { error },
-            SystemError::NoSuchContract { addr, .. } => ApiSystemError::NoSuchContract { addr },
-            SystemError::Unknown { .. } => ApiSystemError::Unknown {},
-        }
-    }
-}
+pub type SystemResult<T> = Result<T, SystemError>;
 
 #[cfg(test)]
-mod test_result {
-    use super::*;
-    use crate::errors::{contract_err, NoSuchContract, StdResult};
-    use crate::serde::{from_slice, to_vec};
-
-    #[test]
-    fn convert_ok_result() {
-        let input: StdResult<Vec<u8>> = Ok(b"foo".to_vec());
-        let convert: ApiResult<Vec<u8>> = input.into();
-        assert_eq!(convert, ApiResult::Ok(b"foo".to_vec()));
-    }
-
-    #[test]
-    fn check_ok_into_conversion() {
-        let input: StdResult<bool> = Ok(true);
-        let convert: ApiResult<i32> = input.into();
-        assert_eq!(convert, ApiResult::Ok(1i32));
-        let expanded: Result<i64, ApiError> = convert.into();
-        assert!(expanded.is_ok());
-        assert_eq!(expanded.unwrap(), 1i64);
-    }
-
-    #[test]
-    fn convert_err_result() {
-        let input: StdResult<()> = contract_err("sample error");
-        let convert: ApiResult<()> = input.into();
-        assert_eq!(
-            convert,
-            ApiResult::Err(ApiError::ContractErr {
-                msg: "sample error".to_string()
-            })
-        );
-        let reconvert: Result<(), ApiError> = convert.into();
-        match reconvert {
-            Ok(_) => panic!("must be error"),
-            Err(e) => assert_eq!(
-                e,
-                ApiError::ContractErr {
-                    msg: "sample error".to_string()
-                }
-            ),
-        }
-    }
-
-    #[test]
-    fn convert_sys_err_result() {
-        let input: Result<(), SystemError> = NoSuchContract {
-            addr: HumanAddr::from("bad_address"),
-        }
-        .fail();
-        let convert: ApiResult<(), ApiSystemError> = input.into();
-        assert_eq!(
-            convert,
-            ApiResult::Err(ApiSystemError::NoSuchContract {
-                addr: HumanAddr::from("bad_address"),
-            })
-        );
-    }
-
-    #[test]
-    // this tests Ok(Err(_)) case for SystemError, Error
-    fn convert_nested_ok_err_result() {
-        let input: Result<StdResult<()>, SystemError> = Ok(contract_err("nested error"));
-        let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
-        assert_eq!(
-            convert,
-            ApiResult::Ok(ApiResult::Err(ApiError::ContractErr {
-                msg: "nested error".to_string()
-            }))
-        );
-    }
-
-    #[test]
-    // this tests Ok(Ok(_)) case for SystemError, Error
-    fn convert_nested_ok_ok_result() {
-        let input: Result<StdResult<i32>, SystemError> = Ok(Ok(123));
-        let convert: ApiResult<ApiResult<i32>, ApiSystemError> = input.into();
-        assert_eq!(convert, ApiResult::Ok(ApiResult::Ok(123)),);
-    }
-
-    #[test]
-    // make sure we can shove this all over API boundaries
-    fn serialize_and_recover_nested_result() {
-        let input: Result<StdResult<()>, SystemError> = Ok(contract_err("over ffi"));
-        let convert: ApiResult<ApiResult<()>, ApiSystemError> = input.into();
-        let recovered: ApiResult<ApiResult<(), ApiError>, ApiSystemError> =
-            from_slice(&to_vec(&convert).unwrap()).unwrap();
-        assert_eq!(
-            recovered,
-            ApiResult::Ok(ApiResult::Err(ApiError::ContractErr {
-                msg: "over ffi".to_string()
-            }))
-        );
-        // into handles nested errors
-        let recovered_result: Result<Result<(), ApiError>, ApiSystemError> = recovered.into();
-        let wrapped_err = recovered_result.unwrap().unwrap_err();
-        assert_eq!(
-            wrapped_err,
-            ApiError::ContractErr {
-                msg: "over ffi".to_string()
-            }
-        );
-    }
-}
-
-#[cfg(test)]
-mod test_errors {
+mod test {
     use snafu::ResultExt;
 
     use super::*;
     use crate::errors::{
-        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, InvalidRequest,
-        NoSuchContract, NotFound, NullPointer, SerializeErr, StdResult,
+        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, NotFound, NullPointer,
+        SerializeErr, StdResult,
     };
     use crate::serde::{from_slice, to_vec};
 
@@ -287,6 +162,23 @@ mod test_errors {
         assert_eq!(msg, format!("{}", converted));
         let round_trip: ApiError = from_slice(&to_vec(&converted).unwrap()).unwrap();
         assert_eq!(round_trip, converted);
+    }
+
+    #[test]
+    fn to_api_result_works_for_ok() {
+        let input: StdResult<Vec<u8>> = Ok(b"foo".to_vec());
+        assert_eq!(to_api_result(input), ApiResult::Ok(b"foo".to_vec()));
+    }
+
+    #[test]
+    fn to_api_result_works_for_err() {
+        let input: StdResult<()> = contract_err("sample error");
+        assert_eq!(
+            to_api_result(input),
+            ApiResult::Err(ApiError::ContractErr {
+                msg: "sample error".to_string()
+            })
+        );
     }
 
     #[test]
@@ -335,32 +227,5 @@ mod test_errors {
     fn serialize_err_conversion() {
         let source = Err(serde_json_wasm::ser::Error::BufferFull);
         assert_conversion(source.context(SerializeErr { kind: "faker" }));
-    }
-
-    fn assert_system_conversion(r: Result<(), SystemError>) {
-        let error = r.unwrap_err();
-        let msg = format!("{}", error);
-        let converted: ApiSystemError = error.into();
-        assert_eq!(msg, format!("{}", converted));
-        let round_trip: ApiSystemError = from_slice(&to_vec(&converted).unwrap()).unwrap();
-        assert_eq!(round_trip, converted);
-    }
-
-    #[test]
-    fn invalid_request_conversion() {
-        let err = InvalidRequest {
-            error: "Unknown field `swap`".to_string(),
-        }
-        .fail();
-        assert_system_conversion(err);
-    }
-
-    #[test]
-    fn no_such_contract_conversion() {
-        let err = NoSuchContract {
-            addr: HumanAddr::from("bad_address"),
-        }
-        .fail();
-        assert_system_conversion(err);
     }
 }
