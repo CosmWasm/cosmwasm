@@ -29,8 +29,8 @@ where
 {
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let res: InitResult<U> = from_slice(&data)?;
-    Ok(res.into())
+    let result: InitResult<U> = from_slice(&data)?;
+    Ok(result)
 }
 
 pub fn call_handle<S, A, Q, U>(
@@ -46,8 +46,8 @@ where
 {
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
-    let res: HandleResult<U> = from_slice(&data)?;
-    Ok(res.into())
+    let result: HandleResult<U> = from_slice(&data)?;
+    Ok(result)
 }
 
 pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
@@ -55,8 +55,7 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     msg: &[u8],
 ) -> VmResult<Result<QueryResponse, ApiError>> {
     let data = call_query_raw(instance, msg)?;
-    let api_result: QueryResult = from_slice(&data)?;
-    let result: Result<QueryResponse, ApiError> = api_result.into();
+    let result: QueryResult = from_slice(&data)?;
 
     // Ensure query response is valid JSON
     if let Ok(binary_response) = &result {

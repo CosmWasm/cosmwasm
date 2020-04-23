@@ -1,7 +1,7 @@
 use std::ffi::c_void;
 use std::vec::Vec;
 
-use crate::api::{ApiResult, ApiSystemError};
+use crate::api::ApiSystemError;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, dyn_contract_err, ContractErr, StdResult};
 #[cfg(feature = "iterator")]
@@ -255,8 +255,8 @@ impl Querier for ExternalQuerier {
 
         let process = |region_ptr| -> StdResult<QuerierResponse> {
             let out = unsafe { consume_region(region_ptr)? };
-            let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> = from_slice(&out)?;
-            Ok(parsed.into())
+            let parsed: QuerierResponse = from_slice(&out)?;
+            Ok(parsed)
         };
 
         match process(response_ptr) {

@@ -6,29 +6,14 @@ use serde::{Deserialize, Serialize};
 use crate::errors::{StdError, SystemError};
 use crate::HumanAddr;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ApiResult<T, E: std::error::Error = ApiError> {
-    Ok(T),
-    Err(E),
-}
+pub type ApiResult<T> = Result<T, ApiError>;
 
-impl<T: Into<U>, U, E: std::error::Error> Into<Result<U, E>> for ApiResult<T, E> {
-    fn into(self) -> Result<U, E> {
-        match self {
-            ApiResult::Ok(t) => Ok(t.into()),
-            ApiResult::Err(e) => Err(e),
-        }
-    }
-}
-
-impl<T, U: Into<T>, E: std::error::Error, F: Into<E>> From<Result<U, F>> for ApiResult<T, E> {
-    fn from(res: Result<U, F>) -> Self {
-        match res {
-            Ok(t) => ApiResult::Ok(t.into()),
-            Err(e) => ApiResult::Err(e.into()),
-        }
-    }
+/// We neither "own" StdResult nor ApiResult, since those are just aliases to the external
+/// std::result::Result. For this reason, we cannot add trait implementations like Into or From.
+/// But we can achive all we need from outside interfaces of StdResult and ApiResult.
+#[cfg(target_arch = "wasm32")]
+pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
+    result.map_err(|std_err| std_err.into())
 }
 
 /// ApiError is a "converted" Error that can be serialized and deserialized.
@@ -162,7 +147,7 @@ impl From<SystemError> for ApiSystemError {
         }
     }
 }
-
+/*
 #[cfg(test)]
 mod test_result {
     use super::*;
@@ -268,6 +253,7 @@ mod test_result {
         );
     }
 }
+*/
 
 #[cfg(test)]
 mod test_errors {

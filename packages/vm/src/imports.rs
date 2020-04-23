@@ -8,8 +8,8 @@ use std::mem;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::StdResult;
 use cosmwasm_std::{
-    Api, ApiQuerierResponse, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier,
-    QuerierResponse, QueryRequest, Storage,
+    Api, ApiSystemError, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResponse, QueryRequest,
+    Storage,
 };
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
@@ -250,9 +250,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
         }),
     };
 
-    let api_res: ApiQuerierResponse = res.into();
-
-    match to_vec(&api_res) {
+    match to_vec(&res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
             Ok(()) => errors::NONE,
             Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
@@ -356,8 +354,7 @@ mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, ApiResult, BankQuery, HumanAddr, ReadonlyStorage,
-        WasmQuery,
+        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, ReadonlyStorage, WasmQuery,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -789,9 +786,7 @@ mod test {
         assert_eq!(result, errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
-            cosmwasm_std::from_slice(&response).unwrap();
-        let query_response: QuerierResponse = parsed.into();
+        let query_response: QuerierResponse = cosmwasm_std::from_slice(&response).unwrap();
         let query_response_inner = query_response.unwrap();
         let query_response_inner_inner = query_response_inner.unwrap();
         let parsed_again: AllBalanceResponse = from_binary(&query_response_inner_inner).unwrap();
@@ -812,9 +807,7 @@ mod test {
         assert_eq!(result, errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
-            cosmwasm_std::from_slice(&response).unwrap();
-        let query_response: QuerierResponse = parsed.into();
+        let query_response: QuerierResponse = cosmwasm_std::from_slice(&response).unwrap();
         match query_response {
             Ok(_) => panic!("This must not succeed"),
             Err(ApiSystemError::InvalidRequest { error }) => {
@@ -843,9 +836,7 @@ mod test {
         assert_eq!(result, errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let parsed: ApiResult<ApiResult<Binary>, ApiSystemError> =
-            cosmwasm_std::from_slice(&response).unwrap();
-        let query_response: QuerierResponse = parsed.into();
+        let query_response: QuerierResponse = cosmwasm_std::from_slice(&response).unwrap();
         match query_response {
             Ok(_) => panic!("This must not succeed"),
             Err(ApiSystemError::NoSuchContract { addr }) => {
