@@ -6,10 +6,10 @@ use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
-use crate::serde::to_binary;
+use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
-use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
+use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, NoMsg};
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -158,8 +158,17 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
-        match request {
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        // MockQuerier doesn't support Custom, so we ignore it completely here
+        let request: QueryRequest<NoMsg> = match from_slice(bin_request) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(SystemError::InvalidRequest {
+                    error: format!("Parsing QueryRequest: {}", e),
+                })
+            }
+        };
+        match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
             QueryRequest::Custom(_) => Err(SystemError::InvalidRequest {
                 error: "Mock doesn't support custom queries".to_string(),

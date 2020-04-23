@@ -7,6 +7,7 @@ use crate::errors::{dyn_contract_err, StdResult};
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 use crate::serde::from_binary;
+use crate::to_vec;
 use crate::types::{CanonicalAddr, HumanAddr, NoMsg};
 use serde::Serialize;
 
@@ -72,12 +73,15 @@ pub trait Api: Copy + Clone + Send {
 pub type QuerierResult = SystemResult<ApiResult<Binary>>;
 
 pub trait Querier: Clone + Send {
-    // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
-    // Since this is information that is returned from outside, we define it this way.
-    //
-    // ApiResult is a format that can capture this info in a serialized form. We parse it into
-    // a typical Result for the implementing object
-    fn query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult;
+    // TODO: rename this... right now this is demo to see if we can pipe it through unparsed in the VM
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
+
+    fn query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
+        match to_vec(request) {
+            Ok(raw) => self.raw_query(&raw),
+            Err(e) => Ok(Err(e.into())),
+        }
+    }
 
     /// Makes the query and parses the response.
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
