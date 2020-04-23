@@ -158,10 +158,12 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResult {
+    fn query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
         match request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(_) => Err(SystemError::InvalidRequest { error: "Mock doesn't support custom queries".to_string()}),
+            QueryRequest::Custom(_) => Err(SystemError::InvalidRequest {
+                error: "Mock doesn't support custom queries".to_string(),
+            }),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => {

@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use crate::api::ApiResult;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::types::{HumanAddr, NoMsg};
+use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
 
@@ -12,7 +12,7 @@ pub type QueryResult = ApiResult<QueryResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum QueryRequest<T = NoMsg> {
+pub enum QueryRequest<T> {
     Bank(BankQuery),
     Custom(T),
     #[cfg(feature = "staking")]

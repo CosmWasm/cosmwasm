@@ -7,7 +7,7 @@ use crate::errors::{dyn_contract_err, StdResult};
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 use crate::serde::from_binary;
-use crate::types::{CanonicalAddr, HumanAddr};
+use crate::types::{CanonicalAddr, HumanAddr, NoMsg};
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -76,7 +76,7 @@ pub trait Querier: Clone + Send {
     //
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
-    fn query(&self, request: &QueryRequest) -> QuerierResult;
+    fn query<T>(&self, request: &QueryRequest<T>) -> QuerierResult;
 
     /// Makes the query and parses the response.
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
@@ -84,7 +84,7 @@ pub trait Querier: Clone + Send {
     ///
     /// eg. When querying another contract, you will often want some way to detect/handle if there
     /// is no contract there.
-    fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> StdResult<T> {
+    fn parse_query<T, U: DeserializeOwned>(&self, request: &QueryRequest<T>) -> StdResult<U> {
         match self.query(&request) {
             Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
             Ok(Err(err)) => dyn_contract_err(format!("Querier contract error: {}", err)),
@@ -102,13 +102,13 @@ pub trait Querier: Clone + Send {
             address: address.into(),
             denom: denom.to_string(),
         });
-        self.parse_query(&request)
+        self.parse_query::<NoMsg, _>(&request)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
         let request = QueryRequest::Bank(BankQuery::AllBalances {
             address: address.into(),
         });
-        self.parse_query(&request)
+        self.parse_query::<NoMsg, _>(&request)
     }
 }
