@@ -6,7 +6,7 @@ use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
-use crate::serde::to_vec;
+use crate::serde::to_binary;
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
 use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
@@ -127,13 +127,33 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 #[derive(Clone)]
 pub struct MockQuerier {
     bank: BankQuerier,
+    #[cfg(feature = "staking")]
+    staking: staking::StakingQuerier,
 }
 
 impl MockQuerier {
+    #[cfg(not(feature = "staking"))]
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
         }
+    }
+
+    #[cfg(feature = "staking")]
+    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
+        MockQuerier {
+            bank: BankQuerier::new(balances),
+            staking: staking::StakingQuerier::new(&[], &[]),
+        }
+    }
+
+    #[cfg(feature = "staking")]
+    pub fn with_staking(
+        &mut self,
+        validators: &[crate::query::Validator],
+        delegations: &[crate::query::Delegation],
+    ) {
+        self.staking = staking::StakingQuerier::new(validators, delegations);
     }
 }
 
@@ -166,16 +186,70 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
-                Ok(api_res)
+                Ok(to_binary(&bank_res).map_err(|e| e.into()))
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
-                Ok(api_res)
+                Ok(to_binary(&bank_res).map_err(|e| e.into()))
+            }
+        }
+    }
+}
+
+#[cfg(feature = "staking")]
+mod staking {
+    use crate::api::{ApiError, ApiSystemError};
+    use crate::encoding::Binary;
+    use crate::query::{
+        Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+    };
+    use crate::to_binary;
+
+    #[derive(Clone)]
+    pub struct StakingQuerier {
+        validators: Vec<Validator>,
+        delegations: Vec<Delegation>,
+    }
+
+    impl StakingQuerier {
+        pub fn new(validators: &[Validator], delegations: &[Delegation]) -> Self {
+            StakingQuerier {
+                validators: validators.to_vec(),
+                delegations: delegations.to_vec(),
+            }
+        }
+
+        pub fn query(
+            &self,
+            request: &StakingQuery,
+        ) -> Result<Result<Binary, ApiError>, ApiSystemError> {
+            match request {
+                StakingQuery::Validators {} => {
+                    let val_res = ValidatorsResponse {
+                        validators: self.validators.clone(),
+                    };
+                    Ok(to_binary(&val_res).map_err(|e| e.into()))
+                }
+                StakingQuery::Delegations {
+                    delegator,
+                    validator,
+                } => {
+                    let matches = |d: &&Delegation| {
+                        if let Some(val) = validator {
+                            if val != &d.validator {
+                                return false;
+                            }
+                        }
+                        &d.delegator == delegator
+                    };
+                    let delegations: Vec<_> =
+                        self.delegations.iter().filter(matches).cloned().collect();
+                    let val_res = DelegationsResponse { delegations };
+                    Ok(to_binary(&val_res).map_err(|e| e.into()))
+                }
             }
         }
     }
@@ -186,9 +260,7 @@ impl Querier for MockQuerier {
         match request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
             #[cfg(feature = "staking")]
-            QueryRequest::Staking(_) => Err(ApiSystemError::InvalidRequest {
-                error: "staking not yet implemented".to_string(),
-            }),
+            QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => {
                 let addr = match msg {
                     WasmQuery::Smart { contract_addr, .. } => contract_addr,

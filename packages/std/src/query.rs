@@ -15,7 +15,7 @@ pub type QueryResult = ApiResult<QueryResponse>;
 pub enum QueryRequest {
     Bank(BankQuery),
     #[cfg(feature = "staking")]
-    Staking(StakingRequest),
+    Staking(StakingQuery),
     Wasm(WasmQuery),
 }
 
@@ -65,7 +65,7 @@ pub struct AllBalanceResponse {
 }
 
 #[cfg(feature = "staking")]
-pub use staking::{Delegation, DelegationsResponse, StakingRequest, Validator, ValidatorsResponse};
+pub use staking::{Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse};
 
 #[cfg(feature = "staking")]
 mod staking {
@@ -77,7 +77,7 @@ mod staking {
 
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
     #[serde(rename_all = "snake_case")]
-    pub enum StakingRequest {
+    pub enum StakingQuery {
         Validators {},
         // Delegations will return all delegations by the delegator,
         // or just those to the given validator (if set)
