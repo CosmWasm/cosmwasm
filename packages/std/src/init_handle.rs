@@ -20,6 +20,8 @@ where
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
     Custom(T),
+    #[cfg(feature = "staking")]
+    Staking(StakingMsg),
     Wasm(WasmMsg),
 }
 
@@ -38,6 +40,35 @@ pub enum BankMsg {
 /// NoMsg can never be instantiated and is a no-op placeholder for
 /// those contracts that don't explicitly set a custom message.
 pub enum NoMsg {}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum StakingMsg {
+    Delegate {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        amount: Coin,
+    },
+    Undelegate {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        amount: Coin,
+    },
+    Withdraw {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        // this is the "withdraw address", the one that should receive the rewards
+        // if None, then use delegator address
+        recipient: Option<HumanAddr>,
+    },
+    Redelegate {
+        // delegator is automatically set to address of the calling contract
+        src_validator: HumanAddr,
+        dst_validator: HumanAddr,
+        amount: Coin,
+    },
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

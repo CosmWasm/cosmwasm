@@ -14,6 +14,8 @@ pub type QueryResult = ApiResult<QueryResponse>;
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest {
     Bank(BankQuery),
+    #[cfg(feature = "staking")]
+    Staking(StakingRequest),
     Wasm(WasmQuery),
 }
 
@@ -60,4 +62,67 @@ pub struct BalanceResponse {
 pub struct AllBalanceResponse {
     // Returns all non-zero coins held by this account.
     pub amount: Vec<Coin>,
+}
+
+#[cfg(feature = "staking")]
+pub use staking::{Delegation, DelegationsResponse, StakingRequest, Validator, ValidatorsResponse};
+
+#[cfg(feature = "staking")]
+mod staking {
+    use schemars::JsonSchema;
+    use serde::{Deserialize, Serialize};
+
+    use crate::coins::Coin;
+    use crate::types::HumanAddr;
+
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
+    pub enum StakingRequest {
+        Validators {},
+        // Delegations will return all delegations by the delegator,
+        // or just those to the given validator (if set)
+        Delegations {
+            delegator: HumanAddr,
+            validator: Option<HumanAddr>,
+        },
+    }
+
+    #[cfg(feature = "staking")]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    /// ValidatorsResponse is data format returned from StakingRequest::Validators query
+    pub struct ValidatorsResponse {
+        pub validators: Vec<Validator>,
+    }
+
+    #[cfg(feature = "staking")]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    pub struct Validator {
+        pub address: HumanAddr,
+        // rates are denominated in 10^-6 - 1_000_000 (max) = 100%, 10_000 = 1%
+        // TODO: capture this in some Dec type?
+        pub commission: u64,
+        pub max_commission: u64,
+        // what units are these (in terms of time)?
+        pub max_change_rate: u64,
+    }
+
+    #[cfg(feature = "staking")]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    #[serde(rename_all = "snake_case")]
+    /// DelegationsResponse is data format returned from StakingRequest::Delegations query
+    pub struct DelegationsResponse {
+        pub delegations: Vec<Delegation>,
+    }
+
+    #[cfg(feature = "staking")]
+    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+    pub struct Delegation {
+        pub delegator: HumanAddr,
+        pub validator: HumanAddr,
+        pub amount: Coin,
+        pub can_redelegate: bool,
+        // Review this: this is how much we can withdraw
+        pub accumulated_rewards: Coin,
+        // TODO: do we want to expose more info?
+    }
 }

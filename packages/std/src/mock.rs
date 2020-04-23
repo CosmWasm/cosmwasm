@@ -166,6 +166,10 @@ impl Querier for MockQuerier {
                 let api_res = to_vec(&bank_res).map(Binary).map_err(|e| e.into());
                 Ok(api_res)
             }
+            #[cfg(feature = "staking")]
+            QueryRequest::Staking(_) => Err(ApiSystemError::InvalidRequest {
+                error: "staking not yet implemented".to_string(),
+            }),
             QueryRequest::Wasm(msg) => {
                 let addr = match msg {
                     WasmQuery::Smart { contract_addr, .. } => contract_addr,
