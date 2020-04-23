@@ -1,4 +1,3 @@
-use crate::HumanAddr;
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
@@ -77,29 +76,6 @@ pub enum StdError {
 /// The prefix "Std" means "the standard result within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
 pub type StdResult<T> = core::result::Result<T, StdError>;
-
-#[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
-/// SystemError is used for errors inside the runtime.
-/// This is used on return values for Querier as a nested Result -
-/// Result<StdResult<T>, SystemError>
-/// The first wrap (SystemError) will trigger if the contract address doesn't exist,
-/// the QueryRequest is malformated, etc. The second wrap will be an error message from
-/// the contract itself.
-pub enum SystemError {
-    #[snafu(display("Cannot parse request: {}", error))]
-    InvalidRequest {
-        error: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("No such contract: {}", addr))]
-    NoSuchContract {
-        addr: HumanAddr,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Unknown system error"))]
-    Unknown { backtrace: snafu::Backtrace },
-}
 
 pub fn invalid<T>(field: &'static str, msg: &'static str) -> StdResult<T> {
     ValidationErr { field, msg }.fail()

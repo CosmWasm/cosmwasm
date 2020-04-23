@@ -3,7 +3,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::{StdError, SystemError};
+use crate::errors::StdError;
 use crate::HumanAddr;
 
 pub type ApiResult<T> = Result<T, ApiError>;
@@ -114,8 +114,15 @@ impl From<StdError> for ApiError {
     }
 }
 
-/// ApiSystemError is an "api friendly" version of SystemError, just as ApiError
-/// is an "api friendly" version of Error
+/// ApiSystemError is used for errors inside the VM and is API frindly (i.e. serializable).
+///
+/// This is used on return values for Querier as a nested result: Result<ApiResult<T>, ApiSystemError>
+/// The first wrap (ApiSystemError) will trigger if the contract address doesn't exist,
+/// the QueryRequest is malformated, etc. The second wrap will be an error message from
+/// the contract itself.
+///
+/// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
+/// the contract understands the error format without creating a dependency on cosmwasm-vm.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ApiSystemError {
     InvalidRequest { error: String },
@@ -137,24 +144,14 @@ impl std::fmt::Display for ApiSystemError {
     }
 }
 
-impl From<SystemError> for ApiSystemError {
-    fn from(value: SystemError) -> Self {
-        match value {
-            SystemError::InvalidRequest { error, .. } => ApiSystemError::InvalidRequest { error },
-            SystemError::NoSuchContract { addr, .. } => ApiSystemError::NoSuchContract { addr },
-            SystemError::Unknown { .. } => ApiSystemError::Unknown {},
-        }
-    }
-}
-
 #[cfg(test)]
 mod test {
     use snafu::ResultExt;
 
     use super::*;
     use crate::errors::{
-        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, InvalidRequest,
-        NoSuchContract, NotFound, NullPointer, SerializeErr, StdResult,
+        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, NotFound, NullPointer,
+        SerializeErr, StdResult,
     };
     use crate::serde::{from_slice, to_vec};
 
@@ -230,32 +227,5 @@ mod test {
     fn serialize_err_conversion() {
         let source = Err(serde_json_wasm::ser::Error::BufferFull);
         assert_conversion(source.context(SerializeErr { kind: "faker" }));
-    }
-
-    fn assert_system_conversion(r: Result<(), SystemError>) {
-        let error = r.unwrap_err();
-        let msg = format!("{}", error);
-        let converted: ApiSystemError = error.into();
-        assert_eq!(msg, format!("{}", converted));
-        let round_trip: ApiSystemError = from_slice(&to_vec(&converted).unwrap()).unwrap();
-        assert_eq!(round_trip, converted);
-    }
-
-    #[test]
-    fn invalid_request_conversion() {
-        let err = InvalidRequest {
-            error: "Unknown field `swap`".to_string(),
-        }
-        .fail();
-        assert_system_conversion(err);
-    }
-
-    #[test]
-    fn no_such_contract_conversion() {
-        let err = NoSuchContract {
-            addr: HumanAddr::from("bad_address"),
-        }
-        .fail();
-        assert_system_conversion(err);
     }
 }

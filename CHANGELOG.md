@@ -78,7 +78,7 @@
   and forth between `Result` and `ApiResult` (with the same serializable error
   types).
 - Add `Querier` trait and `QueryRequest` for future query callbacks from the
-  contract, along with `SystemError` type for the runtime rejecting messages.
+  contract, along with `ApiSystemError` type for the runtime rejecting messages.
 - `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult`
   type.
 - Support results up to 128 KiB in `ExternalStorage.get`.

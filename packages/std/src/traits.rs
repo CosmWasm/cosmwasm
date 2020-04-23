@@ -86,8 +86,8 @@ pub trait Querier: Clone + Send {
     /// is no contract there.
     fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> StdResult<T> {
         match self.query(&request) {
-            Err(sys_err) => dyn_contract_err(format!("Querier SystemError: {}", sys_err)),
-            Ok(Err(err)) => dyn_contract_err(format!("Querier ContractError: {}", err)),
+            Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
+            Ok(Err(err)) => dyn_contract_err(format!("Querier contract error: {}", err)),
             // in theory we would process the response, but here it is the same type, so just pass through
             Ok(Ok(res)) => from_binary(&res),
         }
