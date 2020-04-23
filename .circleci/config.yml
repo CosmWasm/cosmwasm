@@ -60,15 +60,15 @@ jobs:
       - run:
           name: Build library for native target
           working_directory: ~/project/packages/std
-          command: cargo build --locked
+          command: cargo build --locked --no-default-features
       - run:
           name: Build library for wasm target
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked
+          command: cargo wasm --locked --no-default-features
       - run:
           name: Run unit tests
           working_directory: ~/project/packages/std
-          command: cargo test --locked
+          command: cargo test --locked --no-default-features
       - run:
           name: Build library for native target (with iterator support)
           working_directory: ~/project/packages/std
@@ -80,7 +80,7 @@ jobs:
       - run:
           name: Run unit tests (with iterator and staking support)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features iterator,staking
+          command: cargo test --locked --features iterator
       - run:
           name: Build and run schema generator
           working_directory: ~/project/packages/std

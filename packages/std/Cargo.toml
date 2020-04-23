@@ -13,6 +13,7 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
+default = ["staking"]
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
