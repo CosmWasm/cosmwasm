@@ -11,6 +11,7 @@ use crate::query::QueryRequest;
 use crate::serde::{from_slice, to_vec};
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
+use serde::Serialize;
 
 /// A kibi (kilo binary)
 static KI: usize = 1024;
@@ -242,7 +243,7 @@ impl ExternalQuerier {
 }
 
 impl Querier for ExternalQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResult {
+    fn query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
         let bin_request = to_vec(request).or(Err(SystemError::Unknown {}))?;
         let req = build_region(&bin_request);
         let request_ptr = &*req as *const Region as *const c_void;

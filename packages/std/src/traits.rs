@@ -8,6 +8,7 @@ use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 use crate::serde::from_binary;
 use crate::types::{CanonicalAddr, HumanAddr, NoMsg};
+use serde::Serialize;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -76,7 +77,7 @@ pub trait Querier: Clone + Send {
     //
     // ApiResult is a format that can capture this info in a serialized form. We parse it into
     // a typical Result for the implementing object
-    fn query<T>(&self, request: &QueryRequest<T>) -> QuerierResult;
+    fn query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult;
 
     /// Makes the query and parses the response.
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
@@ -84,7 +85,10 @@ pub trait Querier: Clone + Send {
     ///
     /// eg. When querying another contract, you will often want some way to detect/handle if there
     /// is no contract there.
-    fn parse_query<T, U: DeserializeOwned>(&self, request: &QueryRequest<T>) -> StdResult<U> {
+    fn parse_query<T: Serialize, U: DeserializeOwned>(
+        &self,
+        request: &QueryRequest<T>,
+    ) -> StdResult<U> {
         match self.query(&request) {
             Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
             Ok(Err(err)) => dyn_contract_err(format!("Querier contract error: {}", err)),
