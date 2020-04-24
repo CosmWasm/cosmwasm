@@ -27,6 +27,17 @@
     {
       "type": "object",
       "required": [
+        "staking"
+      ],
+      "properties": {
+        "staking": {
+          "$ref": "#/definitions/StakingMsg"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
         "wasm"
       ],
       "properties": {
@@ -97,12 +108,120 @@
       "description": "NoMsg can never be instantiated and is a no-op placeholder for those contracts that don't explicitly set a custom message.",
       "enum": []
     },
+    "StakingMsg": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "delegate"
+          ],
+          "properties": {
+            "delegate": {
+              "type": "object",
+              "required": [
+                "amount",
+                "validator"
+              ],
+              "properties": {
+                "amount": {
+                  "$ref": "#/definitions/Coin"
+                },
+                "validator": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "undelegate"
+          ],
+          "properties": {
+            "undelegate": {
+              "type": "object",
+              "required": [
+                "amount",
+                "validator"
+              ],
+              "properties": {
+                "amount": {
+                  "$ref": "#/definitions/Coin"
+                },
+                "validator": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "withdraw"
+          ],
+          "properties": {
+            "withdraw": {
+              "type": "object",
+              "required": [
+                "validator"
+              ],
+              "properties": {
+                "recipient": {
+                  "description": "this is the \"withdraw address\", the one that should receive the rewards if None, then use delegator address",
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/HumanAddr"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "validator": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "redelegate"
+          ],
+          "properties": {
+            "redelegate": {
+              "type": "object",
+              "required": [
+                "amount",
+                "dst_validator",
+                "src_validator"
+              ],
+              "properties": {
+                "amount": {
+                  "$ref": "#/definitions/Coin"
+                },
+                "dst_validator": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "src_validator": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "Uint128": {
       "type": "string"
     },
     "WasmMsg": {
       "anyOf": [
         {
+          "description": "this dispatches a call to another contract at a known address (with known ABI)",
           "type": "object",
           "required": [
             "execute"
@@ -119,7 +238,12 @@
                   "$ref": "#/definitions/HumanAddr"
                 },
                 "msg": {
-                  "$ref": "#/definitions/Binary"
+                  "description": "msg is the json-encoded HandleMsg struct (as raw Binary)",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
                 },
                 "send": {
                   "type": [
@@ -135,6 +259,7 @@
           }
         },
         {
+          "description": "this instantiates a new contracts from previously uploaded wasm code",
           "type": "object",
           "required": [
             "instantiate"
@@ -153,7 +278,12 @@
                   "minimum": 0.0
                 },
                 "msg": {
-                  "$ref": "#/definitions/Binary"
+                  "description": "msg is the json-encoded InitMsg struct (as raw Binary)",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
                 },
                 "send": {
                   "type": [

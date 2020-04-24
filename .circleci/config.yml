@@ -58,29 +58,29 @@ jobs:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
       - run:
-          name: Build library for native target
+          name: Build library for native target (no features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked
+          command: cargo build --locked --no-default-features
       - run:
-          name: Build library for wasm target
+          name: Build library for wasm target (no features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked
+          command: cargo wasm --locked --no-default-features
       - run:
-          name: Run unit tests
+          name: Run unit tests (no features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked
+          command: cargo test --locked --no-default-features
       - run:
-          name: Build library for native target (with iterator support)
+          name: Build library for native target (all features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --features iterator
+          command: cargo build --locked --all-features
       - run:
-          name: Build library for wasm target (with iterator support)
+          name: Build library for wasm target (all features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --features iterator
+          command: cargo wasm --locked --all-features
       - run:
-          name: Run unit tests (with iterator support)
+          name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --features iterator
+          command: cargo test --locked --all-features
       - run:
           name: Build and run schema generator
           working_directory: ~/project/packages/std

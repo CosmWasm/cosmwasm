@@ -20,6 +20,8 @@ where
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
     Custom(T),
+    #[cfg(feature = "staking")]
+    Staking(StakingMsg),
     Wasm(WasmMsg),
 }
 
@@ -34,24 +36,55 @@ pub enum BankMsg {
     },
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 /// NoMsg can never be instantiated and is a no-op placeholder for
 /// those contracts that don't explicitly set a custom message.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum NoMsg {}
+
+#[cfg(feature = "staking")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum StakingMsg {
+    Delegate {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        amount: Coin,
+    },
+    Undelegate {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        amount: Coin,
+    },
+    Withdraw {
+        // delegator is automatically set to address of the calling contract
+        validator: HumanAddr,
+        /// this is the "withdraw address", the one that should receive the rewards
+        /// if None, then use delegator address
+        recipient: Option<HumanAddr>,
+    },
+    Redelegate {
+        // delegator is automatically set to address of the calling contract
+        src_validator: HumanAddr,
+        dst_validator: HumanAddr,
+        amount: Coin,
+    },
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum WasmMsg {
-    // this dispatches a call to another contract at a known address (with known ABI)
-    // msg is the json-encoded HandleMsg struct
+    /// this dispatches a call to another contract at a known address (with known ABI)
     Execute {
         contract_addr: HumanAddr,
-        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
+        /// msg is the json-encoded HandleMsg struct (as raw Binary)
+        msg: Binary,
         send: Option<Vec<Coin>>,
     },
+    /// this instantiates a new contracts from previously uploaded wasm code
     Instantiate {
         code_id: u64,
-        msg: Binary, // we pass this in as Vec<u8> to the contract, so allow any binary encoding (later, limit to rawjson?)
+        /// msg is the json-encoded InitMsg struct (as raw Binary)
+        msg: Binary,
         send: Option<Vec<Coin>>,
     },
 }
@@ -59,6 +92,13 @@ pub enum WasmMsg {
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
+    }
+}
+
+#[cfg(feature = "staking")]
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<StakingMsg> for CosmosMsg<T> {
+    fn from(msg: StakingMsg) -> Self {
+        CosmosMsg::Staking(msg)
     }
 }
 

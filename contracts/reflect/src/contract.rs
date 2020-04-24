@@ -92,7 +92,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, BankMsg, Binary, StdError};
+    use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -203,6 +203,11 @@ mod tests {
             // make sure we can pass through custom native messages
             CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
             CustomMsg::Debug("Hi, Dad!".to_string()).into(),
+            StakingMsg::Delegate {
+                validator: HumanAddr::from("validator"),
+                amount: coin(100, "stake"),
+            }
+            .into(),
         ];
 
         let msg = HandleMsg::ReflectMsg {

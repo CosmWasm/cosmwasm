@@ -35,6 +35,13 @@ pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
 pub use crate::types::{CanonicalAddr, Env, HumanAddr};
 
+#[cfg(feature = "staking")]
+pub use crate::init_handle::StakingMsg;
+#[cfg(feature = "staking")]
+pub use crate::query::{
+    Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+};
+
 // Exposed in wasm build only
 
 #[cfg(target_arch = "wasm32")]

@@ -13,11 +13,16 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
+default = ["staking"]
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = []
+# staking exposes bindings to a required staking moudle in the runtime, via new
+# CosmosMsg types, and new QueryRequest types. This should only be enabled on contracts
+# that require these types, so other contracts can be used on systems with eg. PoA consensus
+staking = []
 # backtraces provides much better context at runtime errors (in non-wasm code)
 # at the cost of a bit of code size and performance.
 backtraces = ["snafu/backtraces"]
