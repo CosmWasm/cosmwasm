@@ -21,7 +21,7 @@ pub fn mock_dependencies(
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(CONTRACT_ADDR);
     Extern {
-        storage: MockStorage::new(),
+        storage: MockStorage::default(),
         api: MockApi::new(canonical_length),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
     }
@@ -34,7 +34,7 @@ pub fn mock_dependencies_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
     Extern {
-        storage: MockStorage::new(),
+        storage: MockStorage::default(),
         api: MockApi::new(canonical_length),
         querier: MockQuerier::new(balances),
     }
@@ -124,7 +124,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct MockQuerier {
     bank: BankQuerier,
     #[cfg(feature = "staking")]
@@ -143,7 +143,7 @@ impl MockQuerier {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
-            staking: staking::StakingQuerier::new(&[], &[]),
+            staking: staking::StakingQuerier::default(),
         }
     }
 
@@ -175,7 +175,7 @@ impl Querier for MockQuerier {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Default)]
 struct BankQuerier {
     balances: HashMap<HumanAddr, Vec<Coin>>,
 }
@@ -225,7 +225,7 @@ mod staking {
     use crate::serde::to_binary;
     use crate::traits::QuerierResult;
 
-    #[derive(Clone)]
+    #[derive(Clone, Default)]
     pub struct StakingQuerier {
         validators: Vec<Validator>,
         delegations: Vec<Delegation>,
