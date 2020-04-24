@@ -100,7 +100,7 @@ pub trait Querier: Clone + Send {
         let raw = match to_vec(request) {
             Ok(raw) => raw,
             // TODO: maybe I want to make this a SystemError::InvalidRequest ?
-            Err(e) => return Err(e.into()),
+            Err(e) => return Err(e),
         };
         match self.raw_query(&raw) {
             Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
@@ -117,17 +117,19 @@ pub trait Querier: Clone + Send {
         address: U,
         denom: &str,
     ) -> StdResult<BalanceResponse> {
-        let request = QueryRequest::Bank(BankQuery::Balance {
+        let request = BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
-        });
+        }
+        .into();
         self.query(&request)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
-        let request = QueryRequest::Bank(BankQuery::AllBalances {
+        let request = BankQuery::AllBalances {
             address: address.into(),
-        });
+        }
+        .into();
         self.query(&request)
     }
 }
