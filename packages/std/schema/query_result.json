@@ -89,6 +89,25 @@
         {
           "type": "object",
           "required": [
+            "invalid_utf8"
+          ],
+          "properties": {
+            "invalid_utf8": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
             "not_found"
           ],
           "properties": {
@@ -190,25 +209,6 @@
                   "type": "string"
                 },
                 "subtrahend": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "utf8_string_err"
-          ],
-          "properties": {
-            "utf8_string_err": {
-              "type": "object",
-              "required": [
-                "source"
-              ],
-              "properties": {
-                "source": {
                   "type": "string"
                 }
               }

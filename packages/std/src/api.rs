@@ -31,14 +31,13 @@ pub enum ApiError {
     ContractErr { msg: String },
     DynContractErr { msg: String },
     InvalidBase64 { msg: String },
+    InvalidUtf8 { msg: String },
     NotFound { kind: String },
     NullPointer {},
     ParseErr { kind: String, source: String },
     SerializeErr { kind: String, source: String },
     Unauthorized {},
     Underflow { minuend: String, subtrahend: String },
-    // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
-    Utf8StringErr { source: String },
     ValidationErr { field: String, msg: String },
 }
 
@@ -50,6 +49,9 @@ impl std::fmt::Display for ApiError {
             ApiError::ContractErr { msg } => write!(f, "Contract error: {}", msg),
             ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
             ApiError::InvalidBase64 { msg } => write!(f, "Invalid Base64 string: {}", msg),
+            ApiError::InvalidUtf8 { msg } => {
+                write!(f, "Cannot decode UTF8 bytes into string: {}", msg)
+            }
             ApiError::NotFound { kind } => write!(f, "{} not found", kind),
             ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
             ApiError::ParseErr { kind, source } => write!(f, "Error parsing {}: {}", kind, source),
@@ -61,7 +63,6 @@ impl std::fmt::Display for ApiError {
                 minuend,
                 subtrahend,
             } => write!(f, "Cannot subtract {} from {}", subtrahend, minuend),
-            ApiError::Utf8StringErr { source } => write!(f, "UTF8 encoding error: {}", source),
             ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
         }
     }
@@ -75,6 +76,7 @@ impl From<StdError> for ApiError {
             },
             StdError::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
             StdError::InvalidBase64 { msg, .. } => ApiError::InvalidBase64 { msg },
+            StdError::InvalidUtf8 { msg, .. } => ApiError::InvalidUtf8 { msg },
             StdError::NotFound { kind, .. } => ApiError::NotFound {
                 kind: kind.to_string(),
             },
@@ -95,9 +97,6 @@ impl From<StdError> for ApiError {
             } => ApiError::Underflow {
                 minuend,
                 subtrahend,
-            },
-            StdError::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
-                source: format!("{}", source),
             },
             StdError::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
                 field: field.to_string(),

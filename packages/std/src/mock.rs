@@ -1,10 +1,9 @@
-use snafu::ResultExt;
 use std::collections::HashMap;
 
 use crate::api::SystemError;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{contract_err, StdResult, Utf8StringErr};
+use crate::errors::{contract_err, InvalidUtf8, StdResult};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -94,8 +93,9 @@ impl Api for MockApi {
             .cloned()
             .filter(|&x| x != 0)
             .collect();
-        // convert to utf8
-        let human = String::from_utf8(trimmed).context(Utf8StringErr {})?;
+        // decode UTF-8 bytes into string
+        let human =
+            String::from_utf8(trimmed).map_err(|e| InvalidUtf8 { msg: e.to_string() }.build())?;
         Ok(HumanAddr(human))
     }
 }

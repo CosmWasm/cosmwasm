@@ -23,6 +23,12 @@ pub enum StdError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
+    #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
+    InvalidUtf8 {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("{} not found", kind))]
     NotFound {
         kind: &'static str,
@@ -48,12 +54,6 @@ pub enum StdError {
     Underflow {
         minuend: String,
         subtrahend: String,
-        backtrace: snafu::Backtrace,
-    },
-    // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
-    #[snafu(display("UTF8 encoding error: {}", source))]
-    Utf8StringErr {
-        source: std::string::FromUtf8Error,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Invalid {}: {}", field, msg))]
