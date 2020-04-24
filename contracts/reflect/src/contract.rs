@@ -3,8 +3,9 @@ use cosmwasm_std::{
     HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
-use crate::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
-use crate::query::{CustomQuery, CustomResponse};
+use crate::msg::{
+    CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+};
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -102,7 +103,7 @@ fn query_reflect<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::query::CustomQuerier;
+    use crate::testing::CustomQuerier;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
     use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
 

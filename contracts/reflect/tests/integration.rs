@@ -7,8 +7,8 @@ use cosmwasm_std::{
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 use cosmwasm_vm::Instance;
 
-use reflect::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
-use reflect::query::{CustomQuerier, CustomResponse};
+use reflect::msg::{CustomMsg, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use reflect::testing::CustomQuerier;
 
 /**
 This integration test tries to run and call the generated wasm.

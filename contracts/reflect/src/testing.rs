@@ -1,41 +1,8 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use crate::msg::{CustomQuery, CustomResponse};
 
 use cosmwasm_std::{
     from_slice, to_binary, Binary, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
 };
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-/// CustomQuery is an override of QueryRequest::Custom to show this works and can be extended in the contract
-pub enum CustomQuery {
-    Ping {},
-    Capital { text: String },
-}
-
-// TODO: do we want to standardize this somehow for all?
-impl Into<QueryRequest<CustomQuery>> for CustomQuery {
-    fn into(self) -> QueryRequest<CustomQuery> {
-        QueryRequest::Custom(self)
-    }
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-// All return values of CustomQuery are CustomResponse
-pub struct CustomResponse {
-    pub msg: String,
-}
-
-impl CustomQuery {
-    fn execute(&self) -> StdResult<Binary> {
-        let msg = match self {
-            CustomQuery::Ping {} => "pong".to_string(),
-            CustomQuery::Capital { text } => text.to_uppercase(),
-        };
-        to_binary(&CustomResponse { msg })
-    }
-}
 
 #[derive(Clone)]
 pub struct CustomQuerier {}
@@ -52,12 +19,20 @@ impl Querier for CustomQuerier {
             }
         };
         match &request {
-            QueryRequest::Custom(custom_query) => Ok(custom_query.execute().map_err(|e| e.into())),
+            QueryRequest::Custom(custom_query) => Ok(execute(&custom_query).map_err(|e| e.into())),
             _ => Err(SystemError::UnsupportedRequest {
                 kind: "non-custom".to_string(),
             }),
         }
     }
+}
+
+fn execute(query: &CustomQuery) -> StdResult<Binary> {
+    let msg = match query {
+        CustomQuery::Ping {} => "pong".to_string(),
+        CustomQuery::Capital { text } => text.to_uppercase(),
+    };
+    to_binary(&CustomResponse { msg })
 }
 
 #[cfg(test)]
@@ -67,17 +42,16 @@ mod test {
 
     #[test]
     fn custom_query_ping() {
-        let res = CustomQuery::Ping {}.execute().unwrap();
+        let res = execute(&CustomQuery::Ping {}).unwrap();
         let msg: CustomResponse = from_binary(&res).unwrap();
         assert_eq!(msg.msg, "pong".to_string());
     }
 
     #[test]
     fn custom_query_capitalize() {
-        let res = CustomQuery::Capital {
+        let res = execute(&CustomQuery::Capital {
             text: "fOObaR".to_string(),
-        }
-        .execute()
+        })
         .unwrap();
         let msg: CustomResponse = from_binary(&res).unwrap();
         assert_eq!(msg.msg, "FOOBAR".to_string());
