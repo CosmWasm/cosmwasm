@@ -43,10 +43,12 @@ pub enum StdError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Error serializing {}: {}", kind, source))]
+    #[snafu(display("Error serializing type {}: {}", source, msg))]
     SerializeErr {
-        kind: &'static str,
-        source: serde_json_wasm::ser::Error,
+        /// the source type that was attempted
+        #[snafu(source(false))]
+        source: String,
+        msg: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Unauthorized"))]

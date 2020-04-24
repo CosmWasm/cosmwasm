@@ -167,11 +167,11 @@
             "serialize_err": {
               "type": "object",
               "required": [
-                "kind",
+                "msg",
                 "source"
               ],
               "properties": {
-                "kind": {
+                "msg": {
                   "type": "string"
                 },
                 "source": {

@@ -35,7 +35,7 @@ pub enum ApiError {
     NotFound { kind: String },
     NullPointer {},
     ParseErr { target: String, msg: String },
-    SerializeErr { kind: String, source: String },
+    SerializeErr { source: String, msg: String },
     Unauthorized {},
     Underflow { minuend: String, subtrahend: String },
     ValidationErr { field: String, msg: String },
@@ -57,8 +57,8 @@ impl std::fmt::Display for ApiError {
             ApiError::ParseErr { target, msg } => {
                 write!(f, "Error parsing into type {}: {}", target, msg)
             }
-            ApiError::SerializeErr { kind, source } => {
-                write!(f, "Error serializing {}: {}", kind, source)
+            ApiError::SerializeErr { source, msg } => {
+                write!(f, "Error serializing type {}: {}", source, msg)
             }
             ApiError::Unauthorized {} => write!(f, "Unauthorized"),
             ApiError::Underflow {
@@ -84,10 +84,7 @@ impl From<StdError> for ApiError {
             },
             StdError::NullPointer { .. } => ApiError::NullPointer {},
             StdError::ParseErr { target, msg, .. } => ApiError::ParseErr { target, msg },
-            StdError::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
-                kind: kind.to_string(),
-                source: format!("{}", source),
-            },
+            StdError::SerializeErr { source, msg, .. } => ApiError::SerializeErr { source, msg },
             StdError::Unauthorized { .. } => ApiError::Unauthorized {},
             StdError::Underflow {
                 minuend,
@@ -140,8 +137,6 @@ pub type SystemResult<T> = Result<T, SystemError>;
 
 #[cfg(test)]
 mod test {
-    use snafu::ResultExt;
-
     use super::*;
     use crate::errors::{
         contract_err, dyn_contract_err, invalid, unauthorized, InvalidBase64, NotFound,
@@ -223,7 +218,12 @@ mod test {
 
     #[test]
     fn serialize_err_conversion() {
-        let source = Err(serde_json_wasm::ser::Error::BufferFull);
-        assert_conversion(source.context(SerializeErr { kind: "faker" }));
+        assert_conversion(
+            SerializeErr {
+                source: "Person",
+                msg: "buffer is full",
+            }
+            .fail(),
+        );
     }
 }

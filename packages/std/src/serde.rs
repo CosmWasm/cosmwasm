@@ -3,7 +3,6 @@
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
 use serde::{Deserialize, Serialize};
-use snafu::ResultExt;
 use std::any::type_name;
 
 use crate::encoding::Binary;
@@ -33,8 +32,12 @@ pub fn to_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_vec(data).context(SerializeErr {
-        kind: type_name::<T>(),
+    serde_json_wasm::to_vec(data).map_err(|e| {
+        SerializeErr {
+            source: type_name::<T>(),
+            msg: e.to_string(),
+        }
+        .build()
     })
 }
 
