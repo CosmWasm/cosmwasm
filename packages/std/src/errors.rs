@@ -1,47 +1,58 @@
+use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 
-#[derive(Debug, Snafu)]
-#[snafu(visibility = "pub")]
 /// Structured error type for init, handle and query. This cannot be serialized to JSON, such that
 /// it is only available within the contract and its unit tests.
 ///
 /// The prefix "Std" means "the standard error within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
+#[derive(Debug, Serialize, Deserialize, Snafu)]
+#[snafu(visibility = "pub")]
+#[serde(rename_all = "snake_case")]
 pub enum StdError {
     #[snafu(display("Contract error: {}", msg))]
     ContractErr {
         msg: &'static str,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Contract error: {}", msg))]
     DynContractErr {
         msg: String,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Invalid Base64 string: {}", msg))]
     InvalidBase64 {
         msg: String,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
     InvalidUtf8 {
         msg: String,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("{} not found", kind))]
     NotFound {
         kind: &'static str,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Received null pointer, refuse to use"))]
-    NullPointer { backtrace: snafu::Backtrace },
+    NullPointer {
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
+    },
     #[snafu(display("Error parsing into type {}: {}", target, msg))]
     ParseErr {
         /// the target type that was attempted
         target: String,
         msg: String,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Error serializing type {}: {}", source, msg))]
     SerializeErr {
@@ -49,21 +60,27 @@ pub enum StdError {
         #[snafu(source(false))]
         source: String,
         msg: String,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Unauthorized"))]
-    Unauthorized { backtrace: snafu::Backtrace },
+    Unauthorized {
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
+    },
     #[snafu(display("Cannot subtract {} from {}", subtrahend, minuend))]
     Underflow {
         minuend: String,
         subtrahend: String,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Invalid {}: {}", field, msg))]
     ValidationErr {
         field: &'static str,
         msg: &'static str,
-        backtrace: snafu::Backtrace,
+        #[serde(skip)]
+        backtrace: Option<snafu::Backtrace>,
     },
 }
 
@@ -101,6 +118,32 @@ pub fn unauthorized<T>() -> StdResult<T> {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::serde::{from_slice, to_vec};
+
+    #[test]
+    fn can_serialize() {
+        let error = InvalidBase64 {
+            msg: "invalid length".to_string(),
+        }
+        .build();
+        assert_eq!(
+            to_vec(&error).unwrap(),
+            br#"{"invalid_base64":{"msg":"invalid length"}}"#.to_vec()
+        );
+    }
+
+    #[test]
+    fn can_deserialize() {
+        let error: StdError =
+            from_slice(br#"{"invalid_base64":{"msg":"invalid length"}}"#).unwrap();
+        match error {
+            StdError::InvalidBase64 { msg, backtrace } => {
+                assert_eq!(msg, "invalid length");
+                assert!(backtrace.is_none());
+            }
+            _ => panic!("invalid type"),
+        };
+    }
 
     #[test]
     fn use_invalid() {
