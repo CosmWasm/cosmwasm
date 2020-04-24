@@ -36,10 +36,11 @@ pub enum StdError {
     },
     #[snafu(display("Received null pointer, refuse to use"))]
     NullPointer { backtrace: snafu::Backtrace },
-    #[snafu(display("Error parsing {}: {}", kind, source))]
+    #[snafu(display("Error parsing into type {}: {}", target, msg))]
     ParseErr {
-        kind: &'static str,
-        source: serde_json_wasm::de::Error,
+        /// the target type that was attempted
+        target: String,
+        msg: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Error serializing {}: {}", kind, source))]

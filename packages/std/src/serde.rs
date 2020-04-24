@@ -13,8 +13,12 @@ pub fn from_slice<'a, T>(value: &'a [u8]) -> StdResult<T>
 where
     T: Deserialize<'a>,
 {
-    serde_json_wasm::from_slice(value).context(ParseErr {
-        kind: type_name::<T>(),
+    serde_json_wasm::from_slice(value).map_err(|e| {
+        ParseErr {
+            target: type_name::<T>(),
+            msg: e.to_string(),
+        }
+        .build()
     })
 }
 

@@ -34,7 +34,7 @@ pub enum ApiError {
     InvalidUtf8 { msg: String },
     NotFound { kind: String },
     NullPointer {},
-    ParseErr { kind: String, source: String },
+    ParseErr { target: String, msg: String },
     SerializeErr { kind: String, source: String },
     Unauthorized {},
     Underflow { minuend: String, subtrahend: String },
@@ -54,7 +54,9 @@ impl std::fmt::Display for ApiError {
             }
             ApiError::NotFound { kind } => write!(f, "{} not found", kind),
             ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
-            ApiError::ParseErr { kind, source } => write!(f, "Error parsing {}: {}", kind, source),
+            ApiError::ParseErr { target, msg } => {
+                write!(f, "Error parsing into type {}: {}", target, msg)
+            }
             ApiError::SerializeErr { kind, source } => {
                 write!(f, "Error serializing {}: {}", kind, source)
             }
@@ -81,10 +83,7 @@ impl From<StdError> for ApiError {
                 kind: kind.to_string(),
             },
             StdError::NullPointer { .. } => ApiError::NullPointer {},
-            StdError::ParseErr { kind, source, .. } => ApiError::ParseErr {
-                kind: kind.to_string(),
-                source: format!("{}", source),
-            },
+            StdError::ParseErr { target, msg, .. } => ApiError::ParseErr { target, msg },
             StdError::SerializeErr { kind, source, .. } => ApiError::SerializeErr {
                 kind: kind.to_string(),
                 source: format!("{}", source),
