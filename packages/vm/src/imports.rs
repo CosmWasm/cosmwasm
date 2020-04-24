@@ -341,7 +341,7 @@ mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, NoMsg, QueryRequest,
+        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
         ReadonlyStorage, SystemError, WasmQuery,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
@@ -760,7 +760,7 @@ mod test {
     fn do_query_chain_works() {
         let mut instance = make_instance();
 
-        let request: QueryRequest<NoMsg> = QueryRequest::Bank(BankQuery::AllBalances {
+        let request: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
             address: HumanAddr::from(INIT_ADDR),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
@@ -809,7 +809,7 @@ mod test {
     fn do_query_chain_fails_for_missing_contract() {
         let mut instance = make_instance();
 
-        let request: QueryRequest<NoMsg> = QueryRequest::Wasm(WasmQuery::Smart {
+        let request: QueryRequest<Never> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: HumanAddr::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });

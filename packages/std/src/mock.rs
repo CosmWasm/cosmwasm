@@ -9,7 +9,7 @@ use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest,
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
-use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, NoMsg};
+use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, Never};
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -160,7 +160,7 @@ impl MockQuerier {
 impl Querier for MockQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<NoMsg> = match from_slice(bin_request) {
+        let request: QueryRequest<Never> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {

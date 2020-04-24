@@ -8,7 +8,7 @@ use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 use crate::serde::from_binary;
 use crate::to_vec;
-use crate::types::{CanonicalAddr, HumanAddr, NoMsg};
+use crate::types::{CanonicalAddr, HumanAddr, Never};
 use serde::Serialize;
 
 /// Holds all external dependencies of the contract.
@@ -111,13 +111,13 @@ pub trait Querier: Clone + Send {
             address: address.into(),
             denom: denom.to_string(),
         });
-        self.parse_query::<NoMsg, _>(&request)
+        self.parse_query::<Never, _>(&request)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
         let request = QueryRequest::Bank(BankQuery::AllBalances {
             address: address.into(),
         });
-        self.parse_query::<NoMsg, _>(&request)
+        self.parse_query::<Never, _>(&request)
     }
 }

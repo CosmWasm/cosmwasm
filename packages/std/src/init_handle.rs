@@ -7,12 +7,12 @@ use std::fmt;
 use crate::api::ApiResult;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::types::{HumanAddr, NoMsg};
+use crate::types::{HumanAddr, Never};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
-pub enum CosmosMsg<T = NoMsg>
+pub enum CosmosMsg<T = Never>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -118,7 +118,7 @@ pub fn log(key: &str, value: &str) -> LogAttribute {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitResponse<T = NoMsg>
+pub struct InitResponse<T = Never>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -128,7 +128,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type InitResult<U = NoMsg> = ApiResult<InitResponse<U>>;
+pub type InitResult<U = Never> = ApiResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -144,7 +144,7 @@ where
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct HandleResponse<T = NoMsg>
+pub struct HandleResponse<T = Never>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -154,7 +154,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type HandleResult<U = NoMsg> = ApiResult<HandleResponse<U>>;
+pub type HandleResult<U = Never> = ApiResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where
