@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 use crate::api::ApiResult;
 use crate::coins::Coin;
@@ -49,6 +50,25 @@ pub enum WasmQuery {
         /// Key is the raw key used in the contracts Storage
         key: Binary,
     },
+}
+
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankQuery> for QueryRequest<T> {
+    fn from(msg: BankQuery) -> Self {
+        QueryRequest::Bank(msg)
+    }
+}
+
+#[cfg(feature = "staking")]
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<StakingQuery> for QueryRequest<T> {
+    fn from(msg: StakingQuery) -> Self {
+        QueryRequest::Staking(msg)
+    }
+}
+
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmQuery> for QueryRequest<T> {
+    fn from(msg: WasmQuery) -> Self {
+        QueryRequest::Wasm(msg)
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

@@ -53,8 +53,8 @@ impl Querier for CustomQuerier {
         };
         match &request {
             QueryRequest::Custom(custom_query) => Ok(custom_query.execute().map_err(|e| e.into())),
-            _ => Err(SystemError::InvalidRequest {
-                error: "Mock only supports custom queries".to_string(),
+            _ => Err(SystemError::UnsupportedRequest {
+                kind: "non-custom".to_string(),
             }),
         }
     }
