@@ -37,8 +37,6 @@ pub enum ApiError {
     SerializeErr { kind: String, source: String },
     Unauthorized {},
     Underflow { minuend: String, subtrahend: String },
-    // This is used for std::str::from_utf8, which we may well deprecate
-    Utf8Err { source: String },
     // This is used for String::from_utf8, which does zero-copy from Vec<u8>, moving towards this
     Utf8StringErr { source: String },
     ValidationErr { field: String, msg: String },
@@ -63,7 +61,6 @@ impl std::fmt::Display for ApiError {
                 minuend,
                 subtrahend,
             } => write!(f, "Cannot subtract {} from {}", subtrahend, minuend),
-            ApiError::Utf8Err { source } => write!(f, "UTF8 encoding error: {}", source),
             ApiError::Utf8StringErr { source } => write!(f, "UTF8 encoding error: {}", source),
             ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
         }
@@ -98,9 +95,6 @@ impl From<StdError> for ApiError {
             } => ApiError::Underflow {
                 minuend,
                 subtrahend,
-            },
-            StdError::Utf8Err { source, .. } => ApiError::Utf8Err {
-                source: format!("{}", source),
             },
             StdError::Utf8StringErr { source, .. } => ApiError::Utf8StringErr {
                 source: format!("{}", source),

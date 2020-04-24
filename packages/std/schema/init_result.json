@@ -199,25 +199,6 @@
         {
           "type": "object",
           "required": [
-            "utf8_err"
-          ],
-          "properties": {
-            "utf8_err": {
-              "type": "object",
-              "required": [
-                "source"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
             "utf8_string_err"
           ],
           "properties": {
