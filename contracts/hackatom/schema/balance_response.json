@@ -7,7 +7,12 @@
   ],
   "properties": {
     "amount": {
-      "$ref": "#/definitions/Coin"
+      "description": "Always returns a Coin with the requested denom. This may be of 0 amount if no such funds.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Coin"
+        }
+      ]
     }
   },
   "definitions": {

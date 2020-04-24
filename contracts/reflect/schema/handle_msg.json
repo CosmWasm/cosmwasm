@@ -237,6 +237,7 @@
               ],
               "properties": {
                 "recipient": {
+                  "description": "this is the \"withdraw address\", the one that should receive the rewards if None, then use delegator address",
                   "anyOf": [
                     {
                       "$ref": "#/definitions/HumanAddr"
@@ -288,6 +289,7 @@
     "WasmMsg": {
       "anyOf": [
         {
+          "description": "this dispatches a call to another contract at a known address (with known ABI)",
           "type": "object",
           "required": [
             "execute"
@@ -304,7 +306,12 @@
                   "$ref": "#/definitions/HumanAddr"
                 },
                 "msg": {
-                  "$ref": "#/definitions/Binary"
+                  "description": "msg is the json-encoded HandleMsg struct (as raw Binary)",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
                 },
                 "send": {
                   "type": [
@@ -320,6 +327,7 @@
           }
         },
         {
+          "description": "this instantiates a new contracts from previously uploaded wasm code",
           "type": "object",
           "required": [
             "instantiate"
@@ -338,7 +346,12 @@
                   "minimum": 0.0
                 },
                 "msg": {
-                  "$ref": "#/definitions/Binary"
+                  "description": "msg is the json-encoded InitMsg struct (as raw Binary)",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
                 },
                 "send": {
                   "type": [
