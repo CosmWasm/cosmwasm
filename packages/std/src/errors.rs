@@ -8,11 +8,6 @@ use snafu::Snafu;
 /// The prefix "Std" means "the standard error within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
 pub enum StdError {
-    #[snafu(display("Invalid Base64 string: {}", source))]
-    Base64Err {
-        source: base64::DecodeError,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Contract error: {}", msg))]
     ContractErr {
         msg: &'static str,
@@ -20,6 +15,11 @@ pub enum StdError {
     },
     #[snafu(display("Contract error: {}", msg))]
     DynContractErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("Invalid Base64 string: {}", msg))]
+    InvalidBase64 {
         msg: String,
         backtrace: snafu::Backtrace,
     },

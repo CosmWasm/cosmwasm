@@ -2,9 +2,8 @@ use std::fmt;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use snafu::ResultExt;
 
-use crate::errors::{Base64Err, StdResult};
+use crate::errors::{InvalidBase64, StdResult};
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -17,9 +16,11 @@ impl Binary {
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
     pub fn from_base64(encoded: &str) -> StdResult<Self> {
-        let binary = base64::decode(&encoded).context(Base64Err {})?;
+        let binary =
+            base64::decode(&encoded).map_err(|e| InvalidBase64 { msg: e.to_string() }.build())?;
         Ok(Binary(binary))
     }
+
     /// encode to base64 string (guaranteed to be success as we control the data inside).
     /// this returns normalized form (with trailing = if needed)
     pub fn to_base64(&self) -> String {
@@ -91,6 +92,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};
 
     #[test]
@@ -132,7 +134,10 @@ mod test {
     fn from_invalid_string() {
         let invalid_base64 = "cm%uZG9taVo";
         let res = Binary::from_base64(invalid_base64);
-        assert!(res.is_err());
+        match res.unwrap_err() {
+            StdError::InvalidBase64 { msg, .. } => assert_eq!(msg, "Invalid byte 37, offset 2."),
+            _ => panic!("Unexpected error type"),
+        }
     }
 
     #[test]

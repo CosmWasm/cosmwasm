@@ -28,9 +28,9 @@ pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ApiError {
-    Base64Err { source: String },
     ContractErr { msg: String },
     DynContractErr { msg: String },
+    InvalidBase64 { msg: String },
     NotFound { kind: String },
     NullPointer {},
     ParseErr { kind: String, source: String },
@@ -49,9 +49,9 @@ impl std::error::Error for ApiError {}
 impl std::fmt::Display for ApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiError::Base64Err { source } => write!(f, "Invalid Base64 string: {}", source),
             ApiError::ContractErr { msg } => write!(f, "Contract error: {}", msg),
             ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
+            ApiError::InvalidBase64 { msg } => write!(f, "Invalid Base64 string: {}", msg),
             ApiError::NotFound { kind } => write!(f, "{} not found", kind),
             ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
             ApiError::ParseErr { kind, source } => write!(f, "Error parsing {}: {}", kind, source),
@@ -73,13 +73,11 @@ impl std::fmt::Display for ApiError {
 impl From<StdError> for ApiError {
     fn from(value: StdError) -> Self {
         match value {
-            StdError::Base64Err { source, .. } => ApiError::Base64Err {
-                source: format!("{}", source),
-            },
             StdError::ContractErr { msg, .. } => ApiError::ContractErr {
                 msg: msg.to_string(),
             },
             StdError::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
+            StdError::InvalidBase64 { msg, .. } => ApiError::InvalidBase64 { msg },
             StdError::NotFound { kind, .. } => ApiError::NotFound {
                 kind: kind.to_string(),
             },
@@ -154,8 +152,8 @@ mod test {
 
     use super::*;
     use crate::errors::{
-        contract_err, dyn_contract_err, invalid, unauthorized, Base64Err, NotFound, NullPointer,
-        SerializeErr, StdResult,
+        contract_err, dyn_contract_err, invalid, unauthorized, InvalidBase64, NotFound,
+        NullPointer, SerializeErr, StdResult,
     };
     use crate::serde::{from_slice, to_vec};
 
@@ -186,12 +184,6 @@ mod test {
     }
 
     #[test]
-    fn base64_conversion() {
-        let source = Err(base64::DecodeError::InvalidLength);
-        assert_conversion(source.context(Base64Err {}));
-    }
-
-    #[test]
     fn contract_conversion() {
         assert_conversion(contract_err("foobar"));
     }
@@ -199,6 +191,16 @@ mod test {
     #[test]
     fn dyn_contract_conversion() {
         assert_conversion(dyn_contract_err("dynamic".to_string()));
+    }
+
+    #[test]
+    fn invalid_base64_conversion() {
+        assert_conversion(
+            InvalidBase64 {
+                msg: "invalid length".to_string(),
+            }
+            .fail(),
+        );
     }
 
     #[test]

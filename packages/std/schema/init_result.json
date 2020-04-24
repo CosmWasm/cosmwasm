@@ -32,25 +32,6 @@
         {
           "type": "object",
           "required": [
-            "base64_err"
-          ],
-          "properties": {
-            "base64_err": {
-              "type": "object",
-              "required": [
-                "source"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
             "contract_err"
           ],
           "properties": {
@@ -74,6 +55,25 @@
           ],
           "properties": {
             "dyn_contract_err": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "invalid_base64"
+          ],
+          "properties": {
+            "invalid_base64": {
               "type": "object",
               "required": [
                 "msg"
