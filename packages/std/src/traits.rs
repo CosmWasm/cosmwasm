@@ -73,34 +73,44 @@ pub trait Api: Copy + Clone + Send {
 pub type QuerierResult = SystemResult<ApiResult<Binary>>;
 
 pub trait Querier: Clone + Send {
-    // TODO: rename this... right now this is demo to see if we can pipe it through unparsed in the VM
+    /// raw_query is all that must be implemented for the Querier.
+    /// This allows us to pass through binary queries from one level to another without
+    /// knowing the custom format, or we can decode it, with the knowledge of the allowed
+    /// types. People using the querier probably want one of the simpler auto-generated
+    /// helper methods
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 
-    fn query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
-        match to_vec(request) {
-            Ok(raw) => self.raw_query(&raw),
-            // TODO: maybe I want to make this a SystemError::InvalidRequest ?
-            Err(e) => Ok(Err(e.into())),
-        }
+    /// query is a shorthand for custom_query when we are not using a custom type,
+    /// this allows us to avoid specifying "Never" in all the type definitions.
+    fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Never>) -> StdResult<T> {
+        self.custom_query(request)
     }
 
-    /// Makes the query and parses the response.
-    /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
-    /// one level. Only use this if you don't have checks on other side.
+    /// Makes the query and parses the response. Also handles custom queries,
+    /// so you need to specify the custom query type in the function parameters.
+    /// If you are no using a custom query, just use `query` for easier interface.
     ///
-    /// eg. When querying another contract, you will often want some way to detect/handle if there
-    /// is no contract there.
-    fn parse_query<T: Serialize, U: DeserializeOwned>(
+    /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
+    /// one level. Only use this if you don't need to check the SystemError
+    /// eg. If you don't differentiate between contract missing and contract returned error
+    fn custom_query<T: Serialize, U: DeserializeOwned>(
         &self,
         request: &QueryRequest<T>,
     ) -> StdResult<U> {
-        match self.query(&request) {
+        let raw = match to_vec(request) {
+            Ok(raw) => raw,
+            // TODO: maybe I want to make this a SystemError::InvalidRequest ?
+            Err(e) => return Err(e.into()),
+        };
+        match self.raw_query(&raw) {
             Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
             Ok(Err(err)) => dyn_contract_err(format!("Querier contract error: {}", err)),
             // in theory we would process the response, but here it is the same type, so just pass through
             Ok(Ok(res)) => from_binary(&res),
         }
     }
+
+    // TODO: a non-flattened version?
 
     fn query_balance<U: Into<HumanAddr>>(
         &self,
@@ -111,13 +121,13 @@ pub trait Querier: Clone + Send {
             address: address.into(),
             denom: denom.to_string(),
         });
-        self.parse_query::<Never, _>(&request)
+        self.query(&request)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
         let request = QueryRequest::Bank(BankQuery::AllBalances {
             address: address.into(),
         });
-        self.parse_query::<Never, _>(&request)
+        self.query(&request)
     }
 }

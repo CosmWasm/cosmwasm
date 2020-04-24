@@ -90,7 +90,7 @@ mod test {
             text: "food".to_string(),
         }
         .into();
-        let res: CustomResponse = querier.parse_query(&req).unwrap();
+        let res: CustomResponse = querier.custom_query(&req).unwrap();
         assert_eq!(res.msg, "FOOD".to_string());
     }
 }

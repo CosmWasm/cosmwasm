@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, Querier, QueryRequest, StdResult, Storage,
+    HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
 use crate::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
@@ -94,8 +94,8 @@ fn query_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     text: String,
 ) -> StdResult<Binary> {
-    let req: QueryRequest<_> = CustomQuery::Capital { text }.into();
-    let resp: CustomResponse = deps.querier.parse_query(&req)?;
+    let req = CustomQuery::Capital { text }.into();
+    let resp: CustomResponse = deps.querier.custom_query(&req)?;
     to_binary(&resp)
 }
 
