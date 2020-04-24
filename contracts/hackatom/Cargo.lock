@@ -175,7 +175,7 @@ dependencies = [
  "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde-json-wasm 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -199,7 +199,7 @@ dependencies = [
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.48 (registry+https://github.com/rust-lang/crates.io-index)",
  "sha2 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-clif-backend 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-middleware-common 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "wasmer-runtime-core 0.16.2 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -419,7 +419,7 @@ dependencies = [
  "cosmwasm-vm 0.8.0-dev",
  "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -798,17 +798,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "snafu"
-version = "0.6.3"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "backtrace 0.3.45 (registry+https://github.com/rust-lang/crates.io-index)",
  "doc-comment 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu-derive 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)",
+ "snafu-derive 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "snafu-derive"
-version = "0.6.3"
+version = "0.6.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1115,8 +1115,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 "checksum sha2 0.8.1 (registry+https://github.com/rust-lang/crates.io-index)" = "27044adfd2e1f077f649f59deb9490d3941d674002f7d062870a60ebe9bd47a0"
 "checksum smallvec 0.6.13 (registry+https://github.com/rust-lang/crates.io-index)" = "f7b0758c52e15a8b5e3691eae6cc559f08eee9406e548a4477ba4e67770a82b6"
 "checksum smallvec 1.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "5c2fb2ec9bcd216a5b0d0ccf31ab17b5ed1d627960edff65bbe95d3ce221cefc"
-"checksum snafu 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "48492e4f51c6e679217e80c11290edfdedf3133e358f4f432a6296f4c820f95b"
-"checksum snafu-derive 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "b5d1c41856cbfa99befda5034c72539dd9d7dd6f3e61058bdb804ac40715bc2a"
+"checksum snafu 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "b1ec0ae2ed980f26e1ad62e717feb01df90731df56887b5391a2c79f9f6805be"
+"checksum snafu-derive 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)" = "0ec32ba84a7a86aeb0bc32fd0c46d31b0285599f68ea72e87eff6127889d99e1"
 "checksum stable_deref_trait 1.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "dba1a27d3efae4351c8051072d619e3ade2820635c3958d826bfea39d59b54c8"
 "checksum subtle 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2d67a5a62ba6e01cb2192ff309324cb4875d0c451d55fe2319433abe7a05a8ee"
 "checksum syn 1.0.16 (registry+https://github.com/rust-lang/crates.io-index)" = "123bd9499cfb380418d509322d7a6d52e5315f064fe4b3ad18a53d6b92c07859"
