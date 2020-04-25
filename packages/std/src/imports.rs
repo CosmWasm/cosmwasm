@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use crate::api::SystemError;
 use crate::encoding::Binary;
-use crate::errors::{contract_err, dyn_contract_err, ContractErr, StdResult};
+use crate::errors::{contract_err, dyn_contract_err, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -200,10 +200,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
-            return ContractErr {
-                msg: "canonicalize_address returned error",
-            }
-            .fail();
+            return dyn_contract_err("canonicalize_address returned error");
         }
 
         let out = unsafe { consume_region(canon)? };
@@ -217,10 +214,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
-            return ContractErr {
-                msg: "humanize_address returned error",
-            }
-            .fail();
+            return dyn_contract_err("humanize_address returned error");
         }
 
         let out = unsafe { consume_region(human)? };

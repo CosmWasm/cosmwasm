@@ -28,7 +28,6 @@ pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ApiError {
-    ContractErr { msg: String },
     DynContractErr { msg: String },
     InvalidBase64 { msg: String },
     InvalidUtf8 { msg: String },
@@ -46,7 +45,6 @@ impl std::error::Error for ApiError {}
 impl std::fmt::Display for ApiError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            ApiError::ContractErr { msg } => write!(f, "Contract error: {}", msg),
             ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
             ApiError::InvalidBase64 { msg } => write!(f, "Invalid Base64 string: {}", msg),
             ApiError::InvalidUtf8 { msg } => {
@@ -73,9 +71,6 @@ impl std::fmt::Display for ApiError {
 impl From<StdError> for ApiError {
     fn from(value: StdError) -> Self {
         match value {
-            StdError::ContractErr { msg, .. } => ApiError::ContractErr {
-                msg: msg.to_string(),
-            },
             StdError::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
             StdError::InvalidBase64 { msg, .. } => ApiError::InvalidBase64 { msg },
             StdError::InvalidUtf8 { msg, .. } => ApiError::InvalidUtf8 { msg },
@@ -164,20 +159,15 @@ mod test {
         let input: StdResult<()> = contract_err("sample error");
         assert_eq!(
             to_api_result(input),
-            ApiResult::Err(ApiError::ContractErr {
+            ApiResult::Err(ApiError::DynContractErr {
                 msg: "sample error".to_string()
             })
         );
     }
 
     #[test]
-    fn contract_conversion() {
-        assert_conversion(contract_err("foobar"));
-    }
-
-    #[test]
     fn dyn_contract_conversion() {
-        assert_conversion(dyn_contract_err("dynamic".to_string()));
+        assert_conversion(dyn_contract_err("dynamic"));
     }
 
     #[test]

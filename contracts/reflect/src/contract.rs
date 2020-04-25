@@ -190,7 +190,7 @@ mod tests {
         };
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(StdError::ContractErr { msg, .. }) => {
+            Err(StdError::DynContractErr { msg, .. }) => {
                 assert_eq!(msg, "Must reflect at least one message")
             }
             _ => panic!("Must return contract error"),

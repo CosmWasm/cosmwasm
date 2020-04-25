@@ -11,12 +11,6 @@ use snafu::Snafu;
 #[serde(rename_all = "snake_case")]
 pub enum StdError {
     #[snafu(display("Contract error: {}", msg))]
-    ContractErr {
-        msg: &'static str,
-        #[serde(skip)]
-        backtrace: Option<snafu::Backtrace>,
-    },
-    #[snafu(display("Contract error: {}", msg))]
     DynContractErr {
         msg: String,
         #[serde(skip)]
@@ -95,12 +89,13 @@ pub fn invalid<T>(field: &'static str, msg: &'static str) -> StdResult<T> {
     ValidationErr { field, msg }.fail()
 }
 
+/// Deprecated, use dyn_contract_err
 pub fn contract_err<T>(msg: &'static str) -> StdResult<T> {
-    ContractErr { msg }.fail()
+    dyn_contract_err(msg)
 }
 
-pub fn dyn_contract_err<T>(msg: String) -> StdResult<T> {
-    DynContractErr { msg }.fail()
+pub fn dyn_contract_err<T, S: Into<String>>(msg: S) -> StdResult<T> {
+    DynContractErr { msg: msg.into() }.fail()
 }
 
 pub fn underflow<T, U: ToString>(minuend: U, subtrahend: U) -> StdResult<T> {
@@ -163,7 +158,7 @@ mod test {
     fn contract_helper() {
         let e: StdResult<()> = contract_err("not implemented");
         match e {
-            Err(StdError::ContractErr { msg, .. }) => {
+            Err(StdError::DynContractErr { msg, .. }) => {
                 assert_eq!(msg, "not implemented");
             }
             Err(e) => panic!("unexpected error, {:?}", e),
@@ -171,17 +166,26 @@ mod test {
         }
     }
 
-    #[test]
     // example of reporting contract errors with format!
-    fn dyn_contract_helper() {
+    #[test]
+    fn dyn_contract_err_owned() {
         let guess = 7;
-        let e: StdResult<()> = dyn_contract_err(format!("{} is too low", guess));
-        match e {
-            Err(StdError::DynContractErr { msg, .. }) => {
+        let res: StdResult<()> = dyn_contract_err(format!("{} is too low", guess));
+        match res.unwrap_err() {
+            StdError::DynContractErr { msg, .. } => {
                 assert_eq!(msg, String::from("7 is too low"));
             }
-            Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("dyn_contract_err must return error"),
+            e => panic!("unexpected error, {:?}", e),
+        }
+    }
+
+    // example of reporting static contract errors
+    #[test]
+    fn dyn_contract_err_ref() {
+        let res: StdResult<()> = dyn_contract_err("not implemented");
+        match res.unwrap_err() {
+            StdError::DynContractErr { msg, .. } => assert_eq!(msg, "not implemented"),
+            e => panic!("unexpected error, {:?}", e),
         }
     }
 

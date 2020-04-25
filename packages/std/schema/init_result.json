@@ -32,25 +32,6 @@
         {
           "type": "object",
           "required": [
-            "contract_err"
-          ],
-          "properties": {
-            "contract_err": {
-              "type": "object",
-              "required": [
-                "msg"
-              ],
-              "properties": {
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
             "dyn_contract_err"
           ],
           "properties": {
