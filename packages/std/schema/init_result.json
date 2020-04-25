@@ -195,29 +195,6 @@
               }
             }
           }
-        },
-        {
-          "type": "object",
-          "required": [
-            "validation_err"
-          ],
-          "properties": {
-            "validation_err": {
-              "type": "object",
-              "required": [
-                "field",
-                "msg"
-              ],
-              "properties": {
-                "field": {
-                  "type": "string"
-                },
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          }
         }
       ]
     },

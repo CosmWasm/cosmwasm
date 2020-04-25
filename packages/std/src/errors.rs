@@ -69,13 +69,6 @@ pub enum StdError {
         #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
-    #[snafu(display("Invalid {}: {}", field, msg))]
-    ValidationErr {
-        field: &'static str,
-        msg: &'static str,
-        #[serde(skip)]
-        backtrace: Option<snafu::Backtrace>,
-    },
 }
 
 /// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
@@ -84,10 +77,6 @@ pub enum StdError {
 /// The prefix "Std" means "the standard result within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
 pub type StdResult<T> = core::result::Result<T, StdError>;
-
-pub fn invalid<T>(field: &'static str, msg: &'static str) -> StdResult<T> {
-    ValidationErr { field, msg }.fail()
-}
 
 pub fn dyn_contract_err<T, S: Into<String>>(msg: S) -> StdResult<T> {
     DynContractErr { msg: msg.into() }.fail()
@@ -133,19 +122,6 @@ mod test {
             }
             _ => panic!("invalid type"),
         };
-    }
-
-    #[test]
-    fn use_invalid() {
-        let e: StdResult<()> = invalid("demo", "not implemented");
-        match e {
-            Err(StdError::ValidationErr { field, msg, .. }) => {
-                assert_eq!(field, "demo");
-                assert_eq!(msg, "not implemented");
-            }
-            Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("invalid must return error"),
-        }
     }
 
     // example of reporting contract errors with format!

@@ -37,7 +37,6 @@ pub enum ApiError {
     SerializeErr { source: String, msg: String },
     Unauthorized {},
     Underflow { minuend: String, subtrahend: String },
-    ValidationErr { field: String, msg: String },
 }
 
 impl std::error::Error for ApiError {}
@@ -63,7 +62,6 @@ impl std::fmt::Display for ApiError {
                 minuend,
                 subtrahend,
             } => write!(f, "Cannot subtract {} from {}", subtrahend, minuend),
-            ApiError::ValidationErr { field, msg } => write!(f, "Invalid {}: {}", field, msg),
         }
     }
 }
@@ -88,10 +86,6 @@ impl From<StdError> for ApiError {
             } => ApiError::Underflow {
                 minuend,
                 subtrahend,
-            },
-            StdError::ValidationErr { field, msg, .. } => ApiError::ValidationErr {
-                field: field.to_string(),
-                msg: msg.to_string(),
             },
         }
     }
@@ -134,8 +128,8 @@ pub type SystemResult<T> = Result<T, SystemError>;
 mod test {
     use super::*;
     use crate::errors::{
-        dyn_contract_err, invalid, unauthorized, InvalidBase64, NotFound, NullPointer,
-        SerializeErr, StdResult,
+        dyn_contract_err, unauthorized, InvalidBase64, NotFound, NullPointer, SerializeErr,
+        StdResult,
     };
     use crate::serde::{from_slice, to_vec};
 
@@ -178,11 +172,6 @@ mod test {
             }
             .fail(),
         );
-    }
-
-    #[test]
-    fn invalid_conversion() {
-        assert_conversion(invalid("name", "too short"));
     }
 
     #[test]
