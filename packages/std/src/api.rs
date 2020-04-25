@@ -134,8 +134,8 @@ pub type SystemResult<T> = Result<T, SystemError>;
 mod test {
     use super::*;
     use crate::errors::{
-        contract_err, dyn_contract_err, invalid, unauthorized, InvalidBase64, NotFound,
-        NullPointer, SerializeErr, StdResult,
+        dyn_contract_err, invalid, unauthorized, InvalidBase64, NotFound, NullPointer,
+        SerializeErr, StdResult,
     };
     use crate::serde::{from_slice, to_vec};
 
@@ -156,7 +156,7 @@ mod test {
 
     #[test]
     fn to_api_result_works_for_err() {
-        let input: StdResult<()> = contract_err("sample error");
+        let input: StdResult<()> = dyn_contract_err("sample error");
         assert_eq!(
             to_api_result(input),
             ApiResult::Err(ApiError::DynContractErr {

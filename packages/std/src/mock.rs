@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::api::SystemError;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{contract_err, InvalidUtf8, StdResult};
+use crate::errors::{dyn_contract_err, InvalidUtf8, StdResult};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -67,10 +67,10 @@ impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return contract_err("Invalid input: human address too short");
+            return dyn_contract_err("Invalid input: human address too short");
         }
         if human.len() > self.canonical_length {
-            return contract_err("Invalid input: human address too long");
+            return dyn_contract_err("Invalid input: human address too long");
         }
 
         let mut out = Vec::from(human.as_str());
@@ -83,7 +83,7 @@ impl Api for MockApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
-            return contract_err("Invalid input: canonical address length not correct");
+            return dyn_contract_err("Invalid input: canonical address length not correct");
         }
 
         // remove trailing 0's (TODO: fix this - but fine for first tests)

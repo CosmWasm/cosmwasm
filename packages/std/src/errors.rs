@@ -89,11 +89,6 @@ pub fn invalid<T>(field: &'static str, msg: &'static str) -> StdResult<T> {
     ValidationErr { field, msg }.fail()
 }
 
-/// Deprecated, use dyn_contract_err
-pub fn contract_err<T>(msg: &'static str) -> StdResult<T> {
-    dyn_contract_err(msg)
-}
-
 pub fn dyn_contract_err<T, S: Into<String>>(msg: S) -> StdResult<T> {
     DynContractErr { msg: msg.into() }.fail()
 }
@@ -150,19 +145,6 @@ mod test {
             }
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("invalid must return error"),
-        }
-    }
-
-    #[test]
-    // example of reporting static contract errors
-    fn contract_helper() {
-        let e: StdResult<()> = contract_err("not implemented");
-        match e {
-            Err(StdError::DynContractErr { msg, .. }) => {
-                assert_eq!(msg, "not implemented");
-            }
-            Err(e) => panic!("unexpected error, {:?}", e),
-            Ok(_) => panic!("contract_err must return error"),
         }
     }
 

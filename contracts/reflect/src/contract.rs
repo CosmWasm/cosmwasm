@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
+    dyn_contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
     HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
@@ -43,7 +43,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
         return unauthorized();
     }
     if msgs.is_empty() {
-        return contract_err("Must reflect at least one message");
+        return dyn_contract_err("Must reflect at least one message");
     }
     let res = HandleResponse {
         messages: msgs,

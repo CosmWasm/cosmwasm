@@ -3,7 +3,7 @@ use std::vec::Vec;
 
 use crate::api::SystemError;
 use crate::encoding::Binary;
-use crate::errors::{contract_err, dyn_contract_err, StdResult};
+use crate::errors::{dyn_contract_err, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -67,7 +67,7 @@ impl ExternalStorage {
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1_000_001 {
-            return contract_err("Allocated memory too small to hold the database value for the given key. \
+            return dyn_contract_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
         } else if read == -1_001_001 {
             // key does not exist in external storage
