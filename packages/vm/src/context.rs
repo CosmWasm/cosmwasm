@@ -18,7 +18,6 @@ use cosmwasm_std::{
     QuerierResponse, QueryRequest, Storage,
 };
 
-#[cfg(feature = "iterator")]
 use crate::conversion::{to_i32, to_u32};
 use crate::errors::{Error, Result, UninitializedContextData, WasmerRuntimeErr};
 use crate::memory::{read_region, write_region};

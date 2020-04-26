@@ -25,7 +25,7 @@ use crate::errors::{ResolveErr, Result, WasmerErr, WasmerRuntimeErr};
 use crate::memory::{read_region, write_region};
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
-    wasmer_instance: wasmer_runtime_core::instance::Instance,
+    wasmer_instance: Box<wasmer_runtime_core::instance::Instance>,
     pub api: A,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
@@ -121,7 +121,14 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-        let instance_ptr = NonNull::from(&mut wasmer_instance);
+
+        // The pointer shenanigans below are sound because:
+        // 1. Boxing the wasmer instance gives it a constant address,
+        // 2. We never move out of this Box before we finish using this `Instance`
+        // 3. We provide the context a mut pointer to the wasmer context,
+        //    and we only use it when we actually have unique access to it.
+        let mut wasmer_instance = Box::new(wasmer_instance);
+        let instance_ptr = NonNull::from(&mut *wasmer_instance);
         set_wasmer_instance::<S, Q>(wasmer_instance.context(), instance_ptr);
         move_from_context(wasmer_instance.context(), deps.storage, deps.querier);
         Instance {
@@ -146,7 +153,7 @@ where
         } else {
             None
         };
-        (instance.wasmer_instance, ext)
+        (*instance.wasmer_instance, ext)
     }
 
     /// Returns the currently remaining gas
