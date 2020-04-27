@@ -124,6 +124,20 @@ mod test {
         };
     }
 
+    /// How can this work?
+    #[test]
+    fn can_deserialize_static_field() {
+        let error: StdError =
+            from_slice(br#"{"not_found":{"kind":"I don't exist as static str"}}"#).unwrap();
+        match error {
+            StdError::NotFound { kind, backtrace } => {
+                assert!(kind.starts_with("I don't exist as"));
+                assert!(backtrace.is_none());
+            }
+            _ => panic!("invalid type"),
+        };
+    }
+
     // example of reporting contract errors with format!
     #[test]
     fn dyn_contract_err_owned() {
