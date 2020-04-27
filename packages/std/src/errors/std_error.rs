@@ -251,8 +251,7 @@ mod test {
         assert_ne!(error1, error2);
     }
 
-    fn assert_conversion(r: StdResult<()>) {
-        let original = r.unwrap_err();
+    fn assert_conversion(original: StdError) {
         let seralized = to_vec(&original).unwrap();
         let restored: StdError = from_slice(&seralized).unwrap();
         assert_eq!(restored, original);
@@ -260,7 +259,7 @@ mod test {
 
     #[test]
     fn generic_err_conversion() {
-        assert_conversion(GenericErr { msg: "something" }.fail());
+        assert_conversion(GenericErr { msg: "something" }.build());
     }
 
     #[test]
@@ -269,28 +268,28 @@ mod test {
             InvalidBase64 {
                 msg: "invalid length".to_string(),
             }
-            .fail(),
+            .build(),
         );
     }
 
     #[test]
     fn unauthorized_conversion() {
-        assert_conversion(Unauthorized {}.fail());
+        assert_conversion(Unauthorized {}.build());
     }
 
     #[test]
     fn null_pointer_conversion() {
-        assert_conversion(NullPointer {}.fail());
+        assert_conversion(NullPointer {}.build());
     }
 
     #[test]
     fn not_found_conversion() {
-        assert_conversion(NotFound { kind: "State" }.fail());
+        assert_conversion(NotFound { kind: "State" }.build());
     }
 
     #[test]
     fn parse_err_conversion() {
-        let err = from_slice::<String>(b"123").map(|_| ());
+        let err = from_slice::<String>(b"123").unwrap_err();
         assert_conversion(err);
     }
 
@@ -301,7 +300,7 @@ mod test {
                 source: "Person",
                 msg: "buffer is full",
             }
-            .fail(),
+            .build(),
         );
     }
 }
