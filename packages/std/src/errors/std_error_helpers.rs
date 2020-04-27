@@ -56,7 +56,7 @@ mod test {
                 assert_eq!(minuend, "123");
                 assert_eq!(subtrahend, "456");
             }
-            _ => panic!("expect underflow error"),
+            _ => panic!("expect different error"),
         }
     }
 
@@ -72,7 +72,7 @@ mod test {
                 assert_eq!(minuend, "777");
                 assert_eq!(subtrahend, "1234");
             }
-            _ => panic!("expect underflow error"),
+            _ => panic!("expect different error"),
         }
     }
 
@@ -81,7 +81,7 @@ mod test {
         let error: StdError = unauthorized();
         match error {
             StdError::Unauthorized { .. } => {}
-            _ => panic!("expect underflow error"),
+            _ => panic!("expect different error"),
         }
     }
 }
