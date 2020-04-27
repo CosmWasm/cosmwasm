@@ -77,8 +77,11 @@
   from `Error` into serializable `ApiError` (dropping runtime info), and back
   and forth between `Result` and `ApiResult` (with the same serializable error
   types).
-- Add `Querier` trait and `QueryRequest` for future query callbacks from the
-  contract, along with `SystemError` type for the runtime rejecting messages.
+- Add `Querier` trait and `QueryRequest` for query callbacks from the contract,
+  along with `SystemError` type for the runtime rejecting messages.
+- `QueryRequest` takes a generic `Custom(T)` type that is passed opaquely to the
+  end consumer (`wasmd` or integration test stubs), allowing custom queries to
+  native code.
 - `{Init,Handle,Query}Result` are now just aliases for a concrete `ApiResult`
   type.
 - Support results up to 128 KiB in `ExternalStorage.get`.
@@ -99,6 +102,7 @@
   `cosmwasm-vm` and `go-cosmwasm` runtime.
 - Add `staking` feature flag to expose new `StakingMsg` types under `CosmosMsg`
   and new `StakingRequest` types under `QueryRequest`.
+- Add support for mocking-out staking queries via `MockQuerier.with_staking`
 
 **cosmwasm-vm**
 
