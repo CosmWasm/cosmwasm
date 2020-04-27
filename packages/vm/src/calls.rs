@@ -3,8 +3,8 @@ use snafu::ResultExt;
 use std::fmt;
 
 use cosmwasm_std::{
-    Api, ApiError, Env, HandleResponse, HandleResult, InitResponse, InitResult, Querier,
-    QueryResponse, QueryResult, Storage,
+    Api, Env, HandleResponse, HandleResult, InitResponse, InitResult, Querier, QueryResponse,
+    QueryResult, StdResult, Storage,
 };
 
 use crate::errors::{RuntimeErr, VmResult, WasmerRuntimeErr};
@@ -20,7 +20,7 @@ pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<Result<InitResponse<U>, ApiError>>
+) -> VmResult<StdResult<InitResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -37,7 +37,7 @@ pub fn call_handle<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<Result<HandleResponse<U>, ApiError>>
+) -> VmResult<StdResult<HandleResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -53,7 +53,7 @@ where
 pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
-) -> VmResult<Result<QueryResponse, ApiError>> {
+) -> VmResult<StdResult<QueryResponse>> {
     let data = call_query_raw(instance, msg)?;
     let result: QueryResult = from_slice(&data)?;
 

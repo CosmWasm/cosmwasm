@@ -2,14 +2,14 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::api::ApiResult;
 use crate::coins::Coin;
 use crate::encoding::Binary;
+use crate::errors::StdResult;
 use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
 
-pub type QueryResult = ApiResult<QueryResponse>;
+pub type QueryResult = StdResult<QueryResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -44,7 +44,7 @@ pub enum WasmQuery {
         msg: Binary,
     },
     /// this queries the raw kv-store of the contract.
-    /// returns the raw, unparsed data stored at that key (or `Ok(Err(ApiError:NotFound{}))` if missing)
+    /// returns the raw, unparsed data stored at that key (or `Ok(Err(StdError:NotFound{}))` if missing)
     Raw {
         contract_addr: HumanAddr,
         /// Key is the raw key used in the contracts Storage

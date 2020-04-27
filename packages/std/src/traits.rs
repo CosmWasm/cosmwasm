@@ -1,6 +1,6 @@
 use serde::de::DeserializeOwned;
 
-use crate::api::{ApiResult, SystemResult};
+use crate::api::SystemResult;
 use crate::encoding::Binary;
 use crate::errors::{dyn_contract_err, StdResult};
 #[cfg(feature = "iterator")]
@@ -83,7 +83,7 @@ pub trait Api: Copy + Clone + Send {
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
-pub type QuerierResult = SystemResult<ApiResult<Binary>>;
+pub type QuerierResult = SystemResult<StdResult<Binary>>;
 
 pub trait Querier: Clone + Send {
     /// raw_query is all that must be implemented for the Querier.

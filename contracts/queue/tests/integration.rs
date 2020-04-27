@@ -16,7 +16,7 @@
 //!          //...
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-//! 5. When matching on error codes, you can not use Error types, but rather corresponding ApiError variants.
+//! 5. When matching on error codes, you can not use Error types, but rather corresponding StdError variants.
 //!    Note that you don't have backtrace field and can often skip the .. filler:
 //!      match res.unwrap_err() {
 //!          Error::Unauthorized { .. } => {}
@@ -24,7 +24,7 @@
 //!      }
 //!    becomes:
 //!      match res.unwrap_err() {
-//!          ApiError::Unauthorized { .. } => {}
+//!          StdError::Unauthorized { .. } => {}
 //!          _ => panic!("Must return unauthorized error"),
 //!      }
 

@@ -4,9 +4,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::api::ApiResult;
 use crate::coins::Coin;
 use crate::encoding::Binary;
+use crate::errors::StdResult;
 use crate::types::{HumanAddr, Never};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -128,7 +128,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type InitResult<U = Never> = ApiResult<InitResponse<U>>;
+pub type InitResult<U = Never> = StdResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -154,7 +154,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type HandleResult<U = Never> = ApiResult<HandleResponse<U>>;
+pub type HandleResult<U = Never> = StdResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where

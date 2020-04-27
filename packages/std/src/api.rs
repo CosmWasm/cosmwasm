@@ -1,17 +1,11 @@
-/// This maintains types needed for a public API
-/// In particular managing serializing and deserializing errors through API boundaries
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::errors::StdError;
 use crate::HumanAddr;
-
-pub type ApiError = StdError;
-pub type ApiResult<T> = Result<T, ApiError>;
 
 /// SystemError is used for errors inside the VM and is API frindly (i.e. serializable).
 ///
-/// This is used on return values for Querier as a nested result: Result<ApiResult<T>, SystemError>
+/// This is used on return values for Querier as a nested result: Result<StdResult<T>, SystemError>
 /// The first wrap (SystemError) will trigger if the contract address doesn't exist,
 /// the QueryRequest is malformated, etc. The second wrap will be an error message from
 /// the contract itself.
@@ -41,69 +35,3 @@ impl std::fmt::Display for SystemError {
 }
 
 pub type SystemResult<T> = Result<T, SystemError>;
-
-#[cfg(test)]
-mod test {
-    use super::*;
-    use crate::errors::{
-        dyn_contract_err, unauthorized, InvalidBase64, NotFound, NullPointer, SerializeErr,
-        StdResult,
-    };
-    use crate::serde::{from_slice, to_vec};
-
-    fn assert_conversion(r: StdResult<()>) {
-        let error = r.unwrap_err();
-        let msg = format!("{}", error);
-        let converted: ApiError = error.into();
-        assert_eq!(msg, format!("{}", converted));
-        let round_trip: ApiError = from_slice(&to_vec(&converted).unwrap()).unwrap();
-        assert_eq!(round_trip, converted);
-    }
-
-    #[test]
-    fn dyn_contract_conversion() {
-        assert_conversion(dyn_contract_err("dynamic"));
-    }
-
-    #[test]
-    fn invalid_base64_conversion() {
-        assert_conversion(
-            InvalidBase64 {
-                msg: "invalid length".to_string(),
-            }
-            .fail(),
-        );
-    }
-
-    #[test]
-    fn unauthorized_conversion() {
-        assert_conversion(unauthorized());
-    }
-
-    #[test]
-    fn null_pointer_conversion() {
-        assert_conversion(NullPointer {}.fail());
-    }
-
-    #[test]
-    fn not_found_conversion() {
-        assert_conversion(NotFound { kind: "State" }.fail());
-    }
-
-    #[test]
-    fn parse_err_conversion() {
-        let err = from_slice::<String>(b"123").map(|_| ());
-        assert_conversion(err);
-    }
-
-    #[test]
-    fn serialize_err_conversion() {
-        assert_conversion(
-            SerializeErr {
-                source: "Person",
-                msg: "buffer is full",
-            }
-            .fail(),
-        );
-    }
-}

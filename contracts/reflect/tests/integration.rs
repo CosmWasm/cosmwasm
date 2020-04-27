@@ -1,7 +1,7 @@
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HandleResult,
-    HumanAddr, InitResponse, StakingMsg,
+    coin, coins, from_binary, Api, BankMsg, Binary, HandleResponse, HandleResult, HumanAddr,
+    InitResponse, StakingMsg, StdError,
 };
 
 use cosmwasm_vm::testing::{handle, init, mock_instance, query};
@@ -125,7 +125,7 @@ fn reflect_requires_owner() {
 
     let res: HandleResult<CustomMsg> = handle(&mut deps, env, msg);
     match res {
-        Err(ApiError::Unauthorized { .. }) => {}
+        Err(StdError::Unauthorized { .. }) => {}
         _ => panic!("Must return unauthorized error"),
     }
 }
@@ -168,7 +168,7 @@ fn transfer_requires_owner() {
 
     let res: HandleResult = handle(&mut deps, env, msg);
     match res {
-        Err(ApiError::Unauthorized { .. }) => {}
+        Err(StdError::Unauthorized { .. }) => {}
         _ => panic!("Must return unauthorized error"),
     }
 }

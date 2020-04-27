@@ -9,7 +9,7 @@ use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_std::{
-    to_vec, Api, ApiError, Coin, Env, HandleResult, HumanAddr, InitResult, Querier, QueryResponse,
+    to_vec, Api, Coin, Env, HandleResult, HumanAddr, InitResult, Querier, QueryResponse, StdResult,
     Storage,
 };
 
@@ -99,7 +99,7 @@ pub fn query<
 >(
     instance: &mut Instance<S, A, Q>,
     msg: T,
-) -> Result<QueryResponse, ApiError> {
+) -> StdResult<QueryResponse> {
     match to_vec(&msg) {
         Err(e) => Err(e),
         Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),

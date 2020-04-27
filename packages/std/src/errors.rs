@@ -269,6 +269,62 @@ mod test {
         assert_ne!(error1, error2);
     }
 
+    fn assert_conversion(r: StdResult<()>) {
+        let error = r.unwrap_err();
+        let msg = format!("{}", error);
+        let converted: StdError = error.into();
+        assert_eq!(msg, format!("{}", converted));
+        let round_trip: StdError = from_slice(&to_vec(&converted).unwrap()).unwrap();
+        assert_eq!(round_trip, converted);
+    }
+
+    #[test]
+    fn dyn_contract_conversion() {
+        assert_conversion(dyn_contract_err("dynamic"));
+    }
+
+    #[test]
+    fn invalid_base64_conversion() {
+        assert_conversion(
+            InvalidBase64 {
+                msg: "invalid length".to_string(),
+            }
+            .fail(),
+        );
+    }
+
+    #[test]
+    fn unauthorized_conversion() {
+        assert_conversion(unauthorized());
+    }
+
+    #[test]
+    fn null_pointer_conversion() {
+        assert_conversion(NullPointer {}.fail());
+    }
+
+    #[test]
+    fn not_found_conversion() {
+        assert_conversion(NotFound { kind: "State" }.fail());
+    }
+
+    #[test]
+    fn parse_err_conversion() {
+        let err = from_slice::<String>(b"123").map(|_| ());
+        assert_conversion(err);
+    }
+
+    #[test]
+    fn serialize_err_conversion() {
+        assert_conversion(
+            SerializeErr {
+                source: "Person",
+                msg: "buffer is full",
+            }
+            .fail(),
+        );
+    }
+
     // example of reporting contract errors with format!
     #[test]
     fn dyn_contract_err_owned() {
