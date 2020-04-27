@@ -29,7 +29,7 @@ impl Querier for CustomQuerier {
             }
         };
         if let QueryRequest::Custom(custom_query) = &request {
-            Ok(execute(&custom_query).map_err(|e| e.into()))
+            Ok(execute(&custom_query))
         } else {
             self.base.handle_query(&request)
         }

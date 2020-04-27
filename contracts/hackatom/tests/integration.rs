@@ -24,7 +24,7 @@
 //!      }
 //!    becomes:
 //!      match res.unwrap_err() {
-//!          ApiError::Unauthorized {} => {}
+//!          ApiError::Unauthorized { .. } => {}
 //!          _ => panic!("Must return unauthorized error"),
 //!      }
 
@@ -192,7 +192,7 @@ fn failed_handle() {
     let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
     let handle_res: HandleResult = handle(&mut deps, handle_env, HandleMsg::Release {});
     match handle_res.unwrap_err() {
-        ApiError::Unauthorized {} => {}
+        ApiError::Unauthorized { .. } => {}
         _ => panic!("Expect unauthorized error"),
     }
 

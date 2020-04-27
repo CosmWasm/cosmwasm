@@ -235,14 +235,14 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                Ok(to_binary(&bank_res).map_err(|e| e.into()))
+                Ok(to_binary(&bank_res))
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                Ok(to_binary(&bank_res).map_err(|e| e.into()))
+                Ok(to_binary(&bank_res))
             }
         }
     }
@@ -276,7 +276,7 @@ mod staking {
                     let val_res = ValidatorsResponse {
                         validators: self.validators.clone(),
                     };
-                    Ok(to_binary(&val_res).map_err(|e| e.into()))
+                    Ok(to_binary(&val_res))
                 }
                 StakingQuery::Delegations {
                     delegator,
@@ -293,7 +293,7 @@ mod staking {
                     let delegations: Vec<_> =
                         self.delegations.iter().filter(matches).cloned().collect();
                     let val_res = DelegationsResponse { delegations };
-                    Ok(to_binary(&val_res).map_err(|e| e.into()))
+                    Ok(to_binary(&val_res))
                 }
             }
         }

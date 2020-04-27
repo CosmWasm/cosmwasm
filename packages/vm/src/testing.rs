@@ -63,7 +63,7 @@ pub fn init<
     msg: T,
 ) -> InitResult<U> {
     match to_vec(&msg) {
-        Err(e) => Err(e.into()),
+        Err(e) => Err(e),
         Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
     }
 }
@@ -83,7 +83,7 @@ pub fn handle<
     msg: T,
 ) -> HandleResult<U> {
     match to_vec(&msg) {
-        Err(e) => Err(e.into()),
+        Err(e) => Err(e),
         Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),
     }
 }
@@ -101,7 +101,7 @@ pub fn query<
     msg: T,
 ) -> Result<QueryResponse, ApiError> {
     match to_vec(&msg) {
-        Err(e) => Err(e.into()),
+        Err(e) => Err(e),
         Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),
     }
 }

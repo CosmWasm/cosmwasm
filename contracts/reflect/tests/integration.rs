@@ -125,7 +125,7 @@ fn reflect_requires_owner() {
 
     let res: HandleResult<CustomMsg> = handle(&mut deps, env, msg);
     match res {
-        Err(ApiError::Unauthorized {}) => {}
+        Err(ApiError::Unauthorized { .. }) => {}
         _ => panic!("Must return unauthorized error"),
     }
 }
@@ -168,7 +168,7 @@ fn transfer_requires_owner() {
 
     let res: HandleResult = handle(&mut deps, env, msg);
     match res {
-        Err(ApiError::Unauthorized {}) => {}
+        Err(ApiError::Unauthorized { .. }) => {}
         _ => panic!("Must return unauthorized error"),
     }
 }

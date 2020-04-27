@@ -20,14 +20,18 @@
       ],
       "properties": {
         "Err": {
-          "$ref": "#/definitions/ApiError"
+          "$ref": "#/definitions/StdError"
         }
       }
     }
   ],
   "definitions": {
-    "ApiError": {
-      "description": "ApiError is a \"converted\" Error that can be serialized and deserialized. It can be created via `error.into()` This will not contain all information of the original (source error and backtrace cannot be serialized), but we ensure the following: 1. An ApiError will have the same type as the original Error 2. An ApiError will have the same display as the original 3. Serializing and deserializing an ApiError will give you an identical struct\n\nRather than use Display to pass Errors over API/FFI boundaries, we can use ApiError and provide much more context to the client.",
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "StdError": {
+      "description": "Structured error type for init, handle and query. This cannot be serialized to JSON, such that it is only available within the contract and its unit tests.\n\nThe prefix \"Std\" means \"the standard error within the standard library\". This is not the only result/error type in cosmwasm-std.",
       "anyOf": [
         {
           "type": "object",
@@ -68,6 +72,7 @@
           }
         },
         {
+          "description": "Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.",
           "type": "object",
           "required": [
             "invalid_utf8"
@@ -133,6 +138,7 @@
                   "type": "string"
                 },
                 "target": {
+                  "description": "the target type that was attempted",
                   "type": "string"
                 }
               }
@@ -156,6 +162,7 @@
                   "type": "string"
                 },
                 "source": {
+                  "description": "the source type that was attempted",
                   "type": "string"
                 }
               }
@@ -197,10 +204,6 @@
           }
         }
       ]
-    },
-    "Binary": {
-      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
-      "type": "string"
     }
   }
 }

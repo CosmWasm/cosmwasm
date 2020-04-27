@@ -6,88 +6,8 @@ use serde::{Deserialize, Serialize};
 use crate::errors::StdError;
 use crate::HumanAddr;
 
+pub type ApiError = StdError;
 pub type ApiResult<T> = Result<T, ApiError>;
-
-/// We neither "own" StdResult nor ApiResult, since those are just aliases to the external
-/// std::result::Result. For this reason, we cannot add trait implementations like Into or From.
-/// But we can achive all we need from outside interfaces of StdResult and ApiResult.
-pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
-    result.map_err(|std_err| std_err.into())
-}
-
-/// ApiError is a "converted" Error that can be serialized and deserialized.
-/// It can be created via `error.into()`
-/// This will not contain all information of the original (source error and backtrace cannot be serialized),
-/// but we ensure the following:
-/// 1. An ApiError will have the same type as the original Error
-/// 2. An ApiError will have the same display as the original
-/// 3. Serializing and deserializing an ApiError will give you an identical struct
-///
-/// Rather than use Display to pass Errors over API/FFI boundaries, we can use ApiError
-/// and provide much more context to the client.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ApiError {
-    DynContractErr { msg: String },
-    InvalidBase64 { msg: String },
-    InvalidUtf8 { msg: String },
-    NotFound { kind: String },
-    NullPointer {},
-    ParseErr { target: String, msg: String },
-    SerializeErr { source: String, msg: String },
-    Unauthorized {},
-    Underflow { minuend: String, subtrahend: String },
-}
-
-impl std::error::Error for ApiError {}
-
-impl std::fmt::Display for ApiError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ApiError::DynContractErr { msg } => write!(f, "Contract error: {}", msg),
-            ApiError::InvalidBase64 { msg } => write!(f, "Invalid Base64 string: {}", msg),
-            ApiError::InvalidUtf8 { msg } => {
-                write!(f, "Cannot decode UTF8 bytes into string: {}", msg)
-            }
-            ApiError::NotFound { kind } => write!(f, "{} not found", kind),
-            ApiError::NullPointer {} => write!(f, "Received null pointer, refuse to use"),
-            ApiError::ParseErr { target, msg } => {
-                write!(f, "Error parsing into type {}: {}", target, msg)
-            }
-            ApiError::SerializeErr { source, msg } => {
-                write!(f, "Error serializing type {}: {}", source, msg)
-            }
-            ApiError::Unauthorized {} => write!(f, "Unauthorized"),
-            ApiError::Underflow {
-                minuend,
-                subtrahend,
-            } => write!(f, "Cannot subtract {} from {}", subtrahend, minuend),
-        }
-    }
-}
-
-impl From<StdError> for ApiError {
-    fn from(value: StdError) -> Self {
-        match value {
-            StdError::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
-            StdError::InvalidBase64 { msg, .. } => ApiError::InvalidBase64 { msg },
-            StdError::InvalidUtf8 { msg, .. } => ApiError::InvalidUtf8 { msg },
-            StdError::NotFound { kind, .. } => ApiError::NotFound { kind },
-            StdError::NullPointer { .. } => ApiError::NullPointer {},
-            StdError::ParseErr { target, msg, .. } => ApiError::ParseErr { target, msg },
-            StdError::SerializeErr { source, msg, .. } => ApiError::SerializeErr { source, msg },
-            StdError::Unauthorized { .. } => ApiError::Unauthorized {},
-            StdError::Underflow {
-                minuend,
-                subtrahend,
-                ..
-            } => ApiError::Underflow {
-                minuend,
-                subtrahend,
-            },
-        }
-    }
-}
 
 /// SystemError is used for errors inside the VM and is API frindly (i.e. serializable).
 ///
@@ -138,23 +58,6 @@ mod test {
         assert_eq!(msg, format!("{}", converted));
         let round_trip: ApiError = from_slice(&to_vec(&converted).unwrap()).unwrap();
         assert_eq!(round_trip, converted);
-    }
-
-    #[test]
-    fn to_api_result_works_for_ok() {
-        let input: StdResult<Vec<u8>> = Ok(b"foo".to_vec());
-        assert_eq!(to_api_result(input), ApiResult::Ok(b"foo".to_vec()));
-    }
-
-    #[test]
-    fn to_api_result_works_for_err() {
-        let input: StdResult<()> = dyn_contract_err("sample error");
-        assert_eq!(
-            to_api_result(input),
-            ApiResult::Err(ApiError::DynContractErr {
-                msg: "sample error".to_string()
-            })
-        );
     }
 
     #[test]

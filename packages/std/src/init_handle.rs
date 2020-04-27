@@ -172,12 +172,12 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::api::ApiError;
+    use crate::errors::StdError;
     use crate::{coins, from_slice, to_vec};
 
     #[test]
     fn can_deser_error_result() {
-        let fail = InitResult::Err(ApiError::Unauthorized {});
+        let fail = InitResult::Err(StdError::Unauthorized { backtrace: None });
         let bin = to_vec(&fail).expect("encode contract result");
         println!("error: {}", std::str::from_utf8(&bin).unwrap());
         let back: InitResult = from_slice(&bin).expect("decode contract result");

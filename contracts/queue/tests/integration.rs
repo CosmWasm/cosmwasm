@@ -24,7 +24,7 @@
 //!      }
 //!    becomes:
 //!      match res.unwrap_err() {
-//!          ApiError::Unauthorized {} => {}
+//!          ApiError::Unauthorized { .. } => {}
 //!          _ => panic!("Must return unauthorized error"),
 //!      }
 

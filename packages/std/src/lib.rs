@@ -13,7 +13,7 @@ mod storage;
 mod traits;
 mod types;
 
-pub use crate::api::{to_api_result, ApiError, ApiResult, SystemError, SystemResult};
+pub use crate::api::{ApiError, ApiResult, SystemError, SystemResult};
 pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
