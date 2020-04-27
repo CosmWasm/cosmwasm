@@ -419,7 +419,6 @@ dependencies = [
  "cosmwasm-vm 0.8.0-dev",
  "schemars 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.104 (registry+https://github.com/rust-lang/crates.io-index)",
- "snafu 0.6.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
