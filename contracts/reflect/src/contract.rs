@@ -40,10 +40,10 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse<CustomMsg>> {
     let state = config(&mut deps.storage).load()?;
     if env.message.sender != state.owner {
-        return unauthorized();
+        return Err(unauthorized());
     }
     if msgs.is_empty() {
-        return dyn_contract_err("Must reflect at least one message");
+        return Err(dyn_contract_err("Must reflect at least one message"));
     }
     let res = HandleResponse {
         messages: msgs,
@@ -61,7 +61,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
         if env.message.sender != state.owner {
-            return unauthorized();
+            return Err(unauthorized());
         }
         state.owner = api.canonical_address(&owner)?;
         Ok(state)

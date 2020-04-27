@@ -66,10 +66,10 @@ impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return dyn_contract_err("Invalid input: human address too short");
+            return Err(dyn_contract_err("Invalid input: human address too short"));
         }
         if human.len() > self.canonical_length {
-            return dyn_contract_err("Invalid input: human address too long");
+            return Err(dyn_contract_err("Invalid input: human address too long"));
         }
 
         let mut out = Vec::from(human.as_str());
@@ -82,7 +82,9 @@ impl Api for MockApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
-            return dyn_contract_err("Invalid input: canonical address length not correct");
+            return Err(dyn_contract_err(
+                "Invalid input: canonical address length not correct",
+            ));
         }
 
         // remove trailing 0's (TODO: fix this - but fine for first tests)

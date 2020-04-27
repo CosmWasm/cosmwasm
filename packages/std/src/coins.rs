@@ -60,7 +60,7 @@ impl TryFrom<&str> for Uint128 {
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => dyn_contract_err(format!("Parsing coin: {}", e)),
+            Err(e) => Err(dyn_contract_err(format!("Parsing coin: {}", e))),
         }
     }
 }
@@ -103,7 +103,7 @@ impl ops::Sub for Uint128 {
     fn sub(self, other: Self) -> StdResult<Self> {
         let (min, sub) = (self.u128(), other.u128());
         if sub > min {
-            underflow(min, sub)
+            Err(underflow(min, sub))
         } else {
             Ok(Uint128(min - sub))
         }

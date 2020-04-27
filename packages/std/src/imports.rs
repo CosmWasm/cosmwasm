@@ -66,13 +66,16 @@ impl ExternalStorage {
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1_000_001 {
-            return dyn_contract_err("Allocated memory too small to hold the database value for the given key. \
-                You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely.");
+            return Err(dyn_contract_err("Allocated memory too small to hold the database value for the given key. \
+                You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely."));
         } else if read == -1_001_001 {
             // key does not exist in external storage
             return Ok(None);
         } else if read < 0 {
-            return dyn_contract_err(format!("Error reading from database. Error code: {}", read));
+            return Err(dyn_contract_err(format!(
+                "Error reading from database. Error code: {}",
+                read
+            )));
         }
 
         let data = unsafe { consume_region(value_ptr) }?;
@@ -108,10 +111,10 @@ impl ReadonlyStorage for ExternalStorage {
 
         let scan_result = unsafe { db_scan(start_ptr, end_ptr, order) };
         if scan_result < 0 {
-            return dyn_contract_err(format!(
+            return Err(dyn_contract_err(format!(
                 "Error creating iterator (via db_scan). Error code: {}",
                 scan_result
-            ));
+            )));
         }
         let iter = ExternalIterator {
             iterator_id: scan_result as u32, // Cast is safe since we tested for negative values above
@@ -129,7 +132,10 @@ impl Storage for ExternalStorage {
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         let result = unsafe { db_write(key_ptr, value_ptr) };
         if result < 0 {
-            return dyn_contract_err(format!("Error writing to database. Error code: {}", result));
+            return Err(dyn_contract_err(format!(
+                "Error writing to database. Error code: {}",
+                result
+            )));
         }
         Ok(())
     }
@@ -140,10 +146,10 @@ impl Storage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
         let result = unsafe { db_remove(key_ptr) };
         if result < 0 {
-            return dyn_contract_err(format!(
+            return Err(dyn_contract_err(format!(
                 "Error deleting from database. Error code: {}",
                 result
-            ));
+            )));
         }
         Ok(())
     }
@@ -164,12 +170,13 @@ impl Iterator for ExternalIterator {
         let key_ptr = alloc(DB_READ_KEY_BUFFER_LENGTH);
         let value_ptr = alloc(DB_READ_VALUE_BUFFER_LENGTH);
 
-        let read = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
-        if read < 0 {
-            return Some(dyn_contract_err(format!(
+        let db_next_result = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
+        if db_next_result < 0 {
+            let result = Err(dyn_contract_err(format!(
                 "Unknown error from db_next: {}",
-                read
+                db_next_result
             )));
+            return Some(result);
         }
 
         let key = unsafe { consume_region(key_ptr).unwrap() };
@@ -199,7 +206,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
-            return dyn_contract_err("canonicalize_address returned error");
+            return Err(dyn_contract_err("canonicalize_address returned error"));
         }
 
         let out = unsafe { consume_region(canon)? };
@@ -213,7 +220,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
-            return dyn_contract_err("humanize_address returned error");
+            return Err(dyn_contract_err("humanize_address returned error"));
         }
 
         let out = unsafe { consume_region(human)? };

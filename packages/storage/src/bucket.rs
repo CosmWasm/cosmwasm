@@ -296,7 +296,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", &|_d| dyn_contract_err("cuz i feel like it"));
+        let output = bucket.update(b"maria", &|_d| Err(dyn_contract_err("cuz i feel like it")));
         assert!(output.is_err());
 
         // load it properly
@@ -317,7 +317,7 @@ mod test {
         // it's my birthday
         let output = bucket
             .update(b"maria", &|d| match d {
-                Some(_) => dyn_contract_err("Ensure this was empty"),
+                Some(_) => Err(dyn_contract_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })
             .unwrap();

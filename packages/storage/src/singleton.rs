@@ -202,7 +202,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| unauthorized());
+        let output = writer.update(&|_c| Err(unauthorized()));
         match output {
             Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Unexpected output: {:?}", output),

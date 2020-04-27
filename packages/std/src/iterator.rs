@@ -18,7 +18,7 @@ impl TryFrom<i32> for Order {
         match value {
             1 => Ok(Order::Ascending),
             2 => Ok(Order::Descending),
-            _ => dyn_contract_err("Order must be 1 or 2"),
+            _ => Err(dyn_contract_err("Order must be 1 or 2")),
         }
     }
 }

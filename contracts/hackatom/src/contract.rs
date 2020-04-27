@@ -118,7 +118,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         };
         Ok(res)
     } else {
-        unauthorized()
+        Err(unauthorized())
     }
 }
 
@@ -162,13 +162,13 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
         let pages = 1_600; // 100 MiB
         let ptr = wasm32::memory_grow(0, pages);
         if ptr == usize::max_value() {
-            return dyn_contract_err("Error in memory.grow instruction");
+            return Err(dyn_contract_err("Error in memory.grow instruction"));
         }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    dyn_contract_err("Unsupported architecture")
+    Err(dyn_contract_err("Unsupported architecture"))
 }
 
 fn do_panic() -> StdResult<HandleResponse> {

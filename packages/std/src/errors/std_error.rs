@@ -176,22 +176,6 @@ impl PartialEq for StdError {
 /// result/error type in cosmwasm-std.
 pub type StdResult<T> = core::result::Result<T, StdError>;
 
-pub fn dyn_contract_err<T, S: Into<String>>(msg: S) -> StdResult<T> {
-    DynContractErr { msg: msg.into() }.fail()
-}
-
-pub fn underflow<T, U: ToString>(minuend: U, subtrahend: U) -> StdResult<T> {
-    Underflow {
-        minuend: minuend.to_string(),
-        subtrahend: subtrahend.to_string(),
-    }
-    .fail()
-}
-
-pub fn unauthorized<T>() -> StdResult<T> {
-    Unauthorized {}.fail()
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -280,7 +264,7 @@ mod test {
 
     #[test]
     fn dyn_contract_conversion() {
-        assert_conversion(dyn_contract_err("dynamic"));
+        assert_conversion(DynContractErr { msg: "dynamic" }.fail());
     }
 
     #[test]
@@ -295,7 +279,7 @@ mod test {
 
     #[test]
     fn unauthorized_conversion() {
-        assert_conversion(unauthorized());
+        assert_conversion(Unauthorized {}.fail());
     }
 
     #[test]
@@ -323,57 +307,5 @@ mod test {
             }
             .fail(),
         );
-    }
-
-    // example of reporting contract errors with format!
-    #[test]
-    fn dyn_contract_err_owned() {
-        let guess = 7;
-        let res: StdResult<()> = dyn_contract_err(format!("{} is too low", guess));
-        match res.unwrap_err() {
-            StdError::DynContractErr { msg, .. } => {
-                assert_eq!(msg, String::from("7 is too low"));
-            }
-            e => panic!("unexpected error, {:?}", e),
-        }
-    }
-
-    // example of reporting static contract errors
-    #[test]
-    fn dyn_contract_err_ref() {
-        let res: StdResult<()> = dyn_contract_err("not implemented");
-        match res.unwrap_err() {
-            StdError::DynContractErr { msg, .. } => assert_eq!(msg, "not implemented"),
-            e => panic!("unexpected error, {:?}", e),
-        }
-    }
-
-    #[test]
-    fn use_underflow() {
-        let e: StdResult<()> = underflow(123u128, 456u128);
-        match e.unwrap_err() {
-            StdError::Underflow {
-                minuend,
-                subtrahend,
-                ..
-            } => {
-                assert_eq!(minuend, "123");
-                assert_eq!(subtrahend, "456");
-            }
-            _ => panic!("expect underflow error"),
-        }
-
-        let e: StdResult<()> = underflow(777i64, 1234i64);
-        match e.unwrap_err() {
-            StdError::Underflow {
-                minuend,
-                subtrahend,
-                ..
-            } => {
-                assert_eq!(minuend, "777");
-                assert_eq!(subtrahend, "1234");
-            }
-            _ => panic!("expect underflow error"),
-        }
     }
 }
