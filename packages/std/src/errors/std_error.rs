@@ -227,31 +227,27 @@ mod test {
 
     #[test]
     fn eq_works() {
-        let error1 = InvalidBase64 {
+        let error1 = StdError::InvalidBase64 {
             msg: "invalid length".to_string(),
-        }
-        .build();
-        let error2 = InvalidBase64 {
-            msg: "other bla".to_string(),
-        }
-        .build();
-
-        // Errors are only equal when bactrace is removed
-        let normalized1: StdError = from_slice(&to_vec(&error1).unwrap()).unwrap();
-        let normalized2: StdError = from_slice(&to_vec(&error2).unwrap()).unwrap();
-        assert_ne!(normalized1, normalized2);
+            backtrace: None,
+        };
+        let error2 = StdError::InvalidBase64 {
+            msg: "invalid length".to_string(),
+            backtrace: None,
+        };
+        assert_eq!(error1, error2);
     }
 
     #[test]
     fn ne_works() {
-        let error1 = InvalidBase64 {
+        let error1 = StdError::InvalidBase64 {
             msg: "invalid length".to_string(),
-        }
-        .build();
-        let error2 = InvalidBase64 {
+            backtrace: None,
+        };
+        let error2 = StdError::InvalidBase64 {
             msg: "other bla".to_string(),
-        }
-        .build();
+            backtrace: None,
+        };
         assert_ne!(error1, error2);
     }
 
