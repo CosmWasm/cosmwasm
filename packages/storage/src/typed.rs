@@ -143,7 +143,7 @@ where
 mod test {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
-    use cosmwasm_std::{dyn_contract_err, not_found};
+    use cosmwasm_std::{generic_err, not_found};
     use serde::{Deserialize, Serialize};
 
     use crate::prefixed;
@@ -259,7 +259,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", &|_d| Err(dyn_contract_err("cuz i feel like it")));
+        let output = bucket.update(b"maria", &|_d| Err(generic_err("cuz i feel like it")));
         assert!(output.is_err());
 
         // load it properly
@@ -280,7 +280,7 @@ mod test {
         // it's my birthday
         let output = bucket
             .update(b"maria", &|d| match d {
-                Some(_) => Err(dyn_contract_err("Ensure this was empty")),
+                Some(_) => Err(generic_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })
             .unwrap();

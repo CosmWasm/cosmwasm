@@ -1,7 +1,7 @@
 use serde::de::DeserializeOwned;
 
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, StdResult, SystemResult};
+use crate::errors::{generic_err, StdResult, SystemResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
@@ -115,8 +115,8 @@ pub trait Querier: Clone + Send {
             Err(e) => return Err(e),
         };
         match self.raw_query(&raw) {
-            Err(sys) => Err(dyn_contract_err(format!("Querier system error: {}", sys))),
-            Ok(Err(err)) => Err(dyn_contract_err(format!("Querier contract error: {}", err))),
+            Err(sys) => Err(generic_err(format!("Querier system error: {}", sys))),
+            Ok(Err(err)) => Err(generic_err(format!("Querier contract error: {}", err))),
             // in theory we would process the response, but here it is the same type, so just pass through
             Ok(Ok(res)) => from_binary(&res),
         }

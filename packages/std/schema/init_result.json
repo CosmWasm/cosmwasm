@@ -291,12 +291,13 @@
       "description": "Structured error type for init, handle and query. This cannot be serialized to JSON, such that it is only available within the contract and its unit tests.\n\nThe prefix \"Std\" means \"the standard error within the standard library\". This is not the only result/error type in cosmwasm-std.",
       "anyOf": [
         {
+          "description": "Whenever there is no specific error type available",
           "type": "object",
           "required": [
-            "dyn_contract_err"
+            "generic_err"
           ],
           "properties": {
-            "dyn_contract_err": {
+            "generic_err": {
               "type": "object",
               "required": [
                 "msg"

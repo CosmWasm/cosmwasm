@@ -2,7 +2,7 @@ use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, StdResult, SystemError};
+use crate::errors::{generic_err, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -66,13 +66,13 @@ impl ExternalStorage {
 
         let read = unsafe { db_read(key_ptr, value_ptr) };
         if read == -1_000_001 {
-            return Err(dyn_contract_err("Allocated memory too small to hold the database value for the given key. \
+            return Err(generic_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely."));
         } else if read == -1_001_001 {
             // key does not exist in external storage
             return Ok(None);
         } else if read < 0 {
-            return Err(dyn_contract_err(format!(
+            return Err(generic_err(format!(
                 "Error reading from database. Error code: {}",
                 read
             )));
@@ -111,7 +111,7 @@ impl ReadonlyStorage for ExternalStorage {
 
         let scan_result = unsafe { db_scan(start_ptr, end_ptr, order) };
         if scan_result < 0 {
-            return Err(dyn_contract_err(format!(
+            return Err(generic_err(format!(
                 "Error creating iterator (via db_scan). Error code: {}",
                 scan_result
             )));
@@ -132,7 +132,7 @@ impl Storage for ExternalStorage {
         let value_ptr = &mut *value as *mut Region as *mut c_void;
         let result = unsafe { db_write(key_ptr, value_ptr) };
         if result < 0 {
-            return Err(dyn_contract_err(format!(
+            return Err(generic_err(format!(
                 "Error writing to database. Error code: {}",
                 result
             )));
@@ -146,7 +146,7 @@ impl Storage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
         let result = unsafe { db_remove(key_ptr) };
         if result < 0 {
-            return Err(dyn_contract_err(format!(
+            return Err(generic_err(format!(
                 "Error deleting from database. Error code: {}",
                 result
             )));
@@ -172,7 +172,7 @@ impl Iterator for ExternalIterator {
 
         let db_next_result = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
         if db_next_result < 0 {
-            let result = Err(dyn_contract_err(format!(
+            let result = Err(generic_err(format!(
                 "Unknown error from db_next: {}",
                 db_next_result
             )));
@@ -206,7 +206,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
-            return Err(dyn_contract_err("canonicalize_address returned error"));
+            return Err(generic_err("canonicalize_address returned error"));
         }
 
         let out = unsafe { consume_region(canon)? };
@@ -220,7 +220,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
-            return Err(dyn_contract_err("humanize_address returned error"));
+            return Err(generic_err("humanize_address returned error"));
         }
 
         let out = unsafe { consume_region(human)? };

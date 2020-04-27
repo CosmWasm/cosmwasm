@@ -12,8 +12,9 @@ use snafu::Snafu;
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum StdError {
-    #[snafu(display("Contract error: {}", msg))]
-    DynContractErr {
+    /// Whenever there is no specific error type available
+    #[snafu(display("Generic error: {}", msg))]
+    GenericErr {
         msg: String,
         #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
@@ -86,8 +87,8 @@ impl PartialEq for StdError {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (
-                StdError::DynContractErr { msg, backtrace },
-                StdError::DynContractErr {
+                StdError::GenericErr { msg, backtrace },
+                StdError::GenericErr {
                     msg: msg2,
                     backtrace: backtrace2,
                 },
@@ -264,8 +265,8 @@ mod test {
     }
 
     #[test]
-    fn dyn_contract_conversion() {
-        assert_conversion(DynContractErr { msg: "dynamic" }.fail());
+    fn generic_err_conversion() {
+        assert_conversion(GenericErr { msg: "something" }.fail());
     }
 
     #[test]

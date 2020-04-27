@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    dyn_contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
+    generic_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern, HandleResponse,
+    HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
 use crate::msg::{
@@ -43,7 +43,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
         return Err(unauthorized());
     }
     if msgs.is_empty() {
-        return Err(dyn_contract_err("Must reflect at least one message"));
+        return Err(generic_err("Must reflect at least one message"));
     }
     let res = HandleResponse {
         messages: msgs,
@@ -190,7 +190,7 @@ mod tests {
         };
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(StdError::DynContractErr { msg, .. }) => {
+            Err(StdError::GenericErr { msg, .. }) => {
                 assert_eq!(msg, "Must reflect at least one message")
             }
             _ => panic!("Must return contract error"),

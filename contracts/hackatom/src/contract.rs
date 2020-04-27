@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    dyn_contract_err, from_slice, log, not_found, to_binary, to_vec, unauthorized, Api, BankMsg,
-    Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier,
-    QueryResponse, StdResult, Storage,
+    from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, Api, BankMsg, Binary,
+    CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier, QueryResponse,
+    StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -161,13 +161,13 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
         let pages = 1_600; // 100 MiB
         let ptr = wasm32::memory_grow(0, pages);
         if ptr == usize::max_value() {
-            return Err(dyn_contract_err("Error in memory.grow instruction"));
+            return Err(generic_err("Error in memory.grow instruction"));
         }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(dyn_contract_err("Unsupported architecture"))
+    Err(generic_err("Unsupported architecture"))
 }
 
 fn do_panic() -> StdResult<HandleResponse> {
