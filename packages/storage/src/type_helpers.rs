@@ -3,7 +3,7 @@ use std::any::type_name;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
-use cosmwasm_std::{from_slice, NotFound, StdResult};
+use cosmwasm_std::{from_slice, not_found, StdResult};
 
 /// may_deserialize parses json bytes from storage (Option), returning Ok(None) if no data present
 ///
@@ -22,10 +22,7 @@ pub(crate) fn may_deserialize<T: DeserializeOwned>(
 pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> StdResult<T> {
     match value {
         Some(d) => from_slice(&d),
-        None => NotFound {
-            kind: type_name::<T>(),
-        }
-        .fail(),
+        None => Err(not_found(type_name::<T>())),
     }
 }
 

@@ -6,19 +6,13 @@ use serde::{Deserialize, Serialize};
 use std::any::type_name;
 
 use crate::encoding::Binary;
-use crate::errors::{ParseErr, SerializeErr, StdResult};
+use crate::errors::{parse_err, serialize_err, StdResult};
 
 pub fn from_slice<'a, T>(value: &'a [u8]) -> StdResult<T>
 where
     T: Deserialize<'a>,
 {
-    serde_json_wasm::from_slice(value).map_err(|e| {
-        ParseErr {
-            target: type_name::<T>(),
-            msg: e.to_string(),
-        }
-        .build()
-    })
+    serde_json_wasm::from_slice(value).map_err(|e| parse_err(type_name::<T>(), e))
 }
 
 pub fn from_binary<'a, T>(value: &'a Binary) -> StdResult<T>
@@ -32,13 +26,7 @@ pub fn to_vec<T>(data: &T) -> StdResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json_wasm::to_vec(data).map_err(|e| {
-        SerializeErr {
-            source: type_name::<T>(),
-            msg: e.to_string(),
-        }
-        .build()
-    })
+    serde_json_wasm::to_vec(data).map_err(|e| serialize_err(type_name::<T>(), e))
 }
 
 pub fn to_binary<T>(data: &T) -> StdResult<Binary>

@@ -8,7 +8,7 @@ use snafu::Snafu;
 /// The prefix "Std" means "the standard error within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
 #[derive(Debug, Serialize, Deserialize, Snafu, JsonSchema)]
-#[snafu(visibility = "pub")]
+#[snafu(visibility = "pub(crate)")]
 #[serde(rename_all = "snake_case")]
 pub enum StdError {
     #[snafu(display("Contract error: {}", msg))]

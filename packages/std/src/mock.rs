@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, InvalidUtf8, StdResult, SystemError};
+use crate::errors::{dyn_contract_err, invalid_utf8, StdResult, SystemError};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -95,8 +95,7 @@ impl Api for MockApi {
             .filter(|&x| x != 0)
             .collect();
         // decode UTF-8 bytes into string
-        let human =
-            String::from_utf8(trimmed).map_err(|e| InvalidUtf8 { msg: e.to_string() }.build())?;
+        let human = String::from_utf8(trimmed).map_err(invalid_utf8)?;
         Ok(HumanAddr(human))
     }
 }

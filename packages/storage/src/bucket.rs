@@ -167,9 +167,8 @@ where
 mod test {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
-    use cosmwasm_std::{dyn_contract_err, NotFound};
+    use cosmwasm_std::{dyn_contract_err, not_found};
     use serde::{Deserialize, Serialize};
-    use snafu::OptionExt;
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
     struct Data {
@@ -267,7 +266,7 @@ mod test {
 
         // it's my birthday
         let birthday = |mayd: Option<Data>| -> StdResult<Data> {
-            let mut d = mayd.context(NotFound { kind: "Data" })?;
+            let mut d = mayd.ok_or(not_found("Data"))?;
             d.age += 1;
             Ok(d)
         };
