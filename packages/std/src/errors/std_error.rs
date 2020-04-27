@@ -10,6 +10,7 @@ use snafu::Snafu;
 #[derive(Debug, Serialize, Deserialize, Snafu, JsonSchema)]
 #[snafu(visibility = "pub(crate)")]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum StdError {
     #[snafu(display("Contract error: {}", msg))]
     DynContractErr {
