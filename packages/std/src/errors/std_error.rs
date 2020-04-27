@@ -252,12 +252,10 @@ mod test {
     }
 
     fn assert_conversion(r: StdResult<()>) {
-        let error = r.unwrap_err();
-        let msg = format!("{}", error);
-        let converted: StdError = error.into();
-        assert_eq!(msg, format!("{}", converted));
-        let round_trip: StdError = from_slice(&to_vec(&converted).unwrap()).unwrap();
-        assert_eq!(round_trip, converted);
+        let original = r.unwrap_err();
+        let seralized = to_vec(&original).unwrap();
+        let restored: StdError = from_slice(&seralized).unwrap();
+        assert_eq!(restored, original);
     }
 
     #[test]

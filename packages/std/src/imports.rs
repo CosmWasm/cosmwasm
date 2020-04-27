@@ -259,7 +259,7 @@ impl Querier for ExternalQuerier {
 
         match process(response_ptr) {
             Ok(api_response) => api_response,
-            Err(err) => Ok(Err(err.into())),
+            Err(err) => Ok(Err(err)),
         }
     }
 }

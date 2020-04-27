@@ -62,10 +62,8 @@ pub fn init<
     env: Env,
     msg: T,
 ) -> InitResult<U> {
-    match to_vec(&msg) {
-        Err(e) => Err(e),
-        Ok(serialized_msg) => call_init(instance, &env, &serialized_msg).unwrap(),
-    }
+    let serialized_msg = to_vec(&msg)?;
+    call_init(instance, &env, &serialized_msg).expect("VM error")
 }
 
 // handle mimicks the call signature of the smart contracts.
@@ -82,10 +80,8 @@ pub fn handle<
     env: Env,
     msg: T,
 ) -> HandleResult<U> {
-    match to_vec(&msg) {
-        Err(e) => Err(e),
-        Ok(serialized_msg) => call_handle(instance, &env, &serialized_msg).unwrap(),
-    }
+    let serialized_msg = to_vec(&msg)?;
+    call_handle(instance, &env, &serialized_msg).expect("VM error")
 }
 
 // query mimicks the call signature of the smart contracts.
@@ -100,10 +96,8 @@ pub fn query<
     instance: &mut Instance<S, A, Q>,
     msg: T,
 ) -> StdResult<QueryResponse> {
-    match to_vec(&msg) {
-        Err(e) => Err(e),
-        Ok(serialized_msg) => call_query(instance, &serialized_msg).unwrap(),
-    }
+    let serialized_msg = to_vec(&msg)?;
+    call_query(instance, &serialized_msg).expect("VM error")
 }
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
