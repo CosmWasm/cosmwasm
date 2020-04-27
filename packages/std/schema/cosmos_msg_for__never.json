@@ -1,45 +1,48 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "HandleMsg",
+  "title": "CosmosMsg_for_Never",
   "anyOf": [
     {
       "type": "object",
       "required": [
-        "reflect_msg"
+        "bank"
       ],
       "properties": {
-        "reflect_msg": {
-          "type": "object",
-          "required": [
-            "msgs"
-          ],
-          "properties": {
-            "msgs": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
-              }
-            }
-          }
+        "bank": {
+          "$ref": "#/definitions/BankMsg"
         }
       }
     },
     {
       "type": "object",
       "required": [
-        "change_owner"
+        "custom"
       ],
       "properties": {
-        "change_owner": {
-          "type": "object",
-          "required": [
-            "owner"
-          ],
-          "properties": {
-            "owner": {
-              "$ref": "#/definitions/HumanAddr"
-            }
-          }
+        "custom": {
+          "$ref": "#/definitions/Never"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "staking"
+      ],
+      "properties": {
+        "staking": {
+          "$ref": "#/definitions/StakingMsg"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "wasm"
+      ],
+      "properties": {
+        "wasm": {
+          "$ref": "#/definitions/WasmMsg"
         }
       }
     }
@@ -98,83 +101,12 @@
         }
       }
     },
-    "CosmosMsg_for_CustomMsg": {
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "bank"
-          ],
-          "properties": {
-            "bank": {
-              "$ref": "#/definitions/BankMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "custom"
-          ],
-          "properties": {
-            "custom": {
-              "$ref": "#/definitions/CustomMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "staking"
-          ],
-          "properties": {
-            "staking": {
-              "$ref": "#/definitions/StakingMsg"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "wasm"
-          ],
-          "properties": {
-            "wasm": {
-              "$ref": "#/definitions/WasmMsg"
-            }
-          }
-        }
-      ]
-    },
-    "CustomMsg": {
-      "description": "CustomMsg is an override of CosmosMsg::Custom to show this works and can be extended in the contract",
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "debug"
-          ],
-          "properties": {
-            "debug": {
-              "type": "string"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "raw"
-          ],
-          "properties": {
-            "raw": {
-              "$ref": "#/definitions/Binary"
-            }
-          }
-        }
-      ]
-    },
     "HumanAddr": {
       "type": "string"
+    },
+    "Never": {
+      "description": "Never can never be instantiated and is a no-op placeholder for unsupported enums, such as contracts that don't set a custom message.",
+      "enum": []
     },
     "StakingMsg": {
       "anyOf": [

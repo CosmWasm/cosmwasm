@@ -226,7 +226,7 @@ fn passes_io_tests() {
 mod singlepass_tests {
     use super::*;
 
-    use cosmwasm_std::{to_vec, NoMsg};
+    use cosmwasm_std::{to_vec, Never};
     use cosmwasm_vm::call_handle;
 
     fn make_init_msg() -> (InitMsg, HumanAddr) {
@@ -254,7 +254,7 @@ mod singlepass_tests {
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // panic inside contract should not panic out here
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, NoMsg>(
+        let handle_res = call_handle::<_, _, _, Never>(
             &mut deps,
             &handle_env,
             &to_vec(&HandleMsg::Panic {}).unwrap(),
@@ -273,7 +273,7 @@ mod singlepass_tests {
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, NoMsg>(
+        let handle_res = call_handle::<_, _, _, Never>(
             &mut deps,
             &handle_env,
             &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
@@ -293,7 +293,7 @@ mod singlepass_tests {
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, NoMsg>(
+        let handle_res = call_handle::<_, _, _, Never>(
             &mut deps,
             &handle_env,
             &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
@@ -313,7 +313,7 @@ mod singlepass_tests {
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, NoMsg>(
+        let handle_res = call_handle::<_, _, _, Never>(
             &mut deps,
             &handle_env,
             &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
@@ -337,7 +337,7 @@ mod singlepass_tests {
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
         let gas_before = deps.get_gas();
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, NoMsg>(
+        let handle_res = call_handle::<_, _, _, Never>(
             &mut deps,
             &handle_env,
             &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),

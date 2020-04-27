@@ -173,8 +173,8 @@ mod test {
     use crate::errors::VmError;
     use cosmwasm_std::testing::{MockQuerier, MockStorage};
     use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, QueryRequest,
-        ReadonlyStorage,
+        coin, coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never,
+        QueryRequest, ReadonlyStorage,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -313,10 +313,10 @@ mod test {
         leave_default_data(ctx);
 
         let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
-            let req = QueryRequest::Bank(BankQuery::AllBalances {
+            let req: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            querier.query(&req)
+            querier.raw_query(&to_vec(&req).unwrap())
         })
         .unwrap()
         .unwrap();

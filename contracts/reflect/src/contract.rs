@@ -3,7 +3,9 @@ use cosmwasm_std::{
     HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
-use crate::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use crate::msg::{
+    CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+};
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -76,6 +78,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Owner {} => query_owner(deps),
+        QueryMsg::ReflectCustom { text } => query_reflect(deps, text),
     }
 }
 
@@ -88,10 +91,20 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
     to_binary(&resp)
 }
 
+fn query_reflect<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    text: String,
+) -> StdResult<Binary> {
+    let req = CustomQuery::Capital { text }.into();
+    let resp: CustomResponse = deps.querier.custom_query(&req)?;
+    to_binary(&resp)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use crate::testing::mock_dependencies;
+    use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
 
     #[test]
@@ -258,5 +271,21 @@ mod tests {
             Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Must return unauthorized error"),
         }
+    }
+
+    #[test]
+    fn dispatch_custom_query() {
+        let deps = mock_dependencies(20, &[]);
+
+        // we don't even initialize, just trigger a query
+        let res = query(
+            &deps,
+            QueryMsg::ReflectCustom {
+                text: "demo one".to_string(),
+            },
+        )
+        .unwrap();
+        let value: CustomResponse = from_binary(&res).unwrap();
+        assert_eq!("DEMO ONE", value.msg.as_str());
     }
 }

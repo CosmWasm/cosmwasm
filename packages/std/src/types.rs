@@ -92,7 +92,7 @@ pub struct MessageInfo {
     /// Additional signers of the transaction that are either needed for other messages or contain unnecessary
     /// signatures are not propagated into the contract.
     ///
-    /// There is a disussion to open up this field to multiple initiators, which you're welcome to join
+    /// There is a discussion to open up this field to multiple initiators, which you're welcome to join
     /// if you have a specific need for that feature: https://github.com/CosmWasm/cosmwasm/issues/293
     pub sender: CanonicalAddr,
     pub sent_funds: Vec<Coin>,
@@ -102,3 +102,8 @@ pub struct MessageInfo {
 pub struct ContractInfo {
     pub address: CanonicalAddr,
 }
+
+/// Never can never be instantiated and is a no-op placeholder for
+/// unsupported enums, such as contracts that don't set a custom message.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum Never {}

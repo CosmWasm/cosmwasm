@@ -12,6 +12,25 @@
           "type": "object"
         }
       }
+    },
+    {
+      "type": "object",
+      "required": [
+        "reflect_custom"
+      ],
+      "properties": {
+        "reflect_custom": {
+          "type": "object",
+          "required": [
+            "text"
+          ],
+          "properties": {
+            "text": {
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   ]
 }

@@ -6,10 +6,10 @@ use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{contract_err, StdResult, Utf8StringErr};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
-use crate::serde::to_binary;
+use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
-use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo};
+use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, Never};
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -129,6 +129,8 @@ pub struct MockQuerier {
     bank: BankQuerier,
     #[cfg(feature = "staking")]
     staking: staking::StakingQuerier,
+    // placeholder to add support later
+    wasm: NoWasmQuerier,
 }
 
 impl MockQuerier {
@@ -136,6 +138,7 @@ impl MockQuerier {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
+            wasm: NoWasmQuerier {},
         }
     }
 
@@ -144,6 +147,7 @@ impl MockQuerier {
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: staking::StakingQuerier::default(),
+            wasm: NoWasmQuerier {},
         }
     }
 
@@ -158,20 +162,47 @@ impl MockQuerier {
 }
 
 impl Querier for MockQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResult {
-        match request {
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        // MockQuerier doesn't support Custom, so we ignore it completely here
+        let request: QueryRequest<Never> = match from_slice(bin_request) {
+            Ok(v) => v,
+            Err(e) => {
+                return Err(SystemError::InvalidRequest {
+                    error: format!("Parsing QueryRequest: {}", e),
+                })
+            }
+        };
+        self.handle_query(&request)
+    }
+}
+
+impl MockQuerier {
+    pub fn handle_query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
+        match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
+            QueryRequest::Custom(_) => Err(SystemError::UnsupportedRequest {
+                kind: "custom".to_string(),
+            }),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
-            QueryRequest::Wasm(msg) => {
-                let addr = match msg {
-                    WasmQuery::Smart { contract_addr, .. } => contract_addr,
-                    WasmQuery::Raw { contract_addr, .. } => contract_addr,
-                }
-                .clone();
-                Err(SystemError::NoSuchContract { addr })
-            }
+            QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
+    }
+}
+
+#[derive(Clone, Default)]
+struct NoWasmQuerier {
+    // FIXME: actually provide a way to call out
+}
+
+impl NoWasmQuerier {
+    fn query(&self, request: &WasmQuery) -> QuerierResult {
+        let addr = match request {
+            WasmQuery::Smart { contract_addr, .. } => contract_addr,
+            WasmQuery::Raw { contract_addr, .. } => contract_addr,
+        }
+        .clone();
+        Err(SystemError::NoSuchContract { addr })
     }
 }
 

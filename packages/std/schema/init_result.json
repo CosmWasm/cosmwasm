@@ -9,7 +9,7 @@
       ],
       "properties": {
         "Ok": {
-          "$ref": "#/definitions/InitResponse_for_NoMsg"
+          "$ref": "#/definitions/InitResponse_for_Never"
         }
       }
     },
@@ -312,7 +312,7 @@
         }
       }
     },
-    "CosmosMsg_for_NoMsg": {
+    "CosmosMsg_for_Never": {
       "anyOf": [
         {
           "type": "object",
@@ -332,7 +332,7 @@
           ],
           "properties": {
             "custom": {
-              "$ref": "#/definitions/NoMsg"
+              "$ref": "#/definitions/Never"
             }
           }
         },
@@ -363,7 +363,7 @@
     "HumanAddr": {
       "type": "string"
     },
-    "InitResponse_for_NoMsg": {
+    "InitResponse_for_Never": {
       "type": "object",
       "required": [
         "log",
@@ -389,7 +389,7 @@
         "messages": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CosmosMsg_for_NoMsg"
+            "$ref": "#/definitions/CosmosMsg_for_Never"
           }
         }
       }
@@ -409,8 +409,8 @@
         }
       }
     },
-    "NoMsg": {
-      "description": "NoMsg can never be instantiated and is a no-op placeholder for those contracts that don't explicitly set a custom message.",
+    "Never": {
+      "description": "Never can never be instantiated and is a no-op placeholder for unsupported enums, such as contracts that don't set a custom message.",
       "enum": []
     },
     "StakingMsg": {

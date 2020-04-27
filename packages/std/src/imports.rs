@@ -7,8 +7,7 @@ use crate::errors::{contract_err, dyn_contract_err, ContractErr, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
-use crate::query::QueryRequest;
-use crate::serde::{from_slice, to_vec};
+use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
@@ -242,9 +241,8 @@ impl ExternalQuerier {
 }
 
 impl Querier for ExternalQuerier {
-    fn query(&self, request: &QueryRequest) -> QuerierResult {
-        let bin_request = to_vec(request).or(Err(SystemError::Unknown {}))?;
-        let req = build_region(&bin_request);
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        let req = build_region(bin_request);
         let request_ptr = &*req as *const Region as *const c_void;
         let response_ptr = alloc(QUERY_RESULT_BUFFER_LENGTH);
 

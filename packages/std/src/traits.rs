@@ -7,7 +7,9 @@ use crate::errors::{dyn_contract_err, StdResult};
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 use crate::serde::from_binary;
-use crate::types::{CanonicalAddr, HumanAddr};
+use crate::to_vec;
+use crate::types::{CanonicalAddr, HumanAddr, Never};
+use serde::Serialize;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -17,6 +19,19 @@ pub struct Extern<S: Storage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
     pub querier: Q,
+}
+
+impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
+    /// change_querier is a helper mainly for test code when swapping out the Querier
+    /// from the auto-generated one from mock_dependencies. This changes the type of
+    /// Extern so replaces requires some boilerplate.
+    pub fn change_querier<T: Querier, F: Fn(Q) -> T>(self, transform: F) -> Extern<S, A, T> {
+        Extern {
+            storage: self.storage,
+            api: self.api,
+            querier: transform(self.querier),
+        }
+    }
 }
 
 /// ReadonlyStorage is access to the contracts persistent data store
@@ -71,21 +86,36 @@ pub trait Api: Copy + Clone + Send {
 pub type QuerierResult = SystemResult<ApiResult<Binary>>;
 
 pub trait Querier: Clone + Send {
-    // Note: ApiError type can be serialized, and the below can be reconstituted over a WASM/FFI call.
-    // Since this is information that is returned from outside, we define it this way.
-    //
-    // ApiResult is a format that can capture this info in a serialized form. We parse it into
-    // a typical Result for the implementing object
-    fn query(&self, request: &QueryRequest) -> QuerierResult;
+    /// raw_query is all that must be implemented for the Querier.
+    /// This allows us to pass through binary queries from one level to another without
+    /// knowing the custom format, or we can decode it, with the knowledge of the allowed
+    /// types. People using the querier probably want one of the simpler auto-generated
+    /// helper methods
+    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 
-    /// Makes the query and parses the response.
-    /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
-    /// one level. Only use this if you don't have checks on other side.
+    /// query is a shorthand for custom_query when we are not using a custom type,
+    /// this allows us to avoid specifying "Never" in all the type definitions.
+    fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Never>) -> StdResult<T> {
+        self.custom_query(request)
+    }
+
+    /// Makes the query and parses the response. Also handles custom queries,
+    /// so you need to specify the custom query type in the function parameters.
+    /// If you are no using a custom query, just use `query` for easier interface.
     ///
-    /// eg. When querying another contract, you will often want some way to detect/handle if there
-    /// is no contract there.
-    fn parse_query<T: DeserializeOwned>(&self, request: &QueryRequest) -> StdResult<T> {
-        match self.query(&request) {
+    /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
+    /// one level. Only use this if you don't need to check the SystemError
+    /// eg. If you don't differentiate between contract missing and contract returned error
+    fn custom_query<T: Serialize, U: DeserializeOwned>(
+        &self,
+        request: &QueryRequest<T>,
+    ) -> StdResult<U> {
+        let raw = match to_vec(request) {
+            Ok(raw) => raw,
+            // TODO: maybe I want to make this a SystemError::InvalidRequest ?
+            Err(e) => return Err(e),
+        };
+        match self.raw_query(&raw) {
             Err(sys_err) => dyn_contract_err(format!("Querier system error: {}", sys_err)),
             Ok(Err(err)) => dyn_contract_err(format!("Querier contract error: {}", err)),
             // in theory we would process the response, but here it is the same type, so just pass through
@@ -93,22 +123,26 @@ pub trait Querier: Clone + Send {
         }
     }
 
+    // TODO: a non-flattened version?
+
     fn query_balance<U: Into<HumanAddr>>(
         &self,
         address: U,
         denom: &str,
     ) -> StdResult<BalanceResponse> {
-        let request = QueryRequest::Bank(BankQuery::Balance {
+        let request = BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
-        });
-        self.parse_query(&request)
+        }
+        .into();
+        self.query(&request)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
-        let request = QueryRequest::Bank(BankQuery::AllBalances {
+        let request = BankQuery::AllBalances {
             address: address.into(),
-        });
-        self.parse_query(&request)
+        }
+        .into();
+        self.query(&request)
     }
 }

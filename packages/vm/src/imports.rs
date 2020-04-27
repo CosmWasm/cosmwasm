@@ -7,10 +7,7 @@ use std::mem;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::StdResult;
-use cosmwasm_std::{
-    Api, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResult, QueryRequest, Storage,
-    SystemError,
-};
+use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 use wasmer_runtime_core::vm::Ctx;
@@ -24,7 +21,7 @@ use crate::errors::{make_runtime_err, VmError};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
-use crate::serde::{from_slice, to_vec};
+use crate::serde::to_vec;
 
 /// A kibi (kilo binary)
 static KI: usize = 1024;
@@ -237,18 +234,8 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
 
-    let res = match from_slice::<QueryRequest>(&request) {
-        // if we parse, try to execute the query
-        Ok(parsed) => {
-            let qr: QuerierResult =
-                with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| querier.query(&parsed));
-            qr
-        }
-        // otherwise, return the InvalidRequest error as SystemError
-        Err(err) => Err(SystemError::InvalidRequest {
-            error: err.to_string(),
-        }),
-    };
+    let res: QuerierResult =
+        with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| querier.raw_query(&request));
 
     match to_vec(&res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
@@ -354,7 +341,8 @@ mod test {
     use super::*;
     use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, ReadonlyStorage, WasmQuery,
+        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
+        ReadonlyStorage, SystemError, WasmQuery,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -772,7 +760,7 @@ mod test {
     fn do_query_chain_works() {
         let mut instance = make_instance();
 
-        let request = QueryRequest::Bank(BankQuery::AllBalances {
+        let request: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
             address: HumanAddr::from(INIT_ADDR),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
@@ -810,7 +798,9 @@ mod test {
         let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
             Ok(_) => panic!("This must not succeed"),
-            Err(SystemError::InvalidRequest { error }) => assert!(error.starts_with("Parse error")),
+            Err(SystemError::InvalidRequest { error }) => {
+                assert!(error.starts_with("Parsing QueryRequest"), error)
+            }
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
@@ -819,7 +809,7 @@ mod test {
     fn do_query_chain_fails_for_missing_contract() {
         let mut instance = make_instance();
 
-        let request = QueryRequest::Wasm(WasmQuery::Smart {
+        let request: QueryRequest<Never> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: HumanAddr::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });

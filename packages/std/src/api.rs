@@ -128,6 +128,7 @@ pub enum SystemError {
     InvalidRequest { error: String },
     NoSuchContract { addr: HumanAddr },
     Unknown {},
+    UnsupportedRequest { kind: String },
 }
 
 impl std::error::Error for SystemError {}
@@ -138,6 +139,7 @@ impl std::fmt::Display for SystemError {
             SystemError::InvalidRequest { error } => write!(f, "Cannot parse request: {}", error),
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
             SystemError::Unknown {} => write!(f, "Unknown system error"),
+            SystemError::UnsupportedRequest { kind } => write!(f, "Unsupport query type: {}", kind),
         }
     }
 }
