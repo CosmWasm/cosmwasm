@@ -26,6 +26,7 @@ pub fn to_api_result<T>(result: crate::errors::StdResult<T>) -> ApiResult<T> {
 /// Rather than use Display to pass Errors over API/FFI boundaries, we can use ApiError
 /// and provide much more context to the client.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ApiError {
     Base64Err { source: String },
     ContractErr { msg: String },
@@ -124,6 +125,7 @@ impl From<StdError> for ApiError {
 /// Such errors are only created by the VM. The error type is defined in the standard library, to ensure
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum SystemError {
     InvalidRequest { error: String },
     NoSuchContract { addr: HumanAddr },

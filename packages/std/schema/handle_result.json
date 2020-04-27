@@ -32,10 +32,10 @@
         {
           "type": "object",
           "required": [
-            "Base64Err"
+            "base64_err"
           ],
           "properties": {
-            "Base64Err": {
+            "base64_err": {
               "type": "object",
               "required": [
                 "source"
@@ -51,10 +51,10 @@
         {
           "type": "object",
           "required": [
-            "ContractErr"
+            "contract_err"
           ],
           "properties": {
-            "ContractErr": {
+            "contract_err": {
               "type": "object",
               "required": [
                 "msg"
@@ -70,10 +70,10 @@
         {
           "type": "object",
           "required": [
-            "DynContractErr"
+            "dyn_contract_err"
           ],
           "properties": {
-            "DynContractErr": {
+            "dyn_contract_err": {
               "type": "object",
               "required": [
                 "msg"
@@ -89,10 +89,10 @@
         {
           "type": "object",
           "required": [
-            "NotFound"
+            "not_found"
           ],
           "properties": {
-            "NotFound": {
+            "not_found": {
               "type": "object",
               "required": [
                 "kind"
@@ -108,10 +108,10 @@
         {
           "type": "object",
           "required": [
-            "NullPointer"
+            "null_pointer"
           ],
           "properties": {
-            "NullPointer": {
+            "null_pointer": {
               "type": "object"
             }
           }
@@ -119,10 +119,10 @@
         {
           "type": "object",
           "required": [
-            "ParseErr"
+            "parse_err"
           ],
           "properties": {
-            "ParseErr": {
+            "parse_err": {
               "type": "object",
               "required": [
                 "kind",
@@ -142,10 +142,10 @@
         {
           "type": "object",
           "required": [
-            "SerializeErr"
+            "serialize_err"
           ],
           "properties": {
-            "SerializeErr": {
+            "serialize_err": {
               "type": "object",
               "required": [
                 "kind",
@@ -165,10 +165,10 @@
         {
           "type": "object",
           "required": [
-            "Unauthorized"
+            "unauthorized"
           ],
           "properties": {
-            "Unauthorized": {
+            "unauthorized": {
               "type": "object"
             }
           }
@@ -176,10 +176,10 @@
         {
           "type": "object",
           "required": [
-            "Underflow"
+            "underflow"
           ],
           "properties": {
-            "Underflow": {
+            "underflow": {
               "type": "object",
               "required": [
                 "minuend",
@@ -199,10 +199,10 @@
         {
           "type": "object",
           "required": [
-            "Utf8Err"
+            "utf8_err"
           ],
           "properties": {
-            "Utf8Err": {
+            "utf8_err": {
               "type": "object",
               "required": [
                 "source"
@@ -218,10 +218,10 @@
         {
           "type": "object",
           "required": [
-            "Utf8StringErr"
+            "utf8_string_err"
           ],
           "properties": {
-            "Utf8StringErr": {
+            "utf8_string_err": {
               "type": "object",
               "required": [
                 "source"
@@ -237,10 +237,10 @@
         {
           "type": "object",
           "required": [
-            "ValidationErr"
+            "validation_err"
           ],
           "properties": {
-            "ValidationErr": {
+            "validation_err": {
               "type": "object",
               "required": [
                 "field",
