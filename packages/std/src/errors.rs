@@ -71,6 +71,103 @@ pub enum StdError {
     },
 }
 
+/// No equeality is defined on backtraces. For our purposes
+/// in this file we say that for two erros to be equal, their backtraces
+/// must both be unset.
+/// This works because we don't need a reflexive property for StdError,
+/// i.e. error `x.eq(x) == true`.
+fn backtraces_eq(a: &Option<snafu::Backtrace>, b: &Option<snafu::Backtrace>) -> bool {
+    a.is_none() && b.is_none()
+}
+
+impl PartialEq for StdError {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (
+                StdError::DynContractErr { msg, backtrace },
+                StdError::DynContractErr {
+                    msg: msg2,
+                    backtrace: backtrace2,
+                },
+            ) => msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::InvalidBase64 { msg, backtrace },
+                StdError::InvalidBase64 {
+                    msg: msg2,
+                    backtrace: backtrace2,
+                },
+            ) => msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::InvalidUtf8 { msg, backtrace },
+                StdError::InvalidUtf8 {
+                    msg: msg2,
+                    backtrace: backtrace2,
+                },
+            ) => msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::NotFound { kind, backtrace },
+                StdError::NotFound {
+                    kind: kind2,
+                    backtrace: backtrace2,
+                },
+            ) => kind == kind2 && backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::NullPointer { backtrace },
+                StdError::NullPointer {
+                    backtrace: backtrace2,
+                },
+            ) => backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::ParseErr {
+                    target,
+                    msg,
+                    backtrace,
+                },
+                StdError::ParseErr {
+                    target: target2,
+                    msg: msg2,
+                    backtrace: backtrace2,
+                },
+            ) => target == target2 && msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::SerializeErr {
+                    source,
+                    msg,
+                    backtrace,
+                },
+                StdError::SerializeErr {
+                    source: source2,
+                    msg: msg2,
+                    backtrace: backtrace2,
+                },
+            ) => source == source2 && msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::Unauthorized { backtrace },
+                StdError::Unauthorized {
+                    backtrace: backtrace2,
+                },
+            ) => backtraces_eq(backtrace, backtrace2),
+            (
+                StdError::Underflow {
+                    minuend,
+                    subtrahend,
+                    backtrace,
+                },
+                StdError::Underflow {
+                    minuend: minued2,
+                    subtrahend: subtrahend2,
+                    backtrace: backtrace2,
+                },
+            ) => {
+                minuend == minued2
+                    && subtrahend == subtrahend2
+                    && backtraces_eq(backtrace, backtrace2)
+            }
+            _ => false,
+        }
+    }
+}
+
 /// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
@@ -139,6 +236,36 @@ mod test {
             }
             _ => panic!("invalid type"),
         };
+    }
+
+    #[test]
+    fn eq_works() {
+        let error1 = InvalidBase64 {
+            msg: "invalid length".to_string(),
+        }
+        .build();
+        let error2 = InvalidBase64 {
+            msg: "other bla".to_string(),
+        }
+        .build();
+
+        // Errors are only equal when bactrace is removed
+        let normalized1: StdError = from_slice(&to_vec(&error1).unwrap()).unwrap();
+        let normalized2: StdError = from_slice(&to_vec(&error2).unwrap()).unwrap();
+        assert_ne!(normalized1, normalized2);
+    }
+
+    #[test]
+    fn ne_works() {
+        let error1 = InvalidBase64 {
+            msg: "invalid length".to_string(),
+        }
+        .build();
+        let error2 = InvalidBase64 {
+            msg: "other bla".to_string(),
+        }
+        .build();
+        assert_ne!(error1, error2);
     }
 
     // example of reporting contract errors with format!
