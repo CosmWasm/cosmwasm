@@ -72,9 +72,7 @@ impl From<StdError> for ApiError {
             StdError::DynContractErr { msg, .. } => ApiError::DynContractErr { msg },
             StdError::InvalidBase64 { msg, .. } => ApiError::InvalidBase64 { msg },
             StdError::InvalidUtf8 { msg, .. } => ApiError::InvalidUtf8 { msg },
-            StdError::NotFound { kind, .. } => ApiError::NotFound {
-                kind: kind.to_string(),
-            },
+            StdError::NotFound { kind, .. } => ApiError::NotFound { kind },
             StdError::NullPointer { .. } => ApiError::NullPointer {},
             StdError::ParseErr { target, msg, .. } => ApiError::ParseErr { target, msg },
             StdError::SerializeErr { source, msg, .. } => ApiError::SerializeErr { source, msg },

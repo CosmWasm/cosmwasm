@@ -31,7 +31,7 @@ pub enum StdError {
     },
     #[snafu(display("{} not found", kind))]
     NotFound {
-        kind: &'static str,
+        kind: String,
         #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
@@ -124,14 +124,17 @@ mod test {
         };
     }
 
-    /// How can this work?
+    /// The deseralizer in from_slice can perform zero-copy deserializations (https://serde.rs/lifetimes.html).
+    /// So it is possible to have `&'static str` fields as long as all source data is always static.
+    /// This is an unrealistic assumption for our use case. This test case ensures we can deseralize
+    /// errors from limited liefetime sources.
     #[test]
-    fn can_deserialize_static_field() {
-        let error: StdError =
-            from_slice(br#"{"not_found":{"kind":"I don't exist as static str"}}"#).unwrap();
+    fn can_deserialize_from_non_static_source() {
+        let source = (br#"{"not_found":{"kind":"bugs"}}"#).to_vec();
+        let error: StdError = from_slice(&source).unwrap();
         match error {
             StdError::NotFound { kind, backtrace } => {
-                assert!(kind.starts_with("I don't exist as"));
+                assert_eq!(kind, "bugs");
                 assert!(backtrace.is_none());
             }
             _ => panic!("invalid type"),
