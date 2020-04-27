@@ -18,7 +18,7 @@ pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
     contract_err, dyn_contract_err, invalid, unauthorized, underflow, NotFound, NullPointer,
-    ParseErr, SerializeErr, StdError, StdResult,
+    ParseErr, SerializeErr, StdError, StdResult, Utf8StringErr,
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
