@@ -1,11 +1,21 @@
 use crate::msg::{CustomQuery, CustomResponse};
 
+use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{
-    from_slice, to_binary, Binary, Querier, QuerierResult, QueryRequest, StdResult, SystemError,
+    from_slice, to_binary, Binary, Coin, Extern, Querier, QuerierResult, QueryRequest, StdResult,
+    SystemError,
 };
 
 #[derive(Clone)]
-pub struct CustomQuerier {}
+pub struct CustomQuerier {
+    base: MockQuerier,
+}
+
+impl CustomQuerier {
+    pub fn new(base: MockQuerier) -> Self {
+        CustomQuerier { base }
+    }
+}
 
 impl Querier for CustomQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
@@ -18,13 +28,22 @@ impl Querier for CustomQuerier {
                 })
             }
         };
-        match &request {
-            QueryRequest::Custom(custom_query) => Ok(execute(&custom_query).map_err(|e| e.into())),
-            _ => Err(SystemError::UnsupportedRequest {
-                kind: "non-custom".to_string(),
-            }),
+        if let QueryRequest::Custom(custom_query) = &request {
+            Ok(execute(&custom_query).map_err(|e| e.into()))
+        } else {
+            self.base.handle_query(&request)
         }
     }
+}
+
+/// mock_dependencies is a drop-in replacement for cosmwasm_std::testing::mock_dependencies
+/// this uses our CustomQuerier.
+pub fn mock_dependencies(
+    canonical_length: usize,
+    contract_balance: &[Coin],
+) -> Extern<MockStorage, MockApi, CustomQuerier> {
+    let base = cosmwasm_std::testing::mock_dependencies(canonical_length, contract_balance);
+    base.change_querier(CustomQuerier::new)
 }
 
 fn execute(query: &CustomQuery) -> StdResult<Binary> {
@@ -39,6 +58,7 @@ fn execute(query: &CustomQuery) -> StdResult<Binary> {
 mod test {
     use super::*;
     use cosmwasm_std::from_binary;
+    use cosmwasm_std::testing::mock_dependencies;
 
     #[test]
     fn custom_query_ping() {
@@ -59,7 +79,8 @@ mod test {
 
     #[test]
     fn custom_querier() {
-        let querier = CustomQuerier {};
+        let base = mock_dependencies(20, &[]).querier;
+        let querier = CustomQuerier::new(base);
         let req: QueryRequest<_> = CustomQuery::Capital {
             text: "food".to_string(),
         }

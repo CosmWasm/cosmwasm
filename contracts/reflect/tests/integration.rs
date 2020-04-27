@@ -1,6 +1,6 @@
-use cosmwasm_std::testing::{mock_dependencies, mock_env};
+use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, coins, from_binary, Api, ApiError, BankMsg, Binary, Extern, HandleResponse, HandleResult,
+    coin, coins, from_binary, Api, ApiError, BankMsg, Binary, HandleResponse, HandleResult,
     HumanAddr, InitResponse, StakingMsg,
 };
 
@@ -8,7 +8,7 @@ use cosmwasm_vm::testing::{handle, init, mock_instance, query};
 use cosmwasm_vm::Instance;
 
 use reflect::msg::{CustomMsg, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
-use reflect::testing::CustomQuerier;
+use reflect::testing::mock_dependencies;
 
 /**
 This integration test tries to run and call the generated wasm.
@@ -176,7 +176,7 @@ fn transfer_requires_owner() {
 #[test]
 fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
-    let custom = mock_dependencies(20, &[]).with_querier(CustomQuerier {});
+    let custom = mock_dependencies(20, &[]);
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
     let mut deps = Instance::from_code(WASM, custom, 500_000).unwrap();
 

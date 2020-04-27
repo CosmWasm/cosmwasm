@@ -129,6 +129,8 @@ pub struct MockQuerier {
     bank: BankQuerier,
     #[cfg(feature = "staking")]
     staking: staking::StakingQuerier,
+    // placeholder to add support later
+    wasm: NoWasmQuerier,
 }
 
 impl MockQuerier {
@@ -136,6 +138,7 @@ impl MockQuerier {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
+            wasm: NoWasmQuerier {},
         }
     }
 
@@ -144,6 +147,7 @@ impl MockQuerier {
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: staking::StakingQuerier::default(),
+            wasm: NoWasmQuerier {},
         }
     }
 
@@ -168,6 +172,12 @@ impl Querier for MockQuerier {
                 })
             }
         };
+        self.handle_query(&request)
+    }
+}
+
+impl MockQuerier {
+    pub fn handle_query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
             QueryRequest::Custom(_) => Err(SystemError::UnsupportedRequest {
@@ -175,15 +185,24 @@ impl Querier for MockQuerier {
             }),
             #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
-            QueryRequest::Wasm(msg) => {
-                let addr = match msg {
-                    WasmQuery::Smart { contract_addr, .. } => contract_addr,
-                    WasmQuery::Raw { contract_addr, .. } => contract_addr,
-                }
-                .clone();
-                Err(SystemError::NoSuchContract { addr })
-            }
+            QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
+    }
+}
+
+#[derive(Clone, Default)]
+struct NoWasmQuerier {
+    // FIXME: actually provide a way to call out
+}
+
+impl NoWasmQuerier {
+    fn query(&self, request: &WasmQuery) -> QuerierResult {
+        let addr = match request {
+            WasmQuery::Smart { contract_addr, .. } => contract_addr,
+            WasmQuery::Raw { contract_addr, .. } => contract_addr,
+        }
+        .clone();
+        Err(SystemError::NoSuchContract { addr })
     }
 }
 

@@ -22,14 +22,14 @@ pub struct Extern<S: Storage, A: Api, Q: Querier> {
 }
 
 impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
-    /// with_querier is a helper mainly for test code when swapping out the Querier
+    /// change_querier is a helper mainly for test code when swapping out the Querier
     /// from the auto-generated one from mock_dependencies. This changes the type of
     /// Extern so replaces requires some boilerplate.
-    pub fn with_querier<T: Querier>(self, querier: T) -> Extern<S, A, T> {
+    pub fn change_querier<T: Querier, F: Fn(Q) -> T>(self, transform: F) -> Extern<S, A, T> {
         Extern {
             storage: self.storage,
             api: self.api,
-            querier,
+            querier: transform(self.querier),
         }
     }
 }

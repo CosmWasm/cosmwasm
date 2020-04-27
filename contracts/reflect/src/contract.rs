@@ -103,8 +103,8 @@ fn query_reflect<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::CustomQuerier;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use crate::testing::mock_dependencies;
+    use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
 
     #[test]
@@ -275,7 +275,7 @@ mod tests {
 
     #[test]
     fn dispatch_custom_query() {
-        let deps = mock_dependencies(20, &[]).with_querier(CustomQuerier {});
+        let deps = mock_dependencies(20, &[]);
 
         // we don't even initialize, just trigger a query
         let res = query(
