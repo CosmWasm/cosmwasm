@@ -176,12 +176,7 @@ fn transfer_requires_owner() {
 #[test]
 fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
-    let stub = mock_dependencies(20, &[]);
-    let custom = Extern {
-        api: stub.api,
-        storage: stub.storage,
-        querier: CustomQuerier {},
-    };
+    let custom = mock_dependencies(20, &[]).with_querier(CustomQuerier {});
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
     let mut deps = Instance::from_code(WASM, custom, 500_000).unwrap();
 

@@ -275,13 +275,7 @@ mod tests {
 
     #[test]
     fn dispatch_custom_query() {
-        // stub gives us defaults. Consume it and override...
-        let stub = mock_dependencies(20, &[]);
-        let deps = Extern {
-            api: stub.api,
-            storage: stub.storage,
-            querier: CustomQuerier {},
-        };
+        let deps = mock_dependencies(20, &[]).with_querier(CustomQuerier {});
 
         // we don't even initialize, just trigger a query
         let res = query(

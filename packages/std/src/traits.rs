@@ -21,6 +21,19 @@ pub struct Extern<S: Storage, A: Api, Q: Querier> {
     pub querier: Q,
 }
 
+impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
+    /// with_querier is a helper mainly for test code when swapping out the Querier
+    /// from the auto-generated one from mock_dependencies. This changes the type of
+    /// Extern so replaces requires some boilerplate.
+    pub fn with_querier<T: Querier>(self, querier: T) -> Extern<S, A, T> {
+        Extern {
+            storage: self.storage,
+            api: self.api,
+            querier,
+        }
+    }
+}
+
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage {
     /// Returns Err on error.
