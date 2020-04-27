@@ -1,7 +1,16 @@
-use super::std_error::{DynContractErr, StdError, Unauthorized, Underflow};
+use std::fmt::Display;
+
+use super::std_error::{DynContractErr, InvalidBase64, StdError, Unauthorized, Underflow};
 
 pub fn dyn_contract_err<S: Into<String>>(msg: S) -> StdError {
     DynContractErr { msg: msg.into() }.build()
+}
+
+pub fn invalid_base64<S: Display>(msg: S) -> StdError {
+    InvalidBase64 {
+        msg: msg.to_string(),
+    }
+    .build()
 }
 
 pub fn underflow<U: ToString>(minuend: U, subtrahend: U) -> StdError {
@@ -41,6 +50,29 @@ mod test {
         match error {
             StdError::DynContractErr { msg, .. } => assert_eq!(msg, "not implemented"),
             e => panic!("unexpected error, {:?}", e),
+        }
+    }
+
+    #[test]
+    fn invalid_base64_works_for_strings() {
+        let error: StdError = invalid_base64("my text");
+        match error {
+            StdError::InvalidBase64 { msg, .. } => {
+                assert_eq!(msg, "my text");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_base64_works_for_errors() {
+        let original = base64::DecodeError::InvalidLength;
+        let error: StdError = invalid_base64(original);
+        match error {
+            StdError::InvalidBase64 { msg, .. } => {
+                assert_eq!(msg, "Encoded text cannot have a 6-bit remainder.");
+            }
+            _ => panic!("expect different error"),
         }
     }
 
