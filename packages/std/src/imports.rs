@@ -1,9 +1,8 @@
 use std::ffi::c_void;
 use std::vec::Vec;
 
-use crate::api::SystemError;
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, StdResult};
+use crate::errors::{dyn_contract_err, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};

@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
-use crate::api::SystemError;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, InvalidUtf8, StdResult};
+use crate::errors::{dyn_contract_err, InvalidUtf8, StdResult, SystemError};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;

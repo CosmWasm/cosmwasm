@@ -1,8 +1,7 @@
 use serde::de::DeserializeOwned;
 
-use crate::api::SystemResult;
 use crate::encoding::Binary;
-use crate::errors::{dyn_contract_err, StdResult};
+use crate::errors::{dyn_contract_err, StdResult, SystemResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
