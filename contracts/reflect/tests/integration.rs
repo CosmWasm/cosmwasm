@@ -1,3 +1,22 @@
+//! This integration test tries to run and call the generated wasm.
+//! It depends on a Wasm build being available, which you can create with `cargo wasm`.
+//! Then running `cargo integration-test` will validate we can properly call into that generated Wasm.
+//!
+//! You can easily convert unit tests to integration tests.
+//! 1. First copy them over verbatum,
+//! 2. Then change
+//!      let mut deps = mock_dependencies(20);
+//!    to
+//!      let mut deps = mock_instance(WASM, &[]);
+//! 3. If you access raw storage, where ever you see something like:
+//!      deps.storage.get(CONFIG_KEY).expect("no data stored");
+//!    replace it with:
+//!      deps.with_storage(|store| {
+//!          let data = store.get(CONFIG_KEY).expect("no data stored");
+//!          //...
+//!      });
+//! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
+
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
     coin, coins, from_binary, Api, BankMsg, Binary, HandleResponse, HandleResult, HumanAddr,
@@ -9,43 +28,6 @@ use cosmwasm_vm::Instance;
 
 use reflect::msg::{CustomMsg, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
 use reflect::testing::mock_dependencies;
-
-/**
-This integration test tries to run and call the generated wasm.
-It depends on a release build being available already. You can create that with:
-
-cargo wasm
-
-Then running `cargo test` will validate we can properly call into that generated data.
-
-You can easily convert unit tests to integration tests.
-1. First copy them over verbatum,
-2. Then change
-    let mut deps = dependencies(20);
-To
-    let mut deps = mock_instance(WASM, &[]);
-3. If you access raw storage, where ever you see something like:
-    deps.storage.get(CONFIG_KEY).expect("no data stored");
- replace it with:
-    deps.with_storage(|store| {
-        let data = store.get(CONFIG_KEY).expect("no data stored");
-        //...
-    });
-4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-5. When matching on error codes, you can not use Error types, but rather must use strings:
-     match res {
-         Err(Error::Unauthorized{..}) => {},
-         _ => panic!("Must return unauthorized error"),
-     }
-     becomes:
-     match res {
-        ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"),
-        _ => panic!("Expected error"),
-     }
-
-
-
-**/
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/reflect.wasm");

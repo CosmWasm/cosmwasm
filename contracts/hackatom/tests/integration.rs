@@ -16,17 +16,6 @@
 //!          //...
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-//! 5. When matching on error codes, you can not use Error types, but rather corresponding StdError variants.
-//!    Note that you don't have backtrace field and can often skip the .. filler:
-//!      match res.unwrap_err() {
-//!          Error::Unauthorized { .. } => {}
-//!          _ => panic!("Must return unauthorized error"),
-//!      }
-//!    becomes:
-//!      match res.unwrap_err() {
-//!          StdError::Unauthorized { .. } => {}
-//!          _ => panic!("Must return unauthorized error"),
-//!      }
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
