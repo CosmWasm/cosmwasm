@@ -74,98 +74,87 @@ pub enum StdError {
     },
 }
 
-/// No equeality is defined on backtraces. For our purposes
-/// in this file we say that for two erros to be equal, their backtraces
-/// must both be unset.
-/// This works because we don't need a reflexive property for StdError,
-/// i.e. error `x.eq(x) == true`.
-fn backtraces_eq(a: &Option<snafu::Backtrace>, b: &Option<snafu::Backtrace>) -> bool {
-    a.is_none() && b.is_none()
-}
-
 impl PartialEq for StdError {
+    /// Two errors are considered equal if and only if their payloads (i.e. all fields other than backtrace) are equal.
+    ///
+    /// The origin of the error (expressed by its backtrace) is ignored, which allows equality checks on errors and
+    /// results in tests. This is a property that might not always be desired depending on the use case and something
+    /// you should be aware of.
+    ///
+    /// Note: We destruct the unused backtrace as _ to avoid the use of `..` which silently ignores newly added fields.
+    #[allow(clippy::unneeded_field_pattern)]
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (
-                StdError::GenericErr { msg, backtrace },
+                StdError::GenericErr { msg, backtrace: _ },
                 StdError::GenericErr {
                     msg: msg2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            ) => msg == msg2,
             (
-                StdError::InvalidBase64 { msg, backtrace },
+                StdError::InvalidBase64 { msg, backtrace: _ },
                 StdError::InvalidBase64 {
                     msg: msg2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            ) => msg == msg2,
             (
-                StdError::InvalidUtf8 { msg, backtrace },
+                StdError::InvalidUtf8 { msg, backtrace: _ },
                 StdError::InvalidUtf8 {
                     msg: msg2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            ) => msg == msg2,
             (
-                StdError::NotFound { kind, backtrace },
+                StdError::NotFound { kind, backtrace: _ },
                 StdError::NotFound {
                     kind: kind2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => kind == kind2 && backtraces_eq(backtrace, backtrace2),
-            (
-                StdError::NullPointer { backtrace },
-                StdError::NullPointer {
-                    backtrace: backtrace2,
-                },
-            ) => backtraces_eq(backtrace, backtrace2),
+            ) => kind == kind2,
+            (StdError::NullPointer { backtrace: _ }, StdError::NullPointer { backtrace: _ }) => {
+                true
+            }
             (
                 StdError::ParseErr {
                     target,
                     msg,
-                    backtrace,
+                    backtrace: _,
                 },
                 StdError::ParseErr {
                     target: target2,
                     msg: msg2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => target == target2 && msg == msg2 && backtraces_eq(backtrace, backtrace2),
+            ) => target == target2 && msg == msg2,
             (
                 StdError::SerializeErr {
                     source,
                     msg,
-                    backtrace,
+                    backtrace: _,
                 },
                 StdError::SerializeErr {
                     source: source2,
                     msg: msg2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => source == source2 && msg == msg2 && backtraces_eq(backtrace, backtrace2),
-            (
-                StdError::Unauthorized { backtrace },
-                StdError::Unauthorized {
-                    backtrace: backtrace2,
-                },
-            ) => backtraces_eq(backtrace, backtrace2),
+            ) => source == source2 && msg == msg2,
+            (StdError::Unauthorized { backtrace: _ }, StdError::Unauthorized { backtrace: _ }) => {
+                true
+            }
             (
                 StdError::Underflow {
                     minuend,
                     subtrahend,
-                    backtrace,
+                    backtrace: _,
                 },
                 StdError::Underflow {
                     minuend: minued2,
                     subtrahend: subtrahend2,
-                    backtrace: backtrace2,
+                    backtrace: _,
                 },
-            ) => {
-                minuend == minued2
-                    && subtrahend == subtrahend2
-                    && backtraces_eq(backtrace, backtrace2)
-            }
+            ) => minuend == minued2 && subtrahend == subtrahend2,
             _ => false,
         }
     }
