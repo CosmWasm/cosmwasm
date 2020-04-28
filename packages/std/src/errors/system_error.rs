@@ -14,6 +14,7 @@ use crate::HumanAddr;
 /// the contract understands the error format without creating a dependency on cosmwasm-vm.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
+#[non_exhaustive]
 pub enum SystemError {
     InvalidRequest { error: String },
     NoSuchContract { addr: HumanAddr },
