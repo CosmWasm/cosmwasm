@@ -72,11 +72,6 @@
 - The exports `cosmwasm_vm_version_1`, `allocate` and `deallocate` are now
   private and can only be called via the Wasm export. Make sure to `use`
   `cosmwasm_std` at least once in the contract to pull in the C exports.
-- Add new `ApiResult` and `ApiError` types to represent serializable
-  counterparts to `errors::Result` and `errors::Error`. There are conversions
-  from `Error` into serializable `ApiError` (dropping runtime info), and back
-  and forth between `Result` and `ApiResult` (with the same serializable error
-  types).
 - Add `Querier` trait and `QueryRequest` for query callbacks from the contract,
   along with `SystemError` type for the runtime rejecting messages.
 - `QueryRequest` takes a generic `Custom(T)` type that is passed opaquely to the
@@ -91,7 +86,25 @@
   into crate `cosmwasm-storage`.
 - Rename `Result` to `StdResult` to differentiate between the auto-`use`d
   `core::result::Result`. Fix error argument to `Error`.
-- Rename `Error` to `StdError`.
+- Complete overhaul of `Error` into `StdError`:
+  - The `StdError` enum can now be serialized and deserialized (losing its
+    backtrace), which allows us to pass them over the Wasm/VM boundary. This
+    allows using fully structured errors in e.g. integration tests.
+  - Auto generated snafu error constructor structs like `NotFound`/`ParseErr`/…
+    have been intenalized in favour of error generation helpers like
+    `not_found`/`parse_err`/…
+  - All error generator functions now return errors instead of results.
+  - Error cases don't contain `source` fields anymore. Instead source errors are
+    converted to standard types like `String`. For this reason, both
+    `snafu::ResultExt` and `snafu::OptionExt` cannot be used anymore.
+  - Backtraces became optional. Use `RUST_BACKTRACE=1` to enable them.
+  - `Utf8Err`/`Utf8StringErr` merged into `StdError::InvalidUtf8`
+  - `Base64Err` renamed into `StdError::InvalidBase64`
+  - `ContractErr`/`DynContractErr` merged into `StdError::GeneralErr`
+  - The unused `ValidationErr` was removed
+  - `StdError` is now
+    [non_exhaustive](https://doc.rust-lang.org/1.35.0/unstable-book/language-features/non-exhaustive.html),
+    making new error cases non-breaking changes.
 - `ExternalStorage.get` now returns an empty vector if a storage entry exists
   but has an empty value. Before, this was normalized to `None`.
 - Reorganize `CosmosMsg` enum types. They are now split by modules:
