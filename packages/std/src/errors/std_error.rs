@@ -2,11 +2,24 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 
-/// Structured error type for init, handle and query. This cannot be serialized to JSON, such that
-/// it is only available within the contract and its unit tests.
+/// Structured error type for init, handle and query.
+///
+/// This can be serialized and passed over the Wasm/VM boundary, which allows us to use structured
+/// error types in e.g. integration tests. In that process backtraces are stripped off.
 ///
 /// The prefix "Std" means "the standard error within the standard library". This is not the only
 /// result/error type in cosmwasm-std.
+///
+/// When new cases are added, they should describe the problem rather than what was attempted (e.g.
+/// InvalidBase64 is preferred over Base64DecodingErr). In the long run this allows us to get rid of
+/// the duplication in "StdError::FooErr".
+///
+/// Checklist for adding a new error:
+/// - Add enum case
+/// - Add to PartialEq implementation
+/// - Add serialize/deserialize test
+/// - Add creator function in std_error_helpers.rs
+/// - Regenerate schemas
 #[derive(Debug, Serialize, Deserialize, Snafu, JsonSchema)]
 #[snafu(visibility = "pub(crate)")]
 #[serde(rename_all = "snake_case")]
