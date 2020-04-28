@@ -11,10 +11,11 @@ major releases of `cosmwasm`. Note that you can also view the
 `Cargo.toml` dependencies:
 
 - Update to `schemars = "0.7"`
-- Update to `snafu = "0.6.3"`
 - Replace `cosmwasm = "0.7"` with `cosmwasm_std = "0.8"`
 - Replace `cosmwasm_vm = "0.7"` with `cosmwasm_vm = "0.8"`
 - Replace `cw_storage = "0.2"` with `cosmwasm_storage = "0.8"`
+- Remove explicit `snafu` dependency. `cosmwasm_std` still uses it internally
+  but doesn't expose snafu specifics anymore. See more details on errors below.
 
 (Note: until release of `0.8`, you need to use git references for all
 `cosmwasm_*` packages)
@@ -66,9 +67,28 @@ Contract Code:
   ```
 
 - Update the `CosmosMsg` enums used:
+
   - `CosmosMsg::Send{}` => `CosmosMsg::Bank(BankMsg::Send{})`
   - `CosmosMsg::Opaque{ data }` => `CosmosMsg::Native{ msg }`
   - `CosmosMsg::Contract` => `CosmosMsg::Wasm(WasmMsg::Execute{})`
+
+- Complete overhaul of `cosmwasm::Error` into `cosmwasm_std::StdError`:
+  - Auto generated snafu error constructor structs like `NotFound`/`ParseErr`/…
+    have been privatized in favour of error generation helpers like
+    `not_found`/`parse_err`/…
+  - All error generator functions now return errors instead of results, such
+    that e.g. `return unauthorized();` becomes `return Err(unauthorized());`
+  - Error cases don't contain `source` fields anymore. Instead source errors are
+    converted to standard types like `String`. For this reason, both
+    `snafu::ResultExt` and `snafu::OptionExt` cannot be used anymore. An error
+    wrapper now looks like `.map_err(invalid_base64)` and an `Option::None` to
+    error mapping looks like `.ok_or_else(|| not_found("State"))`.
+  - Backtraces became optional. Use `RUST_BACKTRACE=1` to enable them for unit
+    tests.
+  - `Utf8Err`/`Utf8StringErr` merged into `StdError::InvalidUtf8`
+  - `Base64Err` renamed into `StdError::InvalidBase64`
+  - `ContractErr`/`DynContractErr` merged into `StdError::GeneralErr`
+  - The unused `ValidationErr` was removed
 
 At this point `cargo wasm` should pass.
 
@@ -108,7 +128,7 @@ Integration Tests:
 - We no longer check errors as strings but have rich types:
   - Before:
     `match err { ContractResult::Err(msg) => assert_eq!(msg, "Unauthorized"), ... }`
-  - After: `match err { Err(ApiError::Unauthorized{ ..}) => {}, ... }`
+  - After: `match err { Err(StdError::Unauthorized{ .. }) => {}, ... }`
 - Remove all imports / use of `ContractResult`
 - You must specify `CosmosMsg::Native` type when calling
   `cosmwasm_vm::testing::{handle, init}`. You will want to
