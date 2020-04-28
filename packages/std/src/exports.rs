@@ -12,7 +12,6 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::api::to_api_result;
 use crate::errors::StdResult;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
@@ -58,11 +57,7 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: InitResult<U> = to_api_result(_do_init(
-        init_fn,
-        env_ptr as *mut c_void,
-        msg_ptr as *mut c_void,
-    ));
+    let res: InitResult<U> = _do_init(init_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -81,11 +76,8 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: HandleResult<U> = to_api_result(_do_handle(
-        handle_fn,
-        env_ptr as *mut c_void,
-        msg_ptr as *mut c_void,
-    ));
+    let res: HandleResult<U> =
+        _do_handle(handle_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -98,7 +90,7 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
     ) -> StdResult<QueryResponse>,
     msg_ptr: u32,
 ) -> u32 {
-    let res: QueryResult = to_api_result(_do_query(query_fn, msg_ptr as *mut c_void));
+    let res: QueryResult = _do_query(query_fn, msg_ptr as *mut c_void);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }

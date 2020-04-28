@@ -4,9 +4,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::api::ApiResult;
 use crate::coins::Coin;
 use crate::encoding::Binary;
+use crate::errors::StdResult;
 use crate::types::{HumanAddr, Never};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -128,7 +128,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type InitResult<U = Never> = ApiResult<InitResponse<U>>;
+pub type InitResult<U = Never> = StdResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -154,7 +154,7 @@ where
     pub data: Option<Binary>,   // abci defines this as bytes
 }
 
-pub type HandleResult<U = Never> = ApiResult<HandleResponse<U>>;
+pub type HandleResult<U = Never> = StdResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where
@@ -172,12 +172,12 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::api::ApiError;
+    use crate::errors::StdError;
     use crate::{coins, from_slice, to_vec};
 
     #[test]
     fn can_deser_error_result() {
-        let fail = InitResult::Err(ApiError::Unauthorized {});
+        let fail = InitResult::Err(StdError::Unauthorized { backtrace: None });
         let bin = to_vec(&fail).expect("encode contract result");
         println!("error: {}", std::str::from_utf8(&bin).unwrap());
         let back: InitResult = from_slice(&bin).expect("decode contract result");

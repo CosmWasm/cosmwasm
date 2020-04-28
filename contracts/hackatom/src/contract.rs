@@ -1,11 +1,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
-use snafu::OptionExt;
 
 use cosmwasm_std::{
-    contract_err, from_slice, log, to_binary, to_vec, unauthorized, Api, BankMsg, Binary,
-    CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, NotFound, Querier,
-    QueryResponse, StdResult, Storage,
+    from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, Api, BankMsg, Binary,
+    CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier, QueryResponse,
+    StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -95,7 +94,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
     let data = deps
         .storage
         .get(CONFIG_KEY)?
-        .context(NotFound { kind: "State" })?;
+        .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
 
     if env.message.sender == state.verifier {
@@ -118,7 +117,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         };
         Ok(res)
     } else {
-        unauthorized()
+        Err(unauthorized())
     }
 }
 
@@ -162,13 +161,13 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
         let pages = 1_600; // 100 MiB
         let ptr = wasm32::memory_grow(0, pages);
         if ptr == usize::max_value() {
-            return contract_err("Error in memory.grow instruction");
+            return Err(generic_err("Error in memory.grow instruction"));
         }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    contract_err("Unsupported architecture")
+    Err(generic_err("Unsupported architecture"))
 }
 
 fn do_panic() -> StdResult<HandleResponse> {
@@ -191,7 +190,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
     let data = deps
         .storage
         .get(CONFIG_KEY)?
-        .context(NotFound { kind: "State" })?;
+        .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
     Ok(Binary(to_vec(&VerifierResponse { verifier: addr })?))

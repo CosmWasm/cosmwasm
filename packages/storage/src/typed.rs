@@ -143,9 +143,8 @@ where
 mod test {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
-    use cosmwasm_std::{contract_err, NotFound};
+    use cosmwasm_std::{generic_err, not_found};
     use serde::{Deserialize, Serialize};
-    use snafu::OptionExt;
 
     use crate::prefixed;
 
@@ -231,7 +230,7 @@ mod test {
 
         // it's my birthday (fail if no data)
         let birthday = |mayd: Option<Data>| -> StdResult<Data> {
-            let mut d = mayd.context(NotFound { kind: "Data" })?;
+            let mut d = mayd.ok_or(not_found("Data"))?;
             d.age += 1;
             Ok(d)
         };
@@ -260,7 +259,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", &|_d| contract_err("cuz i feel like it"));
+        let output = bucket.update(b"maria", &|_d| Err(generic_err("cuz i feel like it")));
         assert!(output.is_err());
 
         // load it properly
@@ -281,7 +280,7 @@ mod test {
         // it's my birthday
         let output = bucket
             .update(b"maria", &|d| match d {
-                Some(_) => contract_err("Ensure this was empty"),
+                Some(_) => Err(generic_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })
             .unwrap();

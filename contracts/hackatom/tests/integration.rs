@@ -16,22 +16,11 @@
 //!          //...
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-//! 5. When matching on error codes, you can not use Error types, but rather corresponding ApiError variants.
-//!    Note that you don't have backtrace field and can often skip the .. filler:
-//!      match res.unwrap_err() {
-//!          Error::Unauthorized { .. } => {}
-//!          _ => panic!("Must return unauthorized error"),
-//!      }
-//!    becomes:
-//!      match res.unwrap_err() {
-//!          ApiError::Unauthorized {} => {}
-//!          _ => panic!("Must return unauthorized error"),
-//!      }
 
 use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, log, AllBalanceResponse, Api, ApiError, BankMsg, HandleResponse,
-    HandleResult, HumanAddr, InitResponse, InitResult, ReadonlyStorage,
+    coins, from_binary, log, AllBalanceResponse, Api, BankMsg, HandleResponse, HandleResult,
+    HumanAddr, InitResponse, InitResult, ReadonlyStorage, StdError,
 };
 use cosmwasm_vm::from_slice;
 use cosmwasm_vm::testing::{
@@ -97,7 +86,7 @@ fn init_and_query() {
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});
     match qres.unwrap_err() {
-        ApiError::ParseErr { .. } => {}
+        StdError::ParseErr { .. } => {}
         _ => panic!("Expected parse error"),
     }
 }
@@ -130,7 +119,7 @@ fn fails_on_bad_init() {
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res: InitResult = init(&mut deps, env, HandleMsg::Release {});
     match res.unwrap_err() {
-        ApiError::ParseErr { .. } => {}
+        StdError::ParseErr { .. } => {}
         _ => panic!("Expected parse error"),
     }
 }
@@ -192,7 +181,7 @@ fn failed_handle() {
     let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
     let handle_res: HandleResult = handle(&mut deps, handle_env, HandleMsg::Release {});
     match handle_res.unwrap_err() {
-        ApiError::Unauthorized {} => {}
+        StdError::Unauthorized { .. } => {}
         _ => panic!("Expect unauthorized error"),
     }
 

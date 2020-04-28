@@ -593,7 +593,7 @@ mod test {
             assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));
             // we write in the Error case
             store.set(b"bad", b"value").unwrap();
-            unauthorized()
+            Err(unauthorized())
         });
         assert!(res.is_err());
         assert_eq!(base.get(b"bad").unwrap(), None);

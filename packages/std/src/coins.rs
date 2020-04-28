@@ -3,7 +3,7 @@ use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::TryFrom;
 use std::{fmt, ops};
 
-use crate::errors::{dyn_contract_err, underflow, StdError, StdResult};
+use crate::errors::{generic_err, underflow, StdError, StdResult};
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Coin {
@@ -60,7 +60,7 @@ impl TryFrom<&str> for Uint128 {
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => dyn_contract_err(format!("Parsing coin: {}", e)),
+            Err(e) => Err(generic_err(format!("Parsing coin: {}", e))),
         }
     }
 }
@@ -103,7 +103,7 @@ impl ops::Sub for Uint128 {
     fn sub(self, other: Self) -> StdResult<Self> {
         let (min, sub) = (self.u128(), other.u128());
         if sub > min {
-            underflow(min, sub)
+            Err(underflow(min, sub))
         } else {
             Ok(Uint128(min - sub))
         }

@@ -1,10 +1,8 @@
-use snafu::ResultExt;
 use std::collections::HashMap;
 
-use crate::api::SystemError;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{contract_err, StdResult, Utf8StringErr};
+use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -68,10 +66,10 @@ impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return contract_err("Invalid input: human address too short");
+            return Err(generic_err("Invalid input: human address too short"));
         }
         if human.len() > self.canonical_length {
-            return contract_err("Invalid input: human address too long");
+            return Err(generic_err("Invalid input: human address too long"));
         }
 
         let mut out = Vec::from(human.as_str());
@@ -84,7 +82,9 @@ impl Api for MockApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
-            return contract_err("Invalid input: canonical address length not correct");
+            return Err(generic_err(
+                "Invalid input: canonical address length not correct",
+            ));
         }
 
         // remove trailing 0's (TODO: fix this - but fine for first tests)
@@ -94,8 +94,8 @@ impl Api for MockApi {
             .cloned()
             .filter(|&x| x != 0)
             .collect();
-        // convert to utf8
-        let human = String::from_utf8(trimmed).context(Utf8StringErr {})?;
+        // decode UTF-8 bytes into string
+        let human = String::from_utf8(trimmed).map_err(invalid_utf8)?;
         Ok(HumanAddr(human))
     }
 }
@@ -235,14 +235,14 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                Ok(to_binary(&bank_res).map_err(|e| e.into()))
+                Ok(to_binary(&bank_res))
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                Ok(to_binary(&bank_res).map_err(|e| e.into()))
+                Ok(to_binary(&bank_res))
             }
         }
     }
@@ -276,7 +276,7 @@ mod staking {
                     let val_res = ValidatorsResponse {
                         validators: self.validators.clone(),
                     };
-                    Ok(to_binary(&val_res).map_err(|e| e.into()))
+                    Ok(to_binary(&val_res))
                 }
                 StakingQuery::Delegations {
                     delegator,
@@ -293,7 +293,7 @@ mod staking {
                     let delegations: Vec<_> =
                         self.delegations.iter().filter(matches).cloned().collect();
                     let val_res = DelegationsResponse { delegations };
-                    Ok(to_binary(&val_res).map_err(|e| e.into()))
+                    Ok(to_binary(&val_res))
                 }
             }
         }

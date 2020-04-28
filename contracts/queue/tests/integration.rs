@@ -7,7 +7,7 @@
 //! 2. Then change
 //!      let mut deps = mock_dependencies(20);
 //!    to
-//!      let mut deps = mock_instance(WASM);
+//!      let mut deps = mock_instance(WASM, &[]);
 //! 3. If you access raw storage, where ever you see something like:
 //!      deps.storage.get(CONFIG_KEY).expect("no data stored");
 //!    replace it with:
@@ -16,17 +16,6 @@
 //!          //...
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
-//! 5. When matching on error codes, you can not use Error types, but rather corresponding ApiError variants.
-//!    Note that you don't have backtrace field and can often skip the .. filler:
-//!      match res.unwrap_err() {
-//!          Error::Unauthorized { .. } => {}
-//!          _ => panic!("Must return unauthorized error"),
-//!      }
-//!    becomes:
-//!      match res.unwrap_err() {
-//!          ApiError::Unauthorized {} => {}
-//!          _ => panic!("Must return unauthorized error"),
-//!      }
 
 use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{from_binary, from_slice, Env, HandleResponse, HumanAddr, InitResponse};

@@ -1,6 +1,5 @@
 // Exposed on all platforms
 
-mod api;
 mod coins;
 mod encoding;
 mod errors;
@@ -13,12 +12,11 @@ mod storage;
 mod traits;
 mod types;
 
-pub use crate::api::{to_api_result, ApiError, ApiResult, SystemError, SystemResult};
 pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
-    contract_err, dyn_contract_err, invalid, unauthorized, underflow, NotFound, NullPointer,
-    ParseErr, SerializeErr, StdError, StdResult, Utf8StringErr,
+    generic_err, invalid_base64, invalid_utf8, not_found, null_pointer, parse_err, serialize_err,
+    unauthorized, underflow, StdError, StdResult, SystemError, SystemResult,
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,

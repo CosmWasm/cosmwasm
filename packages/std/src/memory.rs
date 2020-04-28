@@ -3,7 +3,7 @@ use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
-use crate::errors::{NullPointer, StdResult};
+use crate::errors::{null_pointer, StdResult};
 
 /// Refers to some heap allocated data in Wasm.
 /// A pointer to an instance of this can be returned over FFI boundaries.
@@ -58,7 +58,7 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// the wasm code OR deallocating the buffer from the caller).
 pub unsafe fn consume_region(ptr: *mut c_void) -> StdResult<Vec<u8>> {
     if ptr.is_null() {
-        return NullPointer {}.fail();
+        return Err(null_pointer());
     }
     let region = Box::from_raw(ptr as *mut Region);
     let buffer = Vec::from_raw_parts(

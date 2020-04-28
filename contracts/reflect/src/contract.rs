@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    contract_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, Querier, StdResult, Storage,
+    generic_err, log, to_binary, unauthorized, Api, Binary, CosmosMsg, Env, Extern, HandleResponse,
+    HumanAddr, InitResponse, Querier, StdResult, Storage,
 };
 
 use crate::msg::{
@@ -40,10 +40,10 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse<CustomMsg>> {
     let state = config(&mut deps.storage).load()?;
     if env.message.sender != state.owner {
-        return unauthorized();
+        return Err(unauthorized());
     }
     if msgs.is_empty() {
-        return contract_err("Must reflect at least one message");
+        return Err(generic_err("Must reflect at least one message"));
     }
     let res = HandleResponse {
         messages: msgs,
@@ -61,7 +61,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     let api = deps.api;
     config(&mut deps.storage).update(&|mut state| {
         if env.message.sender != state.owner {
-            return unauthorized();
+            return Err(unauthorized());
         }
         state.owner = api.canonical_address(&owner)?;
         Ok(state)
@@ -190,7 +190,7 @@ mod tests {
         };
         let res = handle(&mut deps, env, msg);
         match res {
-            Err(StdError::ContractErr { msg, .. }) => {
+            Err(StdError::GenericErr { msg, .. }) => {
                 assert_eq!(msg, "Must reflect at least one message")
             }
             _ => panic!("Must return contract error"),

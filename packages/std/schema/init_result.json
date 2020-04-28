@@ -20,245 +20,12 @@
       ],
       "properties": {
         "Err": {
-          "$ref": "#/definitions/ApiError"
+          "$ref": "#/definitions/StdError"
         }
       }
     }
   ],
   "definitions": {
-    "ApiError": {
-      "description": "ApiError is a \"converted\" Error that can be serialized and deserialized. It can be created via `error.into()` This will not contain all information of the original (source error and backtrace cannot be serialized), but we ensure the following: 1. An ApiError will have the same type as the original Error 2. An ApiError will have the same display as the original 3. Serializing and deserializing an ApiError will give you an identical struct\n\nRather than use Display to pass Errors over API/FFI boundaries, we can use ApiError and provide much more context to the client.",
-      "anyOf": [
-        {
-          "type": "object",
-          "required": [
-            "base64_err"
-          ],
-          "properties": {
-            "base64_err": {
-              "type": "object",
-              "required": [
-                "source"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "contract_err"
-          ],
-          "properties": {
-            "contract_err": {
-              "type": "object",
-              "required": [
-                "msg"
-              ],
-              "properties": {
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "dyn_contract_err"
-          ],
-          "properties": {
-            "dyn_contract_err": {
-              "type": "object",
-              "required": [
-                "msg"
-              ],
-              "properties": {
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "not_found"
-          ],
-          "properties": {
-            "not_found": {
-              "type": "object",
-              "required": [
-                "kind"
-              ],
-              "properties": {
-                "kind": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "null_pointer"
-          ],
-          "properties": {
-            "null_pointer": {
-              "type": "object"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "parse_err"
-          ],
-          "properties": {
-            "parse_err": {
-              "type": "object",
-              "required": [
-                "kind",
-                "source"
-              ],
-              "properties": {
-                "kind": {
-                  "type": "string"
-                },
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "serialize_err"
-          ],
-          "properties": {
-            "serialize_err": {
-              "type": "object",
-              "required": [
-                "kind",
-                "source"
-              ],
-              "properties": {
-                "kind": {
-                  "type": "string"
-                },
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "unauthorized"
-          ],
-          "properties": {
-            "unauthorized": {
-              "type": "object"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "underflow"
-          ],
-          "properties": {
-            "underflow": {
-              "type": "object",
-              "required": [
-                "minuend",
-                "subtrahend"
-              ],
-              "properties": {
-                "minuend": {
-                  "type": "string"
-                },
-                "subtrahend": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "utf8_err"
-          ],
-          "properties": {
-            "utf8_err": {
-              "type": "object",
-              "required": [
-                "source"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "utf8_string_err"
-          ],
-          "properties": {
-            "utf8_string_err": {
-              "type": "object",
-              "required": [
-                "source"
-              ],
-              "properties": {
-                "source": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
-            "validation_err"
-          ],
-          "properties": {
-            "validation_err": {
-              "type": "object",
-              "required": [
-                "field",
-                "msg"
-              ],
-              "properties": {
-                "field": {
-                  "type": "string"
-                },
-                "msg": {
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      ]
-    },
     "BankMsg": {
       "anyOf": [
         {
@@ -513,6 +280,182 @@
                 },
                 "src_validator": {
                   "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "StdError": {
+      "description": "Structured error type for init, handle and query.\n\nThis can be serialized and passed over the Wasm/VM boundary, which allows us to use structured error types in e.g. integration tests. In that process backtraces are stripped off.\n\nThe prefix \"Std\" means \"the standard error within the standard library\". This is not the only result/error type in cosmwasm-std.\n\nWhen new cases are added, they should describe the problem rather than what was attempted (e.g. InvalidBase64 is preferred over Base64DecodingErr). In the long run this allows us to get rid of the duplication in \"StdError::FooErr\".\n\nChecklist for adding a new error: - Add enum case - Add to PartialEq implementation - Add serialize/deserialize test - Add creator function in std_error_helpers.rs - Regenerate schemas",
+      "anyOf": [
+        {
+          "description": "Whenever there is no specific error type available",
+          "type": "object",
+          "required": [
+            "generic_err"
+          ],
+          "properties": {
+            "generic_err": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "invalid_base64"
+          ],
+          "properties": {
+            "invalid_base64": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.",
+          "type": "object",
+          "required": [
+            "invalid_utf8"
+          ],
+          "properties": {
+            "invalid_utf8": {
+              "type": "object",
+              "required": [
+                "msg"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "not_found"
+          ],
+          "properties": {
+            "not_found": {
+              "type": "object",
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "null_pointer"
+          ],
+          "properties": {
+            "null_pointer": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "parse_err"
+          ],
+          "properties": {
+            "parse_err": {
+              "type": "object",
+              "required": [
+                "msg",
+                "target"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                },
+                "target": {
+                  "description": "the target type that was attempted",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "serialize_err"
+          ],
+          "properties": {
+            "serialize_err": {
+              "type": "object",
+              "required": [
+                "msg",
+                "source"
+              ],
+              "properties": {
+                "msg": {
+                  "type": "string"
+                },
+                "source": {
+                  "description": "the source type that was attempted",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "unauthorized"
+          ],
+          "properties": {
+            "unauthorized": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "underflow"
+          ],
+          "properties": {
+            "underflow": {
+              "type": "object",
+              "required": [
+                "minuend",
+                "subtrahend"
+              ],
+              "properties": {
+                "minuend": {
+                  "type": "string"
+                },
+                "subtrahend": {
+                  "type": "string"
                 }
               }
             }
