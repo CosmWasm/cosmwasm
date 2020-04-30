@@ -26,7 +26,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-package_schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/schema
@@ -41,7 +41,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-package_schema-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   package_std:
     docker:
@@ -53,7 +53,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -100,7 +100,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-package_std-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   package_storage:
     docker:
@@ -112,7 +112,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_storage-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-package_storage-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Build library for native target
           working_directory: ~/project/packages/storage
@@ -131,7 +131,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_storage-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-package_storage-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   package_vm_cranelift:
     docker:
@@ -146,7 +146,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -161,7 +161,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-package_vm_cranelift-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   package_vm_singlepass:
     docker:
@@ -176,7 +176,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -199,7 +199,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
 
   hackatom:
     docker:
@@ -213,7 +213,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -248,7 +248,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
   # Avoid duplicating generic checks like unit tests or schema generation – they belong in the generic hackatom job.
@@ -264,7 +264,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -283,7 +283,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
 
   queue:
     docker:
@@ -297,7 +297,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -332,7 +332,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   reflect:
     docker:
@@ -346,7 +346,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -381,7 +381,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:
@@ -393,7 +393,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-fmt-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-fmt-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add rustfmt component
           command: rustup component add rustfmt
@@ -418,7 +418,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-fmt-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-fmt-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   clippy:
     docker:
@@ -430,7 +430,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v3-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -474,4 +474,4 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v3-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
