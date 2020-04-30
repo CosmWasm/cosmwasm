@@ -186,7 +186,7 @@ name = "cosmwasm-schema"
 version = "0.8.0-dev"
 dependencies = [
  "schemars",
- "serde_json",
+ "serde_json 1.0.48",
 ]
 
 [[package]]
@@ -196,7 +196,7 @@ dependencies = [
  "base64",
  "schemars",
  "serde",
- "serde-json-wasm",
+ "serde_json 1.0.52",
  "snafu",
 ]
 
@@ -219,7 +219,7 @@ dependencies = [
  "parity-wasm",
  "schemars",
  "serde",
- "serde_json",
+ "serde_json 1.0.48",
  "sha2",
  "snafu",
  "wasmer-clif-backend",
@@ -754,7 +754,7 @@ checksum = "10db1d3c2260e94570e1a492c762e62c11e1aac8869a2c3d869137995e6810d4"
 dependencies = [
  "schemars_derive",
  "serde",
- "serde_json",
+ "serde_json 1.0.48",
 ]
 
 [[package]]
@@ -810,15 +810,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "serde-json-wasm"
-version = "0.1.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "77cf509484e297252a195b1338a6d45843fe11ef234259f67649e8729934f443"
-dependencies = [
- "serde",
-]
-
-[[package]]
 name = "serde_bytes"
 version = "0.11.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -854,6 +845,16 @@ name = "serde_json"
 version = "1.0.48"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9371ade75d4c2d6cb154141b9752cf3781ec9c05e0e5cf35060e1e70ee7b9c25"
+dependencies = [
+ "itoa",
+ "ryu",
+ "serde",
+]
+
+[[package]]
+name = "serde_json"
+version = "1.0.52"
+source = "git+https://github.com/webmaster128/serde_json_wasm?branch=float-feature#d5f19b526cd659a5d82e370f88ea5866641fee13"
 dependencies = [
  "itoa",
  "ryu",
