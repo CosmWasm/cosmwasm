@@ -25,6 +25,10 @@ docker run --rm -v "$(pwd)":/code \
 cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.8.wasm
 ```
 
+You can do the same for `reflect` and `queue` when there are breaking changes.
+Those are not used internally for testing, but provided here for use testing
+other projects, like `go-cosmwasm`.
+
 ## Testing
 
 By default, this repository is built and tested with the singlepass backend.
