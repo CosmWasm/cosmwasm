@@ -2,23 +2,17 @@
 // The reason is two fold:
 // 1. To easily ensure that all calling libraries use the same version (minimize code size)
 // 2. To allow us to switch out to eg. serde-json-core more easily
-use serde::{Deserialize, Serialize};
+use serde::{de::DeserializeOwned, Serialize};
 use std::any::type_name;
 
 use crate::encoding::Binary;
 use crate::errors::{parse_err, serialize_err, StdResult};
 
-pub fn from_slice<'a, T>(value: &'a [u8]) -> StdResult<T>
-where
-    T: Deserialize<'a>,
-{
+pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {
     serde_json_wasm::from_slice(value).map_err(|e| parse_err(type_name::<T>(), e))
 }
 
-pub fn from_binary<'a, T>(value: &'a Binary) -> StdResult<T>
-where
-    T: Deserialize<'a>,
-{
+pub fn from_binary<T: DeserializeOwned>(value: &Binary) -> StdResult<T> {
     from_slice(value.as_slice())
 }
 
