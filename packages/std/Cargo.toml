@@ -29,7 +29,7 @@ backtraces = ["snafu/backtraces"]
 
 [dependencies]
 base64 = "0.11.0"
-serde-json-wasm = "0.1.2"
+serde-json-wasm = { git="https://github.com/CosmWasm/serde-json-wasm", rev="c5a1a05" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.6.6" }
