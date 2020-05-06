@@ -139,7 +139,7 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
         formatter.write_str("string-encoded integer")
     }
 
-    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
