@@ -811,8 +811,9 @@ dependencies = [
 
 [[package]]
 name = "serde-json-wasm"
-version = "0.2.0-dev"
-source = "git+https://github.com/CosmWasm/serde-json-wasm?rev=c5a1a05#c5a1a05e170e013761fb4b5baf3f4b29a7cb1a66"
+version = "0.2.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7294d94d390f1d2334697c065ea591d7074c676e2d20aa6f1df752fced29823f"
 dependencies = [
  "serde",
 ]
