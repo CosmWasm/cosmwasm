@@ -116,6 +116,8 @@
 - Add `staking` feature flag to expose new `StakingMsg` types under `CosmosMsg`
   and new `StakingRequest` types under `QueryRequest`.
 - Add support for mocking-out staking queries via `MockQuerier.with_staking`
+- `from_slice`/`from_binary` now require result type to be `DeserializeOwned`,
+  i.e. the result must not contain references such as `&str`.
 
 **cosmwasm-vm**
 

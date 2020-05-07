@@ -77,7 +77,7 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
         formatter.write_str("valid base64 encoded string")
     }
 
-    fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
     where
         E: de::Error,
     {
