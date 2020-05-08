@@ -40,12 +40,18 @@ where
     A: Api + 'static,
     Q: Querier + 'static,
 {
+    /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
+    /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
         let module = compile(code)?;
         Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
+    pub(crate) fn from_module(
+        module: &Module,
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+    ) -> VmResult<Self> {
         let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
@@ -120,7 +126,7 @@ where
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
 
-    pub fn from_wasmer(
+    pub(crate) fn from_wasmer(
         mut wasmer_instance: wasmer_runtime_core::Instance,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
@@ -137,7 +143,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(mut instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+    pub(crate) fn recycle(
+        mut instance: Self,
+    ) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
             move_out_of_context(instance.wasmer_instance.context_mut())
         {
