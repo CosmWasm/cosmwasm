@@ -3,6 +3,7 @@ use std::marker::PhantomData;
 use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
+    export::Export,
     imports,
     module::Module,
     typed_func::{Wasm, WasmTypeList},
@@ -29,6 +30,7 @@ static WASM_PAGE_SIZE: u64 = 64 * 1024;
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
+    pub required_features: Vec<String>,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
@@ -132,10 +134,26 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
+
+        let required_features = wasmer_instance
+            .exports()
+            .filter_map(|(name, export)| {
+                if let Export::Function { .. } = export {
+                    if name.starts_with("requires_") {
+                        return Some(name[9..].to_string());
+                    }
+                }
+                None
+            })
+            .collect();
+        // println!("{:?}", required_features);
+
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
+
         Instance {
             wasmer_instance,
             api: deps.api,
+            required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
         }
@@ -218,6 +236,7 @@ where
 mod test {
     use super::*;
 
+    use cosmwasm_std::testing::mock_dependencies;
     use wasmer_runtime_core::error::ResolveError;
 
     use crate::errors::VmError;
@@ -226,6 +245,14 @@ mod test {
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static DEFAULT_GAS_LIMIT: u64 = 500_000;
+
+    #[test]
+    fn required_features_works() {
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features, ["staking"]);
+    }
 
     #[test]
     fn func_works() {
