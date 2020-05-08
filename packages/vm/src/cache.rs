@@ -8,11 +8,12 @@ use snafu::ResultExt;
 use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
+use crate::checksum::Checksum;
 use crate::compatability::check_wasm;
 use crate::errors::{make_integrety_err, IoErr, VmResult};
 use crate::instance::Instance;
 use crate::modules::{FileSystemCache, WasmHash};
-use crate::wasm_store::{load, save, wasm_hash};
+use crate::wasm_store::{load, save};
 
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
@@ -69,14 +70,14 @@ where
         })
     }
 
-    pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Vec<u8>> {
+    pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm)?;
-        let id = save(&self.wasm_path, wasm)?;
+        let checksum = save(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
-        let hash = WasmHash::generate(&id);
+        let hash = WasmHash::generate(&checksum.0);
         // singlepass cannot store a module, just make best effort
         let _ = self.modules.store(hash, module);
-        Ok(id)
+        Ok(checksum)
     }
 
     /// Retrieves a Wasm blob that was previously stored via save_wasm.
@@ -84,11 +85,10 @@ where
     /// This function is public to allow a checksum to Wasm lookup in the blockchain.
     ///
     /// If the given ID is not found or the content does not match the hash (=ID), an error is returned.
-    pub fn load_wasm(&self, id: &[u8]) -> VmResult<Vec<u8>> {
-        let code = load(&self.wasm_path, id)?;
+    pub fn load_wasm(&self, checksum: &Checksum) -> VmResult<Vec<u8>> {
+        let code = load(&self.wasm_path, checksum)?;
         // verify hash matches (integrity check)
-        let hash = wasm_hash(&code);
-        if hash != id {
+        if Checksum::generate(&code) != *checksum {
             Err(make_integrety_err())
         } else {
             Ok(code)
@@ -98,11 +98,11 @@ where
     /// get instance returns a wasmer Instance tied to a previously saved wasm
     pub fn get_instance(
         &mut self,
-        id: &[u8],
+        checksum: &Checksum,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> VmResult<Instance<S, A, Q>> {
-        let hash = WasmHash::generate(&id);
+        let hash = WasmHash::generate(&checksum.0);
 
         // pop from lru cache if present
         if let Some(cache) = &mut self.instances {
@@ -120,18 +120,18 @@ where
         }
 
         // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
-        let wasm = self.load_wasm(id)?;
+        let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
         Instance::from_code(&wasm, deps, gas_limit)
     }
 
     pub fn store_instance(
         &mut self,
-        id: &[u8],
+        checksum: &Checksum,
         instance: Instance<S, A, Q>,
     ) -> Option<Extern<S, A, Q>> {
         if let Some(cache) = &mut self.instances {
-            let hash = WasmHash::generate(&id);
+            let hash = WasmHash::generate(&checksum.0);
             let (wasmer_instance, ext) = Instance::recycle(instance);
             cache.put(hash, wasmer_instance);
             ext
@@ -215,7 +215,7 @@ mod test {
     fn load_wasm_works_across_multiple_instances() {
         let tmp_dir = TempDir::new().unwrap();
         let tmp_path = tmp_dir.path();
-        let id: Vec<u8>;
+        let id: Checksum;
 
         {
             let mut cache1: CosmCache<MockStorage, MockApi, MockQuerier> =
@@ -236,9 +236,12 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
-        let id = vec![5; 32];
+        let checksum = Checksum([
+            5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+            5, 5, 5,
+        ]);
 
-        let res = cache.load_wasm(&id);
+        let res = cache.load_wasm(&checksum);
         match res {
             Err(VmError::IoErr { .. }) => {}
             Err(e) => panic!("Unexpected error: {:?}", e),
@@ -251,14 +254,17 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
-        let id = cache.save_wasm(CONTRACT).unwrap();
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         // Corrupt cache file
-        let filepath = tmp_dir.path().join(WASM_DIR).join(&hex::encode(&id));
+        let filepath = tmp_dir
+            .path()
+            .join(WASM_DIR)
+            .join(&hex::encode(&checksum.0));
         let mut file = OpenOptions::new().write(true).open(filepath).unwrap();
         file.write_all(b"broken data").unwrap();
 
-        let res = cache.load_wasm(&id);
+        let res = cache.load_wasm(&checksum);
         match res {
             Err(VmError::IntegrityErr { .. }) => {}
             Err(e) => panic!("Unexpected error: {:?}", e),

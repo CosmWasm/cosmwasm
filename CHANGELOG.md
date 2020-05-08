@@ -147,6 +147,7 @@
   exist. The latest standard library converts this error code back to a `None`
   value. This allows differentiating non-existent and empty storage entries.
 - Make `Instance::from_module`, `::from_wasmer` and `::recycle` crate-internal.
+- Create explicit, public `Checksum` type to identify Wasm blobs.
 
 ## 0.7.2 (2020-03-23)
 

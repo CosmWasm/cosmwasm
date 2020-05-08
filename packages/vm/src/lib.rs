@@ -1,6 +1,7 @@
 mod backends;
 mod cache;
 mod calls;
+mod checksum;
 mod compatability;
 mod context;
 mod conversion;
@@ -18,6 +19,7 @@ pub use crate::cache::CosmCache;
 pub use crate::calls::{
     call_handle, call_handle_raw, call_init, call_init_raw, call_query, call_query_raw,
 };
+pub use crate::checksum::Checksum;
 pub use crate::errors::{VmError, VmResult};
 pub use crate::instance::Instance;
 pub use crate::modules::FileSystemCache;
