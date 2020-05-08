@@ -9,7 +9,7 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
-use crate::errors::{IntegrityErr, IoErr, VmResult};
+use crate::errors::{make_integrety_err, IoErr, VmResult};
 use crate::instance::Instance;
 use crate::modules::{FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save, wasm_hash};
@@ -79,12 +79,17 @@ where
         Ok(id)
     }
 
+    /// Retrieves a Wasm blob that was previously stored via save_wasm.
+    /// When the cache is instantiated with the same base dir, this finds Wasm files on disc across multiple instances (i.e. node restarts).
+    /// This function is public to allow a checksum to Wasm lookup in the blockchain.
+    ///
+    /// If the given ID is not found or the content does not match the hash (=ID), an error is returned.
     pub fn load_wasm(&self, id: &[u8]) -> VmResult<Vec<u8>> {
         let code = load(&self.wasm_path, id)?;
         // verify hash matches (integrity check)
         let hash = wasm_hash(&code);
-        if hash.ne(&id) {
-            IntegrityErr {}.fail()
+        if hash != id {
+            Err(make_integrety_err())
         } else {
             Ok(code)
         }
@@ -143,6 +148,8 @@ mod test {
     use crate::errors::VmError;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Never};
+    use std::fs::OpenOptions;
+    use std::io::Write;
     use tempfile::TempDir;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;
@@ -190,6 +197,72 @@ mod test {
             Err(VmError::ValidationErr { .. }) => {}
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn load_wasm_works() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
+            unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = cache.save_wasm(CONTRACT).unwrap();
+
+        let restored = cache.load_wasm(&id).unwrap();
+        assert_eq!(restored, CONTRACT);
+    }
+
+    #[test]
+    fn load_wasm_works_across_multiple_instances() {
+        let tmp_dir = TempDir::new().unwrap();
+        let tmp_path = tmp_dir.path();
+        let id: Vec<u8>;
+
+        {
+            let mut cache1: CosmCache<MockStorage, MockApi, MockQuerier> =
+                unsafe { CosmCache::new(tmp_path, 10).unwrap() };
+            id = cache1.save_wasm(CONTRACT).unwrap();
+        }
+
+        {
+            let cache2: CosmCache<MockStorage, MockApi, MockQuerier> =
+                unsafe { CosmCache::new(tmp_path, 10).unwrap() };
+            let restored = cache2.load_wasm(&id).unwrap();
+            assert_eq!(restored, CONTRACT);
+        }
+    }
+
+    #[test]
+    fn load_wasm_errors_for_non_existent_id() {
+        let tmp_dir = TempDir::new().unwrap();
+        let cache: CosmCache<MockStorage, MockApi, MockQuerier> =
+            unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = vec![5; 32];
+
+        let res = cache.load_wasm(&id);
+        match res {
+            Err(VmError::IoErr { .. }) => {}
+            Err(e) => panic!("Unexpected error: {:?}", e),
+            Ok(_) => panic!("This must not succeed"),
+        }
+    }
+
+    #[test]
+    fn load_wasm_errors_for_corrupted_wasm() {
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
+            unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
+        let id = cache.save_wasm(CONTRACT).unwrap();
+
+        // Corrupt cache file
+        let filepath = tmp_dir.path().join(WASM_DIR).join(&hex::encode(&id));
+        let mut file = OpenOptions::new().write(true).open(filepath).unwrap();
+        file.write_all(b"broken data").unwrap();
+
+        let res = cache.load_wasm(&id);
+        match res {
+            Err(VmError::IntegrityErr { .. }) => {}
+            Err(e) => panic!("Unexpected error: {:?}", e),
+            Ok(_) => panic!("This must not succeed"),
         }
     }
 
