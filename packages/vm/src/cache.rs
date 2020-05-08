@@ -194,7 +194,7 @@ mod test {
     }
 
     #[test]
-    fn finds_cached_module() {
+    fn get_instance_finds_cached_module() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
@@ -206,7 +206,7 @@ mod test {
     }
 
     #[test]
-    fn finds_cached_instance() {
+    fn get_instance_finds_cached_instance() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
