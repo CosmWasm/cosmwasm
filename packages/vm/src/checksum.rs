@@ -7,11 +7,19 @@ use sha2::{Digest, Sha256};
 /// This is often referred to as "code ID" in go-cosmwasm, even if code ID
 /// usually refers to an auto-incrementing number.
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub struct Checksum(pub [u8; 32]);
+pub struct Checksum([u8; 32]);
 
 impl Checksum {
+    pub fn from(data: [u8; 32]) -> Self {
+        Checksum(data)
+    }
+
     pub fn generate(wasm: &[u8]) -> Self {
         Checksum(Sha256::digest(wasm).into())
+    }
+
+    pub fn to_hex(&self) -> String {
+        hex::encode(self.0)
     }
 
     /// This generates a module hash in the data type required by Wasmer.

@@ -236,7 +236,7 @@ mod test {
         let tmp_dir = TempDir::new().unwrap();
         let cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), 10).unwrap() };
-        let checksum = Checksum([
+        let checksum = Checksum::from([
             5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
             5, 5, 5,
         ]);
@@ -257,10 +257,7 @@ mod test {
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         // Corrupt cache file
-        let filepath = tmp_dir
-            .path()
-            .join(WASM_DIR)
-            .join(&hex::encode(&checksum.0));
+        let filepath = tmp_dir.path().join(WASM_DIR).join(&checksum.to_hex());
         let mut file = OpenOptions::new().write(true).open(filepath).unwrap();
         file.write_all(b"broken data").unwrap();
 

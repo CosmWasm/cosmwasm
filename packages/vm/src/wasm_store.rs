@@ -13,7 +13,7 @@ use crate::errors::{IoErr, VmResult};
 pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum> {
     // calculate filename
     let checksum = Checksum::generate(wasm);
-    let filename = hex::encode(&checksum.0);
+    let filename = checksum.to_hex();
     let filepath = dir.into().join(&filename);
 
     // write data to file
@@ -31,7 +31,7 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum> {
 
 pub fn load<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResult<Vec<u8>> {
     // this requires the directory and file to exist
-    let path = dir.into().join(hex::encode(checksum.0));
+    let path = dir.into().join(checksum.to_hex());
     let mut file = File::open(path).context(IoErr {})?;
 
     let mut wasm = Vec::<u8>::new();
