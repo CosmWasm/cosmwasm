@@ -5,7 +5,7 @@
 //! You can easily convert unit tests to integration tests.
 //! 1. First copy them over verbatum,
 //! 2. Then change
-//!      let mut deps = mock_dependencies(20);
+//!      let mut deps = mock_dependencies(20, &[]);
 //!    to
 //!      let mut deps = mock_instance(WASM, &[]);
 //! 3. If you access raw storage, where ever you see something like:
