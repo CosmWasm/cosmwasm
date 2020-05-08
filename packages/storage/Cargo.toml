@@ -18,7 +18,8 @@ maintenance = { status = "actively-developed" }
 iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
-cosmwasm-std = { path = "../std" }
+# Uses the path when built locally; uses the given version from crates.io when published
+cosmwasm-std = { path = "../std", version = "0.8.0-alpha1" }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 
 [dev-dependencies]
