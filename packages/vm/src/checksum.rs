@@ -1,3 +1,4 @@
+use crate::modules::WasmHash;
 use sha2::{Digest, Sha256};
 
 /// A SHA-256 checksum of a Wasm blob, used to identify a Wasm code.
@@ -11,6 +12,13 @@ pub struct Checksum(pub [u8; 32]);
 impl Checksum {
     pub fn generate(wasm: &[u8]) -> Self {
         Checksum(Sha256::digest(wasm).into())
+    }
+
+    /// This generates a module hash in the data type required by Wasmer.
+    /// The existence of this method is a bit hacky, since WasmHash::generate expects
+    /// the Wasm blob as an input. Here we derive Wasm -> Checksum -> WasmHash.
+    pub(crate) fn derive_module_hash(&self) -> WasmHash {
+        WasmHash::generate(&self.0)
     }
 }
 
