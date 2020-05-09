@@ -28,6 +28,7 @@ use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
+static REQUIRES_PREFIX: &str = "requires_";
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
@@ -140,11 +141,9 @@ where
         let required_features =
             HashSet::from_iter(wasmer_instance.exports().filter_map(|(mut name, export)| {
                 if let Export::Function { .. } = export {
-                    if name.starts_with("requires_") {
-                        let required_feature = name.split_off(9);
-                        if !required_feature.is_empty() {
-                            return Some(required_feature);
-                        }
+                    if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
+                        let required_feature = name.split_off(REQUIRES_PREFIX.len());
+                        return Some(required_feature);
                     }
                 }
                 None
