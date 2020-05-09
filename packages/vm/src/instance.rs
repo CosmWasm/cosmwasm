@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+use std::iter::FromIterator;
 use std::marker::PhantomData;
 
 use snafu::ResultExt;
@@ -30,7 +32,7 @@ static WASM_PAGE_SIZE: u64 = 64 * 1024;
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
-    pub required_features: Vec<String>,
+    pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
@@ -135,17 +137,18 @@ where
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
 
-        let required_features = wasmer_instance
-            .exports()
-            .filter_map(|(name, export)| {
+        let required_features =
+            HashSet::from_iter(wasmer_instance.exports().filter_map(|(mut name, export)| {
                 if let Export::Function { .. } = export {
                     if name.starts_with("requires_") {
-                        return Some(name[9..].to_string());
+                        let required_feature = name.split_off(9);
+                        if !required_feature.is_empty() {
+                            return Some(required_feature);
+                        }
                     }
                 }
                 None
-            })
-            .collect();
+            }));
         // println!("{:?}", required_features);
 
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
@@ -251,7 +254,34 @@ mod test {
     fn required_features_works() {
         let deps = mock_dependencies(20, &[]);
         let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
-        assert_eq!(instance.required_features, ["staking"]);
+        assert_eq!(instance.required_features.len(), 1);
+        assert!(instance.required_features.contains("staking"));
+    }
+
+    #[test]
+    fn required_features_works_for_many_exports() {
+        use wabt::wat2wasm;
+
+        // this is invalid, as it doesn't contain all required exports
+        static WAT: &'static str = r#"
+            (module
+              (type (func))
+              (func (type 0) nop)
+              (export "requires_water" (func 0))
+              (export "requires_" (func 0))
+              (export "requires_nutrients" (func 0))
+              (export "require_milk" (func 0))
+              (export "requires_sun" (func 0))
+            )
+        "#;
+        let wasm = wat2wasm(WAT).unwrap();
+
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features.len(), 3);
+        assert!(instance.required_features.contains("nutrients"));
+        assert!(instance.required_features.contains("sun"));
+        assert!(instance.required_features.contains("water"));
     }
 
     #[test]
