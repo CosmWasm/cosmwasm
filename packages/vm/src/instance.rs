@@ -1,11 +1,9 @@
 use std::collections::HashSet;
-use std::iter::FromIterator;
 use std::marker::PhantomData;
 
 use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
-    export::Export,
     imports,
     module::Module,
     typed_func::{Wasm, WasmTypeList},
@@ -20,6 +18,7 @@ use crate::context::{
 };
 use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
 };
@@ -28,7 +27,6 @@ use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
-static REQUIRES_PREFIX: &str = "requires_";
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
@@ -137,21 +135,8 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
-
-        let required_features =
-            HashSet::from_iter(wasmer_instance.exports().filter_map(|(mut name, export)| {
-                if let Export::Function { .. } = export {
-                    if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
-                        let required_feature = name.split_off(REQUIRES_PREFIX.len());
-                        return Some(required_feature);
-                    }
-                }
-                None
-            }));
-        // println!("{:?}", required_features);
-
+        let required_features = required_features_from_wasmer_instance(&wasmer_instance);
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
-
         Instance {
             wasmer_instance,
             api: deps.api,

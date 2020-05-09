@@ -6,6 +6,7 @@ mod compatability;
 mod context;
 mod conversion;
 mod errors;
+mod features;
 mod imports;
 mod instance;
 mod memory;
