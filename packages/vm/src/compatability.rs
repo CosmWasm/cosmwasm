@@ -1,6 +1,10 @@
 use parity_wasm::elements::{deserialize_buffer, External, ImportEntry, Module};
+use std::collections::BTreeSet;
+use std::collections::HashSet;
+use std::iter::FromIterator;
 
 use crate::errors::{make_validation_err, VmResult};
+use crate::features::required_features_from_module;
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
@@ -129,10 +133,24 @@ fn check_wasm_imports(module: &Module) -> VmResult<()> {
     Ok(())
 }
 
+fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) -> VmResult<()> {
+    let required_features = required_features_from_module(module);
+    if !required_features.is_subset(supported_features) {
+        // We switch to BTreeSet to get a sorted error message
+        let unsupported = BTreeSet::from_iter(required_features.difference(&supported_features));
+        return make_validation_err(format!(
+            "Wasm contract requires unsupported features: {:?}",
+            unsupported
+        ));
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::errors::VmError;
+    use std::iter::FromIterator;
     use wabt::wat2wasm;
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
@@ -345,6 +363,105 @@ mod test {
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn check_wasm_features_ok() {
+        let wasm = wat2wasm(
+            r#"(module
+            (type (func))
+            (func (type 0) nop)
+            (export "requires_water" (func 0))
+            (export "requires_" (func 0))
+            (export "requires_nutrients" (func 0))
+            (export "require_milk" (func 0))
+            (export "REQUIRES_air" (func 0))
+            (export "requires_sun" (func 0))
+        )"#,
+        )
+        .unwrap();
+        let module = deserialize_buffer(&wasm).unwrap();
+        let supported = HashSet::from_iter(
+            [
+                "water".to_string(),
+                "nutrients".to_string(),
+                "sun".to_string(),
+                "freedom".to_string(),
+            ]
+            .iter()
+            .cloned(),
+        );
+        check_wasm_features(&module, &supported).unwrap();
+    }
+
+    #[test]
+    fn check_wasm_features_fails_for_missing() {
+        let wasm = wat2wasm(
+            r#"(module
+            (type (func))
+            (func (type 0) nop)
+            (export "requires_water" (func 0))
+            (export "requires_" (func 0))
+            (export "requires_nutrients" (func 0))
+            (export "require_milk" (func 0))
+            (export "REQUIRES_air" (func 0))
+            (export "requires_sun" (func 0))
+        )"#,
+        )
+        .unwrap();
+        let module = deserialize_buffer(&wasm).unwrap();
+
+        // Support set 1
+        let supported = HashSet::from_iter(
+            [
+                "water".to_string(),
+                "nutrients".to_string(),
+                "freedom".to_string(),
+            ]
+            .iter()
+            .cloned(),
+        );
+        match check_wasm_features(&module, &supported).unwrap_err() {
+            VmError::ValidationErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasm contract requires unsupported features: {\"sun\"}"
+            ),
+            _ => panic!("Got unexpected error"),
+        }
+
+        // Support set 2
+        let supported = HashSet::from_iter(
+            ["nutrients".to_string(), "freedom".to_string()]
+                .iter()
+                .cloned(),
+        );
+        match check_wasm_features(&module, &supported).unwrap_err() {
+            VmError::ValidationErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasm contract requires unsupported features: {\"sun\", \"water\"}"
+            ),
+            _ => panic!("Got unexpected error"),
+        }
+
+        // Support set 3
+        let supported = HashSet::from_iter(["freedom".to_string()].iter().cloned());
+        match check_wasm_features(&module, &supported).unwrap_err() {
+            VmError::ValidationErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasm contract requires unsupported features: {\"nutrients\", \"sun\", \"water\"}"
+            ),
+            _ => panic!("Got unexpected error"),
+        }
+
+        // Support set 4
+        let supported = HashSet::from_iter([].iter().cloned());
+        match check_wasm_features(&module, &supported).unwrap_err() {
+            VmError::ValidationErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasm contract requires unsupported features: {\"nutrients\", \"sun\", \"water\"}"
+            ),
+            _ => panic!("Got unexpected error"),
         }
     }
 }
