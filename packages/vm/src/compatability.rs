@@ -36,7 +36,7 @@ static REQUIRED_EXPORTS: &[&str] = &[
 static MEMORY_LIMIT: u32 = 512; // in pages
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
-pub fn check_wasm(wasm_code: &[u8]) -> VmResult<()> {
+pub fn check_wasm(wasm_code: &[u8], supported_features: &HashSet<String>) -> VmResult<()> {
     let module = match deserialize_buffer(&wasm_code) {
         Ok(deserialized) => deserialized,
         Err(err) => {
@@ -49,6 +49,7 @@ pub fn check_wasm(wasm_code: &[u8]) -> VmResult<()> {
     check_wasm_memories(&module)?;
     check_wasm_exports(&module)?;
     check_wasm_imports(&module)?;
+    check_wasm_features(&module, supported_features)?;
     Ok(())
 }
 
@@ -158,15 +159,19 @@ mod test {
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
+    fn default_features() -> HashSet<String> {
+        HashSet::from_iter(["staking".to_string()].iter().cloned())
+    }
+
     #[test]
     fn test_check_wasm() {
         // this is our reference check, must pass
-        check_wasm(CONTRACT).unwrap();
+        check_wasm(CONTRACT, &default_features()).unwrap();
     }
 
     #[test]
     fn test_check_wasm_old_contract() {
-        match check_wasm(CONTRACT_0_7) {
+        match check_wasm(CONTRACT_0_7, &default_features()) {
             Err(VmError::ValidationErr { msg, .. }) => assert!(msg.starts_with(
                 "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
             )),
@@ -174,7 +179,7 @@ mod test {
             Ok(_) => panic!("This must not succeeed"),
         };
 
-        match check_wasm(CONTRACT_0_6) {
+        match check_wasm(CONTRACT_0_6, &default_features()) {
             Err(VmError::ValidationErr { msg, .. }) => assert!(msg.starts_with(
                 "Wasm contract doesn't have required export: \"cosmwasm_vm_version_1\""
             )),
@@ -185,7 +190,7 @@ mod test {
 
     #[test]
     fn test_check_wasm_corrupted_data() {
-        match check_wasm(CORRUPTED) {
+        match check_wasm(CORRUPTED, &default_features()) {
             Err(VmError::ValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
             }
