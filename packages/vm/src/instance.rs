@@ -222,12 +222,11 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-
-    use cosmwasm_std::testing::mock_dependencies;
-    use wasmer_runtime_core::error::ResolveError;
-
     use crate::errors::VmError;
     use crate::testing::mock_instance;
+    use cosmwasm_std::testing::mock_dependencies;
+    use wabt::wat2wasm;
+    use wasmer_runtime_core::error::ResolveError;
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
@@ -244,21 +243,19 @@ mod test {
 
     #[test]
     fn required_features_works_for_many_exports() {
-        use wabt::wat2wasm;
-
-        // this is invalid, as it doesn't contain all required exports
-        static WAT: &'static str = r#"
-            (module
-              (type (func))
-              (func (type 0) nop)
-              (export "requires_water" (func 0))
-              (export "requires_" (func 0))
-              (export "requires_nutrients" (func 0))
-              (export "require_milk" (func 0))
-              (export "requires_sun" (func 0))
-            )
-        "#;
-        let wasm = wat2wasm(WAT).unwrap();
+        let wasm = wat2wasm(
+            r#"(module
+            (type (func))
+            (func (type 0) nop)
+            (export "requires_water" (func 0))
+            (export "requires_" (func 0))
+            (export "requires_nutrients" (func 0))
+            (export "require_milk" (func 0))
+            (export "REQUIRES_air" (func 0))
+            (export "requires_sun" (func 0))
+            )"#,
+        )
+        .unwrap();
 
         let deps = mock_dependencies(20, &[]);
         let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT).unwrap();
