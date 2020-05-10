@@ -169,6 +169,15 @@ mod test {
     }
 
     #[test]
+    fn make_runtime_err_works() {
+        let err = make_runtime_err("something went wrong");
+        match err {
+            VmError::RuntimeErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
     fn make_uninitialized_context_data_works() {
         let err = make_uninitialized_context_data("foo");
         match err {
