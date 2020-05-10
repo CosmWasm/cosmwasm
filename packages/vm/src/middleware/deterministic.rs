@@ -161,16 +161,17 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
     }
 }
 
+/// Middleware is only supported in singlepass backend, see
+/// https://github.com/CosmWasm/cosmwasm/issues/311
 #[cfg(all(test, feature = "default-singlepass"))]
 mod tests {
     use super::*;
-    use wasmer_runtime_core::{imports, typed_func::Func};
-
     use crate::backends::compile;
     use crate::errors::VmError;
+    use wabt::wat2wasm;
+    use wasmer_runtime_core::{imports, typed_func::Func};
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn valid_wasm_instance_sanity() {
         let input = r#"
             (module
@@ -180,7 +181,7 @@ mod tests {
                     i32.add
                 ))
             "#;
-        let wasm = wabt::wat2wasm(input).unwrap();
+        let wasm = wat2wasm(input).unwrap();
         let module = compile(&wasm).unwrap();
         let instance = module.instantiate(&imports! {}).unwrap();
 
@@ -191,7 +192,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn parser_floats_are_not_supported() {
         let input = r#"
             (module
@@ -201,7 +201,7 @@ mod tests {
                 ))
             "#;
 
-        let wasm = wabt::wat2wasm(input).unwrap();
+        let wasm = wat2wasm(input).unwrap();
         let res = compile(&wasm);
 
         let failure = res.err().expect("compile should have failed");
