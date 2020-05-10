@@ -205,7 +205,7 @@ mod test {
             unsafe { CosmCache::new(tmp_dir.path(), default_features(), 10).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
-            VmError::ValidationErr { msg, .. } => {
+            VmError::StaticValidationErr { msg, .. } => {
                 assert_eq!(msg, "Wasm contract doesn\'t have a memory section")
             }
             e => panic!("Unexpected error {:?}", e),
