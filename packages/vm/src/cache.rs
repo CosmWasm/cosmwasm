@@ -159,6 +159,7 @@ mod test {
     use std::io::Write;
     use std::iter::FromIterator;
     use tempfile::TempDir;
+    use wabt::wat2wasm;
 
     static TESTING_GAS_LIMIT: u64 = 400_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -187,28 +188,27 @@ mod test {
 
     #[test]
     fn save_wasm_rejects_invalid_contract() {
-        use wabt::wat2wasm;
-
-        // this is invalid, as it doesn't contain all required exports
-        static WAT: &'static str = r#"
-            (module
-              (type $t0 (func (param i32) (result i32)))
-              (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
-                get_local $p0
-                i32.const 1
-                i32.add))
-        "#;
-
-        let wasm = wat2wasm(WAT).unwrap();
+        // Invalid because it doesn't contain required memory and exports
+        let wasm = wat2wasm(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+              get_local $p0
+              i32.const 1
+              i32.add))
+            "#,
+        )
+        .unwrap();
 
         let tmp_dir = TempDir::new().unwrap();
         let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
             unsafe { CosmCache::new(tmp_dir.path(), default_features(), 10).unwrap() };
         let save_result = cache.save_wasm(&wasm);
-        match save_result {
-            Err(VmError::ValidationErr { .. }) => {}
-            Err(e) => panic!("Unexpected error {:?}", e),
-            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        match save_result.unwrap_err() {
+            VmError::ValidationErr { msg, .. } => {
+                assert_eq!(msg, "Wasm contract doesn\'t have a memory section")
+            }
+            e => panic!("Unexpected error {:?}", e),
         }
     }
 
