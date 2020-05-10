@@ -109,8 +109,8 @@ pub fn make_integrity_err() -> VmError {
     IntegrityErr {}.build()
 }
 
-pub fn make_runtime_err<T>(msg: &'static str) -> VmResult<T> {
-    RuntimeErr { msg }.fail()
+pub fn make_runtime_err<S: Into<String>>(msg: S) -> VmError {
+    RuntimeErr { msg: msg.into() }.build()
 }
 
 pub fn make_static_validation_err<S: Into<String>>(msg: S) -> VmError {
