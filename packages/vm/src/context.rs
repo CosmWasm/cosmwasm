@@ -13,7 +13,7 @@ use cosmwasm_std::{StdResult, KV};
 
 #[cfg(feature = "iterator")]
 use crate::errors::IteratorDoesNotExist;
-use crate::errors::{UninitializedContextData, VmResult};
+use crate::errors::{make_uninitialized_context_data, VmResult};
 
 /** context data **/
 
@@ -120,7 +120,7 @@ where
     let mut storage = b.storage.take();
     let res = match &mut storage {
         Some(data) => func(data),
-        None => UninitializedContextData { kind: "storage" }.fail(),
+        None => Err(make_uninitialized_context_data("storage")),
     };
     b.storage = storage;
     res

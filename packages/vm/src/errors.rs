@@ -78,7 +78,7 @@ pub enum VmError {
     },
     #[snafu(display("Uninitialized Context Data: {}", kind))]
     UninitializedContextData {
-        kind: &'static str,
+        kind: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Wasmer error: {}", source))]
@@ -125,6 +125,10 @@ pub fn make_static_validation_err<S: Into<String>>(msg: S) -> VmError {
     StaticValidationErr { msg: msg.into() }.build()
 }
 
+pub fn make_uninitialized_context_data<S: Into<String>>(kind: S) -> VmError {
+    UninitializedContextData { kind: kind.into() }.build()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -160,6 +164,15 @@ mod test {
                 assert_eq!(size, 12);
                 assert_eq!(required, 33);
             }
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_uninitialized_context_data_works() {
+        let err = make_uninitialized_context_data("foo");
+        match err {
+            VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
             _ => panic!("Unexpected error"),
         }
     }
