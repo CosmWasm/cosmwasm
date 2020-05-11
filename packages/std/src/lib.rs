@@ -20,25 +20,19 @@ pub use crate::errors::{
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
-    WasmMsg,
+    StakingMsg, WasmMsg,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, QueryResponse, QueryResult,
+    AllBalanceResponse, BalanceResponse, BankQuery, Billionth, Delegation, DelegationsResponse,
+    QueryRequest, QueryResponse, QueryResult, StakingQuery, Validator, ValidatorsResponse,
     WasmQuery,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
 pub use crate::types::{CanonicalAddr, Env, HumanAddr, Never};
-
-#[cfg(feature = "staking")]
-pub use crate::init_handle::StakingMsg;
-#[cfg(feature = "staking")]
-pub use crate::query::{
-    Billionth, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
-};
 
 // Exposed in wasm build only
 
@@ -62,7 +56,7 @@ mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
     pub use crate::mock::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, MockApi, MockQuerier,
-        MockStorage,
+        mock_dependencies, mock_dependencies_with_balances, mock_env, BankQuerier, MockApi,
+        MockQuerier, MockStorage, StakingQuerier,
     };
 }

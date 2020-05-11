@@ -20,7 +20,6 @@ where
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
     Custom(T),
-    #[cfg(feature = "staking")]
     Staking(StakingMsg),
     Wasm(WasmMsg),
 }
@@ -36,7 +35,6 @@ pub enum BankMsg {
     },
 }
 
-#[cfg(feature = "staking")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingMsg {

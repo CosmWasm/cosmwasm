@@ -3,7 +3,10 @@ use std::collections::HashMap;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
+use crate::query::{
+    AllBalanceResponse, BalanceResponse, BankQuery, Delegation, DelegationsResponse, QueryRequest,
+    StakingQuery, Validator, ValidatorsResponse, WasmQuery,
+};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
@@ -127,26 +130,16 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 #[derive(Clone, Default)]
 pub struct MockQuerier {
     bank: BankQuerier,
-    #[cfg(feature = "staking")]
-    staking: staking::StakingQuerier,
+    staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
 }
 
 impl MockQuerier {
-    #[cfg(not(feature = "staking"))]
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
-            wasm: NoWasmQuerier {},
-        }
-    }
-
-    #[cfg(feature = "staking")]
-    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
-        MockQuerier {
-            bank: BankQuerier::new(balances),
-            staking: staking::StakingQuerier::default(),
+            staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
         }
     }
@@ -157,7 +150,7 @@ impl MockQuerier {
         validators: &[crate::query::Validator],
         delegations: &[crate::query::Delegation],
     ) {
-        self.staking = staking::StakingQuerier::new(validators, delegations);
+        self.staking = StakingQuerier::new(validators, delegations);
     }
 }
 
@@ -183,7 +176,6 @@ impl MockQuerier {
             QueryRequest::Custom(_) => Err(SystemError::UnsupportedRequest {
                 kind: "custom".to_string(),
             }),
-            #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
@@ -207,12 +199,12 @@ impl NoWasmQuerier {
 }
 
 #[derive(Clone, Default)]
-struct BankQuerier {
+pub struct BankQuerier {
     balances: HashMap<HumanAddr, Vec<Coin>>,
 }
 
 impl BankQuerier {
-    fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
+    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         let mut map = HashMap::new();
         for (addr, coins) in balances.iter() {
             map.insert(HumanAddr::from(addr), coins.to_vec());
@@ -220,7 +212,7 @@ impl BankQuerier {
         BankQuerier { balances: map }
     }
 
-    fn query(&self, request: &BankQuery) -> QuerierResult {
+    pub fn query(&self, request: &BankQuery) -> QuerierResult {
         match request {
             BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
@@ -248,201 +240,45 @@ impl BankQuerier {
     }
 }
 
-#[cfg(feature = "staking")]
-mod staking {
-    use crate::query::{
-        Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
-    };
-    use crate::serde::to_binary;
-    use crate::traits::QuerierResult;
+#[derive(Clone, Default)]
+pub struct StakingQuerier {
+    validators: Vec<Validator>,
+    delegations: Vec<Delegation>,
+}
 
-    #[derive(Clone, Default)]
-    pub struct StakingQuerier {
-        validators: Vec<Validator>,
-        delegations: Vec<Delegation>,
+impl StakingQuerier {
+    pub fn new(validators: &[Validator], delegations: &[Delegation]) -> Self {
+        StakingQuerier {
+            validators: validators.to_vec(),
+            delegations: delegations.to_vec(),
+        }
     }
 
-    impl StakingQuerier {
-        pub fn new(validators: &[Validator], delegations: &[Delegation]) -> Self {
-            StakingQuerier {
-                validators: validators.to_vec(),
-                delegations: delegations.to_vec(),
+    pub fn query(&self, request: &StakingQuery) -> QuerierResult {
+        match request {
+            StakingQuery::Validators {} => {
+                let val_res = ValidatorsResponse {
+                    validators: self.validators.clone(),
+                };
+                Ok(to_binary(&val_res))
             }
-        }
-
-        pub fn query(&self, request: &StakingQuery) -> QuerierResult {
-            match request {
-                StakingQuery::Validators {} => {
-                    let val_res = ValidatorsResponse {
-                        validators: self.validators.clone(),
-                    };
-                    Ok(to_binary(&val_res))
-                }
-                StakingQuery::Delegations {
-                    delegator,
-                    validator,
-                } => {
-                    let matches = |d: &&Delegation| {
-                        if let Some(val) = validator {
-                            if val != &d.validator {
-                                return false;
-                            }
+            StakingQuery::Delegations {
+                delegator,
+                validator,
+            } => {
+                let matches = |d: &&Delegation| {
+                    if let Some(val) = validator {
+                        if val != &d.validator {
+                            return false;
                         }
-                        &d.delegator == delegator
-                    };
-                    let delegations: Vec<_> =
-                        self.delegations.iter().filter(matches).cloned().collect();
-                    let val_res = DelegationsResponse { delegations };
-                    Ok(to_binary(&val_res))
-                }
+                    }
+                    &d.delegator == delegator
+                };
+                let delegations: Vec<_> =
+                    self.delegations.iter().filter(matches).cloned().collect();
+                let val_res = DelegationsResponse { delegations };
+                Ok(to_binary(&val_res))
             }
-        }
-    }
-
-    #[cfg(test)]
-    mod test {
-        use super::*;
-
-        use crate::query::Billionth;
-        use crate::{coin, from_binary, HumanAddr};
-
-        #[test]
-        fn staking_querier_validators() {
-            let val1 = Validator {
-                address: HumanAddr::from("validator-one"),
-                commission: Billionth::percent(1),
-                max_commission: Billionth::percent(3),
-                max_change_rate: Billionth::percent(1),
-            };
-            let val2 = Validator {
-                address: HumanAddr::from("validator-two"),
-                commission: Billionth::permille(15),
-                max_commission: Billionth::permille(40),
-                max_change_rate: Billionth::permille(5),
-            };
-
-            let staking = StakingQuerier::new(&[val1.clone(), val2.clone()], &[]);
-
-            // one match
-            let raw = staking
-                .query(&StakingQuery::Validators {})
-                .unwrap()
-                .unwrap();
-            let vals: ValidatorsResponse = from_binary(&raw).unwrap();
-            assert_eq!(vals.validators, vec![val1, val2]);
-        }
-
-        // gets delegators from query or panic
-        fn get_delegators(
-            staking: &StakingQuerier,
-            delegator: HumanAddr,
-            validator: Option<HumanAddr>,
-        ) -> Vec<Delegation> {
-            let raw = staking
-                .query(&StakingQuery::Delegations {
-                    delegator,
-                    validator,
-                })
-                .unwrap()
-                .unwrap();
-            let dels: DelegationsResponse = from_binary(&raw).unwrap();
-            dels.delegations
-        }
-
-        #[test]
-        fn staking_querier_delegations() {
-            let val1 = HumanAddr::from("validator-one");
-            let val2 = HumanAddr::from("validator-two");
-
-            let user_a = HumanAddr::from("investor");
-            let user_b = HumanAddr::from("speculator");
-            let user_c = HumanAddr::from("hodler");
-
-            // we need multiple validators per delegator, so the queries provide different results
-            let del1a = Delegation {
-                delegator: user_a.clone(),
-                validator: val1.clone(),
-                amount: coin(100, "stake"),
-                can_redelegate: true,
-                accumulated_rewards: coin(5, "stake"),
-            };
-            let del2a = Delegation {
-                delegator: user_a.clone(),
-                validator: val2.clone(),
-                amount: coin(500, "stake"),
-                can_redelegate: true,
-                accumulated_rewards: coin(20, "stake"),
-            };
-
-            // this is multiple times on the same validator
-            let del1b = Delegation {
-                delegator: user_b.clone(),
-                validator: val1.clone(),
-                amount: coin(500, "stake"),
-                can_redelegate: false,
-                accumulated_rewards: coin(0, "stake"),
-            };
-            let del1bb = Delegation {
-                delegator: user_b.clone(),
-                validator: val1.clone(),
-                amount: coin(700, "stake"),
-                can_redelegate: true,
-                accumulated_rewards: coin(70, "stake"),
-            };
-
-            // and another one on val2
-            let del2c = Delegation {
-                delegator: user_c.clone(),
-                validator: val2.clone(),
-                amount: coin(8888, "stake"),
-                can_redelegate: true,
-                accumulated_rewards: coin(900, "stake"),
-            };
-
-            let staking = StakingQuerier::new(
-                &[],
-                &[
-                    del1a.clone(),
-                    del1b.clone(),
-                    del1bb.clone(),
-                    del2a.clone(),
-                    del2c.clone(),
-                ],
-            );
-
-            // get all for user a
-            let dels = get_delegators(&staking, user_a.clone(), None);
-            assert_eq!(dels, vec![del1a.clone(), del2a.clone()]);
-
-            // get all for user b
-            let dels = get_delegators(&staking, user_b.clone(), None);
-            assert_eq!(dels, vec![del1b.clone(), del1bb.clone()]);
-
-            // get all for user c
-            let dels = get_delegators(&staking, user_c.clone(), None);
-            assert_eq!(dels, vec![del2c.clone()]);
-
-            // for user with no delegations...
-            let dels = get_delegators(&staking, HumanAddr::from("no one"), None);
-            assert_eq!(dels, vec![]);
-
-            // filter a by validator (1 and 1)
-            let dels = get_delegators(&staking, user_a.clone(), Some(val1.clone()));
-            assert_eq!(dels, vec![del1a.clone()]);
-            let dels = get_delegators(&staking, user_a.clone(), Some(val2.clone()));
-            assert_eq!(dels, vec![del2a.clone()]);
-
-            // filter b by validator (2 and 0)
-            let dels = get_delegators(&staking, user_b.clone(), Some(val1.clone()));
-            assert_eq!(dels, vec![del1b.clone(), del1bb.clone()]);
-            let dels = get_delegators(&staking, user_b.clone(), Some(val2.clone()));
-            assert_eq!(dels, vec![]);
-
-            // filter c by validator (0 and 1)
-            let dels = get_delegators(&staking, user_c.clone(), Some(val1.clone()));
-            assert_eq!(dels, vec![]);
-            let dels = get_delegators(&staking, user_c.clone(), Some(val2.clone()));
-            assert_eq!(dels, vec![del2c.clone()]);
         }
     }
 }
@@ -451,7 +287,7 @@ mod staking {
 mod test {
     use super::*;
 
-    use crate::{coin, coins, from_binary};
+    use crate::{coin, coins, from_binary, Billionth, HumanAddr};
 
     #[test]
     fn mock_env_arguments() {
@@ -577,5 +413,144 @@ mod test {
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
         assert_eq!(res.amount, coin(0, "ELF"));
+    }
+
+    #[test]
+    fn staking_querier_validators() {
+        let val1 = Validator {
+            address: HumanAddr::from("validator-one"),
+            commission: Billionth::percent(1),
+            max_commission: Billionth::percent(3),
+            max_change_rate: Billionth::percent(1),
+        };
+        let val2 = Validator {
+            address: HumanAddr::from("validator-two"),
+            commission: Billionth::permille(15),
+            max_commission: Billionth::permille(40),
+            max_change_rate: Billionth::permille(5),
+        };
+
+        let staking = StakingQuerier::new(&[val1.clone(), val2.clone()], &[]);
+
+        // one match
+        let raw = staking
+            .query(&StakingQuery::Validators {})
+            .unwrap()
+            .unwrap();
+        let vals: ValidatorsResponse = from_binary(&raw).unwrap();
+        assert_eq!(vals.validators, vec![val1, val2]);
+    }
+
+    // gets delegators from query or panic
+    fn get_delegators(
+        staking: &StakingQuerier,
+        delegator: HumanAddr,
+        validator: Option<HumanAddr>,
+    ) -> Vec<Delegation> {
+        let raw = staking
+            .query(&StakingQuery::Delegations {
+                delegator,
+                validator,
+            })
+            .unwrap()
+            .unwrap();
+        let dels: DelegationsResponse = from_binary(&raw).unwrap();
+        dels.delegations
+    }
+
+    #[test]
+    fn staking_querier_delegations() {
+        let val1 = HumanAddr::from("validator-one");
+        let val2 = HumanAddr::from("validator-two");
+
+        let user_a = HumanAddr::from("investor");
+        let user_b = HumanAddr::from("speculator");
+        let user_c = HumanAddr::from("hodler");
+
+        // we need multiple validators per delegator, so the queries provide different results
+        let del1a = Delegation {
+            delegator: user_a.clone(),
+            validator: val1.clone(),
+            amount: coin(100, "stake"),
+            can_redelegate: true,
+            accumulated_rewards: coin(5, "stake"),
+        };
+        let del2a = Delegation {
+            delegator: user_a.clone(),
+            validator: val2.clone(),
+            amount: coin(500, "stake"),
+            can_redelegate: true,
+            accumulated_rewards: coin(20, "stake"),
+        };
+
+        // this is multiple times on the same validator
+        let del1b = Delegation {
+            delegator: user_b.clone(),
+            validator: val1.clone(),
+            amount: coin(500, "stake"),
+            can_redelegate: false,
+            accumulated_rewards: coin(0, "stake"),
+        };
+        let del1bb = Delegation {
+            delegator: user_b.clone(),
+            validator: val1.clone(),
+            amount: coin(700, "stake"),
+            can_redelegate: true,
+            accumulated_rewards: coin(70, "stake"),
+        };
+
+        // and another one on val2
+        let del2c = Delegation {
+            delegator: user_c.clone(),
+            validator: val2.clone(),
+            amount: coin(8888, "stake"),
+            can_redelegate: true,
+            accumulated_rewards: coin(900, "stake"),
+        };
+
+        let staking = StakingQuerier::new(
+            &[],
+            &[
+                del1a.clone(),
+                del1b.clone(),
+                del1bb.clone(),
+                del2a.clone(),
+                del2c.clone(),
+            ],
+        );
+
+        // get all for user a
+        let dels = get_delegators(&staking, user_a.clone(), None);
+        assert_eq!(dels, vec![del1a.clone(), del2a.clone()]);
+
+        // get all for user b
+        let dels = get_delegators(&staking, user_b.clone(), None);
+        assert_eq!(dels, vec![del1b.clone(), del1bb.clone()]);
+
+        // get all for user c
+        let dels = get_delegators(&staking, user_c.clone(), None);
+        assert_eq!(dels, vec![del2c.clone()]);
+
+        // for user with no delegations...
+        let dels = get_delegators(&staking, HumanAddr::from("no one"), None);
+        assert_eq!(dels, vec![]);
+
+        // filter a by validator (1 and 1)
+        let dels = get_delegators(&staking, user_a.clone(), Some(val1.clone()));
+        assert_eq!(dels, vec![del1a.clone()]);
+        let dels = get_delegators(&staking, user_a.clone(), Some(val2.clone()));
+        assert_eq!(dels, vec![del2a.clone()]);
+
+        // filter b by validator (2 and 0)
+        let dels = get_delegators(&staking, user_b.clone(), Some(val1.clone()));
+        assert_eq!(dels, vec![del1b.clone(), del1bb.clone()]);
+        let dels = get_delegators(&staking, user_b.clone(), Some(val2.clone()));
+        assert_eq!(dels, vec![]);
+
+        // filter c by validator (0 and 1)
+        let dels = get_delegators(&staking, user_c.clone(), Some(val1.clone()));
+        assert_eq!(dels, vec![]);
+        let dels = get_delegators(&staking, user_c.clone(), Some(val2.clone()));
+        assert_eq!(dels, vec![del2c.clone()]);
     }
 }
