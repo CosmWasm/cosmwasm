@@ -346,6 +346,13 @@
                   "format": "uint64",
                   "minimum": 0.0
                 },
+                "label": {
+                  "description": "optional human-readbale label for the contract",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "msg": {
                   "description": "msg is the json-encoded InitMsg struct (as raw Binary)",
                   "allOf": [

@@ -25,8 +25,8 @@ pub use crate::init_handle::{
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, QueryResponse, QueryResult,
-    WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, QueryResponse,
+    QueryResult, WasmQuery,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
@@ -37,7 +37,7 @@ pub use crate::types::{CanonicalAddr, Env, HumanAddr, Never};
 pub use crate::init_handle::StakingMsg;
 #[cfg(feature = "staking")]
 pub use crate::query::{
-    Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+    Billionth, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
 };
 
 // Exposed in wasm build only
