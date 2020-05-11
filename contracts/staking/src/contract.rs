@@ -233,17 +233,27 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<Binary> {
     match msg {
-        QueryMsg::TokenInfo {} => panic!("token"),
+        QueryMsg::TokenInfo {} => query_token_info(deps),
         QueryMsg::Investment {} => panic!("investment"),
-        QueryMsg::Balance { address } => panic!("balance"),
+        QueryMsg::Balance { address } => query_balance(deps, address),
     }
 }
 
-// fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<Binary> {
-//     let state = config_read(&deps.storage).load()?;
-//     let resp = CountResponse { count: state.count };
-//     to_binary(&resp)
-// }
+pub fn query_token_info<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+) -> StdResult<Binary> {
+    let info = token_info_read(&deps.storage).load()?;
+    to_binary(&info)
+}
+
+pub fn query_balance<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    address: HumanAddr,
+) -> StdResult<Binary> {
+    let address_raw = deps.api.canonical_address(&address)?;
+    let balance = balances_read(&deps.storage).load(address_raw.as_slice())?;
+    to_binary(&BalanceResponse { balance })
+}
 
 #[cfg(test)]
 mod tests {

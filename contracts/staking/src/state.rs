@@ -19,9 +19,7 @@ pub fn balances<'a, S: Storage>(storage: &'a mut S) -> Bucket<'a, S, Uint128> {
     bucket(PREFIX_BALANCE, storage)
 }
 
-pub fn balances_read<'a, S: ReadonlyStorage>(
-    storage: &'a S,
-) -> ReadonlyBucket<'a, S, InvestmentInfo> {
+pub fn balances_read<'a, S: ReadonlyStorage>(storage: &'a S) -> ReadonlyBucket<'a, S, Uint128> {
     bucket_read(PREFIX_BALANCE, storage)
 }
 
