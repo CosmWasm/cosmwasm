@@ -93,7 +93,17 @@ pub enum VmError {
     },
 }
 
+impl From<wasmer_runtime_core::cache::Error> for VmError {
+    fn from(original: wasmer_runtime_core::cache::Error) -> Self {
+        make_cache_err(format!("Wasmer cache error: {:?}", original))
+    }
+}
+
 pub type VmResult<T> = core::result::Result<T, VmError>;
+
+pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
+    CacheErr { msg: msg.into() }.build()
+}
 
 pub fn make_integrity_err() -> VmError {
     IntegrityErr {}.build()
@@ -105,4 +115,18 @@ pub fn make_runtime_err<T>(msg: &'static str) -> VmResult<T> {
 
 pub fn make_static_validation_err<S: Into<String>>(msg: S) -> VmError {
     StaticValidationErr { msg: msg.into() }.build()
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn make_cache_err_works() {
+        let err = make_cache_err("something went wrong");
+        match err {
+            VmError::CacheErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            _ => panic!("Unexpected error"),
+        }
+    }
 }

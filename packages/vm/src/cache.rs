@@ -82,8 +82,7 @@ where
         let checksum = save(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
         let module_hash = checksum.derive_module_hash();
-        // singlepass cannot store a module, just make best effort
-        let _ = self.modules.store(module_hash, module);
+        self.modules.store(module_hash, module)?;
         Ok(checksum)
     }
 
