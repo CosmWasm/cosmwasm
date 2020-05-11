@@ -73,7 +73,7 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update(&mut self, action: &dyn Fn(T) -> StdResult<T>) -> StdResult<T> {
+    pub fn update(&mut self, action: &mut dyn FnMut(T) -> StdResult<T>) -> StdResult<T> {
         let input = self.load()?;
         let output = action(input)?;
         self.save(&output)?;
@@ -179,7 +179,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|mut c| {
+        let output = writer.update(&mut |mut c| {
             c.max_tokens *= 2;
             Ok(c)
         });
@@ -189,6 +189,32 @@ mod test {
         };
         assert_eq!(output.unwrap(), expected);
         assert_eq!(writer.load().unwrap(), expected);
+    }
+
+    #[test]
+    fn update_success_mut() {
+        let mut store = MockStorage::new();
+        let mut writer = singleton::<_, Config>(&mut store, b"config");
+
+        let cfg = Config {
+            owner: "admin".to_string(),
+            max_tokens: 1234,
+        };
+        writer.save(&cfg).unwrap();
+
+        let mut old_tokens = 0i32;
+        let output = writer.update(&mut |mut c| {
+            old_tokens = c.max_tokens;
+            c.max_tokens *= 2;
+            Ok(c)
+        });
+        let expected = Config {
+            owner: "admin".to_string(),
+            max_tokens: 2468,
+        };
+        assert_eq!(output.unwrap(), expected);
+        assert_eq!(writer.load().unwrap(), expected);
+        assert_eq!(old_tokens, 1234);
     }
 
     #[test]
@@ -202,7 +228,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| Err(unauthorized()));
+        let output = writer.update(&mut |_c| Err(unauthorized()));
         match output {
             Err(StdError::Unauthorized { .. }) => {}
             _ => panic!("Unexpected output: {:?}", output),
