@@ -440,9 +440,13 @@ mod test {
 
         // Support set 2
         let supported = HashSet::from_iter(
-            ["nutrients".to_string(), "freedom".to_string()]
-                .iter()
-                .cloned(),
+            [
+                "nutrients".to_string(),
+                "freedom".to_string(),
+                "Water".to_string(), // features are case sensitive (and lowercase by convention)
+            ]
+            .iter()
+            .cloned(),
         );
         match check_wasm_features(&module, &supported).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
