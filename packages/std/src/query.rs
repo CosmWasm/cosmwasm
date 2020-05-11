@@ -16,7 +16,6 @@ pub type QueryResult = StdResult<QueryResponse>;
 pub enum QueryRequest<T> {
     Bank(BankQuery),
     Custom(T),
-    #[cfg(feature = "staking")]
     Staking(StakingQuery),
     Wasm(WasmQuery),
 }
@@ -86,89 +85,71 @@ pub struct AllBalanceResponse {
     pub amount: Vec<Coin>,
 }
 
-#[cfg(feature = "staking")]
-pub use staking::{
-    Decimal9, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
-};
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum StakingQuery {
+    /// Returns all registered Validators on the system
+    Validators {},
+    /// Delegations will return all delegations by the delegator,
+    /// or just those to the given validator (if set)
+    Delegations {
+        delegator: HumanAddr,
+        validator: Option<HumanAddr>,
+    },
+}
 
-#[cfg(feature = "staking")]
-mod staking {
-    use schemars::JsonSchema;
-    use serde::{Deserialize, Serialize};
+/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorsResponse {
+    pub validators: Vec<Validator>,
+}
 
-    use crate::coins::Coin;
-    use crate::types::HumanAddr;
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Validator {
+    pub address: HumanAddr,
+    pub commission: Decimal9,
+    pub max_commission: Decimal9,
+    /// TODO: what units are these (in terms of time)?
+    pub max_change_rate: Decimal9,
+}
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    #[serde(rename_all = "snake_case")]
-    pub enum StakingQuery {
-        /// Returns all registered Validators on the system
-        Validators {},
-        /// Delegations will return all delegations by the delegator,
-        /// or just those to the given validator (if set)
-        Delegations {
-            delegator: HumanAddr,
-            validator: Option<HumanAddr>,
-        },
+/// DelegationsResponse is data format returned from StakingRequest::Delegations query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct DelegationsResponse {
+    pub delegations: Vec<Delegation>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Delegation {
+    pub delegator: HumanAddr,
+    pub validator: HumanAddr,
+    /// How much we have locked in the delegation
+    pub amount: Coin,
+    /// If true, then a Redelegate command will work now, otherwise you may have to wait more
+    pub can_redelegate: bool,
+    /// How much we can currently withdraw
+    pub accumulated_rewards: Coin,
+    // TODO: do we want to expose more info?
+}
+
+/// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
+/// That is Decimal9(1_000_000_000) == 1
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Decimal9(u64);
+
+impl Decimal9 {
+    pub fn one() -> Decimal9 {
+        Decimal9(1_000_000_000)
     }
 
-    /// ValidatorsResponse is data format returned from StakingRequest::Validators query
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct ValidatorsResponse {
-        pub validators: Vec<Validator>,
+    // convert integer % into Billionth units
+    pub fn percent(percent: u64) -> Decimal9 {
+        Decimal9(percent * 10_000_000)
     }
 
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct Validator {
-        pub address: HumanAddr,
-        pub commission: Decimal9,
-        pub max_commission: Decimal9,
-        /// TODO: what units are these (in terms of time)?
-        pub max_change_rate: Decimal9,
-    }
-
-    /// DelegationsResponse is data format returned from StakingRequest::Delegations query
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    #[serde(rename_all = "snake_case")]
-    pub struct DelegationsResponse {
-        pub delegations: Vec<Delegation>,
-    }
-
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct Delegation {
-        pub delegator: HumanAddr,
-        pub validator: HumanAddr,
-        /// How much we have locked in the delegation
-        pub amount: Coin,
-        /// If true, then a Redelegate command will work now, otherwise you may have to wait more
-        pub can_redelegate: bool,
-        /// How much we can currently withdraw
-        pub accumulated_rewards: Coin,
-        // TODO: do we want to expose more info?
-    }
-
-    /// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
-    /// That is Decimal9(1_000_000_000) == 1
-    #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct Decimal9(u64);
-
-    impl Decimal9 {
-        pub fn one() -> Decimal9 {
-            Decimal9(1_000_000_000)
-        }
-
-        // convert integer % into Billionth units
-        pub fn percent(percent: u64) -> Decimal9 {
-            Decimal9(percent * 10_000_000)
-        }
-
-        // convert permille (1/1000) into Billionth units
-        pub fn permille(permille: u64) -> Decimal9 {
-            Decimal9(permille * 1_000_000)
-        }
+    // convert permille (1/1000) into Billionth units
+    pub fn permille(permille: u64) -> Decimal9 {
+        Decimal9(permille * 1_000_000)
     }
 }
