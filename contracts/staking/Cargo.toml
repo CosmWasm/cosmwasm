@@ -35,12 +35,12 @@ cranelift = ["cosmwasm-vm/default-cranelift"]
 singlepass = ["cosmwasm-vm/default-singlepass"]
 
 [dependencies]
-cosmwasm-std = { version = "0.8.0-alpha1" }
-cosmwasm-storage = { version = "0.8.0-alpha1" }
+cosmwasm-std = { path = "../../packages/std", features = ["staking"] }
+cosmwasm-storage = { path = "../../packages/storage" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 snafu = { version = "0.6.3" }
 
 [dev-dependencies]
-cosmwasm-vm = { version = "0.8.0-alpha1", default-features = false }
-cosmwasm-schema = { version = "0.8.0-alpha1" }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false }
+cosmwasm-schema = { path = "../../packages/schema" }
