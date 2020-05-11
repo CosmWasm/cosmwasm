@@ -125,17 +125,14 @@ pub trait Querier: Clone + Send {
         }
     }
 
-    fn query_balance<U: Into<HumanAddr>>(
-        &self,
-        address: U,
-        denom: &str,
-    ) -> StdResult<BalanceResponse> {
+    fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
         }
         .into();
-        self.query(&request)
+        let res: BalanceResponse = self.query(&request)?;
+        Ok(res.amount)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {

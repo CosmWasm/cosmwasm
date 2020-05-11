@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     generic_err, log, to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse,
-    HumanAddr, InitResponse, Querier, StakingMsg, StdResult, Storage, Uint128,
+    HumanAddr, InitResponse, Querier, StakingMsg, StdResult, Storage, Uint128, WasmMsg,
 };
 
 use crate::msg::{
@@ -52,8 +52,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::Transfer { recipient, amount } => transfer(deps, env, recipient, amount),
         HandleMsg::Bond {} => bond(deps, env),
         HandleMsg::Unbond { amount } => panic!("unbond"),
-        HandleMsg::Reinvest {} => panic!("reinvest"),
-        HandleMsg::_BondAllTokens {} => panic!("bond tokens"),
+        HandleMsg::Reinvest {} => reinvest(deps, env),
+        HandleMsg::_BondAllTokens {} => _bond_all_tokens(deps, env),
     }
 }
 
@@ -131,6 +131,81 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
             log("from", deps.api.human_address(&sender_raw)?.as_str()),
             log("bonded", &payment.amount.to_string()),
             log("minted", &to_mint.to_string()),
+        ],
+        data: None,
+    };
+    Ok(res)
+}
+
+/// reinvest will withdraw all pending rewards,
+/// then issue a callback to itself via _bond_all_tokens
+/// to reinvest the new earnings (and anything else that accumulated)
+pub fn reinvest<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let contract_addr = deps.api.human_address(&env.contract.address)?;
+    let invest = invest_info_read(&deps.storage).load()?;
+    let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
+
+    // and bond them to the validator
+    let res = HandleResponse {
+        messages: vec![
+            StakingMsg::Withdraw {
+                validator: invest.validator,
+                recipient: Some(contract_addr.clone()),
+            }
+            .into(),
+            WasmMsg::Execute {
+                contract_addr,
+                msg,
+                send: vec![],
+            }
+            .into(),
+        ],
+        log: vec![],
+        data: None,
+    };
+    Ok(res)
+}
+
+pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    // this is just meant as a call-back to ourself
+    if &env.message.sender != &env.contract.address {
+        return Err(unauthorized());
+    }
+
+    // find how many tokens we have to bond
+    let contract_human = deps.api.human_address(&env.contract.address)?;
+    let invest = invest_info_read(&deps.storage).load()?;
+    let balance = deps
+        .querier
+        .query_balance(contract_human, &invest.bond_denom)?;
+
+    // if it is below the minimum, no-op
+    if balance.amount < invest.min_withdrawl {
+        return Ok(HandleResponse::default());
+    }
+
+    // update the bonded supply (increasing value of tokens)
+    let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
+        supply.bonded += balance.amount;
+        Ok(supply)
+    })?;
+
+    // and bond them to the validator
+    let res = HandleResponse {
+        messages: vec![StakingMsg::Delegate {
+            validator: invest.validator,
+            amount: balance.clone(),
+        }
+        .into()],
+        log: vec![
+            log("action", "reinvest"),
+            log("bonded", &balance.amount.to_string()),
         ],
         data: None,
     };
