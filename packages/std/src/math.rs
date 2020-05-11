@@ -44,6 +44,12 @@ impl From<u128> for Uint128 {
     }
 }
 
+impl From<u64> for Uint128 {
+    fn from(val: u64) -> Self {
+        Uint128(val.into())
+    }
+}
+
 impl TryFrom<&str> for Uint128 {
     type Error = StdError;
 
@@ -100,6 +106,14 @@ impl ops::Sub for Uint128 {
     }
 }
 
+impl ops::Mul<Decimal9> for Uint128 {
+    type Output = Self;
+
+    fn mul(self, rhs: Decimal9) -> Self {
+        self.multiply_ratio(rhs.0.into(), DECIMAL_FRACTIONAL.into())
+    }
+}
+
 impl Uint128 {
     /// returns self * num / denom
     pub fn multiply_ratio(&self, num: Uint128, denom: Uint128) -> Uint128 {
@@ -114,7 +128,7 @@ impl Uint128 {
         // TODO: better algorithm with less rounding potential
         let val: u128 = self.u128() * places / denom.u128();
         // TODO: better error handling
-        return Decimal9(val.try_into().unwrap());
+        Decimal9(val.try_into().unwrap())
     }
 }
 
@@ -167,7 +181,7 @@ mod test {
 
     #[test]
     fn to_and_from_uint128() {
-        let a: Uint128 = 12345.into();
+        let a: Uint128 = 12345u64.into();
         assert_eq!(12345, a.u128());
         assert_eq!("12345", a.to_string());
 

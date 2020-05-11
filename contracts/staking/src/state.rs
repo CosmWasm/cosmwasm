@@ -15,11 +15,11 @@ pub const KEY_TOTAL_SUPPLY: &[u8] = b"total_supply";
 
 pub const PREFIX_BALANCE: &[u8] = b"balance";
 
-pub fn balances<'a, S: Storage>(storage: &'a mut S) -> Bucket<'a, S, Uint128> {
+pub fn balances<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
     bucket(PREFIX_BALANCE, storage)
 }
 
-pub fn balances_read<'a, S: ReadonlyStorage>(storage: &'a S) -> ReadonlyBucket<'a, S, Uint128> {
+pub fn balances_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
     bucket_read(PREFIX_BALANCE, storage)
 }
 

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    generic_err, log, to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse,
+    coin, generic_err, log, to_binary, unauthorized, Api, Binary, Env, Extern, HandleResponse,
     HumanAddr, InitResponse, Querier, StakingMsg, StdResult, Storage, Uint128, WasmMsg,
 };
 
@@ -35,8 +35,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 
     // set supply to 0
     let supply = Supply {
-        issued: Uint128::from(0),
-        bonded: Uint128::from(0),
+        issued: Uint128(0),
+        bonded: Uint128(0),
     };
     total_supply(&mut deps.storage).save(&supply)?;
 
@@ -51,7 +51,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     match msg {
         HandleMsg::Transfer { recipient, amount } => transfer(deps, env, recipient, amount),
         HandleMsg::Bond {} => bond(deps, env),
-        HandleMsg::Unbond { amount } => panic!("unbond"),
+        HandleMsg::Unbond { amount } => unbond(deps, env, amount),
         HandleMsg::Reinvest {} => reinvest(deps, env),
         HandleMsg::_BondAllTokens {} => _bond_all_tokens(deps, env),
     }
@@ -100,13 +100,13 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
         .message
         .sent_funds
         .iter()
-        .find(|x| &x.denom == &invest.bond_denom)
+        .find(|x| x.denom == invest.bond_denom)
         .ok_or_else(|| generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
 
     // update total supply
-    let mut to_mint = Uint128::from(0);
+    let mut to_mint = Uint128(0);
     let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
-        to_mint = payment.amount.multiply_ratio(supply.bonded, supply.issued);
+        to_mint = payment.amount.multiply_ratio(supply.issued, supply.bonded);
         supply.bonded += payment.amount;
         supply.issued += to_mint;
         Ok(supply)
@@ -129,6 +129,66 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
             log("from", deps.api.human_address(&sender_raw)?.as_str()),
             log("bonded", &payment.amount.to_string()),
             log("minted", &to_mint.to_string()),
+        ],
+        data: None,
+    };
+    Ok(res)
+}
+
+pub fn unbond<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    amount: Uint128,
+) -> StdResult<HandleResponse> {
+    let sender_raw = env.message.sender;
+
+    let invest = invest_info_read(&deps.storage).load()?;
+    // ensure it is big enough to care
+    if amount < invest.min_withdrawl {
+        return Err(generic_err(format!(
+            "Must unbond at least {} {}",
+            invest.min_withdrawl, invest.bond_denom
+        )));
+    }
+    // calculate tax and remainer to unbond
+    let tax = amount * invest.exit_tax;
+
+    // deduct all from the account
+    let mut accounts = balances(&mut deps.storage);
+    accounts.update(sender_raw.as_slice(), &mut |balance| {
+        balance.unwrap_or_default() - amount
+    })?;
+    if tax > Uint128(0) {
+        // add tax to the owner
+        accounts.update(invest.owner.as_slice(), &mut |balance: Option<Uint128>| {
+            Ok(balance.unwrap_or_default() + tax)
+        })?;
+    }
+
+    // calculate how many native tokens this is worth and update supply
+    let remainder = (amount - tax)?;
+    let mut unbond = Uint128(0);
+    total_supply(&mut deps.storage).update(&mut |mut supply| {
+        unbond = remainder.multiply_ratio(supply.bonded, supply.issued);
+        supply.bonded = (supply.bonded - unbond)?;
+        supply.issued = (supply.bonded - remainder)?;
+        Ok(supply)
+    })?;
+
+    // TODO: we need to store some info to claim these tokens later
+
+    // unbond them
+    let res = HandleResponse {
+        messages: vec![StakingMsg::Undelegate {
+            validator: invest.validator,
+            amount: coin(unbond.u128(), &invest.bond_denom),
+        }
+        .into()],
+        log: vec![
+            log("action", "unbond"),
+            log("to", deps.api.human_address(&sender_raw)?.as_str()),
+            log("unbonded", &unbond.to_string()),
+            log("burnt", &amount.to_string()),
         ],
         data: None,
     };
@@ -172,7 +232,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     env: Env,
 ) -> StdResult<HandleResponse> {
     // this is just meant as a call-back to ourself
-    if &env.message.sender != &env.contract.address {
+    if env.message.sender != env.contract.address {
         return Err(unauthorized());
     }
 
@@ -210,22 +270,6 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
-//
-// pub fn try_reset<S: Storage, A: Api, Q: Querier>(
-//     deps: &mut Extern<S, A, Q>,
-//     env: Env,
-//     count: i32,
-// ) -> StdResult<HandleResponse> {
-//     config(&mut deps.storage).update(&|mut state| {
-//         if env.message.sender != state.owner {
-//             return Err(unauthorized());
-//         }
-//         state.count = count;
-//         Ok(state)
-//     })?;
-//     Ok(HandleResponse::default())
-// }
-
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     msg: QueryMsg,
@@ -251,6 +295,24 @@ pub fn query_balance<S: Storage, A: Api, Q: Querier>(
     let address_raw = deps.api.canonical_address(&address)?;
     let balance = balances_read(&deps.storage).load(address_raw.as_slice())?;
     to_binary(&BalanceResponse { balance })
+}
+
+pub fn query_investment<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+) -> StdResult<Binary> {
+    let invest = invest_info_read(&deps.storage).load()?;
+    let supply = total_supply_read(&deps.storage).load()?;
+
+    let res = InvestmentResponse {
+        owner: deps.api.human_address(&invest.owner)?,
+        exit_tax: invest.exit_tax,
+        validator: invest.validator,
+        min_withdrawl: invest.min_withdrawl,
+        token_supply: supply.issued,
+        staked_tokens: coin(supply.bonded.u128(), &invest.bond_denom),
+        nominal_value: supply.bonded.calc_ratio(supply.issued),
+    };
+    to_binary(&res)
 }
 
 #[cfg(test)]
