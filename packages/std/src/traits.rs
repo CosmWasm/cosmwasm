@@ -7,7 +7,10 @@ use crate::errors::{generic_err, StdResult, SystemResult};
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 #[cfg(feature = "staking")]
-use crate::query::{Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse};
+use crate::query::{
+    BondedDenomResponse, Delegation, DelegationsResponse, StakingQuery, Validator,
+    ValidatorsResponse,
+};
 use crate::serde::{from_binary, to_vec};
 use crate::types::{CanonicalAddr, HumanAddr, Never};
 
@@ -149,6 +152,13 @@ pub trait Querier: Clone + Send {
         let request = StakingQuery::Validators {}.into();
         let res: ValidatorsResponse = self.query(&request)?;
         Ok(res.validators)
+    }
+
+    #[cfg(feature = "staking")]
+    fn query_bonded_denom(&self) -> StdResult<String> {
+        let request = StakingQuery::BondedDenom {}.into();
+        let res: BondedDenomResponse = self.query(&request)?;
+        Ok(res.denom)
     }
 
     #[cfg(feature = "staking")]

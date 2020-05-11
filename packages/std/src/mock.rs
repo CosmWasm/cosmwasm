@@ -4,8 +4,8 @@ use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError};
 use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, Delegation, DelegationsResponse, QueryRequest,
-    StakingQuery, Validator, ValidatorsResponse, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, BondedDenomResponse, Delegation,
+    DelegationsResponse, QueryRequest, StakingQuery, Validator, ValidatorsResponse, WasmQuery,
 };
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
@@ -147,10 +147,11 @@ impl MockQuerier {
     #[cfg(feature = "staking")]
     pub fn with_staking(
         &mut self,
+        denom: &str,
         validators: &[crate::query::Validator],
         delegations: &[crate::query::Delegation],
     ) {
-        self.staking = StakingQuerier::new(validators, delegations);
+        self.staking = StakingQuerier::new(denom, validators, delegations);
     }
 }
 
@@ -242,13 +243,15 @@ impl BankQuerier {
 
 #[derive(Clone, Default)]
 pub struct StakingQuerier {
+    denom: String,
     validators: Vec<Validator>,
     delegations: Vec<Delegation>,
 }
 
 impl StakingQuerier {
-    pub fn new(validators: &[Validator], delegations: &[Delegation]) -> Self {
+    pub fn new(denom: &str, validators: &[Validator], delegations: &[Delegation]) -> Self {
         StakingQuerier {
+            denom: denom.to_string(),
             validators: validators.to_vec(),
             delegations: delegations.to_vec(),
         }
@@ -256,11 +259,17 @@ impl StakingQuerier {
 
     pub fn query(&self, request: &StakingQuery) -> QuerierResult {
         match request {
+            StakingQuery::BondedDenom {} => {
+                let res = BondedDenomResponse {
+                    denom: self.denom.clone(),
+                };
+                Ok(to_binary(&res))
+            }
             StakingQuery::Validators {} => {
-                let val_res = ValidatorsResponse {
+                let res = ValidatorsResponse {
                     validators: self.validators.clone(),
                 };
-                Ok(to_binary(&val_res))
+                Ok(to_binary(&res))
             }
             StakingQuery::Delegations {
                 delegator,
@@ -276,8 +285,8 @@ impl StakingQuerier {
                 };
                 let delegations: Vec<_> =
                     self.delegations.iter().filter(matches).cloned().collect();
-                let val_res = DelegationsResponse { delegations };
-                Ok(to_binary(&val_res))
+                let res = DelegationsResponse { delegations };
+                Ok(to_binary(&res))
             }
         }
     }
@@ -430,7 +439,7 @@ mod test {
             max_change_rate: Decimal9::permille(5),
         };
 
-        let staking = StakingQuerier::new(&[val1.clone(), val2.clone()], &[]);
+        let staking = StakingQuerier::new("stake", &[val1.clone(), val2.clone()], &[]);
 
         // one match
         let raw = staking
@@ -509,6 +518,7 @@ mod test {
         };
 
         let staking = StakingQuerier::new(
+            "stake",
             &[],
             &[
                 del1a.clone(),

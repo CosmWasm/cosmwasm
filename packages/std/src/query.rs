@@ -88,29 +88,23 @@ pub struct AllBalanceResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingQuery {
-    /// Returns all registered Validators on the system
-    Validators {},
+    /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
+    BondedDenom {},
     /// Delegations will return all delegations by the delegator,
     /// or just those to the given validator (if set)
     Delegations {
         delegator: HumanAddr,
         validator: Option<HumanAddr>,
     },
+    /// Returns all registered Validators on the system
+    Validators {},
 }
 
-/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+/// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ValidatorsResponse {
-    pub validators: Vec<Validator>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Validator {
-    pub address: HumanAddr,
-    pub commission: Decimal9,
-    pub max_commission: Decimal9,
-    /// TODO: what units are these (in terms of time)?
-    pub max_change_rate: Decimal9,
+#[serde(rename_all = "snake_case")]
+pub struct BondedDenomResponse {
+    pub denom: String,
 }
 
 /// DelegationsResponse is data format returned from StakingRequest::Delegations query
@@ -131,6 +125,21 @@ pub struct Delegation {
     /// How much we can currently withdraw
     pub accumulated_rewards: Coin,
     // TODO: do we want to expose more info?
+}
+
+/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorsResponse {
+    pub validators: Vec<Validator>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Validator {
+    pub address: HumanAddr,
+    pub commission: Decimal9,
+    pub max_commission: Decimal9,
+    /// TODO: what units are these (in terms of time)?
+    pub max_change_rate: Decimal9,
 }
 
 /// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
