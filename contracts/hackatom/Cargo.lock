@@ -213,7 +213,7 @@ name = "cosmwasm-vm"
 version = "0.8.0-alpha1"
 dependencies = [
  "cosmwasm-std",
- "hex 0.3.2",
+ "hex",
  "lru",
  "memmap",
  "parity-wasm",
@@ -484,12 +484,6 @@ checksum = "1010591b26bbfe835e9faeabeb11866061cc7dcebffd56ad7d0942d0e61aefd8"
 dependencies = [
  "libc",
 ]
-
-[[package]]
-name = "hex"
-version = "0.3.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "805026a5d0141ffc30abb3be3173848ad46a1b1664fe632428479619a3644d77"
 
 [[package]]
 name = "hex"
@@ -1060,7 +1054,7 @@ dependencies = [
  "cc",
  "digest",
  "errno",
- "hex 0.4.2",
+ "hex",
  "indexmap",
  "lazy_static",
  "libc",
