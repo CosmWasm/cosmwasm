@@ -145,11 +145,13 @@ pub struct Validator {
 /// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
 /// That is Decimal9(1_000_000_000) == 1
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Decimal9(u64);
+pub struct Decimal9(pub u64);
+
+pub const DECIMAL_FRACTIONAL: u64 = 1_000_000_000;
 
 impl Decimal9 {
     pub fn one() -> Decimal9 {
-        Decimal9(1_000_000_000)
+        Decimal9(DECIMAL_FRACTIONAL)
     }
 
     // convert integer % into Billionth units

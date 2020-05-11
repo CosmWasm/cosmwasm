@@ -1,9 +1,11 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::{fmt, ops};
 
 use crate::errors::{generic_err, underflow, StdError, StdResult};
+use crate::query::DECIMAL_FRACTIONAL;
+use crate::Decimal9;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Coin {
@@ -107,6 +109,24 @@ impl ops::Sub for Uint128 {
         } else {
             Ok(Uint128(min - sub))
         }
+    }
+}
+
+impl Uint128 {
+    /// returns self * num / denom
+    pub fn multiply_ratio(&self, num: Uint128, denom: Uint128) -> Uint128 {
+        // TODO: minimize rounding that takes place (using gcd algorithm)
+        let val = self.u128() * num.u128() / denom.u128();
+        Uint128::from(val)
+    }
+
+    /// Returns the ratio (self / denom) as Decimal9 fixed-point
+    pub fn calc_ratio(&self, denom: Uint128) -> Decimal9 {
+        let places: u128 = DECIMAL_FRACTIONAL.into();
+        // TODO: better algorithm with less rounding potential
+        let val: u128 = self.u128() * places / denom.u128();
+        // TODO: better error handling
+        return Decimal9(val.try_into().unwrap());
     }
 }
 
