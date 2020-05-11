@@ -30,6 +30,8 @@ pub fn balances_read<'a, S: ReadonlyStorage>(
 pub struct InvestmentInfo {
     /// owner created the contract and takes a cut
     pub owner: CanonicalAddr,
+    /// this is the denomination we can stake (and only one we accept for payments)
+    pub bond_denom: String,
     /// this is how much the owner takes as a cut when someone unbonds
     pub exit_tax: Decimal9,
     /// All tokens are bonded to this validator

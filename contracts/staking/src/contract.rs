@@ -1,22 +1,44 @@
 use cosmwasm_std::{
-    to_binary, unauthorized, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier,
-    StdResult, Storage,
+    to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse, InitResponse,
+    Querier, StdResult, Storage, Uint128,
 };
 
-use crate::msg::{CountResponse, HandleMsg, InitMsg, QueryMsg};
-use crate::state::{config, config_read, State};
+use crate::msg::{
+    BalanceResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg, TokenInfoResponse,
+};
+use crate::state::{
+    balances, balances_read, invest_info, invest_info_read, token_info, token_info_read,
+    total_supply, total_supply_read, InvestmentInfo, Supply,
+};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    let state = State {
-        count: msg.count,
-        owner: env.message.sender,
+    let token = TokenInfoResponse {
+        name: msg.name,
+        symbol: msg.symbol,
+        decimals: msg.decimals,
     };
+    token_info(&mut deps.storage).save(&token)?;
 
-    config(&mut deps.storage).save(&state)?;
+    let denom = deps.querier.query_bonded_denom()?;
+    let invest = InvestmentInfo {
+        owner: env.message.sender,
+        exit_tax: msg.exit_tax,
+        bond_denom: denom,
+        validator: msg.validator,
+        min_withdrawl: msg.min_withdrawl,
+    };
+    invest_info(&mut deps.storage).save(&invest)?;
+
+    // set supply to 0
+    let supply = Supply {
+        issued: Uint128::from(0),
+        bonded: Uint128::from(0),
+    };
+    total_supply(&mut deps.storage).save(&supply)?;
 
     Ok(InitResponse::default())
 }
@@ -27,52 +49,56 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     match msg {
-        HandleMsg::Increment {} => try_increment(deps, env),
-        HandleMsg::Reset { count } => try_reset(deps, env, count),
+        HandleMsg::Transfer { recipient, amount } => panic!("transfer"),
+        HandleMsg::Bond {} => panic!("bond"),
+        HandleMsg::Reinvest {} => panic!("reinvest"),
+        HandleMsg::Unbond { amount } => panic!("unbond"),
     }
 }
 
-pub fn try_increment<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
-    _env: Env,
-) -> StdResult<HandleResponse> {
-    config(&mut deps.storage).update(&|mut state| {
-        state.count += 1;
-        Ok(state)
-    })?;
-
-    Ok(HandleResponse::default())
-}
-
-pub fn try_reset<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
-    env: Env,
-    count: i32,
-) -> StdResult<HandleResponse> {
-    config(&mut deps.storage).update(&|mut state| {
-        if env.message.sender != state.owner {
-            return Err(unauthorized());
-        }
-        state.count = count;
-        Ok(state)
-    })?;
-    Ok(HandleResponse::default())
-}
+// pub fn try_increment<S: Storage, A: Api, Q: Querier>(
+//     deps: &mut Extern<S, A, Q>,
+//     _env: Env,
+// ) -> StdResult<HandleResponse> {
+//     config(&mut deps.storage).update(&|mut state| {
+//         state.count += 1;
+//         Ok(state)
+//     })?;
+//
+//     Ok(HandleResponse::default())
+// }
+//
+// pub fn try_reset<S: Storage, A: Api, Q: Querier>(
+//     deps: &mut Extern<S, A, Q>,
+//     env: Env,
+//     count: i32,
+// ) -> StdResult<HandleResponse> {
+//     config(&mut deps.storage).update(&|mut state| {
+//         if env.message.sender != state.owner {
+//             return Err(unauthorized());
+//         }
+//         state.count = count;
+//         Ok(state)
+//     })?;
+//     Ok(HandleResponse::default())
+// }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     msg: QueryMsg,
 ) -> StdResult<Binary> {
     match msg {
-        QueryMsg::GetCount {} => query_count(deps),
+        QueryMsg::TokenInfo {} => panic!("token"),
+        QueryMsg::Investment {} => panic!("investment"),
+        QueryMsg::Balance { address } => panic!("balance"),
     }
 }
 
-fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<Binary> {
-    let state = config_read(&deps.storage).load()?;
-    let resp = CountResponse { count: state.count };
-    to_binary(&resp)
-}
+// fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<Binary> {
+//     let state = config_read(&deps.storage).load()?;
+//     let resp = CountResponse { count: state.count };
+//     to_binary(&resp)
+// }
 
 #[cfg(test)]
 mod tests {
