@@ -87,7 +87,9 @@ pub struct AllBalanceResponse {
 }
 
 #[cfg(feature = "staking")]
-pub use staking::{Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse};
+pub use staking::{
+    Billionth, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+};
 
 #[cfg(feature = "staking")]
 mod staking {
@@ -121,12 +123,10 @@ mod staking {
     #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
     pub struct Validator {
         pub address: HumanAddr,
-        /// rates are denominated in 10^-6 - 1_000_000 (max) = 100%, 10_000 = 1%
-        /// TODO: capture this in some Dec type?
-        pub commission: u64,
-        pub max_commission: u64,
+        pub commission: Billionth,
+        pub max_commission: Billionth,
         /// TODO: what units are these (in terms of time)?
-        pub max_change_rate: u64,
+        pub max_change_rate: Billionth,
     }
 
     /// DelegationsResponse is data format returned from StakingRequest::Delegations query
@@ -149,5 +149,26 @@ mod staking {
         /// How much we can currently withdraw
         pub accumulated_rewards: Coin,
         // TODO: do we want to expose more info?
+    }
+
+    /// Billionth represents a fixed-point decimal value with 9 fractional digits.
+    /// That is Billionth(1_000_000_000) == 1
+    #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
+    pub struct Billionth(u64);
+
+    impl Billionth {
+        pub fn one() -> Billionth {
+            Billionth(1_000_000_000)
+        }
+
+        // convert integer % into Billionth units
+        pub fn percent(percent: u64) -> Billionth {
+            Billionth(percent * 10_000_000)
+        }
+
+        // convert permille (1/1000) into Billionth units
+        pub fn permille(permille: u64) -> Billionth {
+            Billionth(permille * 1_000_000)
+        }
     }
 }
