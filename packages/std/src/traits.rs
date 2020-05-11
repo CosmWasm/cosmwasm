@@ -1,13 +1,17 @@
 use serde::de::DeserializeOwned;
 
+use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{generic_err, StdResult, SystemResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
-use crate::serde::from_binary;
-use crate::to_vec;
+use crate::query::{
+    AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, StakingQuery, Validator,
+    ValidatorsResponse,
+};
+use crate::serde::{from_binary, to_vec};
 use crate::types::{CanonicalAddr, HumanAddr, Never};
+use crate::{Delegation, DelegationsResponse};
 use serde::Serialize;
 
 /// Holds all external dependencies of the contract.
@@ -111,18 +115,15 @@ pub trait Querier: Clone + Send {
     ) -> StdResult<U> {
         let raw = match to_vec(request) {
             Ok(raw) => raw,
-            // TODO: maybe I want to make this a SystemError::InvalidRequest ?
-            Err(e) => return Err(e),
+            Err(e) => return Err(generic_err(format!("Serializing QueryRequest: {}", e))),
         };
         match self.raw_query(&raw) {
             Err(sys) => Err(generic_err(format!("Querier system error: {}", sys))),
-            Ok(Err(err)) => Err(generic_err(format!("Querier contract error: {}", err))),
+            Ok(Err(err)) => Err(err),
             // in theory we would process the response, but here it is the same type, so just pass through
             Ok(Ok(res)) => from_binary(&res),
         }
     }
-
-    // TODO: a non-flattened version?
 
     fn query_balance<U: Into<HumanAddr>>(
         &self,
@@ -137,11 +138,48 @@ pub trait Querier: Clone + Send {
         self.query(&request)
     }
 
-    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<AllBalanceResponse> {
+    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
         .into();
-        self.query(&request)
+        let res: AllBalanceResponse = self.query(&request)?;
+        Ok(res.amount)
+    }
+
+    #[cfg(feature = "staking")]
+    fn query_validators(&self) -> StdResult<Vec<Validator>> {
+        let request = StakingQuery::Validators {}.into();
+        let res: ValidatorsResponse = self.query(&request)?;
+        Ok(res.validators)
+    }
+
+    #[cfg(feature = "staking")]
+    fn query_all_delegations<U: Into<HumanAddr>>(
+        &self,
+        delegator: U,
+    ) -> StdResult<Vec<Delegation>> {
+        let request = StakingQuery::Delegations {
+            delegator: delegator.into(),
+            validator: None,
+        }
+        .into();
+        let res: DelegationsResponse = self.query(&request)?;
+        Ok(res.delegations)
+    }
+
+    #[cfg(feature = "staking")]
+    fn query_delegation<U: Into<HumanAddr>>(
+        &self,
+        delegator: U,
+        validator: U,
+    ) -> StdResult<Vec<Delegation>> {
+        let request = StakingQuery::Delegations {
+            delegator: delegator.into(),
+            validator: Some(validator.into()),
+        }
+        .into();
+        let res: DelegationsResponse = self.query(&request)?;
+        Ok(res.delegations)
     }
 }
