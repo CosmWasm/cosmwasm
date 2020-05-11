@@ -11,7 +11,7 @@ use cosmwasm_std::{Api, Extern, Querier, Storage};
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
 use crate::compatability::check_wasm;
-use crate::errors::{make_integrety_err, IoErr, VmResult};
+use crate::errors::{make_integrity_err, IoErr, VmResult};
 use crate::instance::Instance;
 use crate::modules::{FileSystemCache, WasmHash};
 use crate::wasm_store::{load, save};
@@ -96,7 +96,7 @@ where
         let code = load(&self.wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {
-            Err(make_integrety_err())
+            Err(make_integrity_err())
         } else {
             Ok(code)
         }

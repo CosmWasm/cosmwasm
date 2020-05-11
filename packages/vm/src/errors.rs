@@ -95,7 +95,7 @@ pub enum VmError {
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
 
-pub fn make_integrety_err() -> VmError {
+pub fn make_integrity_err() -> VmError {
     IntegrityErr {}.build()
 }
 
