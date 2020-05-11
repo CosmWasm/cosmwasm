@@ -3,7 +3,9 @@
 //! use cosmwasm_vm::testing::X
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
+use std::collections::HashSet;
 use std::fmt;
+use std::iter::FromIterator;
 
 use cosmwasm_std::testing::{
     mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
@@ -20,11 +22,15 @@ use crate::instance::Instance;
 /// Gas limit for testing
 static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
+fn default_features() -> HashSet<String> {
+    HashSet::from_iter(["staking".to_string()].iter().cloned())
+}
+
 pub fn mock_instance(
     wasm: &[u8],
     contract_balance: &[Coin],
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    check_wasm(wasm).unwrap();
+    check_wasm(wasm, &default_features()).unwrap();
     let deps = mock_dependencies(20, contract_balance);
     Instance::from_code(wasm, deps, DEFAULT_GAS_LIMIT).unwrap()
 }
@@ -33,7 +39,7 @@ pub fn mock_instance_with_balances(
     wasm: &[u8],
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    check_wasm(wasm).unwrap();
+    check_wasm(wasm, &default_features()).unwrap();
     let deps = mock_dependencies_with_balances(20, balances);
     Instance::from_code(wasm, deps, DEFAULT_GAS_LIMIT).unwrap()
 }
@@ -43,7 +49,7 @@ pub fn mock_instance_with_gas_limit(
     contract_balance: &[Coin],
     gas_limit: u64,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    check_wasm(wasm).unwrap();
+    check_wasm(wasm, &default_features()).unwrap();
     let deps = mock_dependencies(20, contract_balance);
     Instance::from_code(wasm, deps, gas_limit).unwrap()
 }

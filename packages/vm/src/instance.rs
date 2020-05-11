@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::marker::PhantomData;
 
 use snafu::ResultExt;
@@ -17,6 +18,7 @@ use crate::context::{
 };
 use crate::conversion::to_u32;
 use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
 };
@@ -29,6 +31,7 @@ static WASM_PAGE_SIZE: u64 = 64 * 1024;
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
+    pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
@@ -40,12 +43,18 @@ where
     A: Api + 'static,
     Q: Querier + 'static,
 {
+    /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
+    /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
         let module = compile(code)?;
         Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
+    pub(crate) fn from_module(
+        module: &Module,
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+    ) -> VmResult<Self> {
         let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
@@ -120,16 +129,18 @@ where
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
 
-    pub fn from_wasmer(
+    pub(crate) fn from_wasmer(
         mut wasmer_instance: wasmer_runtime_core::Instance,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
+        let required_features = required_features_from_wasmer_instance(&wasmer_instance);
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
             wasmer_instance,
             api: deps.api,
+            required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
         }
@@ -137,7 +148,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(mut instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+    pub(crate) fn recycle(
+        mut instance: Self,
+    ) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
             move_out_of_context(instance.wasmer_instance.context_mut())
         {
@@ -209,15 +222,48 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-
-    use wasmer_runtime_core::error::ResolveError;
-
     use crate::errors::VmError;
     use crate::testing::mock_instance;
+    use cosmwasm_std::testing::mock_dependencies;
+    use wabt::wat2wasm;
+    use wasmer_runtime_core::error::ResolveError;
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static DEFAULT_GAS_LIMIT: u64 = 500_000;
+
+    #[test]
+    fn required_features_works() {
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features.len(), 1);
+        assert!(instance.required_features.contains("staking"));
+    }
+
+    #[test]
+    fn required_features_works_for_many_exports() {
+        let wasm = wat2wasm(
+            r#"(module
+            (type (func))
+            (func (type 0) nop)
+            (export "requires_water" (func 0))
+            (export "requires_" (func 0))
+            (export "requires_nutrients" (func 0))
+            (export "require_milk" (func 0))
+            (export "REQUIRES_air" (func 0))
+            (export "requires_sun" (func 0))
+            )"#,
+        )
+        .unwrap();
+
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features.len(), 3);
+        assert!(instance.required_features.contains("nutrients"));
+        assert!(instance.required_features.contains("sun"));
+        assert!(instance.required_features.contains("water"));
+    }
 
     #[test]
     fn func_works() {

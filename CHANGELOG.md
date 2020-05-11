@@ -146,6 +146,9 @@
 - The import `db_read` now returns an error code if the storage key does not
   exist. The latest standard library converts this error code back to a `None`
   value. This allows differentiating non-existent and empty storage entries.
+- Make `Instance::from_module`, `::from_wasmer` and `::recycle` crate-internal.
+- Create explicit, public `Checksum` type to identify Wasm blobs.
+- `CosmCache::new` now takes supported features as an argument.
 
 ## 0.7.2 (2020-03-23)
 

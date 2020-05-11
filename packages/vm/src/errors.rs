@@ -71,14 +71,14 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Error during static Wasm validation: {}", msg))]
+    StaticValidationErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Uninitialized Context Data: {}", kind))]
     UninitializedContextData {
         kind: &'static str,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Validating Wasm: {}", msg))]
-    ValidationErr {
-        msg: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Wasmer error: {}", source))]
@@ -95,10 +95,14 @@ pub enum VmError {
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
 
+pub fn make_integrity_err() -> VmError {
+    IntegrityErr {}.build()
+}
+
 pub fn make_runtime_err<T>(msg: &'static str) -> VmResult<T> {
     RuntimeErr { msg }.fail()
 }
 
-pub fn make_validation_err<T>(msg: String) -> VmResult<T> {
-    ValidationErr { msg }.fail()
+pub fn make_static_validation_err<S: Into<String>>(msg: S) -> VmError {
+    StaticValidationErr { msg: msg.into() }.build()
 }

@@ -2,23 +2,18 @@ use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-use sha2::{Digest, Sha256};
 use snafu::ResultExt;
 
+use crate::checksum::Checksum;
 use crate::errors::{IoErr, VmResult};
-
-/// A collision resistent hash function
-pub fn wasm_hash(wasm: &[u8]) -> Vec<u8> {
-    Sha256::digest(wasm).to_vec()
-}
 
 /// save stores the wasm code in the given directory and returns an ID for lookup.
 /// It will create the directory if it doesn't exist.
 /// Saving the same byte code multiple times is allowed.
-pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Vec<u8>> {
+pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum> {
     // calculate filename
-    let id = wasm_hash(wasm);
-    let filename = hex::encode(&id);
+    let checksum = Checksum::generate(wasm);
+    let filename = checksum.to_hex();
     let filepath = dir.into().join(&filename);
 
     // write data to file
@@ -31,12 +26,12 @@ pub fn save<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Vec<u8>> {
         .context(IoErr {})?;
     file.write_all(wasm).context(IoErr {})?;
 
-    Ok(id)
+    Ok(checksum)
 }
 
-pub fn load<P: Into<PathBuf>>(dir: P, id: &[u8]) -> VmResult<Vec<u8>> {
+pub fn load<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResult<Vec<u8>> {
     // this requires the directory and file to exist
-    let path = dir.into().join(hex::encode(id));
+    let path = dir.into().join(checksum.to_hex());
     let mut file = File::open(path).context(IoErr {})?;
 
     let mut wasm = Vec::<u8>::new();
@@ -56,7 +51,6 @@ mod test {
         let path = tmp_dir.path();
         let code = vec![12u8; 17];
         let id = save(path, &code).unwrap();
-        assert_eq!(id.len(), 32);
 
         let loaded = load(path, &id).unwrap();
         assert_eq!(code, loaded);
@@ -88,7 +82,6 @@ mod test {
         create_dir_all(&path).unwrap();
         let code = vec![12u8; 17];
         let id = save(&path, &code).unwrap();
-        assert_eq!(id.len(), 32);
 
         let loaded = load(&path, &id).unwrap();
         assert_eq!(code, loaded);
