@@ -107,10 +107,10 @@ pub struct ValidatorsResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Validator {
     pub address: HumanAddr,
-    pub commission: Billionth,
-    pub max_commission: Billionth,
+    pub commission: Decimal9,
+    pub max_commission: Decimal9,
     /// TODO: what units are these (in terms of time)?
-    pub max_change_rate: Billionth,
+    pub max_change_rate: Decimal9,
 }
 
 /// DelegationsResponse is data format returned from StakingRequest::Delegations query
@@ -133,23 +133,23 @@ pub struct Delegation {
     // TODO: do we want to expose more info?
 }
 
-/// Billionth represents a fixed-point decimal value with 9 fractional digits.
-/// That is Billionth(1_000_000_000) == 1
+/// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
+/// That is Decimal9(1_000_000_000) == 1
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Billionth(u64);
+pub struct Decimal9(u64);
 
-impl Billionth {
-    pub fn one() -> Billionth {
-        Billionth(1_000_000_000)
+impl Decimal9 {
+    pub fn one() -> Decimal9 {
+        Decimal9(1_000_000_000)
     }
 
     // convert integer % into Billionth units
-    pub fn percent(percent: u64) -> Billionth {
-        Billionth(percent * 10_000_000)
+    pub fn percent(percent: u64) -> Decimal9 {
+        Decimal9(percent * 10_000_000)
     }
 
     // convert permille (1/1000) into Billionth units
-    pub fn permille(permille: u64) -> Billionth {
-        Billionth(permille * 1_000_000)
+    pub fn permille(permille: u64) -> Decimal9 {
+        Decimal9(permille * 1_000_000)
     }
 }

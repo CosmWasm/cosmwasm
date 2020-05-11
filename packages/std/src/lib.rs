@@ -25,7 +25,7 @@ pub use crate::init_handle::{
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, Billionth, Delegation, DelegationsResponse,
+    AllBalanceResponse, BalanceResponse, BankQuery, Decimal9, Delegation, DelegationsResponse,
     QueryRequest, QueryResponse, QueryResult, StakingQuery, Validator, ValidatorsResponse,
     WasmQuery,
 };
