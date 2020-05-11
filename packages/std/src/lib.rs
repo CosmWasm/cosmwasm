@@ -37,7 +37,7 @@ pub use crate::types::{CanonicalAddr, Env, HumanAddr, Never};
 pub use crate::init_handle::StakingMsg;
 #[cfg(feature = "staking")]
 pub use crate::query::{
-    Billionth, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+    Decimal9, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
 };
 
 // Exposed in wasm build only

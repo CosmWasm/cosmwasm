@@ -303,22 +303,22 @@ mod staking {
     mod test {
         use super::*;
 
-        use crate::query::Billionth;
+        use crate::query::Decimal9;
         use crate::{coin, from_binary, HumanAddr};
 
         #[test]
         fn staking_querier_validators() {
             let val1 = Validator {
                 address: HumanAddr::from("validator-one"),
-                commission: Billionth::percent(1),
-                max_commission: Billionth::percent(3),
-                max_change_rate: Billionth::percent(1),
+                commission: Decimal9::percent(1),
+                max_commission: Decimal9::percent(3),
+                max_change_rate: Decimal9::percent(1),
             };
             let val2 = Validator {
                 address: HumanAddr::from("validator-two"),
-                commission: Billionth::permille(15),
-                max_commission: Billionth::permille(40),
-                max_change_rate: Billionth::permille(5),
+                commission: Decimal9::permille(15),
+                max_commission: Decimal9::permille(40),
+                max_change_rate: Decimal9::permille(5),
             };
 
             let staking = StakingQuerier::new(&[val1.clone(), val2.clone()], &[]);
