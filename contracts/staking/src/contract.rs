@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse, InitResponse,
-    Querier, StdResult, Storage, Uint128,
+    log, to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse, HumanAddr,
+    InitResponse, Querier, StdResult, Storage, Uint128,
 };
 
 use crate::msg::{
@@ -49,24 +49,42 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     match msg {
-        HandleMsg::Transfer { recipient, amount } => panic!("transfer"),
+        HandleMsg::Transfer { recipient, amount } => transfer(deps, env, recipient, amount),
         HandleMsg::Bond {} => panic!("bond"),
         HandleMsg::Reinvest {} => panic!("reinvest"),
         HandleMsg::Unbond { amount } => panic!("unbond"),
     }
 }
 
-// pub fn try_increment<S: Storage, A: Api, Q: Querier>(
-//     deps: &mut Extern<S, A, Q>,
-//     _env: Env,
-// ) -> StdResult<HandleResponse> {
-//     config(&mut deps.storage).update(&|mut state| {
-//         state.count += 1;
-//         Ok(state)
-//     })?;
-//
-//     Ok(HandleResponse::default())
-// }
+pub fn transfer<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    recipient: HumanAddr,
+    send: Uint128,
+) -> StdResult<HandleResponse> {
+    let rcpt_raw = deps.api.canonical_address(&recipient)?;
+    let sender_raw = env.message.sender;
+
+    let mut accounts = balances(&mut deps.storage);
+    accounts.update(sender_raw.as_slice(), &|balance: Option<Uint128>| {
+        balance.unwrap_or_default() - send
+    })?;
+    accounts.update(rcpt_raw.as_slice(), &|balance: Option<Uint128>| {
+        Ok(balance.unwrap_or_default() + send)
+    })?;
+
+    let res = HandleResponse {
+        messages: vec![],
+        log: vec![
+            log("action", "transfer"),
+            log("from", deps.api.human_address(&sender_raw)?.as_str()),
+            log("to", recipient.as_str()),
+            log("amount", &send.to_string()),
+        ],
+        data: None,
+    };
+    Ok(res)
+}
 //
 // pub fn try_reset<S: Storage, A: Api, Q: Querier>(
 //     deps: &mut Extern<S, A, Q>,
