@@ -894,7 +894,7 @@ checksum = "dba1a27d3efae4351c8051072d619e3ade2820635c3958d826bfea39d59b54c8"
 
 [[package]]
 name = "staking"
-version = "0.1.0"
+version = "0.8.0-alpha1"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
