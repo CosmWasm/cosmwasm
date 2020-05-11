@@ -104,19 +104,17 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
         .ok_or_else(|| generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
 
     // update total supply
-    // TODO: better way to set the value from the closure?
-    let mut to_mint = 0u128;
+    let mut to_mint = Uint128::from(0);
     let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
-        // TODO: better job with rounding...
-        to_mint = payment.amount.u128() * supply.bonded.u128() / supply.issued.u128();
+        to_mint = payment.amount.multiply_ratio(supply.bonded, supply.issued);
         supply.bonded += payment.amount;
-        supply.issued += to_mint.into();
+        supply.issued += to_mint;
         Ok(supply)
     })?;
 
     // update the balance of the sender
     balances(&mut deps.storage).update(sender_raw.as_slice(), &mut |balance| {
-        Ok(balance.unwrap_or_default() + to_mint.into())
+        Ok(balance.unwrap_or_default() + to_mint)
     })?;
 
     // bond them to the validator

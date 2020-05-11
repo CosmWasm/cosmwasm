@@ -5,6 +5,7 @@ use std::fmt;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
+use crate::math::Decimal9;
 use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
@@ -140,27 +141,4 @@ pub struct Validator {
     pub max_commission: Decimal9,
     /// TODO: what units are these (in terms of time)?
     pub max_change_rate: Decimal9,
-}
-
-/// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
-/// That is Decimal9(1_000_000_000) == 1
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Decimal9(pub u64);
-
-pub const DECIMAL_FRACTIONAL: u64 = 1_000_000_000;
-
-impl Decimal9 {
-    pub fn one() -> Decimal9 {
-        Decimal9(DECIMAL_FRACTIONAL)
-    }
-
-    // convert integer % into Billionth units
-    pub fn percent(percent: u64) -> Decimal9 {
-        Decimal9(percent * 10_000_000)
-    }
-
-    // convert permille (1/1000) into Billionth units
-    pub fn permille(permille: u64) -> Decimal9 {
-        Decimal9(permille * 1_000_000)
-    }
 }
