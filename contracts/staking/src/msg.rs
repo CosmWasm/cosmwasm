@@ -40,6 +40,10 @@ pub enum HandleMsg {
     /// re-bond them to the same validator. Anyone can call this, which updates
     /// the value of the token (how much under custody).
     Reinvest {},
+    /// _BondAllTokens can only be called by the contract itself, after all rewards have been
+    /// withdrawn. This is an example of using "callbacks" in message flows.
+    /// This can only be invoked by the contract itself as a return from Reinvest
+    _BondAllTokens {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

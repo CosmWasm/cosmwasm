@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    log, to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse, HumanAddr,
-    InitResponse, Querier, StdResult, Storage, Uint128,
+    generic_err, log, to_binary, unauthorized, Api, Binary, Decimal9, Env, Extern, HandleResponse,
+    HumanAddr, InitResponse, Querier, StakingMsg, StdResult, Storage, Uint128,
 };
 
 use crate::msg::{
@@ -50,9 +50,10 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     match msg {
         HandleMsg::Transfer { recipient, amount } => transfer(deps, env, recipient, amount),
-        HandleMsg::Bond {} => panic!("bond"),
-        HandleMsg::Reinvest {} => panic!("reinvest"),
+        HandleMsg::Bond {} => bond(deps, env),
         HandleMsg::Unbond { amount } => panic!("unbond"),
+        HandleMsg::Reinvest {} => panic!("reinvest"),
+        HandleMsg::_BondAllTokens {} => panic!("bond tokens"),
     }
 }
 
@@ -66,10 +67,10 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
     let sender_raw = env.message.sender;
 
     let mut accounts = balances(&mut deps.storage);
-    accounts.update(sender_raw.as_slice(), &|balance: Option<Uint128>| {
+    accounts.update(sender_raw.as_slice(), &mut |balance: Option<Uint128>| {
         balance.unwrap_or_default() - send
     })?;
-    accounts.update(rcpt_raw.as_slice(), &|balance: Option<Uint128>| {
+    accounts.update(rcpt_raw.as_slice(), &mut |balance: Option<Uint128>| {
         Ok(balance.unwrap_or_default() + send)
     })?;
 
@@ -85,6 +86,57 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
     };
     Ok(res)
 }
+
+pub fn bond<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    let sender_raw = env.message.sender;
+
+    // ensure we have the proper denom
+    let invest = invest_info_read(&deps.storage).load()?;
+    // payment finds the proper coin (or throws an error)
+    let payment = env
+        .message
+        .sent_funds
+        .iter()
+        .find(|x| &x.denom == &invest.bond_denom)
+        .ok_or_else(|| generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
+
+    // update total supply
+    // TODO: better way to set the value from the closure?
+    let mut to_mint = 0u128;
+    let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
+        // TODO: better job with rounding...
+        to_mint = payment.amount.u128() * supply.bonded.u128() / supply.issued.u128();
+        supply.bonded += payment.amount;
+        supply.issued += to_mint.into();
+        Ok(supply)
+    })?;
+
+    // update the balance of the sender
+    balances(&mut deps.storage).update(sender_raw.as_slice(), &mut |balance| {
+        Ok(balance.unwrap_or_default() + to_mint.into())
+    })?;
+
+    // bond them to the validator
+    let res = HandleResponse {
+        messages: vec![StakingMsg::Delegate {
+            validator: invest.validator,
+            amount: payment.clone(),
+        }
+        .into()],
+        log: vec![
+            log("action", "bond"),
+            log("from", deps.api.human_address(&sender_raw)?.as_str()),
+            log("bonded", &payment.amount.to_string()),
+            log("minted", &to_mint.to_string()),
+        ],
+        data: None,
+    };
+    Ok(res)
+}
+
 //
 // pub fn try_reset<S: Storage, A: Api, Q: Querier>(
 //     deps: &mut Extern<S, A, Q>,
