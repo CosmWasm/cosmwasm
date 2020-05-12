@@ -8,10 +8,10 @@ use std::{
     path::PathBuf,
 };
 
-pub use wasmer_runtime_core::cache::WasmHash;
 use wasmer_runtime_core::{cache::Artifact, module::Module};
 
 use crate::backends::{backend, compiler_for_backend};
+use crate::checksum::Checksum;
 use crate::errors::{make_cache_err, VmResult};
 
 /// Representation of a directory that contains compiled Wasm artifacts.
@@ -58,16 +58,14 @@ impl FileSystemCache {
         }
     }
 
-    pub fn load(&self, key: WasmHash) -> VmResult<Module> {
-        self.load_with_backend(key, backend())
+    pub fn load(&self, checksum: &Checksum) -> VmResult<Module> {
+        self.load_with_backend(checksum, backend())
     }
 
-    pub fn load_with_backend(&self, key: WasmHash, backend: &str) -> VmResult<Module> {
-        let filename = key.encode();
-        let mut new_path_buf = self.path.clone();
-        new_path_buf.push(backend.to_string());
-        new_path_buf.push(filename);
-        let file = File::open(new_path_buf)
+    pub fn load_with_backend(&self, checksum: &Checksum, backend: &str) -> VmResult<Module> {
+        let filename = checksum.to_hex();
+        let file_path = self.path.clone().join(backend).join(filename);
+        let file = File::open(file_path)
             .map_err(|e| make_cache_err(format!("Error opening module file: {}", e)))?;
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| make_cache_err(format!("Mmap error: {}", e)))?;
@@ -84,7 +82,7 @@ impl FileSystemCache {
         Ok(module)
     }
 
-    pub fn store(&mut self, key: WasmHash, module: Module) -> VmResult<()> {
+    pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
         let backend_str = module.info().backend.to_string();
         let modules_dir = self.path.clone().join(backend_str);
         fs::create_dir_all(&modules_dir)
@@ -93,7 +91,7 @@ impl FileSystemCache {
         let serialized_cache = module.cache()?;
         let buffer = serialized_cache.serialize()?;
 
-        let filename = key.encode();
+        let filename = checksum.to_hex();
         let mut file = File::create(modules_dir.join(filename))
             .map_err(|e| make_cache_err(format!("Error creating module file: {}", e)))?;
         file.write_all(&buffer)
@@ -114,16 +112,17 @@ mod tests {
     fn test_file_system_cache_run() {
         use wasmer_runtime_core::{imports, typed_func::Func};
 
-        static WAT: &'static str = r#"
-            (module
-              (type $t0 (func (param i32) (result i32)))
-              (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+        let wasm = wat2wasm(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
                 get_local $p0
                 i32.const 1
                 i32.add))
-        "#;
-
-        let wasm = wat2wasm(WAT).unwrap();
+            "#,
+        )
+        .unwrap();
+        let checksum = Checksum::generate(&wasm);
 
         let module = compile(&wasm).unwrap();
 
@@ -131,18 +130,13 @@ mod tests {
         assert_eq!(backend().to_string(), module.info().backend.to_string());
 
         let cache_dir = env::temp_dir();
+        let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };
 
-        let mut fs_cache = unsafe {
-            FileSystemCache::new(cache_dir)
-                .map_err(|e| format!("Cache error: {:?}", e))
-                .unwrap()
-        };
         // store module
-        let key = WasmHash::generate(&wasm);
-        fs_cache.store(key, module.clone()).unwrap();
+        fs_cache.store(&checksum, module.clone()).unwrap();
 
         // load module
-        let cached_result = fs_cache.load(key);
+        let cached_result = fs_cache.load(&checksum);
 
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};
