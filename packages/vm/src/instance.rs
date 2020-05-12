@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
 
-use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
     imports,
@@ -17,7 +16,7 @@ use crate::context::{
     move_into_context, move_out_of_context, setup_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{make_instantiation_err, VmResult, WasmerRuntimeErr};
+use crate::errors::{make_instantiation_err, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -188,7 +187,7 @@ where
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(to_u32(size)?).context(WasmerRuntimeErr {})?;
+        let ptr = alloc.call(to_u32(size)?)?;
         Ok(ptr)
     }
 
@@ -197,7 +196,7 @@ where
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
-        dealloc.call(ptr).context(WasmerRuntimeErr {})?;
+        dealloc.call(ptr)?;
         Ok(())
     }
 

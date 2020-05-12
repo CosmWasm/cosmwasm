@@ -82,9 +82,9 @@ pub enum VmError {
         kind: String,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Calling wasm function: {}", source))]
+    #[snafu(display("Error executing Wasm: {}", msg))]
     WasmerRuntimeErr {
-        source: wasmer_runtime_core::error::RuntimeError,
+        msg: String,
         backtrace: snafu::Backtrace,
     },
 }
@@ -104,6 +104,12 @@ impl From<wasmer_runtime_core::error::CompileError> for VmError {
 impl From<wasmer_runtime_core::error::ResolveError> for VmError {
     fn from(original: wasmer_runtime_core::error::ResolveError) -> Self {
         make_resolve_err(format!("Resolve error: {:?}", original))
+    }
+}
+
+impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
+    fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
+        make_wasmer_runtime_err(format!("Wasmer runtime error: {:?}", original))
     }
 }
 
@@ -181,6 +187,10 @@ pub fn make_static_validation_err<S: Into<String>>(msg: S) -> VmError {
 
 pub fn make_uninitialized_context_data<S: Into<String>>(kind: S) -> VmError {
     UninitializedContextData { kind: kind.into() }.build()
+}
+
+pub fn make_wasmer_runtime_err<S: Into<String>>(msg: S) -> VmError {
+    WasmerRuntimeErr { msg: msg.into() }.build()
 }
 
 #[cfg(test)]
@@ -324,6 +334,15 @@ mod test {
         let err = make_uninitialized_context_data("foo");
         match err {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_wasmer_runtime_err_works() {
+        let err = make_wasmer_runtime_err("something went wrong");
+        match err {
+            VmError::WasmerRuntimeErr { msg, .. } => assert_eq!(msg, "something went wrong"),
             _ => panic!("Unexpected error"),
         }
     }

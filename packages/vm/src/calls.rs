@@ -1,5 +1,4 @@
 use serde::de::DeserializeOwned;
-use snafu::ResultExt;
 use std::fmt;
 
 use cosmwasm_std::{
@@ -7,7 +6,7 @@ use cosmwasm_std::{
     QueryResult, StdResult, Storage,
 };
 
-use crate::errors::{make_runtime_err, VmResult, WasmerRuntimeErr};
+use crate::errors::{make_runtime_err, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 use schemars::JsonSchema;
@@ -111,12 +110,11 @@ fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     let res_region_ptr = match args.len() {
         1 => {
             let func: Func<u32, u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0]).context(WasmerRuntimeErr {})?
+            func.call(arg_region_ptrs[0])?
         }
         2 => {
             let func: Func<(u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1])
-                .context(WasmerRuntimeErr {})?
+            func.call(arg_region_ptrs[0], arg_region_ptrs[1])?
         }
         _ => panic!("call_raw called with unsupported number of arguments"),
     };
