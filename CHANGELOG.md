@@ -153,6 +153,7 @@
 - Rename `VmError::RegionLengthTooBigErr` to `VmError::RegionLengthTooBig`.
 - Change property types to owned string in `VmError::UninitializedContextData`
   and `VmError::ConversionErr`.
+- Remove `VmError::IoErr` in favour of `VmError::CacheErr`.
 
 ## 0.7.2 (2020-03-23)
 

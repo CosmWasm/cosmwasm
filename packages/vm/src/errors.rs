@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use std::io;
 
 use snafu::Snafu;
 use wasmer_runtime_core::error as core_error;
@@ -22,11 +21,6 @@ pub enum VmError {
     #[snafu(display("Compiling wasm: {}", source))]
     CompileErr {
         source: core_error::CompileError,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Filesystem error: {}", source))]
-    IoErr {
-        source: io::Error,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Iterator with ID {} does not exist", id))]

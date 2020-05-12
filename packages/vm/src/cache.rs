@@ -1,18 +1,16 @@
+use lru::LruCache;
 use std::collections::HashSet;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use lru::LruCache;
-use snafu::ResultExt;
-
 use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
 use crate::compatability::check_wasm;
-use crate::errors::{make_integrity_err, IoErr, VmResult};
+use crate::errors::{make_cache_err, make_integrity_err, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
 
@@ -58,8 +56,11 @@ where
     ) -> VmResult<Self> {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
-        create_dir_all(&wasm_path).context(IoErr {})?;
-        let modules = FileSystemCache::new(base.join(MODULES_DIR)).context(IoErr {})?;
+        create_dir_all(&wasm_path)
+            .map_err(|e| make_cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
+
+        let modules = FileSystemCache::new(base.join(MODULES_DIR))
+            .map_err(|e| make_cache_err(format!("Error file system cache: {}", e)))?;
         let instances = if cache_size > 0 {
             Some(LruCache::new(cache_size))
         } else {
@@ -159,8 +160,9 @@ fn save_wasm_to_disk<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum
         .write(true)
         .create(true)
         .open(filepath)
-        .context(IoErr {})?;
-    file.write_all(wasm).context(IoErr {})?;
+        .map_err(|e| make_cache_err(format!("Error opening Wasm file for writing: {}", e)))?;
+    file.write_all(wasm)
+        .map_err(|e| make_cache_err(format!("Error writing Wasm file: {}", e)))?;
 
     Ok(checksum)
 }
@@ -168,10 +170,12 @@ fn save_wasm_to_disk<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum
 fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResult<Vec<u8>> {
     // this requires the directory and file to exist
     let path = dir.into().join(checksum.to_hex());
-    let mut file = File::open(path).context(IoErr {})?;
+    let mut file = File::open(path)
+        .map_err(|e| make_cache_err(format!("Error opening Wasm file for reading: {}", e)))?;
 
     let mut wasm = Vec::<u8>::new();
-    let _ = file.read_to_end(&mut wasm).context(IoErr {})?;
+    file.read_to_end(&mut wasm)
+        .map_err(|e| make_cache_err(format!("Error reading Wasm file: {}", e)))?;
     Ok(wasm)
 }
 
@@ -280,11 +284,12 @@ mod test {
             5, 5, 5,
         ]);
 
-        let res = cache.load_wasm(&checksum);
-        match res {
-            Err(VmError::IoErr { .. }) => {}
-            Err(e) => panic!("Unexpected error: {:?}", e),
-            Ok(_) => panic!("This must not succeed"),
+        match cache.load_wasm(&checksum).unwrap_err() {
+            VmError::CacheErr { msg, .. } => {
+                assert!(msg
+                    .starts_with("Error opening Wasm file for reading: No such file or directory"))
+            }
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
