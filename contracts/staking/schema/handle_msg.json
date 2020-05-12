@@ -3,35 +3,104 @@
   "title": "HandleMsg",
   "anyOf": [
     {
+      "description": "Transfer moves the derivative token",
       "type": "object",
       "required": [
-        "increment"
+        "transfer"
       ],
       "properties": {
-        "increment": {
+        "transfer": {
+          "type": "object",
+          "required": [
+            "amount",
+            "recipient"
+          ],
+          "properties": {
+            "amount": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "recipient": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Bond will bond all staking tokens sent with the message and release derivative tokens",
+      "type": "object",
+      "required": [
+        "bond"
+      ],
+      "properties": {
+        "bond": {
           "type": "object"
         }
       }
     },
     {
+      "description": "Unbond will \"burn\" the given amount of derivative tokens and send the unbonded staking tokens to the message sender (after exit tax is deducted)",
       "type": "object",
       "required": [
-        "reset"
+        "unbond"
       ],
       "properties": {
-        "reset": {
+        "unbond": {
           "type": "object",
           "required": [
-            "count"
+            "amount"
           ],
           "properties": {
-            "count": {
-              "type": "integer",
-              "format": "int32"
+            "amount": {
+              "$ref": "#/definitions/Uint128"
             }
           }
         }
       }
+    },
+    {
+      "description": "Claim is used to claim your native tokens that you previously \"unbonded\" after the chain-defined waiting period (eg. 3 weeks)",
+      "type": "object",
+      "required": [
+        "claim"
+      ],
+      "properties": {
+        "claim": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "description": "Reinvest will check for all accumulated rewards, withdraw them, and re-bond them to the same validator. Anyone can call this, which updates the value of the token (how much under custody).",
+      "type": "object",
+      "required": [
+        "reinvest"
+      ],
+      "properties": {
+        "reinvest": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "description": "_BondAllTokens can only be called by the contract itself, after all rewards have been withdrawn. This is an example of using \"callbacks\" in message flows. This can only be invoked by the contract itself as a return from Reinvest",
+      "type": "object",
+      "required": [
+        "__bond_all_tokens"
+      ],
+      "properties": {
+        "__bond_all_tokens": {
+          "type": "object"
+        }
+      }
     }
-  ]
+  ],
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
 }

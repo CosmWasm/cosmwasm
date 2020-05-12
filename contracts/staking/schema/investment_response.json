@@ -1,24 +1,19 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "InitMsg",
+  "title": "InvestmentResponse",
   "type": "object",
   "required": [
-    "decimals",
     "exit_tax",
     "min_withdrawl",
-    "name",
-    "symbol",
+    "nominal_value",
+    "owner",
+    "staked_tokens",
+    "token_supply",
     "validator"
   ],
   "properties": {
-    "decimals": {
-      "description": "decimal places of the derivative token (for UI) TODO: does this make sense? Do we need to normalize on this? We don't even know the decimals of the native token",
-      "type": "integer",
-      "format": "uint8",
-      "minimum": 0.0
-    },
     "exit_tax": {
-      "description": "this is how much the owner takes as a cut when someone unbonds TODO",
+      "description": "this is how much the owner takes as a cut when someone unbonds",
       "allOf": [
         {
           "$ref": "#/definitions/Decimal9"
@@ -33,16 +28,25 @@
         }
       ]
     },
-    "name": {
-      "description": "name of the derivative token (FIXME: auto-generate?)",
-      "type": "string"
+    "nominal_value": {
+      "$ref": "#/definitions/Decimal9"
     },
-    "symbol": {
-      "description": "symbol / ticker of the derivative token",
-      "type": "string"
+    "owner": {
+      "description": "owner created the contract and takes a cut",
+      "allOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        }
+      ]
+    },
+    "staked_tokens": {
+      "$ref": "#/definitions/Coin"
+    },
+    "token_supply": {
+      "$ref": "#/definitions/Uint128"
     },
     "validator": {
-      "description": "This is the validator that all tokens will be bonded to",
+      "description": "All tokens are bonded to this validator",
       "allOf": [
         {
           "$ref": "#/definitions/HumanAddr"
@@ -51,6 +55,21 @@
     }
   },
   "definitions": {
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
     "Decimal9": {
       "description": "Decimal9 represents a fixed-point decimal value with 9 fractional digits. That is Decimal9(1_000_000_000) == 1",
       "type": "integer",
