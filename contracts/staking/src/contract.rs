@@ -401,7 +401,7 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{from_binary, CosmosMsg, Decimal9, Validator};
+    use cosmwasm_std::{coins, from_binary, CosmosMsg, Decimal9, Validator};
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
         Validator {
@@ -563,6 +563,67 @@ mod tests {
         assert_eq!(invest.staked_tokens, coin(1000, "stake"));
         assert_eq!(invest.nominal_value, Decimal9::one());
     }
+
+    #[test]
+    fn rebonding_changes_pricing() {
+        let mut deps = mock_dependencies(20, &[]);
+        deps.querier
+            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+
+        let creator = HumanAddr::from("creator");
+        let init_msg = default_init(2, 50);
+        let env = mock_env(&deps.api, &creator, &[]);
+
+        // make sure we can init with this
+        let res = init(&mut deps, env, init_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // let's bond some tokens now
+        let bob = HumanAddr::from("bob");
+        let bond_msg = HandleMsg::Bond {};
+        let env = mock_env(&deps.api, &bob, &[coin(10, "random"), coin(1000, "stake")]);
+        let contract_addr = deps.api.human_address(&env.contract.address).unwrap();
+        let res = handle(&mut deps, env, bond_msg).unwrap();
+        assert_eq!(1, res.messages.len());
+
+        // fake a reinvestment (this must be sent by the contract itself)
+        let rebond_msg = HandleMsg::_BondAllTokens {};
+        let env = mock_env(&deps.api, &contract_addr, &[]);
+        deps.querier
+            .update_balance(&contract_addr, coins(500, "stake"));
+        let _ = handle(&mut deps, env, rebond_msg).unwrap();
+
+        // we should now see 1000 issues and 1500 bonded (and a price of 1.5)
+        let res = query(&deps, QueryMsg::Investment {}).unwrap();
+        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        assert_eq!(invest.token_supply, Uint128(1000));
+        assert_eq!(invest.staked_tokens, coin(1500, "stake"));
+        let mut ratio = Decimal9::one();
+        ratio.0 = ratio.0 * 3 / 2; // TODO: expose this on decimal
+        assert_eq!(invest.nominal_value, ratio);
+
+        // we bond some other tokens and get a different issuance price (maintaining the ratio)
+        let alice = HumanAddr::from("alice");
+        let bond_msg = HandleMsg::Bond {};
+        let env = mock_env(&deps.api, &alice, &[coin(3000, "stake")]);
+        let res = handle(&mut deps, env, bond_msg).unwrap();
+        assert_eq!(1, res.messages.len());
+
+        // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
+        let query_msg = QueryMsg::Balance {
+            address: alice.clone(),
+        };
+        let res = query(&deps, query_msg).unwrap();
+        let bal: BalanceResponse = from_binary(&res).unwrap();
+        assert_eq!(bal.balance, Uint128(2000));
+
+        let res = query(&deps, QueryMsg::Investment {}).unwrap();
+        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        assert_eq!(invest.token_supply, Uint128(3000));
+        assert_eq!(invest.staked_tokens, coin(4500, "stake"));
+        assert_eq!(invest.nominal_value, ratio);
+    }
+
     // #[test]
     // fn increment() {
     //     let mut deps = mock_dependencies(20, &coins(2, "token"));
