@@ -158,6 +158,8 @@
   `VmError::WasmerRuntimeErr` to just hold a string with the details instead of
   the source error.
 - Remove `VmError::WasmerErr` in favour of the new `VmError::InstantiationErr`.
+- The snafu error builders from `VmError` are now private, i.e. callers can only
+  use the errors, not create them.
 
 ## 0.7.2 (2020-03-23)
 
