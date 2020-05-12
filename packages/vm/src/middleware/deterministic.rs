@@ -204,7 +204,7 @@ mod tests {
         let res = compile(&wasm);
 
         match res.err().unwrap() {
-            VmError::CompileErr { msg, .. } => assert_eq!(msg, "Compile error: InternalError { msg: \"Codegen(\\\"ValidationError { msg: \\\\\\\"non-deterministic opcode: F32ConvertI32U\\\\\\\" }\\\")\" }"),
+            VmError::CompileErr { msg, .. } => assert_eq!(msg, "Wasmer compile error: InternalError { msg: \"Codegen(\\\"ValidationError { msg: \\\\\\\"non-deterministic opcode: F32ConvertI32U\\\\\\\" }\\\")\" }"),
             e => panic!("unexpected error: {:?}", e),
         }
     }

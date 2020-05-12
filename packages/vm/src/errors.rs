@@ -104,13 +104,13 @@ impl From<wasmer_runtime_core::cache::Error> for VmError {
 
 impl From<wasmer_runtime_core::error::CompileError> for VmError {
     fn from(original: wasmer_runtime_core::error::CompileError) -> Self {
-        make_compile_err(format!("Compile error: {:?}", original))
+        make_compile_err(format!("Wasmer compile error: {:?}", original))
     }
 }
 
 impl From<wasmer_runtime_core::error::ResolveError> for VmError {
     fn from(original: wasmer_runtime_core::error::ResolveError) -> Self {
-        make_resolve_err(format!("Resolve error: {:?}", original))
+        make_resolve_err(format!("Wasmer resolve error: {:?}", original))
     }
 }
 

@@ -286,7 +286,7 @@ mod test {
         match instance.func::<(), ()>(missing_function).err().unwrap() {
             VmError::ResolveErr { msg, .. } => assert_eq!(
                 msg,
-                "Resolve error: ExportNotFound { name: \"bar_foo345\" }"
+                "Wasmer resolve error: ExportNotFound { name: \"bar_foo345\" }"
             ),
             e => panic!("unexpected error: {:?}", e),
         }
@@ -298,7 +298,7 @@ mod test {
         match instance.func::<(), ()>("allocate").err().unwrap() {
             VmError::ResolveErr { msg, .. } => assert_eq!(
                 msg,
-                "Resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
+                "Wasmer resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
             ),
             e => panic!("unexpected error: {:?}", e),
         }
