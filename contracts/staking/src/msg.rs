@@ -36,6 +36,9 @@ pub enum HandleMsg {
     /// Unbond will "burn" the given amount of derivative tokens and send the unbonded
     /// staking tokens to the message sender (after exit tax is deducted)
     Unbond { amount: Uint128 },
+    /// Claim is used to claim your native tokens that you previously "unbonded"
+    /// after the chain-defined waiting period (eg. 3 weeks)
+    Claim {},
     /// Reinvest will check for all accumulated rewards, withdraw them, and
     /// re-bond them to the same validator. Anyone can call this, which updates
     /// the value of the token (how much under custody).
@@ -51,6 +54,8 @@ pub enum HandleMsg {
 pub enum QueryMsg {
     /// Balance shows the number of staking derivatives
     Balance { address: HumanAddr },
+    /// Claims shows the number of tokens this address can access when they are done unbonding
+    Claims { address: HumanAddr },
     /// TokenInfo shows the metadata of the token for UIs
     TokenInfo {},
     /// Investment shows info on total staking tokens under custody,
@@ -62,6 +67,11 @@ pub enum QueryMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BalanceResponse {
     pub balance: Uint128,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ClaimsResponse {
+    pub claims: Uint128,
 }
 
 /// TokenInfoResponse is info to display the derivative token in a UI

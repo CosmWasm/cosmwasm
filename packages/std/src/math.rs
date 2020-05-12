@@ -29,7 +29,7 @@ impl Decimal9 {
 }
 
 //*** Uint128 ***/
-#[derive(Copy, Clone, Default, Debug, PartialEq, PartialOrd, JsonSchema)]
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint128(#[schemars(with = "String")] pub u128);
 
 impl Uint128 {

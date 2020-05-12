@@ -1,14 +1,16 @@
 use cosmwasm_std::{
-    coin, generic_err, log, to_binary, unauthorized, Api, Binary, Env, Extern, HandleResponse,
-    HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
+    coin, generic_err, log, to_binary, unauthorized, Api, BankMsg, Binary, Env, Extern,
+    HandleResponse, HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage,
+    Uint128, WasmMsg,
 };
 
 use crate::msg::{
-    BalanceResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg, TokenInfoResponse,
+    BalanceResponse, ClaimsResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg,
+    TokenInfoResponse,
 };
 use crate::state::{
-    balances, balances_read, claims, invest_info, invest_info_read, token_info, token_info_read,
-    total_supply, total_supply_read, InvestmentInfo, Supply,
+    balances, balances_read, claims, claims_read, invest_info, invest_info_read, token_info,
+    token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply,
 };
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
@@ -49,6 +51,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::Transfer { recipient, amount } => transfer(deps, env, recipient, amount),
         HandleMsg::Bond {} => bond(deps, env),
         HandleMsg::Unbond { amount } => unbond(deps, env, amount),
+        HandleMsg::Claim {} => claim(deps, env),
         HandleMsg::Reinvest {} => reinvest(deps, env),
         HandleMsg::_BondAllTokens {} => _bond_all_tokens(deps, env),
     }
@@ -196,6 +199,57 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
+pub fn claim<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+) -> StdResult<HandleResponse> {
+    // find how many tokens the contract has
+    let contract_human = deps.api.human_address(&env.contract.address)?;
+    let invest = invest_info_read(&deps.storage).load()?;
+    let mut balance = deps
+        .querier
+        .query_balance(&contract_human, &invest.bond_denom)?;
+    if balance.amount < invest.min_withdrawl {
+        return Err(generic_err(
+            "Insufficient balance in contract to process claim",
+        ));
+    }
+
+    // check how much to send - min(balance, claims[sender]), and reduce the claim
+    let sender_raw = env.message.sender;
+    let mut to_send = balance.amount;
+    claims(&mut deps.storage).update(sender_raw.as_slice(), &mut |claim| {
+        let claim = claim.ok_or_else(|| generic_err("no claim for this address"))?;
+        to_send = to_send.min(claim);
+        claim - to_send
+    })?;
+
+    // update total supply (lower claim)
+    total_supply(&mut deps.storage).update(&mut |mut supply| {
+        supply.claims = (supply.claims - to_send)?;
+        Ok(supply)
+    })?;
+
+    // transfer tokens to the sender
+    let sender_human = deps.api.human_address(&sender_raw)?;
+    balance.amount = to_send;
+    let res = HandleResponse {
+        messages: vec![BankMsg::Send {
+            from_address: contract_human,
+            to_address: sender_human.clone(),
+            amount: vec![balance],
+        }
+        .into()],
+        log: vec![
+            log("action", "claim"),
+            log("from", sender_human.as_str()),
+            log("amount", &to_send.to_string()),
+        ],
+        data: None,
+    };
+    Ok(res)
+}
+
 /// reinvest will withdraw all pending rewards,
 /// then issue a callback to itself via _bond_all_tokens
 /// to reinvest the new earnings (and anything else that accumulated)
@@ -281,8 +335,9 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::TokenInfo {} => query_token_info(deps),
-        QueryMsg::Investment {} => panic!("investment"),
+        QueryMsg::Investment {} => query_investment(deps),
         QueryMsg::Balance { address } => query_balance(deps, address),
+        QueryMsg::Claims { address } => query_claims(deps, address),
     }
 }
 
@@ -300,6 +355,15 @@ pub fn query_balance<S: Storage, A: Api, Q: Querier>(
     let address_raw = deps.api.canonical_address(&address)?;
     let balance = balances_read(&deps.storage).load(address_raw.as_slice())?;
     to_binary(&BalanceResponse { balance })
+}
+
+pub fn query_claims<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    address: HumanAddr,
+) -> StdResult<Binary> {
+    let address_raw = deps.api.canonical_address(&address)?;
+    let claims = claims_read(&deps.storage).load(address_raw.as_slice())?;
+    to_binary(&ClaimsResponse { claims })
 }
 
 pub fn query_investment<S: Storage, A: Api, Q: Querier>(
