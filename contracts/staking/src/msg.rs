@@ -10,6 +10,8 @@ pub struct InitMsg {
     /// symbol / ticker of the derivative token
     pub symbol: String,
     /// decimal places of the derivative token (for UI)
+    /// TODO: does this make sense? Do we need to normalize on this?
+    /// We don't even know the decimals of the native token
     pub decimals: u8,
 
     /// This is the validator that all tokens will be bonded to

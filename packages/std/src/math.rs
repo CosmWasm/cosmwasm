@@ -124,6 +124,12 @@ impl Uint128 {
 
     /// Returns the ratio (self / denom) as Decimal9 fixed-point
     pub fn calc_ratio(&self, denom: Uint128) -> Decimal9 {
+        // special case: 0/0 = 1.0
+        if self.0 == 0 && denom.0 == 0 {
+            return Decimal9::one();
+        }
+        // otherwise, panic on 0 (or how to handle 1/0)?
+
         let places: u128 = DECIMAL_FRACTIONAL.into();
         // TODO: better algorithm with less rounding potential
         let val: u128 = self.u128() * places / denom.u128();
