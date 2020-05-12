@@ -154,7 +154,8 @@
 - Change property types to owned string in `VmError::UninitializedContextData`,
   `VmError::ConversionErr`, `VmError::ParseErr` and `VmError::SerializeErr`.
 - Remove `VmError::IoErr` in favour of `VmError::CacheErr`.
-- Simplify `VmError::CompileErr` to just hold a string with the details.
+- Simplify `VmError::CompileErr` and `VmError::ResolveErr` to just hold a string
+  with the details instead of the source error.
 
 ## 0.7.2 (2020-03-23)
 

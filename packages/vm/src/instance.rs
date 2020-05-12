@@ -17,7 +17,7 @@ use crate::context::{
     move_into_context, move_out_of_context, setup_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::errors::{VmResult, WasmerErr, WasmerRuntimeErr};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -215,10 +215,8 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.wasmer_instance
-            .exports
-            .get(name)
-            .context(ResolveErr {})
+        let function = self.wasmer_instance.exports.get(name)?;
+        Ok(function)
     }
 }
 
@@ -229,7 +227,6 @@ mod test {
     use crate::testing::mock_instance;
     use cosmwasm_std::testing::mock_dependencies;
     use wabt::wat2wasm;
-    use wasmer_runtime_core::error::ResolveError;
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
@@ -285,13 +282,24 @@ mod test {
     fn func_errors_for_non_existent_function() {
         let instance = mock_instance(&CONTRACT, &[]);
         let missing_function = "bar_foo345";
-        match instance.func::<(), ()>(missing_function) {
-            Err(VmError::ResolveErr { source, .. }) => match source {
-                ResolveError::ExportNotFound { name } => assert_eq!(name, missing_function),
-                _ => panic!("found unexpected source error"),
-            },
-            Err(e) => panic!("unexpected error: {:?}", e),
-            Ok(_) => panic!("must not succeed"),
+        match instance.func::<(), ()>(missing_function).err().unwrap() {
+            VmError::ResolveErr { msg, .. } => assert_eq!(
+                msg,
+                "Resolve error: ExportNotFound { name: \"bar_foo345\" }"
+            ),
+            e => panic!("unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn func_errors_for_wrong_signature() {
+        let instance = mock_instance(&CONTRACT, &[]);
+        match instance.func::<(), ()>("allocate").err().unwrap() {
+            VmError::ResolveErr { msg, .. } => assert_eq!(
+                msg,
+                "Resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
+            ),
+            e => panic!("unexpected error: {:?}", e),
         }
     }
 

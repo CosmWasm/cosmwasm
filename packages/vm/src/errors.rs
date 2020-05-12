@@ -44,9 +44,9 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Resolving wasm function: {}", source))]
+    #[snafu(display("Error resolving Wasm function: {}", msg))]
     ResolveErr {
-        source: wasmer_runtime_core::error::ResolveError,
+        msg: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
@@ -101,6 +101,12 @@ impl From<wasmer_runtime_core::error::CompileError> for VmError {
     }
 }
 
+impl From<wasmer_runtime_core::error::ResolveError> for VmError {
+    fn from(original: wasmer_runtime_core::error::ResolveError) -> Self {
+        make_resolve_err(format!("Resolve error: {:?}", original))
+    }
+}
+
 pub type VmResult<T> = core::result::Result<T, VmError>;
 
 pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
@@ -147,6 +153,10 @@ pub fn make_serialize_err<S: Into<String>, M: Display>(source: S, msg: M) -> VmE
         msg: msg.to_string(),
     }
     .build()
+}
+
+pub fn make_resolve_err<S: Into<String>>(msg: S) -> VmError {
+    ResolveErr { msg: msg.into() }.build()
 }
 
 pub fn make_region_length_too_big(length: usize, max_length: usize) -> VmError {
@@ -248,6 +258,15 @@ mod test {
                 assert_eq!(source, "Book");
                 assert_eq!(msg, "Content too long");
             }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn make_resolve_err_works() {
+        let error = make_resolve_err("function has different signature");
+        match error {
+            VmError::ResolveErr { msg, .. } => assert_eq!(msg, "function has different signature"),
             _ => panic!("expect different error"),
         }
     }
