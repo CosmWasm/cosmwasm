@@ -400,7 +400,8 @@ mod test {
 
     fn write_data(wasmer_instance: &mut Instance, data: &[u8]) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
-            .func("allocate")
+            .exports
+            .get("allocate")
             .expect("error getting function");
         let region_ptr = allocate
             .call(data.len() as u32)
@@ -411,7 +412,8 @@ mod test {
 
     fn create_empty(wasmer_instance: &mut Instance, capacity: u32) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
-            .func("allocate")
+            .exports
+            .get("allocate")
             .expect("error getting function");
         let region_ptr = allocate.call(capacity).expect("error calling allocate");
         region_ptr

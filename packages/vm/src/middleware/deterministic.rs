@@ -184,7 +184,7 @@ mod tests {
         let module = compile(&wasm).unwrap();
         let instance = module.instantiate(&imports! {}).unwrap();
 
-        let func: Func<(i32, i32), i32> = instance.func("sum").unwrap();
+        let func: Func<(i32, i32), i32> = instance.exports.get("sum").unwrap();
         let res = func.call(10, 20);
         assert!(res.is_ok());
         assert_eq!(30, res.unwrap());
