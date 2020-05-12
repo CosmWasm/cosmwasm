@@ -117,6 +117,10 @@ impl ops::Mul<Decimal9> for Uint128 {
 impl Uint128 {
     /// returns self * num / denom
     pub fn multiply_ratio(&self, num: Uint128, denom: Uint128) -> Uint128 {
+        // special case for 0/0 (== 1)
+        if num.0 == 0 && denom.0 == 0 {
+            return *self;
+        }
         // TODO: minimize rounding that takes place (using gcd algorithm)
         let val = self.u128() * num.u128() / denom.u128();
         Uint128::from(val)

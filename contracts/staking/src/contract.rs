@@ -401,7 +401,7 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{from_binary, Decimal9, Validator};
+    use cosmwasm_std::{from_binary, CosmosMsg, Decimal9, Validator};
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
         Validator {
@@ -409,6 +409,19 @@ mod tests {
             commission: Decimal9::percent(3),
             max_commission: Decimal9::percent(10),
             max_change_rate: Decimal9::percent(1),
+        }
+    }
+
+    const DEFAULT_VALIDATOR: &str = "default-validator";
+
+    fn default_init(tax_percent: u64, min_withdrawl: u128) -> InitMsg {
+        InitMsg {
+            name: "Cool Derivative".to_string(),
+            symbol: "DRV".to_string(),
+            decimals: 9,
+            validator: HumanAddr::from(DEFAULT_VALIDATOR),
+            exit_tax: Decimal9::percent(tax_percent),
+            min_withdrawl: Uint128(min_withdrawl),
         }
     }
 
@@ -457,7 +470,7 @@ mod tests {
         let msg = InitMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
-            decimals: 9,
+            decimals: 0,
             validator: HumanAddr::from("my-validator"),
             exit_tax: Decimal9::percent(2),
             min_withdrawl: Uint128(50),
@@ -476,24 +489,18 @@ mod tests {
         assert_eq!(token.decimals, msg.decimals);
 
         // no balance
-        let res = query(
-            &deps,
-            QueryMsg::Balance {
-                address: creator.clone(),
-            },
-        )
-        .unwrap();
+        let bal_query = QueryMsg::Balance {
+            address: creator.clone(),
+        };
+        let res = query(&deps, bal_query).unwrap();
         let bal: BalanceResponse = from_binary(&res).unwrap();
         assert_eq!(bal.balance, Uint128(0));
 
         // no claims
-        let res = query(
-            &deps,
-            QueryMsg::Claims {
-                address: creator.clone(),
-            },
-        )
-        .unwrap();
+        let claim_query = QueryMsg::Claims {
+            address: creator.clone(),
+        };
+        let res = query(&deps, claim_query).unwrap();
         let claim: ClaimsResponse = from_binary(&res).unwrap();
         assert_eq!(claim.claims, Uint128(0));
 
@@ -510,6 +517,52 @@ mod tests {
         assert_eq!(invest.nominal_value, Decimal9::one());
     }
 
+    #[test]
+    fn bonding_issues_tokens() {
+        let mut deps = mock_dependencies(20, &[]);
+        deps.querier
+            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+
+        let creator = HumanAddr::from("creator");
+        let init_msg = default_init(2, 50);
+        let env = mock_env(&deps.api, &creator, &[]);
+
+        // make sure we can init with this
+        let res = init(&mut deps, env, init_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // let's bond some tokens now
+        let bob = HumanAddr::from("bob");
+        let bond_msg = HandleMsg::Bond {};
+        let env = mock_env(&deps.api, &bob, &[coin(10, "random"), coin(1000, "stake")]);
+
+        // try to bond and make sure we trigger delegation
+        let res = handle(&mut deps, env, bond_msg).unwrap();
+        assert_eq!(1, res.messages.len());
+        let delegate = &res.messages[0];
+        match delegate {
+            CosmosMsg::Staking(StakingMsg::Delegate { validator, amount }) => {
+                assert_eq!(validator.as_str(), DEFAULT_VALIDATOR);
+                assert_eq!(amount, &coin(1000, "stake"));
+            }
+            _ => panic!("Unexpected message: {:?}", delegate),
+        }
+
+        // query the supply and balance are updated
+        let query_msg = QueryMsg::Balance {
+            address: bob.clone(),
+        };
+        let res = query(&deps, query_msg).unwrap();
+        let bal: BalanceResponse = from_binary(&res).unwrap();
+        assert_eq!(bal.balance, Uint128(1000));
+
+        // investment info correct (updated supply)
+        let res = query(&deps, QueryMsg::Investment {}).unwrap();
+        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        assert_eq!(invest.token_supply, Uint128(1000));
+        assert_eq!(invest.staked_tokens, coin(1000, "stake"));
+        assert_eq!(invest.nominal_value, Decimal9::one());
+    }
     // #[test]
     // fn increment() {
     //     let mut deps = mock_dependencies(20, &coins(2, "token"));
