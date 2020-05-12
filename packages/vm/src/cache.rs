@@ -13,7 +13,7 @@ use crate::checksum::Checksum;
 use crate::compatability::check_wasm;
 use crate::errors::{make_integrity_err, IoErr, VmResult};
 use crate::instance::Instance;
-use crate::modules::{FileSystemCache, WasmHash};
+use crate::modules::FileSystemCache;
 use crate::wasm_store::{load, save};
 
 static WASM_DIR: &str = "wasm";
@@ -30,7 +30,7 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     modules: FileSystemCache,
-    instances: Option<LruCache<WasmHash, wasmer_runtime_core::Instance>>,
+    instances: Option<LruCache<Checksum, wasmer_runtime_core::Instance>>,
     stats: Stats,
     // Those two don't store data but only fix type information
     type_storage: PhantomData<S>,
@@ -81,8 +81,7 @@ where
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
-        let module_hash = checksum.derive_module_hash();
-        self.modules.store(module_hash, module)?;
+        self.modules.store(&checksum, module)?;
         Ok(checksum)
     }
 
@@ -108,18 +107,16 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> VmResult<Instance<S, A, Q>> {
-        let module_hash = checksum.derive_module_hash();
-
         // pop from lru cache if present
         if let Some(cache) = &mut self.instances {
-            if let Some(cached_instance) = cache.pop(&module_hash) {
+            if let Some(cached_instance) = cache.pop(checksum) {
                 self.stats.hits_instance += 1;
                 return Ok(Instance::from_wasmer(cached_instance, deps, gas_limit));
             }
         }
 
         // try from the module cache
-        let res = self.modules.load_with_backend(module_hash, backend());
+        let res = self.modules.load_with_backend(checksum, backend());
         if let Ok(module) = res {
             self.stats.hits_module += 1;
             return Instance::from_module(&module, deps, gas_limit);
@@ -137,9 +134,8 @@ where
         instance: Instance<S, A, Q>,
     ) -> Option<Extern<S, A, Q>> {
         if let Some(cache) = &mut self.instances {
-            let module_hash = checksum.derive_module_hash();
             let (wasmer_instance, ext) = Instance::recycle(instance);
-            cache.put(module_hash, wasmer_instance);
+            cache.put(*checksum, wasmer_instance);
             ext
         } else {
             None
