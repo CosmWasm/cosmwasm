@@ -121,6 +121,11 @@ pub fn make_conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
     .build()
 }
 
+#[cfg(feature = "iterator")]
+pub fn make_iterator_does_not_exist(iterator_id: u32) -> VmError {
+    IteratorDoesNotExist { id: iterator_id }.build()
+}
+
 pub fn make_integrity_err() -> VmError {
     IntegrityErr {}.build()
 }
@@ -181,6 +186,16 @@ mod test {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "-9");
             }
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn make_iterator_does_not_exist_works() {
+        let err = make_iterator_does_not_exist(15);
+        match err {
+            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
             _ => panic!("Unexpected error"),
         }
     }
