@@ -14,13 +14,24 @@ pub const KEY_TOKEN_INFO: &[u8] = b"token";
 pub const KEY_TOTAL_SUPPLY: &[u8] = b"total_supply";
 
 pub const PREFIX_BALANCE: &[u8] = b"balance";
+pub const PREFIX_CLAIMS: &[u8] = b"claim";
 
+/// balances are state of the erc20 tokens
 pub fn balances<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
     bucket(PREFIX_BALANCE, storage)
 }
 
 pub fn balances_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
     bucket_read(PREFIX_BALANCE, storage)
+}
+
+/// claims are the claims to money being unbonded
+pub fn claims<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
+    bucket(PREFIX_CLAIMS, storage)
+}
+
+pub fn claims_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
+    bucket_read(PREFIX_CLAIMS, storage)
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
@@ -41,12 +52,14 @@ pub struct InvestmentInfo {
 }
 
 /// Supply is dynamic and tracks the current supply of staked and ERC20 tokens.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
 pub struct Supply {
     /// issued is how many derivative tokens this contract has issued
     pub issued: Uint128,
     /// bonded is how many native tokens exist bonded to the validator
     pub bonded: Uint128,
+    /// claims is how many tokens need to be reserved paying back those who unbonded
+    pub claims: Uint128,
 }
 
 pub fn invest_info<S: Storage>(storage: &mut S) -> Singleton<S, InvestmentInfo> {

@@ -1,13 +1,13 @@
 use cosmwasm_std::{
     coin, generic_err, log, to_binary, unauthorized, Api, Binary, Env, Extern, HandleResponse,
-    HumanAddr, InitResponse, Querier, StakingMsg, StdResult, Storage, Uint128, WasmMsg,
+    HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 
 use crate::msg::{
     BalanceResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg, TokenInfoResponse,
 };
 use crate::state::{
-    balances, balances_read, invest_info, invest_info_read, token_info, token_info_read,
+    balances, balances_read, claims, invest_info, invest_info_read, token_info, token_info_read,
     total_supply, total_supply_read, InvestmentInfo, Supply,
 };
 
@@ -34,10 +34,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     invest_info(&mut deps.storage).save(&invest)?;
 
     // set supply to 0
-    let supply = Supply {
-        issued: Uint128(0),
-        bonded: Uint128(0),
-    };
+    let supply = Supply::default();
     total_supply(&mut deps.storage).save(&supply)?;
 
     Ok(InitResponse::default())
@@ -172,10 +169,14 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
         unbond = remainder.multiply_ratio(supply.bonded, supply.issued);
         supply.bonded = (supply.bonded - unbond)?;
         supply.issued = (supply.bonded - remainder)?;
+        supply.claims += unbond;
         Ok(supply)
     })?;
 
-    // TODO: we need to store some info to claim these tokens later
+    // add a claim to this user to get their tokens after the unbonding period
+    claims(&mut deps.storage).update(sender_raw.as_slice(), &mut |claim| {
+        Ok(claim.unwrap_or_default() + unbond)
+    })?;
 
     // unbond them
     let res = HandleResponse {
@@ -239,20 +240,24 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     // find how many tokens we have to bond
     let contract_human = deps.api.human_address(&env.contract.address)?;
     let invest = invest_info_read(&deps.storage).load()?;
-    let balance = deps
+    let mut balance = deps
         .querier
         .query_balance(contract_human, &invest.bond_denom)?;
 
-    // if it is below the minimum, no-op
-    if balance.amount < invest.min_withdrawl {
-        return Ok(HandleResponse::default());
-    }
-
-    // update the bonded supply (increasing value of tokens)
-    let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
+    // we deduct pending claims from our account balance before reinvesting.
+    // if there is not enough funds, we just return a no-op
+    match total_supply(&mut deps.storage).update(&mut |mut supply| {
+        balance.amount = (balance.amount - supply.claims)?;
+        // this just triggers the "no op" case if we don't have min_withdrawl left to reinvest
+        (balance.amount - invest.min_withdrawl)?;
         supply.bonded += balance.amount;
         Ok(supply)
-    })?;
+    }) {
+        Ok(_) => {}
+        // if it is below the minimum, we do a no-op (do not revert other state from withdrawl)
+        Err(StdError::Underflow { .. }) => return Ok(HandleResponse::default()),
+        Err(e) => return Err(e),
+    }
 
     // and bond them to the validator
     let res = HandleResponse {
