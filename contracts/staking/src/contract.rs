@@ -18,14 +18,21 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     env: Env,
     msg: InitMsg,
 ) -> StdResult<InitResponse> {
+    // ensure the validator is registered
+    let vals = deps.querier.query_validators()?;
+    if !vals.iter().any(|v| v.address == msg.validator) {
+        return Err(generic_err(format!(
+            "{} is not in the current validator set",
+            msg.validator
+        )));
+    }
+
     let token = TokenInfoResponse {
         name: msg.name,
         symbol: msg.symbol,
         decimals: msg.decimals,
     };
     token_info(&mut deps.storage).save(&token)?;
-
-    // TODO: add query to ensure the validator is a valid bonded validator
 
     let denom = deps.querier.query_bonded_denom()?;
     let invest = InvestmentInfo {
@@ -394,12 +401,57 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{from_binary, Decimal9};
+    use cosmwasm_std::{from_binary, Decimal9, Validator};
+
+    fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
+        Validator {
+            address: addr.into(),
+            commission: Decimal9::percent(3),
+            max_commission: Decimal9::percent(10),
+            max_change_rate: Decimal9::percent(1),
+        }
+    }
+
+    #[test]
+    fn initialization_with_missing_validator() {
+        let mut deps = mock_dependencies(20, &[]);
+        deps.querier
+            .with_staking("stake", &[sample_validator("john")], &[]);
+
+        let creator = HumanAddr::from("creator");
+        let msg = InitMsg {
+            name: "Cool Derivative".to_string(),
+            symbol: "DRV".to_string(),
+            decimals: 9,
+            validator: HumanAddr::from("my-validator"),
+            exit_tax: Decimal9::percent(2),
+            min_withdrawl: Uint128(50),
+        };
+        let env = mock_env(&deps.api, &creator, &[]);
+
+        // make sure we can init with this
+        let res = init(&mut deps, env, msg.clone());
+        match res.unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(
+                msg.as_str(),
+                "my-validator is not in the current validator set"
+            ),
+            _ => panic!("expected unregistered validator error"),
+        }
+    }
 
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies(20, &[]);
-        deps.querier.with_staking("stake", &[], &[]);
+        deps.querier.with_staking(
+            "stake",
+            &[
+                sample_validator("john"),
+                sample_validator("mary"),
+                sample_validator("my-validator"),
+            ],
+            &[],
+        );
 
         let creator = HumanAddr::from("creator");
         let msg = InitMsg {

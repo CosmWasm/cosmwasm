@@ -18,7 +18,9 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::testing::{mock_dependencies, mock_env};
-use cosmwasm_std::{coin, from_binary, Decimal9, HumanAddr, InitResponse, Uint128};
+use cosmwasm_std::{
+    coin, from_binary, Decimal9, HumanAddr, InitResponse, StdError, StdResult, Uint128, Validator,
+};
 use cosmwasm_vm::testing::{init, query};
 use cosmwasm_vm::Instance;
 
@@ -31,11 +33,57 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/st
 // You can uncomment this line instead to test productionified build from cosmwasm-opt
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
+fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
+    Validator {
+        address: addr.into(),
+        commission: Decimal9::percent(3),
+        max_commission: Decimal9::percent(10),
+        max_change_rate: Decimal9::percent(1),
+    }
+}
+
+#[test]
+fn initialization_with_missing_validator() {
+    let mut ext = mock_dependencies(20, &[]);
+    ext.querier
+        .with_staking("stake", &[sample_validator("john")], &[]);
+    let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
+
+    let creator = HumanAddr::from("creator");
+    let msg = InitMsg {
+        name: "Cool Derivative".to_string(),
+        symbol: "DRV".to_string(),
+        decimals: 9,
+        validator: HumanAddr::from("my-validator"),
+        exit_tax: Decimal9::percent(2),
+        min_withdrawl: Uint128(50),
+    };
+    let env = mock_env(&deps.api, &creator, &[]);
+
+    // make sure we can init with this
+    let res: StdResult<InitResponse> = init(&mut deps, env, msg.clone());
+    match res.unwrap_err() {
+        StdError::GenericErr { msg, .. } => assert_eq!(
+            msg.as_str(),
+            "my-validator is not in the current validator set"
+        ),
+        _ => panic!("expected unregistered validator error"),
+    }
+}
+
 #[test]
 fn proper_initialization() {
     // we need to use the verbose approach here to customize the querier with staking info
     let mut ext = mock_dependencies(20, &[]);
-    ext.querier.with_staking("stake", &[], &[]);
+    ext.querier.with_staking(
+        "stake",
+        &[
+            sample_validator("john"),
+            sample_validator("mary"),
+            sample_validator("my-validator"),
+        ],
+        &[],
+    );
     let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
 
     let creator = HumanAddr::from("creator");
