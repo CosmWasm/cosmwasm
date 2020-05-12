@@ -79,9 +79,9 @@ checksum = "cf1de2fe8c75bc145a2f577add951f8134889b4795d47466a54a5c846d691693"
 
 [[package]]
 name = "blake3"
-version = "0.1.5"
+version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "46080006c1505f12f64dd2a09264b343381ed3190fa02c8005d5d662ac571c63"
+checksum = "68df31bdf2bbb567e5adf8f21ac125dc0e897b1381e7b841f181521f06fc3134"
 dependencies = [
  "arrayref",
  "arrayvec",
@@ -144,15 +144,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ddfc5b9aa5d4507acaf872de71051dfd0e309860e88966e1051e462a077aac4f"
 dependencies = [
  "bitflags",
-]
-
-[[package]]
-name = "cmake"
-version = "0.1.42"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81fb25b677f8bf1eb325017cb6bb8452f87969db0fedb4f757b297bee78a7c62"
-dependencies = [
- "cc",
 ]
 
 [[package]]
@@ -242,8 +233,8 @@ dependencies = [
  "cranelift-entity",
  "gimli",
  "log",
- "smallvec 1.2.0",
- "target-lexicon 0.10.0",
+ "smallvec",
+ "target-lexicon",
  "thiserror",
 ]
 
@@ -277,7 +268,7 @@ checksum = "32daf082da21c0c05d93394ff4842c2ab7c4991b1f3186a1d952f8ac660edd0b"
 dependencies = [
  "cranelift-codegen",
  "raw-cpuid",
- "target-lexicon 0.10.0",
+ "target-lexicon",
 ]
 
 [[package]]
@@ -495,9 +486,9 @@ checksum = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 
 [[package]]
 name = "libc"
-version = "0.2.67"
+version = "0.2.69"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eb147597cdf94ed43ab7a9038716637d2d1bf2bc571da995d0028dec06bd3018"
+checksum = "99e85c08494b21a9054e7fe1374a732aeadaff3980b6990b94bfd3a70f690005"
 
 [[package]]
 name = "lock_api"
@@ -625,7 +616,7 @@ dependencies = [
  "cloudabi",
  "libc",
  "redox_syscall",
- "smallvec 1.2.0",
+ "smallvec",
  "winapi",
 ]
 
@@ -859,15 +850,6 @@ dependencies = [
 
 [[package]]
 name = "smallvec"
-version = "0.6.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7b0758c52e15a8b5e3691eae6cc559f08eee9406e548a4477ba4e67770a82b6"
-dependencies = [
- "maybe-uninit",
-]
-
-[[package]]
-name = "smallvec"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5c2fb2ec9bcd216a5b0d0ccf31ab17b5ed1d627960edff65bbe95d3ce221cefc"
@@ -916,12 +898,6 @@ dependencies = [
  "quote",
  "unicode-xid",
 ]
-
-[[package]]
-name = "target-lexicon"
-version = "0.9.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "6f4c118a7a38378f305a9e111fcb2f7f838c0be324bfb31a77ea04f7f6e684b4"
 
 [[package]]
 name = "target-lexicon"
@@ -975,9 +951,9 @@ checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
 name = "wasmer-clif-backend"
-version = "0.16.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e5ccdc1c1d6bda103fcfb8000d557e1661071e6333c42754de7459bf2456d397"
+checksum = "691ea323652d540a10722066dbf049936f4367bb22a96f8992a262a942a8b11b"
 dependencies = [
  "byteorder",
  "cranelift-codegen",
@@ -990,7 +966,7 @@ dependencies = [
  "serde-bench",
  "serde_bytes",
  "serde_derive",
- "target-lexicon 0.10.0",
+ "target-lexicon",
  "wasmer-clif-fork-frontend",
  "wasmer-clif-fork-wasm",
  "wasmer-runtime-core",
@@ -1007,8 +983,8 @@ checksum = "c23f2824f354a00a77e4b040eef6e1d4c595a8a3e9013bad65199cc8dade9a5a"
 dependencies = [
  "cranelift-codegen",
  "log",
- "smallvec 1.2.0",
- "target-lexicon 0.10.0",
+ "smallvec",
+ "target-lexicon",
 ]
 
 [[package]]
@@ -1027,18 +1003,18 @@ dependencies = [
 
 [[package]]
 name = "wasmer-middleware-common"
-version = "0.16.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a710a575f2ee8534fd12ce2001ca554445224185893afb517d84aa3bc25f6ad0"
+checksum = "fd94068186b25fbe5213442648ffe0fa65ee77389bed020404486fd22056cc87"
 dependencies = [
  "wasmer-runtime-core",
 ]
 
 [[package]]
 name = "wasmer-runtime-core"
-version = "0.16.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8e32bdb04d008eb136c88a12c0fdfb7e5d7ff30b208af4bef1d292d863eb1ba2"
+checksum = "45d4253f097502423d8b19d54cb18745f61b984b9dbce32424cba7945cfef367"
 dependencies = [
  "bincode",
  "blake3",
@@ -1057,17 +1033,17 @@ dependencies = [
  "serde-bench",
  "serde_bytes",
  "serde_derive",
- "smallvec 0.6.13",
- "target-lexicon 0.9.0",
+ "smallvec",
+ "target-lexicon",
  "wasmparser",
  "winapi",
 ]
 
 [[package]]
 name = "wasmer-singlepass-backend"
-version = "0.16.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4f850cf15c8d1d29e6010bd980206100cf58f0d4766216a7b24e6b590ab89c0"
+checksum = "37cf84179dd5e92b784f7bc190b237f1184916a6d6d3f87d4dd94ca371a2cc25"
 dependencies = [
  "bincode",
  "byteorder",
@@ -1078,17 +1054,17 @@ dependencies = [
  "nix",
  "serde",
  "serde_derive",
- "smallvec 0.6.13",
+ "smallvec",
  "wasmer-runtime-core",
 ]
 
 [[package]]
 name = "wasmer-win-exception-handler"
-version = "0.16.2"
+version = "0.17.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7d9ddd20d076ab9eb3d5b4ccca19d691dfda89e2ac0ff79f4ecf0e4cac0a1b8d"
+checksum = "cf22ce6dc66d893099aac853d451bf9443fa8f5443f5bf4fc63f3aebd7b592b1"
 dependencies = [
- "cmake",
+ "cc",
  "libc",
  "wasmer-runtime-core",
  "winapi",
