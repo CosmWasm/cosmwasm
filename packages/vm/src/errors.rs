@@ -1,7 +1,6 @@
 use std::fmt::Debug;
 
 use snafu::Snafu;
-use wasmer_runtime_core::error as core_error;
 
 #[derive(Debug, Snafu)]
 #[snafu(visibility = "pub")]
@@ -11,16 +10,16 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Error compiling Wasm: {}", msg))]
+    CompileErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input))]
     ConversionErr {
         from_type: String,
         to_type: String,
         input: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Compiling wasm: {}", source))]
-    CompileErr {
-        source: core_error::CompileError,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Iterator with ID {} does not exist", id))]
@@ -44,7 +43,7 @@ pub enum VmError {
     },
     #[snafu(display("Resolving wasm function: {}", source))]
     ResolveErr {
-        source: core_error::ResolveError,
+        source: wasmer_runtime_core::error::ResolveError,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
@@ -77,12 +76,12 @@ pub enum VmError {
     },
     #[snafu(display("Wasmer error: {}", source))]
     WasmerErr {
-        source: core_error::Error,
+        source: wasmer_runtime_core::error::Error,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Calling wasm function: {}", source))]
     WasmerRuntimeErr {
-        source: core_error::RuntimeError,
+        source: wasmer_runtime_core::error::RuntimeError,
         backtrace: snafu::Backtrace,
     },
 }
@@ -93,10 +92,20 @@ impl From<wasmer_runtime_core::cache::Error> for VmError {
     }
 }
 
+impl From<wasmer_runtime_core::error::CompileError> for VmError {
+    fn from(original: wasmer_runtime_core::error::CompileError) -> Self {
+        make_compile_err(format!("Compile error: {:?}", original))
+    }
+}
+
 pub type VmResult<T> = core::result::Result<T, VmError>;
 
 pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
     CacheErr { msg: msg.into() }.build()
+}
+
+pub fn make_compile_err<S: Into<String>>(msg: S) -> VmError {
+    CompileErr { msg: msg.into() }.build()
 }
 
 pub fn make_conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
@@ -145,6 +154,15 @@ mod test {
         let err = make_cache_err("something went wrong");
         match err {
             VmError::CacheErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_compile_err_works() {
+        let err = make_compile_err("something went wrong");
+        match err {
+            VmError::CompileErr { msg, .. } => assert_eq!(msg, "something went wrong"),
             _ => panic!("Unexpected error"),
         }
     }
