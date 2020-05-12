@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use snafu::Snafu;
 
@@ -29,16 +29,19 @@ pub enum VmError {
     },
     #[snafu(display("Hash doesn't match stored data"))]
     IntegrityErr { backtrace: snafu::Backtrace },
-    #[snafu(display("Parse error: {}", source))]
+    #[snafu(display("Error parsing into type {}: {}", target, msg))]
     ParseErr {
-        kind: &'static str,
-        source: serde_json::Error,
+        /// the target type that was attempted
+        target: String,
+        msg: String,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Serialize error: {}", source))]
+    #[snafu(display("Error serializing type {}: {}", source, msg))]
     SerializeErr {
-        kind: &'static str,
-        source: serde_json::Error,
+        /// the source type that was attempted
+        #[snafu(source(false))]
+        source: String,
+        msg: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Resolving wasm function: {}", source))]
@@ -130,6 +133,22 @@ pub fn make_integrity_err() -> VmError {
     IntegrityErr {}.build()
 }
 
+pub fn make_parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> VmError {
+    ParseErr {
+        target: target.into(),
+        msg: msg.to_string(),
+    }
+    .build()
+}
+
+pub fn make_serialize_err<S: Into<String>, M: Display>(source: S, msg: M) -> VmError {
+    SerializeErr {
+        source: source.into(),
+        msg: msg.to_string(),
+    }
+    .build()
+}
+
 pub fn make_region_length_too_big(length: usize, max_length: usize) -> VmError {
     RegionLengthTooBig { length, max_length }.build()
 }
@@ -206,6 +225,30 @@ mod test {
         match err {
             VmError::IntegrityErr { .. } => {}
             _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_parse_err_works() {
+        let error = make_parse_err("Book", "Missing field: title");
+        match error {
+            VmError::ParseErr { target, msg, .. } => {
+                assert_eq!(target, "Book");
+                assert_eq!(msg, "Missing field: title");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn make_serialize_err_works() {
+        let error = make_serialize_err("Book", "Content too long");
+        match error {
+            VmError::SerializeErr { source, msg, .. } => {
+                assert_eq!(source, "Book");
+                assert_eq!(msg, "Content too long");
+            }
+            _ => panic!("expect different error"),
         }
     }
 

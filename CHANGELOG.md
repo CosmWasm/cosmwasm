@@ -151,8 +151,8 @@
 - `CosmCache::new` now takes supported features as an argument.
 - Rename `VmError::RegionTooSmallErr` to `VmError::RegionTooSmall`.
 - Rename `VmError::RegionLengthTooBigErr` to `VmError::RegionLengthTooBig`.
-- Change property types to owned string in `VmError::UninitializedContextData`
-  and `VmError::ConversionErr`.
+- Change property types to owned string in `VmError::UninitializedContextData`,
+  `VmError::ConversionErr`, `VmError::ParseErr` and `VmError::SerializeErr`.
 - Remove `VmError::IoErr` in favour of `VmError::CacheErr`.
 - Simplify `VmError::CompileErr` to just hold a string with the details.
 
