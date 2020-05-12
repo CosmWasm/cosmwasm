@@ -201,6 +201,15 @@ mod test {
     }
 
     #[test]
+    fn make_integrity_err_works() {
+        let err = make_integrity_err();
+        match err {
+            VmError::IntegrityErr { .. } => {}
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
     fn make_region_length_too_big_works() {
         let err = make_region_length_too_big(50, 20);
         match err {
