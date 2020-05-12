@@ -215,7 +215,10 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.wasmer_instance.func(name).context(ResolveErr {})
+        self.wasmer_instance
+            .exports
+            .get(name)
+            .context(ResolveErr {})
     }
 }
 
