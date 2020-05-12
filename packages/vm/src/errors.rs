@@ -3,6 +3,7 @@ use std::fmt::{Debug, Display};
 use snafu::Snafu;
 
 #[derive(Debug, Snafu)]
+#[non_exhaustive]
 pub enum VmError {
     #[snafu(display("Cache error: {}", msg))]
     CacheErr {
