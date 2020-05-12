@@ -14,8 +14,8 @@ pub enum VmError {
     },
     #[snafu(display("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input))]
     ConversionErr {
-        from_type: &'static str,
-        to_type: &'static str,
+        from_type: String,
+        to_type: String,
         input: String,
         backtrace: snafu::Backtrace,
     },
@@ -105,6 +105,19 @@ pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
     CacheErr { msg: msg.into() }.build()
 }
 
+pub fn make_conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
+    from_type: S,
+    to_type: T,
+    input: U,
+) -> VmError {
+    ConversionErr {
+        from_type: from_type.into(),
+        to_type: to_type.into(),
+        input: input.into(),
+    }
+    .build()
+}
+
 pub fn make_integrity_err() -> VmError {
     IntegrityErr {}.build()
 }
@@ -138,6 +151,24 @@ mod test {
         let err = make_cache_err("something went wrong");
         match err {
             VmError::CacheErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_conversion_err_works() {
+        let err = make_conversion_err("i32", "u32", "-9");
+        match err {
+            VmError::ConversionErr {
+                from_type,
+                to_type,
+                input,
+                ..
+            } => {
+                assert_eq!(from_type, "i32");
+                assert_eq!(to_type, "u32");
+                assert_eq!(input, "-9");
+            }
             _ => panic!("Unexpected error"),
         }
     }
