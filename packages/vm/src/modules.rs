@@ -8,11 +8,8 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer_runtime_core::module::Module;
-pub use wasmer_runtime_core::{
-    backend::Compiler,
-    cache::{Artifact, WasmHash},
-};
+pub use wasmer_runtime_core::cache::WasmHash;
+use wasmer_runtime_core::{cache::Artifact, module::Module};
 
 use crate::backends::{backend, compiler_for_backend};
 use crate::errors::{make_cache_err, VmResult};
