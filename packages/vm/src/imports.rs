@@ -17,7 +17,7 @@ use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{with_querier_from_context, with_storage_from_context};
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{make_runtime_err, VmError};
+use crate::errors::{make_backend_err, VmError};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
@@ -121,7 +121,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         store
             .get(&key)
-            .or_else(|_| Err(make_runtime_err("Error reading from backend")))
+            .or_else(|_| Err(make_backend_err("Error reading from backend")))
     }) {
         Ok(v) => v,
         Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
@@ -152,7 +152,7 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: 
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
         store
             .set(&key, &value)
-            .or_else(|_| Err(make_runtime_err("Error setting database value in backend")))
+            .or_else(|_| Err(make_backend_err("Error setting database value in backend")))
     }) {
         Ok(_) => errors::NONE,
         Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
@@ -169,7 +169,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> i32 {
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
         store
             .remove(&key)
-            .or_else(|_| Err(make_runtime_err("Error removing database key from backend")))
+            .or_else(|_| Err(make_backend_err("Error removing database key from backend")))
     }) {
         Ok(_) => errors::NONE,
         Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
@@ -271,7 +271,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     let range_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         let iter = match store.range(start.as_deref(), end.as_deref(), order) {
             Ok(iter) => iter,
-            Err(_) => return Err(make_runtime_err("An error occurred in range call")),
+            Err(_) => return Err(make_backend_err("An error occurred in range call")),
         };
 
         // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below

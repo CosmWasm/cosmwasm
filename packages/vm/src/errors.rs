@@ -5,6 +5,12 @@ use snafu::Snafu;
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum VmError {
+    /// An error coming from the backend (i.e. the chain)
+    #[snafu(display("Backend error: {}", msg))]
+    BackendErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Cache error: {}", msg))]
     CacheErr {
         msg: String,
@@ -20,6 +26,12 @@ pub enum VmError {
         from_type: String,
         to_type: String,
         input: String,
+        backtrace: snafu::Backtrace,
+    },
+    /// Whenever there is no specific error type available
+    #[snafu(display("Generic error: {}", msg))]
+    GenericErr {
+        msg: String,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Error instantiating a Wasm module: {}", msg))]
@@ -67,7 +79,7 @@ pub enum VmError {
         required: usize,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Runtime error: {}", msg))]
+    #[snafu(display("Error executing Wasm: {}", msg))]
     RuntimeErr {
         msg: String,
         backtrace: snafu::Backtrace,
@@ -80,11 +92,6 @@ pub enum VmError {
     #[snafu(display("Uninitialized Context Data: {}", kind))]
     UninitializedContextData {
         kind: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Error executing Wasm: {}", msg))]
-    WasmerRuntimeErr {
-        msg: String,
         backtrace: snafu::Backtrace,
     },
 }
@@ -109,11 +116,15 @@ impl From<wasmer_runtime_core::error::ResolveError> for VmError {
 
 impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
     fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
-        make_wasmer_runtime_err(format!("Wasmer runtime error: {:?}", original))
+        make_runtime_err(format!("Wasmer runtime error: {:?}", original))
     }
 }
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
+
+pub fn make_backend_err<S: Into<String>>(msg: S) -> VmError {
+    BackendErr { msg: msg.into() }.build()
+}
 
 pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
     CacheErr { msg: msg.into() }.build()
@@ -134,6 +145,10 @@ pub fn make_conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
         input: input.into(),
     }
     .build()
+}
+
+pub fn make_generic_err<S: Into<String>>(msg: S) -> VmError {
+    GenericErr { msg: msg.into() }.build()
 }
 
 pub fn make_instantiation_err<S: Into<String>>(msg: S) -> VmError {
@@ -189,13 +204,18 @@ pub fn make_uninitialized_context_data<S: Into<String>>(kind: S) -> VmError {
     UninitializedContextData { kind: kind.into() }.build()
 }
 
-pub fn make_wasmer_runtime_err<S: Into<String>>(msg: S) -> VmError {
-    WasmerRuntimeErr { msg: msg.into() }.build()
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn make_backend_err_works() {
+        let err = make_backend_err("something went wrong");
+        match err {
+            VmError::BackendErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            _ => panic!("Unexpected error"),
+        }
+    }
 
     #[test]
     fn make_cache_err_works() {
@@ -230,6 +250,18 @@ mod test {
                 assert_eq!(input, "-9");
             }
             _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_generic_err_works() {
+        let guess = 7;
+        let error = make_generic_err(format!("{} is too low", guess));
+        match error {
+            VmError::GenericErr { msg, .. } => {
+                assert_eq!(msg, String::from("7 is too low"));
+            }
+            e => panic!("unexpected error, {:?}", e),
         }
     }
 
@@ -334,15 +366,6 @@ mod test {
         let err = make_uninitialized_context_data("foo");
         match err {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
-            _ => panic!("Unexpected error"),
-        }
-    }
-
-    #[test]
-    fn make_wasmer_runtime_err_works() {
-        let err = make_wasmer_runtime_err("something went wrong");
-        match err {
-            VmError::WasmerRuntimeErr { msg, .. } => assert_eq!(msg, "something went wrong"),
             _ => panic!("Unexpected error"),
         }
     }

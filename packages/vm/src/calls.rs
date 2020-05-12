@@ -6,7 +6,7 @@ use cosmwasm_std::{
     QueryResult, StdResult, Storage,
 };
 
-use crate::errors::{make_runtime_err, VmResult};
+use crate::errors::{make_generic_err, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 use schemars::JsonSchema;
@@ -59,7 +59,7 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     // Ensure query response is valid JSON
     if let Ok(binary_response) = &result {
         serde_json::from_slice::<serde_json::Value>(binary_response.as_slice())
-            .or_else(|_| Err(make_runtime_err("Query response must be valid JSON")))?;
+            .map_err(|e| make_generic_err(format!("Query response must be valid JSON. {}", e)))?;
     }
 
     Ok(result)

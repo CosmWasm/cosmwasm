@@ -161,6 +161,9 @@
 - The snafu error builders from `VmError` are now private, i.e. callers can only
   use the errors, not create them.
 - `VmError` is now `#[non_exhaustive]`.
+- Split `VmError::RuntimeErr` in `VmError::BackendErr` and
+  `VmError::GenericErr`; rename `VmError::WasmerRuntimeErr` to
+  `VmError::RuntimeErr`.
 
 ## 0.7.2 (2020-03-23)
 
