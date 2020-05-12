@@ -5,7 +5,7 @@ use wasmer_runtime_core::{
 };
 
 use crate::conversion::to_u32;
-use crate::errors::{RegionLengthTooBigErr, RegionTooSmallErr, VmResult};
+use crate::errors::{make_region_length_too_big, make_region_too_small, VmResult};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -65,11 +65,10 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
     let region = get_region(ctx, ptr);
 
     if region.length > to_u32(max_length)? {
-        return RegionLengthTooBigErr {
-            length: region.length as usize,
+        return Err(make_region_length_too_big(
+            region.length as usize,
             max_length,
-        }
-        .fail();
+        ));
     }
 
     let memory = ctx.memory(0);
@@ -111,11 +110,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
-        return RegionTooSmallErr {
-            size: region_capacity,
-            required: data.len(),
-        }
-        .fail();
+        return Err(make_region_too_small(region_capacity, data.len()));
     }
 
     let memory = ctx.memory(0);

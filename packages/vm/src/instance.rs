@@ -362,7 +362,7 @@ mod test {
             .expect("error writing");
 
         match instance.read_memory(region_ptr, max_length) {
-            Err(VmError::RegionLengthTooBigErr {
+            Err(VmError::RegionLengthTooBig {
                 length, max_length, ..
             }) => {
                 assert_eq!(length, 6);

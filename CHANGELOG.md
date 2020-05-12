@@ -149,6 +149,8 @@
 - Make `Instance::from_module`, `::from_wasmer` and `::recycle` crate-internal.
 - Create explicit, public `Checksum` type to identify Wasm blobs.
 - `CosmCache::new` now takes supported features as an argument.
+- Rename `VmError::RegionTooSmallErr` to `VmError::RegionTooSmall`.
+- Rename `VmError::RegionLengthTooBigErr` to `VmError::RegionLengthTooBig`.
 
 ## 0.7.2 (2020-03-23)
 
