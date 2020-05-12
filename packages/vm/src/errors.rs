@@ -362,6 +362,15 @@ mod test {
     }
 
     #[test]
+    fn make_static_validation_err_works() {
+        let error = make_static_validation_err("export xy missing");
+        match error {
+            VmError::StaticValidationErr { msg, .. } => assert_eq!(msg, "export xy missing"),
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
     fn make_uninitialized_context_data_works() {
         let err = make_uninitialized_context_data("foo");
         match err {
