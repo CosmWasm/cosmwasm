@@ -180,7 +180,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     total_supply(&mut deps.storage).update(&mut |mut supply| {
         unbond = remainder.multiply_ratio(supply.bonded, supply.issued);
         supply.bonded = (supply.bonded - unbond)?;
-        supply.issued = (supply.bonded - remainder)?;
+        supply.issued = (supply.issued - remainder)?;
         supply.claims += unbond;
         Ok(supply)
     })?;
@@ -425,6 +425,30 @@ mod tests {
         }
     }
 
+    fn get_balance<S: Storage, A: Api, Q: Querier, U: Into<HumanAddr>>(
+        deps: &Extern<S, A, Q>,
+        addr: U,
+    ) -> Uint128 {
+        let query_msg = QueryMsg::Balance {
+            address: addr.into(),
+        };
+        let res = query(&deps, query_msg).unwrap();
+        let bal: BalanceResponse = from_binary(&res).unwrap();
+        bal.balance
+    }
+
+    fn get_claims<S: Storage, A: Api, Q: Querier, U: Into<HumanAddr>>(
+        deps: &Extern<S, A, Q>,
+        addr: U,
+    ) -> Uint128 {
+        let query_msg = QueryMsg::Claims {
+            address: addr.into(),
+        };
+        let res = query(&deps, query_msg).unwrap();
+        let claim: ClaimsResponse = from_binary(&res).unwrap();
+        claim.claims
+    }
+
     #[test]
     fn initialization_with_missing_validator() {
         let mut deps = mock_dependencies(20, &[]);
@@ -489,20 +513,9 @@ mod tests {
         assert_eq!(token.decimals, msg.decimals);
 
         // no balance
-        let bal_query = QueryMsg::Balance {
-            address: creator.clone(),
-        };
-        let res = query(&deps, bal_query).unwrap();
-        let bal: BalanceResponse = from_binary(&res).unwrap();
-        assert_eq!(bal.balance, Uint128(0));
-
+        assert_eq!(get_balance(&deps, &creator), Uint128(0));
         // no claims
-        let claim_query = QueryMsg::Claims {
-            address: creator.clone(),
-        };
-        let res = query(&deps, claim_query).unwrap();
-        let claim: ClaimsResponse = from_binary(&res).unwrap();
-        assert_eq!(claim.claims, Uint128(0));
+        assert_eq!(get_claims(&deps, &creator), Uint128(0));
 
         // investment info correct
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
@@ -548,13 +561,8 @@ mod tests {
             _ => panic!("Unexpected message: {:?}", delegate),
         }
 
-        // query the supply and balance are updated
-        let query_msg = QueryMsg::Balance {
-            address: bob.clone(),
-        };
-        let res = query(&deps, query_msg).unwrap();
-        let bal: BalanceResponse = from_binary(&res).unwrap();
-        assert_eq!(bal.balance, Uint128(1000));
+        // bob got 1000 DRV for 1000 stake at a 1.0 ratio
+        assert_eq!(get_balance(&deps, &bob), Uint128(1000));
 
         // investment info correct (updated supply)
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
@@ -610,12 +618,7 @@ mod tests {
         assert_eq!(1, res.messages.len());
 
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
-        let query_msg = QueryMsg::Balance {
-            address: alice.clone(),
-        };
-        let res = query(&deps, query_msg).unwrap();
-        let bal: BalanceResponse = from_binary(&res).unwrap();
-        assert_eq!(bal.balance, Uint128(2000));
+        assert_eq!(get_balance(&deps, &alice), Uint128(2000));
 
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
         let invest: InvestmentResponse = from_binary(&res).unwrap();
@@ -624,50 +627,99 @@ mod tests {
         assert_eq!(invest.nominal_value, ratio);
     }
 
-    // #[test]
-    // fn increment() {
-    //     let mut deps = mock_dependencies(20, &coins(2, "token"));
-    //
-    //     let msg = InitMsg { count: 17 };
-    //     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    //     let _res = init(&mut deps, env, msg).unwrap();
-    //
-    //     // beneficiary can release it
-    //     let env = mock_env(&deps.api, "anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::Increment {};
-    //     let _res = handle(&mut deps, env, msg).unwrap();
-    //
-    //     // should increase counter by 1
-    //     let res = query(&deps, QueryMsg::GetCount {}).unwrap();
-    //     let value: CountResponse = from_binary(&res).unwrap();
-    //     assert_eq!(18, value.count);
-    // }
+    #[test]
+    fn bonding_fails_with_wrong_denom() {
+        let mut deps = mock_dependencies(20, &[]);
+        deps.querier
+            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
 
-    // #[test]
-    // fn reset() {
-    //     let mut deps = mock_dependencies(20, &coins(2, "token"));
-    //
-    //     let msg = InitMsg { count: 17 };
-    //     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    //     let _res = init(&mut deps, env, msg).unwrap();
-    //
-    //     // beneficiary can release it
-    //     let unauth_env = mock_env(&deps.api, "anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::Reset { count: 5 };
-    //     let res = handle(&mut deps, unauth_env, msg);
-    //     match res {
-    //         Err(StdError::Unauthorized { .. }) => {}
-    //         _ => panic!("Must return unauthorized error"),
-    //     }
-    //
-    //     // only the original creator can reset the counter
-    //     let auth_env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    //     let msg = HandleMsg::Reset { count: 5 };
-    //     let _res = handle(&mut deps, auth_env, msg).unwrap();
-    //
-    //     // should now be 5
-    //     let res = query(&deps, QueryMsg::GetCount {}).unwrap();
-    //     let value: CountResponse = from_binary(&res).unwrap();
-    //     assert_eq!(5, value.count);
-    // }
+        let creator = HumanAddr::from("creator");
+        let init_msg = default_init(2, 50);
+        let env = mock_env(&deps.api, &creator, &[]);
+
+        // make sure we can init with this
+        let res = init(&mut deps, env, init_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // let's bond some tokens now
+        let bob = HumanAddr::from("bob");
+        let bond_msg = HandleMsg::Bond {};
+        let env = mock_env(&deps.api, &bob, &[coin(500, "photon")]);
+
+        // try to bond and make sure we trigger delegation
+        let res = handle(&mut deps, env, bond_msg);
+        match res.unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg.as_str(), "No stake tokens sent"),
+            e => panic!("Expected wrong denom error, got: {:?}", e),
+        };
+    }
+
+    #[test]
+    fn unbonding_maintains_price_ratio() {
+        let mut deps = mock_dependencies(20, &[]);
+        deps.querier
+            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+
+        let creator = HumanAddr::from("creator");
+        let init_msg = default_init(10, 50);
+        let env = mock_env(&deps.api, &creator, &[]);
+
+        // make sure we can init with this
+        let res = init(&mut deps, env, init_msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // let's bond some tokens now
+        let bob = HumanAddr::from("bob");
+        let bond_msg = HandleMsg::Bond {};
+        let env = mock_env(&deps.api, &bob, &[coin(10, "random"), coin(1000, "stake")]);
+        let contract_addr = deps.api.human_address(&env.contract.address).unwrap();
+        let res = handle(&mut deps, env, bond_msg).unwrap();
+        assert_eq!(1, res.messages.len());
+
+        // fake a reinvestment (this must be sent by the contract itself)
+        // after this, we see 1000 issues and 1500 bonded (and a price of 1.5)
+        let rebond_msg = HandleMsg::_BondAllTokens {};
+        let env = mock_env(&deps.api, &contract_addr, &[]);
+        deps.querier
+            .update_balance(&contract_addr, coins(500, "stake"));
+        let _ = handle(&mut deps, env, rebond_msg).unwrap();
+
+        // bob unbonds 600 tokens at 10% tax...
+        // 60 are taken and send to the owner
+        // 540 are unbonded in exchange for 540 * 1.5 = 810 native tokens
+        let unbond_msg = HandleMsg::Unbond {
+            amount: Uint128(600),
+        };
+        let owner_cut = Uint128(60);
+        let bobs_claim = Uint128(810);
+        let bobs_balance = Uint128(400);
+        let env = mock_env(&deps.api, &bob, &[]);
+        let res = handle(&mut deps, env, unbond_msg).unwrap();
+        assert_eq!(1, res.messages.len());
+        let delegate = &res.messages[0];
+        match delegate {
+            CosmosMsg::Staking(StakingMsg::Undelegate { validator, amount }) => {
+                assert_eq!(validator.as_str(), DEFAULT_VALIDATOR);
+                assert_eq!(amount, &coin(bobs_claim.u128(), "stake"));
+            }
+            _ => panic!("Unexpected message: {:?}", delegate),
+        }
+
+        // check balances
+        assert_eq!(get_balance(&deps, &bob), bobs_balance);
+        assert_eq!(get_balance(&deps, &creator), owner_cut);
+        // proper claims
+        assert_eq!(get_claims(&deps, &bob), bobs_claim);
+
+        // supplies updated, ratio the same (1.5)
+        let mut ratio = Decimal9::one();
+        ratio.0 = ratio.0 * 3 / 2; // TODO: expose this on decimal
+
+        let res = query(&deps, QueryMsg::Investment {}).unwrap();
+        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        print!("invest: {:?}", &invest);
+        assert_eq!(invest.token_supply, bobs_balance + owner_cut);
+        assert_eq!(invest.staked_tokens, coin(690, "stake")); // 1500 - 810
+        assert_eq!(invest.nominal_value, ratio);
+    }
 }
