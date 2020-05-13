@@ -59,7 +59,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     owner: HumanAddr,
 ) -> StdResult<HandleResponse<CustomMsg>> {
     let api = deps.api;
-    config(&mut deps.storage).update(&mut |mut state| {
+    config(&mut deps.storage).update(&|mut state| {
         if env.message.sender != state.owner {
             return Err(unauthorized());
         }
