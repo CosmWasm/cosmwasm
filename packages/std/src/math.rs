@@ -31,6 +31,10 @@ impl Decimal {
     pub fn permille(x: u64) -> Decimal {
         Decimal(Uint128((x as u128) * 1_000_000_000_000_000))
     }
+
+    pub fn is_zero(&self) -> bool {
+        self.0.u128() == 0
+    }
 }
 
 impl ops::Add for Decimal {
@@ -229,6 +233,17 @@ mod test {
     fn decimal_permille() {
         let value = Decimal::permille(125);
         assert_eq!(value.0.u128(), DECIMAL_FRACTIONAL.u128() / 8);
+    }
+
+    #[test]
+    fn decimal_is_zero_works() {
+        assert_eq!(Decimal::zero().is_zero(), true);
+        assert_eq!(Decimal::percent(0).is_zero(), true);
+        assert_eq!(Decimal::permille(0).is_zero(), true);
+
+        assert_eq!(Decimal::one().is_zero(), false);
+        assert_eq!(Decimal::percent(123).is_zero(), false);
+        assert_eq!(Decimal::permille(1234).is_zero(), false);
     }
 
     #[test]
