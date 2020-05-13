@@ -15,7 +15,7 @@ pub struct Decimal(Uint128);
 const DECIMAL_FRACTIONAL: Uint128 = Uint128(1_000_000_000_000_000_000);
 
 impl Decimal {
-    pub const MAX: Decimal = Decimal(Uint128(u128::MAX));
+    pub const MAX: Decimal = Decimal(Uint128(std::u128::MAX));
 
     /// Create a 1.0 Decimal
     pub const fn one() -> Decimal {
