@@ -8,7 +8,7 @@ use crate::errors::{generic_err, underflow, StdError, StdResult};
 /// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
 /// That is Decimal9(1_000_000_000) == 1
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Decimal9(pub u64);
+pub struct Decimal9(u64);
 
 const DECIMAL_FRACTIONAL: u64 = 1_000_000_000;
 
