@@ -66,6 +66,7 @@ impl Uint128 {
         Uint128(0)
     }
 
+    /// Returns a copy of the internal data
     pub fn u128(&self) -> u128 {
         self.0
     }
@@ -106,7 +107,7 @@ impl Into<String> for Uint128 {
 
 impl Into<u128> for Uint128 {
     fn into(self) -> u128 {
-        self.u128()
+        self.0
     }
 }
 
