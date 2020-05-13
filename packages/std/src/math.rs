@@ -58,6 +58,10 @@ impl Uint128 {
     pub fn u128(&self) -> u128 {
         self.0
     }
+
+    pub fn is_zero(&self) -> bool {
+        self.0 == 0
+    }
 }
 
 impl From<u128> for Uint128 {
@@ -136,7 +140,7 @@ impl ops::Mul<Decimal> for Uint128 {
 
     fn mul(self, rhs: Decimal) -> Self::Output {
         // 0*a and b*0 is always 0
-        if self.0 == 0 || rhs.is_zero() {
+        if self.is_zero() || rhs.is_zero() {
             return Uint128::zero();
         }
         self.multiply_ratio(rhs.0, DECIMAL_FRACTIONAL)
@@ -278,6 +282,15 @@ mod test {
 
         let a: StdResult<Uint128> = "1.23".try_into();
         assert!(a.is_err());
+    }
+
+    #[test]
+    fn uint128_is_zero_works() {
+        assert_eq!(Uint128::zero().is_zero(), true);
+        assert_eq!(Uint128(0).is_zero(), true);
+
+        assert_eq!(Uint128(1).is_zero(), false);
+        assert_eq!(Uint128(123).is_zero(), false);
     }
 
     #[test]

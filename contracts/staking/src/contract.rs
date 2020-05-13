@@ -117,7 +117,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     // update total supply
     let mut to_mint = Uint128(0);
     let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
-        to_mint = if supply.issued == Uint128::zero() || supply.bonded == Uint128::zero() {
+        to_mint = if supply.issued.is_zero() || supply.bonded.is_zero() {
             FALLBACK_RATIO * payment.amount
         } else {
             payment.amount.multiply_ratio(supply.issued, supply.bonded)
