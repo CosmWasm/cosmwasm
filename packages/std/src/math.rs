@@ -10,21 +10,27 @@ use crate::errors::{generic_err, underflow, StdError, StdResult};
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Decimal9(pub u64);
 
-pub const DECIMAL_FRACTIONAL: u64 = 1_000_000_000;
+const DECIMAL_FRACTIONAL: u64 = 1_000_000_000;
 
 impl Decimal9 {
+    /// Create a 1.0 Decimal
     pub fn one() -> Decimal9 {
         Decimal9(DECIMAL_FRACTIONAL)
     }
 
-    // convert integer % into Billionth units
-    pub fn percent(percent: u64) -> Decimal9 {
-        Decimal9(percent * 10_000_000)
+    /// Create a 0.0 Decimal
+    pub fn zero() -> Decimal9 {
+        Decimal9(0)
     }
 
-    // convert permille (1/1000) into Billionth units
-    pub fn permille(permille: u64) -> Decimal9 {
-        Decimal9(permille * 1_000_000)
+    /// Convert x% into Decimal
+    pub fn percent(x: u64) -> Decimal9 {
+        Decimal9(x * 10_000_000)
+    }
+
+    /// Convert permille (x/1000) into Decimal
+    pub fn permille(x: u64) -> Decimal9 {
+        Decimal9(x * 1_000_000)
     }
 }
 
@@ -188,6 +194,30 @@ mod test {
     use crate::errors::{StdError, StdResult};
     use crate::{from_slice, to_vec};
     use std::convert::TryInto;
+
+    #[test]
+    fn decimal_one() {
+        let value = Decimal9::one();
+        assert_eq!(value.0, DECIMAL_FRACTIONAL);
+    }
+
+    #[test]
+    fn decimal_zero() {
+        let value = Decimal9::zero();
+        assert_eq!(value.0, 0);
+    }
+
+    #[test]
+    fn decimal_percent() {
+        let value = Decimal9::percent(50);
+        assert_eq!(value.0, DECIMAL_FRACTIONAL / 2);
+    }
+
+    #[test]
+    fn decimal_permille() {
+        let value = Decimal9::permille(125);
+        assert_eq!(value.0, DECIMAL_FRACTIONAL / 8);
+    }
 
     #[test]
     fn to_and_from_uint128() {
