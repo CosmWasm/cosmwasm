@@ -5,8 +5,7 @@ use wasmer_runtime_core::{
     module::Module,
 };
 
-use crate::errors::{CompileErr, VmResult};
-use snafu::ResultExt;
+use crate::errors::VmResult;
 
 static FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
@@ -15,7 +14,8 @@ pub fn compile(code: &[u8]) -> VmResult<Module> {
         enable_verification: false, // As discussed in https://github.com/CosmWasm/cosmwasm/issues/155
         ..Default::default()
     };
-    compile_with_config(code, compiler().as_ref(), config).context(CompileErr {})
+    let module = compile_with_config(code, compiler().as_ref(), config)?;
+    Ok(module)
 }
 
 pub fn compiler() -> Box<dyn Compiler> {

@@ -161,16 +161,17 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
     }
 }
 
+/// Middleware is only supported in singlepass backend, see
+/// https://github.com/CosmWasm/cosmwasm/issues/311
 #[cfg(all(test, feature = "default-singlepass"))]
 mod tests {
-    use super::*;
-    use wasmer_runtime_core::{imports, typed_func::Func};
-
+    // No 'use super::*;' here. This is strange and means we are not testing the functions in this module directly.
     use crate::backends::compile;
     use crate::errors::VmError;
+    use wabt::wat2wasm;
+    use wasmer_runtime_core::{imports, typed_func::Func};
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn valid_wasm_instance_sanity() {
         let input = r#"
             (module
@@ -180,7 +181,7 @@ mod tests {
                     i32.add
                 ))
             "#;
-        let wasm = wabt::wat2wasm(input).unwrap();
+        let wasm = wat2wasm(input).unwrap();
         let module = compile(&wasm).unwrap();
         let instance = module.instantiate(&imports! {}).unwrap();
 
@@ -191,7 +192,6 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn parser_floats_are_not_supported() {
         let input = r#"
             (module
@@ -200,22 +200,12 @@ mod tests {
                     f32.convert_u/i32
                 ))
             "#;
-
-        let wasm = wabt::wat2wasm(input).unwrap();
+        let wasm = wat2wasm(input).unwrap();
         let res = compile(&wasm);
 
-        let failure = res.err().expect("compile should have failed");
-
-        if let VmError::CompileErr { source, .. } = &failure {
-            if let CompileError::InternalError { msg } = source {
-                assert_eq!(
-                    "Codegen(\"ValidationError { msg: \\\"non-deterministic opcode: F32ConvertI32U\\\" }\")",
-                    msg.as_str()
-                );
-                return;
-            }
+        match res.err().unwrap() {
+            VmError::CompileErr { msg, .. } => assert_eq!(msg, "Wasmer compile error: InternalError { msg: \"Codegen(\\\"ValidationError { msg: \\\\\\\"non-deterministic opcode: F32ConvertI32U\\\\\\\" }\\\")\" }"),
+            e => panic!("unexpected error: {:?}", e),
         }
-
-        panic!("unexpected error: {:?}", failure)
     }
 }

@@ -1,5 +1,4 @@
 use serde::de::DeserializeOwned;
-use snafu::ResultExt;
 use std::fmt;
 
 use cosmwasm_std::{
@@ -7,7 +6,7 @@ use cosmwasm_std::{
     QueryResult, StdResult, Storage,
 };
 
-use crate::errors::{RuntimeErr, VmResult, WasmerRuntimeErr};
+use crate::errors::{make_generic_err, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 use schemars::JsonSchema;
@@ -59,12 +58,8 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
 
     // Ensure query response is valid JSON
     if let Ok(binary_response) = &result {
-        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).or_else(|_| {
-            RuntimeErr {
-                msg: "Query response must be valid JSON",
-            }
-            .fail()
-        })?;
+        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice())
+            .map_err(|e| make_generic_err(format!("Query response must be valid JSON. {}", e)))?;
     }
 
     Ok(result)
@@ -115,12 +110,11 @@ fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     let res_region_ptr = match args.len() {
         1 => {
             let func: Func<u32, u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0]).context(WasmerRuntimeErr {})?
+            func.call(arg_region_ptrs[0])?
         }
         2 => {
             let func: Func<(u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1])
-                .context(WasmerRuntimeErr {})?
+            func.call(arg_region_ptrs[0], arg_region_ptrs[1])?
         }
         _ => panic!("call_raw called with unsupported number of arguments"),
     };

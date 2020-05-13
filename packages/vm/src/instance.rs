@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
 
-use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
     imports,
@@ -17,7 +16,7 @@ use crate::context::{
     move_into_context, move_out_of_context, setup_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::errors::{make_instantiation_err, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -125,7 +124,9 @@ where
             },
         });
 
-        let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
+        let wasmer_instance = module.instantiate(&import_obj).map_err(|original| {
+            make_instantiation_err(format!("Error instantiating module: {:?}", original))
+        })?;
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
 
@@ -186,7 +187,7 @@ where
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(to_u32(size)?).context(WasmerRuntimeErr {})?;
+        let ptr = alloc.call(to_u32(size)?)?;
         Ok(ptr)
     }
 
@@ -195,7 +196,7 @@ where
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
-        dealloc.call(ptr).context(WasmerRuntimeErr {})?;
+        dealloc.call(ptr)?;
         Ok(())
     }
 
@@ -215,10 +216,8 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.wasmer_instance
-            .exports
-            .get(name)
-            .context(ResolveErr {})
+        let function = self.wasmer_instance.exports.get(name)?;
+        Ok(function)
     }
 }
 
@@ -229,7 +228,6 @@ mod test {
     use crate::testing::mock_instance;
     use cosmwasm_std::testing::mock_dependencies;
     use wabt::wat2wasm;
-    use wasmer_runtime_core::error::ResolveError;
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
@@ -285,13 +283,24 @@ mod test {
     fn func_errors_for_non_existent_function() {
         let instance = mock_instance(&CONTRACT, &[]);
         let missing_function = "bar_foo345";
-        match instance.func::<(), ()>(missing_function) {
-            Err(VmError::ResolveErr { source, .. }) => match source {
-                ResolveError::ExportNotFound { name } => assert_eq!(name, missing_function),
-                _ => panic!("found unexpected source error"),
-            },
-            Err(e) => panic!("unexpected error: {:?}", e),
-            Ok(_) => panic!("must not succeed"),
+        match instance.func::<(), ()>(missing_function).err().unwrap() {
+            VmError::ResolveErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasmer resolve error: ExportNotFound { name: \"bar_foo345\" }"
+            ),
+            e => panic!("unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn func_errors_for_wrong_signature() {
+        let instance = mock_instance(&CONTRACT, &[]);
+        match instance.func::<(), ()>("allocate").err().unwrap() {
+            VmError::ResolveErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasmer resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
+            ),
+            e => panic!("unexpected error: {:?}", e),
         }
     }
 
@@ -362,7 +371,7 @@ mod test {
             .expect("error writing");
 
         match instance.read_memory(region_ptr, max_length) {
-            Err(VmError::RegionLengthTooBigErr {
+            Err(VmError::RegionLengthTooBig {
                 length, max_length, ..
             }) => {
                 assert_eq!(length, 6);

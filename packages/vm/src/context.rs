@@ -12,8 +12,8 @@ use cosmwasm_std::{Querier, Storage, SystemError, SystemResult};
 use cosmwasm_std::{StdResult, KV};
 
 #[cfg(feature = "iterator")]
-use crate::errors::IteratorDoesNotExist;
-use crate::errors::{UninitializedContextData, VmResult};
+use crate::errors::make_iterator_does_not_exist;
+use crate::errors::{make_uninitialized_context_data, VmResult};
 
 /** context data **/
 
@@ -120,7 +120,7 @@ where
     let mut storage = b.storage.take();
     let res = match &mut storage {
         Some(data) => func(data),
-        None => UninitializedContextData { kind: "storage" }.fail(),
+        None => Err(make_uninitialized_context_data("storage")),
     };
     b.storage = storage;
     res
@@ -161,7 +161,7 @@ where
             b.iterators.insert(iterator_id, data);
             res
         }
-        None => IteratorDoesNotExist { id: iterator_id }.fail(),
+        None => Err(make_iterator_does_not_exist(iterator_id)),
     }
 }
 
@@ -383,13 +383,12 @@ mod test {
         leave_default_data(ctx);
 
         let missing_id = 42u32;
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
+        let result = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
             panic!("this should not be called");
         });
-        match miss {
-            Ok(_) => panic!("Expected error"),
-            Err(VmError::IteratorDoesNotExist { id, .. }) => assert_eq!(id, missing_id),
-            Err(e) => panic!("Unexpected error: {}", e),
+        match result.unwrap_err() {
+            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, missing_id),
+            e => panic!("Unexpected error: {}", e),
         }
     }
 }

@@ -1,20 +1,18 @@
+use lru::LruCache;
 use std::collections::HashSet;
-use std::fs::create_dir_all;
+use std::fs::{create_dir_all, File, OpenOptions};
+use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
-
-use lru::LruCache;
-use snafu::ResultExt;
 
 use cosmwasm_std::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
 use crate::compatability::check_wasm;
-use crate::errors::{make_integrity_err, IoErr, VmResult};
+use crate::errors::{make_cache_err, make_integrity_err, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
-use crate::wasm_store::{load, save};
 
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
@@ -58,8 +56,11 @@ where
     ) -> VmResult<Self> {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
-        create_dir_all(&wasm_path).context(IoErr {})?;
-        let modules = FileSystemCache::new(base.join(MODULES_DIR)).context(IoErr {})?;
+        create_dir_all(&wasm_path)
+            .map_err(|e| make_cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
+
+        let modules = FileSystemCache::new(base.join(MODULES_DIR))
+            .map_err(|e| make_cache_err(format!("Error file system cache: {}", e)))?;
         let instances = if cache_size > 0 {
             Some(LruCache::new(cache_size))
         } else {
@@ -79,7 +80,7 @@ where
 
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
-        let checksum = save(&self.wasm_path, wasm)?;
+        let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
         self.modules.store(&checksum, module)?;
         Ok(checksum)
@@ -91,7 +92,7 @@ where
     ///
     /// If the given ID is not found or the content does not match the hash (=ID), an error is returned.
     pub fn load_wasm(&self, checksum: &Checksum) -> VmResult<Vec<u8>> {
-        let code = load(&self.wasm_path, checksum)?;
+        let code = load_wasm_from_disk(&self.wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {
             Err(make_integrity_err())
@@ -141,6 +142,41 @@ where
             None
         }
     }
+}
+
+/// save stores the wasm code in the given directory and returns an ID for lookup.
+/// It will create the directory if it doesn't exist.
+/// Saving the same byte code multiple times is allowed.
+fn save_wasm_to_disk<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum> {
+    // calculate filename
+    let checksum = Checksum::generate(wasm);
+    let filename = checksum.to_hex();
+    let filepath = dir.into().join(&filename);
+
+    // write data to file
+    // Since the same filename (a collision resistent hash) cannot be generated from two different byte codes
+    // (even if a malicious actor tried), it is safe to override.
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create(true)
+        .open(filepath)
+        .map_err(|e| make_cache_err(format!("Error opening Wasm file for writing: {}", e)))?;
+    file.write_all(wasm)
+        .map_err(|e| make_cache_err(format!("Error writing Wasm file: {}", e)))?;
+
+    Ok(checksum)
+}
+
+fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResult<Vec<u8>> {
+    // this requires the directory and file to exist
+    let path = dir.into().join(checksum.to_hex());
+    let mut file = File::open(path)
+        .map_err(|e| make_cache_err(format!("Error opening Wasm file for reading: {}", e)))?;
+
+    let mut wasm = Vec::<u8>::new();
+    file.read_to_end(&mut wasm)
+        .map_err(|e| make_cache_err(format!("Error reading Wasm file: {}", e)))?;
+    Ok(wasm)
 }
 
 #[cfg(test)]
@@ -248,11 +284,12 @@ mod test {
             5, 5, 5,
         ]);
 
-        let res = cache.load_wasm(&checksum);
-        match res {
-            Err(VmError::IoErr { .. }) => {}
-            Err(e) => panic!("Unexpected error: {:?}", e),
-            Ok(_) => panic!("This must not succeed"),
+        match cache.load_wasm(&checksum).unwrap_err() {
+            VmError::CacheErr { msg, .. } => {
+                assert!(msg
+                    .starts_with("Error opening Wasm file for reading: No such file or directory"))
+            }
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -450,7 +487,7 @@ mod test {
         let env1 = mock_env(&instance1.api, "owner1", &coins(1000, "earth"));
         let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         match call_init::<_, _, _, Never>(&mut instance1, &env1, msg1) {
-            Err(VmError::WasmerRuntimeErr { .. }) => (), // all good, continue
+            Err(VmError::RuntimeErr { .. }) => (), // all good, continue
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("call_init must run out of gas"),
         }
@@ -470,5 +507,47 @@ mod test {
         call_init::<_, _, _, Never>(&mut instance2, &env2, msg2)
             .unwrap()
             .unwrap();
+    }
+
+    #[test]
+    fn save_wasm_to_disk_works_for_same_data_multiple_times() {
+        let tmp_dir = TempDir::new().unwrap();
+        let path = tmp_dir.path();
+        let code = vec![12u8; 17];
+
+        save_wasm_to_disk(path, &code).unwrap();
+        save_wasm_to_disk(path, &code).unwrap();
+    }
+
+    #[test]
+    fn save_wasm_to_disk_fails_on_non_existent_dir() {
+        let tmp_dir = TempDir::new().unwrap();
+        let path = tmp_dir.path().join("something");
+        let code = vec![12u8; 17];
+        let res = save_wasm_to_disk(path.to_str().unwrap(), &code);
+        assert!(res.is_err());
+    }
+
+    #[test]
+    fn load_wasm_from_disk_works() {
+        let tmp_dir = TempDir::new().unwrap();
+        let path = tmp_dir.path();
+        let code = vec![12u8; 17];
+        let id = save_wasm_to_disk(path, &code).unwrap();
+
+        let loaded = load_wasm_from_disk(path, &id).unwrap();
+        assert_eq!(code, loaded);
+    }
+
+    #[test]
+    fn load_wasm_from_disk_works_in_subfolder() {
+        let tmp_dir = TempDir::new().unwrap();
+        let path = tmp_dir.path().join("something");
+        create_dir_all(&path).unwrap();
+        let code = vec![12u8; 17];
+        let id = save_wasm_to_disk(&path, &code).unwrap();
+
+        let loaded = load_wasm_from_disk(&path, &id).unwrap();
+        assert_eq!(code, loaded);
     }
 }

@@ -149,6 +149,21 @@
 - Make `Instance::from_module`, `::from_wasmer` and `::recycle` crate-internal.
 - Create explicit, public `Checksum` type to identify Wasm blobs.
 - `CosmCache::new` now takes supported features as an argument.
+- Rename `VmError::RegionTooSmallErr` to `VmError::RegionTooSmall`.
+- Rename `VmError::RegionLengthTooBigErr` to `VmError::RegionLengthTooBig`.
+- Change property types to owned string in `VmError::UninitializedContextData`,
+  `VmError::ConversionErr`, `VmError::ParseErr` and `VmError::SerializeErr`.
+- Remove `VmError::IoErr` in favour of `VmError::CacheErr`.
+- Simplify `VmError::CompileErr`, `VmError::ResolveErr` and
+  `VmError::WasmerRuntimeErr` to just hold a string with the details instead of
+  the source error.
+- Remove `VmError::WasmerErr` in favour of the new `VmError::InstantiationErr`.
+- The snafu error builders from `VmError` are now private, i.e. callers can only
+  use the errors, not create them.
+- `VmError` is now `#[non_exhaustive]`.
+- Split `VmError::RuntimeErr` in `VmError::BackendErr` and
+  `VmError::GenericErr`; rename `VmError::WasmerRuntimeErr` to
+  `VmError::RuntimeErr`.
 
 ## 0.7.2 (2020-03-23)
 

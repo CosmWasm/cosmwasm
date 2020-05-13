@@ -14,7 +14,6 @@ mod middleware;
 mod modules;
 mod serde;
 pub mod testing;
-mod wasm_store;
 
 pub use crate::cache::CosmCache;
 pub use crate::calls::{

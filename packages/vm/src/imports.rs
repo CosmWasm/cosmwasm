@@ -17,7 +17,7 @@ use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{with_querier_from_context, with_storage_from_context};
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{make_runtime_err, VmError};
+use crate::errors::{make_backend_err, VmError};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
@@ -115,13 +115,13 @@ mod errors {
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         store
             .get(&key)
-            .or_else(|_| make_runtime_err("Error reading from backend"))
+            .or_else(|_| Err(make_backend_err("Error reading from backend")))
     }) {
         Ok(v) => v,
         Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
@@ -130,7 +130,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
     match value {
         Some(buf) => match write_region(ctx, value_ptr, &buf) {
             Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmall { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
         None => errors::read::KEY_DOES_NOT_EXIST,
@@ -141,18 +141,18 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u
 pub fn do_write<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let value = match read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
         store
             .set(&key, &value)
-            .or_else(|_| make_runtime_err("Error setting database value in backend"))
+            .or_else(|_| Err(make_backend_err("Error setting database value in backend")))
     }) {
         Ok(_) => errors::NONE,
         Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
@@ -163,13 +163,13 @@ pub fn do_write<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> i32 {
     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
         store
             .remove(&key)
-            .or_else(|_| make_runtime_err("Error removing database key from backend"))
+            .or_else(|_| Err(make_backend_err("Error removing database key from backend")))
     }) {
         Ok(_) => errors::NONE,
         Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
@@ -185,7 +185,7 @@ pub fn do_canonicalize_address<A: Api>(
 ) -> i32 {
     let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let human = match String::from_utf8(human_data) {
@@ -195,7 +195,7 @@ pub fn do_canonicalize_address<A: Api>(
     match api.canonical_address(&human) {
         Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
             Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmall { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
         Err(_) => errors::canonicalize::UNKNOWN,
@@ -210,13 +210,13 @@ pub fn do_humanize_address<A: Api>(
 ) -> i32 {
     let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_CANONICAL_ADDRESS) {
         Ok(data) => Binary(data),
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     match api.human_address(&CanonicalAddr(canonical)) {
         Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
             Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmall { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
         Err(_) => errors::humanize::UNKNOWN,
@@ -230,7 +230,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
 ) -> i32 {
     let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
 
@@ -240,7 +240,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
     match to_vec(&res) {
         Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
             Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmall { .. }) => errors::REGION_WRITE_TOO_SMALL,
             Err(_) => errors::REGION_WRITE_UNKNOWN,
         },
         Err(_) => errors::query_chain::CANNOT_SERIALIZE_RESPONSE,
@@ -256,12 +256,12 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 ) -> i32 {
     let start = match maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let end = match maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY) {
         Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+        Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
         Err(_) => return errors::REGION_READ_UNKNOWN,
     };
     let order: Order = match order.try_into() {
@@ -271,7 +271,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     let range_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         let iter = match store.range(start.as_deref(), end.as_deref(), order) {
             Ok(iter) => iter,
-            Err(_) => return make_runtime_err("An error occurred in range call"),
+            Err(_) => return Err(make_backend_err("An error occurred in range call")),
         };
 
         // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
@@ -320,7 +320,7 @@ pub fn do_next<S: Storage, Q: Querier>(
     if let Some(key) = key {
         match write_region(ctx, key_ptr, &key) {
             Ok(()) => (),
-            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmall { .. }) => return errors::REGION_WRITE_TOO_SMALL,
             Err(_) => return errors::REGION_WRITE_UNKNOWN,
         };
     }
@@ -328,7 +328,7 @@ pub fn do_next<S: Storage, Q: Querier>(
     if let Some(value) = value {
         match write_region(ctx, value_ptr, &value) {
             Ok(()) => (),
-            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
+            Err(VmError::RegionTooSmall { .. }) => return errors::REGION_WRITE_TOO_SMALL,
             Err(_) => return errors::REGION_WRITE_UNKNOWN,
         };
     }
