@@ -4,24 +4,28 @@ use std::collections::HashMap;
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
 use std::ffi::c_void;
+#[cfg(not(feature = "iterator"))]
+use std::marker::PhantomData;
 
 use wasmer_runtime_core::vm::Ctx;
 
-use cosmwasm_std::{Querier, Storage, SystemError, SystemResult};
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{StdResult, KV};
+use cosmwasm_std::KV;
 
-#[cfg(feature = "iterator")]
-use crate::errors::IteratorDoesNotExist;
 use crate::errors::{UninitializedContextData, VmResult};
+use crate::traits::{Querier, Storage};
+#[cfg(feature = "iterator")]
+use crate::{errors::IteratorDoesNotExist, FfiResult};
 
 /** context data **/
 
-struct ContextData<S: Storage, Q: Querier> {
+struct ContextData<'a, S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
-    iterators: HashMap<u32, Box<dyn Iterator<Item = StdResult<KV>>>>,
+    iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<KV>> + 'a>>,
+    #[cfg(not(feature = "iterator"))]
+    iterators: PhantomData<&'a mut ()>,
 }
 
 pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
@@ -37,6 +41,8 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
         querier: None,
         #[cfg(feature = "iterator")]
         iterators: HashMap::new(),
+        #[cfg(not(feature = "iterator"))]
+        iterators: PhantomData::default(),
     };
     let heap_data = Box::new(data); // move from stack to heap
     Box::into_raw(heap_data) as *mut c_void // give up ownership
@@ -52,7 +58,28 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 }
 
 /// Get a mutable reference to the context's data. Ownership remains in the Context.
-fn get_context_data<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut ContextData<S, Q> {
+// NOTE: This is actually not really implemented safely at the moment. I did this as a
+// nicer and less-terrible version of the previous solution to the following issue:
+//
+//                                                  +--->> Go pointer
+//                                                  |
+// Ctx -> ContextData --> iterators: Box<dyn Iterator + 'a> --+
+//                    |                                       |
+//                    +-> storage: impl Storage <<------------+
+//                    |
+//                    +-> querier: impl Querier
+//
+// ->  : Ownership
+// ->> : Mutable borrow
+//
+// As you can see, there's a cyclical reference here... changing this function to return the same lifetime as it
+// returns (and adjusting a few other functions to only have one lifetime instead of two) triggers an error
+// elsewhere where we try to add iterators to the context. That's not legal according to Rust's rules, and it
+// complains that we're trying to borrow ctx mutably twice. This needs a better solution because this function
+// probably triggers unsoundness.
+fn get_context_data<'a, 'b, S: Storage, Q: Querier>(
+    ctx: &'a mut Ctx,
+) -> &'b mut ContextData<'b, S, Q> {
     let owned = unsafe {
         Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
     };
@@ -75,6 +102,8 @@ pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
     let mut b = get_context_data::<S, Q>(source);
     // Destroy all existing iterators which are (in contrast to the storage)
     // not reused between different instances.
+    // This is also important because the iterators are pointers to Go memory which should not be stored long term
+    // Paragraphs 5-7: https://golang.org/cmd/cgo/#hdr-Passing_pointers
     destroy_iterators(&mut b);
     (b.storage.take(), b.querier.take())
 }
@@ -91,9 +120,9 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
 /// IDs are guaranteed to be in the range [0, 2**31-1], i.e. fit in the non-negative part if type i32.
 #[cfg(feature = "iterator")]
 #[must_use = "without the returned iterator ID, the iterator cannot be accessed"]
-pub fn add_iterator<S: Storage, Q: Querier>(
+pub fn add_iterator<'a, S: Storage, Q: Querier>(
     ctx: &mut Ctx,
-    iter: Box<dyn Iterator<Item = StdResult<KV>>>,
+    iter: Box<dyn Iterator<Item = FfiResult<KV>> + 'a>,
 ) -> u32 {
     let b = get_context_data::<S, Q>(ctx);
     let last_id: u32 = b
@@ -110,57 +139,52 @@ pub fn add_iterator<S: Storage, Q: Querier>(
     new_id
 }
 
-pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &mut Ctx, mut func: F) -> VmResult<T>
+pub(crate) fn with_storage_from_context<'a, 'b, S, Q, F, T>(
+    ctx: &'a mut Ctx,
+    mut func: F,
+) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&mut S) -> VmResult<T>,
+    F: FnMut(&'b mut S) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
-    let mut storage = b.storage.take();
-    let res = match &mut storage {
+    match b.storage.as_mut() {
         Some(data) => func(data),
         None => UninitializedContextData { kind: "storage" }.fail(),
-    };
-    b.storage = storage;
-    res
+    }
 }
 
-pub(crate) fn with_querier_from_context<S, Q, F, T>(ctx: &mut Ctx, mut func: F) -> SystemResult<T>
+pub(crate) fn with_querier_from_context<'a, 'b, S, Q, F, T>(
+    ctx: &'a mut Ctx,
+    mut func: F,
+) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&Q) -> SystemResult<T>,
+    F: FnMut(&'b Q) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
-    let querier = b.querier.take();
-    let res = match &querier {
+    match b.querier.as_ref() {
         Some(q) => func(q),
-        None => Err(SystemError::Unknown {}),
-    };
-    b.querier = querier;
-    res
+        None => UninitializedContextData { kind: "storage" }.fail(),
+    }
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn with_iterator_from_context<S, Q, F, T>(
-    ctx: &mut Ctx,
+pub(crate) fn with_iterator_from_context<'a, 'b, S, Q, F, T>(
+    ctx: &'a mut Ctx,
     iterator_id: u32,
     mut func: F,
 ) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&mut dyn Iterator<Item = StdResult<KV>>) -> VmResult<T>,
+    F: FnMut(&'b mut (dyn Iterator<Item = FfiResult<KV>>)) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
-    let iter = b.iterators.remove(&iterator_id);
-    match iter {
-        Some(mut data) => {
-            let res = func(&mut data);
-            b.iterators.insert(iterator_id, data);
-            res
-        }
+    match b.iterators.get_mut(&iterator_id) {
+        Some(data) => func(data),
         None => IteratorDoesNotExist { id: iterator_id }.fail(),
     }
 }
@@ -171,10 +195,10 @@ mod test {
     use crate::backends::compile;
     #[cfg(feature = "iterator")]
     use crate::errors::VmError;
-    use cosmwasm_std::testing::{MockQuerier, MockStorage};
+    use crate::mock::{MockQuerier, MockStorage};
+    use crate::ReadonlyStorage;
     use cosmwasm_std::{
-        coin, coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never,
-        QueryRequest, ReadonlyStorage,
+        coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -316,35 +340,14 @@ mod test {
             let req: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            querier.raw_query(&to_vec(&req).unwrap())
+            Ok(querier.raw_query(&to_vec(&req).unwrap())?)
         })
+        .unwrap()
         .unwrap()
         .unwrap();
         let balance: AllBalanceResponse = from_binary(&res).unwrap();
 
         assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
-    }
-
-    #[test]
-    fn with_querier_from_context_parse_works() {
-        let mut instance = make_instance();
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-        let contract = HumanAddr::from(INIT_ADDR);
-
-        let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
-            Ok(querier.query_balance(&contract, INIT_DENOM))
-        })
-        .unwrap()
-        .unwrap();
-        assert_eq!(balance.amount, coin(INIT_AMOUNT, INIT_DENOM));
-
-        let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
-            Ok(querier.query_balance(&contract, "foo"))
-        })
-        .unwrap()
-        .unwrap();
-        assert_eq!(balance.amount, coin(0, "foo"));
     }
 
     #[test]

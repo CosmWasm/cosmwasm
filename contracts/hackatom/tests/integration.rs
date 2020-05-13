@@ -3,7 +3,7 @@
 //! Then running `cargo integration-test` will validate we can properly call into that generated Wasm.
 //!
 //! You can easily convert unit tests to integration tests.
-//! 1. First copy them over verbatum,
+//! 1. First copy them over verbatim,
 //! 2. Then change
 //!      let mut deps = mock_dependencies(20);
 //!    to
@@ -17,14 +17,15 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coins, from_binary, log, AllBalanceResponse, Api, BankMsg, HandleResponse, HandleResult,
-    HumanAddr, InitResponse, InitResult, ReadonlyStorage, StdError,
+    coins, from_binary, log, AllBalanceResponse, BankMsg, HandleResponse, HandleResult, HumanAddr,
+    InitResponse, InitResult, StdError,
 };
-use cosmwasm_vm::from_slice;
-use cosmwasm_vm::testing::{
-    handle, init, mock_instance, mock_instance_with_balances, query, test_io,
+use cosmwasm_vm::{
+    from_slice,
+    mock::mock_env,
+    testing::{handle, init, mock_instance, mock_instance_with_balances, query, test_io},
+    Api, ReadonlyStorage,
 };
 
 use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};

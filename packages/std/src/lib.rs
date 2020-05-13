@@ -31,7 +31,9 @@ pub use crate::query::{
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
-pub use crate::types::{CanonicalAddr, Env, HumanAddr, Never};
+pub use crate::types::{
+    BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, Never,
+};
 
 #[cfg(feature = "staking")]
 pub use crate::init_handle::StakingMsg;

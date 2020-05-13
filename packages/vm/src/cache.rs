@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use lru::LruCache;
 use snafu::ResultExt;
 
-use cosmwasm_std::{Api, Extern, Querier, Storage};
+use crate::traits::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::compatability::check_wasm;
@@ -141,7 +141,7 @@ mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use crate::mock::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Never};
     use tempfile::TempDir;
 

@@ -22,9 +22,9 @@ impl Querier for CustomQuerier {
         // parse into our custom query class
         let request: QueryRequest<CustomQuery> = match from_slice(bin_request) {
             Ok(v) => v,
-            Err(e) => {
+            Err(_) => {
                 return Err(SystemError::InvalidRequest {
-                    error: format!("Parsing QueryRequest: {}", e),
+                    msg: bin_request.to_vec(),
                 })
             }
         };

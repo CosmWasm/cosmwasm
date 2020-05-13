@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::HumanAddr;
 
-/// SystemError is used for errors inside the VM and is API frindly (i.e. serializable).
+/// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
 ///
 /// This is used on return values for Querier as a nested result: Result<StdResult<T>, SystemError>
 /// The first wrap (SystemError) will trigger if the contract address doesn't exist,
@@ -16,9 +16,10 @@ use crate::HumanAddr;
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
-    InvalidRequest { error: String },
+    InvalidRequest { msg: Vec<u8> },
+    InvalidResponse { msg: Vec<u8> },
     NoSuchContract { addr: HumanAddr },
-    Unknown {},
+    Unknown,
     UnsupportedRequest { kind: String },
 }
 
@@ -27,9 +28,14 @@ impl std::error::Error for SystemError {}
 impl std::fmt::Display for SystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SystemError::InvalidRequest { error } => write!(f, "Cannot parse request: {}", error),
+            SystemError::InvalidRequest { msg } => {
+                write!(f, "Cannot parse request: {}", String::from_utf8_lossy(msg))
+            }
+            SystemError::InvalidResponse { msg } => {
+                write!(f, "Cannot parse response: {}", String::from_utf8_lossy(msg))
+            }
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
-            SystemError::Unknown {} => write!(f, "Unknown system error"),
+            SystemError::Unknown => write!(f, "Unknown system error"),
             SystemError::UnsupportedRequest { kind } => write!(f, "Unsupport query type: {}", kind),
         }
     }

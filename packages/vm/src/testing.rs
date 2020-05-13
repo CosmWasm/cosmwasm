@@ -5,12 +5,12 @@ use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
-use cosmwasm_std::testing::{
+use crate::mock::{
     mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MockStorage,
 };
+use crate::{Api, Querier, Storage};
 use cosmwasm_std::{
-    to_vec, Api, Coin, Env, HandleResult, HumanAddr, InitResult, Querier, QueryResponse, StdResult,
-    Storage,
+    to_vec, Coin, Env, HandleResult, HumanAddr, InitResult, QueryResponse, StdResult,
 };
 
 use crate::calls::{call_handle, call_init, call_query};

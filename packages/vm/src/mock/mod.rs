@@ -1,13 +1,15 @@
 use std::collections::HashMap;
 
-use crate::coins::Coin;
-use crate::encoding::Binary;
-use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest, WasmQuery};
-use crate::serde::{from_slice, to_binary};
-use crate::storage::MemoryStorage;
-use crate::traits::{Api, Extern, Querier, QuerierResult};
-use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, Never};
+use crate::{Api, Extern, FfiError, FfiResult, Querier, QuerierResult};
+use cosmwasm_std::{
+    from_slice, to_binary, AllBalanceResponse, BalanceResponse, BankQuery, Binary, BlockInfo,
+    CanonicalAddr, Coin, ContractInfo, Delegation, Env, HumanAddr, MessageInfo, Never,
+    QueryRequest, SystemError, Validator, WasmQuery,
+};
+
+mod storage;
+
+use storage::MemoryStorage;
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -63,13 +65,13 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
+    fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return Err(generic_err("Invalid input: human address too short"));
+            return Err(FfiError::Other);
         }
         if human.len() > self.canonical_length {
-            return Err(generic_err("Invalid input: human address too long"));
+            return Err(FfiError::Other);
         }
 
         let mut out = Vec::from(human.as_str());
@@ -80,11 +82,9 @@ impl Api for MockApi {
         Ok(CanonicalAddr(Binary(out)))
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
-            return Err(generic_err(
-                "Invalid input: canonical address length not correct",
-            ));
+            return Err(FfiError::Other);
         }
 
         // remove trailing 0's (TODO: fix this - but fine for first tests)
@@ -95,7 +95,7 @@ impl Api for MockApi {
             .filter(|&x| x != 0)
             .collect();
         // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed).map_err(invalid_utf8)?;
+        let human = String::from_utf8(trimmed).or(Err(FfiError::Other))?;
         Ok(HumanAddr(human))
     }
 }
@@ -127,22 +127,12 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 #[derive(Clone, Default)]
 pub struct MockQuerier {
     bank: BankQuerier,
-    #[cfg(feature = "staking")]
     staking: staking::StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
 }
 
 impl MockQuerier {
-    #[cfg(not(feature = "staking"))]
-    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
-        MockQuerier {
-            bank: BankQuerier::new(balances),
-            wasm: NoWasmQuerier {},
-        }
-    }
-
-    #[cfg(feature = "staking")]
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
@@ -151,12 +141,7 @@ impl MockQuerier {
         }
     }
 
-    #[cfg(feature = "staking")]
-    pub fn with_staking(
-        &mut self,
-        validators: &[crate::query::Validator],
-        delegations: &[crate::query::Delegation],
-    ) {
+    pub fn with_staking(&mut self, validators: &[Validator], delegations: &[Delegation]) {
         self.staking = staking::StakingQuerier::new(validators, delegations);
     }
 }
@@ -166,10 +151,10 @@ impl Querier for MockQuerier {
         // MockQuerier doesn't support Custom, so we ignore it completely here
         let request: QueryRequest<Never> = match from_slice(bin_request) {
             Ok(v) => v,
-            Err(e) => {
-                return Err(SystemError::InvalidRequest {
-                    error: format!("Parsing QueryRequest: {}", e),
-                })
+            Err(_) => {
+                return Ok(Err(SystemError::InvalidRequest {
+                    msg: bin_request.to_vec(),
+                }))
             }
         };
         self.handle_query(&request)
@@ -180,10 +165,9 @@ impl MockQuerier {
     pub fn handle_query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(_) => Err(SystemError::UnsupportedRequest {
+            QueryRequest::Custom(_) => Ok(Err(SystemError::UnsupportedRequest {
                 kind: "custom".to_string(),
-            }),
-            #[cfg(feature = "staking")]
+            })),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
@@ -202,7 +186,7 @@ impl NoWasmQuerier {
             WasmQuery::Raw { contract_addr, .. } => contract_addr,
         }
         .clone();
-        Err(SystemError::NoSuchContract { addr })
+        Ok(Err(SystemError::NoSuchContract { addr }))
     }
 }
 
@@ -235,26 +219,24 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                Ok(to_binary(&bank_res))
+                Ok(Ok(to_binary(&bank_res)))
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                Ok(to_binary(&bank_res))
+                Ok(Ok(to_binary(&bank_res)))
             }
         }
     }
 }
 
-#[cfg(feature = "staking")]
 mod staking {
-    use crate::query::{
-        Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
-    };
-    use crate::serde::to_binary;
     use crate::traits::QuerierResult;
+    use cosmwasm_std::{
+        to_binary, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+    };
 
     #[derive(Clone, Default)]
     pub struct StakingQuerier {
@@ -276,7 +258,7 @@ mod staking {
                     let val_res = ValidatorsResponse {
                         validators: self.validators.clone(),
                     };
-                    Ok(to_binary(&val_res))
+                    Ok(Ok(to_binary(&val_res)))
                 }
                 StakingQuery::Delegations {
                     delegator,
@@ -293,7 +275,7 @@ mod staking {
                     let delegations: Vec<_> =
                         self.delegations.iter().filter(matches).cloned().collect();
                     let val_res = DelegationsResponse { delegations };
-                    Ok(to_binary(&val_res))
+                    Ok(Ok(to_binary(&val_res)))
                 }
             }
         }
@@ -303,7 +285,7 @@ mod staking {
     mod test {
         use super::*;
 
-        use crate::{coin, from_binary, HumanAddr};
+        use cosmwasm_std::{coin, from_binary, HumanAddr};
 
         #[test]
         fn staking_querier_validators() {
@@ -326,6 +308,7 @@ mod staking {
             let raw = staking
                 .query(&StakingQuery::Validators {})
                 .unwrap()
+                .unwrap()
                 .unwrap();
             let vals: ValidatorsResponse = from_binary(&raw).unwrap();
             assert_eq!(vals.validators, vec![val1, val2]);
@@ -342,6 +325,7 @@ mod staking {
                     delegator,
                     validator,
                 })
+                .unwrap()
                 .unwrap()
                 .unwrap();
             let dels: DelegationsResponse = from_binary(&raw).unwrap();
@@ -450,7 +434,7 @@ mod staking {
 mod test {
     use super::*;
 
-    use crate::{coin, coins, from_binary};
+    use cosmwasm_std::{coin, coins, from_binary};
 
     #[test]
     fn mock_env_arguments() {
@@ -481,27 +465,26 @@ mod test {
     }
 
     #[test]
-    #[should_panic(expected = "length not correct")]
+    // #[should_panic(expected = "length not correct")]
     fn human_address_input_length() {
         let api = MockApi::new(10);
         let input = CanonicalAddr(Binary(vec![61; 11]));
-        api.human_address(&input).unwrap();
+        // api.human_address(&input).unwrap();
+        assert_eq!(api.human_address(&input).unwrap_err(), FfiError::Other);
     }
 
     #[test]
-    #[should_panic(expected = "address too short")]
     fn canonical_address_min_input_length() {
         let api = MockApi::new(10);
         let human = HumanAddr("1".to_string());
-        let _ = api.canonical_address(&human).unwrap();
+        assert_eq!(api.canonical_address(&human).unwrap_err(), FfiError::Other);
     }
 
     #[test]
-    #[should_panic(expected = "address too long")]
     fn canonical_address_max_input_length() {
         let api = MockApi::new(10);
         let human = HumanAddr("longer-than-10".to_string());
-        let _ = api.canonical_address(&human).unwrap();
+        assert_eq!(api.canonical_address(&human).unwrap_err(), FfiError::Other);
     }
 
     #[test]
@@ -515,6 +498,7 @@ mod test {
             .query(&BankQuery::AllBalances {
                 address: addr.clone(),
             })
+            .unwrap()
             .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
@@ -534,6 +518,7 @@ mod test {
                 denom: "FLY".to_string(),
             })
             .unwrap()
+            .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&fly).unwrap();
         assert_eq!(res.amount, coin(777, "FLY"));
@@ -544,6 +529,7 @@ mod test {
                 address: addr.clone(),
                 denom: "MISS".to_string(),
             })
+            .unwrap()
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
@@ -562,6 +548,7 @@ mod test {
                 address: HumanAddr::from("elsewhere"),
             })
             .unwrap()
+            .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
         assert_eq!(res.amount, vec![]);
@@ -572,6 +559,7 @@ mod test {
                 address: HumanAddr::from("elsewhere"),
                 denom: "ELF".to_string(),
             })
+            .unwrap()
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();

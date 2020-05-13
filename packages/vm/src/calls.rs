@@ -3,13 +3,14 @@ use snafu::ResultExt;
 use std::fmt;
 
 use cosmwasm_std::{
-    Api, Env, HandleResponse, HandleResult, InitResponse, InitResult, Querier, QueryResponse,
-    QueryResult, StdResult, Storage,
+    Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResponse, QueryResult,
+    StdResult,
 };
 
 use crate::errors::{RuntimeErr, VmResult, WasmerRuntimeErr};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
+use crate::traits::{Api, Querier, Storage};
 use schemars::JsonSchema;
 
 static MAX_LENGTH_INIT: usize = 100_000;

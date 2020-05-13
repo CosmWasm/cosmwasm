@@ -2,14 +2,10 @@
 
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
-#[cfg(feature = "iterator")]
-use std::mem;
 
 #[cfg(feature = "iterator")]
-use cosmwasm_std::StdResult;
-use cosmwasm_std::{Api, Binary, CanonicalAddr, HumanAddr, Querier, QuerierResult, Storage};
-#[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
+use cosmwasm_std::Order;
+use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 use wasmer_runtime_core::vm::Ctx;
 
 #[cfg(feature = "iterator")]
@@ -17,11 +13,12 @@ use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{with_querier_from_context, with_storage_from_context};
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{make_runtime_err, VmError};
+use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
+use crate::traits::{Api, Querier, Storage};
 
 /// A kibi (kilo binary)
 static KI: usize = 1024;
@@ -37,6 +34,7 @@ static MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 static MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
+// TODO convert these numbers to a single enum.
 mod errors {
     /// Success
     pub static NONE: i32 = 0;
@@ -53,11 +51,6 @@ mod errors {
     // unused block (-1_000_3xx)
     // unused block (-1_000_4xx)
 
-    /// Generic error - using context with no Storage attached
-    pub static NO_CONTEXT_DATA: i32 = -1_000_500;
-    /// Generic error - An unknown error accessing the DB
-    pub static DB_UNKNOWN: i32 = -1_000_501;
-
     /// db_read errors (-1_001_0xx)
     pub mod read {
         // pub static UNKNOWN: i32 = -1_001_000;
@@ -70,22 +63,16 @@ mod errors {
 
     /// canonicalize_address errors (-1_002_0xx)
     pub mod canonicalize {
-        /// An unknown error when canonicalizing address
-        pub static UNKNOWN: i32 = -1_002_000;
         /// The input address (human address) was invalid
         pub static INVALID_INPUT: i32 = -1_002_001;
     }
 
-    /// humanize_address errors (-1_002_1xx)
-    pub mod humanize {
-        /// An unknonw error when humanizing address
-        pub static UNKNOWN: i32 = -1_002_100;
-    }
+    // /// humanize_address errors (-1_002_1xx)
+    // pub mod humanize {
+    // }
 
     /// query_chain errors (-1_003_0xx)
     pub mod query_chain {
-        /// An unknown error in query_chain
-        // pub static UNKNOWN: i32 = -1_003_000;
         /// Cannot serialize query response
         pub static CANNOT_SERIALIZE_RESPONSE: i32 = -1_003_001;
     }
@@ -95,86 +82,103 @@ mod errors {
     /// db_scan errors (-2_000_0xx)
     #[cfg(feature = "iterator")]
     pub mod scan {
-        /// An unknown error in the db_scan implementation
-        pub static UNKNOWN: i32 = -2_000_001;
         /// Invalid Order enum value passed into scan
         pub static INVALID_ORDER: i32 = -2_000_002;
     }
 
-    /// db_next errors (-2_000_1xx)
-    #[cfg(feature = "iterator")]
-    pub mod next {
-        /// An unknown error in the db_next implementation
-        pub static UNKNOWN: i32 = -2_000_101;
-        /// Iterator with the given ID is not registered
-        pub static ITERATOR_DOES_NOT_EXIST: i32 = -2_000_102;
-    }
+    // /// db_next errors (-2_000_1xx)
+    // #[cfg(feature = "iterator")]
+    // pub mod next {
+    // }
+}
+
+/// This macro wraps the read_region function for the purposes of the functions below which need to report errors
+/// in its operation to the caller in the WASM runtime.
+/// On success, the read data is returned from the expression.
+/// On failure, an error number is wrapped in `Ok` and returned from the function.
+macro_rules! read_region {
+    ($ctx: expr, $ptr: expr, $length: expr) => {
+        match read_region($ctx, $ptr, $length) {
+            Ok(data) => data,
+            Err(err) => {
+                return Ok(match err {
+                    VmError::RegionLengthTooBigErr { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
+                    _ => errors::REGION_READ_UNKNOWN,
+                })
+            }
+        }
+    };
+}
+
+#[cfg(feature = "iterator")]
+/// This macro wraps the maybe_read_region function for the purposes of the functions below which need to report errors
+/// in its operation to the caller in the WASM runtime.
+/// On success, the optionally read data is returned from the expression.
+/// On failure, an error number is wrapped in `Ok` and returned from the function.
+macro_rules! maybe_read_region {
+    ($ctx: expr, $ptr: expr, $length: expr) => {
+        match maybe_read_region($ctx, $ptr, $length) {
+            Ok(data) => data,
+            Err(err) => {
+                return Ok(match err {
+                    VmError::RegionLengthTooBigErr { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
+                    _ => errors::REGION_READ_UNKNOWN,
+                })
+            }
+        }
+    };
+}
+
+/// This macro wraps the write_region function for the purposes of the functions below which need to report errors
+/// in its operation to the caller in the WASM runtime.
+/// On success, `errors::NONE` is returned from the expression.
+/// On failure, an error number is wrapped in `Ok` and returned from the function.
+macro_rules! write_region {
+    ($ctx: expr, $ptr: expr, $buffer: expr) => {
+        match write_region($ctx, $ptr, $buffer) {
+            Ok(()) => errors::NONE,
+            Err(err) => {
+                return Ok(match err {
+                    VmError::RegionTooSmallErr { .. } => errors::REGION_WRITE_TOO_SMALL,
+                    _ => errors::REGION_WRITE_UNKNOWN,
+                })
+            }
+        }
+    };
 }
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-    let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
-    let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-        store
-            .get(&key)
-            .or_else(|_| make_runtime_err("Error reading from backend"))
-    }) {
-        Ok(v) => v,
-        Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
-        Err(_) => return errors::DB_UNKNOWN,
-    };
-    match value {
-        Some(buf) => match write_region(ctx, value_ptr, &buf) {
-            Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
-            Err(_) => errors::REGION_WRITE_UNKNOWN,
-        },
+pub fn do_read<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    key_ptr: u32,
+    value_ptr: u32,
+) -> VmResult<i32> {
+    let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
+    // `Ok(expr?)` used to convert the error variant.
+    let value: Option<Vec<u8>> =
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)?))?;
+    Ok(match value {
+        Some(buf) => write_region!(ctx, value_ptr, &buf),
         None => errors::read::KEY_DOES_NOT_EXIST,
-    }
+    })
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-pub fn do_write<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-    let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
-    let value = match read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
-    match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-        store
-            .set(&key, &value)
-            .or_else(|_| make_runtime_err("Error setting database value in backend"))
-    }) {
-        Ok(_) => errors::NONE,
-        Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
-        Err(_) => errors::DB_UNKNOWN,
-    }
+pub fn do_write<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    key_ptr: u32,
+    value_ptr: u32,
+) -> VmResult<i32> {
+    let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
+    let value = read_region!(ctx, value_ptr, MAX_LENGTH_DB_VALUE);
+    with_storage_from_context::<S, Q, _, ()>(ctx, |store| Ok(store.set(&key, &value)?))
+        .and(Ok(errors::NONE))
 }
 
-pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> i32 {
-    let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
-    match with_storage_from_context::<S, Q, _, ()>(ctx, |store| {
-        store
-            .remove(&key)
-            .or_else(|_| make_runtime_err("Error removing database key from backend"))
-    }) {
-        Ok(_) => errors::NONE,
-        Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
-        Err(_) => errors::DB_UNKNOWN,
-    }
+pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
+    let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
+    with_storage_from_context::<S, Q, _, ()>(ctx, |store| Ok(store.remove(&key)?))
+        .and(Ok(errors::NONE))
 }
 
 pub fn do_canonicalize_address<A: Api>(
@@ -182,24 +186,14 @@ pub fn do_canonicalize_address<A: Api>(
     ctx: &mut Ctx,
     human_ptr: u32,
     canonical_ptr: u32,
-) -> i32 {
-    let human_data = match read_region(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
+) -> VmResult<i32> {
+    let human_data = read_region!(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS);
     let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return errors::canonicalize::INVALID_INPUT,
+        Err(_) => return Ok(errors::canonicalize::INVALID_INPUT),
     };
-    match api.canonical_address(&human) {
-        Ok(canon) => match write_region(ctx, canonical_ptr, canon.as_slice()) {
-            Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
-            Err(_) => errors::REGION_WRITE_UNKNOWN,
-        },
-        Err(_) => errors::canonicalize::UNKNOWN,
-    }
+    let canon = api.canonical_address(&human)?;
+    Ok(write_region!(ctx, canonical_ptr, canon.as_slice()))
 }
 
 pub fn do_humanize_address<A: Api>(
@@ -207,44 +201,31 @@ pub fn do_humanize_address<A: Api>(
     ctx: &mut Ctx,
     canonical_ptr: u32,
     human_ptr: u32,
-) -> i32 {
-    let canonical = match read_region(ctx, canonical_ptr, MAX_LENGTH_CANONICAL_ADDRESS) {
-        Ok(data) => Binary(data),
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
-    match api.human_address(&CanonicalAddr(canonical)) {
-        Ok(human) => match write_region(ctx, human_ptr, human.as_str().as_bytes()) {
-            Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
-            Err(_) => errors::REGION_WRITE_UNKNOWN,
-        },
-        Err(_) => errors::humanize::UNKNOWN,
-    }
+) -> VmResult<i32> {
+    let canonical = Binary(read_region!(
+        ctx,
+        canonical_ptr,
+        MAX_LENGTH_CANONICAL_ADDRESS
+    ));
+    let human = api.human_address(&CanonicalAddr(canonical))?;
+    Ok(write_region!(ctx, human_ptr, human.as_str().as_bytes()))
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     request_ptr: u32,
     response_ptr: u32,
-) -> i32 {
-    let request = match read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
+) -> VmResult<i32> {
+    let request = read_region!(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST);
 
-    let res: QuerierResult =
-        with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| querier.raw_query(&request));
+    let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| {
+        Ok(querier.raw_query(&request)?)
+    })?;
 
-    match to_vec(&res) {
-        Ok(serialized) => match write_region(ctx, response_ptr, &serialized) {
-            Ok(()) => errors::NONE,
-            Err(VmError::RegionTooSmallErr { .. }) => errors::REGION_WRITE_TOO_SMALL,
-            Err(_) => errors::REGION_WRITE_UNKNOWN,
-        },
+    Ok(match to_vec(&res) {
+        Ok(serialized) => write_region!(ctx, response_ptr, &serialized),
         Err(_) => errors::query_chain::CANNOT_SERIALIZE_RESPONSE,
-    }
+    })
 }
 
 #[cfg(feature = "iterator")]
@@ -253,45 +234,19 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
-) -> i32 {
-    let start = match maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
-    let end = match maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY) {
-        Ok(data) => data,
-        Err(VmError::RegionLengthTooBigErr { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-        Err(_) => return errors::REGION_READ_UNKNOWN,
-    };
+) -> VmResult<i32> {
+    let start = maybe_read_region!(ctx, start_ptr, MAX_LENGTH_DB_KEY);
+    let end = maybe_read_region!(ctx, end_ptr, MAX_LENGTH_DB_KEY);
     let order: Order = match order.try_into() {
-        Ok(o) => o,
-        Err(_) => return errors::scan::INVALID_ORDER,
+        Ok(order) => order,
+        Err(_) => return Ok(errors::scan::INVALID_ORDER),
     };
-    let range_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-        let iter = match store.range(start.as_deref(), end.as_deref(), order) {
-            Ok(iter) => iter,
-            Err(_) => return make_runtime_err("An error occurred in range call"),
-        };
+    let iterator = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        Ok(store.range(start.as_deref(), end.as_deref(), order)?)
+    })?;
 
-        // Unsafe: I know the iterator will be deallocated before the storage as I control the lifetime below
-        // But there is no way for the compiler to know. So... let's just lie to the compiler a little bit.
-        let live_forever: Box<dyn Iterator<Item = StdResult<KV>> + 'static> =
-            unsafe { mem::transmute(iter) };
-        Ok(live_forever)
-    });
-
-    match range_result {
-        Ok(iterator) => {
-            let new_id = add_iterator::<S, Q>(ctx, iterator);
-            match to_i32(new_id) {
-                Ok(new_id_signed) => new_id_signed,
-                Err(_) => errors::scan::UNKNOWN,
-            }
-        }
-        Err(VmError::UninitializedContextData { .. }) => errors::NO_CONTEXT_DATA,
-        Err(_) => errors::scan::UNKNOWN,
-    }
+    let new_id = add_iterator::<S, Q>(ctx, iterator);
+    to_i32(new_id)
 }
 
 #[cfg(feature = "iterator")]
@@ -300,49 +255,36 @@ pub fn do_next<S: Storage, Q: Querier>(
     iterator_id: u32,
     key_ptr: u32,
     value_ptr: u32,
-) -> i32 {
-    let item = match with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| {
-        Ok(iter.next())
-    }) {
-        Ok(i) => i,
-        Err(VmError::IteratorDoesNotExist { .. }) => return errors::next::ITERATOR_DOES_NOT_EXIST,
-        Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
-        Err(_) => return errors::next::UNKNOWN,
-    };
+) -> VmResult<i32> {
+    // This always succeeds but `?` is cheaper  and more future-proof than `unwrap` :D
+    let item = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
 
     // Prepare return values. Both key and value are Options and will be written if set.
-    let (key, value) = match item {
-        Some(Ok(item)) => (Some(item.0), Some(item.1)),
-        Some(Err(_)) => return errors::next::UNKNOWN,
-        None => (Some(Vec::<u8>::new()), None), // Empty key will later be treated as _no more element_.
+    let (key, value) = if let Some(result) = item {
+        let item = result?;
+        (Some(item.0), Some(item.1))
+    } else {
+        (Some(Vec::<u8>::new()), None) // Empty key will later be treated as _no more element_.
     };
 
     if let Some(key) = key {
-        match write_region(ctx, key_ptr, &key) {
-            Ok(()) => (),
-            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
-            Err(_) => return errors::REGION_WRITE_UNKNOWN,
-        };
+        write_region!(ctx, key_ptr, &key);
     }
 
     if let Some(value) = value {
-        match write_region(ctx, value_ptr, &value) {
-            Ok(()) => (),
-            Err(VmError::RegionTooSmallErr { .. }) => return errors::REGION_WRITE_TOO_SMALL,
-            Err(_) => return errors::REGION_WRITE_UNKNOWN,
-        };
+        write_region!(ctx, value_ptr, &value);
     }
 
-    errors::NONE
+    Ok(errors::NONE)
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage};
+    use crate::mock::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
         coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
-        ReadonlyStorage, SystemError, WasmQuery,
+        SystemError, WasmQuery,
     };
     use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
 
@@ -350,6 +292,8 @@ mod test {
     use crate::context::{move_into_context, setup_context};
     #[cfg(feature = "iterator")]
     use crate::conversion::to_u32;
+    use crate::traits::ReadonlyStorage;
+    use crate::FfiError;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -433,7 +377,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, value_ptr), VALUE1);
     }
 
@@ -448,7 +392,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::read::KEY_DOES_NOT_EXIST);
+        assert_eq!(result.unwrap(), errors::read::KEY_DOES_NOT_EXIST);
         assert!(force_read(ctx, value_ptr).is_empty());
     }
 
@@ -463,7 +407,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
         assert!(force_read(ctx, value_ptr).is_empty());
     }
 
@@ -478,7 +422,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
         assert!(force_read(ctx, value_ptr).is_empty());
     }
 
@@ -493,7 +437,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -513,7 +457,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(KEY1).expect("error getting value"))
@@ -533,7 +477,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
 
         let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -553,7 +497,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -567,7 +511,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -581,7 +525,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_remove::<S, Q>(ctx, key_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
 
         let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(existing_key).expect("error getting value"))
@@ -602,7 +546,7 @@ mod test {
 
         let result = do_remove::<S, Q>(ctx, key_ptr);
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
 
         let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(non_existent_key).expect("error getting value"))
@@ -621,7 +565,7 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_remove::<S, Q>(ctx, key_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -636,7 +580,7 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
     }
 
@@ -654,15 +598,25 @@ mod test {
         let api = MockApi::new(8);
 
         let result = do_canonicalize_address(api, ctx, source_ptr1, dest_ptr);
-        assert_eq!(result, errors::canonicalize::INVALID_INPUT);
+        assert_eq!(result.unwrap(), errors::canonicalize::INVALID_INPUT);
 
         // TODO: would be nice if do_canonicalize_address could differentiate between different errors
         // from Api.canonical_address and return INVALID_INPUT for those cases as well.
         let result = do_canonicalize_address(api, ctx, source_ptr2, dest_ptr);
-        assert_eq!(result, errors::canonicalize::UNKNOWN);
+        match result.unwrap_err() {
+            VmError::FfiErr {
+                source: FfiError::Other,
+            } => {}
+            err => panic!("Incorrect error returned: {:?}", err),
+        };
 
         let result = do_canonicalize_address(api, ctx, source_ptr3, dest_ptr);
-        assert_eq!(result, errors::canonicalize::UNKNOWN);
+        match result.unwrap_err() {
+            VmError::FfiErr {
+                source: FfiError::Other,
+            } => {}
+            err => panic!("Incorrect error returned: {:?}", err),
+        };
     }
 
     #[test]
@@ -677,7 +631,7 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -692,7 +646,7 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
     }
 
     #[test]
@@ -707,7 +661,7 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, dest_ptr), b"foo");
     }
 
@@ -723,7 +677,12 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::humanize::UNKNOWN);
+        match result.unwrap_err() {
+            VmError::FfiErr {
+                source: FfiError::Other,
+            } => {}
+            err => panic!("Incorrect error returned: {:?}", err),
+        };
     }
 
     #[test]
@@ -738,7 +697,7 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::REGION_READ_LENGTH_TOO_BIG);
+        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
     #[test]
@@ -753,7 +712,7 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
     }
 
     #[test]
@@ -771,10 +730,11 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult =
+            cosmwasm_std::from_slice(&response).unwrap();
         let query_result_inner = query_result.unwrap();
         let query_result_inner_inner = query_result_inner.unwrap();
         let parsed_again: AllBalanceResponse = from_binary(&query_result_inner_inner).unwrap();
@@ -785,22 +745,22 @@ mod test {
     fn do_query_chain_fails_for_broken_request() {
         let mut instance = make_instance();
 
-        let request_ptr = write_data(&mut instance, b"Not valid JSON for sure");
+        let request = b"Not valid JSON for sure";
+        let request_ptr = write_data(&mut instance, request);
         let response_ptr = create_empty(&mut instance, 1000);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
         let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult =
+            cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
             Ok(_) => panic!("This must not succeed"),
-            Err(SystemError::InvalidRequest { error }) => {
-                assert!(error.starts_with("Parsing QueryRequest"), error)
-            }
+            Err(SystemError::InvalidRequest { msg }) => assert_eq!(msg, request),
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
@@ -821,10 +781,11 @@ mod test {
         leave_default_data(ctx);
 
         let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         let response = force_read(ctx, response_ptr);
 
-        let query_result: QuerierResult = cosmwasm_std::from_slice(&response).unwrap();
+        let query_result: cosmwasm_std::QuerierResult =
+            cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
             Ok(_) => panic!("This must not succeed"),
             Err(SystemError::NoSuchContract { addr }) => {
@@ -842,7 +803,7 @@ mod test {
         leave_default_data(ctx);
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
         assert_eq!(1, id);
 
@@ -867,7 +828,7 @@ mod test {
         leave_default_data(ctx);
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()))
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()).unwrap())
             .expect("ID must not be negative");
         assert_eq!(1, id);
 
@@ -895,7 +856,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, start, end, Order::Ascending.into()))
+        let id = to_u32(do_scan::<S, Q>(ctx, start, end, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
         let item =
@@ -915,9 +876,9 @@ mod test {
         leave_default_data(ctx);
 
         // unbounded, ascending and descending
-        let id1 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+        let id1 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
-        let id2 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()))
+        let id2 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()).unwrap())
             .expect("ID must not be negative");
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
@@ -959,24 +920,24 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
         // Entry 1
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, key_ptr), KEY1);
         assert_eq!(force_read(ctx, value_ptr), VALUE1);
 
         // Entry 2
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, key_ptr), KEY2);
         assert_eq!(force_read(ctx, value_ptr), VALUE2);
 
         // End
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
-        assert_eq!(result, errors::NONE);
+        assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, key_ptr), b"");
         // API makes no guarantees for value_ptr in this case
     }
@@ -994,7 +955,11 @@ mod test {
 
         let non_existent_id = 42u32;
         let result = do_next::<S, Q>(ctx, non_existent_id, key_ptr, value_ptr);
-        assert_eq!(result, errors::next::ITERATOR_DOES_NOT_EXIST);
+        // assert_eq!(result, errors::next::ITERATOR_DOES_NOT_EXIST);
+        match result {
+            Err(VmError::IteratorDoesNotExist { id, .. }) if id == non_existent_id => {}
+            _ => panic!("Got an unexpected error: {:?}", result),
+        }
     }
 
     #[test]
@@ -1008,11 +973,11 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
     }
 
     #[test]
@@ -1026,10 +991,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()))
+        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
         let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
-        assert_eq!(result, errors::REGION_WRITE_TOO_SMALL);
+        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
     }
 }

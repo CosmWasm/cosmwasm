@@ -91,14 +91,40 @@ pub enum VmError {
         source: core_error::RuntimeError,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Calling external function through FFI: {}", source))]
+    FfiErr {
+        #[snafu(backtrace)]
+        source: FfiError,
+    },
+    #[snafu(display("Ran out of gas during contract execution"))]
+    GasDepletion,
 }
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
 
-pub fn make_runtime_err<T>(msg: &'static str) -> VmResult<T> {
-    RuntimeErr { msg }.fail()
-}
-
 pub fn make_validation_err<T>(msg: String) -> VmResult<T> {
     ValidationErr { msg }.fail()
 }
+
+#[derive(PartialEq, Debug, Snafu)]
+pub enum FfiError {
+    #[snafu(display("Panic in FFI call"))]
+    ForeignPanic,
+    #[snafu(display("bad argument passed to FFI"))]
+    BadArgument,
+    #[snafu(display("Ran out of gas during FFI call"))]
+    OutOfGas,
+    #[snafu(display("Unspecified Error during FFI call"))]
+    Other,
+}
+
+impl From<FfiError> for VmError {
+    fn from(ffi_error: FfiError) -> Self {
+        match ffi_error {
+            FfiError::OutOfGas => VmError::GasDepletion,
+            _ => VmError::FfiErr { source: ffi_error },
+        }
+    }
+}
+
+pub type FfiResult<T> = core::result::Result<T, FfiError>;
