@@ -3,7 +3,6 @@ use cosmwasm_std::{
     HandleResponse, HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage,
     Uint128, WasmMsg,
 };
-use std::str::FromStr;
 
 use crate::msg::{
     BalanceResponse, ClaimsResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg,
@@ -413,6 +412,7 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
     use cosmwasm_std::{coins, from_binary, CosmosMsg, Decimal, Validator};
+    use std::str::FromStr;
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
         Validator {

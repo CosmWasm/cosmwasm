@@ -25,6 +25,24 @@ docker run --rm -v "$(pwd)":/code \
   && cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.8.wasm
 ```
 
+To rebuild all contracts used by other repos for testing (before tagging a release):
+```sh
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  confio/cosmwasm-opt:0.7.3 ./contracts/queue
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  confio/cosmwasm-opt:0.7.3 ./contracts/reflect
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  confio/cosmwasm-opt:0.7.3 ./contracts/staking
+```
+
 You can do the same for `reflect` and `queue` when there are breaking changes.
 Those are not used internally for testing, but provided here for use testing
 other projects, like `go-cosmwasm`.
