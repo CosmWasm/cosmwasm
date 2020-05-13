@@ -98,6 +98,19 @@ where
     pub fn update(
         &mut self,
         key: &[u8],
+        action: &dyn Fn(Option<T>) -> StdResult<T>,
+    ) -> StdResult<T> {
+        let input = self.may_load(key)?;
+        let output = action(input)?;
+        self.save(key, &output)?;
+        Ok(output)
+    }
+
+    /// update_mut is like update but takes FnMut allowing you to pass in a closure that modifies some
+    /// shared variable
+    pub fn update_mut(
+        &mut self,
+        key: &[u8],
         action: &mut dyn FnMut(Option<T>) -> StdResult<T>,
     ) -> StdResult<T> {
         let input = self.may_load(key)?;
@@ -265,12 +278,12 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let mut birthday = |mayd: Option<Data>| -> StdResult<Data> {
+        let birthday = |mayd: Option<Data>| -> StdResult<Data> {
             let mut d = mayd.ok_or(not_found("Data"))?;
             d.age += 1;
             Ok(d)
         };
-        let output = bucket.update(b"maria", &mut birthday).unwrap();
+        let output = bucket.update(b"maria", &birthday).unwrap();
         let expected = Data {
             name: "Maria".to_string(),
             age: 43,
@@ -302,7 +315,7 @@ mod test {
             d.age += 1;
             Ok(d)
         };
-        let output = bucket.update(b"maria", &mut birthday).unwrap();
+        let output = bucket.update_mut(b"maria", &mut birthday).unwrap();
         let expected = Data {
             name: "Maria".to_string(),
             age: 43,
@@ -325,7 +338,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", &mut |_d| Err(generic_err("cuz i feel like it")));
+        let output = bucket.update(b"maria", &|_d| Err(generic_err("cuz i feel like it")));
         assert!(output.is_err());
 
         // load it properly
@@ -345,7 +358,7 @@ mod test {
 
         // it's my birthday
         let output = bucket
-            .update(b"maria", &mut |d| match d {
+            .update(b"maria", &|d| match d {
                 Some(_) => Err(generic_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })
