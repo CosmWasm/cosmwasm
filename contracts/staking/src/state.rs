@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Decimal9, HumanAddr, ReadonlyStorage, Storage, Uint128};
+use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, ReadonlyStorage, Storage, Uint128};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -42,7 +42,7 @@ pub struct InvestmentInfo {
     /// this is the denomination we can stake (and only one we accept for payments)
     pub bond_denom: String,
     /// this is how much the owner takes as a cut when someone unbonds
-    pub exit_tax: Decimal9,
+    pub exit_tax: Decimal,
     /// All tokens are bonded to this validator
     /// FIXME: humanize/canonicalize address doesn't work for validator addrresses
     pub validator: HumanAddr,

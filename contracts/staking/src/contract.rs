@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coin, generic_err, log, to_binary, unauthorized, Api, BankMsg, Binary, Env, Extern,
+    coin, generic_err, log, to_binary, unauthorized, Api, BankMsg, Binary, Decimal, Env, Extern,
     HandleResponse, HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage,
     Uint128, WasmMsg,
 };
@@ -12,6 +12,8 @@ use crate::state::{
     balances, balances_read, claims, claims_read, invest_info, invest_info_read, token_info,
     token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply,
 };
+
+const FALLBACK_RATIO: Decimal = Decimal::one();
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -115,7 +117,11 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     // update total supply
     let mut to_mint = Uint128(0);
     let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
-        to_mint = payment.amount.multiply_ratio(supply.issued, supply.bonded);
+        to_mint = if supply.issued.is_zero() || supply.bonded.is_zero() {
+            FALLBACK_RATIO * payment.amount
+        } else {
+            payment.amount.multiply_ratio(supply.issued, supply.bonded)
+        };
         supply.bonded += payment.amount;
         supply.issued += to_mint;
         Ok(supply)
@@ -392,7 +398,11 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
         min_withdrawl: invest.min_withdrawl,
         token_supply: supply.issued,
         staked_tokens: coin(supply.bonded.u128(), &invest.bond_denom),
-        nominal_value: supply.bonded.calc_ratio(supply.issued),
+        nominal_value: if supply.issued.is_zero() {
+            FALLBACK_RATIO
+        } else {
+            Decimal::from_ratio(supply.bonded, supply.issued)
+        },
     };
     to_binary(&res)
 }
@@ -401,14 +411,14 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, CosmosMsg, Decimal9, Validator};
+    use cosmwasm_std::{coins, from_binary, CosmosMsg, Decimal, Validator};
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
         Validator {
             address: addr.into(),
-            commission: Decimal9::percent(3),
-            max_commission: Decimal9::percent(10),
-            max_change_rate: Decimal9::percent(1),
+            commission: Decimal::percent(3),
+            max_commission: Decimal::percent(10),
+            max_change_rate: Decimal::percent(1),
         }
     }
 
@@ -420,7 +430,7 @@ mod tests {
             symbol: "DRV".to_string(),
             decimals: 9,
             validator: HumanAddr::from(DEFAULT_VALIDATOR),
-            exit_tax: Decimal9::percent(tax_percent),
+            exit_tax: Decimal::percent(tax_percent),
             min_withdrawl: Uint128(min_withdrawl),
         }
     }
@@ -461,7 +471,7 @@ mod tests {
             symbol: "DRV".to_string(),
             decimals: 9,
             validator: HumanAddr::from("my-validator"),
-            exit_tax: Decimal9::percent(2),
+            exit_tax: Decimal::percent(2),
             min_withdrawl: Uint128(50),
         };
         let env = mock_env(&deps.api, &creator, &[]);
@@ -496,7 +506,7 @@ mod tests {
             symbol: "DRV".to_string(),
             decimals: 0,
             validator: HumanAddr::from("my-validator"),
-            exit_tax: Decimal9::percent(2),
+            exit_tax: Decimal::percent(2),
             min_withdrawl: Uint128(50),
         };
         let env = mock_env(&deps.api, &creator, &[]);
@@ -527,7 +537,7 @@ mod tests {
 
         assert_eq!(invest.token_supply, Uint128(0));
         assert_eq!(invest.staked_tokens, coin(0, "stake"));
-        assert_eq!(invest.nominal_value, Decimal9::one());
+        assert_eq!(invest.nominal_value, Decimal::one());
     }
 
     #[test]
@@ -569,7 +579,7 @@ mod tests {
         let invest: InvestmentResponse = from_binary(&res).unwrap();
         assert_eq!(invest.token_supply, Uint128(1000));
         assert_eq!(invest.staked_tokens, coin(1000, "stake"));
-        assert_eq!(invest.nominal_value, Decimal9::one());
+        assert_eq!(invest.nominal_value, Decimal::one());
     }
 
     #[test]
@@ -606,8 +616,7 @@ mod tests {
         let invest: InvestmentResponse = from_binary(&res).unwrap();
         assert_eq!(invest.token_supply, Uint128(1000));
         assert_eq!(invest.staked_tokens, coin(1500, "stake"));
-        let mut ratio = Decimal9::one();
-        ratio.0 = ratio.0 * 3 / 2; // TODO: expose this on decimal
+        let ratio = Decimal::one() + Decimal::percent(50);
         assert_eq!(invest.nominal_value, ratio);
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
@@ -712,8 +721,7 @@ mod tests {
         assert_eq!(get_claims(&deps, &bob), bobs_claim);
 
         // supplies updated, ratio the same (1.5)
-        let mut ratio = Decimal9::one();
-        ratio.0 = ratio.0 * 3 / 2; // TODO: expose this on decimal
+        let ratio = Decimal::one() + Decimal::percent(50);
 
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
         let invest: InvestmentResponse = from_binary(&res).unwrap();
