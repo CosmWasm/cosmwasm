@@ -1,17 +1,21 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::{fmt, ops};
 
 use crate::errors::{generic_err, underflow, StdError, StdResult};
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
+///
+/// The greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Decimal(Uint128);
 
 const DECIMAL_FRACTIONAL: Uint128 = Uint128(1_000_000_000_000_000_000);
 
 impl Decimal {
+    pub const MAX: Decimal = Decimal(Uint128(u128::MAX));
+
     /// Create a 1.0 Decimal
     pub const fn one() -> Decimal {
         Decimal(DECIMAL_FRACTIONAL)
@@ -41,6 +45,50 @@ impl Decimal {
         }
         // TODO: better algorithm with less rounding potential?
         Decimal(Uint128(nominator * DECIMAL_FRACTIONAL.u128() / denominator))
+    }
+
+    /// Converts the decimal string to a Decimal
+    /// Possible inputs: "1.23", "1", "000012", "1.123000000"
+    /// Disallowed: "", ".23"
+    ///
+    /// This never performs any kind of rounding.
+    /// More than 18 fractional digits, even zeros, result in an error.
+    pub fn from_str(input: &str) -> StdResult<Decimal> {
+        let parts: Vec<&str> = input.split('.').collect();
+        match parts.len() {
+            1 => {
+                let whole = parts[0]
+                    .parse::<u128>()
+                    .map_err(|_| generic_err("Error parsing whole"))?;
+
+                let whole_as_atomics = whole
+                    .checked_mul(DECIMAL_FRACTIONAL.u128())
+                    .ok_or_else(|| generic_err("Value too big"))?;
+                Ok(Decimal(Uint128(whole_as_atomics)))
+            }
+            2 => {
+                let whole = parts[0]
+                    .parse::<u128>()
+                    .map_err(|_| generic_err("Error parsing whole"))?;
+                let fractional = parts[1]
+                    .parse::<u128>()
+                    .map_err(|_| generic_err("Error parsing fractional"))?;
+                let exp = (18usize.checked_sub(parts[1].len()))
+                    .ok_or_else(|| generic_err("Cannot parse more than 18 fractional digits"))?;
+                let fractional_factor = 10u128
+                    .checked_pow(exp.try_into().unwrap())
+                    .ok_or_else(|| generic_err("Cannot compute fractional factor"))?;
+
+                let whole_as_atomics = whole
+                    .checked_mul(DECIMAL_FRACTIONAL.u128())
+                    .ok_or_else(|| generic_err("Value too big"))?;
+                let atomics = whole_as_atomics
+                    .checked_add(fractional * fractional_factor)
+                    .ok_or_else(|| generic_err("Value too big"))?;
+                Ok(Decimal(Uint128(atomics)))
+            }
+            _ => Err(generic_err("Unexpected number of dots")),
+        }
     }
 
     pub fn is_zero(&self) -> bool {
@@ -286,6 +334,137 @@ mod test {
     #[should_panic(expected = "Denominator must not be zero")]
     fn decimal_from_ratio_panics_for_zero_denominator() {
         Decimal::from_ratio(1u128, 0u128);
+    }
+
+    #[test]
+    fn decimal_from_str_works() {
+        // Integers
+        assert_eq!(Decimal::from_str("0").unwrap(), Decimal::percent(0));
+        assert_eq!(Decimal::from_str("1").unwrap(), Decimal::percent(100));
+        assert_eq!(Decimal::from_str("5").unwrap(), Decimal::percent(500));
+        assert_eq!(Decimal::from_str("42").unwrap(), Decimal::percent(4200));
+        assert_eq!(Decimal::from_str("000").unwrap(), Decimal::percent(0));
+        assert_eq!(Decimal::from_str("001").unwrap(), Decimal::percent(100));
+        assert_eq!(Decimal::from_str("005").unwrap(), Decimal::percent(500));
+        assert_eq!(Decimal::from_str("0042").unwrap(), Decimal::percent(4200));
+
+        // Decimals
+        assert_eq!(Decimal::from_str("1.0").unwrap(), Decimal::percent(100));
+        assert_eq!(Decimal::from_str("1.5").unwrap(), Decimal::percent(150));
+        assert_eq!(Decimal::from_str("0.5").unwrap(), Decimal::percent(50));
+        assert_eq!(Decimal::from_str("0.123").unwrap(), Decimal::permille(123));
+
+        assert_eq!(Decimal::from_str("40.00").unwrap(), Decimal::percent(4000));
+        assert_eq!(Decimal::from_str("04.00").unwrap(), Decimal::percent(0400));
+        assert_eq!(Decimal::from_str("00.40").unwrap(), Decimal::percent(0040));
+        assert_eq!(Decimal::from_str("00.04").unwrap(), Decimal::percent(0004));
+
+        // Can handle 18 fractional digits
+        assert_eq!(
+            Decimal::from_str("7.123456789012345678").unwrap(),
+            Decimal(Uint128(7123456789012345678))
+        );
+        assert_eq!(
+            Decimal::from_str("7.999999999999999999").unwrap(),
+            Decimal(Uint128(7999999999999999999))
+        );
+
+        // Works for documented max value
+        assert_eq!(
+            Decimal::from_str("340282366920938463463.374607431768211455").unwrap(),
+            Decimal::MAX
+        );
+    }
+
+    #[test]
+    fn decimal_from_str_errors_for_broken_whole_part() {
+        match Decimal::from_str("").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        match Decimal::from_str(" ").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        match Decimal::from_str("-1").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing whole"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn decimal_from_str_errors_for_broken_fractinal_part() {
+        match Decimal::from_str("1.").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        match Decimal::from_str("1. ").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        match Decimal::from_str("1.e").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        match Decimal::from_str("1.2e3").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Error parsing fractional"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn decimal_from_str_errors_for_more_than_18_fractional_digits() {
+        match Decimal::from_str("7.1234567890123456789").unwrap_err() {
+            StdError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        // No special rules for trailing zeros. This could be changed but adds gas cost for the happy path.
+        match Decimal::from_str("7.1230000000000000000").unwrap_err() {
+            StdError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "Cannot parse more than 18 fractional digits")
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn decimal_from_str_errors_for_invalid_number_of_dots() {
+        match Decimal::from_str("1.2.3").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        match Decimal::from_str("1.2.3.4").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Unexpected number of dots"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn decimal_from_str_errors_for_more_than_max_value() {
+        // Integer
+        match Decimal::from_str("340282366920938463464").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+
+        // Decimal
+        match Decimal::from_str("340282366920938463464.0").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+        match Decimal::from_str("340282366920938463463.374607431768211456").unwrap_err() {
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "Value too big"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
     }
 
     #[test]
