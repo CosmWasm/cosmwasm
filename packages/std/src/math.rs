@@ -13,12 +13,12 @@ const DECIMAL_FRACTIONAL: Uint128 = Uint128(1_000_000_000_000_000_000);
 
 impl Decimal {
     /// Create a 1.0 Decimal
-    pub fn one() -> Decimal {
+    pub const fn one() -> Decimal {
         Decimal(DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal
-    pub fn zero() -> Decimal {
+    pub const fn zero() -> Decimal {
         Decimal(Uint128(0))
     }
 
@@ -51,7 +51,7 @@ pub struct Uint128(#[schemars(with = "String")] pub u128);
 
 impl Uint128 {
     /// Creates a Uint128(0)
-    pub fn zero() -> Self {
+    pub const fn zero() -> Self {
         Uint128(0)
     }
 
