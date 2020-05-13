@@ -40,7 +40,7 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
 // this takes a comma-separated string, splits it by commas, and returns a set that
 // can be used to initialize the cache
 pub fn features_from_csv(csv: &str) -> HashSet<String> {
-    HashSet::from_iter(csv.split(",").map(|x| x.trim().to_string()))
+    HashSet::from_iter(csv.split(',').map(|x| x.trim().to_string()))
 }
 
 impl<S, A, Q> CosmCache<S, A, Q>
