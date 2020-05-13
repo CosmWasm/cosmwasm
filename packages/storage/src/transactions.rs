@@ -253,27 +253,31 @@ where
     }
 }
 
-pub fn transactional<S: Storage, T>(
-    storage: &mut S,
-    tx: &dyn Fn(&mut StorageTransaction<S>) -> StdResult<T>,
-) -> StdResult<T> {
+pub fn transactional<S, C, T>(storage: &mut S, callback: C) -> StdResult<T>
+where
+    S: Storage,
+    C: FnOnce(&mut StorageTransaction<S>) -> StdResult<T>,
+{
     let mut stx = StorageTransaction::new(storage);
-    let res = tx(&mut stx)?;
+    let res = callback(&mut stx)?;
     stx.prepare().commit(storage)?;
     Ok(res)
 }
 
-pub fn transactional_deps<S: Storage, A: Api, Q: Querier, T>(
-    deps: &mut Extern<S, A, Q>,
-    tx: &dyn Fn(&mut Extern<StorageTransaction<S>, A, Q>) -> StdResult<T>,
-) -> StdResult<T> {
+pub fn transactional_deps<S, A, Q, C, T>(deps: &mut Extern<S, A, Q>, callback: C) -> StdResult<T>
+where
+    S: Storage,
+    A: Api,
+    Q: Querier,
+    C: FnOnce(&mut Extern<StorageTransaction<S>, A, Q>) -> StdResult<T>,
+{
     let c = StorageTransaction::new(&deps.storage);
     let mut stx_deps = Extern {
         storage: c,
         api: deps.api,
         querier: deps.querier.clone(),
     };
-    let res = tx(&mut stx_deps);
+    let res = callback(&mut stx_deps);
     if res.is_ok() {
         stx_deps.storage.prepare().commit(&mut deps.storage)?;
     } else {
@@ -576,7 +580,7 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         // writes on success
-        let res: StdResult<i32> = transactional(&mut base, &|store| {
+        let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
             // we write in the Ok case
@@ -587,7 +591,7 @@ mod test {
         assert_eq!(base.get(b"good").unwrap(), Some(b"one".to_vec()));
 
         // rejects on error
-        let res: StdResult<i32> = transactional(&mut base, &|store| {
+        let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
             assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));
