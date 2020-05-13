@@ -3,6 +3,7 @@ use cosmwasm_std::{
     HandleResponse, HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage,
     Uint128, WasmMsg,
 };
+use std::str::FromStr;
 
 use crate::msg::{
     BalanceResponse, ClaimsResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg,
@@ -616,7 +617,7 @@ mod tests {
         let invest: InvestmentResponse = from_binary(&res).unwrap();
         assert_eq!(invest.token_supply, Uint128(1000));
         assert_eq!(invest.staked_tokens, coin(1500, "stake"));
-        let ratio = Decimal::one() + Decimal::percent(50);
+        let ratio = Decimal::from_str("1.5").unwrap();
         assert_eq!(invest.nominal_value, ratio);
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
@@ -721,7 +722,7 @@ mod tests {
         assert_eq!(get_claims(&deps, &bob), bobs_claim);
 
         // supplies updated, ratio the same (1.5)
-        let ratio = Decimal::one() + Decimal::percent(50);
+        let ratio = Decimal::from_str("1.5").unwrap();
 
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
         let invest: InvestmentResponse = from_binary(&res).unwrap();
