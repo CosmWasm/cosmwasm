@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::{fmt, ops};
 
 use crate::errors::{generic_err, underflow, StdError, StdResult};
@@ -30,6 +30,17 @@ impl Decimal {
     /// Convert permille (x/1000) into Decimal
     pub fn permille(x: u64) -> Decimal {
         Decimal(Uint128((x as u128) * 1_000_000_000_000_000))
+    }
+
+    /// Returns the ratio (nominator / denominator) as a Decimal
+    pub fn from_ratio<A: Into<u128>, B: Into<u128>>(nominator: A, denominator: B) -> Decimal {
+        let nominator: u128 = nominator.into();
+        let denominator: u128 = denominator.into();
+        if denominator == 0 {
+            panic!("Denominator must not be zero");
+        }
+        // TODO: better algorithm with less rounding potential?
+        Decimal(Uint128(nominator * DECIMAL_FRACTIONAL.u128() / denominator))
     }
 
     pub fn is_zero(&self) -> bool {
@@ -168,21 +179,6 @@ impl Uint128 {
         let val = self.u128() * nominator / denominator;
         Uint128::from(val)
     }
-
-    /// Returns the ratio (self / denom) as Decimal fixed-point
-    pub fn calc_ratio(&self, denom: Uint128) -> Decimal {
-        // special case: 0/0 = 1.0
-        if self.0 == 0 && denom.0 == 0 {
-            return Decimal::one();
-        }
-        // otherwise, panic on 0 (or how to handle 1/0)?
-
-        let places: u128 = DECIMAL_FRACTIONAL.into();
-        // TODO: better algorithm with less rounding potential
-        let val: u128 = self.u128() * places / denom.u128();
-        // TODO: better error handling
-        Decimal(val.try_into().unwrap())
-    }
 }
 
 /// Serializes as a base64 string
@@ -254,6 +250,41 @@ mod test {
     fn decimal_permille() {
         let value = Decimal::permille(125);
         assert_eq!(value.0.u128(), DECIMAL_FRACTIONAL.u128() / 8);
+    }
+
+    #[test]
+    fn decimal_from_ratio_works() {
+        // 1.0
+        assert_eq!(Decimal::from_ratio(1u128, 1u128), Decimal::one());
+        assert_eq!(Decimal::from_ratio(53u128, 53u128), Decimal::one());
+        assert_eq!(Decimal::from_ratio(125u128, 125u128), Decimal::one());
+
+        // 1.5
+        assert_eq!(Decimal::from_ratio(3u128, 2u128), Decimal::percent(150));
+        assert_eq!(Decimal::from_ratio(150u128, 100u128), Decimal::percent(150));
+        assert_eq!(Decimal::from_ratio(333u128, 222u128), Decimal::percent(150));
+
+        // 0.125
+        assert_eq!(Decimal::from_ratio(1u64, 8u64), Decimal::permille(125));
+        assert_eq!(Decimal::from_ratio(125u64, 1000u64), Decimal::permille(125));
+
+        // 1/3 (result floored)
+        assert_eq!(
+            Decimal::from_ratio(1u64, 3u64),
+            Decimal(Uint128(0_333_333_333_333_333_333))
+        );
+
+        // 2/3 (result floored)
+        assert_eq!(
+            Decimal::from_ratio(2u64, 3u64),
+            Decimal(Uint128(0_666_666_666_666_666_666))
+        );
+    }
+
+    #[test]
+    #[should_panic(expected = "Denominator must not be zero")]
+    fn decimal_from_ratio_panics_for_zero_denominator() {
+        Decimal::from_ratio(1u128, 0u128);
     }
 
     #[test]
