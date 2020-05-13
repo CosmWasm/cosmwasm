@@ -138,6 +138,7 @@ impl ops::Sub for Uint128 {
 impl ops::Mul<Decimal> for Uint128 {
     type Output = Self;
 
+    #[allow(clippy::suspicious_arithmetic_impl)]
     fn mul(self, rhs: Decimal) -> Self::Output {
         // 0*a and b*0 is always 0
         if self.is_zero() || rhs.is_zero() {
