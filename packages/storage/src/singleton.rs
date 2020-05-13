@@ -82,7 +82,10 @@ where
 
     /// update_mut is like update but takes FnMut allowing you to pass in a closure that modifies some
     /// shared variable
-    pub fn update_mut(&mut self, action: &mut dyn FnMut(T) -> StdResult<T>) -> StdResult<T> {
+    pub fn update_mut<A>(&mut self, action: A) -> StdResult<T>
+    where
+        A: FnOnce(T) -> StdResult<T>,
+    {
         let input = self.load()?;
         let output = action(input)?;
         self.save(&output)?;
@@ -212,7 +215,7 @@ mod test {
         writer.save(&cfg).unwrap();
 
         let mut old_tokens = 0i32;
-        let output = writer.update_mut(&mut |mut c| {
+        let output = writer.update_mut(|mut c| {
             old_tokens = c.max_tokens;
             c.max_tokens *= 2;
             Ok(c)

@@ -108,11 +108,10 @@ where
 
     /// update_mut is like update but takes FnMut allowing you to pass in a closure that modifies some
     /// shared variable
-    pub fn update_mut(
-        &mut self,
-        key: &[u8],
-        action: &mut dyn FnMut(Option<T>) -> StdResult<T>,
-    ) -> StdResult<T> {
+    pub fn update_mut<A>(&mut self, key: &[u8], action: A) -> StdResult<T>
+    where
+        A: FnOnce(Option<T>) -> StdResult<T>,
+    {
         let input = self.may_load(key)?;
         let output = action(input)?;
         self.save(key, &output)?;

@@ -116,7 +116,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
 
     // update total supply
     let mut to_mint = Uint128(0);
-    let _ = total_supply(&mut deps.storage).update_mut(&mut |mut supply| {
+    let _ = total_supply(&mut deps.storage).update_mut(|mut supply| {
         to_mint = if supply.issued.is_zero() || supply.bonded.is_zero() {
             FALLBACK_RATIO * payment.amount
         } else {
@@ -183,7 +183,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     // calculate how many native tokens this is worth and update supply
     let remainder = (amount - tax)?;
     let mut unbond = Uint128(0);
-    total_supply(&mut deps.storage).update_mut(&mut |mut supply| {
+    total_supply(&mut deps.storage).update_mut(|mut supply| {
         unbond = remainder.multiply_ratio(supply.bonded, supply.issued);
         supply.bonded = (supply.bonded - unbond)?;
         supply.issued = (supply.issued - remainder)?;
@@ -233,7 +233,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     // check how much to send - min(balance, claims[sender]), and reduce the claim
     let sender_raw = env.message.sender;
     let mut to_send = balance.amount;
-    claims(&mut deps.storage).update_mut(sender_raw.as_slice(), &mut |claim| {
+    claims(&mut deps.storage).update_mut(sender_raw.as_slice(), |claim| {
         let claim = claim.ok_or_else(|| generic_err("no claim for this address"))?;
         to_send = to_send.min(claim);
         claim - to_send
@@ -315,7 +315,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
 
     // we deduct pending claims from our account balance before reinvesting.
     // if there is not enough funds, we just return a no-op
-    match total_supply(&mut deps.storage).update_mut(&mut |mut supply| {
+    match total_supply(&mut deps.storage).update_mut(|mut supply| {
         balance.amount = (balance.amount - supply.claims)?;
         // this just triggers the "no op" case if we don't have min_withdrawl left to reinvest
         (balance.amount - invest.min_withdrawl)?;
