@@ -337,14 +337,14 @@ mod test {
         })
         .unwrap()
         .unwrap();
-        assert_eq!(balance.amount, coin(INIT_AMOUNT, INIT_DENOM));
+        assert_eq!(balance, coin(INIT_AMOUNT, INIT_DENOM));
 
         let balance = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
             Ok(querier.query_balance(&contract, "foo"))
         })
         .unwrap()
         .unwrap();
-        assert_eq!(balance.amount, coin(0, "foo"));
+        assert_eq!(balance, coin(0, "foo"));
     }
 
     #[test]

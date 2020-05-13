@@ -7,7 +7,10 @@ use crate::errors::{generic_err, StdResult, SystemResult};
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 #[cfg(feature = "staking")]
-use crate::query::{Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse};
+use crate::query::{
+    BondedDenomResponse, Delegation, DelegationsResponse, StakingQuery, Validator,
+    ValidatorsResponse,
+};
 use crate::serde::{from_binary, to_vec};
 use crate::types::{CanonicalAddr, HumanAddr, Never};
 
@@ -122,17 +125,14 @@ pub trait Querier: Clone + Send {
         }
     }
 
-    fn query_balance<U: Into<HumanAddr>>(
-        &self,
-        address: U,
-        denom: &str,
-    ) -> StdResult<BalanceResponse> {
+    fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
         }
         .into();
-        self.query(&request)
+        let res: BalanceResponse = self.query(&request)?;
+        Ok(res.amount)
     }
 
     fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
@@ -149,6 +149,13 @@ pub trait Querier: Clone + Send {
         let request = StakingQuery::Validators {}.into();
         let res: ValidatorsResponse = self.query(&request)?;
         Ok(res.validators)
+    }
+
+    #[cfg(feature = "staking")]
+    fn query_bonded_denom(&self) -> StdResult<String> {
+        let request = StakingQuery::BondedDenom {}.into();
+        let res: BondedDenomResponse = self.query(&request)?;
+        Ok(res.denom)
     }
 
     #[cfg(feature = "staking")]

@@ -98,7 +98,7 @@ where
     pub fn update(
         &mut self,
         key: &[u8],
-        action: &dyn Fn(Option<T>) -> StdResult<T>,
+        action: &mut dyn FnMut(Option<T>) -> StdResult<T>,
     ) -> StdResult<T> {
         let input = self.may_load(key)?;
         let output = action(input)?;
@@ -265,12 +265,12 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let birthday = |mayd: Option<Data>| -> StdResult<Data> {
+        let mut birthday = |mayd: Option<Data>| -> StdResult<Data> {
             let mut d = mayd.ok_or(not_found("Data"))?;
             d.age += 1;
             Ok(d)
         };
-        let output = bucket.update(b"maria", &birthday).unwrap();
+        let output = bucket.update(b"maria", &mut birthday).unwrap();
         let expected = Data {
             name: "Maria".to_string(),
             age: 43,
@@ -280,6 +280,36 @@ mod test {
         // load it properly
         let loaded = bucket.load(b"maria").unwrap();
         assert_eq!(loaded, expected);
+    }
+
+    #[test]
+    fn update_mut_success() {
+        let mut store = MockStorage::new();
+        let mut bucket = bucket::<_, Data>(b"data", &mut store);
+
+        // initial data
+        let init = Data {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        bucket.save(b"maria", &init).unwrap();
+
+        // show we can capture data from the closure
+        let mut old_age = 0i32;
+        let mut birthday = |mayd: Option<Data>| -> StdResult<Data> {
+            let mut d = mayd.ok_or(not_found("Data"))?;
+            old_age = d.age;
+            d.age += 1;
+            Ok(d)
+        };
+        let output = bucket.update(b"maria", &mut birthday).unwrap();
+        let expected = Data {
+            name: "Maria".to_string(),
+            age: 43,
+        };
+        assert_eq!(output, expected);
+        //
+        assert_eq!(old_age, 42);
     }
 
     #[test]
@@ -295,7 +325,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", &|_d| Err(generic_err("cuz i feel like it")));
+        let output = bucket.update(b"maria", &mut |_d| Err(generic_err("cuz i feel like it")));
         assert!(output.is_err());
 
         // load it properly
@@ -315,7 +345,7 @@ mod test {
 
         // it's my birthday
         let output = bucket
-            .update(b"maria", &|d| match d {
+            .update(b"maria", &mut |d| match d {
                 Some(_) => Err(generic_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })

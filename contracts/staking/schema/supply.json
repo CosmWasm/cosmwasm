@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Supply",
+  "description": "Supply is dynamic and tracks the current supply of staked and ERC20 tokens.",
+  "type": "object",
+  "required": [
+    "bonded",
+    "claims",
+    "issued"
+  ],
+  "properties": {
+    "bonded": {
+      "description": "bonded is how many native tokens exist bonded to the validator",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
+    },
+    "claims": {
+      "description": "claims is how many tokens need to be reserved paying back those who unbonded",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
+    },
+    "issued": {
+      "description": "issued is how many derivative tokens this contract has issued",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}

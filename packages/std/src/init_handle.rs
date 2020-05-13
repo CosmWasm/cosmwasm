@@ -71,14 +71,14 @@ pub enum WasmMsg {
         contract_addr: HumanAddr,
         /// msg is the json-encoded HandleMsg struct (as raw Binary)
         msg: Binary,
-        send: Option<Vec<Coin>>,
+        send: Vec<Coin>,
     },
     /// this instantiates a new contracts from previously uploaded wasm code
     Instantiate {
         code_id: u64,
         /// msg is the json-encoded InitMsg struct (as raw Binary)
         msg: Binary,
-        send: Option<Vec<Coin>>,
+        send: Vec<Coin>,
         /// optional human-readbale label for the contract
         label: Option<String>,
     },

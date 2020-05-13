@@ -300,7 +300,8 @@
               "type": "object",
               "required": [
                 "contract_addr",
-                "msg"
+                "msg",
+                "send"
               ],
               "properties": {
                 "contract_addr": {
@@ -315,10 +316,7 @@
                   ]
                 },
                 "send": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
+                  "type": "array",
                   "items": {
                     "$ref": "#/definitions/Coin"
                   }
@@ -338,7 +336,8 @@
               "type": "object",
               "required": [
                 "code_id",
-                "msg"
+                "msg",
+                "send"
               ],
               "properties": {
                 "code_id": {
@@ -362,10 +361,7 @@
                   ]
                 },
                 "send": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
+                  "type": "array",
                   "items": {
                     "$ref": "#/definitions/Coin"
                   }

@@ -1,0 +1,88 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InvestmentResponse",
+  "type": "object",
+  "required": [
+    "exit_tax",
+    "min_withdrawl",
+    "nominal_value",
+    "owner",
+    "staked_tokens",
+    "token_supply",
+    "validator"
+  ],
+  "properties": {
+    "exit_tax": {
+      "description": "this is how much the owner takes as a cut when someone unbonds",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Decimal"
+        }
+      ]
+    },
+    "min_withdrawl": {
+      "description": "This is the minimum amount we will pull out to reinvest, as well as a minumum that can be unbonded (to avoid needless staking tx)",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
+    },
+    "nominal_value": {
+      "$ref": "#/definitions/Decimal"
+    },
+    "owner": {
+      "description": "owner created the contract and takes a cut",
+      "allOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        }
+      ]
+    },
+    "staked_tokens": {
+      "$ref": "#/definitions/Coin"
+    },
+    "token_supply": {
+      "$ref": "#/definitions/Uint128"
+    },
+    "validator": {
+      "description": "All tokens are bonded to this validator",
+      "allOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}

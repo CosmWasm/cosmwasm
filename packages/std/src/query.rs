@@ -5,6 +5,7 @@ use std::fmt;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
+use crate::math::Decimal;
 use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
@@ -88,29 +89,23 @@ pub struct AllBalanceResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingQuery {
-    /// Returns all registered Validators on the system
-    Validators {},
+    /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
+    BondedDenom {},
     /// Delegations will return all delegations by the delegator,
     /// or just those to the given validator (if set)
     Delegations {
         delegator: HumanAddr,
         validator: Option<HumanAddr>,
     },
+    /// Returns all registered Validators on the system
+    Validators {},
 }
 
-/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+/// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ValidatorsResponse {
-    pub validators: Vec<Validator>,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Validator {
-    pub address: HumanAddr,
-    pub commission: Decimal9,
-    pub max_commission: Decimal9,
-    /// TODO: what units are these (in terms of time)?
-    pub max_change_rate: Decimal9,
+#[serde(rename_all = "snake_case")]
+pub struct BondedDenomResponse {
+    pub denom: String,
 }
 
 /// DelegationsResponse is data format returned from StakingRequest::Delegations query
@@ -133,23 +128,17 @@ pub struct Delegation {
     // TODO: do we want to expose more info?
 }
 
-/// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
-/// That is Decimal9(1_000_000_000) == 1
-#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Decimal9(u64);
+/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorsResponse {
+    pub validators: Vec<Validator>,
+}
 
-impl Decimal9 {
-    pub fn one() -> Decimal9 {
-        Decimal9(1_000_000_000)
-    }
-
-    // convert integer % into Billionth units
-    pub fn percent(percent: u64) -> Decimal9 {
-        Decimal9(percent * 10_000_000)
-    }
-
-    // convert permille (1/1000) into Billionth units
-    pub fn permille(permille: u64) -> Decimal9 {
-        Decimal9(permille * 1_000_000)
-    }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Validator {
+    pub address: HumanAddr,
+    pub commission: Decimal,
+    pub max_commission: Decimal,
+    /// TODO: what units are these (in terms of time)?
+    pub max_change_rate: Decimal,
 }

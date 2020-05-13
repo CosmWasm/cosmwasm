@@ -6,13 +6,14 @@ mod errors;
 mod init_handle;
 #[cfg(feature = "iterator")]
 mod iterator;
+mod math;
 mod query;
 mod serde;
 mod storage;
 mod traits;
 mod types;
 
-pub use crate::coins::{coin, coins, has_coins, Coin, Uint128};
+pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::encoding::Binary;
 pub use crate::errors::{
     generic_err, invalid_base64, invalid_utf8, not_found, null_pointer, parse_err, serialize_err,
@@ -24,10 +25,10 @@ pub use crate::init_handle::{
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
+pub use crate::math::{Decimal, Uint128};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, Decimal9, Delegation, DelegationsResponse,
-    QueryRequest, QueryResponse, QueryResult, StakingQuery, Validator, ValidatorsResponse,
-    WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, Delegation, DelegationsResponse, QueryRequest,
+    QueryResponse, QueryResult, StakingQuery, Validator, ValidatorsResponse, WasmQuery,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
