@@ -606,8 +606,7 @@ mod tests {
         let invest: InvestmentResponse = from_binary(&res).unwrap();
         assert_eq!(invest.token_supply, Uint128(1000));
         assert_eq!(invest.staked_tokens, coin(1500, "stake"));
-        let mut ratio = Decimal9::one();
-        ratio.0 = ratio.0 * 3 / 2; // TODO: expose this on decimal
+        let ratio = Decimal9::one() + Decimal9::percent(50);
         assert_eq!(invest.nominal_value, ratio);
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
@@ -712,8 +711,7 @@ mod tests {
         assert_eq!(get_claims(&deps, &bob), bobs_claim);
 
         // supplies updated, ratio the same (1.5)
-        let mut ratio = Decimal9::one();
-        ratio.0 = ratio.0 * 3 / 2; // TODO: expose this on decimal
+        let ratio = Decimal9::one() + Decimal9::percent(50);
 
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
         let invest: InvestmentResponse = from_binary(&res).unwrap();

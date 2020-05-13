@@ -34,6 +34,14 @@ impl Decimal9 {
     }
 }
 
+impl ops::Add for Decimal9 {
+    type Output = Self;
+
+    fn add(self, other: Self) -> Self {
+        Decimal9(self.0 + other.0)
+    }
+}
+
 //*** Uint128 ***/
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint128(#[schemars(with = "String")] pub u128);
@@ -217,6 +225,12 @@ mod test {
     fn decimal_permille() {
         let value = Decimal9::permille(125);
         assert_eq!(value.0, DECIMAL_FRACTIONAL / 8);
+    }
+
+    #[test]
+    fn decimal_add() {
+        let value = Decimal9::one() + Decimal9::percent(50); // 1.5
+        assert_eq!(value.0, DECIMAL_FRACTIONAL * 3 / 2);
     }
 
     #[test]
