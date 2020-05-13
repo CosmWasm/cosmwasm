@@ -22,6 +22,11 @@ pub enum VmError {
         input: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Error instantiating a Wasm module: {}", msg))]
+    InstantiationErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Iterator with ID {} does not exist", id))]
     IteratorDoesNotExist {
         id: u32,
@@ -77,11 +82,6 @@ pub enum VmError {
         kind: String,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Wasmer error: {}", source))]
-    WasmerErr {
-        source: wasmer_runtime_core::error::Error,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Calling wasm function: {}", source))]
     WasmerRuntimeErr {
         source: wasmer_runtime_core::error::RuntimeError,
@@ -128,6 +128,10 @@ pub fn make_conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
         input: input.into(),
     }
     .build()
+}
+
+pub fn make_instantiation_err<S: Into<String>>(msg: S) -> VmError {
+    InstantiationErr { msg: msg.into() }.build()
 }
 
 #[cfg(feature = "iterator")]
@@ -215,6 +219,15 @@ mod test {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "-9");
             }
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn make_instantiation_err_works() {
+        let err = make_instantiation_err("something went wrong");
+        match err {
+            VmError::InstantiationErr { msg, .. } => assert_eq!(msg, "something went wrong"),
             _ => panic!("Unexpected error"),
         }
     }
