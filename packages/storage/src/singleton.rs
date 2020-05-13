@@ -73,16 +73,7 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update(&mut self, action: &dyn Fn(T) -> StdResult<T>) -> StdResult<T> {
-        let input = self.load()?;
-        let output = action(input)?;
-        self.save(&output)?;
-        Ok(output)
-    }
-
-    /// update_mut is like update but takes FnMut allowing you to pass in a closure that modifies some
-    /// shared variable
-    pub fn update_mut<A>(&mut self, action: A) -> StdResult<T>
+    pub fn update<A>(&mut self, action: A) -> StdResult<T>
     where
         A: FnOnce(T) -> StdResult<T>,
     {
@@ -191,7 +182,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|mut c| {
+        let output = writer.update(|mut c| {
             c.max_tokens *= 2;
             Ok(c)
         });
@@ -204,29 +195,24 @@ mod test {
     }
 
     #[test]
-    fn update_success_mut() {
+    fn update_can_change_variable_from_outer_scope() {
         let mut store = MockStorage::new();
         let mut writer = singleton::<_, Config>(&mut store, b"config");
-
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
         writer.save(&cfg).unwrap();
 
-        let mut old_tokens = 0i32;
-        let output = writer.update_mut(|mut c| {
-            old_tokens = c.max_tokens;
-            c.max_tokens *= 2;
-            Ok(c)
-        });
-        let expected = Config {
-            owner: "admin".to_string(),
-            max_tokens: 2468,
-        };
-        assert_eq!(output.unwrap(), expected);
-        assert_eq!(writer.load().unwrap(), expected);
-        assert_eq!(old_tokens, 1234);
+        let mut old_max_tokens = 0i32;
+        writer
+            .update(|mut c| {
+                old_max_tokens = c.max_tokens;
+                c.max_tokens *= 2;
+                Ok(c)
+            })
+            .unwrap();
+        assert_eq!(old_max_tokens, 1234);
     }
 
     #[test]
