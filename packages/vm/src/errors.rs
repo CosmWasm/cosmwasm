@@ -27,13 +27,13 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Hash doesn't match stored data"))]
+    IntegrityErr { backtrace: snafu::Backtrace },
     #[snafu(display("Iterator with ID {} does not exist", id))]
     IteratorDoesNotExist {
         id: u32,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Hash doesn't match stored data"))]
-    IntegrityErr { backtrace: snafu::Backtrace },
     #[snafu(display("Error parsing into type {}: {}", target, msg))]
     ParseErr {
         /// the target type that was attempted
@@ -140,13 +140,13 @@ pub fn make_instantiation_err<S: Into<String>>(msg: S) -> VmError {
     InstantiationErr { msg: msg.into() }.build()
 }
 
+pub fn make_integrity_err() -> VmError {
+    IntegrityErr {}.build()
+}
+
 #[cfg(feature = "iterator")]
 pub fn make_iterator_does_not_exist(iterator_id: u32) -> VmError {
     IteratorDoesNotExist { id: iterator_id }.build()
-}
-
-pub fn make_integrity_err() -> VmError {
-    IntegrityErr {}.build()
 }
 
 pub fn make_parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> VmError {
@@ -243,20 +243,20 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "iterator")]
-    fn make_iterator_does_not_exist_works() {
-        let err = make_iterator_does_not_exist(15);
+    fn make_integrity_err_works() {
+        let err = make_integrity_err();
         match err {
-            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
+            VmError::IntegrityErr { .. } => {}
             _ => panic!("Unexpected error"),
         }
     }
 
     #[test]
-    fn make_integrity_err_works() {
-        let err = make_integrity_err();
+    #[cfg(feature = "iterator")]
+    fn make_iterator_does_not_exist_works() {
+        let err = make_iterator_does_not_exist(15);
         match err {
-            VmError::IntegrityErr { .. } => {}
+            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
             _ => panic!("Unexpected error"),
         }
     }
