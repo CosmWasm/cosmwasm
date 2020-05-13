@@ -15,7 +15,7 @@ mod modules;
 mod serde;
 pub mod testing;
 
-pub use crate::cache::CosmCache;
+pub use crate::cache::{features_from_csv, CosmCache};
 pub use crate::calls::{
     call_handle, call_handle_raw, call_init, call_init_raw, call_query, call_query_raw,
 };
