@@ -5,40 +5,39 @@ use std::{fmt, ops};
 
 use crate::errors::{generic_err, underflow, StdError, StdResult};
 
-/// Decimal9 represents a fixed-point decimal value with 9 fractional digits.
-/// That is Decimal9(1_000_000_000) == 1
+/// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 #[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, JsonSchema)]
-pub struct Decimal9(u64);
+pub struct Decimal(Uint128);
 
-const DECIMAL_FRACTIONAL: u64 = 1_000_000_000;
+const DECIMAL_FRACTIONAL: Uint128 = Uint128(1_000_000_000_000_000_000);
 
-impl Decimal9 {
+impl Decimal {
     /// Create a 1.0 Decimal
-    pub fn one() -> Decimal9 {
-        Decimal9(DECIMAL_FRACTIONAL)
+    pub fn one() -> Decimal {
+        Decimal(DECIMAL_FRACTIONAL)
     }
 
     /// Create a 0.0 Decimal
-    pub fn zero() -> Decimal9 {
-        Decimal9(0)
+    pub fn zero() -> Decimal {
+        Decimal(Uint128(0))
     }
 
     /// Convert x% into Decimal
-    pub fn percent(x: u64) -> Decimal9 {
-        Decimal9(x * 10_000_000)
+    pub fn percent(x: u64) -> Decimal {
+        Decimal(Uint128((x as u128) * 10_000_000_000_000_000))
     }
 
     /// Convert permille (x/1000) into Decimal
-    pub fn permille(x: u64) -> Decimal9 {
-        Decimal9(x * 1_000_000)
+    pub fn permille(x: u64) -> Decimal {
+        Decimal(Uint128((x as u128) * 1_000_000_000_000_000))
     }
 }
 
-impl ops::Add for Decimal9 {
+impl ops::Add for Decimal {
     type Output = Self;
 
     fn add(self, other: Self) -> Self {
-        Decimal9(self.0 + other.0)
+        Decimal(self.0 + other.0)
     }
 }
 
@@ -47,6 +46,11 @@ impl ops::Add for Decimal9 {
 pub struct Uint128(#[schemars(with = "String")] pub u128);
 
 impl Uint128 {
+    /// Creates a Uint128(0)
+    pub fn zero() -> Self {
+        Uint128(0)
+    }
+
     pub fn u128(&self) -> u128 {
         self.0
     }
@@ -120,10 +124,10 @@ impl ops::Sub for Uint128 {
     }
 }
 
-impl ops::Mul<Decimal9> for Uint128 {
+impl ops::Mul<Decimal> for Uint128 {
     type Output = Self;
 
-    fn mul(self, rhs: Decimal9) -> Self {
+    fn mul(self, rhs: Decimal) -> Self {
         self.multiply_ratio(rhs.0.into(), DECIMAL_FRACTIONAL.into())
     }
 }
@@ -140,11 +144,11 @@ impl Uint128 {
         Uint128::from(val)
     }
 
-    /// Returns the ratio (self / denom) as Decimal9 fixed-point
-    pub fn calc_ratio(&self, denom: Uint128) -> Decimal9 {
+    /// Returns the ratio (self / denom) as Decimal fixed-point
+    pub fn calc_ratio(&self, denom: Uint128) -> Decimal {
         // special case: 0/0 = 1.0
         if self.0 == 0 && denom.0 == 0 {
-            return Decimal9::one();
+            return Decimal::one();
         }
         // otherwise, panic on 0 (or how to handle 1/0)?
 
@@ -152,7 +156,7 @@ impl Uint128 {
         // TODO: better algorithm with less rounding potential
         let val: u128 = self.u128() * places / denom.u128();
         // TODO: better error handling
-        Decimal9(val.try_into().unwrap())
+        Decimal(val.try_into().unwrap())
     }
 }
 
@@ -205,32 +209,32 @@ mod test {
 
     #[test]
     fn decimal_one() {
-        let value = Decimal9::one();
+        let value = Decimal::one();
         assert_eq!(value.0, DECIMAL_FRACTIONAL);
     }
 
     #[test]
     fn decimal_zero() {
-        let value = Decimal9::zero();
-        assert_eq!(value.0, 0);
+        let value = Decimal::zero();
+        assert_eq!(value.0, Uint128::zero());
     }
 
     #[test]
     fn decimal_percent() {
-        let value = Decimal9::percent(50);
-        assert_eq!(value.0, DECIMAL_FRACTIONAL / 2);
+        let value = Decimal::percent(50);
+        assert_eq!(value.0.u128(), DECIMAL_FRACTIONAL.u128() / 2);
     }
 
     #[test]
     fn decimal_permille() {
-        let value = Decimal9::permille(125);
-        assert_eq!(value.0, DECIMAL_FRACTIONAL / 8);
+        let value = Decimal::permille(125);
+        assert_eq!(value.0.u128(), DECIMAL_FRACTIONAL.u128() / 8);
     }
 
     #[test]
     fn decimal_add() {
-        let value = Decimal9::one() + Decimal9::percent(50); // 1.5
-        assert_eq!(value.0, DECIMAL_FRACTIONAL * 3 / 2);
+        let value = Decimal::one() + Decimal::percent(50); // 1.5
+        assert_eq!(value.0.u128(), DECIMAL_FRACTIONAL.u128() * 3 / 2);
     }
 
     #[test]

@@ -19,7 +19,7 @@
       "description": "this is how much the owner takes as a cut when someone unbonds",
       "allOf": [
         {
-          "$ref": "#/definitions/Decimal9"
+          "$ref": "#/definitions/Decimal"
         }
       ]
     },
@@ -56,11 +56,13 @@
     "CanonicalAddr": {
       "$ref": "#/definitions/Binary"
     },
-    "Decimal9": {
-      "description": "Decimal9 represents a fixed-point decimal value with 9 fractional digits. That is Decimal9(1_000_000_000) == 1",
-      "type": "integer",
-      "format": "uint64",
-      "minimum": 0.0
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
     },
     "HumanAddr": {
       "type": "string"

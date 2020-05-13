@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Coin, Decimal9, HumanAddr, Uint128};
+use cosmwasm_std::{Coin, Decimal, HumanAddr, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -19,7 +19,7 @@ pub struct InitMsg {
 
     /// this is how much the owner takes as a cut when someone unbonds
     /// TODO
-    pub exit_tax: Decimal9,
+    pub exit_tax: Decimal,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum
     /// that can be unbonded (to avoid needless staking tx)
     pub min_withdrawl: Uint128,
@@ -92,12 +92,12 @@ pub struct InvestmentResponse {
     pub token_supply: Uint128,
     pub staked_tokens: Coin,
     // ratio of staked_tokens / token_supply (or how many native tokens that one derivative token is nominally worth)
-    pub nominal_value: Decimal9,
+    pub nominal_value: Decimal,
 
     /// owner created the contract and takes a cut
     pub owner: HumanAddr,
     /// this is how much the owner takes as a cut when someone unbonds
-    pub exit_tax: Decimal9,
+    pub exit_tax: Decimal,
     /// All tokens are bonded to this validator
     pub validator: HumanAddr,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum

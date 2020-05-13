@@ -19,7 +19,7 @@
 
 use cosmwasm_std::testing::{mock_dependencies, mock_env};
 use cosmwasm_std::{
-    coin, from_binary, Decimal9, HumanAddr, InitResponse, StdError, StdResult, Uint128, Validator,
+    coin, from_binary, Decimal, HumanAddr, InitResponse, StdError, StdResult, Uint128, Validator,
 };
 use cosmwasm_vm::testing::{init, query};
 use cosmwasm_vm::Instance;
@@ -36,9 +36,9 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/st
 fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
     Validator {
         address: addr.into(),
-        commission: Decimal9::percent(3),
-        max_commission: Decimal9::percent(10),
-        max_change_rate: Decimal9::percent(1),
+        commission: Decimal::percent(3),
+        max_commission: Decimal::percent(10),
+        max_change_rate: Decimal::percent(1),
     }
 }
 
@@ -55,7 +55,7 @@ fn initialization_with_missing_validator() {
         symbol: "DRV".to_string(),
         decimals: 9,
         validator: HumanAddr::from("my-validator"),
-        exit_tax: Decimal9::percent(2),
+        exit_tax: Decimal::percent(2),
         min_withdrawl: Uint128(50),
     };
     let env = mock_env(&deps.api, &creator, &[]);
@@ -92,7 +92,7 @@ fn proper_initialization() {
         symbol: "DRV".to_string(),
         decimals: 9,
         validator: HumanAddr::from("my-validator"),
-        exit_tax: Decimal9::percent(2),
+        exit_tax: Decimal::percent(2),
         min_withdrawl: Uint128(50),
     };
     let env = mock_env(&deps.api, &creator, &[]);
@@ -140,7 +140,7 @@ fn proper_initialization() {
 
     assert_eq!(invest.token_supply, Uint128(0));
     assert_eq!(invest.staked_tokens, coin(0, "stake"));
-    assert_eq!(invest.nominal_value, Decimal9::one());
+    assert_eq!(invest.nominal_value, Decimal::one());
 }
 
 // #[test]

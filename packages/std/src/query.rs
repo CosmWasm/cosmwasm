@@ -5,7 +5,7 @@ use std::fmt;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
-use crate::math::Decimal9;
+use crate::math::Decimal;
 use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
@@ -137,8 +137,8 @@ pub struct ValidatorsResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Validator {
     pub address: HumanAddr,
-    pub commission: Decimal9,
-    pub max_commission: Decimal9,
+    pub commission: Decimal,
+    pub max_commission: Decimal,
     /// TODO: what units are these (in terms of time)?
-    pub max_change_rate: Decimal9,
+    pub max_change_rate: Decimal,
 }
