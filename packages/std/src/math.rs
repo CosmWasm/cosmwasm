@@ -154,9 +154,8 @@ impl ops::Mul<Uint128> for Decimal {
 impl Uint128 {
     /// returns self * num / denom
     pub fn multiply_ratio(&self, num: Uint128, denom: Uint128) -> Uint128 {
-        // special case for 0/0 (== 1)
-        if num.0 == 0 && denom.0 == 0 {
-            return *self;
+        if denom.0 == 0 {
+            panic!("Denominator must not be zero");
         }
         // TODO: minimize rounding that takes place (using gcd algorithm)
         let val = self.u128() * num.u128() / denom.u128();

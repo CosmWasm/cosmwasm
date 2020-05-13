@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    coin, generic_err, log, to_binary, unauthorized, Api, BankMsg, Binary, Env, Extern,
+    coin, generic_err, log, to_binary, unauthorized, Api, BankMsg, Binary, Decimal, Env, Extern,
     HandleResponse, HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage,
     Uint128, WasmMsg,
 };
@@ -12,6 +12,8 @@ use crate::state::{
     balances, balances_read, claims, claims_read, invest_info, invest_info_read, token_info,
     token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply,
 };
+
+const FALLBACK_RATIO: Decimal = Decimal::one();
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -115,7 +117,11 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     // update total supply
     let mut to_mint = Uint128(0);
     let _ = total_supply(&mut deps.storage).update(&mut |mut supply| {
-        to_mint = payment.amount.multiply_ratio(supply.issued, supply.bonded);
+        to_mint = if supply.issued == Uint128::zero() || supply.bonded == Uint128::zero() {
+            FALLBACK_RATIO * payment.amount
+        } else {
+            payment.amount.multiply_ratio(supply.issued, supply.bonded)
+        };
         supply.bonded += payment.amount;
         supply.issued += to_mint;
         Ok(supply)
