@@ -1,6 +1,7 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
+use std::str::FromStr;
 use std::{fmt, ops};
 
 use crate::errors::{generic_err, underflow, StdError, StdResult};
@@ -47,13 +48,21 @@ impl Decimal {
         Decimal(Uint128(nominator * DECIMAL_FRACTIONAL.u128() / denominator))
     }
 
+    pub fn is_zero(&self) -> bool {
+        self.0.u128() == 0
+    }
+}
+
+impl FromStr for Decimal {
+    type Err = StdError;
+
     /// Converts the decimal string to a Decimal
     /// Possible inputs: "1.23", "1", "000012", "1.123000000"
     /// Disallowed: "", ".23"
     ///
     /// This never performs any kind of rounding.
     /// More than 18 fractional digits, even zeros, result in an error.
-    pub fn from_str(input: &str) -> StdResult<Decimal> {
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
         let parts: Vec<&str> = input.split('.').collect();
         match parts.len() {
             1 => {
@@ -89,10 +98,6 @@ impl Decimal {
             }
             _ => Err(generic_err("Unexpected number of dots")),
         }
-    }
-
-    pub fn is_zero(&self) -> bool {
-        self.0.u128() == 0
     }
 }
 
