@@ -1,8 +1,9 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
+use std::fmt::{self, Write};
+use std::ops;
 use std::str::FromStr;
-use std::{fmt, ops};
 
 use crate::errors::{generic_err, underflow, StdError, StdResult};
 
@@ -97,6 +98,23 @@ impl FromStr for Decimal {
                 Ok(Decimal(Uint128(atomics)))
             }
             _ => Err(generic_err("Unexpected number of dots")),
+        }
+    }
+}
+
+impl fmt::Display for Decimal {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let whole = (self.0).0 / DECIMAL_FRACTIONAL.0;
+        let fractional = (self.0).0 % DECIMAL_FRACTIONAL.0;
+
+        if fractional == 0 {
+            write!(f, "{}", whole)
+        } else {
+            let fractional_string = format!("{:018}", fractional);
+            f.write_str(&whole.to_string())?;
+            f.write_char('.')?;
+            f.write_str(fractional_string.trim_end_matches('0'))?;
+            Ok(())
         }
     }
 }
@@ -487,6 +505,38 @@ mod test {
     fn decimal_add() {
         let value = Decimal::one() + Decimal::percent(50); // 1.5
         assert_eq!(value.0.u128(), DECIMAL_FRACTIONAL.u128() * 3 / 2);
+    }
+
+    #[test]
+    fn decimal_to_string() {
+        // Integers
+        assert_eq!(Decimal::zero().to_string(), "0");
+        assert_eq!(Decimal::one().to_string(), "1");
+        assert_eq!(Decimal::percent(500).to_string(), "5");
+
+        // Decimals
+        assert_eq!(Decimal::percent(125).to_string(), "1.25");
+        assert_eq!(Decimal::percent(42638).to_string(), "426.38");
+        assert_eq!(Decimal::percent(1).to_string(), "0.01");
+        assert_eq!(Decimal::permille(987).to_string(), "0.987");
+
+        assert_eq!(Decimal(Uint128(1)).to_string(), "0.000000000000000001");
+        assert_eq!(Decimal(Uint128(10)).to_string(), "0.00000000000000001");
+        assert_eq!(Decimal(Uint128(100)).to_string(), "0.0000000000000001");
+        assert_eq!(Decimal(Uint128(1000)).to_string(), "0.000000000000001");
+        assert_eq!(Decimal(Uint128(10000)).to_string(), "0.00000000000001");
+        assert_eq!(Decimal(Uint128(100000)).to_string(), "0.0000000000001");
+        assert_eq!(Decimal(Uint128(1000000)).to_string(), "0.000000000001");
+        assert_eq!(Decimal(Uint128(10000000)).to_string(), "0.00000000001");
+        assert_eq!(Decimal(Uint128(100000000)).to_string(), "0.0000000001");
+        assert_eq!(Decimal(Uint128(1000000000)).to_string(), "0.000000001");
+        assert_eq!(Decimal(Uint128(10000000000)).to_string(), "0.00000001");
+        assert_eq!(Decimal(Uint128(100000000000)).to_string(), "0.0000001");
+        assert_eq!(Decimal(Uint128(10000000000000)).to_string(), "0.00001");
+        assert_eq!(Decimal(Uint128(100000000000000)).to_string(), "0.0001");
+        assert_eq!(Decimal(Uint128(1000000000000000)).to_string(), "0.001");
+        assert_eq!(Decimal(Uint128(10000000000000000)).to_string(), "0.01");
+        assert_eq!(Decimal(Uint128(100000000000000000)).to_string(), "0.1");
     }
 
     #[test]
