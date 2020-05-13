@@ -9,7 +9,8 @@ use crate::errors::{make_cache_err, VmError};
 ///
 /// This is often referred to as "code ID" in go-cosmwasm, even if code ID
 /// usually refers to an auto-incrementing number.
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Default)]
+// Note: do not remove Default, we need it in go-cosmwasm (for now)
 pub struct Checksum([u8; 32]);
 
 impl Checksum {
