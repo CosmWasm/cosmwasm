@@ -110,11 +110,11 @@ pub fn add_iterator<S: Storage, Q: Querier>(
     new_id
 }
 
-pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &mut Ctx, mut func: F) -> VmResult<T>
+pub(crate) fn with_storage_from_context<S, Q, F, T>(ctx: &mut Ctx, func: F) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&mut S) -> VmResult<T>,
+    F: FnOnce(&mut S) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
     let mut storage = b.storage.take();
@@ -126,11 +126,11 @@ where
     res
 }
 
-pub(crate) fn with_querier_from_context<S, Q, F, T>(ctx: &mut Ctx, mut func: F) -> SystemResult<T>
+pub(crate) fn with_querier_from_context<S, Q, F, T>(ctx: &mut Ctx, func: F) -> SystemResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&Q) -> SystemResult<T>,
+    F: FnOnce(&Q) -> SystemResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
     let querier = b.querier.take();
@@ -146,12 +146,12 @@ where
 pub(crate) fn with_iterator_from_context<S, Q, F, T>(
     ctx: &mut Ctx,
     iterator_id: u32,
-    mut func: F,
+    func: F,
 ) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
-    F: FnMut(&mut dyn Iterator<Item = StdResult<KV>>) -> VmResult<T>,
+    F: FnOnce(&mut dyn Iterator<Item = StdResult<KV>>) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
     let iter = b.iterators.remove(&iterator_id);

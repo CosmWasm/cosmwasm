@@ -179,7 +179,7 @@ where
         get_gas(&self.wasmer_instance)
     }
 
-    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+    pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
         with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
