@@ -2,8 +2,8 @@
 //! It depends on a Wasm build being available, which you can create with `cargo wasm`.
 //! Then running `cargo integration-test` will validate we can properly call into that generated Wasm.
 //!
-//! You can easily convert unit tests to integration tests.
-//! 1. First copy them over verbatum,
+//! You can easily convert unit tests to integration tests as follows:
+//! 1. Copy them over verbatim
 //! 2. Then change
 //!      let mut deps = mock_dependencies(20, &[]);
 //!    to
