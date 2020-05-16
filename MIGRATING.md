@@ -11,9 +11,9 @@ major releases of `cosmwasm`. Note that you can also view the
 `Cargo.toml` dependencies:
 
 - Update to `schemars = "0.7"`
-- Replace `cosmwasm = "0.7"` with `cosmwasm_std = "0.8"`
-- Replace `cosmwasm_vm = "0.7"` with `cosmwasm_vm = "0.8"`
-- Replace `cw_storage = "0.2"` with `cosmwasm_storage = "0.8"`
+- Replace `cosmwasm = "0.7"` with `cosmwasm-std = "0.8"`
+- Replace `cosmwasm-vm = "0.7"` with `cosmwasm-vm = "0.8"`
+- Replace `cw-storage = "0.2"` with `cosmwasm-storage = "0.8"`
 - Remove explicit `snafu` dependency. `cosmwasm_std` still uses it internally
   but doesn't expose snafu specifics anymore. See more details on errors below.
 
@@ -87,7 +87,8 @@ Contract Code:
     tests.
   - `Utf8Err`/`Utf8StringErr` merged into `StdError::InvalidUtf8`
   - `Base64Err` renamed into `StdError::InvalidBase64`
-  - `ContractErr`/`DynContractErr` merged into `StdError::GeneralErr`
+  - `ContractErr`/`DynContractErr` merged into `StdError::GenericErr`, thus both
+    `contract_err` and `dyn_contract_err` must be replaced with `generic_err`.
   - The unused `ValidationErr` was removed
 
 At this point `cargo wasm` should pass.
@@ -105,13 +106,14 @@ Both:
   `Coin::new` and returns one `Coin`.
 - Remove the 4th argument (contract balance) from all calls to `mock_env`, this
   is no longer stored in the environment.
-- `mock_dependencies` and `mock_instance` take a 2nd argument to set the
-  contract balance (visible for the querier). If you need to set more balances,
-  use `mock_XX_with_balances`. The follow code block explains:
+- `dependencies` was renamed to `mock_dependencies`. `mock_dependencies` and
+  `mock_instance` take a 2nd argument to set the contract balance (visible for
+  the querier). If you need to set more balances, use `mock_XX_with_balances`.
+  The follow code block explains:
 
   ```rust
   // before: balance as last arg in mock_env
-  let mut deps = mock_dependencies(20);
+  let mut deps = dependencies(20);
   let env = mock_env(&deps.api, "creator", &coins(15, "earth"), &coins(1015, "earth"));
 
   // after: balance as last arg in mock_dependencies
