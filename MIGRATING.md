@@ -48,7 +48,7 @@ Contract Code:
   - Before: `my_func<S: Storage, A: Api>(deps: &Extern<S, A>, ...`
   - After: `my_func<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>, ...`
   - Remember to add `use cosmwasm_std::Querier;`
-- `query` now returns `Result<Binary>` not `Result<Vec<u8>>`
+- `query` now returns `StdResult<Binary>` instead of `Result<Vec<u8>>`
   - You can also replace `to_vec(...)` with `to_binary(...)`
 - No `.context(...)` is required after `from_slice` and `to_vec`, they return
   proper `cosmwasm_std::Error` variants on errors.
