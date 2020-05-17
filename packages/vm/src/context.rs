@@ -13,7 +13,7 @@ use wasmer_runtime_core::vm::Ctx;
 use cosmwasm_std::KV;
 
 #[cfg(feature = "iterator")]
-use crate::errors::{make_iterator_does_not_exist, FfiResult, IteratorDoesNotExist};
+use crate::errors::{make_iterator_does_not_exist, FfiResult};
 use crate::errors::{make_uninitialized_context_data, VmResult};
 use crate::traits::{Querier, Storage};
 
