@@ -16,8 +16,8 @@ use crate::HumanAddr;
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
-    InvalidRequest { msg: Vec<u8> },
-    InvalidResponse { msg: Vec<u8> },
+    InvalidRequest { error: String, request: Vec<u8> },
+    InvalidResponse { error: String, response: Vec<u8> },
     NoSuchContract { addr: HumanAddr },
     Unknown,
     UnsupportedRequest { kind: String },
@@ -28,15 +28,23 @@ impl std::error::Error for SystemError {}
 impl std::fmt::Display for SystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            SystemError::InvalidRequest { msg } => {
-                write!(f, "Cannot parse request: {}", String::from_utf8_lossy(msg))
-            }
-            SystemError::InvalidResponse { msg } => {
-                write!(f, "Cannot parse response: {}", String::from_utf8_lossy(msg))
-            }
+            SystemError::InvalidRequest { error, request } => write!(
+                f,
+                "Cannot parse request: {} in: {}",
+                error,
+                String::from_utf8_lossy(request)
+            ),
+            SystemError::InvalidResponse { error, response } => write!(
+                f,
+                "Cannot parse response: {} in: {}",
+                error,
+                String::from_utf8_lossy(response)
+            ),
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
             SystemError::Unknown => write!(f, "Unknown system error"),
-            SystemError::UnsupportedRequest { kind } => write!(f, "Unsupport query type: {}", kind),
+            SystemError::UnsupportedRequest { kind } => {
+                write!(f, "Unsupported query type: {}", kind)
+            }
         }
     }
 }

@@ -86,10 +86,12 @@ mod errors {
         pub static INVALID_ORDER: i32 = -2_000_002;
     }
 
-    // /// db_next errors (-2_000_1xx)
-    // #[cfg(feature = "iterator")]
-    // pub mod next {
-    // }
+    /// db_next errors (-2_000_1xx)
+    #[cfg(feature = "iterator")]
+    pub mod next {
+        /// Iterator with the given ID is not registered
+        pub static ITERATOR_DOES_NOT_EXIST: i32 = -2_000_102;
+    }
 }
 
 /// This macro wraps the read_region function for the purposes of the functions below which need to report errors
@@ -257,7 +259,12 @@ pub fn do_next<S: Storage, Q: Querier>(
     value_ptr: u32,
 ) -> VmResult<i32> {
     // This always succeeds but `?` is cheaper  and more future-proof than `unwrap` :D
-    let item = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
+    let result = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()));
+    // This error variant is caused by user input, so we let the user know about it using an explicit error code.
+    if let Err(VmError::IteratorDoesNotExist { .. }) = result {
+        return Ok(errors::next::ITERATOR_DOES_NOT_EXIST);
+    }
+    let item = result?;
 
     // Prepare return values. Both key and value are Options and will be written if set.
     let (key, value) = if let Some(result) = item {
@@ -605,7 +612,7 @@ mod test {
         let result = do_canonicalize_address(api, ctx, source_ptr2, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other,
+                source: FfiError::Other { .. },
             } => {}
             err => panic!("Incorrect error returned: {:?}", err),
         };
@@ -613,7 +620,7 @@ mod test {
         let result = do_canonicalize_address(api, ctx, source_ptr3, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other,
+                source: FfiError::Other { .. },
             } => {}
             err => panic!("Incorrect error returned: {:?}", err),
         };
@@ -679,7 +686,7 @@ mod test {
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other,
+                source: FfiError::Other { .. },
             } => {}
             err => panic!("Incorrect error returned: {:?}", err),
         };
@@ -760,7 +767,7 @@ mod test {
             cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
             Ok(_) => panic!("This must not succeed"),
-            Err(SystemError::InvalidRequest { msg }) => assert_eq!(msg, request),
+            Err(SystemError::InvalidRequest { request: err, .. }) => assert_eq!(err, request),
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
@@ -955,11 +962,7 @@ mod test {
 
         let non_existent_id = 42u32;
         let result = do_next::<S, Q>(ctx, non_existent_id, key_ptr, value_ptr);
-        // assert_eq!(result, errors::next::ITERATOR_DOES_NOT_EXIST);
-        match result {
-            Err(VmError::IteratorDoesNotExist { id, .. }) if id == non_existent_id => {}
-            _ => panic!("Got an unexpected error: {:?}", result),
-        }
+        assert_eq!(result.unwrap(), errors::next::ITERATOR_DOES_NOT_EXIST);
     }
 
     #[test]

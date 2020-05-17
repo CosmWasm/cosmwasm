@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{Api, Extern, FfiError, FfiResult, Querier, QuerierResult};
+use crate::{Api, Extern, FfiResult, Querier, QuerierResult};
 use cosmwasm_std::{
     from_slice, to_binary, AllBalanceResponse, BalanceResponse, BankQuery, Binary, BlockInfo,
     CanonicalAddr, Coin, ContractInfo, Delegation, Env, HumanAddr, MessageInfo, Never,
@@ -68,10 +68,14 @@ impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return Err(FfiError::Other);
+            return Err(crate::make_ffi_other(
+                "Invalid input: human address too short",
+            ));
         }
         if human.len() > self.canonical_length {
-            return Err(FfiError::Other);
+            return Err(crate::make_ffi_other(
+                "Invalid input: human address too long",
+            ));
         }
 
         let mut out = Vec::from(human.as_str());
@@ -84,7 +88,9 @@ impl Api for MockApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
-            return Err(FfiError::Other);
+            return Err(crate::make_ffi_other(
+                "Invalid input: canonical address length not correct",
+            ));
         }
 
         // remove trailing 0's (TODO: fix this - but fine for first tests)
@@ -95,7 +101,8 @@ impl Api for MockApi {
             .filter(|&x| x != 0)
             .collect();
         // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed).or(Err(FfiError::Other))?;
+        let human = String::from_utf8(trimmed)
+            .map_err(|_| crate::make_ffi_other("Could not parse human address result as utf-8"))?;
         Ok(HumanAddr(human))
     }
 }
@@ -151,9 +158,10 @@ impl Querier for MockQuerier {
         // MockQuerier doesn't support Custom, so we ignore it completely here
         let request: QueryRequest<Never> = match from_slice(bin_request) {
             Ok(v) => v,
-            Err(_) => {
+            Err(e) => {
                 return Ok(Err(SystemError::InvalidRequest {
-                    msg: bin_request.to_vec(),
+                    error: format!("Parsing QueryRequest: {}", e),
+                    request: bin_request.to_vec(),
                 }))
             }
         };
@@ -433,7 +441,7 @@ mod staking {
 #[cfg(test)]
 mod test {
     use super::*;
-
+    use crate::FfiError;
     use cosmwasm_std::{coin, coins, from_binary};
 
     #[test]
@@ -465,26 +473,33 @@ mod test {
     }
 
     #[test]
-    // #[should_panic(expected = "length not correct")]
     fn human_address_input_length() {
         let api = MockApi::new(10);
         let input = CanonicalAddr(Binary(vec![61; 11]));
-        // api.human_address(&input).unwrap();
-        assert_eq!(api.human_address(&input).unwrap_err(), FfiError::Other);
+        match api.human_address(&input).unwrap_err() {
+            FfiError::Other { .. } => {}
+            err => panic!("Unexpected error: {}", err),
+        }
     }
 
     #[test]
     fn canonical_address_min_input_length() {
         let api = MockApi::new(10);
         let human = HumanAddr("1".to_string());
-        assert_eq!(api.canonical_address(&human).unwrap_err(), FfiError::Other);
+        match api.canonical_address(&human).unwrap_err() {
+            FfiError::Other { .. } => {}
+            err => panic!("Unexpected error: {}", err),
+        }
     }
 
     #[test]
     fn canonical_address_max_input_length() {
         let api = MockApi::new(10);
         let human = HumanAddr("longer-than-10".to_string());
-        assert_eq!(api.canonical_address(&human).unwrap_err(), FfiError::Other);
+        match api.canonical_address(&human).unwrap_err() {
+            FfiError::Other { .. } => {}
+            err => panic!("Unexpected error: {}", err),
+        }
     }
 
     #[test]

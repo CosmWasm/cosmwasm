@@ -61,13 +61,13 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 // NOTE: This is actually not really implemented safely at the moment. I did this as a
 // nicer and less-terrible version of the previous solution to the following issue:
 //
-//                                                  +--->> Go pointer
-//                                                  |
-// Ctx -> ContextData --> iterators: Box<dyn Iterator + 'a> --+
-//                    |                                       |
-//                    +-> storage: impl Storage <<------------+
-//                    |
-//                    +-> querier: impl Querier
+//                                                   +--->> Go pointer
+//                                                   |
+// Ctx ->> ContextData +-> iterators: Box<dyn Iterator + 'a> --+
+//                     |                                       |
+//                     +-> storage: impl Storage <<------------+
+//                     |
+//                     +-> querier: impl Querier
 //
 // ->  : Ownership
 // ->> : Mutable borrow
@@ -167,7 +167,7 @@ where
     let b = get_context_data::<S, Q>(ctx);
     match b.querier.as_ref() {
         Some(q) => func(q),
-        None => UninitializedContextData { kind: "storage" }.fail(),
+        None => UninitializedContextData { kind: "querier" }.fail(),
     }
 }
 
@@ -184,7 +184,7 @@ where
 {
     let b = get_context_data::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
-        Some(data) => func(data),
+        Some(iterator) => func(iterator),
         None => IteratorDoesNotExist { id: iterator_id }.fail(),
     }
 }

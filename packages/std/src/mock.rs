@@ -166,9 +166,10 @@ impl Querier for MockQuerier {
         // MockQuerier doesn't support Custom, so we ignore it completely here
         let request: QueryRequest<Never> = match from_slice(bin_request) {
             Ok(v) => v,
-            Err(_) => {
+            Err(e) => {
                 return Err(SystemError::InvalidRequest {
-                    msg: bin_request.to_vec(),
+                    error: format!("Parsing QueryRequest: {}", e),
+                    request: bin_request.to_vec(),
                 })
             }
         };

@@ -106,16 +106,31 @@ pub fn make_validation_err<T>(msg: String) -> VmResult<T> {
     ValidationErr { msg }.fail()
 }
 
-#[derive(PartialEq, Debug, Snafu)]
+#[derive(Debug, Snafu)]
 pub enum FfiError {
     #[snafu(display("Panic in FFI call"))]
-    ForeignPanic,
+    ForeignPanic { backtrace: snafu::Backtrace },
     #[snafu(display("bad argument passed to FFI"))]
-    BadArgument,
+    BadArgument { backtrace: snafu::Backtrace },
     #[snafu(display("Ran out of gas during FFI call"))]
     OutOfGas,
-    #[snafu(display("Unspecified Error during FFI call"))]
-    Other,
+    #[snafu(display("Error during FFI call: {}", error))]
+    Other {
+        error: String,
+        backtrace: snafu::Backtrace,
+    },
+}
+
+impl FfiError {
+    pub fn set_message<S>(&mut self, message: S) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        if let FfiError::Other { error, .. } = self {
+            *error = message.into()
+        }
+        self
+    }
 }
 
 impl From<FfiError> for VmError {
@@ -128,3 +143,25 @@ impl From<FfiError> for VmError {
 }
 
 pub type FfiResult<T> = core::result::Result<T, FfiError>;
+
+pub fn make_ffi_foreign_panic() -> FfiError {
+    ForeignPanic {}.build()
+}
+
+pub fn make_ffi_bad_argument() -> FfiError {
+    BadArgument {}.build()
+}
+
+pub fn make_ffi_out_of_gas() -> FfiError {
+    FfiError::OutOfGas
+}
+
+pub fn make_ffi_other<S>(error: S) -> FfiError
+where
+    S: Into<String>,
+{
+    Other {
+        error: error.into(),
+    }
+    .build()
+}

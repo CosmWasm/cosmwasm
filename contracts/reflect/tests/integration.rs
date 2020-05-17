@@ -40,8 +40,9 @@ mod mock {
 
     use cosmwasm_std::{from_slice, to_binary, Binary, Coin, QueryRequest, StdResult};
     use cosmwasm_vm::{
+        make_ffi_other,
         mock::{MockApi, MockQuerier, MockStorage},
-        Extern, FfiError, Querier, QuerierResult,
+        Extern, Querier, QuerierResult,
     };
 
     #[derive(Clone)]
@@ -60,7 +61,9 @@ mod mock {
             // parse into our custom query class
             let request: QueryRequest<CustomQuery> = match from_slice(bin_request) {
                 Ok(v) => v,
-                Err(_) => return Err(FfiError::Other),
+                Err(e) => {
+                    return Err(make_ffi_other(format!("Parsing QueryRequest: {}", e)));
+                }
             };
             if let QueryRequest::Custom(custom_query) = &request {
                 Ok(Ok(execute(&custom_query)))
