@@ -104,7 +104,7 @@ macro_rules! read_region {
             Ok(data) => data,
             Err(err) => {
                 return Ok(match err {
-                    VmError::RegionLengthTooBigErr { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
+                    VmError::RegionLengthTooBig { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
                     _ => errors::REGION_READ_UNKNOWN,
                 })
             }
@@ -123,11 +123,28 @@ macro_rules! maybe_read_region {
             Ok(data) => data,
             Err(err) => {
                 return Ok(match err {
-                    VmError::RegionLengthTooBigErr { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
+                    VmError::RegionLengthTooBig { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
                     _ => errors::REGION_READ_UNKNOWN,
                 })
             }
         }
+// =======
+// /// Reads a storage entry from the VM's storage into Wasm memory
+// pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
+//     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
+//         Ok(data) => data,
+//         Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
+//         Err(_) => return errors::REGION_READ_UNKNOWN,
+//     };
+//     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+//         store
+//             .get(&key)
+//             .or_else(|_| Err(make_backend_err("Error reading from backend")))
+//     }) {
+//         Ok(v) => v,
+//         Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
+//         Err(_) => return errors::DB_UNKNOWN,
+// >>>>>>> origin/master
     };
 }
 
@@ -141,7 +158,7 @@ macro_rules! write_region {
             Ok(()) => errors::NONE,
             Err(err) => {
                 return Ok(match err {
-                    VmError::RegionTooSmallErr { .. } => errors::REGION_WRITE_TOO_SMALL,
+                    VmError::RegionTooSmall { .. } => errors::REGION_WRITE_TOO_SMALL,
                     _ => errors::REGION_WRITE_UNKNOWN,
                 })
             }
@@ -351,7 +368,8 @@ mod test {
 
     fn write_data(wasmer_instance: &mut Instance, data: &[u8]) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
-            .func("allocate")
+            .exports
+            .get("allocate")
             .expect("error getting function");
         let region_ptr = allocate
             .call(data.len() as u32)
@@ -362,7 +380,8 @@ mod test {
 
     fn create_empty(wasmer_instance: &mut Instance, capacity: u32) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
-            .func("allocate")
+            .exports
+            .get("allocate")
             .expect("error getting function");
         let region_ptr = allocate.call(capacity).expect("error calling allocate");
         region_ptr

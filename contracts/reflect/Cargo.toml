@@ -1,6 +1,6 @@
 [package]
 name = "reflect"
-version = "0.1.0"
+version = "0.8.0-alpha2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 publish = false
 edition = "2018"
@@ -37,13 +37,8 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 cranelift = ["cosmwasm-vm/default-cranelift"]
 singlepass = ["cosmwasm-vm/default-singlepass"]
 
-# speed up integration tests
-[profile.dev.package.wasmer-clif-backend]
-debug-assertions = false
-opt-level = 1
-
 [dependencies]
-cosmwasm-std = { path = "../../packages/std" }
+cosmwasm-std = { path = "../../packages/std", features = ["staking"] }
 cosmwasm-storage = { path = "../../packages/storage" }
 schemars = "0.7"
 serde = { version = "=1.0.103", default-features = false, features = ["derive"] }

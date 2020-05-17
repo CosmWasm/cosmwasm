@@ -479,7 +479,8 @@
               "type": "object",
               "required": [
                 "contract_addr",
-                "msg"
+                "msg",
+                "send"
               ],
               "properties": {
                 "contract_addr": {
@@ -494,10 +495,7 @@
                   ]
                 },
                 "send": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
+                  "type": "array",
                   "items": {
                     "$ref": "#/definitions/Coin"
                   }
@@ -517,13 +515,21 @@
               "type": "object",
               "required": [
                 "code_id",
-                "msg"
+                "msg",
+                "send"
               ],
               "properties": {
                 "code_id": {
                   "type": "integer",
                   "format": "uint64",
                   "minimum": 0.0
+                },
+                "label": {
+                  "description": "optional human-readbale label for the contract",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 },
                 "msg": {
                   "description": "msg is the json-encoded InitMsg struct (as raw Binary)",
@@ -534,10 +540,7 @@
                   ]
                 },
                 "send": {
-                  "type": [
-                    "array",
-                    "null"
-                  ],
+                  "type": "array",
                   "items": {
                     "$ref": "#/definitions/Coin"
                   }

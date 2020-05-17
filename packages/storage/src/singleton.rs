@@ -79,6 +79,15 @@ where
         self.save(&output)?;
         Ok(output)
     }
+
+    /// update_mut is like update but takes FnMut allowing you to pass in a closure that modifies some
+    /// shared variable
+    pub fn update_mut(&mut self, action: &mut dyn FnMut(T) -> StdResult<T>) -> StdResult<T> {
+        let input = self.load()?;
+        let output = action(input)?;
+        self.save(&output)?;
+        Ok(output)
+    }
 }
 
 /// ReadonlySingleton only requires a ReadonlyStorage and exposes only the
@@ -189,6 +198,32 @@ mod test {
         };
         assert_eq!(output.unwrap(), expected);
         assert_eq!(writer.load().unwrap(), expected);
+    }
+
+    #[test]
+    fn update_success_mut() {
+        let mut store = MockStorage::new();
+        let mut writer = singleton::<_, Config>(&mut store, b"config");
+
+        let cfg = Config {
+            owner: "admin".to_string(),
+            max_tokens: 1234,
+        };
+        writer.save(&cfg).unwrap();
+
+        let mut old_tokens = 0i32;
+        let output = writer.update_mut(&mut |mut c| {
+            old_tokens = c.max_tokens;
+            c.max_tokens *= 2;
+            Ok(c)
+        });
+        let expected = Config {
+            owner: "admin".to_string(),
+            max_tokens: 2468,
+        };
+        assert_eq!(output.unwrap(), expected);
+        assert_eq!(writer.load().unwrap(), expected);
+        assert_eq!(old_tokens, 1234);
     }
 
     #[test]

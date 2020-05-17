@@ -105,6 +105,19 @@ where
         self.save(key, &output)?;
         Ok(output)
     }
+
+    /// update_mut is like update but takes FnMut allowing you to pass in a closure that modifies some
+    /// shared variable
+    pub fn update_mut(
+        &mut self,
+        key: &[u8],
+        action: &mut dyn FnMut(Option<T>) -> StdResult<T>,
+    ) -> StdResult<T> {
+        let input = self.may_load(key)?;
+        let output = action(input)?;
+        self.save(key, &output)?;
+        Ok(output)
+    }
 }
 
 pub struct ReadonlyBucket<'a, S: ReadonlyStorage, T>
@@ -280,6 +293,36 @@ mod test {
         // load it properly
         let loaded = bucket.load(b"maria").unwrap();
         assert_eq!(loaded, expected);
+    }
+
+    #[test]
+    fn update_mut_success() {
+        let mut store = MockStorage::new();
+        let mut bucket = bucket::<_, Data>(b"data", &mut store);
+
+        // initial data
+        let init = Data {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        bucket.save(b"maria", &init).unwrap();
+
+        // show we can capture data from the closure
+        let mut old_age = 0i32;
+        let mut birthday = |mayd: Option<Data>| -> StdResult<Data> {
+            let mut d = mayd.ok_or(not_found("Data"))?;
+            old_age = d.age;
+            d.age += 1;
+            Ok(d)
+        };
+        let output = bucket.update_mut(b"maria", &mut birthday).unwrap();
+        let expected = Data {
+            name: "Maria".to_string(),
+            age: 43,
+        };
+        assert_eq!(output, expected);
+        //
+        assert_eq!(old_age, 42);
     }
 
     #[test]

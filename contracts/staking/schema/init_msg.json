@@ -1,0 +1,65 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "InitMsg",
+  "type": "object",
+  "required": [
+    "decimals",
+    "exit_tax",
+    "min_withdrawl",
+    "name",
+    "symbol",
+    "validator"
+  ],
+  "properties": {
+    "decimals": {
+      "description": "decimal places of the derivative token (for UI) TODO: does this make sense? Do we need to normalize on this? We don't even know the decimals of the native token",
+      "type": "integer",
+      "format": "uint8",
+      "minimum": 0.0
+    },
+    "exit_tax": {
+      "description": "this is how much the owner takes as a cut when someone unbonds TODO",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Decimal"
+        }
+      ]
+    },
+    "min_withdrawl": {
+      "description": "This is the minimum amount we will pull out to reinvest, as well as a minumum that can be unbonded (to avoid needless staking tx)",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Uint128"
+        }
+      ]
+    },
+    "name": {
+      "description": "name of the derivative token (FIXME: auto-generate?)",
+      "type": "string"
+    },
+    "symbol": {
+      "description": "symbol / ticker of the derivative token",
+      "type": "string"
+    },
+    "validator": {
+      "description": "This is the validator that all tokens will be bonded to",
+      "allOf": [
+        {
+          "$ref": "#/definitions/HumanAddr"
+        }
+      ]
+    }
+  },
+  "definitions": {
+    "Decimal": {
+      "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
+      "type": "string"
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}

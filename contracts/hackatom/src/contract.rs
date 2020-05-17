@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, Api, BankMsg, Binary,
-    CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, Querier, QueryResponse,
-    StdResult, Storage,
+    from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, AllBalanceResponse,
+    Api, BankMsg, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse,
+    Querier, QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -110,7 +110,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
             messages: vec![BankMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
-                amount: balance.amount,
+                amount: balance,
             }
             .into()],
             data: None,
@@ -200,8 +200,8 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
 ) -> StdResult<QueryResponse> {
-    let res = deps.querier.query_all_balances(address)?;
-    to_binary(&res)
+    let amount = deps.querier.query_all_balances(address)?;
+    to_binary(&AllBalanceResponse { amount })
 }
 
 #[cfg(test)]

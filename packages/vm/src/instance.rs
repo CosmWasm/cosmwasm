@@ -1,6 +1,6 @@
+use std::collections::HashSet;
 use std::marker::PhantomData;
 
-use snafu::ResultExt;
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
     imports,
@@ -16,7 +16,8 @@ use crate::context::{
     move_into_context, move_out_of_context, setup_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{ResolveErr, VmResult, WasmerErr, WasmerRuntimeErr};
+use crate::errors::{make_instantiation_err, VmResult};
+use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
 };
@@ -29,6 +30,7 @@ static WASM_PAGE_SIZE: u64 = 64 * 1024;
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasmer_instance: wasmer_runtime_core::instance::Instance,
     pub api: A,
+    pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
@@ -40,12 +42,18 @@ where
     A: Api + 'static,
     Q: Querier + 'static,
 {
+    /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
+    /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
         let module = compile(code)?;
         Instance::from_module(&module, deps, gas_limit)
     }
 
-    pub fn from_module(module: &Module, deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
+    pub(crate) fn from_module(
+        module: &Module,
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+    ) -> VmResult<Self> {
         let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
@@ -116,20 +124,24 @@ where
             },
         });
 
-        let wasmer_instance = module.instantiate(&import_obj).context(WasmerErr {})?;
+        let wasmer_instance = module.instantiate(&import_obj).map_err(|original| {
+            make_instantiation_err(format!("Error instantiating module: {:?}", original))
+        })?;
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
 
-    pub fn from_wasmer(
+    pub(crate) fn from_wasmer(
         mut wasmer_instance: wasmer_runtime_core::Instance,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
+        let required_features = required_features_from_wasmer_instance(&wasmer_instance);
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
             wasmer_instance,
             api: deps.api,
+            required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
         }
@@ -137,7 +149,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub fn recycle(mut instance: Self) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+    pub(crate) fn recycle(
+        mut instance: Self,
+    ) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
             move_out_of_context(instance.wasmer_instance.context_mut())
         {
@@ -173,7 +187,7 @@ where
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(to_u32(size)?).context(WasmerRuntimeErr {})?;
+        let ptr = alloc.call(to_u32(size)?)?;
         Ok(ptr)
     }
 
@@ -182,7 +196,7 @@ where
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
         let dealloc: Func<u32, ()> = self.func("deallocate")?;
-        dealloc.call(ptr).context(WasmerRuntimeErr {})?;
+        dealloc.call(ptr)?;
         Ok(())
     }
 
@@ -202,22 +216,60 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        self.wasmer_instance.func(name).context(ResolveErr {})
+        let function = self.wasmer_instance.exports.get(name)?;
+        Ok(function)
     }
 }
 
 #[cfg(test)]
 mod test {
     use super::*;
-
-    use wasmer_runtime_core::error::ResolveError;
-
     use crate::errors::VmError;
     use crate::testing::mock_instance;
+    use cosmwasm_std::testing::mock_dependencies;
+    use wabt::wat2wasm;
 
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static REFLECT_CONTRACT: &[u8] = include_bytes!("../../../contracts/reflect/contract.wasm");
+    static DEFAULT_GAS_LIMIT: u64 = 500_000;
+
+    #[test]
+    fn required_features_works() {
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features.len(), 0);
+
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(REFLECT_CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features.len(), 1);
+        assert!(instance.required_features.contains("staking"));
+    }
+
+    #[test]
+    fn required_features_works_for_many_exports() {
+        let wasm = wat2wasm(
+            r#"(module
+            (type (func))
+            (func (type 0) nop)
+            (export "requires_water" (func 0))
+            (export "requires_" (func 0))
+            (export "requires_nutrients" (func 0))
+            (export "require_milk" (func 0))
+            (export "REQUIRES_air" (func 0))
+            (export "requires_sun" (func 0))
+            )"#,
+        )
+        .unwrap();
+
+        let deps = mock_dependencies(20, &[]);
+        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT).unwrap();
+        assert_eq!(instance.required_features.len(), 3);
+        assert!(instance.required_features.contains("nutrients"));
+        assert!(instance.required_features.contains("sun"));
+        assert!(instance.required_features.contains("water"));
+    }
 
     #[test]
     fn func_works() {
@@ -236,13 +288,24 @@ mod test {
     fn func_errors_for_non_existent_function() {
         let instance = mock_instance(&CONTRACT, &[]);
         let missing_function = "bar_foo345";
-        match instance.func::<(), ()>(missing_function) {
-            Err(VmError::ResolveErr { source, .. }) => match source {
-                ResolveError::ExportNotFound { name } => assert_eq!(name, missing_function),
-                _ => panic!("found unexpected source error"),
-            },
-            Err(e) => panic!("unexpected error: {:?}", e),
-            Ok(_) => panic!("must not succeed"),
+        match instance.func::<(), ()>(missing_function).err().unwrap() {
+            VmError::ResolveErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasmer resolve error: ExportNotFound { name: \"bar_foo345\" }"
+            ),
+            e => panic!("unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn func_errors_for_wrong_signature() {
+        let instance = mock_instance(&CONTRACT, &[]);
+        match instance.func::<(), ()>("allocate").err().unwrap() {
+            VmError::ResolveErr { msg, .. } => assert_eq!(
+                msg,
+                "Wasmer resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
+            ),
+            e => panic!("unexpected error: {:?}", e),
         }
     }
 
@@ -313,7 +376,7 @@ mod test {
             .expect("error writing");
 
         match instance.read_memory(region_ptr, max_length) {
-            Err(VmError::RegionLengthTooBigErr {
+            Err(VmError::RegionLengthTooBig {
                 length, max_length, ..
             }) => {
                 assert_eq!(length, 6);
@@ -393,7 +456,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 45568);
+        assert_eq!(init_used, 65604);
     }
 
     #[test]
@@ -417,7 +480,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 63432);
+        assert_eq!(handle_used, 94653);
     }
 
     #[test]
@@ -452,6 +515,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 23066);
+        assert_eq!(query_used, 32676);
     }
 }

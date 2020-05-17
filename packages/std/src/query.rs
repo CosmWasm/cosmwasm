@@ -5,6 +5,7 @@ use std::fmt;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
+use crate::math::Decimal;
 use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
@@ -16,7 +17,6 @@ pub type QueryResult = StdResult<QueryResponse>;
 pub enum QueryRequest<T> {
     Bank(BankQuery),
     Custom(T),
-    #[cfg(feature = "staking")]
     Staking(StakingQuery),
     Wasm(WasmQuery),
 }
@@ -86,68 +86,59 @@ pub struct AllBalanceResponse {
     pub amount: Vec<Coin>,
 }
 
-#[cfg(feature = "staking")]
-pub use staking::{Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse};
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum StakingQuery {
+    /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
+    BondedDenom {},
+    /// Delegations will return all delegations by the delegator,
+    /// or just those to the given validator (if set)
+    Delegations {
+        delegator: HumanAddr,
+        validator: Option<HumanAddr>,
+    },
+    /// Returns all registered Validators on the system
+    Validators {},
+}
 
-#[cfg(feature = "staking")]
-mod staking {
-    use schemars::JsonSchema;
-    use serde::{Deserialize, Serialize};
+/// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct BondedDenomResponse {
+    pub denom: String,
+}
 
-    use crate::coins::Coin;
-    use crate::types::HumanAddr;
+/// DelegationsResponse is data format returned from StakingRequest::Delegations query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct DelegationsResponse {
+    pub delegations: Vec<Delegation>,
+}
 
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    #[serde(rename_all = "snake_case")]
-    pub enum StakingQuery {
-        /// Returns all registered Validators on the system
-        Validators {},
-        /// Delegations will return all delegations by the delegator,
-        /// or just those to the given validator (if set)
-        Delegations {
-            delegator: HumanAddr,
-            validator: Option<HumanAddr>,
-        },
-    }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Delegation {
+    pub delegator: HumanAddr,
+    pub validator: HumanAddr,
+    /// How much we have locked in the delegation
+    pub amount: Coin,
+    /// If true, then a Redelegate command will work now, otherwise you may have to wait more
+    pub can_redelegate: bool,
+    /// How much we can currently withdraw
+    pub accumulated_rewards: Coin,
+    // TODO: do we want to expose more info?
+}
 
-    /// ValidatorsResponse is data format returned from StakingRequest::Validators query
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct ValidatorsResponse {
-        pub validators: Vec<Validator>,
-    }
+/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorsResponse {
+    pub validators: Vec<Validator>,
+}
 
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct Validator {
-        pub address: HumanAddr,
-        /// rates are denominated in 10^-6 - 1_000_000 (max) = 100%, 10_000 = 1%
-        /// TODO: capture this in some Dec type?
-        pub commission: u64,
-        pub max_commission: u64,
-        /// TODO: what units are these (in terms of time)?
-        pub max_change_rate: u64,
-    }
-
-    /// DelegationsResponse is data format returned from StakingRequest::Delegations query
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    #[serde(rename_all = "snake_case")]
-    pub struct DelegationsResponse {
-        pub delegations: Vec<Delegation>,
-    }
-
-    #[cfg(feature = "staking")]
-    #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-    pub struct Delegation {
-        pub delegator: HumanAddr,
-        pub validator: HumanAddr,
-        /// How much we have locked in the delegation
-        pub amount: Coin,
-        /// If true, then a Redelegate command will work now, otherwise you may have to wait more
-        pub can_redelegate: bool,
-        /// How much we can currently withdraw
-        pub accumulated_rewards: Coin,
-        // TODO: do we want to expose more info?
-    }
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct Validator {
+    pub address: HumanAddr,
+    pub commission: Decimal,
+    pub max_commission: Decimal,
+    /// TODO: what units are these (in terms of time)?
+    pub max_change_rate: Decimal,
 }

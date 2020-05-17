@@ -12,10 +12,10 @@ use wasmer_runtime_core::vm::Ctx;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
 
-use crate::errors::{UninitializedContextData, VmResult};
-use crate::traits::{Querier, Storage};
 #[cfg(feature = "iterator")]
-use crate::{errors::IteratorDoesNotExist, FfiResult};
+use crate::errors::{make_iterator_does_not_exist, FfiResult, IteratorDoesNotExist};
+use crate::errors::{make_uninitialized_context_data, VmResult};
+use crate::traits::{Querier, Storage};
 
 /** context data **/
 
@@ -151,7 +151,7 @@ where
     let b = get_context_data::<S, Q>(ctx);
     match b.storage.as_mut() {
         Some(data) => func(data),
-        None => UninitializedContextData { kind: "storage" }.fail(),
+        None => Err(make_uninitialized_context_data("storage")),
     }
 }
 
@@ -167,7 +167,7 @@ where
     let b = get_context_data::<S, Q>(ctx);
     match b.querier.as_ref() {
         Some(q) => func(q),
-        None => UninitializedContextData { kind: "querier" }.fail(),
+        None => Err(make_uninitialized_context_data("querier")),
     }
 }
 
@@ -185,7 +185,7 @@ where
     let b = get_context_data::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
         Some(iterator) => func(iterator),
-        None => IteratorDoesNotExist { id: iterator_id }.fail(),
+        None => Err(make_iterator_does_not_exist(iterator_id)),
     }
 }
 
@@ -386,13 +386,12 @@ mod test {
         leave_default_data(ctx);
 
         let missing_id = 42u32;
-        let miss = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
+        let result = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
             panic!("this should not be called");
         });
-        match miss {
-            Ok(_) => panic!("Expected error"),
-            Err(VmError::IteratorDoesNotExist { id, .. }) => assert_eq!(id, missing_id),
-            Err(e) => panic!("Unexpected error: {}", e),
+        match result.unwrap_err() {
+            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, missing_id),
+            e => panic!("Unexpected error: {}", e),
         }
     }
 }

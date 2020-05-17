@@ -20,7 +20,6 @@ where
     // by default we use RawMsg, but a contract can override that
     // to call into more app-specific code (whatever they define)
     Custom(T),
-    #[cfg(feature = "staking")]
     Staking(StakingMsg),
     Wasm(WasmMsg),
 }
@@ -36,7 +35,6 @@ pub enum BankMsg {
     },
 }
 
-#[cfg(feature = "staking")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingMsg {
@@ -73,14 +71,16 @@ pub enum WasmMsg {
         contract_addr: HumanAddr,
         /// msg is the json-encoded HandleMsg struct (as raw Binary)
         msg: Binary,
-        send: Option<Vec<Coin>>,
+        send: Vec<Coin>,
     },
     /// this instantiates a new contracts from previously uploaded wasm code
     Instantiate {
         code_id: u64,
         /// msg is the json-encoded InitMsg struct (as raw Binary)
         msg: Binary,
-        send: Option<Vec<Coin>>,
+        send: Vec<Coin>,
+        /// optional human-readbale label for the contract
+        label: Option<String>,
     },
 }
 

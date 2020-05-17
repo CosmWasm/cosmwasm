@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.8.0-dev"
+version = "0.8.0-alpha2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -29,17 +29,18 @@ backtraces = ["snafu/backtraces"]
 iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
-cosmwasm-std = { path = "../std" }
+# Uses the path when built locally; uses the given version from crates.io when published
+cosmwasm-std = { path = "../std", version = "0.8.0-alpha2" }
 serde_json = "1.0"
-wasmer-runtime-core = "0.16"
-wasmer-middleware-common = "0.16"
-wasmer-clif-backend = { version = "0.16", optional = true }
-wasmer-singlepass-backend = { version = "0.16", optional = true }
+wasmer-runtime-core = "0.17"
+wasmer-middleware-common = "0.17"
+wasmer-clif-backend = { version = "0.17", optional = true }
+wasmer-singlepass-backend = { version = "0.17", optional = true }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.6.3" }
 sha2 = "0.8.0"
-hex = "0.3.1"
+hex = "0.4"
 memmap = "0.7"
 lru = "0.3.1"
 parity-wasm = "0.41"

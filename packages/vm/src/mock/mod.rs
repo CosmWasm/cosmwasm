@@ -149,7 +149,7 @@ impl MockQuerier {
     }
 
     pub fn with_staking(&mut self, validators: &[Validator], delegations: &[Delegation]) {
-        self.staking = staking::StakingQuerier::new(validators, delegations);
+        self.staking = staking::StakingQuerier::new("stake", validators, delegations);
     }
 }
 
@@ -243,18 +243,21 @@ impl BankQuerier {
 mod staking {
     use crate::traits::QuerierResult;
     use cosmwasm_std::{
-        to_binary, Delegation, DelegationsResponse, StakingQuery, Validator, ValidatorsResponse,
+        to_binary, BondedDenomResponse, Delegation, DelegationsResponse, StakingQuery, Validator,
+        ValidatorsResponse,
     };
 
     #[derive(Clone, Default)]
     pub struct StakingQuerier {
+        denom: String,
         validators: Vec<Validator>,
         delegations: Vec<Delegation>,
     }
 
     impl StakingQuerier {
-        pub fn new(validators: &[Validator], delegations: &[Delegation]) -> Self {
+        pub fn new(denom: &str, validators: &[Validator], delegations: &[Delegation]) -> Self {
             StakingQuerier {
+                denom: denom.to_string(),
                 validators: validators.to_vec(),
                 delegations: delegations.to_vec(),
             }
@@ -262,11 +265,17 @@ mod staking {
 
         pub fn query(&self, request: &StakingQuery) -> QuerierResult {
             match request {
+                StakingQuery::BondedDenom {} => {
+                    let res = BondedDenomResponse {
+                        denom: self.denom.clone(),
+                    };
+                    Ok(Ok(to_binary(&res)))
+                }
                 StakingQuery::Validators {} => {
-                    let val_res = ValidatorsResponse {
+                    let res = ValidatorsResponse {
                         validators: self.validators.clone(),
                     };
-                    Ok(Ok(to_binary(&val_res)))
+                    Ok(Ok(to_binary(&res)))
                 }
                 StakingQuery::Delegations {
                     delegator,
@@ -282,8 +291,8 @@ mod staking {
                     };
                     let delegations: Vec<_> =
                         self.delegations.iter().filter(matches).cloned().collect();
-                    let val_res = DelegationsResponse { delegations };
-                    Ok(Ok(to_binary(&val_res)))
+                    let res = DelegationsResponse { delegations };
+                    Ok(Ok(to_binary(&res)))
                 }
             }
         }

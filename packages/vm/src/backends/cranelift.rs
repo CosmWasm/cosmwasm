@@ -1,14 +1,21 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 use wasmer_clif_backend::CraneliftCompiler;
-use wasmer_runtime_core::{backend::Compiler, compile_with, instance::Instance, module::Module};
+use wasmer_runtime_core::{
+    backend::Compiler, backend::CompilerConfig, compile_with_config, instance::Instance,
+    module::Module,
+};
 
-use crate::errors::{CompileErr, VmResult};
-use snafu::ResultExt;
+use crate::errors::VmResult;
 
 static FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
-    compile_with(code, compiler().as_ref()).context(CompileErr {})
+    let config = CompilerConfig {
+        enable_verification: false, // As discussed in https://github.com/CosmWasm/cosmwasm/issues/155
+        ..Default::default()
+    };
+    let module = compile_with_config(code, compiler().as_ref(), config)?;
+    Ok(module)
 }
 
 pub fn compiler() -> Box<dyn Compiler> {

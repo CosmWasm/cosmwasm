@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "anyOf": [
+    {
+      "description": "Balance shows the number of staking derivatives",
+      "type": "object",
+      "required": [
+        "balance"
+      ],
+      "properties": {
+        "balance": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Claims shows the number of tokens this address can access when they are done unbonding",
+      "type": "object",
+      "required": [
+        "claims"
+      ],
+      "properties": {
+        "claims": {
+          "type": "object",
+          "required": [
+            "address"
+          ],
+          "properties": {
+            "address": {
+              "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "TokenInfo shows the metadata of the token for UIs",
+      "type": "object",
+      "required": [
+        "token_info"
+      ],
+      "properties": {
+        "token_info": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "description": "Investment shows info on total staking tokens under custody, with which validator, as well as how many derivative tokens are lists. It also shows with the exit tax.",
+      "type": "object",
+      "required": [
+        "investment"
+      ],
+      "properties": {
+        "investment": {
+          "type": "object"
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    }
+  }
+}

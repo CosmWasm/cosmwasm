@@ -132,7 +132,7 @@ Integration Tests:
 - Remove all imports / use of `ContractResult`
 - You must specify `CosmosMsg::Native` type when calling
   `cosmwasm_vm::testing::{handle, init}`. You will want to
-  `use cosmwasm_vm::testing::{HandleResult, InitResult}` or
+  `use cosmwasm_std::{HandleResult, InitResult}` or
   `use cosmwasm_std::{HandleResponse, InitResponse}`. If you don't use custom
   native types, simply update calls as follows:
   - `let res = init(...)` => `let res: InitResult = init(...)`

@@ -5,7 +5,7 @@
 **all**
 
 - Upgrade schemars to 0.7.
-- Upgrade wasmer to 0.16.
+- Upgrade wasmer to 0.17.
 - Update snafu to 0.6.
 - Minimal supported Rust version is 1.41.
 - Split `Region.len` into `Region.capacity` and `Region.length`, where the new
@@ -116,6 +116,8 @@
 - Add `staking` feature flag to expose new `StakingMsg` types under `CosmosMsg`
   and new `StakingRequest` types under `QueryRequest`.
 - Add support for mocking-out staking queries via `MockQuerier.with_staking`
+- `from_slice`/`from_binary` now require result type to be `DeserializeOwned`,
+  i.e. the result must not contain references such as `&str`.
 
 **cosmwasm-vm**
 
@@ -144,6 +146,24 @@
 - The import `db_read` now returns an error code if the storage key does not
   exist. The latest standard library converts this error code back to a `None`
   value. This allows differentiating non-existent and empty storage entries.
+- Make `Instance::from_module`, `::from_wasmer` and `::recycle` crate-internal.
+- Create explicit, public `Checksum` type to identify Wasm blobs.
+- `CosmCache::new` now takes supported features as an argument.
+- Rename `VmError::RegionTooSmallErr` to `VmError::RegionTooSmall`.
+- Rename `VmError::RegionLengthTooBigErr` to `VmError::RegionLengthTooBig`.
+- Change property types to owned string in `VmError::UninitializedContextData`,
+  `VmError::ConversionErr`, `VmError::ParseErr` and `VmError::SerializeErr`.
+- Remove `VmError::IoErr` in favour of `VmError::CacheErr`.
+- Simplify `VmError::CompileErr`, `VmError::ResolveErr` and
+  `VmError::WasmerRuntimeErr` to just hold a string with the details instead of
+  the source error.
+- Remove `VmError::WasmerErr` in favour of the new `VmError::InstantiationErr`.
+- The snafu error builders from `VmError` are now private, i.e. callers can only
+  use the errors, not create them.
+- `VmError` is now `#[non_exhaustive]`.
+- Split `VmError::RuntimeErr` in `VmError::BackendErr` and
+  `VmError::GenericErr`; rename `VmError::WasmerRuntimeErr` to
+  `VmError::RuntimeErr`.
 
 ## 0.7.2 (2020-03-23)
 

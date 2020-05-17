@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-std"
-version = "0.8.0-dev"
+version = "0.8.0-alpha2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
@@ -13,7 +13,7 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-default = ["staking"]
+default = []
 # iterator allows us to iterate over all DB items in a given range
 # optional as some merkle stores (like tries) don't support this
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
@@ -29,7 +29,7 @@ backtraces = ["snafu/backtraces"]
 
 [dependencies]
 base64 = "0.11.0"
-serde-json-wasm = "0.1.2"
+serde-json-wasm = { version = "0.2.1" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.6.6" }
