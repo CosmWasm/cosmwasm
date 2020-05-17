@@ -302,24 +302,24 @@ mod staking {
     mod test {
         use super::*;
 
-        use cosmwasm_std::{coin, from_binary, HumanAddr};
+        use cosmwasm_std::{coin, from_binary, Decimal, HumanAddr};
 
         #[test]
         fn staking_querier_validators() {
             let val1 = Validator {
                 address: HumanAddr::from("validator-one"),
-                commission: 1000,
-                max_commission: 3000,
-                max_change_rate: 1000,
+                commission: Decimal::percent(1),
+                max_commission: Decimal::percent(3),
+                max_change_rate: Decimal::percent(1),
             };
             let val2 = Validator {
                 address: HumanAddr::from("validator-two"),
-                commission: 1500,
-                max_commission: 4000,
-                max_change_rate: 500,
+                commission: Decimal::permille(15),
+                max_commission: Decimal::permille(40),
+                max_change_rate: Decimal::permille(5),
             };
 
-            let staking = StakingQuerier::new(&[val1.clone(), val2.clone()], &[]);
+            let staking = StakingQuerier::new("stake", &[val1.clone(), val2.clone()], &[]);
 
             // one match
             let raw = staking
@@ -400,6 +400,7 @@ mod staking {
             };
 
             let staking = StakingQuerier::new(
+                "stake",
                 &[],
                 &[
                     del1a.clone(),

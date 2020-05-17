@@ -225,8 +225,8 @@ where
 mod test {
     use super::*;
     use crate::errors::VmError;
+    use crate::mock::mock_dependencies;
     use crate::testing::mock_instance;
-    use cosmwasm_std::testing::mock_dependencies;
     use wabt::wat2wasm;
 
     static KIB: usize = 1024;
