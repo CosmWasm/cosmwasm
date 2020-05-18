@@ -287,7 +287,6 @@ pub fn do_next<S: Storage, Q: Querier>(
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::mock::{MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{
         coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
         SystemError, WasmQuery,
@@ -298,6 +297,7 @@ mod test {
     use crate::context::{move_into_context, setup_context};
     #[cfg(feature = "iterator")]
     use crate::conversion::to_u32;
+    use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
     use crate::FfiError;
 

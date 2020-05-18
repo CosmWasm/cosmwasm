@@ -11,7 +11,6 @@ mod imports;
 mod instance;
 mod memory;
 mod middleware;
-pub mod mock;
 mod modules;
 mod serde;
 pub mod testing;

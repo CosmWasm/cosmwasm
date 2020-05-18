@@ -229,8 +229,9 @@ where
 mod test {
     use super::*;
     use crate::errors::VmError;
-    use crate::mock::mock_dependencies;
-    use crate::testing::{mock_instance, mock_instance_with_balances};
+    use crate::testing::{
+        mock_dependencies, mock_instance, mock_instance_with_balances, mock_instance_with_gas_limit,
+    };
     use crate::traits::ReadonlyStorage;
     use cosmwasm_std::{
         coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,
@@ -416,10 +417,18 @@ mod test {
 
     #[test]
     #[cfg(feature = "default-cranelift")]
-    fn set_get_and_gas_cranelift_noop() {
-        let instance = crate::testing::mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
+    fn set_get_and_gas_cranelift() {
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
         let orig_gas = instance.get_gas();
-        assert_eq!(orig_gas, 1_000_000);
+        assert_eq!(orig_gas, 1_000_000); // We expect a dummy value for cranelift
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn set_get_and_gas_singlepass() {
+        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
+        let orig_gas = instance.get_gas();
+        assert_eq!(orig_gas, 123321);
     }
 
     #[test]
@@ -558,20 +567,12 @@ mod test {
 #[cfg(test)]
 #[cfg(feature = "default-singlepass")]
 mod singlepass_test {
-    use crate::mock::mock_env;
     use cosmwasm_std::{coins, Never};
 
     use crate::calls::{call_handle, call_init, call_query};
-    use crate::testing::{mock_instance, mock_instance_with_gas_limit};
+    use crate::testing::{mock_env, mock_instance, mock_instance_with_gas_limit};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-
-    #[test]
-    fn set_get_and_gas_singlepass_works() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
-        let orig_gas = instance.get_gas();
-        assert_eq!(orig_gas, 123321);
-    }
 
     #[test]
     fn contract_deducts_gas_init() {

@@ -22,8 +22,7 @@ use cosmwasm_std::{
     InitResponse, StakingMsg, StdError,
 };
 use cosmwasm_vm::{
-    mock::mock_env,
-    testing::{handle, init, mock_instance, query},
+    testing::{handle, init, mock_env, mock_instance, query},
     Api, Instance,
 };
 
@@ -41,7 +40,9 @@ mod mock {
     use cosmwasm_std::{from_slice, to_binary, Binary, Coin, QueryRequest, StdResult};
     use cosmwasm_vm::{
         make_ffi_other,
-        mock::{MockApi, MockQuerier, MockStorage},
+        testing::{
+            mock_dependencies as original_mock_dependencies, MockApi, MockQuerier, MockStorage,
+        },
         Extern, Querier, QuerierResult,
     };
 
@@ -79,7 +80,7 @@ mod mock {
         canonical_length: usize,
         contract_balance: &[Coin],
     ) -> Extern<MockStorage, MockApi, CustomQuerier> {
-        let base = cosmwasm_vm::mock::mock_dependencies(canonical_length, contract_balance);
+        let base = original_mock_dependencies(canonical_length, contract_balance);
         base.change_querier(CustomQuerier::new)
     }
 

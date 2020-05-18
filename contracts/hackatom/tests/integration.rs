@@ -23,8 +23,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     from_slice,
-    mock::mock_env,
-    testing::{handle, init, mock_instance, mock_instance_with_balances, query, test_io},
+    testing::{handle, init, mock_env, mock_instance, mock_instance_with_balances, query, test_io},
     Api, ReadonlyStorage,
 };
 

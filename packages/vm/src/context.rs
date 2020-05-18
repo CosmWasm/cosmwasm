@@ -195,8 +195,8 @@ mod test {
     use crate::backends::compile;
     #[cfg(feature = "iterator")]
     use crate::errors::VmError;
-    use crate::mock::{MockQuerier, MockStorage};
-    use crate::ReadonlyStorage;
+    use crate::testing::{MockQuerier, MockStorage};
+    use crate::traits::ReadonlyStorage;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };

@@ -10,17 +10,17 @@ use crate::{FfiResult, ReadonlyStorage, Storage};
 use cosmwasm_std::{Order, KV};
 
 #[derive(Default)]
-pub struct MemoryStorage {
+pub struct MockStorage {
     data: BTreeMap<Vec<u8>, Vec<u8>>,
 }
 
-impl MemoryStorage {
+impl MockStorage {
     pub fn new() -> Self {
-        MemoryStorage::default()
+        MockStorage::default()
     }
 }
 
-impl ReadonlyStorage for MemoryStorage {
+impl ReadonlyStorage for MockStorage {
     fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>> {
         Ok(self.data.get(key).cloned())
     }
@@ -72,7 +72,7 @@ fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
     (key.clone(), value.clone())
 }
 
-impl Storage for MemoryStorage {
+impl Storage for MockStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
         Ok(())
@@ -245,7 +245,7 @@ mod test {
 
     #[test]
     fn get_and_set() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         assert_eq!(None, store.get(b"foo").unwrap());
         store.set(b"foo", b"bar").unwrap();
         assert_eq!(Some(b"bar".to_vec()), store.get(b"foo").unwrap());
@@ -254,7 +254,7 @@ mod test {
 
     #[test]
     fn delete() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(b"foo", b"bar").unwrap();
         store.set(b"food", b"bank").unwrap();
         store.remove(b"foo").unwrap();
@@ -266,7 +266,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn iterator() {
-        let mut store = MemoryStorage::new();
+        let mut store = MockStorage::new();
         store.set(b"foo", b"bar").expect("error setting value");
         iterator_test_suite(&mut store);
     }

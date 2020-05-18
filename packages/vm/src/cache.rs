@@ -191,7 +191,7 @@ mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
-    use crate::mock::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use crate::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Never};
     use std::fs::OpenOptions;
     use std::io::Write;
