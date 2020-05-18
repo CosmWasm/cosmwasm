@@ -79,11 +79,10 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update(
-        &mut self,
-        key: &[u8],
-        action: &dyn Fn(Option<T>) -> StdResult<T>,
-    ) -> StdResult<T> {
+    pub fn update<A>(&mut self, key: &[u8], action: A) -> StdResult<T>
+    where
+        A: FnOnce(Option<T>) -> StdResult<T>,
+    {
         let input = self.may_load(key)?;
         let output = action(input)?;
         self.save(key, &output)?;
@@ -259,7 +258,7 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", &|_d| Err(generic_err("cuz i feel like it")));
+        let output = bucket.update(b"maria", |_d| Err(generic_err("cuz i feel like it")));
         assert!(output.is_err());
 
         // load it properly
@@ -279,7 +278,7 @@ mod test {
 
         // it's my birthday
         let output = bucket
-            .update(b"maria", &|d| match d {
+            .update(b"maria", |d| match d {
                 Some(_) => Err(generic_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })

@@ -298,7 +298,7 @@ mod tests {
         };
 
         // let's see if we can checkpoint on a contract
-        let res = transactional_deps(&mut deps, &|deps| {
+        let res = transactional_deps(&mut deps, |deps| {
             let msg = InitMsg {
                 verifier: verifier.clone(),
                 beneficiary: beneficiary.clone(),
