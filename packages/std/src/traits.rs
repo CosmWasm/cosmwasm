@@ -8,7 +8,7 @@ use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 #[cfg(feature = "staking")]
 use crate::query::{
-    BondedDenomResponse, Delegation, DelegationsResponse, StakingQuery, Validator,
+    AllDelegationsResponse, BondedDenomResponse, Delegation, StakingQuery, Validator,
     ValidatorsResponse,
 };
 use crate::serde::{from_binary, to_vec};
@@ -168,7 +168,7 @@ pub trait Querier: Clone + Send {
             validator: None,
         }
         .into();
-        let res: DelegationsResponse = self.query(&request)?;
+        let res: AllDelegationsResponse = self.query(&request)?;
         Ok(res.delegations)
     }
 
@@ -183,7 +183,7 @@ pub trait Querier: Clone + Send {
             validator: Some(validator.into()),
         }
         .into();
-        let res: DelegationsResponse = self.query(&request)?;
+        let res: AllDelegationsResponse = self.query(&request)?;
         Ok(res.delegations)
     }
 }

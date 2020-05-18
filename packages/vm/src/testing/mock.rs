@@ -251,7 +251,7 @@ impl BankQuerier {
 mod staking {
     use crate::traits::QuerierResult;
     use cosmwasm_std::{
-        to_binary, BondedDenomResponse, Delegation, DelegationsResponse, StakingQuery, Validator,
+        to_binary, BondedDenomResponse, Delegation, AllDelegationsResponse, StakingQuery, Validator,
         ValidatorsResponse,
     };
 
@@ -299,7 +299,7 @@ mod staking {
                     };
                     let delegations: Vec<_> =
                         self.delegations.iter().filter(matches).cloned().collect();
-                    let res = DelegationsResponse { delegations };
+                    let res = AllDelegationsResponse { delegations };
                     Ok(Ok(to_binary(&res)))
                 }
             }
@@ -353,7 +353,7 @@ mod staking {
                 .unwrap()
                 .unwrap()
                 .unwrap();
-            let dels: DelegationsResponse = from_binary(&raw).unwrap();
+            let dels: AllDelegationsResponse = from_binary(&raw).unwrap();
             dels.delegations
         }
 

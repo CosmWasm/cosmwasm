@@ -91,11 +91,13 @@ pub struct AllBalanceResponse {
 pub enum StakingQuery {
     /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
     BondedDenom {},
-    /// Delegations will return all delegations by the delegator,
-    /// or just those to the given validator (if set)
-    Delegations {
+    /// AllDelegations will return all delegations by the delegator
+    AllDelegations { delegator: HumanAddr },
+    /// Delegation will return more detailed info on a particular
+    /// delegation, defined by delegator/validator pair
+    Delegation {
         delegator: HumanAddr,
-        validator: Option<HumanAddr>,
+        validator: HumanAddr,
     },
     /// Returns all registered Validators on the system
     Validators {},
@@ -108,15 +110,43 @@ pub struct BondedDenomResponse {
     pub denom: String,
 }
 
-/// DelegationsResponse is data format returned from StakingRequest::Delegations query
+/// DelegationsResponse is data format returned from StakingRequest::AllDelegations query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct DelegationsResponse {
+pub struct AllDelegationsResponse {
     pub delegations: Vec<Delegation>,
 }
 
+/// Delegation is basic (cheap to query) data about a delegation
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Delegation {
+    pub delegator: HumanAddr,
+    pub validator: HumanAddr,
+    /// How much we have locked in the delegation
+    pub amount: Coin,
+}
+
+impl From<FullDelegation> for Delegation {
+    fn from(full: FullDelegation) -> Self {
+        Delegation {
+            delegator: full.delegator,
+            validator: full.validator,
+            amount: full.amount,
+        }
+    }
+}
+
+/// DelegationResponse is data format returned from StakingRequest::Delegation query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct DelegationResponse {
+    pub delegation: Option<FullDelegation>,
+}
+
+/// FullDelegation is all the info on the delegation, some (like accumulated_reward and can_redelegate)
+/// is expensive to query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct FullDelegation {
     pub delegator: HumanAddr,
     pub validator: HumanAddr,
     /// How much we have locked in the delegation
