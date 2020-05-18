@@ -64,7 +64,7 @@ mod mock {
                 Err(e) => {
                     return Ok(Err(SystemError::InvalidRequest {
                         error: format!("Parsing query request: {}", e),
-                        request: Binary(bin_request.to_vec()),
+                        request: bin_request.into(),
                     }))
                 }
             };
