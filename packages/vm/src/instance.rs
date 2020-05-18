@@ -183,7 +183,7 @@ where
         with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
-    pub fn with_querier<F: FnOnce(&Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+    pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
         with_querier_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
@@ -500,6 +500,55 @@ mod test {
                 assert_eq!(amount[1].amount.u128(), 8000);
                 assert_eq!(amount[1].denom, "silver");
 
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    /// This is needed for writing intagration tests in which the balance of a contract changes over time
+    #[test]
+    fn with_querier_allows_updating_balances() {
+        let rich_addr = HumanAddr::from("foobar");
+        let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
+        let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
+        let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance1)]);
+
+        // Get initial state
+        instance
+            .with_querier(|querier| {
+                let response = querier
+                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::Balance {
+                        address: rich_addr.clone(),
+                        denom: "silver".to_string(),
+                    }))?
+                    .unwrap()
+                    .unwrap();
+                let BalanceResponse { amount } = from_binary(&response).unwrap();
+                assert_eq!(amount.amount.u128(), 500);
+                Ok(())
+            })
+            .unwrap();
+
+        // Update balance
+        instance
+            .with_querier(|querier| {
+                querier.update_balance(&rich_addr, rich_balance2);
+                Ok(())
+            })
+            .unwrap();
+
+        // Get updated state
+        instance
+            .with_querier(|querier| {
+                let response = querier
+                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::Balance {
+                        address: rich_addr.clone(),
+                        denom: "silver".to_string(),
+                    }))?
+                    .unwrap()
+                    .unwrap();
+                let BalanceResponse { amount } = from_binary(&response).unwrap();
+                assert_eq!(amount.amount.u128(), 8000);
                 Ok(())
             })
             .unwrap();

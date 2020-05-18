@@ -148,6 +148,15 @@ impl MockQuerier {
         }
     }
 
+    // set a new balance for the given address and return the old balance
+    pub fn update_balance<U: Into<HumanAddr>>(
+        &mut self,
+        addr: U,
+        balance: Vec<Coin>,
+    ) -> Option<Vec<Coin>> {
+        self.bank.balances.insert(addr.into(), balance)
+    }
+
     pub fn with_staking(
         &mut self,
         denom: &str,
