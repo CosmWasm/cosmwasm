@@ -19,7 +19,7 @@ pub enum SystemError {
     InvalidRequest { error: String, request: Binary },
     InvalidResponse { error: String, response: Binary },
     NoSuchContract { addr: HumanAddr },
-    Unknown,
+    Unknown {},
     UnsupportedRequest { kind: String },
 }
 
@@ -41,7 +41,7 @@ impl std::fmt::Display for SystemError {
                 String::from_utf8_lossy(response.as_slice())
             ),
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
-            SystemError::Unknown => write!(f, "Unknown system error"),
+            SystemError::Unknown {} => write!(f, "Unknown system error"),
             SystemError::UnsupportedRequest { kind } => {
                 write!(f, "Unsupported query type: {}", kind)
             }
