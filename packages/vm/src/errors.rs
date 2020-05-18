@@ -5,12 +5,6 @@ use snafu::Snafu;
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum VmError {
-    /// An error coming from the backend (i.e. the chain)
-    #[snafu(display("Backend error: {}", msg))]
-    BackendErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Cache error: {}", msg))]
     CacheErr {
         msg: String,
@@ -128,10 +122,6 @@ impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
 }
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
-
-pub fn make_backend_err<S: Into<String>>(msg: S) -> VmError {
-    BackendErr { msg: msg.into() }.build()
-}
 
 pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
     CacheErr { msg: msg.into() }.build()
@@ -274,15 +264,6 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn make_backend_err_works() {
-        let err = make_backend_err("something went wrong");
-        match err {
-            VmError::BackendErr { msg, .. } => assert_eq!(msg, "something went wrong"),
-            _ => panic!("Unexpected error"),
-        }
-    }
 
     #[test]
     fn make_cache_err_works() {
