@@ -128,23 +128,6 @@ macro_rules! maybe_read_region {
                 })
             }
         }
-// =======
-// /// Reads a storage entry from the VM's storage into Wasm memory
-// pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32, value_ptr: u32) -> i32 {
-//     let key = match read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY) {
-//         Ok(data) => data,
-//         Err(VmError::RegionLengthTooBig { .. }) => return errors::REGION_READ_LENGTH_TOO_BIG,
-//         Err(_) => return errors::REGION_READ_UNKNOWN,
-//     };
-//     let value: Option<Vec<u8>> = match with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-//         store
-//             .get(&key)
-//             .or_else(|_| Err(make_backend_err("Error reading from backend")))
-//     }) {
-//         Ok(v) => v,
-//         Err(VmError::UninitializedContextData { .. }) => return errors::NO_CONTEXT_DATA,
-//         Err(_) => return errors::DB_UNKNOWN,
-// >>>>>>> origin/master
     };
 }
 
