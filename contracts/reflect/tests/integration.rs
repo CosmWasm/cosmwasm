@@ -37,9 +37,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 mod mock {
     use reflect::msg::{CustomQuery, CustomResponse};
 
-    use cosmwasm_std::{from_slice, to_binary, Binary, Coin, QueryRequest, StdResult};
+    use cosmwasm_std::{from_slice, to_binary, Binary, Coin, QueryRequest, StdResult, SystemError};
     use cosmwasm_vm::{
-        make_ffi_other,
         testing::{
             mock_dependencies as original_mock_dependencies, MockApi, MockQuerier, MockStorage,
         },
@@ -63,7 +62,10 @@ mod mock {
             let request: QueryRequest<CustomQuery> = match from_slice(bin_request) {
                 Ok(v) => v,
                 Err(e) => {
-                    return Err(make_ffi_other(format!("Parsing QueryRequest: {}", e)));
+                    return Ok(Err(SystemError::InvalidRequest {
+                        error: format!("Parsing query request: {}", e),
+                        request: bin_request.into(),
+                    }))
                 }
             };
             if let QueryRequest::Custom(custom_query) = &request {
