@@ -161,7 +161,7 @@ impl Querier for MockQuerier {
             Err(e) => {
                 return Ok(Err(SystemError::InvalidRequest {
                     error: format!("Parsing QueryRequest: {}", e),
-                    request: bin_request.to_vec(),
+                    request: Binary(bin_request.to_vec()),
                 }))
             }
         };

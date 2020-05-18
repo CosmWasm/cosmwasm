@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::HumanAddr;
+use crate::{Binary, HumanAddr};
 
 /// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
 ///
@@ -16,8 +16,8 @@ use crate::HumanAddr;
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
-    InvalidRequest { error: String, request: Vec<u8> },
-    InvalidResponse { error: String, response: Vec<u8> },
+    InvalidRequest { error: String, request: Binary },
+    InvalidResponse { error: String, response: Binary },
     NoSuchContract { addr: HumanAddr },
     Unknown,
     UnsupportedRequest { kind: String },
@@ -32,13 +32,13 @@ impl std::fmt::Display for SystemError {
                 f,
                 "Cannot parse request: {} in: {}",
                 error,
-                String::from_utf8_lossy(request)
+                String::from_utf8_lossy(request.as_slice())
             ),
             SystemError::InvalidResponse { error, response } => write!(
                 f,
                 "Cannot parse response: {} in: {}",
                 error,
-                String::from_utf8_lossy(response)
+                String::from_utf8_lossy(response.as_slice())
             ),
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
             SystemError::Unknown => write!(f, "Unknown system error"),

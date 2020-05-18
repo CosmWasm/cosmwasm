@@ -769,7 +769,9 @@ mod test {
             cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
             Ok(_) => panic!("This must not succeed"),
-            Err(SystemError::InvalidRequest { request: err, .. }) => assert_eq!(err, request),
+            Err(SystemError::InvalidRequest { request: err, .. }) => {
+                assert_eq!(err.as_slice(), request)
+            }
             Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
