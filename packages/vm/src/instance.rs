@@ -9,11 +9,10 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use crate::traits::{Api, Extern, Querier, Storage};
-
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    move_into_context, move_out_of_context, setup_context, with_storage_from_context,
+    move_into_context, move_out_of_context, setup_context, with_querier_from_context,
+    with_storage_from_context,
 };
 use crate::conversion::to_u32;
 use crate::errors::{make_instantiation_err, VmResult};
@@ -24,6 +23,7 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
+use crate::traits::{Api, Extern, Querier, Storage};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
 
@@ -183,6 +183,10 @@ where
         with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
+    pub fn with_querier<F: FnOnce(&Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+        with_querier_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
+    }
+
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
@@ -226,8 +230,12 @@ mod test {
     use super::*;
     use crate::errors::VmError;
     use crate::mock::mock_dependencies;
-    use crate::testing::mock_instance;
+    use crate::testing::{mock_instance, mock_instance_with_balances};
     use crate::traits::ReadonlyStorage;
+    use cosmwasm_std::{
+        coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,
+        QueryRequest,
+    };
     use wabt::wat2wasm;
 
     static KIB: usize = 1024;
@@ -450,6 +458,50 @@ mod test {
         let mut instance = mock_instance(&CONTRACT, &[]);
         instance
             .with_storage::<_, ()>(|_store| panic!("trigger failure"))
+            .unwrap();
+    }
+
+    #[test]
+    fn with_querier_works_readonly() {
+        let rich_addr = HumanAddr::from("foobar");
+        let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
+        let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance)]);
+
+        // query one
+        instance
+            .with_querier(|querier| {
+                let response = querier
+                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::Balance {
+                        address: rich_addr.clone(),
+                        denom: "silver".to_string(),
+                    }))?
+                    .unwrap()
+                    .unwrap();
+                let BalanceResponse { amount } = from_binary(&response).unwrap();
+                assert_eq!(amount.amount.u128(), 8000);
+                assert_eq!(amount.denom, "silver");
+                Ok(())
+            })
+            .unwrap();
+
+        // query all
+        instance
+            .with_querier(|querier| {
+                let response = querier
+                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::AllBalances {
+                        address: rich_addr.clone(),
+                    }))?
+                    .unwrap()
+                    .unwrap();
+                let AllBalanceResponse { amount } = from_binary(&response).unwrap();
+                assert_eq!(amount.len(), 2);
+                assert_eq!(amount[0].amount.u128(), 10000);
+                assert_eq!(amount[0].denom, "gold");
+                assert_eq!(amount[1].amount.u128(), 8000);
+                assert_eq!(amount[1].denom, "silver");
+
+                Ok(())
+            })
             .unwrap();
     }
 }
