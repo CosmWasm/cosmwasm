@@ -1,15 +1,13 @@
-use std::collections::HashMap;
-
-use crate::{Api, Extern, FfiResult, Querier, QuerierResult};
 use cosmwasm_std::{
     from_slice, to_binary, AllBalanceResponse, BalanceResponse, BankQuery, Binary, BlockInfo,
     CanonicalAddr, Coin, ContractInfo, Delegation, Env, HumanAddr, MessageInfo, Never,
     QueryRequest, SystemError, Validator, WasmQuery,
 };
+use std::collections::HashMap;
 
-mod storage;
+use crate::{Api, Extern, FfiResult, Querier, QuerierResult};
 
-use storage::MemoryStorage;
+use super::storage::MockStorage;
 
 static CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -39,10 +37,6 @@ pub fn mock_dependencies_with_balances(
         querier: MockQuerier::new(balances),
     }
 }
-
-// Use MemoryStorage implementation (which is valid in non-testcode)
-// We can later make simplifications here if needed
-pub type MockStorage = MemoryStorage;
 
 // MockPrecompiles zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.

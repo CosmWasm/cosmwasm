@@ -19,8 +19,7 @@
 
 use cosmwasm_std::{from_binary, from_slice, Env, HandleResponse, HumanAddr, InitResponse};
 use cosmwasm_vm::{
-    mock::{mock_env, MockApi, MockQuerier, MockStorage},
-    testing::{handle, init, mock_instance, query},
+    testing::{handle, init, mock_env, mock_instance, query, MockApi, MockQuerier, MockStorage},
     Instance,
 };
 
