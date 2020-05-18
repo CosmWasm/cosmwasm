@@ -25,6 +25,7 @@ impl Querier for CustomQuerier {
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
                     error: format!("Parsing QueryRequest: {}", e),
+                    request: Binary(bin_request.to_vec()),
                 })
             }
         };

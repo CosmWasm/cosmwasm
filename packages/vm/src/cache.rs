@@ -6,7 +6,7 @@ use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use cosmwasm_std::{Api, Extern, Querier, Storage};
+use crate::traits::{Api, Extern, Querier, Storage};
 
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
@@ -191,7 +191,7 @@ mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use crate::mock::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Never};
     use std::fs::OpenOptions;
     use std::io::Write;

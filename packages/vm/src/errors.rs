@@ -5,12 +5,6 @@ use snafu::Snafu;
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum VmError {
-    /// An error coming from the backend (i.e. the chain)
-    #[snafu(display("Backend error: {}", msg))]
-    BackendErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Cache error: {}", msg))]
     CacheErr {
         msg: String,
@@ -94,6 +88,13 @@ pub enum VmError {
         kind: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Calling external function through FFI: {}", source))]
+    FfiErr {
+        #[snafu(backtrace)]
+        source: FfiError,
+    },
+    #[snafu(display("Ran out of gas during contract execution"))]
+    GasDepletion,
 }
 
 impl From<wasmer_runtime_core::cache::Error> for VmError {
@@ -121,10 +122,6 @@ impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
 }
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
-
-pub fn make_backend_err<S: Into<String>>(msg: S) -> VmError {
-    BackendErr { msg: msg.into() }.build()
-}
 
 pub fn make_cache_err<S: Into<String>>(msg: S) -> VmError {
     CacheErr { msg: msg.into() }.build()
@@ -204,18 +201,69 @@ pub fn make_uninitialized_context_data<S: Into<String>>(kind: S) -> VmError {
     UninitializedContextData { kind: kind.into() }.build()
 }
 
+#[derive(Debug, Snafu)]
+pub enum FfiError {
+    #[snafu(display("Panic in FFI call"))]
+    ForeignPanic { backtrace: snafu::Backtrace },
+    #[snafu(display("bad argument passed to FFI"))]
+    BadArgument { backtrace: snafu::Backtrace },
+    #[snafu(display("Ran out of gas during FFI call"))]
+    OutOfGas {},
+    #[snafu(display("Error during FFI call: {}", error))]
+    Other {
+        error: String,
+        backtrace: snafu::Backtrace,
+    },
+}
+
+impl FfiError {
+    pub fn set_message<S>(&mut self, message: S) -> &mut Self
+    where
+        S: Into<String>,
+    {
+        if let FfiError::Other { error, .. } = self {
+            *error = message.into()
+        }
+        self
+    }
+}
+
+impl From<FfiError> for VmError {
+    fn from(ffi_error: FfiError) -> Self {
+        match ffi_error {
+            FfiError::OutOfGas {} => VmError::GasDepletion,
+            _ => VmError::FfiErr { source: ffi_error },
+        }
+    }
+}
+
+pub type FfiResult<T> = core::result::Result<T, FfiError>;
+
+pub fn make_ffi_foreign_panic() -> FfiError {
+    ForeignPanic {}.build()
+}
+
+pub fn make_ffi_bad_argument() -> FfiError {
+    BadArgument {}.build()
+}
+
+pub fn make_ffi_out_of_gas() -> FfiError {
+    FfiError::OutOfGas {}
+}
+
+pub fn make_ffi_other<S>(error: S) -> FfiError
+where
+    S: Into<String>,
+{
+    Other {
+        error: error.into(),
+    }
+    .build()
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
-
-    #[test]
-    fn make_backend_err_works() {
-        let err = make_backend_err("something went wrong");
-        match err {
-            VmError::BackendErr { msg, .. } => assert_eq!(msg, "something went wrong"),
-            _ => panic!("Unexpected error"),
-        }
-    }
 
     #[test]
     fn make_cache_err_works() {

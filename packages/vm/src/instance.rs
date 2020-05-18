@@ -9,7 +9,7 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use cosmwasm_std::{Api, Extern, Querier, Storage};
+use crate::traits::{Api, Extern, Querier, Storage};
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
@@ -66,13 +66,13 @@ where
                 //   value region too small: -1_000_001
                 //   key does not exist: -1_001_001
                 // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
                     do_read::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
-                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> i32 {
+                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
                     do_write::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Removes the value at the given key. Different than writing &[] as future
@@ -80,24 +80,24 @@ where
                 // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
                 // Ownership of both key pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
-                "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> i32 {
+                "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<i32> {
                     do_remove::<S, Q>(ctx, key_ptr)
                 }),
                 // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
                 // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> i32 {
+                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> VmResult<i32> {
                     do_canonicalize_address(api, ctx, human_ptr, canonical_ptr)
                 }),
                 // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
                 // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> i32 {
+                "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> VmResult<i32> {
                     do_humanize_address(api, ctx, canonical_ptr, human_ptr)
                 }),
-                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> i32 {
+                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> VmResult<i32> {
                     do_query_chain::<S, Q>(ctx, request_ptr, response_ptr)
                 }),
             },
@@ -111,14 +111,14 @@ where
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns negative code on error.
                 // Returns iterator ID > 0 on success.
-                "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> i32 {
+                "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> VmResult<i32> {
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Get next element of iterator with ID `iterator_id`.
-                // Expectes Regions in key_ptr and value_ptr, in which the result is written.
+                // Expects Regions in key_ptr and value_ptr, in which the result is written.
                 // An empty key value (Region of length 0) means no more element.
                 // Ownership of both key and value pointer is not transferred to the host.
-                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32, key_ptr: u32, value_ptr: u32| -> i32 {
+                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
                     do_next::<S, Q>(ctx, iterator_id, key_ptr, value_ptr)
                 }),
             },
@@ -179,7 +179,7 @@ where
         get_gas(&self.wasmer_instance)
     }
 
-    pub fn with_storage<F: FnMut(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
+    pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
         with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
     }
 
@@ -225,8 +225,8 @@ where
 mod test {
     use super::*;
     use crate::errors::VmError;
+    use crate::mock::mock_dependencies;
     use crate::testing::mock_instance;
-    use cosmwasm_std::testing::mock_dependencies;
     use wabt::wat2wasm;
 
     static KIB: usize = 1024;
@@ -427,7 +427,7 @@ mod test {
 #[cfg(test)]
 #[cfg(feature = "default-singlepass")]
 mod singlepass_test {
-    use cosmwasm_std::testing::mock_env;
+    use crate::mock::mock_env;
     use cosmwasm_std::{coins, Never};
 
     use crate::calls::{call_handle, call_init, call_query};

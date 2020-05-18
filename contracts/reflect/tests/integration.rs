@@ -17,22 +17,80 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::testing::mock_env;
 use cosmwasm_std::{
-    coin, coins, from_binary, Api, BankMsg, Binary, HandleResponse, HandleResult, HumanAddr,
+    coin, coins, from_binary, BankMsg, Binary, HandleResponse, HandleResult, HumanAddr,
     InitResponse, StakingMsg, StdError,
 };
+use cosmwasm_vm::{
+    mock::mock_env,
+    testing::{handle, init, mock_instance, query},
+    Api, Instance,
+};
 
-use cosmwasm_vm::testing::{handle, init, mock_instance, query};
-use cosmwasm_vm::Instance;
-
+use mock::mock_dependencies;
 use reflect::msg::{CustomMsg, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
-use reflect::testing::mock_dependencies;
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/reflect.wasm");
 // You can uncomment this line instead to test productionified build from cosmwasm-opt
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
+
+mod mock {
+    use reflect::msg::{CustomQuery, CustomResponse};
+
+    use cosmwasm_std::{from_slice, to_binary, Binary, Coin, QueryRequest, StdResult};
+    use cosmwasm_vm::{
+        make_ffi_other,
+        mock::{MockApi, MockQuerier, MockStorage},
+        Extern, Querier, QuerierResult,
+    };
+
+    #[derive(Clone)]
+    pub struct CustomQuerier {
+        base: MockQuerier,
+    }
+
+    impl CustomQuerier {
+        pub fn new(base: MockQuerier) -> Self {
+            CustomQuerier { base }
+        }
+    }
+
+    impl Querier for CustomQuerier {
+        fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+            // parse into our custom query class
+            let request: QueryRequest<CustomQuery> = match from_slice(bin_request) {
+                Ok(v) => v,
+                Err(e) => {
+                    return Err(make_ffi_other(format!("Parsing QueryRequest: {}", e)));
+                }
+            };
+            if let QueryRequest::Custom(custom_query) = &request {
+                Ok(Ok(execute(&custom_query)))
+            } else {
+                self.base.handle_query(&request)
+            }
+        }
+    }
+
+    /// mock_dependencies is a drop-in replacement for cosmwasm_std::testing::mock_dependencies
+    /// this uses our CustomQuerier.
+    pub fn mock_dependencies(
+        canonical_length: usize,
+        contract_balance: &[Coin],
+    ) -> Extern<MockStorage, MockApi, CustomQuerier> {
+        let base = cosmwasm_vm::mock::mock_dependencies(canonical_length, contract_balance);
+        base.change_querier(CustomQuerier::new)
+    }
+
+    fn execute(query: &CustomQuery) -> StdResult<Binary> {
+        let msg = match query {
+            CustomQuery::Ping {} => "pong".to_string(),
+            CustomQuery::Capital { text } => text.to_uppercase(),
+        };
+        to_binary(&CustomResponse { msg })
+    }
+}
 
 #[test]
 fn proper_initialization() {

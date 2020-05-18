@@ -27,13 +27,16 @@ pub use crate::init_handle::{
 pub use crate::iterator::{Order, KV};
 pub use crate::math::{Decimal, Uint128};
 pub use crate::query::{
-    AllBalanceResponse, BalanceResponse, BankQuery, Delegation, DelegationsResponse, QueryRequest,
-    QueryResponse, QueryResult, StakingQuery, Validator, ValidatorsResponse, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, BondedDenomResponse, Delegation,
+    DelegationsResponse, QueryRequest, QueryResponse, QueryResult, StakingQuery, Validator,
+    ValidatorsResponse, WasmQuery,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
-pub use crate::types::{CanonicalAddr, Env, HumanAddr, Never};
+pub use crate::types::{
+    BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, Never,
+};
 
 // Exposed in wasm build only
 

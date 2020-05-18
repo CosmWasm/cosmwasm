@@ -17,10 +17,10 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::testing::{mock_dependencies, mock_env};
 use cosmwasm_std::{
     coin, from_binary, Decimal, HumanAddr, InitResponse, StdError, StdResult, Uint128, Validator,
 };
+use cosmwasm_vm::mock::{mock_dependencies, mock_env};
 use cosmwasm_vm::testing::{init, query};
 use cosmwasm_vm::Instance;
 

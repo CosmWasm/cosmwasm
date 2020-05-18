@@ -17,10 +17,12 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::testing::{mock_env, MockApi, MockQuerier, MockStorage};
 use cosmwasm_std::{from_binary, from_slice, Env, HandleResponse, HumanAddr, InitResponse};
-use cosmwasm_vm::testing::{handle, init, mock_instance, query};
-use cosmwasm_vm::Instance;
+use cosmwasm_vm::{
+    mock::{mock_env, MockApi, MockQuerier, MockStorage},
+    testing::{handle, init, mock_instance, query},
+    Instance,
+};
 
 use queue::contract::{
     CountResponse, HandleMsg, InitMsg, Item, QueryMsg, ReducerResponse, SumResponse,
