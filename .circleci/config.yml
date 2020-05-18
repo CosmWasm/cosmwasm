@@ -8,10 +8,10 @@ workflows:
       - package_storage
       - package_vm_cranelift
       - package_vm_singlepass
-      - hackatom
-      - hackatom_in_singlepass_vm
-      - queue
-      - reflect
+      - contract_hackatom
+      - contract_hackatom_in_singlepass_vm
+      - contract_queue
+      - contract_reflect
       - contract_staking
       - fmt
       - clippy
@@ -202,7 +202,7 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
 
-  hackatom:
+  contract_hackatom:
     docker:
       - image: rust:1.41.1
     working_directory: ~/cosmwasm/contracts/hackatom
@@ -214,7 +214,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -249,11 +249,11 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_hackatom-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
   # Avoid duplicating generic checks like unit tests or schema generation – they belong in the generic hackatom job.
-  hackatom_in_singlepass_vm:
+  contract_hackatom_in_singlepass_vm:
     docker:
       - image: rustlang/rust:nightly
     working_directory: ~/cosmwasm/contracts/hackatom
@@ -265,7 +265,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -284,9 +284,9 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
 
-  queue:
+  contract_queue:
     docker:
       - image: rust:1.41.1
     working_directory: ~/cosmwasm/contracts/queue
@@ -298,7 +298,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -333,9 +333,9 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_queue-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
-  reflect:
+  contract_reflect:
     docker:
       - image: rust:1.41.1
     working_directory: ~/cosmwasm/contracts/reflect
@@ -347,7 +347,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -382,7 +382,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_reflect-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   contract_staking:
     docker:
@@ -396,7 +396,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-staking-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_staking-rust:1.41.1-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -431,7 +431,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-staking-rust:1.41.1-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_staking-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   fmt:
     docker:
@@ -448,19 +448,23 @@ jobs:
           name: Add rustfmt component
           command: rustup component add rustfmt
       - run:
-          name: Format and check workspace
+          name: Check formatting of workspace
           command: cargo fmt -- --check
       - run:
-          name: Format and check hackatom
+          name: Check formatting of contract hackatom
           working_directory: ~/project/contracts/hackatom
           command: cargo fmt -- --check
       - run:
-          name: Format and check reflect
+          name: Check formatting of contract reflect
           working_directory: ~/project/contracts/reflect
           command: cargo fmt -- --check
       - run:
-          name: Format and check queue
+          name: Check formatting of contract queue
           working_directory: ~/project/contracts/queue
+          command: cargo fmt -- --check
+      - run:
+          name: Check formatting of contract staking
+          working_directory: ~/project/contracts/staking
           command: cargo fmt -- --check
       - save_cache:
           paths:
@@ -517,6 +521,10 @@ jobs:
       - run:
           name: Clippy linting on queue
           working_directory: ~/project/contracts/queue
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Clippy linting on staking
+          working_directory: ~/project/contracts/staking
           command: cargo clippy -- -D warnings
       - save_cache:
           paths:
