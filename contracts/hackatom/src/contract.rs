@@ -343,7 +343,7 @@ mod tests {
         deps.querier.update_balance(&contract_addr, init_amount);
 
         // beneficiary can release it
-        let handle_env = mock_env(&deps.api, verifier.as_str(), &coins(15, "earth"));
+        let handle_env = mock_env(&deps.api, verifier.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
         assert_eq!(handle_res.messages.len(), 1);
         let msg = handle_res.messages.get(0).expect("no message");
