@@ -148,8 +148,13 @@ impl MockQuerier {
         }
     }
 
-    pub fn with_staking(&mut self, validators: &[Validator], delegations: &[Delegation]) {
-        self.staking = staking::StakingQuerier::new("stake", validators, delegations);
+    pub fn with_staking(
+        &mut self,
+        denom: &str,
+        validators: &[Validator],
+        delegations: &[Delegation],
+    ) {
+        self.staking = staking::StakingQuerier::new(denom, validators, delegations);
     }
 }
 
