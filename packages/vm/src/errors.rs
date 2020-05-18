@@ -208,7 +208,7 @@ pub enum FfiError {
     #[snafu(display("bad argument passed to FFI"))]
     BadArgument { backtrace: snafu::Backtrace },
     #[snafu(display("Ran out of gas during FFI call"))]
-    OutOfGas,
+    OutOfGas {},
     #[snafu(display("Error during FFI call: {}", error))]
     Other {
         error: String,
@@ -231,7 +231,7 @@ impl FfiError {
 impl From<FfiError> for VmError {
     fn from(ffi_error: FfiError) -> Self {
         match ffi_error {
-            FfiError::OutOfGas => VmError::GasDepletion,
+            FfiError::OutOfGas {} => VmError::GasDepletion,
             _ => VmError::FfiErr { source: ffi_error },
         }
     }
@@ -248,7 +248,7 @@ pub fn make_ffi_bad_argument() -> FfiError {
 }
 
 pub fn make_ffi_out_of_gas() -> FfiError {
-    FfiError::OutOfGas
+    FfiError::OutOfGas {}
 }
 
 pub fn make_ffi_other<S>(error: S) -> FfiError
