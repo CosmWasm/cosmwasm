@@ -164,6 +164,7 @@
 - Split `VmError::RuntimeErr` in `VmError::BackendErr` and
   `VmError::GenericErr`; rename `VmError::WasmerRuntimeErr` to
   `VmError::RuntimeErr`.
+- Add `Instance.with_querier` analogue to `Instance.with_storage`.
 
 ## 0.7.2 (2020-03-23)
 

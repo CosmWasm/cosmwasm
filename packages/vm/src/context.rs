@@ -162,10 +162,10 @@ pub(crate) fn with_querier_from_context<'a, 'b, S, Q, F, T>(
 where
     S: Storage,
     Q: Querier,
-    F: FnOnce(&'b Q) -> VmResult<T>,
+    F: FnOnce(&'b mut Q) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
-    match b.querier.as_ref() {
+    match b.querier.as_mut() {
         Some(q) => func(q),
         None => Err(make_uninitialized_context_data("querier")),
     }

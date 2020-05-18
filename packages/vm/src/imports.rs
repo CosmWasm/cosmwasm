@@ -220,9 +220,8 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
 ) -> VmResult<i32> {
     let request = read_region!(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST);
 
-    let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier: &Q| {
-        Ok(querier.raw_query(&request)?)
-    })?;
+    let res =
+        with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)?))?;
 
     Ok(match to_vec(&res) {
         Ok(serialized) => write_region!(ctx, response_ptr, &serialized),
