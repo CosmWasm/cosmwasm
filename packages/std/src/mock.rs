@@ -509,14 +509,14 @@ mod test {
             delegator: user_a.clone(),
             validator: val1.clone(),
             amount: coin(100, "stake"),
-            can_redelegate: true,
+            can_redelegate: coin(100, "stake"),
             accumulated_rewards: coin(5, "stake"),
         };
         let del2a = FullDelegation {
             delegator: user_a.clone(),
             validator: val2.clone(),
             amount: coin(500, "stake"),
-            can_redelegate: true,
+            can_redelegate: coin(500, "stake"),
             accumulated_rewards: coin(20, "stake"),
         };
 
@@ -525,7 +525,7 @@ mod test {
             delegator: user_b.clone(),
             validator: val1.clone(),
             amount: coin(500, "stake"),
-            can_redelegate: false,
+            can_redelegate: coin(0, "stake"),
             accumulated_rewards: coin(0, "stake"),
         };
 
@@ -534,7 +534,7 @@ mod test {
             delegator: user_c.clone(),
             validator: val2.clone(),
             amount: coin(8888, "stake"),
-            can_redelegate: true,
+            can_redelegate: coin(4567, "stake"),
             accumulated_rewards: coin(900, "stake"),
         };
 

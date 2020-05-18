@@ -251,8 +251,8 @@ impl BankQuerier {
 mod staking {
     use crate::traits::QuerierResult;
     use cosmwasm_std::{
-        to_binary, BondedDenomResponse, Delegation, AllDelegationsResponse, StakingQuery, Validator,
-        ValidatorsResponse,
+        to_binary, AllDelegationsResponse, BondedDenomResponse, Delegation, StakingQuery,
+        Validator, ValidatorsResponse,
     };
 
     #[derive(Clone, Default)]

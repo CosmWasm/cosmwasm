@@ -151,11 +151,12 @@ pub struct FullDelegation {
     pub validator: HumanAddr,
     /// How much we have locked in the delegation
     pub amount: Coin,
-    /// If true, then a Redelegate command will work now, otherwise you may have to wait more
-    pub can_redelegate: bool,
+    /// can_redelegate captures how much can be immediately redelegated.
+    /// 0 is no redelegation and can_redelegate == amount is redelegate all
+    /// but there are many places between the two
+    pub can_redelegate: Coin,
     /// How much we can currently withdraw
     pub accumulated_rewards: Coin,
-    // TODO: do we want to expose more info?
 }
 
 /// ValidatorsResponse is data format returned from StakingRequest::Validators query
