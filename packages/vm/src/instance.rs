@@ -227,6 +227,7 @@ mod test {
     use crate::errors::VmError;
     use crate::mock::mock_dependencies;
     use crate::testing::mock_instance;
+    use crate::traits::ReadonlyStorage;
     use wabt::wat2wasm;
 
     static KIB: usize = 1024;
@@ -414,8 +415,37 @@ mod test {
     }
 
     #[test]
+    fn with_storage_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // initial check
+        instance
+            .with_storage(|store| {
+                assert!(store.get(b"foo").unwrap().is_none());
+                Ok(())
+            })
+            .unwrap();
+
+        // write some data
+        instance
+            .with_storage(|store| {
+                store.set(b"foo", b"bar").unwrap();
+                Ok(())
+            })
+            .unwrap();
+
+        // read some data
+        instance
+            .with_storage(|store| {
+                assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
     #[should_panic]
-    fn with_context_safe_for_panic() {
+    fn with_storage_safe_for_panic() {
         // this should fail with the assertion, but not cause a double-free crash (issue #59)
         let mut instance = mock_instance(&CONTRACT, &[]);
         instance
