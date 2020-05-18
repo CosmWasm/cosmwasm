@@ -77,7 +77,10 @@ pub trait Api: Copy + Clone + Send {
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr>;
 }
 
-/// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
+/// A short-hand alias for the three-level query result
+/// 1. Passing the query message to the backend
+/// 2. Accessing the contract
+/// 3. Executing query in the contract
 pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
 
 pub trait Querier: Clone + Send + 'static {
