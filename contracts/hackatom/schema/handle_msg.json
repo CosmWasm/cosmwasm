@@ -3,6 +3,7 @@
   "title": "HandleMsg",
   "anyOf": [
     {
+      "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
       "type": "object",
       "required": [
         "release"

@@ -126,32 +126,42 @@ fn fails_on_bad_init() {
 }
 
 #[test]
-fn proper_handle() {
-    let mut deps = mock_instance(WASM, &coins(1015, "earth"));
+fn handle_release_works() {
+    let mut deps = mock_instance(WASM, &[]);
 
     // initialize the store
-    let verifier = HumanAddr(String::from("verifies"));
-    let beneficiary = HumanAddr(String::from("benefits"));
+    let creator = HumanAddr::from("creator");
+    let verifier = HumanAddr::from("verifies");
+    let beneficiary = HumanAddr::from("benefits");
 
     let init_msg = InitMsg {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
+    let init_amount = coins(1000, "earth");
+    let init_env = mock_env(&deps.api, creator.as_str(), &init_amount);
+    let contract_addr = deps.api.human_address(&init_env.contract.address).unwrap();
     let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(init_res.messages.len(), 0);
+
+    // balance changed in init
+    deps.with_querier(|querier| {
+        querier.update_balance(&contract_addr, init_amount);
+        Ok(())
+    })
+    .unwrap();
 
     // beneficiary can release it
     let handle_env = mock_env(&deps.api, verifier.as_str(), &coins(15, "earth"));
     let handle_res: HandleResponse = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
-    assert_eq!(1, handle_res.messages.len());
+    assert_eq!(handle_res.messages.len(), 1);
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
         msg,
         &BankMsg::Send {
             from_address: HumanAddr("cosmos2contract".to_string()),
             to_address: beneficiary,
-            amount: coins(1015, "earth"),
+            amount: coins(1000, "earth"),
         }
         .into(),
     );
@@ -162,21 +172,30 @@ fn proper_handle() {
 }
 
 #[test]
-fn failed_handle() {
-    let mut deps = mock_instance(WASM, &coins(1000, "earth"));
+fn handle_release_fails_for_wrong_sender() {
+    let mut deps = mock_instance(WASM, &[]);
 
     // initialize the store
-    let verifier = HumanAddr(String::from("verifies"));
-    let beneficiary = HumanAddr(String::from("benefits"));
-    let creator = HumanAddr(String::from("creator"));
+    let creator = HumanAddr::from("creator");
+    let verifier = HumanAddr::from("verifies");
+    let beneficiary = HumanAddr::from("benefits");
 
     let init_msg = InitMsg {
         verifier: verifier.clone(),
         beneficiary: beneficiary.clone(),
     };
-    let init_env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
+    let init_amount = coins(1000, "earth");
+    let init_env = mock_env(&deps.api, creator.as_str(), &init_amount);
+    let contract_addr = deps.api.human_address(&init_env.contract.address).unwrap();
     let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(init_res.messages.len(), 0);
+
+    // balance changed in init
+    deps.with_querier(|querier| {
+        querier.update_balance(&contract_addr, init_amount);
+        Ok(())
+    })
+    .unwrap();
 
     // beneficiary cannot release it
     let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
@@ -187,15 +206,15 @@ fn failed_handle() {
     }
 
     // state should not change
-    let state: State = deps
+    let data = deps
         .with_storage(|store| {
-            let data = store
+            Ok(store
                 .get(CONFIG_KEY)
                 .expect("error reading db")
-                .expect("no data stored");
-            from_slice(&data)
+                .expect("no data stored"))
         })
         .unwrap();
+    let state: State = from_slice(&data).unwrap();
     assert_eq!(
         state,
         State {
