@@ -114,18 +114,33 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
         .find(|x| x.denom == invest.bond_denom)
         .ok_or_else(|| generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
 
-    // update total supply
-    let mut to_mint = Uint128(0);
-    let _ = total_supply(&mut deps.storage).update(|mut supply| {
-        to_mint = if supply.issued.is_zero() || supply.bonded.is_zero() {
-            FALLBACK_RATIO * payment.amount
-        } else {
-            payment.amount.multiply_ratio(supply.issued, supply.bonded)
-        };
-        supply.bonded += payment.amount;
-        supply.issued += to_mint;
-        Ok(supply)
-    })?;
+    // re-calculate bonded to ensure we have real values
+    let contract_addr = deps.api.human_address(&env.contract.address)?;
+    // bonded is the total number of tokens we have delegated from this address
+    let bonded = deps
+        .querier
+        .query_all_delegations(&contract_addr)?
+        .iter()
+        .fold(Uint128(0), |acc, d| acc + d.amount.amount);
+
+    // calculate to_mint and update total supply
+    let mut totals = total_supply(&mut deps.storage);
+    let mut supply = totals.load()?;
+    // this is just temporary check
+    if supply.bonded != bonded {
+        return Err(generic_err(format!(
+            "Stored bonded {}, but query bonded: {}",
+            supply.bonded, bonded
+        )));
+    }
+    let to_mint = if supply.issued.is_zero() || supply.bonded.is_zero() {
+        FALLBACK_RATIO * payment.amount
+    } else {
+        payment.amount.multiply_ratio(supply.issued, supply.bonded)
+    };
+    supply.bonded += payment.amount;
+    supply.issued += to_mint;
+    totals.save(&supply)?;
 
     // update the balance of the sender
     balances(&mut deps.storage).update(sender_raw.as_slice(), |balance| {
@@ -411,8 +426,10 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, from_binary, CosmosMsg, Decimal, Validator};
+    use cosmwasm_std::{coins, from_binary, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
+
+    const CONTRACT_ADDR: &str = "cosmos2contract";
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
         Validator {
@@ -420,6 +437,18 @@ mod tests {
             commission: Decimal::percent(3),
             max_commission: Decimal::percent(10),
             max_change_rate: Decimal::percent(1),
+        }
+    }
+
+    fn sample_delegation<U: Into<HumanAddr>>(addr: U, amount: Coin) -> FullDelegation {
+        let can_redelegate = amount.clone();
+        let accumulated_rewards = coin(0, &amount.denom);
+        FullDelegation {
+            validator: addr.into(),
+            delegator: CONTRACT_ADDR.into(),
+            amount,
+            can_redelegate,
+            accumulated_rewards,
         }
     }
 
@@ -605,12 +634,26 @@ mod tests {
         let res = handle(&mut deps, env, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
+        // update the querier with new bond
+        deps.querier.with_staking(
+            "stake",
+            &[sample_validator(DEFAULT_VALIDATOR)],
+            &[sample_delegation(DEFAULT_VALIDATOR, coin(1000, "stake"))],
+        );
+
         // fake a reinvestment (this must be sent by the contract itself)
         let rebond_msg = HandleMsg::_BondAllTokens {};
         let env = mock_env(&deps.api, &contract_addr, &[]);
         deps.querier
             .update_balance(&contract_addr, coins(500, "stake"));
         let _ = handle(&mut deps, env, rebond_msg).unwrap();
+
+        // update the querier with new bond
+        deps.querier.with_staking(
+            "stake",
+            &[sample_validator(DEFAULT_VALIDATOR)],
+            &[sample_delegation(DEFAULT_VALIDATOR, coin(1500, "stake"))],
+        );
 
         // we should now see 1000 issues and 1500 bonded (and a price of 1.5)
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
@@ -626,6 +669,13 @@ mod tests {
         let env = mock_env(&deps.api, &alice, &[coin(3000, "stake")]);
         let res = handle(&mut deps, env, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
+
+        // update the querier with new bond
+        deps.querier.with_staking(
+            "stake",
+            &[sample_validator(DEFAULT_VALIDATOR)],
+            &[sample_delegation(DEFAULT_VALIDATOR, coin(3000, "stake"))],
+        );
 
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
         assert_eq!(get_balance(&deps, &alice), Uint128(2000));
