@@ -1,6 +1,6 @@
 [package]
 name = "staking"
-version = "0.8.0-alpha2"
+version = "0.8.0-alpha3"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 
