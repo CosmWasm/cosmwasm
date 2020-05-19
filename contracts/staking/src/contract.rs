@@ -101,21 +101,22 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
 // get_bonded returns the total amount of delegations from contract
 // it ensures they are all the same denom
 fn get_bonded<Q: Querier>(querier: &Q, contract: &HumanAddr) -> StdResult<Uint128> {
-    let bonds = querier
-        .query_all_delegations(contract)?;
+    let bonds = querier.query_all_delegations(contract)?;
     if bonds.len() == 0 {
         return Ok(Uint128(0));
     }
     let denom = bonds[0].amount.denom.as_str();
-    bonds.iter()
-        .fold(Ok(Uint128(0)), |racc, d| {
-            let acc = racc?;
-            if d.amount.denom.as_str() != denom {
-                Err(generic_err(format!("different denoms in bonds: '{}' vs '{}'", denom, &d.amount.denom)))
-            } else {
-                Ok(acc + d.amount.amount)
-            }
-        })
+    bonds.iter().fold(Ok(Uint128(0)), |racc, d| {
+        let acc = racc?;
+        if d.amount.denom.as_str() != denom {
+            Err(generic_err(format!(
+                "different denoms in bonds: '{}' vs '{}'",
+                denom, &d.amount.denom
+            )))
+        } else {
+            Ok(acc + d.amount.amount)
+        }
+    })
 }
 
 fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
@@ -217,16 +218,22 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
         })?;
     }
 
+    // re-calculate bonded to ensure we have real values
+    let contract_addr = deps.api.human_address(&env.contract.address)?;
+    // bonded is the total number of tokens we have delegated from this address
+    let bonded = get_bonded(&deps.querier, &contract_addr)?;
+
     // calculate how many native tokens this is worth and update supply
     let remainder = (amount - tax)?;
-    let mut unbond = Uint128(0);
-    total_supply(&mut deps.storage).update(|mut supply| {
-        unbond = remainder.multiply_ratio(supply.bonded, supply.issued);
-        supply.bonded = (supply.bonded - unbond)?;
-        supply.issued = (supply.issued - remainder)?;
-        supply.claims += unbond;
-        Ok(supply)
-    })?;
+    let mut totals = total_supply(&mut deps.storage);
+    let mut supply = totals.load()?;
+    // TODO: this is just temporary check - we should use dynamic query or have a way to recover
+    assert_bonds(&supply, bonded)?;
+    let unbond = remainder.multiply_ratio(bonded, supply.issued);
+    supply.bonded = (bonded - unbond)?;
+    supply.issued = (supply.issued - remainder)?;
+    supply.claims += unbond;
+    totals.save(&supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
     claims(&mut deps.storage).update(sender_raw.as_slice(), |claim| {
@@ -447,7 +454,7 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockQuerier};
     use cosmwasm_std::{coins, from_binary, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
 
@@ -472,6 +479,18 @@ mod tests {
             can_redelegate,
             accumulated_rewards,
         }
+    }
+
+    fn set_validator(querier: &mut MockQuerier) {
+        querier.with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+    }
+
+    fn set_delegation(querier: &mut MockQuerier, amount: u128, denom: &str) {
+        querier.with_staking(
+            "stake",
+            &[sample_validator(DEFAULT_VALIDATOR)],
+            &[sample_delegation(DEFAULT_VALIDATOR, coin(amount, denom))],
+        );
     }
 
     const DEFAULT_VALIDATOR: &str = "default-validator";
@@ -595,8 +614,7 @@ mod tests {
     #[test]
     fn bonding_issues_tokens() {
         let mut deps = mock_dependencies(20, &[]);
-        deps.querier
-            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+        set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
         let init_msg = default_init(2, 50);
@@ -637,8 +655,7 @@ mod tests {
     #[test]
     fn rebonding_changes_pricing() {
         let mut deps = mock_dependencies(20, &[]);
-        deps.querier
-            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+        set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
         let init_msg = default_init(2, 50);
@@ -657,11 +674,7 @@ mod tests {
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
-        deps.querier.with_staking(
-            "stake",
-            &[sample_validator(DEFAULT_VALIDATOR)],
-            &[sample_delegation(DEFAULT_VALIDATOR, coin(1000, "stake"))],
-        );
+        set_delegation(&mut deps.querier, 1000, "stake");
 
         // fake a reinvestment (this must be sent by the contract itself)
         let rebond_msg = HandleMsg::_BondAllTokens {};
@@ -671,11 +684,7 @@ mod tests {
         let _ = handle(&mut deps, env, rebond_msg).unwrap();
 
         // update the querier with new bond
-        deps.querier.with_staking(
-            "stake",
-            &[sample_validator(DEFAULT_VALIDATOR)],
-            &[sample_delegation(DEFAULT_VALIDATOR, coin(1500, "stake"))],
-        );
+        set_delegation(&mut deps.querier, 1500, "stake");
 
         // we should now see 1000 issues and 1500 bonded (and a price of 1.5)
         let res = query(&deps, QueryMsg::Investment {}).unwrap();
@@ -693,11 +702,7 @@ mod tests {
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
-        deps.querier.with_staking(
-            "stake",
-            &[sample_validator(DEFAULT_VALIDATOR)],
-            &[sample_delegation(DEFAULT_VALIDATOR, coin(3000, "stake"))],
-        );
+        set_delegation(&mut deps.querier, 3000, "stake");
 
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
         assert_eq!(get_balance(&deps, &alice), Uint128(2000));
@@ -712,8 +717,7 @@ mod tests {
     #[test]
     fn bonding_fails_with_wrong_denom() {
         let mut deps = mock_dependencies(20, &[]);
-        deps.querier
-            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+        set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
         let init_msg = default_init(2, 50);
@@ -739,8 +743,7 @@ mod tests {
     #[test]
     fn unbonding_maintains_price_ratio() {
         let mut deps = mock_dependencies(20, &[]);
-        deps.querier
-            .with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+        set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
         let init_msg = default_init(10, 50);
@@ -758,6 +761,9 @@ mod tests {
         let res = handle(&mut deps, env, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
+        // update the querier with new bond
+        set_delegation(&mut deps.querier, 1000, "stake");
+
         // fake a reinvestment (this must be sent by the contract itself)
         // after this, we see 1000 issues and 1500 bonded (and a price of 1.5)
         let rebond_msg = HandleMsg::_BondAllTokens {};
@@ -765,6 +771,10 @@ mod tests {
         deps.querier
             .update_balance(&contract_addr, coins(500, "stake"));
         let _ = handle(&mut deps, env, rebond_msg).unwrap();
+
+        // update the querier with new bond, lower balance
+        set_delegation(&mut deps.querier, 1500, "stake");
+        deps.querier.update_balance(&contract_addr, vec![]);
 
         // bob unbonds 600 tokens at 10% tax...
         // 60 are taken and send to the owner
@@ -786,6 +796,9 @@ mod tests {
             }
             _ => panic!("Unexpected message: {:?}", delegate),
         }
+
+        // update the querier with new bond, lower balance
+        set_delegation(&mut deps.querier, 690, "stake");
 
         // check balances
         assert_eq!(get_balance(&deps, &bob), bobs_balance);
