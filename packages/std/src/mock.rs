@@ -159,7 +159,7 @@ impl MockQuerier {
         &mut self,
         denom: &str,
         validators: &[crate::query::Validator],
-        delegations: &[crate::query::Delegation],
+        delegations: &[crate::query::FullDelegation],
     ) {
         self.staking = StakingQuerier::new(denom, validators, delegations);
     }
