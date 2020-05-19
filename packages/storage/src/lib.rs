@@ -1,4 +1,5 @@
 mod bucket;
+mod length_prefixed;
 mod namespace_helpers;
 mod prefixed_storage;
 mod sequence;

@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
 
-use crate::namespace_helpers::key_prefix;
+use crate::length_prefixed::key_prefix;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 // singleton is a helper function for less verbose usage

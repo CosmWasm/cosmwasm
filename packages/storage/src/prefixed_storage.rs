@@ -2,11 +2,10 @@
 use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
 
+use crate::length_prefixed::{key_prefix, key_prefix_nested};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
-use crate::namespace_helpers::{
-    get_with_prefix, key_prefix, key_prefix_nested, remove_with_prefix, set_with_prefix,
-};
+use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
 
 // prefixed_read is a helper function for less verbose usage
 pub fn prefixed_read<'a, T: ReadonlyStorage>(
