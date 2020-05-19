@@ -3,12 +3,12 @@ set -o errexit -o nounset -o pipefail
 command -v shellcheck > /dev/null && shellcheck "$0"
 
 function print_usage() {
-  echo "Usage: $0 OLD_VERSION NEW_VERSION"
+  echo "Usage: $0 NEW_VERSION"
   echo ""
-  echo "e.g. $0 0.8.0-alpha1 0.8.0"
+  echo "e.g. $0 0.8.0"
 }
 
-if [ "$#" -ne 2 ]; then
+if [ "$#" -ne 1 ]; then
     print_usage
     exit 1
 fi
@@ -28,8 +28,9 @@ if [[ -n "$CHANGES_IN_REPO" ]]; then
     exit 3
 fi
 
-OLD="$1"
-NEW="$2"
+NEW="$1"
+OLD=$(sed -n -e 's/^version[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' packages/std/Cargo.toml)
+echo "Updating old version $OLD to new version $NEW ..."
 
 FILES_MODIFIED=()
 
