@@ -98,6 +98,37 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
     Ok(res)
 }
 
+// get_bonded returns the total amount of delegations from contract
+// it ensures they are all the same denom
+fn get_bonded<Q: Querier>(querier: &Q, contract: &HumanAddr) -> StdResult<Uint128> {
+    let bonds = querier
+        .query_all_delegations(contract)?;
+    if bonds.len() == 0 {
+        return Ok(Uint128(0));
+    }
+    let denom = bonds[0].amount.denom.as_str();
+    bonds.iter()
+        .fold(Ok(Uint128(0)), |racc, d| {
+            let acc = racc?;
+            if d.amount.denom.as_str() != denom {
+                Err(generic_err(format!("different denoms in bonds: '{}' vs '{}'", denom, &d.amount.denom)))
+            } else {
+                Ok(acc + d.amount.amount)
+            }
+        })
+}
+
+fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
+    if supply.bonded != bonded {
+        Err(generic_err(format!(
+            "Stored bonded {}, but query bonded: {}",
+            supply.bonded, bonded
+        )))
+    } else {
+        Ok(())
+    }
+}
+
 pub fn bond<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
@@ -117,28 +148,19 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     // re-calculate bonded to ensure we have real values
     let contract_addr = deps.api.human_address(&env.contract.address)?;
     // bonded is the total number of tokens we have delegated from this address
-    let bonded = deps
-        .querier
-        .query_all_delegations(&contract_addr)?
-        .iter()
-        .fold(Uint128(0), |acc, d| acc + d.amount.amount);
+    let bonded = get_bonded(&deps.querier, &contract_addr)?;
 
     // calculate to_mint and update total supply
     let mut totals = total_supply(&mut deps.storage);
     let mut supply = totals.load()?;
-    // this is just temporary check
-    if supply.bonded != bonded {
-        return Err(generic_err(format!(
-            "Stored bonded {}, but query bonded: {}",
-            supply.bonded, bonded
-        )));
-    }
-    let to_mint = if supply.issued.is_zero() || supply.bonded.is_zero() {
+    // TODO: this is just temporary check - we should use dynamic query or have a way to recover
+    assert_bonds(&supply, bonded)?;
+    let to_mint = if supply.issued.is_zero() || bonded.is_zero() {
         FALLBACK_RATIO * payment.amount
     } else {
-        payment.amount.multiply_ratio(supply.issued, supply.bonded)
+        payment.amount.multiply_ratio(supply.issued, bonded)
     };
-    supply.bonded += payment.amount;
+    supply.bonded = bonded + payment.amount;
     supply.issued += to_mint;
     totals.save(&supply)?;
 
