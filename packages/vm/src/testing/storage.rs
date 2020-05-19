@@ -9,7 +9,7 @@ use crate::{FfiResult, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct MockStorage {
     data: BTreeMap<Vec<u8>, Vec<u8>>,
 }
