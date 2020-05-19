@@ -18,12 +18,9 @@ impl Checksum {
         Checksum(Sha256::digest(wasm).into())
     }
 
+    /// Creates a lowercase hex encoded copy of this checksum
     pub fn to_hex(&self) -> String {
         hex::encode(self.0)
-    }
-
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.0.to_vec()
     }
 }
 
@@ -46,14 +43,46 @@ impl TryFrom<&[u8]> for Checksum {
     }
 }
 
+impl Into<Vec<u8>> for Checksum {
+    fn into(self) -> Vec<u8> {
+        // Rust 1.43+ also supports self.0.into()
+        self.0.to_vec()
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
 
     #[test]
     fn generate_works() {
-        let wasm = vec![12u8; 17];
-        let id = Checksum::generate(&wasm);
-        assert_eq!(id.0.len(), 32);
+        let wasm = vec![0x68, 0x69, 0x6a];
+        let checksum = Checksum::generate(&wasm);
+
+        // echo -n "hij" | sha256sum
+        let expected = [
+            0x72, 0x2c, 0x8c, 0x99, 0x3f, 0xd7, 0x5a, 0x76, 0x27, 0xd6, 0x9e, 0xd9, 0x41, 0x34,
+            0x4f, 0xe2, 0xa1, 0x42, 0x3a, 0x3e, 0x75, 0xef, 0xd3, 0xe6, 0x77, 0x8a, 0x14, 0x28,
+            0x84, 0x22, 0x71, 0x04,
+        ];
+        assert_eq!(checksum.0, expected);
+    }
+
+    #[test]
+    fn to_hex_works() {
+        let wasm = vec![0x68, 0x69, 0x6a];
+        let checksum = Checksum::generate(&wasm);
+        // echo -n "hij" | sha256sum
+        assert_eq!(
+            checksum.to_hex(),
+            "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104"
+        );
+    }
+
+    #[test]
+    fn into_vec_works() {
+        let checksum = Checksum::generate(&vec![12u8; 17]);
+        let as_vec: Vec<u8> = checksum.into();
+        assert_eq!(as_vec, checksum.0);
     }
 }
