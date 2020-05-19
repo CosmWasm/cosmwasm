@@ -18,6 +18,7 @@ impl Checksum {
         Checksum(Sha256::digest(wasm).into())
     }
 
+    /// Creates a lowercase hex encoded copy of this checksum
     pub fn to_hex(&self) -> String {
         hex::encode(self.0)
     }
@@ -62,5 +63,16 @@ mod test {
             0x84, 0x22, 0x71, 0x04,
         ];
         assert_eq!(checksum.0, expected);
+    }
+
+    #[test]
+    fn to_hex_works() {
+        let wasm = vec![0x68, 0x69, 0x6a];
+        let checksum = Checksum::generate(&wasm);
+        // echo -n "hij" | sha256sum
+        assert_eq!(
+            checksum.to_hex(),
+            "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104"
+        );
     }
 }
