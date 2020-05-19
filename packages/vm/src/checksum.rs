@@ -22,10 +22,6 @@ impl Checksum {
     pub fn to_hex(&self) -> String {
         hex::encode(self.0)
     }
-
-    pub fn to_vec(&self) -> Vec<u8> {
-        self.0.to_vec()
-    }
 }
 
 impl From<[u8; 32]> for Checksum {
@@ -44,6 +40,13 @@ impl TryFrom<&[u8]> for Checksum {
         let mut data = [0u8; 32];
         data.copy_from_slice(value);
         Ok(Checksum(data))
+    }
+}
+
+impl Into<Vec<u8>> for Checksum {
+    fn into(self) -> Vec<u8> {
+        // Rust 1.43+ also supports self.0.into()
+        self.0.to_vec()
     }
 }
 
@@ -74,5 +77,12 @@ mod test {
             checksum.to_hex(),
             "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104"
         );
+    }
+
+    #[test]
+    fn into_vec_works() {
+        let checksum = Checksum::generate(&vec![12u8; 17]);
+        let as_vec: Vec<u8> = checksum.into();
+        assert_eq!(as_vec, checksum.0);
     }
 }
