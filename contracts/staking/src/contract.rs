@@ -102,7 +102,7 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
 // it ensures they are all the same denom
 fn get_bonded<Q: Querier>(querier: &Q, contract: &HumanAddr) -> StdResult<Uint128> {
     let bonds = querier.query_all_delegations(contract)?;
-    if bonds.len() == 0 {
+    if bonds.is_empty() {
         return Ok(Uint128(0));
     }
     let denom = bonds[0].amount.denom.as_str();
