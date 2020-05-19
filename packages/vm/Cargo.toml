@@ -12,7 +12,7 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-default = ["default-singlepass"]
+default = ["default-singlepass", "staking"]
 # multiple backends may be activated here (available through eg. backends::cranelift::*)
 cranelift = ["wasmer-clif-backend"]
 singlepass = ["wasmer-singlepass-backend"]
@@ -27,6 +27,7 @@ backtraces = ["snafu/backtraces"]
 # given Ethereum 1.0, 2.0, Substrate, and other major projects use Tries
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = ["cosmwasm-std/iterator"]
+staking = ["cosmwasm-std/staking"]
 
 [dependencies]
 # Uses the path when built locally; uses the given version from crates.io when published

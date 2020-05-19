@@ -8,8 +8,8 @@ use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
 #[cfg(feature = "staking")]
 use crate::query::{
-    BondedDenomResponse, Delegation, DelegationsResponse, StakingQuery, Validator,
-    ValidatorsResponse,
+    AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
+    StakingQuery, Validator, ValidatorsResponse,
 };
 use crate::serde::{from_binary, to_vec};
 use crate::types::{CanonicalAddr, HumanAddr, Never};
@@ -163,12 +163,11 @@ pub trait Querier: Clone + Send {
         &self,
         delegator: U,
     ) -> StdResult<Vec<Delegation>> {
-        let request = StakingQuery::Delegations {
+        let request = StakingQuery::AllDelegations {
             delegator: delegator.into(),
-            validator: None,
         }
         .into();
-        let res: DelegationsResponse = self.query(&request)?;
+        let res: AllDelegationsResponse = self.query(&request)?;
         Ok(res.delegations)
     }
 
@@ -177,13 +176,13 @@ pub trait Querier: Clone + Send {
         &self,
         delegator: U,
         validator: U,
-    ) -> StdResult<Vec<Delegation>> {
-        let request = StakingQuery::Delegations {
+    ) -> StdResult<Option<FullDelegation>> {
+        let request = StakingQuery::Delegation {
             delegator: delegator.into(),
-            validator: Some(validator.into()),
+            validator: validator.into(),
         }
         .into();
-        let res: DelegationsResponse = self.query(&request)?;
-        Ok(res.delegations)
+        let res: DelegationResponse = self.query(&request)?;
+        Ok(res.delegation)
     }
 }
