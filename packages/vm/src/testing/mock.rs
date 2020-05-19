@@ -1,7 +1,10 @@
 use serde::Serialize;
 
 use cosmwasm_std::testing::MockQuerier as StdMockQuerier;
-use cosmwasm_std::{to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo, Querier as _, QueryRequest, SystemError};
+use cosmwasm_std::{
+    to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
+    Querier as _, QueryRequest, SystemError,
+};
 
 use super::storage::MockStorage;
 use crate::{Api, Extern, FfiResult, Querier, QuerierResult};
