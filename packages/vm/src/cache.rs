@@ -2,7 +2,6 @@ use lru::LruCache;
 use std::collections::HashSet;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
-use std::iter::FromIterator;
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
@@ -35,12 +34,6 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     type_storage: PhantomData<S>,
     type_api: PhantomData<A>,
     type_querier: PhantomData<Q>,
-}
-
-// this takes a comma-separated string, splits it by commas, and returns a set that
-// can be used to initialize the cache
-pub fn features_from_csv(csv: &str) -> HashSet<String> {
-    HashSet::from_iter(csv.split(',').map(|x| x.trim().to_string()))
 }
 
 impl<S, A, Q> CosmCache<S, A, Q>
@@ -191,6 +184,7 @@ mod test {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
+    use crate::features::features_from_csv;
     use crate::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Never};
     use std::fs::OpenOptions;
@@ -202,16 +196,7 @@ mod test {
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     fn default_features() -> HashSet<String> {
-        HashSet::from_iter(["staking".to_string()].iter().cloned())
-    }
-
-    #[test]
-    fn parse_features() {
-        let set = features_from_csv("foo, bar,baz ");
-        assert_eq!(set.len(), 3);
-        assert!(set.contains("foo"));
-        assert!(set.contains("bar"));
-        assert!(set.contains("baz"));
+        features_from_csv("staking")
     }
 
     #[test]
