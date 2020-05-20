@@ -16,7 +16,7 @@ pub(crate) fn key_prefix(namespace: &[u8]) -> Vec<u8> {
 /// Calculates the raw key prefix for a given nested namespace
 /// as documented in https://github.com/webmaster128/key-namespacing#nesting
 pub(crate) fn key_prefix_nested(namespaces: &[&[u8]]) -> Vec<u8> {
-    let mut size = namespaces.len();
+    let mut size = 0;
     for &namespace in namespaces {
         size += namespace.len() + 2;
     }
@@ -77,6 +77,21 @@ mod test {
     }
 
     #[test]
+    fn key_prefix_calculates_capacity_correctly() {
+        // Those tests cannot guarantee the required capacity was calculated correctly before
+        // the vector allocation but increase the likelyhood of a proper implementation.
+
+        let key = key_prefix(b"");
+        assert_eq!(key.capacity(), key.len());
+
+        let key = key_prefix(b"h");
+        assert_eq!(key.capacity(), key.len());
+
+        let key = key_prefix(b"hij");
+        assert_eq!(key.capacity(), key.len());
+    }
+
+    #[test]
     fn key_prefix_nested_works() {
         assert_eq!(key_prefix_nested(&[]), b"");
         assert_eq!(key_prefix_nested(&[b""]), b"\x00\x00");
@@ -88,6 +103,27 @@ mod test {
             key_prefix_nested(&[b"a", b"ab", b"abc"]),
             b"\x00\x01a\x00\x02ab\x00\x03abc"
         );
+    }
+
+    #[test]
+    fn key_prefix_nested_calculates_capacity_correctly() {
+        // Those tests cannot guarantee the required capacity was calculated correctly before
+        // the vector allocation but increase the likelyhood of a proper implementation.
+
+        let key = key_prefix_nested(&[]);
+        assert_eq!(key.capacity(), key.len());
+
+        let key = key_prefix_nested(&[b""]);
+        assert_eq!(key.capacity(), key.len());
+
+        let key = key_prefix_nested(&[b"a"]);
+        assert_eq!(key.capacity(), key.len());
+
+        let key = key_prefix_nested(&[b"a", b"bc"]);
+        assert_eq!(key.capacity(), key.len());
+
+        let key = key_prefix_nested(&[b"a", b"bc", b"def"]);
+        assert_eq!(key.capacity(), key.len());
     }
 
     #[test]
