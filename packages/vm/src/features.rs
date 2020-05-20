@@ -5,10 +5,14 @@ use wasmer_runtime_core::{export::Export, instance::Instance};
 
 static REQUIRES_PREFIX: &str = "requires_";
 
-/// Takes a comma-separated string, splits it by commas, and returns a set of features.
+/// Takes a comma-separated string, splits it by commas, removes empty elements and returns a set of features.
 /// This can be used e.g. to initialize the cache.
 pub fn features_from_csv(csv: &str) -> HashSet<String> {
-    HashSet::from_iter(csv.split(',').map(|x| x.trim().to_string()))
+    HashSet::from_iter(
+        csv.split(',')
+            .map(|x| x.trim().to_string())
+            .filter(|f| !f.is_empty()),
+    )
 }
 
 pub fn required_features_from_wasmer_instance(wasmer_instance: &Instance) -> HashSet<String> {
@@ -56,6 +60,20 @@ mod test {
         assert!(set.contains("foo"));
         assert!(set.contains("bar"));
         assert!(set.contains("baz"));
+    }
+
+    #[test]
+    fn features_from_csv_skips_empty() {
+        let set = features_from_csv("");
+        assert_eq!(set.len(), 0);
+        let set = features_from_csv("a,,b");
+        assert_eq!(set.len(), 2);
+        assert!(set.contains("a"));
+        assert!(set.contains("b"));
+        let set = features_from_csv("a,b,");
+        assert_eq!(set.len(), 2);
+        assert!(set.contains("a"));
+        assert!(set.contains("b"));
     }
 
     #[test]
