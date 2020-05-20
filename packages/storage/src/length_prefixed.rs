@@ -8,7 +8,7 @@
 /// in https://github.com/webmaster128/key-namespacing#length-prefixed-keys
 pub(crate) fn key_prefix(namespace: &[u8]) -> Vec<u8> {
     let mut out = Vec::with_capacity(namespace.len() + 2);
-    out.extend_from_slice(&key_len(namespace));
+    out.extend_from_slice(&encode_length(namespace));
     out.extend_from_slice(namespace);
     out
 }
@@ -23,19 +23,19 @@ pub(crate) fn key_prefix_nested(namespaces: &[&[u8]]) -> Vec<u8> {
 
     let mut out = Vec::with_capacity(size);
     for &namespace in namespaces {
-        out.extend_from_slice(&key_len(namespace));
+        out.extend_from_slice(&encode_length(namespace));
         out.extend_from_slice(namespace);
     }
     out
 }
 
-// returns the length as a 2 byte big endian encoded integer
-fn key_len(prefix: &[u8]) -> [u8; 2] {
-    if prefix.len() > 0xFFFF {
+/// Encodes the length of a given namespace as a 2 byte big endian encoded integer
+fn encode_length(namespace: &[u8]) -> [u8; 2] {
+    if namespace.len() > 0xFFFF {
         panic!("only supports namespaces up to length 0xFFFF")
     }
-    let length_bytes = (prefix.len() as u64).to_be_bytes();
-    [length_bytes[6], length_bytes[7]]
+    let length_bytes = (namespace.len() as u32).to_be_bytes();
+    [length_bytes[2], length_bytes[3]]
 }
 
 #[cfg(test)]
@@ -88,5 +88,23 @@ mod test {
             key_prefix_nested(&[b"a", b"ab", b"abc"]),
             b"\x00\x01a\x00\x02ab\x00\x03abc"
         );
+    }
+
+    #[test]
+    fn encode_length_works() {
+        assert_eq!(encode_length(b""), *b"\x00\x00");
+        assert_eq!(encode_length(b"a"), *b"\x00\x01");
+        assert_eq!(encode_length(b"aa"), *b"\x00\x02");
+        assert_eq!(encode_length(b"aaa"), *b"\x00\x03");
+        assert_eq!(encode_length(&vec![1; 255]), *b"\x00\xff");
+        assert_eq!(encode_length(&vec![1; 256]), *b"\x01\x00");
+        assert_eq!(encode_length(&vec![1; 12345]), *b"\x30\x39");
+        assert_eq!(encode_length(&vec![1; 65535]), *b"\xff\xff");
+    }
+
+    #[test]
+    #[should_panic(expected = "only supports namespaces up to length 0xFFFF")]
+    fn encode_length_panics_for_large_values() {
+        encode_length(&vec![1; 65536]);
     }
 }
