@@ -5,6 +5,16 @@ use wasmer_runtime_core::{export::Export, instance::Instance};
 
 static REQUIRES_PREFIX: &str = "requires_";
 
+/// Takes a comma-separated string, splits it by commas, removes empty elements and returns a set of features.
+/// This can be used e.g. to initialize the cache.
+pub fn features_from_csv(csv: &str) -> HashSet<String> {
+    HashSet::from_iter(
+        csv.split(',')
+            .map(|x| x.trim().to_string())
+            .filter(|f| !f.is_empty()),
+    )
+}
+
 pub fn required_features_from_wasmer_instance(wasmer_instance: &Instance) -> HashSet<String> {
     HashSet::from_iter(wasmer_instance.exports().filter_map(|(mut name, export)| {
         if let Export::Function { .. } = export {
@@ -42,6 +52,29 @@ mod test {
     use super::*;
     use parity_wasm::elements::deserialize_buffer;
     use wabt::wat2wasm;
+
+    #[test]
+    fn features_from_csv_works() {
+        let set = features_from_csv("foo, bar,baz ");
+        assert_eq!(set.len(), 3);
+        assert!(set.contains("foo"));
+        assert!(set.contains("bar"));
+        assert!(set.contains("baz"));
+    }
+
+    #[test]
+    fn features_from_csv_skips_empty() {
+        let set = features_from_csv("");
+        assert_eq!(set.len(), 0);
+        let set = features_from_csv("a,,b");
+        assert_eq!(set.len(), 2);
+        assert!(set.contains("a"));
+        assert!(set.contains("b"));
+        let set = features_from_csv("a,b,");
+        assert_eq!(set.len(), 2);
+        assert!(set.contains("a"));
+        assert!(set.contains("b"));
+    }
 
     #[test]
     fn required_features_from_module_works() {

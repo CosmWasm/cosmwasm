@@ -7,9 +7,11 @@ mod storage;
 
 pub use calls::{handle, init, query};
 pub use instance::{
-    mock_instance, mock_instance_with_balances, mock_instance_with_gas_limit, test_io,
+    mock_instance, mock_instance_with_balances, mock_instance_with_gas_limit,
+    mock_instance_with_options, test_io, MockInstanceOptions,
 };
 pub use mock::{
     mock_dependencies, mock_dependencies_with_balances, mock_env, MockApi, MockQuerier,
+    MOCK_CONTRACT_ADDR,
 };
 pub use storage::MockStorage;
