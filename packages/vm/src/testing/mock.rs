@@ -9,7 +9,7 @@ use cosmwasm_std::{
 use super::storage::MockStorage;
 use crate::{Api, Extern, FfiResult, Querier, QuerierResult};
 
-static CONTRACT_ADDR: &str = "cosmos2contract";
+pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -17,7 +17,7 @@ pub fn mock_dependencies(
     canonical_length: usize,
     contract_balance: &[Coin],
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
-    let contract_addr = HumanAddr::from(CONTRACT_ADDR);
+    let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Extern {
         storage: MockStorage::default(),
         api: MockApi::new(canonical_length),
@@ -117,7 +117,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
         },
         contract: ContractInfo {
             address: api
-                .canonical_address(&HumanAddr::from(CONTRACT_ADDR))
+                .canonical_address(&HumanAddr::from(MOCK_CONTRACT_ADDR))
                 .unwrap(),
         },
     }
