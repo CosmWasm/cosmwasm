@@ -3,40 +3,39 @@
 //! use cosmwasm_vm::testing::X
 use cosmwasm_std::{Coin, HumanAddr};
 use std::collections::HashSet;
-use std::iter::FromIterator;
 
 use crate::compatability::check_wasm;
+use crate::features::features_from_csv;
 use crate::instance::Instance;
 use crate::{Api, Querier, Storage};
 
-use super::mock::{
-    mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MOCK_CONTRACT_ADDR,
-};
+use super::mock::{mock_dependencies_with_balances, MockApi, MockQuerier, MOCK_CONTRACT_ADDR};
 use super::storage::MockStorage;
-
-/// Gas limit for testing
-const DEFAULT_GAS_LIMIT: u64 = 500_000;
-
-fn default_features() -> HashSet<String> {
-    HashSet::from_iter(["staking".to_string()].iter().cloned())
-}
 
 pub fn mock_instance(
     wasm: &[u8],
     contract_balance: &[Coin],
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    check_wasm(wasm, &default_features()).unwrap();
-    let deps = mock_dependencies(20, contract_balance);
-    Instance::from_code(wasm, deps, DEFAULT_GAS_LIMIT).unwrap()
+    mock_instance_with_options(
+        wasm,
+        MockInstanceOptions {
+            contract_balance: Some(contract_balance),
+            ..Default::default()
+        },
+    )
 }
 
 pub fn mock_instance_with_balances(
     wasm: &[u8],
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    check_wasm(wasm, &default_features()).unwrap();
-    let deps = mock_dependencies_with_balances(20, balances);
-    Instance::from_code(wasm, deps, DEFAULT_GAS_LIMIT).unwrap()
+    mock_instance_with_options(
+        wasm,
+        MockInstanceOptions {
+            balances,
+            ..Default::default()
+        },
+    )
 }
 
 pub fn mock_instance_with_gas_limit(
@@ -44,9 +43,14 @@ pub fn mock_instance_with_gas_limit(
     contract_balance: &[Coin],
     gas_limit: u64,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
-    check_wasm(wasm, &default_features()).unwrap();
-    let deps = mock_dependencies(20, contract_balance);
-    Instance::from_code(wasm, deps, gas_limit).unwrap()
+    mock_instance_with_options(
+        wasm,
+        MockInstanceOptions {
+            contract_balance: Some(contract_balance),
+            gas_limit,
+            ..Default::default()
+        },
+    )
 }
 
 #[derive(Debug)]
@@ -71,7 +75,7 @@ impl Default for MockInstanceOptions<'_> {
             contract_balance: Default::default(),
 
             // instance
-            supported_features: default_features(),
+            supported_features: features_from_csv("staking"),
             gas_limit: 500_000,
         }
     }
