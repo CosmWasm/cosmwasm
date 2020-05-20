@@ -9,7 +9,9 @@ use crate::compatability::check_wasm;
 use crate::instance::Instance;
 use crate::{Api, Querier, Storage};
 
-use super::mock::{mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier};
+use super::mock::{
+    mock_dependencies, mock_dependencies_with_balances, MockApi, MockQuerier, MOCK_CONTRACT_ADDR,
+};
 use super::storage::MockStorage;
 
 /// Gas limit for testing
@@ -45,6 +47,55 @@ pub fn mock_instance_with_gas_limit(
     check_wasm(wasm, &default_features()).unwrap();
     let deps = mock_dependencies(20, contract_balance);
     Instance::from_code(wasm, deps, gas_limit).unwrap()
+}
+
+#[derive(Debug)]
+pub struct MockInstanceOptions<'a> {
+    // dependencies
+    pub canonical_address_length: usize,
+    pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
+    /// This option is merged into balances and might override an existing value
+    pub contract_balance: Option<&'a [Coin]>,
+
+    // instance
+    pub supported_features: HashSet<String>,
+    pub gas_limit: u64,
+}
+
+impl Default for MockInstanceOptions<'_> {
+    fn default() -> Self {
+        Self {
+            // dependencies
+            canonical_address_length: 20,
+            balances: Default::default(),
+            contract_balance: Default::default(),
+
+            // instance
+            supported_features: default_features(),
+            gas_limit: 500_000,
+        }
+    }
+}
+
+pub fn mock_instance_with_options(
+    wasm: &[u8],
+    options: MockInstanceOptions,
+) -> Instance<MockStorage, MockApi, MockQuerier> {
+    check_wasm(wasm, &options.supported_features).unwrap();
+    let contract_address = HumanAddr::from(MOCK_CONTRACT_ADDR);
+
+    // merge balances
+    let mut balances = options.balances.to_vec();
+    if let Some(contract_balance) = options.contract_balance {
+        // Remove old entry if exists
+        if let Some(pos) = balances.iter().position(|item| *item.0 == contract_address) {
+            balances.remove(pos);
+        }
+        balances.push((&contract_address, contract_balance));
+    }
+
+    let deps = mock_dependencies_with_balances(options.canonical_address_length, &balances);
+    Instance::from_code(wasm, deps, options.gas_limit).unwrap()
 }
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
