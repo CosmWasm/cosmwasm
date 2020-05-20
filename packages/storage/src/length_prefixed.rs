@@ -106,6 +106,32 @@ mod test {
     }
 
     #[test]
+    fn key_prefix_nested_allows_many_long_namespaces() {
+        // The 0xFFFF limit is for each namespace, not for the combination of them
+
+        let long_namespace1 = vec![0xaa; 0xFFFD];
+        let long_namespace2 = vec![0xbb; 0xFFFE];
+        let long_namespace3 = vec![0xcc; 0xFFFF];
+
+        let prefix = key_prefix_nested(&[&long_namespace1, &long_namespace2, &long_namespace3]);
+        assert_eq!(&prefix[0..2], b"\xFF\xFD");
+        assert_eq!(&prefix[2..(2 + 0xFFFD)], long_namespace1.as_slice());
+        assert_eq!(&prefix[(2 + 0xFFFD)..(2 + 0xFFFD + 2)], b"\xFF\xFe");
+        assert_eq!(
+            &prefix[(2 + 0xFFFD + 2)..(2 + 0xFFFD + 2 + 0xFFFE)],
+            long_namespace2.as_slice()
+        );
+        assert_eq!(
+            &prefix[(2 + 0xFFFD + 2 + 0xFFFE)..(2 + 0xFFFD + 2 + 0xFFFE + 2)],
+            b"\xFF\xFf"
+        );
+        assert_eq!(
+            &prefix[(2 + 0xFFFD + 2 + 0xFFFE + 2)..(2 + 0xFFFD + 2 + 0xFFFE + 2 + 0xFFFF)],
+            long_namespace3.as_slice()
+        );
+    }
+
+    #[test]
     fn key_prefix_nested_calculates_capacity_correctly() {
         // Those tests cannot guarantee the required capacity was calculated correctly before
         // the vector allocation but increase the likelyhood of a proper implementation.
