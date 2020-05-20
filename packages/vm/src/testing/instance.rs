@@ -7,9 +7,9 @@ use std::collections::HashSet;
 use crate::compatability::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::Instance;
-use crate::{Api, Querier, Storage};
+use crate::{Api, Extern, Querier, Storage};
 
-use super::mock::{mock_dependencies_with_balances, MockApi, MockQuerier, MOCK_CONTRACT_ADDR};
+use super::mock::{MockApi, MockQuerier, MOCK_CONTRACT_ADDR};
 use super::storage::MockStorage;
 
 pub fn mock_instance(
@@ -98,7 +98,11 @@ pub fn mock_instance_with_options(
         balances.push((&contract_address, contract_balance));
     }
 
-    let deps = mock_dependencies_with_balances(options.canonical_address_length, &balances);
+    let deps = Extern {
+        storage: MockStorage::default(),
+        api: MockApi::new(options.canonical_address_length),
+        querier: MockQuerier::new(&balances),
+    };
     Instance::from_code(wasm, deps, options.gas_limit).unwrap()
 }
 
