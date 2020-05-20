@@ -40,13 +40,11 @@ pub fn mock_instance_with_balances(
 
 pub fn mock_instance_with_gas_limit(
     wasm: &[u8],
-    contract_balance: &[Coin],
     gas_limit: u64,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
     mock_instance_with_options(
         wasm,
         MockInstanceOptions {
-            contract_balance: Some(contract_balance),
             gas_limit,
             ..Default::default()
         },

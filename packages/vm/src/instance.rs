@@ -418,7 +418,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 1_000_000); // We expect a dummy value for cranelift
     }
@@ -426,7 +426,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn set_get_and_gas_singlepass() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, &[], 123321);
+        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas();
         assert_eq!(orig_gas, 123321);
     }
@@ -617,7 +617,7 @@ mod singlepass_test {
 
     #[test]
     fn contract_enforces_gas_limit() {
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, &[], 20_000);
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT, 20_000);
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
