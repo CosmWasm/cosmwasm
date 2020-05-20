@@ -5,9 +5,10 @@ use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
+use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
-use crate::namespace_helpers::{get_with_prefix, key_prefix, key_prefix_nested, set_with_prefix};
+use crate::namespace_helpers::{get_with_prefix, set_with_prefix};
 #[cfg(feature = "iterator")]
 use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
@@ -45,7 +46,7 @@ where
 {
     pub fn new(namespace: &[u8], storage: &'a mut S) -> Self {
         Bucket {
-            prefix: key_prefix(namespace),
+            prefix: to_length_prefixed(namespace),
             storage,
             data: PhantomData,
         }
@@ -53,7 +54,7 @@ where
 
     pub fn multilevel(namespaces: &[&[u8]], storage: &'a mut S) -> Self {
         Bucket {
-            prefix: key_prefix_nested(namespaces),
+            prefix: to_length_prefixed_nested(namespaces),
             storage,
             data: PhantomData,
         }
@@ -122,7 +123,7 @@ where
 {
     pub fn new(namespace: &[u8], storage: &'a S) -> Self {
         ReadonlyBucket {
-            prefix: key_prefix(namespace),
+            prefix: to_length_prefixed(namespace),
             storage,
             data: PhantomData,
         }
@@ -130,7 +131,7 @@ where
 
     pub fn multilevel(namespaces: &[&[u8]], storage: &'a S) -> Self {
         ReadonlyBucket {
-            prefix: key_prefix_nested(namespaces),
+            prefix: to_length_prefixed_nested(namespaces),
             storage,
             data: PhantomData,
         }
