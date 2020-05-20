@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiResult, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult, Querier, QuerierResult};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -62,14 +62,10 @@ impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return Err(crate::make_ffi_other(
-                "Invalid input: human address too short",
-            ));
+            return Err(FfiError::other("Invalid input: human address too short"));
         }
         if human.len() > self.canonical_length {
-            return Err(crate::make_ffi_other(
-                "Invalid input: human address too long",
-            ));
+            return Err(FfiError::other("Invalid input: human address too long"));
         }
 
         let mut out = Vec::from(human.as_str());
@@ -82,7 +78,7 @@ impl Api for MockApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
-            return Err(crate::make_ffi_other(
+            return Err(FfiError::other(
                 "Invalid input: canonical address length not correct",
             ));
         }
@@ -96,7 +92,7 @@ impl Api for MockApi {
             .collect();
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed)
-            .map_err(|_| crate::make_ffi_other("Could not parse human address result as utf-8"))?;
+            .map_err(|_| FfiError::other("Could not parse human address result as utf-8"))?;
         Ok(HumanAddr(human))
     }
 }

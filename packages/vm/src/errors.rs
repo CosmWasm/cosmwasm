@@ -217,6 +217,28 @@ pub enum FfiError {
 }
 
 impl FfiError {
+    pub fn foreign_panic() -> Self {
+        ForeignPanic {}.build()
+    }
+
+    pub fn bad_argument() -> Self {
+        BadArgument {}.build()
+    }
+
+    pub fn out_of_gas() -> Self {
+        OutOfGas {}.build()
+    }
+
+    pub fn other<S>(error: S) -> Self
+    where
+        S: Into<String>,
+    {
+        Other {
+            error: error.into(),
+        }
+        .build()
+    }
+
     pub fn set_message<S>(&mut self, message: S) -> &mut Self
     where
         S: Into<String>,
@@ -238,28 +260,6 @@ impl From<FfiError> for VmError {
 }
 
 pub type FfiResult<T> = core::result::Result<T, FfiError>;
-
-pub fn make_ffi_foreign_panic() -> FfiError {
-    ForeignPanic {}.build()
-}
-
-pub fn make_ffi_bad_argument() -> FfiError {
-    BadArgument {}.build()
-}
-
-pub fn make_ffi_out_of_gas() -> FfiError {
-    FfiError::OutOfGas {}
-}
-
-pub fn make_ffi_other<S>(error: S) -> FfiError
-where
-    S: Into<String>,
-{
-    Other {
-        error: error.into(),
-    }
-    .build()
-}
 
 #[cfg(test)]
 mod test {
@@ -423,6 +423,44 @@ mod test {
         let err = make_uninitialized_context_data("foo");
         match err {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    // FfiError constructors
+
+    #[test]
+    fn ffi_error_foreign_panic() {
+        let err = FfiError::foreign_panic();
+        match err {
+            FfiError::ForeignPanic { .. } => {}
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn ffi_error_bad_argument() {
+        let err = FfiError::bad_argument();
+        match err {
+            FfiError::BadArgument { .. } => {}
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn ffi_error_out_of_gas() {
+        let err = FfiError::out_of_gas();
+        match err {
+            FfiError::OutOfGas { .. } => {}
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    #[test]
+    fn ffi_error_other() {
+        let err = FfiError::other("broken");
+        match err {
+            FfiError::Other { error, .. } => assert_eq!(error, "broken"),
             _ => panic!("Unexpected error"),
         }
     }
