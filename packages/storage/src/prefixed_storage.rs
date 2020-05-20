@@ -2,7 +2,7 @@
 use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
 
-use crate::length_prefixed::{key_prefix, key_prefix_nested};
+use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
@@ -28,7 +28,7 @@ pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
 impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     pub fn new(namespace: &[u8], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
-            prefix: key_prefix(namespace),
+            prefix: to_length_prefixed(namespace),
             storage,
         }
     }
@@ -37,7 +37,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     // https://github.com/webmaster128/key-namespacing#nesting
     pub fn multilevel(namespaces: &[&[u8]], storage: &'a T) -> Self {
         ReadonlyPrefixedStorage {
-            prefix: key_prefix_nested(namespaces),
+            prefix: to_length_prefixed_nested(namespaces),
             storage,
         }
     }
@@ -68,7 +68,7 @@ pub struct PrefixedStorage<'a, T: Storage> {
 impl<'a, T: Storage> PrefixedStorage<'a, T> {
     pub fn new(namespace: &[u8], storage: &'a mut T) -> Self {
         PrefixedStorage {
-            prefix: key_prefix(namespace),
+            prefix: to_length_prefixed(namespace),
             storage,
         }
     }
@@ -77,7 +77,7 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
     // https://github.com/webmaster128/key-namespacing#nesting
     pub fn multilevel(namespaces: &[&[u8]], storage: &'a mut T) -> Self {
         PrefixedStorage {
-            prefix: key_prefix_nested(namespaces),
+            prefix: to_length_prefixed_nested(namespaces),
             storage,
         }
     }

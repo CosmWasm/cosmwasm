@@ -3,7 +3,7 @@ use std::marker::PhantomData;
 
 use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
 
-use crate::length_prefixed::key_prefix;
+use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 // singleton is a helper function for less verbose usage
@@ -26,7 +26,7 @@ where
 }
 
 /// Singleton effectively combines PrefixedStorage with TypedStorage to
-/// work on a single storage key. It performs the key_prefix transformation
+/// work on a single storage key. It performs the to_length_prefixed transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
 pub struct Singleton<'a, S: Storage, T>
@@ -46,7 +46,7 @@ where
     pub fn new(storage: &'a mut S, key: &[u8]) -> Self {
         Singleton {
             storage,
-            key: key_prefix(key),
+            key: to_length_prefixed(key),
             data: PhantomData,
         }
     }
@@ -103,7 +103,7 @@ where
     pub fn new(storage: &'a S, key: &[u8]) -> Self {
         ReadonlySingleton {
             storage,
-            key: key_prefix(key),
+            key: to_length_prefixed(key),
             data: PhantomData,
         }
     }

@@ -92,20 +92,20 @@ fn namespace_upper_bound(input: &[u8]) -> Vec<u8> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::length_prefixed::key_prefix;
+    use crate::length_prefixed::to_length_prefixed;
     use cosmwasm_std::testing::MockStorage;
 
     #[test]
     fn prefix_get_set() {
         let mut storage = MockStorage::new();
-        let prefix = key_prefix(b"foo");
+        let prefix = to_length_prefixed(b"foo");
 
         set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha").unwrap();
         let rfoo = get_with_prefix(&storage, &prefix, b"bar").unwrap();
         assert_eq!(Some(b"gotcha".to_vec()), rfoo);
 
         // no collisions with other prefixes
-        let other_prefix = key_prefix(b"fo");
+        let other_prefix = to_length_prefixed(b"fo");
         let collision = get_with_prefix(&storage, &other_prefix, b"obar").unwrap();
         assert_eq!(None, collision);
     }
@@ -114,8 +114,8 @@ mod test {
     #[cfg(feature = "iterator")]
     fn test_range() {
         let mut storage = MockStorage::new();
-        let prefix = key_prefix(b"foo");
-        let other_prefix = key_prefix(b"food");
+        let prefix = to_length_prefixed(b"foo");
+        let other_prefix = to_length_prefixed(b"food");
 
         // set some values in this range
         set_with_prefix(&mut storage, &prefix, b"bar", b"none").unwrap();
@@ -148,8 +148,8 @@ mod test {
     fn test_range_with_prefix_wrapover() {
         let mut storage = MockStorage::new();
         // if we don't properly wrap over there will be issues here (note 255+1 is used to calculate end)
-        let prefix = key_prefix(b"f\xff\xff");
-        let other_prefix = key_prefix(b"f\xff\x44");
+        let prefix = to_length_prefixed(b"f\xff\xff");
+        let other_prefix = to_length_prefixed(b"f\xff\x44");
 
         // set some values in this range
         set_with_prefix(&mut storage, &prefix, b"bar", b"none").unwrap();
@@ -175,8 +175,8 @@ mod test {
     fn test_range_with_start_end_set() {
         let mut storage = MockStorage::new();
         // if we don't properly wrap over there will be issues here (note 255+1 is used to calculate end)
-        let prefix = key_prefix(b"f\xff\xff");
-        let other_prefix = key_prefix(b"f\xff\x44");
+        let prefix = to_length_prefixed(b"f\xff\xff");
+        let other_prefix = to_length_prefixed(b"f\xff\x44");
 
         // set some values in this range
         set_with_prefix(&mut storage, &prefix, b"bar", b"none").unwrap();
