@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.8.0-alpha3"
+version = "0.8.0-rc1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -31,7 +31,7 @@ staking = ["cosmwasm-std/staking"]
 
 [dependencies]
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "0.8.0-alpha3" }
+cosmwasm-std = { path = "../std", version = "0.8.0-rc1" }
 serde_json = "1.0"
 wasmer-runtime-core = "0.17"
 wasmer-middleware-common = "0.17"

@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-storage"
-version = "0.8.0-alpha3"
+version = "0.8.0-rc1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "CosmWasm library with useful helpers for Storage patterns"
@@ -19,7 +19,7 @@ iterator = ["cosmwasm-std/iterator"]
 
 [dependencies]
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "0.8.0-alpha3" }
+cosmwasm-std = { path = "../std", version = "0.8.0-rc1" }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 
 [dev-dependencies]
