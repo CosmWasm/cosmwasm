@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError};
+use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError, SystemResult};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator, ValidatorsResponse,
@@ -171,7 +171,10 @@ impl<C: Clone + DeserializeOwned> MockQuerier<C> {
         self.staking = StakingQuerier::new(denom, validators, delegations);
     }
 
-    pub fn with_custom_handler(mut self, handler: Box<dyn Fn(C) -> QuerierResult>) -> Self {
+    pub fn with_custom_handler(
+        mut self,
+        handler: Box<dyn Fn(C) -> SystemResult<StdResult<Binary>>>,
+    ) -> Self {
         self.handle_custom = handler;
         self
     }
