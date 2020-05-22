@@ -23,7 +23,10 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     from_slice,
-    testing::{handle, init, mock_env, mock_instance, mock_instance_with_balances, query, test_io},
+    testing::{
+        handle, init, mock_env, mock_instance, mock_instance_with_balances, query, test_io,
+        MOCK_CONTRACT_ADDR,
+    },
     Api, ReadonlyStorage,
 };
 
@@ -158,7 +161,7 @@ fn handle_release_works() {
     assert_eq!(
         msg,
         &BankMsg::Send {
-            from_address: HumanAddr("cosmos2contract".to_string()),
+            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: beneficiary,
             amount: coins(1000, "earth"),
         }
