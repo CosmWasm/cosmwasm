@@ -1,4 +1,6 @@
+use serde::de::DeserializeOwned;
 use std::collections::HashMap;
+use std::marker::PhantomData;
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
@@ -129,11 +131,12 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
 #[derive(Default)]
-pub struct MockQuerier {
+pub struct MockQuerier<C: DeserializeOwned = Never> {
     bank: BankQuerier,
     staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
+    custom_query: PhantomData<C>,
 }
 
 impl MockQuerier {
@@ -142,6 +145,7 @@ impl MockQuerier {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
+            custom_query: PhantomData::default(),
         }
     }
 
@@ -165,10 +169,9 @@ impl MockQuerier {
     }
 }
 
-impl Querier for MockQuerier {
+impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<Never> = match from_slice(bin_request) {
+        let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
@@ -181,13 +184,16 @@ impl Querier for MockQuerier {
     }
 }
 
-impl MockQuerier {
-    pub fn handle_query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
+impl<C: DeserializeOwned> MockQuerier<C> {
+    pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(_) => Err(SystemError::UnsupportedRequest {
-                kind: "custom".to_string(),
-            }),
+            QueryRequest::Custom(_) => {
+                // TODO: allow setting a custom handler
+                Err(SystemError::UnsupportedRequest {
+                    kind: "custom".to_string(),
+                })
+            }
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
