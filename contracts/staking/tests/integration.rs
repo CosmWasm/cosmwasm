@@ -62,10 +62,9 @@ fn initialization_with_missing_validator() {
     // make sure we can init with this
     let res: StdResult<InitResponse> = init(&mut deps, env, msg.clone());
     match res.unwrap_err() {
-        StdError::GenericErr { msg, .. } => assert_eq!(
-            msg.as_str(),
-            "my-validator is not in the current validator set"
-        ),
+        StdError::GenericErr { msg, .. } => {
+            assert_eq!(msg, "my-validator is not in the current validator set")
+        }
         _ => panic!("expected unregistered validator error"),
     }
 }
