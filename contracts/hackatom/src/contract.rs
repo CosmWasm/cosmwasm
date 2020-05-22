@@ -207,7 +207,9 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
+    };
     // import trait ReadonlyStorage to get access to read
     use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
     use cosmwasm_storage::transactional_deps;
@@ -350,7 +352,7 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                from_address: HumanAddr("cosmos2contract".to_string()),
+                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
                 to_address: beneficiary,
                 amount: coins(1000, "earth"),
             }
