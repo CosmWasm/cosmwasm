@@ -117,7 +117,24 @@ impl From<wasmer_runtime_core::error::ResolveError> for VmError {
 
 impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
     fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
-        make_runtime_err(format!("Wasmer runtime error: {:?}", original))
+        use wasmer_runtime_core::error::{InvokeError, RuntimeError};
+
+        fn runtime_error(err: RuntimeError) -> VmError {
+            make_runtime_err(format!("Wasmer runtime error: {:?}", err))
+        }
+
+        match original {
+            // `InvokeError::FailedWithNoError` happens when running out of gas in singlepass v0.17
+            // but it's supposed to indicate bugs in Wasmer...
+            // https://github.com/wasmerio/wasmer/issues/1452
+            RuntimeError::InvokeError(InvokeError::FailedWithNoError) => VmError::GasDepletion,
+            // This variant contains the error we return from imports.
+            RuntimeError::User(err) => match err.downcast::<VmError>() {
+                Ok(err) => *err,
+                Err(err) => runtime_error(RuntimeError::User(err)),
+            },
+            _ => runtime_error(original),
+        }
     }
 }
 
