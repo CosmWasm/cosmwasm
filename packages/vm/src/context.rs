@@ -378,7 +378,7 @@ mod test {
         storage
             .set(INIT_KEY, INIT_VALUE)
             .expect("error setting value");
-        let querier =
+        let querier: MockQuerier<Never> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(ctx, storage, querier);
     }

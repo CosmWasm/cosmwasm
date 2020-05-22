@@ -1,9 +1,9 @@
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
 use cosmwasm_std::testing::MockQuerier as StdMockQuerier;
 use cosmwasm_std::{
     to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-    Querier as _, QueryRequest, SystemError,
+    Never, Querier as _, QueryRequest, StdResult, SystemError, SystemResult,
 };
 
 use super::storage::MockStorage;
@@ -140,11 +140,11 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-pub struct MockQuerier {
-    querier: StdMockQuerier,
+pub struct MockQuerier<C: Clone + DeserializeOwned = Never> {
+    querier: StdMockQuerier<C>,
 }
 
-impl MockQuerier {
+impl<C: Clone + DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             querier: StdMockQuerier::new(balances),
@@ -169,9 +169,17 @@ impl MockQuerier {
     ) {
         self.querier.with_staking(denom, validators, delegations);
     }
+
+    pub fn with_custom_handler(
+        mut self,
+        handler: Box<dyn Fn(C) -> SystemResult<StdResult<Binary>>>,
+    ) -> Self {
+        self.querier = self.querier.with_custom_handler(handler);
+        self
+    }
 }
 
-impl Querier for MockQuerier {
+impl<C: Clone + DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let res = self.querier.raw_query(bin_request);
         // We don't use FFI, so FfiResult is always Ok() regardless of error on other levels
