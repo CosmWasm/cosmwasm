@@ -171,11 +171,11 @@ impl<C: Clone + DeserializeOwned> MockQuerier<C> {
         self.staking = StakingQuerier::new(denom, validators, delegations);
     }
 
-    pub fn with_custom_handler(
-        mut self,
-        handler: Box<dyn Fn(C) -> SystemResult<StdResult<Binary>>>,
-    ) -> Self {
-        self.handle_custom = handler;
+    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
+    where
+        CH: Fn(C) -> SystemResult<StdResult<Binary>>,
+    {
+        self.handle_custom = Box::from(handler);
         self
     }
 }

@@ -170,10 +170,10 @@ impl<C: Clone + DeserializeOwned> MockQuerier<C> {
         self.querier.with_staking(denom, validators, delegations);
     }
 
-    pub fn with_custom_handler(
-        mut self,
-        handler: Box<dyn Fn(C) -> SystemResult<StdResult<Binary>>>,
-    ) -> Self {
+    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
+    where
+        CH: Fn(C) -> SystemResult<StdResult<Binary>>,
+    {
         self.querier = self.querier.with_custom_handler(handler);
         self
     }

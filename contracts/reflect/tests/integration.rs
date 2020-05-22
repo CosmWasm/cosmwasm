@@ -55,7 +55,7 @@ pub fn mock_dependencies_with_custom_querier(
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<CustomQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
-            .with_custom_handler(Box::from(|query| Ok(execute(&query))));
+            .with_custom_handler(|query| Ok(execute(&query)));
 
     Extern {
         storage: MockStorage::default(),
