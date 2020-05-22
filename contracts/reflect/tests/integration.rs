@@ -232,5 +232,5 @@ fn dispatch_custom_query() {
     )
     .unwrap();
     let value: CustomResponse = from_binary(&res).unwrap();
-    assert_eq!("DEMO ONE", value.msg.as_str());
+    assert_eq!(value.msg, "DEMO ONE");
 }

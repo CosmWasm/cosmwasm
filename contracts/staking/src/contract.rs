@@ -548,10 +548,9 @@ mod tests {
         // make sure we can init with this
         let res = init(&mut deps, env, msg.clone());
         match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(
-                msg.as_str(),
-                "my-validator is not in the current validator set"
-            ),
+            StdError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "my-validator is not in the current validator set")
+            }
             _ => panic!("expected unregistered validator error"),
         }
     }
@@ -733,7 +732,7 @@ mod tests {
         // try to bond and make sure we trigger delegation
         let res = handle(&mut deps, env, bond_msg);
         match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg.as_str(), "No stake tokens sent"),
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "No stake tokens sent"),
             e => panic!("Expected wrong denom error, got: {:?}", e),
         };
     }
