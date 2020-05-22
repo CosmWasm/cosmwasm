@@ -1,6 +1,5 @@
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
-use std::marker::PhantomData;
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
@@ -130,22 +129,26 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-#[derive(Default)]
-pub struct MockQuerier<C: DeserializeOwned = Never> {
+pub struct MockQuerier<C: Clone + DeserializeOwned = Never> {
     bank: BankQuerier,
     staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
-    custom_query: PhantomData<C>,
+    // TODO: Replace argument C -> &C. This requires proper lifetime handling ...
+    handle_custom: Box<dyn Fn(C) -> QuerierResult>, // use box to avoid the need of another generic type
 }
 
-impl MockQuerier {
+impl<C: Clone + DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
-            custom_query: PhantomData::default(),
+            handle_custom: Box::from(|_| -> QuerierResult {
+                Err(SystemError::UnsupportedRequest {
+                    kind: "custom".to_string(),
+                })
+            }),
         }
     }
 
@@ -167,9 +170,14 @@ impl MockQuerier {
     ) {
         self.staking = StakingQuerier::new(denom, validators, delegations);
     }
+
+    pub fn with_custom_handler(mut self, handler: Box<dyn Fn(C) -> QuerierResult>) -> Self {
+        self.handle_custom = handler;
+        self
+    }
 }
 
-impl<C: DeserializeOwned> Querier for MockQuerier<C> {
+impl<C: Clone + DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
@@ -184,16 +192,11 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     }
 }
 
-impl<C: DeserializeOwned> MockQuerier<C> {
+impl<C: Clone + DeserializeOwned> MockQuerier<C> {
     pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(_) => {
-                // TODO: allow setting a custom handler
-                Err(SystemError::UnsupportedRequest {
-                    kind: "custom".to_string(),
-                })
-            }
+            QueryRequest::Custom(custom_query) => (*self.handle_custom)(custom_query.clone()),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }

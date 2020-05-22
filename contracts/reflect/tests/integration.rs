@@ -22,7 +22,7 @@ use cosmwasm_std::{
     InitResponse, StakingMsg, StdError,
 };
 use cosmwasm_vm::{
-    testing::{handle, init, mock_env, mock_instance, query},
+    testing::{handle, init, mock_env, mock_instance, query, MOCK_CONTRACT_ADDR},
     Api, Instance,
 };
 
@@ -80,9 +80,18 @@ mod mock {
     pub fn mock_dependencies(
         canonical_length: usize,
         contract_balance: &[Coin],
-    ) -> Extern<MockStorage, MockApi, CustomQuerier> {
-        let base = original_mock_dependencies(canonical_length, contract_balance);
-        base.change_querier(CustomQuerier::new)
+    ) -> Extern<MockStorage, MockApi, MockQuerier<CustomQuery>> {
+        // let base = original_mock_dependencies(canonical_length, contract_balance);
+        // base.change_querier(CustomQuerier::new)
+
+        let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
+        let querier = MockQuerier::new(&[(&contract_addr, contract_balance)]);
+
+        Extern {
+            storage: MockStorage::default(),
+            api: MockApi::new(canonical_length),
+            querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
+        }
     }
 
     fn execute(query: &CustomQuery) -> StdResult<Binary> {
