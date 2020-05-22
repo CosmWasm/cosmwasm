@@ -140,7 +140,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct MockQuerier {
     querier: StdMockQuerier,
 }
