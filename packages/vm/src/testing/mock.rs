@@ -1,9 +1,9 @@
 use serde::{de::DeserializeOwned, Serialize};
 
-use cosmwasm_std::testing::MockQuerier as StdMockQuerier;
+use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
     to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-    Never, Querier as _, QueryRequest, StdResult, SystemError, SystemResult,
+    Never, Querier as _, QueryRequest, SystemError,
 };
 
 use super::storage::MockStorage;
@@ -172,7 +172,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 
     pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
     where
-        CH: Fn(&C) -> SystemResult<StdResult<Binary>>,
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
     {
         self.querier = self.querier.with_custom_handler(handler);
         self

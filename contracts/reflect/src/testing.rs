@@ -12,7 +12,7 @@ pub fn mock_dependencies_with_custom_querier(
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<CustomQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
-            .with_custom_handler(|query| Ok(execute(&query)));
+            .with_custom_handler(|query| Ok(custom_query_execute(&query)));
     Extern {
         storage: MockStorage::default(),
         api: MockApi::new(canonical_length),
@@ -20,7 +20,7 @@ pub fn mock_dependencies_with_custom_querier(
     }
 }
 
-fn execute(query: &CustomQuery) -> StdResult<Binary> {
+fn custom_query_execute(query: &CustomQuery) -> StdResult<Binary> {
     let msg = match query {
         CustomQuery::Ping {} => "pong".to_string(),
         CustomQuery::Capital { text } => text.to_uppercase(),
@@ -34,20 +34,20 @@ mod test {
     use cosmwasm_std::{from_binary, Querier, QueryRequest};
 
     #[test]
-    fn custom_query_ping() {
-        let res = execute(&CustomQuery::Ping {}).unwrap();
-        let msg: CustomResponse = from_binary(&res).unwrap();
-        assert_eq!(msg.msg, "pong".to_string());
+    fn custom_query_execute_ping() {
+        let res = custom_query_execute(&CustomQuery::Ping {}).unwrap();
+        let response: CustomResponse = from_binary(&res).unwrap();
+        assert_eq!(response.msg, "pong");
     }
 
     #[test]
-    fn custom_query_capitalize() {
-        let res = execute(&CustomQuery::Capital {
+    fn custom_query_execute_capitalize() {
+        let res = custom_query_execute(&CustomQuery::Capital {
             text: "fOObaR".to_string(),
         })
         .unwrap();
-        let msg: CustomResponse = from_binary(&res).unwrap();
-        assert_eq!(msg.msg, "FOOBAR".to_string());
+        let response: CustomResponse = from_binary(&res).unwrap();
+        assert_eq!(response.msg, "FOOBAR");
     }
 
     #[test]
@@ -57,7 +57,7 @@ mod test {
             text: "food".to_string(),
         }
         .into();
-        let res: CustomResponse = deps.querier.custom_query(&req).unwrap();
-        assert_eq!(res.msg, "FOOD".to_string());
+        let response: CustomResponse = deps.querier.custom_query(&req).unwrap();
+        assert_eq!(response.msg, "FOOD");
     }
 }

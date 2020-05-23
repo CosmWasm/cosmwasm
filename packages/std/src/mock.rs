@@ -127,6 +127,10 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
     }
 }
 
+/// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
+/// cosmwasm-vm. It might diverge from QuerierResult at some point.
+pub type MockQuerierCustomHandlerResult = SystemResult<StdResult<Binary>>;
+
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
 pub struct MockQuerier<C: DeserializeOwned = Never> {
@@ -138,13 +142,13 @@ pub struct MockQuerier<C: DeserializeOwned = Never> {
     /// always errors by default. Update it via `with_custom_handler`.
     ///
     /// Use box to avoid the need of another generic type
-    custom_handler: Box<dyn for<'a> Fn(&'a C) -> QuerierResult>,
+    custom_handler: Box<dyn for<'a> Fn(&'a C) -> MockQuerierCustomHandlerResult>,
 }
 
 impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
-        let no_handler = |_: &_| -> QuerierResult {
+        let no_handler = |_: &_| -> MockQuerierCustomHandlerResult {
             Err(SystemError::UnsupportedRequest {
                 kind: "custom".to_string(),
             })
@@ -179,7 +183,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 
     pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
     where
-        CH: Fn(&C) -> SystemResult<StdResult<Binary>>,
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
     {
         self.custom_handler = Box::from(handler);
         self
