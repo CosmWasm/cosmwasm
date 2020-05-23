@@ -134,7 +134,11 @@ pub struct MockQuerier<C: DeserializeOwned = Never> {
     staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
-    handle_custom: Box<dyn for<'a> Fn(&'a C) -> QuerierResult>, // use box to avoid the need of another generic type
+    /// A handler to handle custom queries. This is set to a dummy handler that
+    /// always errors by default. Update it via `with_custom_handler`.
+    ///
+    /// Use box to avoid the need of another generic type
+    custom_handler: Box<dyn for<'a> Fn(&'a C) -> QuerierResult>,
 }
 
 impl<C: DeserializeOwned> MockQuerier<C> {
@@ -150,7 +154,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
-            handle_custom: Box::from(no_handler),
+            custom_handler: Box::from(no_handler),
         }
     }
 
@@ -177,7 +181,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     where
         CH: Fn(&C) -> SystemResult<StdResult<Binary>>,
     {
-        self.handle_custom = Box::from(handler);
+        self.custom_handler = Box::from(handler);
         self
     }
 }
@@ -201,7 +205,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(custom_query) => (*self.handle_custom)(custom_query),
+            QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
