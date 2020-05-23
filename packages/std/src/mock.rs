@@ -129,26 +129,28 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-pub struct MockQuerier<C: Clone + DeserializeOwned = Never> {
+pub struct MockQuerier<C: DeserializeOwned = Never> {
     bank: BankQuerier,
     staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
-    // TODO: Replace argument C -> &C. This requires proper lifetime handling ...
-    handle_custom: Box<dyn Fn(C) -> QuerierResult>, // use box to avoid the need of another generic type
+    handle_custom: Box<dyn for<'a> Fn(&'a C) -> QuerierResult>, // use box to avoid the need of another generic type
 }
 
-impl<C: Clone + DeserializeOwned> MockQuerier<C> {
+impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
+        // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
+        let no_handler = |_: &_| -> QuerierResult {
+            Err(SystemError::UnsupportedRequest {
+                kind: "custom".to_string(),
+            })
+        };
+
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
-            handle_custom: Box::from(|_| -> QuerierResult {
-                Err(SystemError::UnsupportedRequest {
-                    kind: "custom".to_string(),
-                })
-            }),
+            handle_custom: Box::from(no_handler),
         }
     }
 
@@ -173,14 +175,14 @@ impl<C: Clone + DeserializeOwned> MockQuerier<C> {
 
     pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
     where
-        CH: Fn(C) -> SystemResult<StdResult<Binary>>,
+        CH: Fn(&C) -> SystemResult<StdResult<Binary>>,
     {
         self.handle_custom = Box::from(handler);
         self
     }
 }
 
-impl<C: Clone + DeserializeOwned> Querier for MockQuerier<C> {
+impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
@@ -195,11 +197,11 @@ impl<C: Clone + DeserializeOwned> Querier for MockQuerier<C> {
     }
 }
 
-impl<C: Clone + DeserializeOwned> MockQuerier<C> {
+impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(custom_query) => (*self.handle_custom)(custom_query.clone()),
+            QueryRequest::Custom(custom_query) => (*self.handle_custom)(custom_query),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }
