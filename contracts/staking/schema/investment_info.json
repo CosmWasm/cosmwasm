@@ -6,7 +6,7 @@
   "required": [
     "bond_denom",
     "exit_tax",
-    "min_withdrawl",
+    "min_withdrawal",
     "owner",
     "validator"
   ],
@@ -23,7 +23,7 @@
         }
       ]
     },
-    "min_withdrawl": {
+    "min_withdrawal": {
       "description": "This is the minimum amount we will pull out to reinvest, as well as a minumum that can be unbonded (to avoid needless staking tx)",
       "allOf": [
         {
