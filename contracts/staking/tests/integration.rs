@@ -55,7 +55,7 @@ fn initialization_with_missing_validator() {
         decimals: 9,
         validator: HumanAddr::from("my-validator"),
         exit_tax: Decimal::percent(2),
-        min_withdrawl: Uint128(50),
+        min_withdrawal: Uint128(50),
     };
     let env = mock_env(&deps.api, &creator, &[]);
 
@@ -91,7 +91,7 @@ fn proper_initialization() {
         decimals: 9,
         validator: HumanAddr::from("my-validator"),
         exit_tax: Decimal::percent(2),
-        min_withdrawl: Uint128(50),
+        min_withdrawal: Uint128(50),
     };
     let env = mock_env(&deps.api, &creator, &[]);
 
@@ -134,7 +134,7 @@ fn proper_initialization() {
     assert_eq!(&invest.owner, &creator);
     assert_eq!(&invest.validator, &msg.validator);
     assert_eq!(invest.exit_tax, msg.exit_tax);
-    assert_eq!(invest.min_withdrawl, msg.min_withdrawl);
+    assert_eq!(invest.min_withdrawal, msg.min_withdrawal);
 
     assert_eq!(invest.token_supply, Uint128(0));
     assert_eq!(invest.staked_tokens, coin(0, "stake"));

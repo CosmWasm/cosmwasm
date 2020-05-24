@@ -22,7 +22,7 @@ pub struct InitMsg {
     pub exit_tax: Decimal,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum
     /// that can be unbonded (to avoid needless staking tx)
-    pub min_withdrawl: Uint128,
+    pub min_withdrawal: Uint128,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -102,5 +102,5 @@ pub struct InvestmentResponse {
     pub validator: HumanAddr,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum
     /// that can be unbonded (to avoid needless staking tx)
-    pub min_withdrawl: Uint128,
+    pub min_withdrawal: Uint128,
 }

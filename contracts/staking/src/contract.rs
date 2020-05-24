@@ -42,7 +42,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         exit_tax: msg.exit_tax,
         bond_denom: denom,
         validator: msg.validator,
-        min_withdrawl: msg.min_withdrawl,
+        min_withdrawal: msg.min_withdrawal,
     };
     invest_info(&mut deps.storage).save(&invest)?;
 
@@ -197,10 +197,10 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
 
     let invest = invest_info_read(&deps.storage).load()?;
     // ensure it is big enough to care
-    if amount < invest.min_withdrawl {
+    if amount < invest.min_withdrawal {
         return Err(generic_err(format!(
             "Must unbond at least {} {}",
-            invest.min_withdrawl, invest.bond_denom
+            invest.min_withdrawal, invest.bond_denom
         )));
     }
     // calculate tax and remainer to unbond
@@ -268,7 +268,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     let mut balance = deps
         .querier
         .query_balance(&contract_human, &invest.bond_denom)?;
-    if balance.amount < invest.min_withdrawl {
+    if balance.amount < invest.min_withdrawal {
         return Err(generic_err(
             "Insufficient balance in contract to process claim",
         ));
@@ -361,13 +361,13 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     // if there is not enough funds, we just return a no-op
     match total_supply(&mut deps.storage).update(|mut supply| {
         balance.amount = (balance.amount - supply.claims)?;
-        // this just triggers the "no op" case if we don't have min_withdrawl left to reinvest
-        (balance.amount - invest.min_withdrawl)?;
+        // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
+        (balance.amount - invest.min_withdrawal)?;
         supply.bonded += balance.amount;
         Ok(supply)
     }) {
         Ok(_) => {}
-        // if it is below the minimum, we do a no-op (do not revert other state from withdrawl)
+        // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
         Err(StdError::Underflow { .. }) => return Ok(HandleResponse::default()),
         Err(e) => return Err(e),
     }
@@ -439,7 +439,7 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
         owner: deps.api.human_address(&invest.owner)?,
         exit_tax: invest.exit_tax,
         validator: invest.validator,
-        min_withdrawl: invest.min_withdrawl,
+        min_withdrawal: invest.min_withdrawal,
         token_supply: supply.issued,
         staked_tokens: coin(supply.bonded.u128(), &invest.bond_denom),
         nominal_value: if supply.issued.is_zero() {
@@ -493,14 +493,14 @@ mod tests {
 
     const DEFAULT_VALIDATOR: &str = "default-validator";
 
-    fn default_init(tax_percent: u64, min_withdrawl: u128) -> InitMsg {
+    fn default_init(tax_percent: u64, min_withdrawal: u128) -> InitMsg {
         InitMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 9,
             validator: HumanAddr::from(DEFAULT_VALIDATOR),
             exit_tax: Decimal::percent(tax_percent),
-            min_withdrawl: Uint128(min_withdrawl),
+            min_withdrawal: Uint128(min_withdrawal),
         }
     }
 
@@ -541,7 +541,7 @@ mod tests {
             decimals: 9,
             validator: HumanAddr::from("my-validator"),
             exit_tax: Decimal::percent(2),
-            min_withdrawl: Uint128(50),
+            min_withdrawal: Uint128(50),
         };
         let env = mock_env(&deps.api, &creator, &[]);
 
@@ -575,7 +575,7 @@ mod tests {
             decimals: 0,
             validator: HumanAddr::from("my-validator"),
             exit_tax: Decimal::percent(2),
-            min_withdrawl: Uint128(50),
+            min_withdrawal: Uint128(50),
         };
         let env = mock_env(&deps.api, &creator, &[]);
 
@@ -601,7 +601,7 @@ mod tests {
         assert_eq!(&invest.owner, &creator);
         assert_eq!(&invest.validator, &msg.validator);
         assert_eq!(invest.exit_tax, msg.exit_tax);
-        assert_eq!(invest.min_withdrawl, msg.min_withdrawl);
+        assert_eq!(invest.min_withdrawal, msg.min_withdrawal);
 
         assert_eq!(invest.token_supply, Uint128(0));
         assert_eq!(invest.staked_tokens, coin(0, "stake"));
