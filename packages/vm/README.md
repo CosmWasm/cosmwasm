@@ -10,12 +10,14 @@ fs caching.
 
 ## Setup
 
-There are demo files in `testdata/contract*.wasm`. Those are compiled and
-optimized versions of
-[contracts/hackatom](https://github.com/confio/cosmwasm/tree/master/contracts/hackatom)
-run through [cosmwasm-opt](https://github.com/confio/cosmwasm-opt).
+There are demo files in `testdata/*.wasm`. Those are compiled and optimized
+versions of
+[contracts/hackatom](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/hackatom)
+and
+[contracts/staking](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
+run through [rust-optimizer](https://github.com/CosmWasm/rust-optimizer).
 
-To rebuild the test contract, go to the repo root and do
+To rebuild the test contracts, go to the repo root and do
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
@@ -23,6 +25,12 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.8.0 ./contracts/hackatom \
   && cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.8.wasm
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.8.0 ./contracts/staking \
+  && cp contracts/staking/contract.wasm packages/vm/testdata/staking.wasm
 ```
 
 ## Testing
