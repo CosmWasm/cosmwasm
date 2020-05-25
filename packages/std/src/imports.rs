@@ -15,8 +15,8 @@ static KI: usize = 1024;
 /// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
 #[cfg(feature = "iterator")]
 static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
-/// The number of bytes of the memory region we pre-allocate for the result data in ExternalStorage.get
-/// and ExternalIterator.next
+/// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
+#[cfg(feature = "iterator")]
 static DB_READ_VALUE_BUFFER_LENGTH: usize = 128 * KI;
 /// The number of bytes of the memory region we pre-allocate for the result data in queries
 static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
@@ -54,19 +54,18 @@ impl ExternalStorage {
     pub fn new() -> ExternalStorage {
         ExternalStorage {}
     }
+}
 
-    pub fn get_with_result_length(
-        &self,
-        key: &[u8],
-        result_length: usize,
-    ) -> StdResult<Option<Vec<u8>>> {
+impl ReadonlyStorage for ExternalStorage {
+    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
 
         let read = unsafe { db_read(key_ptr) };
         if read == -1_000_001 {
-            return Err(generic_err("Allocated memory too small to hold the database value for the given key. \
-                You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely."));
+            return Err(generic_err(
+                "Allocated memory too small to hold the database value for the given key.",
+            ));
         } else if read == -1_001_001 {
             // key does not exist in external storage
             return Ok(None);
@@ -80,12 +79,6 @@ impl ExternalStorage {
         let value_ptr = read as *mut c_void;
         let data = unsafe { consume_region(value_ptr) }?;
         Ok(Some(data))
-    }
-}
-
-impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
-        self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
     }
 
     #[cfg(feature = "iterator")]

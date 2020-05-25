@@ -27,7 +27,7 @@ static KI: usize = 1024;
 /// value for db_next (see DB_READ_KEY_BUFFER_LENGTH in packages/std/src/imports.rs)
 static MAX_LENGTH_DB_KEY: usize = 64 * KI;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory). Should match the
-/// value for db_read/db_next (see DB_READ_VALUE_BUFFER_LENGTH in packages/std/src/imports.rs)
+/// value for db_next (see DB_READ_VALUE_BUFFER_LENGTH in packages/std/src/imports.rs)
 static MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 /// Typically 20 (Cosmos SDK, Ethereum) or 32 (Nano, Substrate)
 static MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
