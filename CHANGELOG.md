@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.8.1 (not yet released)
+
+**cosmwasm-vm**
+
+- Deprecated `Instance::get_gas` in favour of `Instance::get_gas_left`. The old
+  method will remain available for a while but will issue a deprecation warning
+  when used.
+
 ## 0.8.0 (2020-05-25)
 
 **all**

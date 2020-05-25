@@ -26,8 +26,10 @@ pub fn backend() -> &'static str {
     "cranelift"
 }
 
-pub fn set_gas(_instance: &mut Instance, _limit: u64) {}
+/// Set the amount of gas units that can be used in the `Instance`.
+pub fn set_gas_limit(_instance: &mut Instance, _limit: u64) {}
 
-pub fn get_gas(_instance: &Instance) -> u64 {
+/// Get how many more gas units can be used in the `Instance`.
+pub fn get_gas_left(_instance: &Instance) -> u64 {
     FAKE_GAS_AVAILABLE
 }

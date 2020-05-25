@@ -9,7 +9,7 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use crate::backends::{compile, get_gas, set_gas};
+use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
     move_into_context, move_out_of_context, setup_context, with_querier_from_context,
     with_storage_from_context,
@@ -138,7 +138,7 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas(wasmer_instance.as_mut(), gas_limit);
+        set_gas_limit(wasmer_instance.as_mut(), gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
@@ -177,9 +177,17 @@ where
         (get_memory_info(self.wasmer_instance.context()).size as u64) * WASM_PAGE_SIZE
     }
 
-    /// Returns the currently remaining gas
+    /// Returns the currently remaining gas.
+    pub fn get_gas_left(&self) -> u64 {
+        get_gas_left(&self.wasmer_instance)
+    }
+
+    /// Returns the currently remaining gas.
+    ///
+    /// DEPRECATED: renamed to `get_gas_left`.
+    #[deprecated(note = "renamed to `get_gas_left`")]
     pub fn get_gas(&self) -> u64 {
-        get_gas(&self.wasmer_instance)
+        self.get_gas_left()
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
@@ -422,7 +430,7 @@ mod test {
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
-        let orig_gas = instance.get_gas();
+        let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 1_000_000); // We expect a dummy value for cranelift
     }
 
@@ -430,7 +438,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn set_get_and_gas_singlepass() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
-        let orig_gas = instance.get_gas();
+        let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
 
@@ -580,7 +588,7 @@ mod singlepass_test {
     #[test]
     fn contract_deducts_gas_init() {
         let mut instance = mock_instance(&CONTRACT, &[]);
-        let orig_gas = instance.get_gas();
+        let orig_gas = instance.get_gas_left();
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
@@ -589,7 +597,7 @@ mod singlepass_test {
             .unwrap()
             .unwrap();
 
-        let init_used = orig_gas - instance.get_gas();
+        let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
         assert_eq!(init_used, 65257);
     }
@@ -606,14 +614,14 @@ mod singlepass_test {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_handle = instance.get_gas();
+        let gas_before_handle = instance.get_gas_left();
         let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         call_handle::<_, _, _, Never>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
-        let handle_used = gas_before_handle - instance.get_gas();
+        let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
         assert_eq!(handle_used, 95374);
     }
@@ -641,14 +649,14 @@ mod singlepass_test {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_query = instance.get_gas();
+        let gas_before_query = instance.get_gas_left();
         // we need to encode the key in base64
         let msg = r#"{"verifier":{}}"#.as_bytes();
         let res = call_query(&mut instance, msg).unwrap();
         let answer = res.unwrap();
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
-        let query_used = gas_before_query - instance.get_gas();
+        let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
         assert_eq!(query_used, 32750);
     }
