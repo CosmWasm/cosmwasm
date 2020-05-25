@@ -28,7 +28,7 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     modules: FileSystemCache,
-    instances: Option<LruCache<Checksum, wasmer_runtime_core::Instance>>,
+    instances: Option<LruCache<Checksum, Box<wasmer_runtime_core::Instance>>>,
     stats: Stats,
     // Those two don't store data but only fix type information
     type_storage: PhantomData<S>,
