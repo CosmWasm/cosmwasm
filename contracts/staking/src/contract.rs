@@ -773,6 +773,17 @@ mod tests {
         set_delegation(&mut deps.querier, 1500, "stake");
         deps.querier.update_balance(&contract_addr, vec![]);
 
+        // creator now tries to unbond these tokens - this must fail
+        let unbond_msg = HandleMsg::Unbond {
+            amount: Uint128(600),
+        };
+        let env = mock_env(&deps.api, &creator, &[]);
+        let res = handle(&mut deps, env, unbond_msg);
+        match res.unwrap_err() {
+            StdError::Underflow { .. } => {}
+            e => panic!("unexpected error: {}", e),
+        }
+
         // bob unbonds 600 tokens at 10% tax...
         // 60 are taken and send to the owner
         // 540 are unbonded in exchange for 540 * 1.5 = 810 native tokens
