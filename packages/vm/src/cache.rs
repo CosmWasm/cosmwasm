@@ -448,7 +448,7 @@ mod test {
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 0);
         assert_eq!(cache.stats.misses, 0);
-        let original_gas = instance1.get_gas();
+        let original_gas = instance1.get_gas_left();
 
         // Consume some gas
         let env = mock_env(&instance1.api, "owner1", &coins(1000, "earth"));
@@ -456,7 +456,7 @@ mod test {
         call_init::<_, _, _, Never>(&mut instance1, &env, msg)
             .unwrap()
             .unwrap();
-        assert!(instance1.get_gas() < original_gas);
+        assert!(instance1.get_gas_left() < original_gas);
         cache.store_instance(&id, instance1).unwrap();
 
         // Init from instance cache
@@ -464,7 +464,7 @@ mod test {
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 1);
         assert_eq!(cache.stats.misses, 0);
-        assert_eq!(instance2.get_gas(), TESTING_GAS_LIMIT);
+        assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
     }
 
     #[test]
@@ -491,7 +491,7 @@ mod test {
             Err(e) => panic!("unexpected error, {:?}", e),
             Ok(_) => panic!("call_init must run out of gas"),
         }
-        assert_eq!(instance1.get_gas(), 0);
+        assert_eq!(instance1.get_gas_left(), 0);
         cache.store_instance(&id, instance1).unwrap();
 
         // Init from instance cache
@@ -499,7 +499,7 @@ mod test {
         assert_eq!(cache.stats.hits_module, 1);
         assert_eq!(cache.stats.hits_instance, 1);
         assert_eq!(cache.stats.misses, 0);
-        assert_eq!(instance2.get_gas(), TESTING_GAS_LIMIT);
+        assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
         // Now it works
         let env2 = mock_env(&instance2.api, "owner2", &coins(500, "earth"));
