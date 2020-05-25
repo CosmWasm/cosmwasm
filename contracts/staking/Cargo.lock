@@ -174,7 +174,7 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.8.0-rc1"
+version = "0.8.0"
 dependencies = [
  "schemars",
  "serde_json",
@@ -182,7 +182,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.8.0-rc1"
+version = "0.8.0"
 dependencies = [
  "base64",
  "schemars",
@@ -193,7 +193,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.8.0-rc1"
+version = "0.8.0"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -201,7 +201,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.8.0-rc1"
+version = "0.8.0"
 dependencies = [
  "cosmwasm-std",
  "hex",
@@ -876,7 +876,7 @@ checksum = "dba1a27d3efae4351c8051072d619e3ade2820635c3958d826bfea39d59b54c8"
 
 [[package]]
 name = "staking"
-version = "0.8.0-rc1"
+version = "0.8.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
