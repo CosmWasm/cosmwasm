@@ -33,7 +33,7 @@ pub fn backend() -> &'static str {
     "singlepass"
 }
 
-pub fn set_gas(instance: &mut Instance, limit: u64) {
+pub fn set_gas_limit(instance: &mut Instance, limit: u64) {
     let used = if limit > GAS_LIMIT {
         0
     } else {
@@ -42,7 +42,7 @@ pub fn set_gas(instance: &mut Instance, limit: u64) {
     metering::set_points_used(instance, used)
 }
 
-pub fn get_gas(instance: &Instance) -> u64 {
+pub fn get_gas_left(instance: &Instance) -> u64 {
     let used = metering::get_points_used(instance);
     // when running out of gas, get_points_used can exceed GAS_LIMIT
     if used > GAS_LIMIT {

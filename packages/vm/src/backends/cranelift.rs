@@ -26,8 +26,8 @@ pub fn backend() -> &'static str {
     "cranelift"
 }
 
-pub fn set_gas(_instance: &mut Instance, _limit: u64) {}
+pub fn set_gas_limit(_instance: &mut Instance, _limit: u64) {}
 
-pub fn get_gas(_instance: &Instance) -> u64 {
+pub fn get_gas_left(_instance: &Instance) -> u64 {
     FAKE_GAS_AVAILABLE
 }
