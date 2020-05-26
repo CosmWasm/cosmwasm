@@ -8,7 +8,11 @@ use std::ffi::c_void;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-use wasmer_runtime_core::{vm::Ctx, Instance as WasmerInstance};
+use wasmer_runtime_core::{
+    typed_func::{Func, Wasm, WasmTypeList},
+    vm::Ctx,
+    Instance as WasmerInstance,
+};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
@@ -154,6 +158,28 @@ pub fn add_iterator<'a, S: Storage, Q: Querier>(
     new_id
 }
 
+pub(crate) fn with_func_from_context<'a, S, Q, Args, Rets, Callback, CallbackData>(
+    ctx: &'a mut Ctx,
+    name: &str,
+    callback: Callback,
+) -> VmResult<CallbackData>
+where
+    S: Storage,
+    Q: Querier,
+    Args: WasmTypeList,
+    Rets: WasmTypeList,
+    Callback: FnOnce(Func<Args, Rets, Wasm>) -> VmResult<CallbackData>,
+{
+    let ctx_data = get_context_data::<S, Q>(ctx);
+    match ctx_data.wasmer_instance {
+        Some(instance_ptr) => {
+            let func = unsafe { instance_ptr.as_ref() }.exports.get(name)?;
+            callback(func)
+        }
+        None => Err(make_uninitialized_context_data("wasmer_instance")),
+    }
+}
+
 pub(crate) fn with_storage_from_context<'a, 'b, S, Q, F, T>(
     ctx: &'a mut Ctx,
     func: F,
@@ -208,7 +234,6 @@ where
 mod test {
     use super::*;
     use crate::backends::compile;
-    #[cfg(feature = "iterator")]
     use crate::errors::VmError;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
@@ -247,7 +272,11 @@ mod test {
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
-        let instance = Box::from(module.instantiate(&import_obj).unwrap());
+        let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
+
+        let instance_ptr = NonNull::from(instance.as_ref());
+        set_wasmer_instance::<MS, MQ>(instance.context_mut(), Some(instance_ptr));
+
         instance
     }
 
@@ -301,6 +330,58 @@ mod test {
         assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id1));
         assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id2));
         assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id3));
+    }
+
+    #[test]
+    fn with_func_from_context_works() {
+        let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
+
+        let ctx = instance.context_mut();
+        let ptr = with_func_from_context::<MS, MQ, u32, u32, _, _>(ctx, "allocate", |alloc_func| {
+            let ptr = alloc_func.call(10)?;
+            Ok(ptr)
+        })
+        .unwrap();
+        assert!(ptr > 0);
+    }
+
+    #[test]
+    fn with_func_from_context_fails_for_missing_instance() {
+        let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
+
+        // Clear context's wasmer_instance
+        set_wasmer_instance::<MS, MQ>(instance.context_mut(), None);
+
+        let ctx = instance.context_mut();
+        let res = with_func_from_context::<MS, MQ, u32, u32, _, ()>(ctx, "allocate", |_func| {
+            panic!("unexpected callback call");
+        });
+        match res.unwrap_err() {
+            VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
+            e => panic!("Unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn with_func_from_context_fails_for_missing_function() {
+        let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
+
+        let ctx = instance.context_mut();
+        let res = with_func_from_context::<MS, MQ, u32, u32, _, ()>(ctx, "doesnt_exist", |_func| {
+            panic!("unexpected callback call");
+        });
+        match res.unwrap_err() {
+            VmError::ResolveErr { msg, .. } => {
+                assert_eq!(
+                    msg,
+                    "Wasmer resolve error: ExportNotFound { name: \"doesnt_exist\" }"
+                );
+            }
+            e => panic!("Unexpected error: {}", e),
+        }
     }
 
     #[test]
