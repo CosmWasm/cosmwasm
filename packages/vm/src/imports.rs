@@ -13,7 +13,9 @@ use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{
     with_func_from_context, with_querier_from_context, with_storage_from_context,
 };
-use crate::conversion::{to_i32, to_u32};
+#[cfg(feature = "iterator")]
+use crate::conversion::to_i32;
+use crate::conversion::to_u32;
 use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -53,12 +55,6 @@ mod errors {
     // unused block (-1_000_4xx)
 
     /// db_read errors (-1_001_0xx)
-    pub mod read {
-        // pub static UNKNOWN: i32 = -1_001_000;
-        /// The given key does not exist in storage
-        pub static KEY_DOES_NOT_EXIST: i32 = -1_001_001;
-    }
-
     /// db_write errors (-1_001_1xx)
     /// db_remove errors (-1_001_2xx)
 
@@ -151,15 +147,15 @@ macro_rules! write_region {
 }
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
-    let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
+pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
+    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     // `Ok(expr?)` used to convert the error variant.
     let value: Option<Vec<u8>> =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)?))?;
 
     let out_data = match value {
         Some(data) => data,
-        None => return Ok(errors::read::KEY_DOES_NOT_EXIST),
+        None => return Ok(0),
     };
 
     let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
@@ -167,8 +163,8 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
         let ptr = allocate.call(out_size)?;
         Ok(ptr)
     })?;
-    write_region!(ctx, out_ptr, &out_data);
-    Ok(to_i32(out_ptr)?)
+    write_region(ctx, out_ptr, &out_data)?;
+    Ok(out_ptr)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
@@ -331,7 +327,7 @@ mod test {
         let import_obj = imports! {
             || { setup_context::<MockStorage, MockQuerier>() },
             "env" => {
-                "db_read" => Func::new(|_a: i32| -> i32 { 0 }),
+                "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
@@ -406,7 +402,7 @@ mod test {
         let key_ptr = write_data(&mut instance, b"I do not exist in storage");
         let ctx = instance.context_mut();
         let result = do_read::<MS, MQ>(ctx, key_ptr);
-        assert_eq!(result.unwrap(), errors::read::KEY_DOES_NOT_EXIST);
+        assert_eq!(result.unwrap(), 0);
     }
 
     #[test]
@@ -417,7 +413,10 @@ mod test {
         let key_ptr = write_data(&mut instance, &vec![7u8; 300 * 1024]);
         let ctx = instance.context_mut();
         let result = do_read::<MS, MQ>(ctx, key_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match result.unwrap_err() {
+            VmError::RegionLengthTooBig { length, .. } => assert_eq!(length, 300 * 1024),
+            e => panic!("Unexpected error: {:?}", e),
+        }
     }
 
     #[test]

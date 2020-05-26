@@ -28,7 +28,7 @@ static ADDR_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn db_read(key: *const c_void) -> i32;
+    fn db_read(key: *const c_void) -> u32;
     fn db_write(key: *const c_void, value: *mut c_void) -> i32;
     fn db_remove(key: *const c_void) -> i32;
 
@@ -62,18 +62,9 @@ impl ReadonlyStorage for ExternalStorage {
         let key_ptr = &*key as *const Region as *const c_void;
 
         let read = unsafe { db_read(key_ptr) };
-        if read == -1_000_001 {
-            return Err(generic_err(
-                "Allocated memory too small to hold the database value for the given key.",
-            ));
-        } else if read == -1_001_001 {
+        if read == 0 {
             // key does not exist in external storage
             return Ok(None);
-        } else if read < 0 {
-            return Err(generic_err(format!(
-                "Error reading from database. Error code: {}",
-                read
-            )));
         }
 
         let value_ptr = read as *mut c_void;

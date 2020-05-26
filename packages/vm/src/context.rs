@@ -262,7 +262,7 @@ mod test {
         let import_obj = imports! {
             || { setup_context::<MockStorage, MockQuerier>() },
             "env" => {
-                "db_read" => Func::new(|_a: i32| -> i32 { 0 }),
+                "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),

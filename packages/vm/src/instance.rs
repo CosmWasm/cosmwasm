@@ -66,12 +66,10 @@ where
         import_obj.extend(imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
-                // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
-                //   value region too small: -1_000_001
-                //   key does not exist: -1_001_001
-                // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<i32> {
+                // Returns 0 if key does not exist and pointer to result region otherwise.
+                // Ownership of the key pointer is not transferred to the host.
+                // Ownership of the value pointer is transferred to the contract.
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<u32> {
                     do_read::<S, Q>(ctx, key_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
