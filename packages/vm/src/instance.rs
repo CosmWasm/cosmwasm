@@ -230,9 +230,11 @@ mod test {
     use super::*;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_dependencies, mock_instance, mock_instance_with_balances, mock_instance_with_gas_limit,
+        mock_dependencies, mock_env, mock_instance, mock_instance_with_balances,
+        mock_instance_with_failing_api, mock_instance_with_gas_limit, MockApi, MOCK_CONTRACT_ADDR,
     };
     use crate::traits::ReadonlyStorage;
+    use crate::{call_init, FfiError};
     use cosmwasm_std::{
         coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,
         QueryRequest,
@@ -369,6 +371,26 @@ mod test {
                 .expect("error reading");
             assert_eq!(data, original);
             instance.deallocate(region_ptr).expect("error deallocating");
+        }
+    }
+
+    #[test]
+    fn errors_in_imports_are_unwrapped_from_wasmer_errors() {
+        // set up an instance that will experience an error in an import
+        let mut instance = mock_instance_with_failing_api(&CONTRACT, &[]);
+        let init_result = call_init::<_, _, _, serde_json::Value>(
+            &mut instance,
+            &mock_env(&MockApi::new(MOCK_CONTRACT_ADDR.len()), "someone", &[]),
+            b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
+        );
+
+        // in this case we get a `VmError::FfiError` rather than a `VmError::RuntimeErr` because the conversion
+        // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
+        match init_result.unwrap_err() {
+            VmError::FfiErr {
+                source: FfiError::Other { error, .. },
+            } if error == "canonical_address failed intentionally" => {}
+            other => panic!("unexpected error: {:?}", other),
         }
     }
 

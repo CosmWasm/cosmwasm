@@ -124,6 +124,7 @@ impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
         }
 
         match original {
+            // TODO: fix the issue described below:
             // `InvokeError::FailedWithNoError` happens when running out of gas in singlepass v0.17
             // but it's supposed to indicate bugs in Wasmer...
             // https://github.com/wasmerio/wasmer/issues/1452

@@ -25,6 +25,20 @@ pub fn mock_instance(
     )
 }
 
+pub fn mock_instance_with_failing_api(
+    wasm: &[u8],
+    contract_balance: &[Coin],
+) -> Instance<MockStorage, MockApi, MockQuerier> {
+    mock_instance_with_options(
+        wasm,
+        MockInstanceOptions {
+            contract_balance: Some(contract_balance),
+            api_failure: true,
+            ..Default::default()
+        },
+    )
+}
+
 pub fn mock_instance_with_balances(
     wasm: &[u8],
     balances: &[(&HumanAddr, &[Coin])],
@@ -58,6 +72,8 @@ pub struct MockInstanceOptions<'a> {
     pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
     /// This option is merged into balances and might override an existing value
     pub contract_balance: Option<&'a [Coin]>,
+    /// When set to true, all calls to the API fail with a specific FfiError::Other
+    pub api_failure: bool,
 
     // instance
     pub supported_features: HashSet<String>,
@@ -71,6 +87,7 @@ impl Default for MockInstanceOptions<'_> {
             canonical_address_length: 20,
             balances: Default::default(),
             contract_balance: Default::default(),
+            api_failure: false,
 
             // instance
             supported_features: features_from_csv("staking"),
@@ -96,10 +113,16 @@ pub fn mock_instance_with_options(
         balances.push((&contract_address, contract_balance));
     }
 
+    let api = if options.api_failure {
+        MockApi::new_failing(options.canonical_address_length)
+    } else {
+        MockApi::new(options.canonical_address_length)
+    };
+
     let deps = Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(options.canonical_address_length),
         querier: MockQuerier::new(&balances),
+        api,
     };
     Instance::from_code(wasm, deps, options.gas_limit).unwrap()
 }

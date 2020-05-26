@@ -44,11 +44,22 @@ pub fn mock_dependencies_with_balances(
 #[derive(Copy, Clone)]
 pub struct MockApi {
     canonical_length: usize,
+    should_fail: bool,
 }
 
 impl MockApi {
     pub fn new(canonical_length: usize) -> Self {
-        MockApi { canonical_length }
+        MockApi {
+            canonical_length,
+            should_fail: false,
+        }
+    }
+
+    pub fn new_failing(canonical_length: usize) -> Self {
+        MockApi {
+            canonical_length,
+            should_fail: true,
+        }
     }
 }
 
@@ -60,6 +71,10 @@ impl Default for MockApi {
 
 impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
+        if self.should_fail {
+            return Err(FfiError::other("canonical_address failed intentionally"));
+        }
+
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
             return Err(FfiError::other("Invalid input: human address too short"));
@@ -77,6 +92,10 @@ impl Api for MockApi {
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
+        if self.should_fail {
+            return Err(FfiError::other("human_address failed intentionally"));
+        }
+
         if canonical.len() != self.canonical_length {
             return Err(FfiError::other(
                 "Invalid input: canonical address length not correct",
