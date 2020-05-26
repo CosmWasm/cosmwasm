@@ -377,7 +377,8 @@ mod test {
     #[test]
     fn errors_in_imports_are_unwrapped_from_wasmer_errors() {
         // set up an instance that will experience an error in an import
-        let mut instance = mock_instance_with_failing_api(&CONTRACT, &[]);
+        let error_message = "Api failed intentionally";
+        let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
         let init_result = call_init::<_, _, _, serde_json::Value>(
             &mut instance,
             &mock_env(&MockApi::new(MOCK_CONTRACT_ADDR.len()), "someone", &[]),
@@ -389,7 +390,7 @@ mod test {
         match init_result.unwrap_err() {
             VmError::FfiErr {
                 source: FfiError::Other { error, .. },
-            } if error == "canonical_address failed intentionally" => {}
+            } if error == error_message => {}
             other => panic!("unexpected error: {:?}", other),
         }
     }
