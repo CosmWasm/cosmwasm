@@ -204,9 +204,9 @@ mod test {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
-    // shorthand for function generics below
-    type S = MockStorage;
-    type Q = MockQuerier;
+    // shorthands for function generics below
+    type MS = MockStorage;
+    type MQ = MockQuerier;
 
     // prepared data
     static INIT_KEY: &[u8] = b"foo";
@@ -254,19 +254,19 @@ mod test {
         let ctx = instance.context_mut();
 
         // empty data on start
-        let (inits, initq) = move_out_of_context::<S, Q>(ctx);
+        let (inits, initq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
         leave_default_data(ctx);
-        let (s, q) = move_out_of_context::<S, Q>(ctx);
+        let (s, q) = move_out_of_context::<MS, MQ>(ctx);
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
 
         // now is empty again
-        let (ends, endq) = move_out_of_context::<S, Q>(ctx);
+        let (ends, endq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
@@ -278,14 +278,14 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 0);
-        let id1 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        let id2 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        let id3 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 3);
-        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id1));
-        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id2));
-        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id3));
+        assert_eq!(get_context_data::<MS, MQ>(ctx).iterators.len(), 0);
+        let id1 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        let id2 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        let id3 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        assert_eq!(get_context_data::<MS, MQ>(ctx).iterators.len(), 3);
+        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id1));
+        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id2));
+        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id3));
     }
 
     #[test]
@@ -294,7 +294,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(INIT_KEY).expect("error getting value"))
         })
         .unwrap();
@@ -303,13 +303,13 @@ mod test {
         let set_key: &[u8] = b"more";
         let set_value: &[u8] = b"data";
 
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             store.set(set_key, set_value).expect("error setting value");
             Ok(())
         })
         .unwrap();
 
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             assert_eq!(store.get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
             assert_eq!(store.get(set_key).unwrap(), Some(set_value.to_vec()));
             Ok(())
@@ -324,7 +324,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
+        with_storage_from_context::<MS, MQ, _, ()>(ctx, |_store| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
@@ -336,7 +336,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+        let res = with_querier_from_context::<MS, MQ, _, _>(ctx, |querier| {
             let req: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
@@ -357,7 +357,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        with_querier_from_context::<S, Q, _, ()>(ctx, |_querier| {
+        with_querier_from_context::<MS, MQ, _, ()>(ctx, |_querier| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
@@ -370,8 +370,8 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        with_iterator_from_context::<S, Q, _, ()>(ctx, id, |iter| {
+        let id = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
             assert!(iter.next().is_none());
             Ok(())
         })
@@ -386,7 +386,7 @@ mod test {
         leave_default_data(ctx);
 
         let missing_id = 42u32;
-        let result = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
+        let result = with_iterator_from_context::<MS, MQ, _, ()>(ctx, missing_id, |_iter| {
             panic!("this should not be called");
         });
         match result.unwrap_err() {
