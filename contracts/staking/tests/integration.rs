@@ -83,6 +83,8 @@ fn proper_initialization() {
         &[],
     );
     let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
+    assert_eq!(deps.required_features.len(), 1);
+    assert!(deps.required_features.contains("staking"));
 
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {

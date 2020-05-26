@@ -109,8 +109,8 @@ pub struct LogAttribute {
     pub value: String,
 }
 
-/// A shorthand to produce log messages
-pub fn log(key: &str, value: &str) -> LogAttribute {
+/// A shorthand to produce a log attribute
+pub fn log<K: ToString, V: ToString>(key: K, value: V) -> LogAttribute {
     LogAttribute {
         key: key.to_string(),
         value: value.to_string(),
@@ -173,7 +173,22 @@ where
 mod test {
     use super::*;
     use crate::errors::StdError;
-    use crate::{coins, from_slice, to_vec};
+    use crate::{coins, from_slice, to_vec, Uint128};
+
+    #[test]
+    fn log_works_for_different_types() {
+        let expeceted = LogAttribute {
+            key: "foo".to_string(),
+            value: "42".to_string(),
+        };
+
+        assert_eq!(log("foo", "42"), expeceted);
+        assert_eq!(log("foo".to_string(), "42"), expeceted);
+        assert_eq!(log("foo", "42".to_string()), expeceted);
+        assert_eq!(log("foo", HumanAddr::from("42")), expeceted);
+        assert_eq!(log("foo", Uint128(42)), expeceted);
+        assert_eq!(log("foo", 42), expeceted);
+    }
 
     #[test]
     fn can_deser_error_result() {

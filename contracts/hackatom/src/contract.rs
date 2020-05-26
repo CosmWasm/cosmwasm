@@ -103,10 +103,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         let balance = deps.querier.query_all_balances(&from_addr)?;
 
         let res = HandleResponse {
-            log: vec![
-                log("action", "release"),
-                log("destination", to_addr.as_str()),
-            ],
+            log: vec![log("action", "release"), log("destination", &to_addr)],
             messages: vec![BankMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
