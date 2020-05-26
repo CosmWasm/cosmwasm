@@ -28,7 +28,7 @@ static ADDR_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn db_read(key: *const c_void, value: *mut c_void) -> i32;
+    fn db_read(key: *const c_void) -> i32;
     fn db_write(key: *const c_void, value: *mut c_void) -> i32;
     fn db_remove(key: *const c_void) -> i32;
 
@@ -62,9 +62,8 @@ impl ExternalStorage {
     ) -> StdResult<Option<Vec<u8>>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let value_ptr = alloc(result_length);
 
-        let read = unsafe { db_read(key_ptr, value_ptr) };
+        let read = unsafe { db_read(key_ptr) };
         if read == -1_000_001 {
             return Err(generic_err("Allocated memory too small to hold the database value for the given key. \
                 You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely."));
@@ -78,6 +77,7 @@ impl ExternalStorage {
             )));
         }
 
+        let value_ptr = read as *mut c_void;
         let data = unsafe { consume_region(value_ptr) }?;
         Ok(Some(data))
     }

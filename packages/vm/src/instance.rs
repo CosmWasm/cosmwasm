@@ -71,8 +71,8 @@ where
                 //   value region too small: -1_000_001
                 //   key does not exist: -1_001_001
                 // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
-                    do_read::<S, Q>(ctx, key_ptr, value_ptr)
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<i32> {
+                    do_read::<S, Q>(ctx, key_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.

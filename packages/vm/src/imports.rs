@@ -10,9 +10,10 @@ use wasmer_runtime_core::vm::Ctx;
 
 #[cfg(feature = "iterator")]
 use crate::context::{add_iterator, with_iterator_from_context};
-use crate::context::{with_querier_from_context, with_storage_from_context};
-#[cfg(feature = "iterator")]
-use crate::conversion::to_i32;
+use crate::context::{
+    with_func_from_context, with_querier_from_context, with_storage_from_context,
+};
+use crate::conversion::{to_i32, to_u32};
 use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -150,19 +151,24 @@ macro_rules! write_region {
 }
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(
-    ctx: &mut Ctx,
-    key_ptr: u32,
-    value_ptr: u32,
-) -> VmResult<i32> {
+pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
     // `Ok(expr?)` used to convert the error variant.
     let value: Option<Vec<u8>> =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)?))?;
-    Ok(match value {
-        Some(buf) => write_region!(ctx, value_ptr, &buf),
-        None => errors::read::KEY_DOES_NOT_EXIST,
-    })
+
+    let out_data = match value {
+        Some(data) => data,
+        None => return Ok(errors::read::KEY_DOES_NOT_EXIST),
+    };
+
+    let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
+        let out_size = to_u32(out_data.len())?;
+        let ptr = allocate.call(out_size)?;
+        Ok(ptr)
+    })?;
+    write_region!(ctx, out_ptr, &out_data);
+    Ok(to_i32(out_ptr)?)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
@@ -291,10 +297,11 @@ mod test {
         coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
         SystemError, WasmQuery,
     };
+    use std::ptr::NonNull;
     use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{move_into_context, setup_context};
+    use crate::context::{move_into_context, set_wasmer_instance, setup_context};
     #[cfg(feature = "iterator")]
     use crate::conversion::to_u32;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
@@ -324,7 +331,7 @@ mod test {
         let import_obj = imports! {
             || { setup_context::<MockStorage, MockQuerier>() },
             "env" => {
-                "db_read" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "db_read" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
@@ -334,7 +341,11 @@ mod test {
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
-        let instance = Box::from(module.instantiate(&import_obj).unwrap());
+        let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
+
+        let instance_ptr = NonNull::from(instance.as_ref());
+        set_wasmer_instance::<MS, MQ>(instance.context_mut(), Some(instance_ptr));
+
         instance
     }
 
@@ -377,61 +388,36 @@ mod test {
     #[test]
     fn do_read_works() {
         let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
 
         let key_ptr = write_data(&mut instance, KEY1);
-        let value_ptr = create_empty(&mut instance, 50);
-
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
-        assert_eq!(force_read(ctx, value_ptr), VALUE1);
+        let result = do_read::<MS, MQ>(ctx, key_ptr);
+        let value_ptr = result.unwrap();
+        assert!(value_ptr > 0);
+        assert_eq!(force_read(ctx, value_ptr as u32), VALUE1);
     }
 
     #[test]
     fn do_read_works_for_non_existent_key() {
         let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
 
         let key_ptr = write_data(&mut instance, b"I do not exist in storage");
-        let value_ptr = create_empty(&mut instance, 50);
-
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
+        let result = do_read::<MS, MQ>(ctx, key_ptr);
         assert_eq!(result.unwrap(), errors::read::KEY_DOES_NOT_EXIST);
-        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
     fn do_read_fails_for_large_key() {
         let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
 
         let key_ptr = write_data(&mut instance, &vec![7u8; 300 * 1024]);
-        let value_ptr = create_empty(&mut instance, 50);
-
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
+        let result = do_read::<MS, MQ>(ctx, key_ptr);
         assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
-        assert!(force_read(ctx, value_ptr).is_empty());
-    }
-
-    #[test]
-    fn do_read_fails_for_small_result_region() {
-        let mut instance = make_instance();
-
-        let key_ptr = write_data(&mut instance, KEY1);
-        let value_ptr = create_empty(&mut instance, 3);
-
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
-        assert!(force_read(ctx, value_ptr).is_empty());
     }
 
     #[test]
