@@ -25,12 +25,6 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.8.0 ./contracts/hackatom \
   && cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.8.wasm
-
-docker run --rm -v "$(pwd)":/code \
-  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
-  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.8.0 ./contracts/staking \
-  && cp contracts/staking/contract.wasm packages/vm/testdata/staking.wasm
 ```
 
 ## Testing
