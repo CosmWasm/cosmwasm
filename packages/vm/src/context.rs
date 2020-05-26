@@ -216,7 +216,7 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
-    fn make_instance() -> Instance {
+    fn make_instance() -> Box<Instance> {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
@@ -232,7 +232,7 @@ mod test {
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
-        let instance = module.instantiate(&import_obj).unwrap();
+        let instance = Box::from(module.instantiate(&import_obj).unwrap());
         instance
     }
 
