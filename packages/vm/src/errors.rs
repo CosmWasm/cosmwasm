@@ -128,6 +128,7 @@ impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
             // `InvokeError::FailedWithNoError` happens when running out of gas in singlepass v0.17
             // but it's supposed to indicate bugs in Wasmer...
             // https://github.com/wasmerio/wasmer/issues/1452
+            // https://github.com/CosmWasm/cosmwasm/issues/375
             RuntimeError::InvokeError(InvokeError::FailedWithNoError) => VmError::GasDepletion,
             // This variant contains the error we return from imports.
             RuntimeError::User(err) => match err.downcast::<VmError>() {
