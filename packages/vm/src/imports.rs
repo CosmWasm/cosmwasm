@@ -303,9 +303,9 @@ mod test {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
-    // shorthand for function generics below
-    type S = MockStorage;
-    type Q = MockQuerier;
+    // shorthands for function generics below
+    type MS = MockStorage;
+    type MQ = MockQuerier;
 
     // prepared data
     static KEY1: &[u8] = b"ant";
@@ -318,7 +318,7 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
-    fn make_instance() -> Instance {
+    fn make_instance() -> Box<Instance> {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
@@ -334,7 +334,7 @@ mod test {
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
-        let instance = module.instantiate(&import_obj).unwrap();
+        let instance = Box::from(module.instantiate(&import_obj).unwrap());
         instance
     }
 
@@ -384,7 +384,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, value_ptr), VALUE1);
     }
@@ -399,7 +399,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::read::KEY_DOES_NOT_EXIST);
         assert!(force_read(ctx, value_ptr).is_empty());
     }
@@ -414,7 +414,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
         assert!(force_read(ctx, value_ptr).is_empty());
     }
@@ -429,7 +429,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_read::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_read::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
         assert!(force_read(ctx, value_ptr).is_empty());
     }
@@ -444,10 +444,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
 
-        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
         })
         .unwrap();
@@ -464,10 +464,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
 
-        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(KEY1).expect("error getting value"))
         })
         .unwrap();
@@ -484,10 +484,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
 
-        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
         })
         .unwrap();
@@ -504,7 +504,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
@@ -518,7 +518,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<S, Q>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
@@ -532,10 +532,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_remove::<S, Q>(ctx, key_ptr);
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
 
-        let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let value = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(existing_key).expect("error getting value"))
         })
         .unwrap();
@@ -552,11 +552,11 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_remove::<S, Q>(ctx, key_ptr);
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
         // Note: right now we cannot differnetiate between an existent and a non-existent key
         assert_eq!(result.unwrap(), errors::NONE);
 
-        let value = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let value = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(non_existent_key).expect("error getting value"))
         })
         .unwrap();
@@ -572,7 +572,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_remove::<S, Q>(ctx, key_ptr);
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
         assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
     }
 
@@ -737,7 +737,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        let result = do_query_chain::<MS, MQ>(ctx, request_ptr, response_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         let response = force_read(ctx, response_ptr);
 
@@ -760,7 +760,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        let result = do_query_chain::<MS, MQ>(ctx, request_ptr, response_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         let response = force_read(ctx, response_ptr);
 
@@ -790,7 +790,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_query_chain::<S, Q>(ctx, request_ptr, response_ptr);
+        let result = do_query_chain::<MS, MQ>(ctx, request_ptr, response_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         let response = force_read(ctx, response_ptr);
 
@@ -813,20 +813,20 @@ mod test {
         leave_default_data(ctx);
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
+        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
         assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert!(item.is_none());
     }
 
@@ -838,20 +838,20 @@ mod test {
         leave_default_data(ctx);
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()).unwrap())
+        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap())
             .expect("ID must not be negative");
         assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert!(item.is_none());
     }
 
@@ -866,15 +866,15 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, start, end, Order::Ascending.into()).unwrap())
+        let id = to_u32(do_scan::<MS, MQ>(ctx, start, end, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
         assert!(item.is_none());
     }
 
@@ -886,36 +886,36 @@ mod test {
         leave_default_data(ctx);
 
         // unbounded, ascending and descending
-        let id1 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
+        let id1 = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
-        let id2 = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Descending.into()).unwrap())
+        let id2 = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap())
             .expect("ID must not be negative");
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
         // first item, first iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
         assert!(item.is_none());
 
         // second item, second iterator
         let item =
-            with_iterator_from_context::<S, Q, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
 
@@ -930,23 +930,23 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
+        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
         // Entry 1
-        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        let result = do_next::<MS, MQ>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, key_ptr), KEY1);
         assert_eq!(force_read(ctx, value_ptr), VALUE1);
 
         // Entry 2
-        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        let result = do_next::<MS, MQ>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, key_ptr), KEY2);
         assert_eq!(force_read(ctx, value_ptr), VALUE2);
 
         // End
-        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        let result = do_next::<MS, MQ>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::NONE);
         assert_eq!(force_read(ctx, key_ptr), b"");
         // API makes no guarantees for value_ptr in this case
@@ -964,7 +964,7 @@ mod test {
         leave_default_data(ctx);
 
         let non_existent_id = 42u32;
-        let result = do_next::<S, Q>(ctx, non_existent_id, key_ptr, value_ptr);
+        let result = do_next::<MS, MQ>(ctx, non_existent_id, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::next::ITERATOR_DOES_NOT_EXIST);
     }
 
@@ -979,10 +979,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
+        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
-        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        let result = do_next::<MS, MQ>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
     }
 
@@ -997,10 +997,10 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<S, Q>(ctx, 0, 0, Order::Ascending.into()).unwrap())
+        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
             .expect("ID must not be negative");
 
-        let result = do_next::<S, Q>(ctx, id, key_ptr, value_ptr);
+        let result = do_next::<MS, MQ>(ctx, id, key_ptr, value_ptr);
         assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
     }
 }
