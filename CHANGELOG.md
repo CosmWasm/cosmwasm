@@ -2,6 +2,12 @@
 
 ## 0.9.0 (not yet released)
 
+**cosmwasm-vm**
+
+- The import `db_read` now allocates memory for the return value as part of the
+  call and returns a pointer to the value as `u32`. The return value 0 means
+  _key does not exist_.
+
 ## 0.8.1 (not yet released)
 
 **cosmwasm-std**
