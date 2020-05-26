@@ -253,7 +253,6 @@ mod test {
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-    static STAKING_CONTRACT: &[u8] = include_bytes!("../testdata/staking.wasm");
     static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
     #[test]
@@ -261,11 +260,6 @@ mod test {
         let deps = mock_dependencies(20, &[]);
         let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
         assert_eq!(instance.required_features.len(), 0);
-
-        let deps = mock_dependencies(20, &[]);
-        let instance = Instance::from_code(STAKING_CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
-        assert_eq!(instance.required_features.len(), 1);
-        assert!(instance.required_features.contains("staking"));
     }
 
     #[test]

@@ -37,6 +37,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/ha
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
+    assert_eq!(deps.required_features.len(), 0);
+
     let verifier = HumanAddr(String::from("verifies"));
     let beneficiary = HumanAddr(String::from("benefits"));
     let creator = HumanAddr(String::from("creator"));
