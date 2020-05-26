@@ -1,5 +1,7 @@
 # CHANGELOG
 
+## 0.9.0 (not yet released)
+
 ## 0.8.1 (not yet released)
 
 **cosmwasm-vm**
