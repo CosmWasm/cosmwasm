@@ -2,6 +2,12 @@
 
 ## 0.8.1 (not yet released)
 
+**cosmwasm-std**
+
+- The arguments of `log` changed from `&str` to `ToString`, allowing to pass
+  various types like `String`, `HumanAddr`, `Uint128` or primitive integers
+  directly.
+
 **cosmwasm-vm**
 
 - Deprecated `Instance::get_gas` in favour of `Instance::get_gas_left`. The old
