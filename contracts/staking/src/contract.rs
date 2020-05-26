@@ -89,9 +89,9 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
         messages: vec![],
         log: vec![
             log("action", "transfer"),
-            log("from", deps.api.human_address(&sender_raw)?.as_str()),
-            log("to", recipient.as_str()),
-            log("amount", &send.to_string()),
+            log("from", deps.api.human_address(&sender_raw)?),
+            log("to", recipient),
+            log("amount", send),
         ],
         data: None,
     };
@@ -179,9 +179,9 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
         .into()],
         log: vec![
             log("action", "bond"),
-            log("from", deps.api.human_address(&sender_raw)?.as_str()),
-            log("bonded", &payment.amount.to_string()),
-            log("minted", &to_mint.to_string()),
+            log("from", deps.api.human_address(&sender_raw)?),
+            log("bonded", payment.amount),
+            log("minted", to_mint),
         ],
         data: None,
     };
@@ -249,9 +249,9 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
         .into()],
         log: vec![
             log("action", "unbond"),
-            log("to", deps.api.human_address(&sender_raw)?.as_str()),
-            log("unbonded", &unbond.to_string()),
-            log("burnt", &amount.to_string()),
+            log("to", deps.api.human_address(&sender_raw)?),
+            log("unbonded", unbond),
+            log("burnt", amount),
         ],
         data: None,
     };
@@ -301,8 +301,8 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
         .into()],
         log: vec![
             log("action", "claim"),
-            log("from", sender_human.as_str()),
-            log("amount", &to_send.to_string()),
+            log("from", sender_human),
+            log("amount", to_send),
         ],
         data: None,
     };
@@ -379,10 +379,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
             amount: balance.clone(),
         }
         .into()],
-        log: vec![
-            log("action", "reinvest"),
-            log("bonded", &balance.amount.to_string()),
-        ],
+        log: vec![log("action", "reinvest"), log("bonded", balance.amount)],
         data: None,
     };
     Ok(res)
