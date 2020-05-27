@@ -16,7 +16,7 @@ use crate::context::{
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
 use crate::conversion::to_u32;
-use crate::errors::{VmError, VmResult};
+use crate::errors::{make_generic_err, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
@@ -161,6 +161,11 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
     let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
         let out_size = to_u32(out_data.len())?;
         let ptr = allocate.call(out_size)?;
+        if ptr == 0 {
+            return Err(make_generic_err(
+                "Got a null Wasm pointer from allocate(). This is not allowed by CosmWasm even if it is valid Wasm. The contract needs to ensure to allocate at a non-null address. See https://stackoverflow.com/q/62042733/2013738 for more information.",
+            ));
+        }
         Ok(ptr)
     })?;
     write_region(ctx, out_ptr, &out_data)?;
