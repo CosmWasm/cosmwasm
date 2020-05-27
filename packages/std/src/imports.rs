@@ -68,7 +68,7 @@ impl ReadonlyStorage for ExternalStorage {
         }
 
         let value_ptr = read as *mut c_void;
-        let data = unsafe { consume_region(value_ptr) }?;
+        let data = unsafe { consume_region(value_ptr) };
         Ok(Some(data))
     }
 
@@ -163,8 +163,8 @@ impl Iterator for ExternalIterator {
             return Some(result);
         }
 
-        let key = unsafe { consume_region(key_ptr).unwrap() };
-        let value = unsafe { consume_region(value_ptr).unwrap() };
+        let key = unsafe { consume_region(key_ptr) };
+        let value = unsafe { consume_region(value_ptr) };
         if key.is_empty() {
             return None;
         }
@@ -193,7 +193,7 @@ impl Api for ExternalApi {
             return Err(generic_err("canonicalize_address returned error"));
         }
 
-        let out = unsafe { consume_region(canon)? };
+        let out = unsafe { consume_region(canon) };
         Ok(CanonicalAddr(Binary(out)))
     }
 
@@ -207,7 +207,7 @@ impl Api for ExternalApi {
             return Err(generic_err("humanize_address returned error"));
         }
 
-        let out = unsafe { consume_region(human)? };
+        let out = unsafe { consume_region(human) };
         // we know input was correct when created, so let's save some bytes
         let result = unsafe { String::from_utf8_unchecked(out) };
         Ok(HumanAddr(result))
@@ -236,7 +236,7 @@ impl Querier for ExternalQuerier {
         }
 
         let process = |region_ptr| -> StdResult<QuerierResult> {
-            let out = unsafe { consume_region(region_ptr)? };
+            let out = unsafe { consume_region(region_ptr) };
             let parsed: QuerierResult = from_slice(&out)?;
             Ok(parsed)
         };

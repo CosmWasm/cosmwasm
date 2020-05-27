@@ -3,8 +3,6 @@ use std::mem;
 use std::os::raw::c_void;
 use std::vec::Vec;
 
-use crate::errors::{null_pointer, StdResult};
-
 /// Refers to some heap allocated data in Wasm.
 /// A pointer to an instance of this can be returned over FFI boundaries.
 ///
@@ -49,24 +47,29 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 ///
 /// # Safety
 ///
-/// If ptr is non-nil, it must refer to a valid Region, which was previously returned by alloc,
+/// The ptr must refer to a valid Region, which was previously returned by alloc,
 /// and not yet deallocated. This call will deallocate the Region and return an owner vector
 /// to the caller containing the referenced data.
 ///
 /// Naturally, calling this function twice on the same pointer will double deallocate data
 /// and lead to a crash. Make sure to call it exactly once (either consuming the input in
 /// the wasm code OR deallocating the buffer from the caller).
-pub unsafe fn consume_region(ptr: *mut c_void) -> StdResult<Vec<u8>> {
+pub unsafe fn consume_region(ptr: *mut c_void) -> Vec<u8> {
     if ptr.is_null() {
-        return Err(null_pointer());
+        panic!("Region pointer is null");
     }
     let region = Box::from_raw(ptr as *mut Region);
-    let buffer = Vec::from_raw_parts(
-        region.offset as *mut u8,
+    let region_start = region.offset as *mut u8;
+    if region_start.is_null() {
+        // This case is explicitely disallowed by Vec
+        // "The pointer will never be null, so this type is null-pointer-optimized."
+        panic!("Region starts at null pointer");
+    }
+    Vec::from_raw_parts(
+        region_start,
         region.length as usize,
         region.capacity as usize,
-    );
-    Ok(buffer)
+    )
 }
 
 /// Returns a box of a Region, which can be sent over a call to extern
