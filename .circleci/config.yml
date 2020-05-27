@@ -477,11 +477,23 @@ jobs:
   clippy:
     docker:
       - image: rust:1.41.1
+    environment:
+      # Make sure to choose version with clippy present: https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
+      NIGHTLY_TOOLCHAIN: nightly-2020-05-26
     steps:
       - checkout
       - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+          name: Install Rust nightly
+          command: |
+            rustup --version
+            rustup toolchain install $NIGHTLY_TOOLCHAIN --allow-downgrade --profile minimal --component clippy
+            rustup target list --installed
+      - run:
+          name: Version information (default; stable)
+          command: rustc --version && cargo --version
+      - run:
+          name: Version information (nightly)
+          command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
             - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
@@ -496,17 +508,29 @@ jobs:
           working_directory: ~/project/packages/schema
           command: cargo clippy -- -D warnings
       - run:
-          name: Clippy linting on std
+          name: Clippy linting on std (no feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy --features iterator -- -D warnings
+          command: cargo clippy -- -D warnings
       - run:
-          name: Clippy linting on storage
+          name: Clippy linting on std (all feature flags)
+          working_directory: ~/project/packages/std
+          command: cargo clippy --features iterator,staking -- -D warnings
+      - run:
+          name: Clippy linting on storage (no feature flags)
+          working_directory: ~/project/packages/storage
+          command: cargo clippy -- -D warnings
+      - run:
+          name: Clippy linting on storage (all feature flags)
           working_directory: ~/project/packages/storage
           command: cargo clippy --features iterator -- -D warnings
       - run:
-          name: Clippy linting on vm (use flags for Rust stable support)
+          name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --no-default-features --features "default-cranelift iterator" -- -D warnings
+          command: cargo +$NIGHTLY_TOOLCHAIN clippy -- -D warnings
+      - run:
+          name: Clippy linting on vm (all feature flags)
+          working_directory: ~/project/packages/vm
+          command: cargo +$NIGHTLY_TOOLCHAIN clippy --features iterator -- -D warnings
       #
       # Contracts
       #
