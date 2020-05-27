@@ -26,6 +26,9 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
     }
 }
 
+#[cfg(feature = "iterator")]
+pub type StorageIteratorItem = FfiResult<(KV, u64)>;
+
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage
 where
@@ -50,7 +53,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>>;
+    ) -> FfiResult<Box<dyn Iterator<Item = StorageIteratorItem> + 'a>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

@@ -57,6 +57,7 @@ fn proper_initialization() {
             let data = store
                 .get(CONFIG_KEY)
                 .expect("error reading db")
+                .0
                 .expect("no data stored");
             from_slice(&data)
         })
@@ -210,6 +211,7 @@ fn handle_release_fails_for_wrong_sender() {
             Ok(store
                 .get(CONFIG_KEY)
                 .expect("error reading db")
+                .0
                 .expect("no data stored"))
         })
         .unwrap();

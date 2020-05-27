@@ -13,9 +13,10 @@ use wasmer_runtime_core::vm::Ctx;
 use cosmwasm_std::KV;
 
 #[cfg(feature = "iterator")]
-use crate::errors::{
-    make_iterator_does_not_exist, make_uninitialized_context_data, FfiResult, VmError, VmResult,
-};
+use crate::errors::{make_iterator_does_not_exist, FfiResult};
+use crate::errors::{make_uninitialized_context_data, VmError, VmResult};
+#[cfg(feature = "iterator")]
+use crate::traits::StorageIteratorItem;
 use crate::traits::{Querier, Storage};
 
 /** context data **/
@@ -49,7 +50,7 @@ struct ContextData<'a, S: Storage, Q: Querier> {
     storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
-    iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>>,
+    iterators: HashMap<u32, Box<dyn Iterator<Item = StorageIteratorItem> + 'a>>,
     #[cfg(not(feature = "iterator"))]
     iterators: PhantomData<&'a mut ()>,
 }

@@ -5,6 +5,8 @@ use std::{
     ops::{Bound, RangeBounds},
 };
 
+#[cfg(feature = "iterator")]
+use crate::StorageIteratorItem;
 use crate::{FfiResult, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
@@ -33,7 +35,7 @@ impl ReadonlyStorage for MockStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>> {
+    ) -> FfiResult<Box<dyn Iterator<Item = StorageIteratorItem> + 'a>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
