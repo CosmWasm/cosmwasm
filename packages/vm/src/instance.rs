@@ -11,8 +11,8 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas, set_gas};
 use crate::context::{
-    move_into_context, move_out_of_context, setup_context, with_querier_from_context,
-    with_storage_from_context,
+    get_gas_status, move_into_context, move_out_of_context, setup_context,
+    with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
 use crate::errors::{make_instantiation_err, VmResult};
@@ -137,6 +137,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas(&mut wasmer_instance, gas_limit);
+        get_gas_status::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(&wasmer_instance);
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {

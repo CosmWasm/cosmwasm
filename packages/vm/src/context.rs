@@ -43,6 +43,10 @@ impl GasState {
     fn out_of_gas(&self) -> bool {
         self.total_used_gas > self.gas_limit
     }
+
+    pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
+        self.gas_limit = gas_limit;
+    }
 }
 
 struct ContextData<'a, S: Storage, Q: Querier> {
