@@ -2,6 +2,11 @@
 
 ## 0.9.0 (not yet released)
 
+**cosmwasm-std**
+
+- `ReadonlyStorage::get` and all its implementations now return
+  `Option<Vec<u8>>`.
+
 **cosmwasm-vm**
 
 - The export `allocate` must not return 0 as a valid address. The contract is

@@ -57,19 +57,19 @@ impl ExternalStorage {
 }
 
 impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
 
         let read = unsafe { db_read(key_ptr) };
         if read == 0 {
             // key does not exist in external storage
-            return Ok(None);
+            return None;
         }
 
         let value_ptr = read as *mut c_void;
         let data = unsafe { consume_region(value_ptr) };
-        Ok(Some(data))
+        Some(data)
     }
 
     #[cfg(feature = "iterator")]

@@ -6,7 +6,7 @@ pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
     namespace: &[u8],
     key: &[u8],
-) -> StdResult<Option<Vec<u8>>> {
+) -> Option<Vec<u8>> {
     storage.get(&concat(namespace, key))
 }
 
@@ -101,13 +101,13 @@ mod test {
         let prefix = to_length_prefixed(b"foo");
 
         set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha").unwrap();
-        let rfoo = get_with_prefix(&storage, &prefix, b"bar").unwrap();
-        assert_eq!(Some(b"gotcha".to_vec()), rfoo);
+        let rfoo = get_with_prefix(&storage, &prefix, b"bar");
+        assert_eq!(rfoo, Some(b"gotcha".to_vec()));
 
         // no collisions with other prefixes
         let other_prefix = to_length_prefixed(b"fo");
-        let collision = get_with_prefix(&storage, &other_prefix, b"obar").unwrap();
-        assert_eq!(None, collision);
+        let collision = get_with_prefix(&storage, &other_prefix, b"obar");
+        assert_eq!(collision, None);
     }
 
     #[test]

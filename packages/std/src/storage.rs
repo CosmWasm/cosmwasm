@@ -21,8 +21,8 @@ impl MemoryStorage {
 }
 
 impl ReadonlyStorage for MemoryStorage {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
-        Ok(self.data.get(key).cloned())
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+        self.data.get(key).cloned()
     }
 
     #[cfg(feature = "iterator")]
@@ -94,7 +94,7 @@ mod test {
     // (this allows us to test StorageTransaction and other wrapped storage better)
     fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
-        assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(
             store.range(None, None, Order::Ascending).unwrap().count(),
             1
@@ -246,10 +246,10 @@ mod test {
     #[test]
     fn get_and_set() {
         let mut store = MemoryStorage::new();
-        assert_eq!(None, store.get(b"foo").unwrap());
+        assert_eq!(store.get(b"foo"), None);
         store.set(b"foo", b"bar").unwrap();
-        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo").unwrap());
-        assert_eq!(None, store.get(b"food").unwrap());
+        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+        assert_eq!(store.get(b"food"), None);
     }
 
     #[test]
@@ -259,8 +259,8 @@ mod test {
         store.set(b"food", b"bank").unwrap();
         store.remove(b"foo").unwrap();
 
-        assert_eq!(None, store.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), store.get(b"food").unwrap());
+        assert_eq!(store.get(b"foo"), None);
+        assert_eq!(store.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]

@@ -45,12 +45,12 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
-            Some(val) => Ok(match val {
+            Some(val) => match val {
                 Delta::Set { value } => Some(value.clone()),
                 Delta::Delete {} => None,
-            }),
+            },
             None => self.storage.get(key),
         }
     }
@@ -305,7 +305,7 @@ mod test {
     // (this allows us to test StorageTransaction and other wrapped storage better)
     fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
-        assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(
             store.range(None, None, Order::Ascending).unwrap().count(),
             1
@@ -462,13 +462,13 @@ mod test {
         check.set(b"food", b"bank").unwrap();
         check.remove(b"foo").unwrap();
 
-        assert_eq!(None, check.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
+        assert_eq!(check.get(b"foo"), None);
+        assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
         check.prepare().commit(&mut base).unwrap();
-        assert_eq!(None, base.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
+        assert_eq!(base.get(b"foo"), None);
+        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
@@ -479,13 +479,13 @@ mod test {
         check.set(b"food", b"bank").unwrap();
         check.remove(b"foo").unwrap();
 
-        assert_eq!(None, check.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
+        assert_eq!(check.get(b"foo"), None);
+        assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
         check.prepare().commit(&mut base).unwrap();
-        assert_eq!(None, base.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
+        assert_eq!(base.get(b"foo"), None);
+        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
@@ -523,11 +523,11 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works").unwrap();
         check.prepare().commit(&mut base).unwrap();
 
-        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
@@ -537,16 +537,16 @@ mod test {
 
         let mut stxn1 = StorageTransaction::new(&base);
 
-        assert_eq!(stxn1.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
 
         stxn1.set(b"subtx", b"works").unwrap();
-        assert_eq!(stxn1.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
 
         // Can still read from base, txn is not yet committed
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
 
         stxn1.prepare().commit(&mut base).unwrap();
-        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
@@ -555,11 +555,11 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works").unwrap();
         check.rollback();
 
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
     }
 
     #[test]
@@ -568,10 +568,10 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works").unwrap();
 
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
     }
 
     #[test]
@@ -582,24 +582,24 @@ mod test {
         // writes on success
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             // we write in the Ok case
             store.set(b"good", b"one").unwrap();
             Ok(5)
         });
-        assert_eq!(5, res.unwrap());
-        assert_eq!(base.get(b"good").unwrap(), Some(b"one".to_vec()));
+        assert_eq!(res.unwrap(), 5);
+        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
 
         // rejects on error
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-            assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
             // we write in the Error case
             store.set(b"bad", b"value").unwrap();
             Err(unauthorized())
         });
         assert!(res.is_err());
-        assert_eq!(base.get(b"bad").unwrap(), None);
+        assert_eq!(base.get(b"bad"), None);
     }
 }
