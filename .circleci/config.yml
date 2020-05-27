@@ -477,20 +477,23 @@ jobs:
   clippy:
     docker:
       - image: rust:1.41.1
+    environment:
+      # Make sure to choose version with clippy present: https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
+      NIGHTLY_TOOLCHAIN: nightly-2020-05-26
     steps:
       - checkout
       - run:
           name: Install Rust nightly
           command: |
             rustup --version
-            rustup toolchain install nightly --allow-downgrade --profile minimal --component clippy
+            rustup toolchain install $NIGHTLY_TOOLCHAIN --allow-downgrade --profile minimal --component clippy
             rustup target list --installed
       - run:
           name: Version information (default; stable)
           command: rustc --version && cargo --version
       - run:
           name: Version information (nightly)
-          command: rustc +nightly --version && cargo +nightly --version
+          command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
             - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
@@ -523,11 +526,11 @@ jobs:
       - run:
           name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo +nightly clippy -- -D warnings
+          command: cargo +$NIGHTLY_TOOLCHAIN clippy -- -D warnings
       - run:
           name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo +nightly clippy --features iterator -- -D warnings
+          command: cargo +$NIGHTLY_TOOLCHAIN clippy --features iterator -- -D warnings
       #
       # Contracts
       #
