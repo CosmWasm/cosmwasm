@@ -7,6 +7,7 @@ use wasmer_runtime_core::{
     module::Module,
     typed_func::{Wasm, WasmTypeList},
     vm::Ctx,
+    Instance as WasmerInstance,
 };
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
@@ -31,7 +32,7 @@ pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
-    wasmer_instance: Box<wasmer_runtime_core::instance::Instance>,
+    wasmer_instance: Box<WasmerInstance>,
     pub api: A,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
@@ -134,7 +135,7 @@ where
     }
 
     pub(crate) fn from_wasmer(
-        mut wasmer_instance: Box<wasmer_runtime_core::Instance>,
+        mut wasmer_instance: Box<WasmerInstance>,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
@@ -152,9 +153,7 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub(crate) fn recycle(
-        mut instance: Self,
-    ) -> (Box<wasmer_runtime_core::Instance>, Option<Extern<S, A, Q>>) {
+    pub(crate) fn recycle(mut instance: Self) -> (Box<WasmerInstance>, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
             move_out_of_context(instance.wasmer_instance.context_mut())
         {
