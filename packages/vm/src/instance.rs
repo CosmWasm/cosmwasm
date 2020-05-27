@@ -7,6 +7,7 @@ use wasmer_runtime_core::{
     module::Module,
     typed_func::{Wasm, WasmTypeList},
     vm::Ctx,
+    Instance as WasmerInstance,
 };
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
@@ -31,7 +32,7 @@ pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
-    wasmer_instance: Box<wasmer_runtime_core::instance::Instance>,
+    inner: Box<WasmerInstance>,
     pub api: A,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
@@ -134,7 +135,7 @@ where
     }
 
     pub(crate) fn from_wasmer(
-        mut wasmer_instance: Box<wasmer_runtime_core::Instance>,
+        mut wasmer_instance: Box<WasmerInstance>,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
@@ -142,7 +143,7 @@ where
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
-            wasmer_instance,
+            inner: wasmer_instance,
             api: deps.api,
             required_features,
             type_storage: PhantomData::<S> {},
@@ -152,11 +153,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub(crate) fn recycle(
-        mut instance: Self,
-    ) -> (Box<wasmer_runtime_core::Instance>, Option<Extern<S, A, Q>>) {
+    pub(crate) fn recycle(mut instance: Self) -> (Box<WasmerInstance>, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
-            move_out_of_context(instance.wasmer_instance.context_mut())
+            move_out_of_context(instance.inner.context_mut())
         {
             Some(Extern {
                 storage,
@@ -166,7 +165,7 @@ where
         } else {
             None
         };
-        (instance.wasmer_instance, ext)
+        (instance.inner, ext)
     }
 
     /// Returns the size of the default memory in bytes.
@@ -174,12 +173,12 @@ where
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
     pub fn get_memory_size(&self) -> u64 {
-        (get_memory_info(self.wasmer_instance.context()).size as u64) * WASM_PAGE_SIZE
+        (get_memory_info(self.inner.context()).size as u64) * WASM_PAGE_SIZE
     }
 
     /// Returns the currently remaining gas.
     pub fn get_gas_left(&self) -> u64 {
-        get_gas_left(&self.wasmer_instance)
+        get_gas_left(&self.inner)
     }
 
     /// Returns the currently remaining gas.
@@ -191,11 +190,11 @@ where
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
+        with_storage_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
+        with_querier_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -217,12 +216,12 @@ where
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(self.wasmer_instance.context(), region_ptr, max_length)
+        read_region(self.inner.context(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(self.wasmer_instance.context(), region_ptr, data)?;
+        write_region(self.inner.context(), region_ptr, data)?;
         Ok(())
     }
 
@@ -231,7 +230,7 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        let function = self.wasmer_instance.exports.get(name)?;
+        let function = self.inner.exports.get(name)?;
         Ok(function)
     }
 }

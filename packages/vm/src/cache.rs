@@ -4,8 +4,7 @@ use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
-
-use crate::traits::{Api, Extern, Querier, Storage};
+use wasmer_runtime_core::Instance as WasmerInstance;
 
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
@@ -13,6 +12,7 @@ use crate::compatability::check_wasm;
 use crate::errors::{make_cache_err, make_integrity_err, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
+use crate::traits::{Api, Extern, Querier, Storage};
 
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
@@ -28,7 +28,7 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     modules: FileSystemCache,
-    instances: Option<LruCache<Checksum, Box<wasmer_runtime_core::Instance>>>,
+    instances: Option<LruCache<Checksum, Box<WasmerInstance>>>,
     stats: Stats,
     // Those two don't store data but only fix type information
     type_storage: PhantomData<S>,
@@ -101,7 +101,8 @@ where
         }
     }
 
-    /// get instance returns a wasmer Instance tied to a previously saved wasm
+    /// Returns an Instance tied to a previously saved Wasm.
+    /// Depending on availability, this is either generated from a cached instance, a cached module or Wasm code.
     pub fn get_instance(
         &mut self,
         checksum: &Checksum,

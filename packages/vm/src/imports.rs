@@ -291,7 +291,7 @@ mod test {
         coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
         SystemError, WasmQuery,
     };
-    use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
+    use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
     use crate::backends::compile;
     use crate::context::{move_into_context, setup_context};
@@ -318,7 +318,7 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
-    fn make_instance() -> Box<Instance> {
+    fn make_instance() -> Box<WasmerInstance> {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
@@ -348,7 +348,7 @@ mod test {
         move_into_context(ctx, storage, querier);
     }
 
-    fn write_data(wasmer_instance: &mut Instance, data: &[u8]) -> u32 {
+    fn write_data(wasmer_instance: &mut WasmerInstance, data: &[u8]) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
             .exports
             .get("allocate")
@@ -360,7 +360,7 @@ mod test {
         region_ptr
     }
 
-    fn create_empty(wasmer_instance: &mut Instance, capacity: u32) -> u32 {
+    fn create_empty(wasmer_instance: &mut WasmerInstance, capacity: u32) -> u32 {
         let allocate: Func<u32, u32> = wasmer_instance
             .exports
             .get("allocate")

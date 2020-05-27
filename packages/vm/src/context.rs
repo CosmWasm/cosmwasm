@@ -200,7 +200,7 @@ mod test {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };
-    use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
+    use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -216,7 +216,7 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
-    fn make_instance() -> Box<Instance> {
+    fn make_instance() -> Box<WasmerInstance> {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
