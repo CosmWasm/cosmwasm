@@ -12,7 +12,7 @@ use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 use crate::errors::VmResult;
 use crate::middleware::DeterministicMiddleware;
 
-static GAS_LIMIT: u64 = 10_000_000_000;
+pub const GAS_LIMIT: u64 = 10_000_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = compile_with(code, compiler().as_ref())?;

@@ -54,7 +54,8 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> VmResult<Self> {
-        let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
+        let mut import_obj =
+            imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
@@ -461,7 +462,7 @@ mod test {
         // initial check
         instance
             .with_storage(|store| {
-                assert!(store.get(b"foo").unwrap().is_none());
+                assert!(store.get(b"foo").unwrap().0.is_none());
                 Ok(())
             })
             .unwrap();
@@ -477,7 +478,7 @@ mod test {
         // read some data
         instance
             .with_storage(|store| {
-                assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+                assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
                 Ok(())
             })
             .unwrap();

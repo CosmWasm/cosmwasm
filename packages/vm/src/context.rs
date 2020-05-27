@@ -13,30 +13,57 @@ use wasmer_runtime_core::vm::Ctx;
 use cosmwasm_std::KV;
 
 #[cfg(feature = "iterator")]
-use crate::errors::{make_iterator_does_not_exist, FfiResult};
-use crate::errors::{make_uninitialized_context_data, VmResult};
+use crate::errors::{
+    make_iterator_does_not_exist, make_uninitialized_context_data, FfiResult, VmError, VmResult,
+};
 use crate::traits::{Querier, Storage};
 
 /** context data **/
 
+pub struct GasState {
+    /// Gas limit for the computation.
+    gas_limit: u64,
+    /// Tracking the gas used in the whole system, in cosmwasm units.
+    total_used_gas: u64,
+}
+
+impl GasState {
+    fn with_limit(gas_limit: u64) -> Self {
+        Self {
+            gas_limit,
+            total_used_gas: 0,
+        }
+    }
+
+    fn use_gas(&mut self, amount: u64) {
+        self.total_used_gas += amount;
+    }
+
+    fn out_of_gas(&self) -> bool {
+        self.total_used_gas > self.gas_limit
+    }
+}
+
 struct ContextData<'a, S: Storage, Q: Querier> {
+    gas_state: GasState,
     storage: Option<S>,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
-    iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<KV>> + 'a>>,
+    iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>>,
     #[cfg(not(feature = "iterator"))]
     iterators: PhantomData<&'a mut ()>,
 }
 
-pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
+pub fn setup_context<S: Storage, Q: Querier>(gas_limit: u64) -> (*mut c_void, fn(*mut c_void)) {
     (
-        create_unmanaged_context_data::<S, Q>(),
+        create_unmanaged_context_data::<S, Q>(gas_limit),
         destroy_unmanaged_context_data::<S, Q>,
     )
 }
 
-fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
+fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut c_void {
     let data = ContextData::<S, Q> {
+        gas_state: GasState::with_limit(gas_limit),
         storage: None,
         querier: None,
         #[cfg(feature = "iterator")]
@@ -116,13 +143,27 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
+pub fn get_gas_status<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
+    &mut get_context_data::<S, Q>(ctx).gas_state
+}
+
+pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
+    let gas_status = get_gas_status::<S, Q>(ctx);
+    gas_status.use_gas(used_gas);
+    if gas_status.out_of_gas() {
+        Err(VmError::GasDepletion)
+    } else {
+        Ok(())
+    }
+}
+
 /// Add the iterator to the context's data. A new ID is assigned and returned.
 /// IDs are guaranteed to be in the range [0, 2**31-1], i.e. fit in the non-negative part if type i32.
 #[cfg(feature = "iterator")]
 #[must_use = "without the returned iterator ID, the iterator cannot be accessed"]
 pub fn add_iterator<'a, S: Storage, Q: Querier>(
     ctx: &mut Ctx,
-    iter: Box<dyn Iterator<Item = FfiResult<KV>> + 'a>,
+    iter: Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>,
 ) -> u32 {
     let b = get_context_data::<S, Q>(ctx);
     let last_id: u32 = b
@@ -180,7 +221,7 @@ pub(crate) fn with_iterator_from_context<'a, 'b, S, Q, F, T>(
 where
     S: Storage,
     Q: Querier,
-    F: FnOnce(&'b mut (dyn Iterator<Item = FfiResult<KV>>)) -> VmResult<T>,
+    F: FnOnce(&'b mut (dyn Iterator<Item = FfiResult<(KV, u64)>>)) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
@@ -216,11 +257,16 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
+    #[cfg(feature = "singlepass")]
+    use crate::backends::singlepass::GAS_LIMIT;
+    #[cfg(not(feature = "singlepass"))]
+    const GAS_LIMIT: u64 = 10_000_000_000;
+
     fn make_instance() -> Instance {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
-            || { setup_context::<MockStorage, MockQuerier>() },
+            || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
                 "db_read" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
@@ -263,7 +309,10 @@ mod test {
         let (s, q) = move_out_of_context::<S, Q>(ctx);
         assert!(s.is_some());
         assert!(q.is_some());
-        assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
+        assert_eq!(
+            s.unwrap().get(INIT_KEY).unwrap().0,
+            Some(INIT_VALUE.to_vec())
+        );
 
         // now is empty again
         let (ends, endq) = move_out_of_context::<S, Q>(ctx);
@@ -294,7 +343,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let val = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let (val, _used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
             Ok(store.get(INIT_KEY).expect("error getting value"))
         })
         .unwrap();
@@ -310,8 +359,8 @@ mod test {
         .unwrap();
 
         with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-            assert_eq!(store.get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
-            assert_eq!(store.get(set_key).unwrap(), Some(set_value.to_vec()));
+            assert_eq!(store.get(INIT_KEY).unwrap().0, Some(INIT_VALUE.to_vec()));
+            assert_eq!(store.get(set_key).unwrap().0, Some(set_value.to_vec()));
             Ok(())
         })
         .unwrap();
