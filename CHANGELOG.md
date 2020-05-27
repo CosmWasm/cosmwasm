@@ -4,6 +4,8 @@
 
 **cosmwasm-vm**
 
+- The export `allocate` must not return 0 as a valid address. The contract is
+  responsible for avoiding this offset in the linear memory.
 - The import `db_read` now allocates memory for the return value as part of the
   call and returns a pointer to the value as `u32`. The return value 0 means
   _key does not exist_.
