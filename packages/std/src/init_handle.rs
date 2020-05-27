@@ -143,6 +143,39 @@ where
     }
 }
 
+// some proposed helpers for InitResponse, designed for chaining
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> InitResponse<T> {
+    pub fn with_message(mut self, msg: CosmosMsg<T>) -> Self {
+        self.messages.push(msg);
+        self
+    }
+
+    pub fn with_log<U: ToString>(mut self, key: &str, value: U) -> Self {
+        self.log.push(log(key, value));
+        self
+    }
+
+    pub fn with_data<U: Into<Binary>>(mut self, data: U) -> Self {
+        self.data = Some(data.into());
+        self
+    }
+}
+
+// other proposed helpers for InitResponse, mutating state
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> InitResponse<T> {
+    pub fn add_message(&mut self, msg: CosmosMsg<T>) {
+        self.messages.push(msg);
+    }
+
+    pub fn add_log<U: ToString>(&mut self, key: &str, value: U) {
+        self.log.push(log(key, value));
+    }
+
+    pub fn add_data<U: Into<Binary>>(&mut self, data: U) {
+        self.data = Some(data.into());
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct HandleResponse<T = Never>
 where
@@ -174,6 +207,67 @@ mod test {
     use super::*;
     use crate::errors::StdError;
     use crate::{coins, from_slice, to_vec, Uint128};
+
+    #[test]
+    fn init_response_chaining_helpers() {
+        let msg = CosmosMsg::Bank(BankMsg::Send {
+            from_address: HumanAddr::from("sender"),
+            to_address: HumanAddr::from("recipient"),
+            amount: coins(100, "test"),
+        });
+
+        let expected = InitResponse::<Never> {
+            messages: vec![msg.clone()],
+            log: vec![log("action", "demo"), log("sender", "foobar")],
+            data: Some(Binary(b"sample".to_vec())),
+        };
+
+        // this is more verbose, but may be a more readable alternative to the above constructor
+        let res: InitResponse<Never> = InitResponse::default()
+            .with_log("action", "demo")
+            .with_log("sender", &HumanAddr::from("foobar"))
+            .with_message(msg.clone())
+            .with_data(b"sample".to_vec());
+
+        assert_eq!(res, expected);
+
+        // especially when we have less data
+        let expected = InitResponse::<Never> {
+            messages: vec![],
+            log: vec![log("init", "success")],
+            data: None,
+        };
+
+        let res: InitResponse<Never> = InitResponse::default().with_log("init", "success");
+
+        assert_eq!(res, expected);
+    }
+
+    #[test]
+    fn init_response_mutating_helpers() {
+        let msg = CosmosMsg::Bank(BankMsg::Send {
+            from_address: HumanAddr::from("sender"),
+            to_address: HumanAddr::from("recipient"),
+            amount: coins(100, "test"),
+        });
+
+        let expected = InitResponse::<Never> {
+            messages: vec![msg.clone()],
+            log: vec![log("action", "demo"), log("sender", "foobar")],
+            data: Some(Binary(b"sample".to_vec())),
+        };
+
+        let mut res: InitResponse<Never> = InitResponse::default();
+        // these can be separated over various parts of the init functon
+        res.add_log("action", "demo");
+        res.add_log("sender", &HumanAddr::from("foobar"));
+        // setting the message at the end
+        res.add_message(msg.clone());
+        // and the data once we get the id
+        res.add_data(b"sample".to_vec());
+
+        assert_eq!(res, expected);
+    }
 
     #[test]
     fn log_works_for_different_types() {

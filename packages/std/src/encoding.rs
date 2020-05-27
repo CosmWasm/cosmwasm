@@ -48,6 +48,12 @@ impl From<&[u8]> for Binary {
     }
 }
 
+impl From<Vec<u8>> for Binary {
+    fn from(vec: Vec<u8>) -> Self {
+        Self(vec)
+    }
+}
+
 /// Serializes as a base64 string
 impl Serialize for Binary {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
