@@ -480,8 +480,17 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+          name: Install Rust nightly
+          command: |
+            rustup --version
+            rustup toolchain install nightly --allow-downgrade --profile minimal --component clippy
+            rustup target list --installed
+      - run:
+          name: Version information (default; stable)
+          command: rustc --version && cargo --version
+      - run:
+          name: Version information (nightly)
+          command: rustc +nightly --version && cargo +nightly --version
       - restore_cache:
           keys:
             - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
@@ -504,9 +513,13 @@ jobs:
           working_directory: ~/project/packages/storage
           command: cargo clippy --features iterator -- -D warnings
       - run:
-          name: Clippy linting on vm (use flags for Rust stable support)
+          name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --no-default-features --features "default-cranelift iterator" -- -D warnings
+          command: cargo +nightly clippy -- -D warnings
+      - run:
+          name: Clippy linting on vm (all feature flags)
+          working_directory: ~/project/packages/vm
+          command: cargo +nightly clippy --features iterator -- -D warnings
       #
       # Contracts
       #
