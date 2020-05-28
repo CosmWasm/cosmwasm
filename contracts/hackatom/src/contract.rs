@@ -93,7 +93,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)?
+        .get(CONFIG_KEY)
         .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
 
@@ -186,7 +186,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<QueryResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)?
+        .get(CONFIG_KEY)
         .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
@@ -233,11 +233,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -310,11 +306,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -392,11 +384,7 @@ mod tests {
         }
 
         // state should not change
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(
             state,

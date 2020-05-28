@@ -39,13 +39,12 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
 
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage {
-    /// Returns Err on error.
-    /// Returns Ok(None) when key does not exist.
-    /// Returns Ok(Some(Vec<u8>)) when key exists.
+    /// Returns None when key does not exist.
+    /// Returns Some(Vec<u8>) when key exists.
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>>;
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 
     #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
@@ -58,7 +57,7 @@ pub trait ReadonlyStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'a>>;
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

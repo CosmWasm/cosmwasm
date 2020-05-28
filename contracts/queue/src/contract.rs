@@ -84,8 +84,7 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
 
     let new_key = match last_item {
         None => FIRST_KEY,
-        Some(item) => {
-            let (key, _) = item?;
+        Some((key, _)) => {
             key[0] + 1 // all keys are one byte
         }
     };
@@ -103,11 +102,10 @@ fn dequeue<S: Storage, A: Api, Q: Querier>(
     let first = deps.storage.range(None, None, Order::Ascending)?.next();
 
     let mut res = HandleResponse::default();
-    if let Some(item) = first {
-        let (k, v) = item?;
+    if let Some((key, value)) = first {
         // remove from storage and return old value
-        deps.storage.remove(&k)?;
-        res.data = Some(Binary(v));
+        deps.storage.remove(&key)?;
+        res.data = Some(Binary(value));
         Ok(res)
     } else {
         Ok(res)
@@ -134,7 +132,7 @@ fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResul
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)?
-        .map(|item| item.and_then(|(_, v)| from_slice(&v)))
+        .map(|(_, v)| from_slice(&v))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
     Ok(Binary(to_vec(&SumResponse { sum })?))
@@ -148,7 +146,7 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     for val in deps
         .storage
         .range(None, None, Order::Ascending)?
-        .map(|item| item.and_then(|(_, v)| from_slice::<Item>(&v)))
+        .map(|(_, v)| from_slice::<Item>(&v))
     {
         // this returns error on parse error
         let my_val = val?.value;
@@ -157,8 +155,9 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
             .storage
             .range(None, None, Order::Ascending)?
             // get value. ignore parse errors, just count as 0
-            .map(|item| {
-                item.and_then(|(_, v)| from_slice::<Item>(&v).map(|v| v.value))
+            .map(|(_, v)| {
+                from_slice::<Item>(&v)
+                    .map(|v| v.value)
                     .expect("error in item")
             })
             .filter(|v| *v > my_val)

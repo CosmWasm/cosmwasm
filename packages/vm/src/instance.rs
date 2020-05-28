@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
@@ -12,11 +13,11 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    move_into_context, move_out_of_context, setup_context, with_querier_from_context,
-    with_storage_from_context,
+    move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
+    with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{make_instantiation_err, VmResult};
+use crate::errors::{make_instantiation_err, CommunicationError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -65,13 +66,11 @@ where
         import_obj.extend(imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
-                // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
-                //   value region too small: -1_000_001
-                //   key does not exist: -1_001_001
-                // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
-                    do_read::<S, Q>(ctx, key_ptr, value_ptr)
+                // Returns 0 if key does not exist and pointer to result region otherwise.
+                // Ownership of the key pointer is not transferred to the host.
+                // Ownership of the value pointer is transferred to the contract.
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<u32> {
+                    do_read::<S, Q>(ctx, key_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
@@ -119,11 +118,12 @@ where
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Get next element of iterator with ID `iterator_id`.
-                // Expects Regions in key_ptr and value_ptr, in which the result is written.
-                // An empty key value (Region of length 0) means no more element.
-                // Ownership of both key and value pointer is not transferred to the host.
-                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
-                    do_next::<S, Q>(ctx, iterator_id, key_ptr, value_ptr)
+                // Creates a region containing both key and value and returns its address.
+                // Ownership of the result region is transferred to the contract.
+                // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
+                // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
+                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32| -> VmResult<u32> {
+                    do_next::<S, Q>(ctx, iterator_id)
                 }),
             },
         });
@@ -141,6 +141,8 @@ where
     ) -> Self {
         set_gas_limit(wasmer_instance.as_mut(), gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
+        let instance_ptr = NonNull::from(wasmer_instance.as_ref());
+        set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
             inner: wasmer_instance,
@@ -202,6 +204,9 @@ where
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(to_u32(size)?)?;
+        if ptr == 0 {
+            return Err(CommunicationError::zero_address().into());
+        }
         Ok(ptr)
     }
 
@@ -592,7 +597,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 65257);
+        assert_eq!(init_used, 65186);
     }
 
     #[test]
@@ -616,7 +621,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 95374);
+        assert_eq!(handle_used, 96570);
     }
 
     #[test]
@@ -651,6 +656,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 32750);
+        assert_eq!(query_used, 32552);
     }
 }

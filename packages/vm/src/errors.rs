@@ -10,6 +10,11 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Error in guest/host communication: {}", source))]
+    CommunicationErr {
+        #[snafu(backtrace)]
+        source: CommunicationError,
+    },
     #[snafu(display("Error compiling Wasm: {}", msg))]
     CompileErr {
         msg: String,
@@ -199,6 +204,28 @@ pub fn make_static_validation_err<S: Into<String>>(msg: S) -> VmError {
 
 pub fn make_uninitialized_context_data<S: Into<String>>(kind: S) -> VmError {
     UninitializedContextData { kind: kind.into() }.build()
+}
+
+/// An error in the communcation between contract and host. Those happen around imports and exports.
+#[derive(Debug, Snafu)]
+#[non_exhaustive]
+pub enum CommunicationError {
+    #[snafu(display("Got a zero Wasm address"))]
+    ZeroAddress { backtrace: snafu::Backtrace },
+}
+
+impl CommunicationError {
+    pub fn zero_address() -> Self {
+        ZeroAddress {}.build()
+    }
+}
+
+impl From<CommunicationError> for VmError {
+    fn from(communication_error: CommunicationError) -> Self {
+        VmError::CommunicationErr {
+            source: communication_error,
+        }
+    }
 }
 
 #[derive(Debug, Snafu)]
@@ -423,6 +450,18 @@ mod test {
         let err = make_uninitialized_context_data("foo");
         match err {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
+            _ => panic!("Unexpected error"),
+        }
+    }
+
+    // CommunicationError constructors
+
+    #[allow(unreachable_patterns)] // since CommunicationError is non_exhaustive, this should not create a warning. But it does :(
+    #[test]
+    fn communication_error_zero_address() {
+        let err = CommunicationError::zero_address();
+        match err {
+            CommunicationError::ZeroAddress { .. } => {}
             _ => panic!("Unexpected error"),
         }
     }
