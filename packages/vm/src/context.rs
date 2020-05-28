@@ -19,7 +19,7 @@ use cosmwasm_std::KV;
 
 #[cfg(feature = "iterator")]
 use crate::errors::{make_iterator_does_not_exist, FfiResult};
-use crate::errors::{make_uninitialized_context_data, VmError, VmResult};
+use crate::errors::{make_uninitialized_context_data, VmResult};
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIteratorItem;
 use crate::traits::{Querier, Storage};
@@ -30,6 +30,7 @@ pub struct GasState {
     /// Gas limit for the computation.
     gas_limit: u64,
     /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
+    #[cfg(feature = "default-singlepass")]
     sdk_used_gas: u64,
 }
 
@@ -37,10 +38,12 @@ impl GasState {
     fn with_limit(gas_limit: u64) -> Self {
         Self {
             gas_limit,
+            #[cfg(feature = "default-singlepass")]
             sdk_used_gas: 0,
         }
     }
 
+    #[cfg(feature = "default-singlepass")]
     fn use_gas(&mut self, amount: u64) {
         self.sdk_used_gas += amount;
     }
@@ -163,18 +166,25 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
-pub fn get_gas_status<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
+pub fn get_gas_state<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
     &mut get_context_data::<S, Q>(ctx).gas_state
 }
 
+#[cfg(feature = "default-singlepass")]
 pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
     use crate::backends::get_gas_left;
+    use crate::VmError;
 
     let ctx_data = get_context_data::<S, Q>(ctx);
     if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
         let instance = unsafe { instance_ptr.as_mut() };
 
-        let gas_status = get_gas_status::<S, Q>(ctx);
+        let gas_status = get_gas_state::<S, Q>(ctx);
+        println!(
+            "####################### {} {}",
+            gas_status.gas_limit,
+            get_gas_left(instance)
+        );
         let wasmer_used_gas = gas_status.gas_limit - get_gas_left(instance);
 
         gas_status.use_gas(used_gas);
@@ -186,6 +196,11 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
     } else {
         Err(make_uninitialized_context_data("wasmer_instance"))
     }
+}
+
+#[cfg(feature = "default-cranelift")]
+pub fn try_consume_gas<S: Storage, Q: Querier>(_ctx: &mut Ctx, _used_gas: u64) -> VmResult<()> {
+    Ok(())
 }
 
 /// Add the iterator to the context's data. A new ID is assigned and returned.
