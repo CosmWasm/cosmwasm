@@ -31,7 +31,7 @@ pub struct GasState {
     gas_limit: u64,
     /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
     #[cfg(feature = "default-singlepass")]
-    sdk_used_gas: u64,
+    externally_used_gas: u64,
 }
 
 impl GasState {
@@ -39,13 +39,13 @@ impl GasState {
         Self {
             gas_limit,
             #[cfg(feature = "default-singlepass")]
-            sdk_used_gas: 0,
+            externally_used_gas: 0,
         }
     }
 
     #[cfg(feature = "default-singlepass")]
     fn use_gas(&mut self, amount: u64) {
-        self.sdk_used_gas += amount;
+        self.externally_used_gas += amount;
     }
 
     pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
@@ -188,7 +188,7 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
         let wasmer_used_gas = gas_status.gas_limit - get_gas_left(instance);
 
         gas_status.use_gas(used_gas);
-        if gas_status.sdk_used_gas + wasmer_used_gas > gas_status.gas_limit {
+        if gas_status.externally_used_gas + wasmer_used_gas > gas_status.gas_limit {
             Err(VmError::GasDepletion)
         } else {
             Ok(())
