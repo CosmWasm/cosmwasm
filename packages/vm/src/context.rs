@@ -180,11 +180,6 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
         let instance = unsafe { instance_ptr.as_mut() };
 
         let gas_status = get_gas_state::<S, Q>(ctx);
-        println!(
-            "####################### {} {}",
-            gas_status.gas_limit,
-            get_gas_left(instance)
-        );
         let wasmer_used_gas = gas_status.gas_limit - get_gas_left(instance);
 
         gas_status.use_gas(used_gas);
