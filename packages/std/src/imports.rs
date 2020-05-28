@@ -72,7 +72,7 @@ impl ReadonlyStorage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>>>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV>>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -142,7 +142,7 @@ struct ExternalIterator {
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
-    type Item = StdResult<KV>;
+    type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
@@ -163,7 +163,7 @@ impl Iterator for ExternalIterator {
         kv.truncate(kv.len() - 4);
         let key = kv.split_off(kv.len() - keylen);
         let value = kv;
-        Some(Ok((key, value)))
+        Some((key, value))
     }
 }
 

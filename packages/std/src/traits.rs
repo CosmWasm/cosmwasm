@@ -57,7 +57,7 @@ pub trait ReadonlyStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'a>>;
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

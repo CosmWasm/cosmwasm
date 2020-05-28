@@ -6,6 +6,8 @@
 
 - `ReadonlyStorage::get` and all its implementations now return
   `Option<Vec<u8>>`.
+- `ReadonlyStorage::range` and all its implementations now return an iterator
+  over `Option<KV>` instead of `Option<StdResult<KV>>`.
 
 **cosmwasm-vm**
 

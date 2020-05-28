@@ -63,7 +63,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -176,7 +176,7 @@ enum Delta {
 struct MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
     left: Peekable<L>,
     right: Peekable<R>,
@@ -187,7 +187,7 @@ where
 impl<'a, L, R> MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
     fn new(left: L, right: R, order: Order) -> Self {
         MergeOverlay {
@@ -197,7 +197,7 @@ where
         }
     }
 
-    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<StdResult<KV>> {
+    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<KV> {
         // compare keys - result is such that Ordering::Less => return left side
         let order = match self.order {
             Order::Ascending => lkey.cmp(&rkey),
@@ -217,10 +217,10 @@ where
     }
 
     /// take_left must only be called when we know self.left.next() will return Some
-    fn take_left(&mut self) -> Option<StdResult<KV>> {
+    fn take_left(&mut self) -> Option<KV> {
         let (lkey, lval) = self.left.next().unwrap();
         match lval {
-            Delta::Set { value } => Some(Ok((lkey.clone(), value.clone()))),
+            Delta::Set { value } => Some((lkey.clone(), value.clone())),
             Delta::Delete {} => self.next(),
         }
     }
@@ -230,16 +230,16 @@ where
 impl<'a, L, R> Iterator for MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
-    type Item = StdResult<KV>;
+    type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
         let (left, right) = (self.left.peek(), self.right.peek());
         match (left, right) {
             (Some(litem), Some(ritem)) => {
                 let (lkey, _) = litem;
-                let (rkey, _) = ritem.as_ref().expect("error items not yet supported");
+                let (rkey, _) = ritem;
 
                 // we just use cloned keys to avoid double mutable references
                 // (we must release the return value from peek, before beginning to call next or other mut methods
@@ -322,7 +322,7 @@ mod test {
         // unbounded
         {
             let iter = store.range(None, None, Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -336,7 +336,7 @@ mod test {
         // unbounded (descending)
         {
             let iter = store.range(None, None, Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -352,7 +352,7 @@ mod test {
             let iter = store
                 .range(Some(b"f"), Some(b"n"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
@@ -361,7 +361,7 @@ mod test {
             let iter = store
                 .range(Some(b"air"), Some(b"loop"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -376,7 +376,7 @@ mod test {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -385,7 +385,7 @@ mod test {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -394,7 +394,7 @@ mod test {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -403,14 +403,14 @@ mod test {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // right unbounded
         {
             let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -423,7 +423,7 @@ mod test {
         // right unbounded (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -436,14 +436,14 @@ mod test {
         // left unbounded
         {
             let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // left unbounded (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
