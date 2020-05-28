@@ -48,7 +48,7 @@ pub struct InvestmentInfo {
     pub validator: HumanAddr,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum
     /// that can be unbonded (to avoid needless staking tx)
-    pub min_withdrawl: Uint128,
+    pub min_withdrawal: Uint128,
 }
 
 /// Supply is dynamic and tracks the current supply of staked and ERC20 tokens.

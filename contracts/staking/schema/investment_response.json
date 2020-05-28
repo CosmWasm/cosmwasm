@@ -4,7 +4,7 @@
   "type": "object",
   "required": [
     "exit_tax",
-    "min_withdrawl",
+    "min_withdrawal",
     "nominal_value",
     "owner",
     "staked_tokens",
@@ -20,7 +20,7 @@
         }
       ]
     },
-    "min_withdrawl": {
+    "min_withdrawal": {
       "description": "This is the minimum amount we will pull out to reinvest, as well as a minumum that can be unbonded (to avoid needless staking tx)",
       "allOf": [
         {

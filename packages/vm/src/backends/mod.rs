@@ -16,7 +16,7 @@ pub fn compiler_for_backend(backend: &str) -> Option<Box<dyn Compiler>> {
 }
 
 #[cfg(feature = "default-cranelift")]
-pub use cranelift::{backend, compile, get_gas, set_gas};
+pub use cranelift::{backend, compile, get_gas_left, set_gas_limit};
 
 #[cfg(feature = "default-singlepass")]
-pub use singlepass::{backend, compile, get_gas, set_gas};
+pub use singlepass::{backend, compile, get_gas_left, set_gas_limit};

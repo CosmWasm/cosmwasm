@@ -67,7 +67,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
         Ok(state)
     })?;
     Ok(HandleResponse {
-        log: vec![log("action", "change_owner"), log("owner", owner.as_str())],
+        log: vec![log("action", "change_owner"), log("owner", owner)],
         ..HandleResponse::default()
     })
 }
@@ -286,6 +286,6 @@ mod tests {
         )
         .unwrap();
         let value: CustomResponse = from_binary(&res).unwrap();
-        assert_eq!("DEMO ONE", value.msg.as_str());
+        assert_eq!(value.msg, "DEMO ONE");
     }
 }

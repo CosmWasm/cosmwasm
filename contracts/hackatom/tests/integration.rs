@@ -23,7 +23,10 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     from_slice,
-    testing::{handle, init, mock_env, mock_instance, mock_instance_with_balances, query, test_io},
+    testing::{
+        handle, init, mock_env, mock_instance, mock_instance_with_balances, query, test_io,
+        MOCK_CONTRACT_ADDR,
+    },
     Api, ReadonlyStorage,
 };
 
@@ -34,6 +37,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/ha
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
+    assert_eq!(deps.required_features.len(), 0);
+
     let verifier = HumanAddr(String::from("verifies"));
     let beneficiary = HumanAddr(String::from("benefits"));
     let creator = HumanAddr(String::from("creator"));
@@ -158,7 +163,7 @@ fn handle_release_works() {
     assert_eq!(
         msg,
         &BankMsg::Send {
-            from_address: HumanAddr("cosmos2contract".to_string()),
+            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: beneficiary,
             amount: coins(1000, "earth"),
         }
@@ -287,7 +292,7 @@ mod singlepass_tests {
             &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
-        assert_eq!(deps.get_gas(), 0);
+        assert_eq!(deps.get_gas_left(), 0);
     }
 
     #[test]
@@ -307,7 +312,7 @@ mod singlepass_tests {
             &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
-        assert_eq!(deps.get_gas(), 0);
+        assert_eq!(deps.get_gas_left(), 0);
     }
 
     #[test]
@@ -327,7 +332,7 @@ mod singlepass_tests {
             &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
-        assert_eq!(deps.get_gas(), 0);
+        assert_eq!(deps.get_gas_left(), 0);
 
         // Ran out of gas before consuming a significant amount of memory
         assert!(deps.get_memory_size() < 2 * 1024 * 1024);
@@ -343,14 +348,14 @@ mod singlepass_tests {
         assert_eq!(0, init_res.messages.len());
 
         let handle_env = mock_env(&deps.api, creator.as_str(), &[]);
-        let gas_before = deps.get_gas();
+        let gas_before = deps.get_gas_left();
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle::<_, _, _, Never>(
             &mut deps,
             &handle_env,
             &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
         );
-        let gas_used = gas_before - deps.get_gas();
+        let gas_used = gas_before - deps.get_gas_left();
 
         // TODO: this must fail, see https://github.com/CosmWasm/cosmwasm/issues/81
         assert_eq!(handle_res.is_err(), false);

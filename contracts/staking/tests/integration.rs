@@ -55,17 +55,16 @@ fn initialization_with_missing_validator() {
         decimals: 9,
         validator: HumanAddr::from("my-validator"),
         exit_tax: Decimal::percent(2),
-        min_withdrawl: Uint128(50),
+        min_withdrawal: Uint128(50),
     };
     let env = mock_env(&deps.api, &creator, &[]);
 
     // make sure we can init with this
     let res: StdResult<InitResponse> = init(&mut deps, env, msg.clone());
     match res.unwrap_err() {
-        StdError::GenericErr { msg, .. } => assert_eq!(
-            msg.as_str(),
-            "my-validator is not in the current validator set"
-        ),
+        StdError::GenericErr { msg, .. } => {
+            assert_eq!(msg, "my-validator is not in the current validator set")
+        }
         _ => panic!("expected unregistered validator error"),
     }
 }
@@ -84,6 +83,8 @@ fn proper_initialization() {
         &[],
     );
     let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
+    assert_eq!(deps.required_features.len(), 1);
+    assert!(deps.required_features.contains("staking"));
 
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
@@ -92,7 +93,7 @@ fn proper_initialization() {
         decimals: 9,
         validator: HumanAddr::from("my-validator"),
         exit_tax: Decimal::percent(2),
-        min_withdrawl: Uint128(50),
+        min_withdrawal: Uint128(50),
     };
     let env = mock_env(&deps.api, &creator, &[]);
 
@@ -135,7 +136,7 @@ fn proper_initialization() {
     assert_eq!(&invest.owner, &creator);
     assert_eq!(&invest.validator, &msg.validator);
     assert_eq!(invest.exit_tax, msg.exit_tax);
-    assert_eq!(invest.min_withdrawl, msg.min_withdrawl);
+    assert_eq!(invest.min_withdrawal, msg.min_withdrawal);
 
     assert_eq!(invest.token_supply, Uint128(0));
     assert_eq!(invest.staked_tokens, coin(0, "stake"));

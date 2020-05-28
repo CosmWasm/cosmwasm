@@ -1,5 +1,6 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
@@ -7,15 +8,16 @@ use wasmer_runtime_core::{
     module::Module,
     typed_func::{Wasm, WasmTypeList},
     vm::Ctx,
+    Instance as WasmerInstance,
 };
 
-use crate::backends::{compile, get_gas, set_gas};
+use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    move_into_context, move_out_of_context, setup_context, with_querier_from_context,
-    with_storage_from_context,
+    move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
+    with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{make_instantiation_err, VmResult};
+use crate::errors::{make_instantiation_err, CommunicationError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -28,7 +30,10 @@ use crate::traits::{Api, Extern, Querier, Storage};
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
-    wasmer_instance: wasmer_runtime_core::instance::Instance,
+    /// We put this instance in a box to maintain a constant memory address for the entire
+    /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
+    /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
+    inner: Box<WasmerInstance>,
     pub api: A,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
@@ -61,13 +66,11 @@ where
         import_obj.extend(imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
-                // A prepared and sufficiently large memory Region is expected at value_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns negative value on error. An incomplete list of error codes is:
-                //   value region too small: -1_000_001
-                //   key does not exist: -1_001_001
-                // Ownership of both input and output pointer is not transferred to the host.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
-                    do_read::<S, Q>(ctx, key_ptr, value_ptr)
+                // Returns 0 if key does not exist and pointer to result region otherwise.
+                // Ownership of the key pointer is not transferred to the host.
+                // Ownership of the value pointer is transferred to the contract.
+                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<u32> {
+                    do_read::<S, Q>(ctx, key_ptr)
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
@@ -115,31 +118,34 @@ where
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Get next element of iterator with ID `iterator_id`.
-                // Expects Regions in key_ptr and value_ptr, in which the result is written.
-                // An empty key value (Region of length 0) means no more element.
-                // Ownership of both key and value pointer is not transferred to the host.
-                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
-                    do_next::<S, Q>(ctx, iterator_id, key_ptr, value_ptr)
+                // Creates a region containing both key and value and returns its address.
+                // Ownership of the result region is transferred to the contract.
+                // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
+                // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
+                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32| -> VmResult<u32> {
+                    do_next::<S, Q>(ctx, iterator_id)
                 }),
             },
         });
 
-        let wasmer_instance = module.instantiate(&import_obj).map_err(|original| {
+        let wasmer_instance = Box::from(module.instantiate(&import_obj).map_err(|original| {
             make_instantiation_err(format!("Error instantiating module: {:?}", original))
-        })?;
+        })?);
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }
 
     pub(crate) fn from_wasmer(
-        mut wasmer_instance: wasmer_runtime_core::Instance,
+        mut wasmer_instance: Box<WasmerInstance>,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas(&mut wasmer_instance, gas_limit);
-        let required_features = required_features_from_wasmer_instance(&wasmer_instance);
+        set_gas_limit(wasmer_instance.as_mut(), gas_limit);
+        let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
+        let instance_ptr = NonNull::from(wasmer_instance.as_ref());
+        set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
         Instance {
-            wasmer_instance,
+            inner: wasmer_instance,
             api: deps.api,
             required_features,
             type_storage: PhantomData::<S> {},
@@ -149,11 +155,9 @@ where
 
     /// Takes ownership of instance and decomposes it into its components.
     /// The components we want to preserve are returned, the rest is dropped.
-    pub(crate) fn recycle(
-        mut instance: Self,
-    ) -> (wasmer_runtime_core::Instance, Option<Extern<S, A, Q>>) {
+    pub(crate) fn recycle(mut instance: Self) -> (Box<WasmerInstance>, Option<Extern<S, A, Q>>) {
         let ext = if let (Some(storage), Some(querier)) =
-            move_out_of_context(instance.wasmer_instance.context_mut())
+            move_out_of_context(instance.inner.context_mut())
         {
             Some(Extern {
                 storage,
@@ -163,7 +167,7 @@ where
         } else {
             None
         };
-        (instance.wasmer_instance, ext)
+        (instance.inner, ext)
     }
 
     /// Returns the size of the default memory in bytes.
@@ -171,20 +175,28 @@ where
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
     pub fn get_memory_size(&self) -> u64 {
-        (get_memory_info(self.wasmer_instance.context()).size as u64) * WASM_PAGE_SIZE
+        (get_memory_info(self.inner.context()).size as u64) * WASM_PAGE_SIZE
     }
 
-    /// Returns the currently remaining gas
+    /// Returns the currently remaining gas.
+    pub fn get_gas_left(&self) -> u64 {
+        get_gas_left(&self.inner)
+    }
+
+    /// Returns the currently remaining gas.
+    ///
+    /// DEPRECATED: renamed to `get_gas_left`.
+    #[deprecated(note = "renamed to `get_gas_left`")]
     pub fn get_gas(&self) -> u64 {
-        get_gas(&self.wasmer_instance)
+        self.get_gas_left()
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
+        with_storage_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(self.wasmer_instance.context_mut(), func)
+        with_querier_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -192,6 +204,9 @@ where
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(to_u32(size)?)?;
+        if ptr == 0 {
+            return Err(CommunicationError::zero_address().into());
+        }
         Ok(ptr)
     }
 
@@ -206,12 +221,12 @@ where
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(self.wasmer_instance.context(), region_ptr, max_length)
+        read_region(self.inner.context(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(self.wasmer_instance.context(), region_ptr, data)?;
+        write_region(self.inner.context(), region_ptr, data)?;
         Ok(())
     }
 
@@ -220,7 +235,7 @@ where
         Args: WasmTypeList,
         Rets: WasmTypeList,
     {
-        let function = self.wasmer_instance.exports.get(name)?;
+        let function = self.inner.exports.get(name)?;
         Ok(function)
     }
 }
@@ -244,7 +259,6 @@ mod test {
     static KIB: usize = 1024;
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-    static REFLECT_CONTRACT: &[u8] = include_bytes!("../../../contracts/reflect/contract.wasm");
     static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
     #[test]
@@ -252,11 +266,6 @@ mod test {
         let deps = mock_dependencies(20, &[]);
         let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
         assert_eq!(instance.required_features.len(), 0);
-
-        let deps = mock_dependencies(20, &[]);
-        let instance = Instance::from_code(REFLECT_CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
-        assert_eq!(instance.required_features.len(), 1);
-        assert!(instance.required_features.contains("staking"));
     }
 
     #[test]
@@ -442,7 +451,7 @@ mod test {
     #[cfg(feature = "default-cranelift")]
     fn set_get_and_gas_cranelift() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
-        let orig_gas = instance.get_gas();
+        let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 1_000_000); // We expect a dummy value for cranelift
     }
 
@@ -450,7 +459,7 @@ mod test {
     #[cfg(feature = "default-singlepass")]
     fn set_get_and_gas_singlepass() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
-        let orig_gas = instance.get_gas();
+        let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
 
@@ -600,7 +609,7 @@ mod singlepass_test {
     #[test]
     fn contract_deducts_gas_init() {
         let mut instance = mock_instance(&CONTRACT, &[]);
-        let orig_gas = instance.get_gas();
+        let orig_gas = instance.get_gas_left();
 
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
@@ -609,9 +618,9 @@ mod singlepass_test {
             .unwrap()
             .unwrap();
 
-        let init_used = orig_gas - instance.get_gas();
+        let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 65257);
+        assert_eq!(init_used, 65186);
     }
 
     #[test]
@@ -626,16 +635,16 @@ mod singlepass_test {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_handle = instance.get_gas();
+        let gas_before_handle = instance.get_gas_left();
         let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         call_handle::<_, _, _, Never>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
-        let handle_used = gas_before_handle - instance.get_gas();
+        let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 95374);
+        assert_eq!(handle_used, 96570);
     }
 
     #[test]
@@ -661,15 +670,15 @@ mod singlepass_test {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_query = instance.get_gas();
+        let gas_before_query = instance.get_gas_left();
         // we need to encode the key in base64
         let msg = r#"{"verifier":{}}"#.as_bytes();
         let res = call_query(&mut instance, msg).unwrap();
         let answer = res.unwrap();
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
-        let query_used = gas_before_query - instance.get_gas();
+        let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 32750);
+        assert_eq!(query_used, 32552);
     }
 }

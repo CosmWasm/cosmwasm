@@ -34,7 +34,7 @@ echo "Updating old version $OLD to new version $NEW ..."
 
 FILES_MODIFIED=()
 
-for package_dir in packages/*; do
+for package_dir in packages/*/; do
   CARGO_TOML="$package_dir/Cargo.toml"
   sed -i '' -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
   FILES_MODIFIED+=("$CARGO_TOML")
@@ -43,7 +43,7 @@ done
 cargo +nightly build
 FILES_MODIFIED+=("Cargo.lock")
 
-for contract_dir in contracts/*; do
+for contract_dir in contracts/*/; do
   CARGO_TOML="$contract_dir/Cargo.toml"
   CARGO_LOCK="$contract_dir/Cargo.lock"
 

@@ -61,6 +61,6 @@ mod mock;
 pub mod testing {
     pub use crate::mock::{
         mock_dependencies, mock_dependencies_with_balances, mock_env, BankQuerier, MockApi,
-        MockQuerier, MockStorage, StakingQuerier,
+        MockQuerier, MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
 }

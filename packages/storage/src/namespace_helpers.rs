@@ -6,7 +6,7 @@ pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
     namespace: &[u8],
     key: &[u8],
-) -> StdResult<Option<Vec<u8>>> {
+) -> Option<Vec<u8>> {
     storage.get(&concat(namespace, key))
 }
 
@@ -41,7 +41,7 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     start: Option<&[u8]>,
     end: Option<&[u8]>,
     order: Order,
-) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'a>> {
+) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>> {
     // prepare start, end with prefix
     let start = match start {
         Some(s) => concat(namespace, s),
@@ -58,10 +58,7 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
 
     // make a copy for the closure to handle lifetimes safely
     let prefix = namespace.to_vec();
-    let mapped = base_iterator.map(move |item| match item {
-        Ok((k, v)) => Ok((trim(&prefix, &k), v)),
-        Err(e) => Err(e),
-    });
+    let mapped = base_iterator.map(move |(k, v)| (trim(&prefix, &k), v));
     Ok(Box::new(mapped))
 }
 
@@ -101,13 +98,13 @@ mod test {
         let prefix = to_length_prefixed(b"foo");
 
         set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha").unwrap();
-        let rfoo = get_with_prefix(&storage, &prefix, b"bar").unwrap();
-        assert_eq!(Some(b"gotcha".to_vec()), rfoo);
+        let rfoo = get_with_prefix(&storage, &prefix, b"bar");
+        assert_eq!(rfoo, Some(b"gotcha".to_vec()));
 
         // no collisions with other prefixes
         let other_prefix = to_length_prefixed(b"fo");
-        let collision = get_with_prefix(&storage, &other_prefix, b"obar").unwrap();
-        assert_eq!(None, collision);
+        let collision = get_with_prefix(&storage, &other_prefix, b"obar");
+        assert_eq!(collision, None);
     }
 
     #[test]
@@ -126,9 +123,9 @@ mod test {
 
         // ensure we get proper result from prefixed_range iterator
         let mut iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending).unwrap();
-        let first = iter.next().unwrap().unwrap();
+        let first = iter.next().unwrap();
         assert_eq!(first, (b"snowy".to_vec(), b"day".to_vec()));
-        let second = iter.next().unwrap().unwrap();
+        let second = iter.next().unwrap();
         assert_eq!(second, (b"bar".to_vec(), b"none".to_vec()));
         assert!(iter.next().is_none());
 
@@ -138,7 +135,7 @@ mod test {
 
         // foo comes first
         let mut iter = storage.range(None, None, Order::Ascending).unwrap();
-        let first = iter.next().unwrap().unwrap();
+        let first = iter.next().unwrap();
         let expected_key = concat(&prefix, b"bar");
         assert_eq!(first, (expected_key, b"none".to_vec()));
     }
@@ -160,7 +157,7 @@ mod test {
 
         // ensure we get proper result from prefixed_range iterator
         let iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending).unwrap();
-        let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+        let elements: Vec<KV> = iter.collect();
         assert_eq!(
             elements,
             vec![
@@ -189,7 +186,6 @@ mod test {
         let res: Vec<KV> =
             range_with_prefix(&storage, &prefix, Some(b"b"), Some(b"c"), Order::Ascending)
                 .unwrap()
-                .filter_map(StdResult::ok)
                 .collect();
         assert_eq!(res.len(), 1);
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
@@ -203,14 +199,12 @@ mod test {
             Order::Ascending,
         )
         .unwrap()
-        .filter_map(StdResult::ok)
         .collect();
         assert_eq!(res.len(), 0);
 
         let res: Vec<KV> =
             range_with_prefix(&storage, &prefix, Some(b"ant"), None, Order::Ascending)
                 .unwrap()
-                .filter_map(StdResult::ok)
                 .collect();
         assert_eq!(res.len(), 2);
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
