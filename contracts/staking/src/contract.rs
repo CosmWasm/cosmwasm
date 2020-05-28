@@ -42,7 +42,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         exit_tax: msg.exit_tax,
         bond_denom: denom,
         validator: msg.validator,
-        min_withdrawl: msg.min_withdrawl,
+        min_withdrawal: msg.min_withdrawal,
     };
     invest_info(&mut deps.storage).save(&invest)?;
 
@@ -89,9 +89,9 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
         messages: vec![],
         log: vec![
             log("action", "transfer"),
-            log("from", deps.api.human_address(&sender_raw)?.as_str()),
-            log("to", recipient.as_str()),
-            log("amount", &send.to_string()),
+            log("from", deps.api.human_address(&sender_raw)?),
+            log("to", recipient),
+            log("amount", send),
         ],
         data: None,
     };
@@ -179,9 +179,9 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
         .into()],
         log: vec![
             log("action", "bond"),
-            log("from", deps.api.human_address(&sender_raw)?.as_str()),
-            log("bonded", &payment.amount.to_string()),
-            log("minted", &to_mint.to_string()),
+            log("from", deps.api.human_address(&sender_raw)?),
+            log("bonded", payment.amount),
+            log("minted", to_mint),
         ],
         data: None,
     };
@@ -197,10 +197,10 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
 
     let invest = invest_info_read(&deps.storage).load()?;
     // ensure it is big enough to care
-    if amount < invest.min_withdrawl {
+    if amount < invest.min_withdrawal {
         return Err(generic_err(format!(
             "Must unbond at least {} {}",
-            invest.min_withdrawl, invest.bond_denom
+            invest.min_withdrawal, invest.bond_denom
         )));
     }
     // calculate tax and remainer to unbond
@@ -249,9 +249,9 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
         .into()],
         log: vec![
             log("action", "unbond"),
-            log("to", deps.api.human_address(&sender_raw)?.as_str()),
-            log("unbonded", &unbond.to_string()),
-            log("burnt", &amount.to_string()),
+            log("to", deps.api.human_address(&sender_raw)?),
+            log("unbonded", unbond),
+            log("burnt", amount),
         ],
         data: None,
     };
@@ -268,7 +268,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     let mut balance = deps
         .querier
         .query_balance(&contract_human, &invest.bond_denom)?;
-    if balance.amount < invest.min_withdrawl {
+    if balance.amount < invest.min_withdrawal {
         return Err(generic_err(
             "Insufficient balance in contract to process claim",
         ));
@@ -301,8 +301,8 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
         .into()],
         log: vec![
             log("action", "claim"),
-            log("from", sender_human.as_str()),
-            log("amount", &to_send.to_string()),
+            log("from", sender_human),
+            log("amount", to_send),
         ],
         data: None,
     };
@@ -361,13 +361,13 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     // if there is not enough funds, we just return a no-op
     match total_supply(&mut deps.storage).update(|mut supply| {
         balance.amount = (balance.amount - supply.claims)?;
-        // this just triggers the "no op" case if we don't have min_withdrawl left to reinvest
-        (balance.amount - invest.min_withdrawl)?;
+        // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
+        (balance.amount - invest.min_withdrawal)?;
         supply.bonded += balance.amount;
         Ok(supply)
     }) {
         Ok(_) => {}
-        // if it is below the minimum, we do a no-op (do not revert other state from withdrawl)
+        // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
         Err(StdError::Underflow { .. }) => return Ok(HandleResponse::default()),
         Err(e) => return Err(e),
     }
@@ -379,10 +379,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
             amount: balance.clone(),
         }
         .into()],
-        log: vec![
-            log("action", "reinvest"),
-            log("bonded", &balance.amount.to_string()),
-        ],
+        log: vec![log("action", "reinvest"), log("bonded", balance.amount)],
         data: None,
     };
     Ok(res)
@@ -439,7 +436,7 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
         owner: deps.api.human_address(&invest.owner)?,
         exit_tax: invest.exit_tax,
         validator: invest.validator,
-        min_withdrawl: invest.min_withdrawl,
+        min_withdrawal: invest.min_withdrawal,
         token_supply: supply.issued,
         staked_tokens: coin(supply.bonded.u128(), &invest.bond_denom),
         nominal_value: if supply.issued.is_zero() {
@@ -454,11 +451,9 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockQuerier};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MockQuerier, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{coins, from_binary, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
-
-    const CONTRACT_ADDR: &str = "cosmos2contract";
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
         Validator {
@@ -474,7 +469,7 @@ mod tests {
         let accumulated_rewards = coin(0, &amount.denom);
         FullDelegation {
             validator: addr.into(),
-            delegator: CONTRACT_ADDR.into(),
+            delegator: HumanAddr::from(MOCK_CONTRACT_ADDR),
             amount,
             can_redelegate,
             accumulated_rewards,
@@ -495,14 +490,14 @@ mod tests {
 
     const DEFAULT_VALIDATOR: &str = "default-validator";
 
-    fn default_init(tax_percent: u64, min_withdrawl: u128) -> InitMsg {
+    fn default_init(tax_percent: u64, min_withdrawal: u128) -> InitMsg {
         InitMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 9,
             validator: HumanAddr::from(DEFAULT_VALIDATOR),
             exit_tax: Decimal::percent(tax_percent),
-            min_withdrawl: Uint128(min_withdrawl),
+            min_withdrawal: Uint128(min_withdrawal),
         }
     }
 
@@ -543,17 +538,16 @@ mod tests {
             decimals: 9,
             validator: HumanAddr::from("my-validator"),
             exit_tax: Decimal::percent(2),
-            min_withdrawl: Uint128(50),
+            min_withdrawal: Uint128(50),
         };
         let env = mock_env(&deps.api, &creator, &[]);
 
         // make sure we can init with this
         let res = init(&mut deps, env, msg.clone());
         match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(
-                msg.as_str(),
-                "my-validator is not in the current validator set"
-            ),
+            StdError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "my-validator is not in the current validator set")
+            }
             _ => panic!("expected unregistered validator error"),
         }
     }
@@ -578,7 +572,7 @@ mod tests {
             decimals: 0,
             validator: HumanAddr::from("my-validator"),
             exit_tax: Decimal::percent(2),
-            min_withdrawl: Uint128(50),
+            min_withdrawal: Uint128(50),
         };
         let env = mock_env(&deps.api, &creator, &[]);
 
@@ -604,7 +598,7 @@ mod tests {
         assert_eq!(&invest.owner, &creator);
         assert_eq!(&invest.validator, &msg.validator);
         assert_eq!(invest.exit_tax, msg.exit_tax);
-        assert_eq!(invest.min_withdrawl, msg.min_withdrawl);
+        assert_eq!(invest.min_withdrawal, msg.min_withdrawal);
 
         assert_eq!(invest.token_supply, Uint128(0));
         assert_eq!(invest.staked_tokens, coin(0, "stake"));
@@ -735,7 +729,7 @@ mod tests {
         // try to bond and make sure we trigger delegation
         let res = handle(&mut deps, env, bond_msg);
         match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg.as_str(), "No stake tokens sent"),
+            StdError::GenericErr { msg, .. } => assert_eq!(msg, "No stake tokens sent"),
             e => panic!("Expected wrong denom error, got: {:?}", e),
         };
     }
@@ -775,6 +769,17 @@ mod tests {
         // update the querier with new bond, lower balance
         set_delegation(&mut deps.querier, 1500, "stake");
         deps.querier.update_balance(&contract_addr, vec![]);
+
+        // creator now tries to unbond these tokens - this must fail
+        let unbond_msg = HandleMsg::Unbond {
+            amount: Uint128(600),
+        };
+        let env = mock_env(&deps.api, &creator, &[]);
+        let res = handle(&mut deps, env, unbond_msg);
+        match res.unwrap_err() {
+            StdError::Underflow { .. } => {}
+            e => panic!("unexpected error: {}", e),
+        }
 
         // bob unbonds 600 tokens at 10% tax...
         // 60 are taken and send to the owner

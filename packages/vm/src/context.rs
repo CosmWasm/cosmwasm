@@ -6,8 +6,13 @@ use std::convert::TryInto;
 use std::ffi::c_void;
 #[cfg(not(feature = "iterator"))]
 use std::marker::PhantomData;
+use std::ptr::NonNull;
 
-use wasmer_runtime_core::vm::Ctx;
+use wasmer_runtime_core::{
+    typed_func::{Func, Wasm, WasmTypeList},
+    vm::Ctx,
+    Instance as WasmerInstance,
+};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::KV;
@@ -53,6 +58,8 @@ struct ContextData<'a, S: Storage, Q: Querier> {
     gas_state: GasState,
     storage: Option<S>,
     querier: Option<Q>,
+    /// A non-owning link to the wasmer instance
+    wasmer_instance: Option<NonNull<WasmerInstance>>,
     #[cfg(feature = "iterator")]
     iterators: HashMap<u32, Box<dyn Iterator<Item = StorageIteratorItem> + 'a>>,
     #[cfg(not(feature = "iterator"))]
@@ -71,6 +78,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut
         gas_state: GasState::with_limit(gas_limit),
         storage: None,
         querier: None,
+        wasmer_instance: None,
         #[cfg(feature = "iterator")]
         iterators: HashMap::new(),
         #[cfg(not(feature = "iterator"))]
@@ -116,6 +124,17 @@ fn get_context_data<'a, 'b, S: Storage, Q: Querier>(
         Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
     };
     Box::leak(owned) // give up ownership
+}
+
+/// Creates a back reference from a contact to its partent instance
+pub fn set_wasmer_instance<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    wasmer_instance: Option<NonNull<WasmerInstance>>,
+) {
+    let context_data = ctx.data as *mut ContextData<S, Q>;
+    unsafe {
+        (*context_data).wasmer_instance = wasmer_instance;
+    }
 }
 
 #[cfg(feature = "iterator")]
@@ -185,6 +204,28 @@ pub fn add_iterator<'a, S: Storage, Q: Querier>(
     new_id
 }
 
+pub(crate) fn with_func_from_context<S, Q, Args, Rets, Callback, CallbackData>(
+    ctx: &mut Ctx,
+    name: &str,
+    callback: Callback,
+) -> VmResult<CallbackData>
+where
+    S: Storage,
+    Q: Querier,
+    Args: WasmTypeList,
+    Rets: WasmTypeList,
+    Callback: FnOnce(Func<Args, Rets, Wasm>) -> VmResult<CallbackData>,
+{
+    let ctx_data = get_context_data::<S, Q>(ctx);
+    match ctx_data.wasmer_instance {
+        Some(instance_ptr) => {
+            let func = unsafe { instance_ptr.as_ref() }.exports.get(name)?;
+            callback(func)
+        }
+        None => Err(make_uninitialized_context_data("wasmer_instance")),
+    }
+}
+
 pub(crate) fn with_storage_from_context<'a, 'b, S, Q, F, T>(
     ctx: &'a mut Ctx,
     func: F,
@@ -239,20 +280,19 @@ where
 mod test {
     use super::*;
     use crate::backends::compile;
-    #[cfg(feature = "iterator")]
     use crate::errors::VmError;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };
-    use wasmer_runtime_core::{imports, instance::Instance, typed_func::Func};
+    use wasmer_runtime_core::{imports, typed_func::Func};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
-    // shorthand for function generics below
-    type S = MockStorage;
-    type Q = MockQuerier;
+    // shorthands for function generics below
+    type MS = MockStorage;
+    type MQ = MockQuerier;
 
     // prepared data
     static INIT_KEY: &[u8] = b"foo";
@@ -267,23 +307,27 @@ mod test {
     #[cfg(not(feature = "singlepass"))]
     const GAS_LIMIT: u64 = 10_000_000_000;
 
-    fn make_instance() -> Instance {
+    fn make_instance() -> Box<WasmerInstance> {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
             || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
-                "db_read" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
-                "db_next" => Func::new(|_a: u32, _b: i32, _c: i32| -> i32 { 0 }),
+                "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
-        let instance = module.instantiate(&import_obj).unwrap();
+        let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
+
+        let instance_ptr = NonNull::from(instance.as_ref());
+        set_wasmer_instance::<MS, MQ>(instance.context_mut(), Some(instance_ptr));
+
         instance
     }
 
@@ -305,13 +349,13 @@ mod test {
         let ctx = instance.context_mut();
 
         // empty data on start
-        let (inits, initq) = move_out_of_context::<S, Q>(ctx);
+        let (inits, initq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
         leave_default_data(ctx);
-        let (s, q) = move_out_of_context::<S, Q>(ctx);
+        let (s, q) = move_out_of_context::<MS, MQ>(ctx);
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
@@ -320,7 +364,7 @@ mod test {
         );
 
         // now is empty again
-        let (ends, endq) = move_out_of_context::<S, Q>(ctx);
+        let (ends, endq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
@@ -332,14 +376,66 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 0);
-        let id1 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        let id2 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        let id3 = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        assert_eq!(get_context_data::<S, Q>(ctx).iterators.len(), 3);
-        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id1));
-        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id2));
-        assert!(get_context_data::<S, Q>(ctx).iterators.contains_key(&id3));
+        assert_eq!(get_context_data::<MS, MQ>(ctx).iterators.len(), 0);
+        let id1 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        let id2 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        let id3 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        assert_eq!(get_context_data::<MS, MQ>(ctx).iterators.len(), 3);
+        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id1));
+        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id2));
+        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id3));
+    }
+
+    #[test]
+    fn with_func_from_context_works() {
+        let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
+
+        let ctx = instance.context_mut();
+        let ptr = with_func_from_context::<MS, MQ, u32, u32, _, _>(ctx, "allocate", |alloc_func| {
+            let ptr = alloc_func.call(10)?;
+            Ok(ptr)
+        })
+        .unwrap();
+        assert!(ptr > 0);
+    }
+
+    #[test]
+    fn with_func_from_context_fails_for_missing_instance() {
+        let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
+
+        // Clear context's wasmer_instance
+        set_wasmer_instance::<MS, MQ>(instance.context_mut(), None);
+
+        let ctx = instance.context_mut();
+        let res = with_func_from_context::<MS, MQ, u32, u32, _, ()>(ctx, "allocate", |_func| {
+            panic!("unexpected callback call");
+        });
+        match res.unwrap_err() {
+            VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
+            e => panic!("Unexpected error: {}", e),
+        }
+    }
+
+    #[test]
+    fn with_func_from_context_fails_for_missing_function() {
+        let mut instance = make_instance();
+        leave_default_data(instance.context_mut());
+
+        let ctx = instance.context_mut();
+        let res = with_func_from_context::<MS, MQ, u32, u32, _, ()>(ctx, "doesnt_exist", |_func| {
+            panic!("unexpected callback call");
+        });
+        match res.unwrap_err() {
+            VmError::ResolveErr { msg, .. } => {
+                assert_eq!(
+                    msg,
+                    "Wasmer resolve error: ExportNotFound { name: \"doesnt_exist\" }"
+                );
+            }
+            e => panic!("Unexpected error: {}", e),
+        }
     }
 
     #[test]
@@ -348,7 +444,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let (val, _used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(INIT_KEY).expect("error getting value"))
         })
         .unwrap();
@@ -357,13 +453,13 @@ mod test {
         let set_key: &[u8] = b"more";
         let set_value: &[u8] = b"data";
 
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             store.set(set_key, set_value).expect("error setting value");
             Ok(())
         })
         .unwrap();
 
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             assert_eq!(store.get(INIT_KEY).unwrap().0, Some(INIT_VALUE.to_vec()));
             assert_eq!(store.get(set_key).unwrap().0, Some(set_value.to_vec()));
             Ok(())
@@ -378,7 +474,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        with_storage_from_context::<S, Q, _, ()>(ctx, |_store| {
+        with_storage_from_context::<MS, MQ, _, ()>(ctx, |_store| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
@@ -390,7 +486,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let res = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+        let res = with_querier_from_context::<MS, MQ, _, _>(ctx, |querier| {
             let req: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
@@ -411,7 +507,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        with_querier_from_context::<S, Q, _, ()>(ctx, |_querier| {
+        with_querier_from_context::<MS, MQ, _, ()>(ctx, |_querier| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
@@ -424,8 +520,8 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = add_iterator::<S, Q>(ctx, Box::new(std::iter::empty()));
-        with_iterator_from_context::<S, Q, _, ()>(ctx, id, |iter| {
+        let id = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
             assert!(iter.next().is_none());
             Ok(())
         })
@@ -440,7 +536,7 @@ mod test {
         leave_default_data(ctx);
 
         let missing_id = 42u32;
-        let result = with_iterator_from_context::<S, Q, _, ()>(ctx, missing_id, |_iter| {
+        let result = with_iterator_from_context::<MS, MQ, _, ()>(ctx, missing_id, |_iter| {
             panic!("this should not be called");
         });
         match result.unwrap_err() {

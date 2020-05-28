@@ -45,12 +45,12 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
-            Some(val) => Ok(match val {
+            Some(val) => match val {
                 Delta::Set { value } => Some(value.clone()),
                 Delta::Delete {} => None,
-            }),
+            },
             None => self.storage.get(key),
         }
     }
@@ -63,7 +63,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -176,7 +176,7 @@ enum Delta {
 struct MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
     left: Peekable<L>,
     right: Peekable<R>,
@@ -187,7 +187,7 @@ where
 impl<'a, L, R> MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
     fn new(left: L, right: R, order: Order) -> Self {
         MergeOverlay {
@@ -197,7 +197,7 @@ where
         }
     }
 
-    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<StdResult<KV>> {
+    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<KV> {
         // compare keys - result is such that Ordering::Less => return left side
         let order = match self.order {
             Order::Ascending => lkey.cmp(&rkey),
@@ -217,10 +217,10 @@ where
     }
 
     /// take_left must only be called when we know self.left.next() will return Some
-    fn take_left(&mut self) -> Option<StdResult<KV>> {
+    fn take_left(&mut self) -> Option<KV> {
         let (lkey, lval) = self.left.next().unwrap();
         match lval {
-            Delta::Set { value } => Some(Ok((lkey.clone(), value.clone()))),
+            Delta::Set { value } => Some((lkey.clone(), value.clone())),
             Delta::Delete {} => self.next(),
         }
     }
@@ -230,16 +230,16 @@ where
 impl<'a, L, R> Iterator for MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
-    type Item = StdResult<KV>;
+    type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
         let (left, right) = (self.left.peek(), self.right.peek());
         match (left, right) {
             (Some(litem), Some(ritem)) => {
                 let (lkey, _) = litem;
-                let (rkey, _) = ritem.as_ref().expect("error items not yet supported");
+                let (rkey, _) = ritem;
 
                 // we just use cloned keys to avoid double mutable references
                 // (we must release the return value from peek, before beginning to call next or other mut methods
@@ -305,7 +305,7 @@ mod test {
     // (this allows us to test StorageTransaction and other wrapped storage better)
     fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
-        assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(
             store.range(None, None, Order::Ascending).unwrap().count(),
             1
@@ -322,7 +322,7 @@ mod test {
         // unbounded
         {
             let iter = store.range(None, None, Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -336,7 +336,7 @@ mod test {
         // unbounded (descending)
         {
             let iter = store.range(None, None, Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -352,7 +352,7 @@ mod test {
             let iter = store
                 .range(Some(b"f"), Some(b"n"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
@@ -361,7 +361,7 @@ mod test {
             let iter = store
                 .range(Some(b"air"), Some(b"loop"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -376,7 +376,7 @@ mod test {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -385,7 +385,7 @@ mod test {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -394,7 +394,7 @@ mod test {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -403,14 +403,14 @@ mod test {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // right unbounded
         {
             let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -423,7 +423,7 @@ mod test {
         // right unbounded (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -436,14 +436,14 @@ mod test {
         // left unbounded
         {
             let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // left unbounded (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -462,13 +462,13 @@ mod test {
         check.set(b"food", b"bank").unwrap();
         check.remove(b"foo").unwrap();
 
-        assert_eq!(None, check.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
+        assert_eq!(check.get(b"foo"), None);
+        assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
         check.prepare().commit(&mut base).unwrap();
-        assert_eq!(None, base.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
+        assert_eq!(base.get(b"foo"), None);
+        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
@@ -479,13 +479,13 @@ mod test {
         check.set(b"food", b"bank").unwrap();
         check.remove(b"foo").unwrap();
 
-        assert_eq!(None, check.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
+        assert_eq!(check.get(b"foo"), None);
+        assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
         check.prepare().commit(&mut base).unwrap();
-        assert_eq!(None, base.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
+        assert_eq!(base.get(b"foo"), None);
+        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
@@ -523,11 +523,11 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works").unwrap();
         check.prepare().commit(&mut base).unwrap();
 
-        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
@@ -537,16 +537,16 @@ mod test {
 
         let mut stxn1 = StorageTransaction::new(&base);
 
-        assert_eq!(stxn1.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
 
         stxn1.set(b"subtx", b"works").unwrap();
-        assert_eq!(stxn1.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
 
         // Can still read from base, txn is not yet committed
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
 
         stxn1.prepare().commit(&mut base).unwrap();
-        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
@@ -555,11 +555,11 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works").unwrap();
         check.rollback();
 
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
     }
 
     #[test]
@@ -568,10 +568,10 @@ mod test {
         base.set(b"foo", b"bar").unwrap();
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works").unwrap();
 
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
     }
 
     #[test]
@@ -582,24 +582,24 @@ mod test {
         // writes on success
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             // we write in the Ok case
             store.set(b"good", b"one").unwrap();
             Ok(5)
         });
-        assert_eq!(5, res.unwrap());
-        assert_eq!(base.get(b"good").unwrap(), Some(b"one".to_vec()));
+        assert_eq!(res.unwrap(), 5);
+        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
 
         // rejects on error
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-            assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
             // we write in the Error case
             store.set(b"bad", b"value").unwrap();
             Err(unauthorized())
         });
         assert!(res.is_err());
-        assert_eq!(base.get(b"bad").unwrap(), None);
+        assert_eq!(base.get(b"bad"), None);
     }
 }

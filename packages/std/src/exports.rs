@@ -112,8 +112,8 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
+    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
     let env: Env = from_slice(&env)?;
     let msg: T = from_slice(&msg)?;
     let mut deps = make_dependencies();
@@ -133,8 +133,8 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let env: Vec<u8> = unsafe { consume_region(env_ptr)? };
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
+    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = from_slice(&env)?;
     let msg: T = from_slice(&msg)?;
@@ -149,7 +149,7 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
     ) -> StdResult<QueryResponse>,
     msg_ptr: *mut c_void,
 ) -> StdResult<QueryResponse> {
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr)? };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let msg: T = from_slice(&msg)?;
     let deps = make_dependencies();

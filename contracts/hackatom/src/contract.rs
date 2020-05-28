@@ -93,7 +93,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)?
+        .get(CONFIG_KEY)
         .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
 
@@ -103,10 +103,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         let balance = deps.querier.query_all_balances(&from_addr)?;
 
         let res = HandleResponse {
-            log: vec![
-                log("action", "release"),
-                log("destination", to_addr.as_str()),
-            ],
+            log: vec![log("action", "release"), log("destination", &to_addr)],
             messages: vec![BankMsg::Send {
                 from_address: from_addr,
                 to_address: to_addr,
@@ -189,7 +186,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<QueryResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)?
+        .get(CONFIG_KEY)
         .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
@@ -207,7 +204,9 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_dependencies_with_balances, mock_env};
+    use cosmwasm_std::testing::{
+        mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
+    };
     // import trait ReadonlyStorage to get access to read
     use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
     use cosmwasm_storage::transactional_deps;
@@ -234,11 +233,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -311,11 +306,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's check the state
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -350,7 +341,7 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                from_address: HumanAddr("cosmos2contract".to_string()),
+                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
                 to_address: beneficiary,
                 amount: coins(1000, "earth"),
             }
@@ -393,11 +384,7 @@ mod tests {
         }
 
         // state should not change
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(
             state,

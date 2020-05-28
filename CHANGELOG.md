@@ -1,6 +1,41 @@
 # CHANGELOG
 
-## 0.8.0 (not yet released)
+## 0.9.0 (not yet released)
+
+**cosmwasm-std**
+
+- `ReadonlyStorage::get` and all its implementations now return
+  `Option<Vec<u8>>`.
+- `ReadonlyStorage::range` and all its implementations now return an iterator
+  over `Option<KV>` instead of `Option<StdResult<KV>>`.
+
+**cosmwasm-vm**
+
+- The export `allocate` must not return 0 as a valid address. The contract is
+  responsible for avoiding this offset in the linear memory.
+- The import `db_read` now allocates memory for the return value as part of the
+  call and returns a pointer to the value as `u32`. The return value 0 means
+  _key does not exist_.
+- The import `db_next` now allocates a memory region for the return key and
+  value as part of the call and returns a pointer to the region as `u32`. The
+  data in the region is stored in the format `value || key || keylen`. As
+  before, an empty key means _no more value_.
+
+## 0.8.1 (not yet released)
+
+**cosmwasm-std**
+
+- The arguments of `log` changed from `&str` to `ToString`, allowing to pass
+  various types like `String`, `HumanAddr`, `Uint128` or primitive integers
+  directly.
+
+**cosmwasm-vm**
+
+- Deprecated `Instance::get_gas` in favour of `Instance::get_gas_left`. The old
+  method will remain available for a while but will issue a deprecation warning
+  when used.
+
+## 0.8.0 (2020-05-25)
 
 **all**
 
