@@ -173,7 +173,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
     let value = read_region!(ctx, value_ptr, MAX_LENGTH_DB_VALUE);
     let used_gas =
-        with_storage_from_context::<S, Q, _, u64>(ctx, |store| Ok(store.set(&key, &value)?))?;
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)?))?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
     Ok(errors::NONE)
@@ -181,7 +181,7 @@ pub fn do_write<S: Storage, Q: Querier>(
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
-    let used_gas = with_storage_from_context::<S, Q, _, u64>(ctx, |store| Ok(store.remove(&key)?))?;
+    let used_gas = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
     Ok(errors::NONE)

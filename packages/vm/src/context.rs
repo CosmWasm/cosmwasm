@@ -29,24 +29,20 @@ use crate::traits::{Querier, Storage};
 pub struct GasState {
     /// Gas limit for the computation.
     gas_limit: u64,
-    /// Tracking the gas used in the whole system, in cosmwasm units.
-    total_used_gas: u64,
+    /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
+    sdk_used_gas: u64,
 }
 
 impl GasState {
     fn with_limit(gas_limit: u64) -> Self {
         Self {
             gas_limit,
-            total_used_gas: 0,
+            sdk_used_gas: 0,
         }
     }
 
     fn use_gas(&mut self, amount: u64) {
-        self.total_used_gas += amount;
-    }
-
-    fn out_of_gas(&self) -> bool {
-        self.total_used_gas > self.gas_limit
+        self.sdk_used_gas += amount;
     }
 
     pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
@@ -172,12 +168,23 @@ pub fn get_gas_status<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
 }
 
 pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
-    let gas_status = get_gas_status::<S, Q>(ctx);
-    gas_status.use_gas(used_gas);
-    if gas_status.out_of_gas() {
-        Err(VmError::GasDepletion)
+    use crate::backends::get_gas_left;
+
+    let ctx_data = get_context_data::<S, Q>(ctx);
+    if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
+        let instance = unsafe { instance_ptr.as_mut() };
+
+        let gas_status = get_gas_status::<S, Q>(ctx);
+        let wasmer_used_gas = gas_status.gas_limit - get_gas_left(instance);
+
+        gas_status.use_gas(used_gas);
+        if gas_status.sdk_used_gas + wasmer_used_gas > gas_status.gas_limit {
+            Err(VmError::GasDepletion)
+        } else {
+            Ok(())
+        }
     } else {
-        Ok(())
+        Err(make_uninitialized_context_data("wasmer_instance"))
     }
 }
 
