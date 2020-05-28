@@ -24,7 +24,8 @@ impl MockStorage {
 
 impl ReadonlyStorage for MockStorage {
     fn get(&self, key: &[u8]) -> FfiResult<(Option<Vec<u8>>, u64)> {
-        Ok((self.data.get(key).cloned(), key.len() as u64))
+        let gas_cost = key.len() as u64;
+        Ok((self.data.get(key).cloned(), gas_cost))
     }
 
     #[cfg(feature = "iterator")]
@@ -52,8 +53,8 @@ impl ReadonlyStorage for MockStorage {
             Order::Ascending => Box::new(
                 iter.map(clone_item)
                     .map(|item| {
-                        let len = (item.0.len() + item.1.len()) as u64;
-                        (item, len)
+                        let gas_cost = (item.0.len() + item.1.len()) as u64;
+                        (item, gas_cost)
                     })
                     .map(FfiResult::Ok),
             ),
@@ -61,8 +62,8 @@ impl ReadonlyStorage for MockStorage {
                 iter.rev()
                     .map(clone_item)
                     .map(|item| {
-                        let len = (item.0.len() + item.1.len()) as u64;
-                        (item, len)
+                        let gas_cost = (item.0.len() + item.1.len()) as u64;
+                        (item, gas_cost)
                     })
                     .map(FfiResult::Ok),
             ),
@@ -92,12 +93,14 @@ fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
 impl Storage for MockStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64> {
         self.data.insert(key.to_vec(), value.to_vec());
-        Ok((key.len() + value.len()) as u64)
+        let gas_cost = (key.len() + value.len()) as u64;
+        Ok(gas_cost)
     }
 
     fn remove(&mut self, key: &[u8]) -> FfiResult<u64> {
         self.data.remove(key);
-        Ok(key.len() as u64)
+        let gas_cost = key.len() as u64;
+        Ok(gas_cost)
     }
 }
 
