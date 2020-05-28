@@ -55,16 +55,14 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// and lead to a crash. Make sure to call it exactly once (either consuming the input in
 /// the wasm code OR deallocating the buffer from the caller).
 pub unsafe fn consume_region(ptr: *mut c_void) -> Vec<u8> {
-    if ptr.is_null() {
-        panic!("Region pointer is null");
-    }
+    assert!(!ptr.is_null(), "Region pointer is null");
     let region = Box::from_raw(ptr as *mut Region);
+
     let region_start = region.offset as *mut u8;
-    if region_start.is_null() {
-        // This case is explicitely disallowed by Vec
-        // "The pointer will never be null, so this type is null-pointer-optimized."
-        panic!("Region starts at null pointer");
-    }
+    // This case is explicitely disallowed by Vec
+    // "The pointer will never be null, so this type is null-pointer-optimized."
+    assert!(!region_start.is_null(), "Region starts at null pointer");
+
     Vec::from_raw_parts(
         region_start,
         region.length as usize,
