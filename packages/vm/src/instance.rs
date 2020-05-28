@@ -17,7 +17,7 @@ use crate::context::{
     with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{make_instantiation_err, VmResult};
+use crate::errors::{make_instantiation_err, CommunicationError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -203,6 +203,9 @@ where
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let alloc: Func<u32, u32> = self.func("allocate")?;
         let ptr = alloc.call(to_u32(size)?)?;
+        if ptr == 0 {
+            return Err(CommunicationError::zero_address().into());
+        }
         Ok(ptr)
     }
 
