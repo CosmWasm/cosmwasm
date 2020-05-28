@@ -14,6 +14,10 @@
 - The import `db_read` now allocates memory for the return value as part of the
   call and returns a pointer to the value as `u32`. The return value 0 means
   _key does not exist_.
+- The import `db_next` now allocates a memory region for the return key and
+  value as part of the call and returns a pointer to the region as `u32`. The
+  data in the region is stored in the format `value || key || keylen`. As
+  before, an empty key means _no more value_.
 
 ## 0.8.1 (not yet released)
 

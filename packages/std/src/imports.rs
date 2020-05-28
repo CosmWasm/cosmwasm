@@ -12,12 +12,6 @@ use crate::types::{CanonicalAddr, HumanAddr};
 
 /// A kibi (kilo binary)
 static KI: usize = 1024;
-/// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
-#[cfg(feature = "iterator")]
-static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
-/// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
-#[cfg(feature = "iterator")]
-static DB_READ_VALUE_BUFFER_LENGTH: usize = 128 * KI;
 /// The number of bytes of the memory region we pre-allocate for the result data in queries
 static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
 // this is the maximum allowed size for bech32
@@ -36,7 +30,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn db_next(iterator_id: u32, key: *mut c_void, value: *mut c_void) -> i32;
+    fn db_next(iterator_id: u32) -> u32;
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
@@ -151,23 +145,24 @@ impl Iterator for ExternalIterator {
     type Item = StdResult<KV>;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key_ptr = alloc(DB_READ_KEY_BUFFER_LENGTH);
-        let value_ptr = alloc(DB_READ_VALUE_BUFFER_LENGTH);
+        let next_result = unsafe { db_next(self.iterator_id) };
+        let kv_region_ptr = next_result as *mut c_void;
+        let mut kv = unsafe { consume_region(kv_region_ptr) };
 
-        let db_next_result = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
-        if db_next_result < 0 {
-            let result = Err(generic_err(format!(
-                "Unknown error from db_next: {}",
-                db_next_result
-            )));
-            return Some(result);
-        }
-
-        let key = unsafe { consume_region(key_ptr) };
-        let value = unsafe { consume_region(value_ptr) };
-        if key.is_empty() {
+        // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value
+        let keylen = u32::from_be_bytes([
+            kv[kv.len() - 4],
+            kv[kv.len() - 3],
+            kv[kv.len() - 2],
+            kv[kv.len() - 1],
+        ]) as usize;
+        if keylen == 0 {
             return None;
         }
+
+        kv.truncate(kv.len() - 4);
+        let key = kv.split_off(kv.len() - keylen);
+        let value = kv;
         Some(Ok((key, value)))
     }
 }

@@ -118,11 +118,12 @@ where
                     do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
                 }),
                 // Get next element of iterator with ID `iterator_id`.
-                // Expects Regions in key_ptr and value_ptr, in which the result is written.
-                // An empty key value (Region of length 0) means no more element.
-                // Ownership of both key and value pointer is not transferred to the host.
-                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
-                    do_next::<S, Q>(ctx, iterator_id, key_ptr, value_ptr)
+                // Creates a region containing both key and value and returns its address.
+                // Ownership of the result region is transferred to the contract.
+                // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
+                // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
+                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32| -> VmResult<u32> {
+                    do_next::<S, Q>(ctx, iterator_id)
                 }),
             },
         });
