@@ -158,8 +158,8 @@ pub fn add_iterator<'a, S: Storage, Q: Querier>(
     new_id
 }
 
-pub(crate) fn with_func_from_context<'a, S, Q, Args, Rets, Callback, CallbackData>(
-    ctx: &'a mut Ctx,
+pub(crate) fn with_func_from_context<S, Q, Args, Rets, Callback, CallbackData>(
+    ctx: &mut Ctx,
     name: &str,
     callback: Callback,
 ) -> VmResult<CallbackData>
