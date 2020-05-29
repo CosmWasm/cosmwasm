@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, testing::MockQuerierCustomHandlerResult, to_binary, BankMsg, Binary,
-    Coin, HandleResponse, HandleResult, HumanAddr, InitResponse, StakingMsg, StdError,
+    coin, coins, from_binary, testing::MockQuerierCustomHandlerResult, BankMsg, Binary, Coin,
+    HandleResponse, HandleResult, HumanAddr, InitResponse, StakingMsg, StdError,
 };
 use cosmwasm_vm::{
     testing::{
@@ -32,6 +32,7 @@ use cosmwasm_vm::{
 use reflect::msg::{
     CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
 };
+use reflect::testing::custom_query_execute;
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/reflect.wasm");
@@ -45,11 +46,7 @@ pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
 ) -> Extern<MockStorage, MockApi, MockQuerier<CustomQuery>> {
     fn execute(query: &CustomQuery) -> MockQuerierCustomHandlerResult {
-        let msg = match query {
-            CustomQuery::Ping {} => "pong".to_string(),
-            CustomQuery::Capital { text } => text.to_uppercase(),
-        };
-        Ok(to_binary(&CustomResponse { msg }))
+        Ok(custom_query_execute(query))
     }
 
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);

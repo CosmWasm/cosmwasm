@@ -20,7 +20,7 @@ pub fn mock_dependencies_with_custom_querier(
     }
 }
 
-fn custom_query_execute(query: &CustomQuery) -> StdResult<Binary> {
+pub fn custom_query_execute(query: &CustomQuery) -> StdResult<Binary> {
     let msg = match query {
         CustomQuery::Ping {} => "pong".to_string(),
         CustomQuery::Capital { text } => text.to_uppercase(),
