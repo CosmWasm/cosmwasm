@@ -7,6 +7,8 @@
 - The arguments of `log` changed from `&str` to `ToString`, allowing to pass
   various types like `String`, `HumanAddr`, `Uint128` or primitive integers
   directly.
+- Add `From<Vec<u8>>` and `Into<Vec<u8>>` implementations for `Binary` for
+  zero-copy conversions.
 
 **cosmwasm-vm**
 

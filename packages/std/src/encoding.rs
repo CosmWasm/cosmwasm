@@ -48,6 +48,18 @@ impl From<&[u8]> for Binary {
     }
 }
 
+impl From<Vec<u8>> for Binary {
+    fn from(vec: Vec<u8>) -> Self {
+        Self(vec)
+    }
+}
+
+impl Into<Vec<u8>> for Binary {
+    fn into(self) -> Vec<u8> {
+        self.0
+    }
+}
+
 /// Serializes as a base64 string
 impl Serialize for Binary {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -137,6 +149,31 @@ mod test {
             StdError::InvalidBase64 { msg, .. } => assert_eq!(msg, "Invalid byte 37, offset 2."),
             _ => panic!("Unexpected error type"),
         }
+    }
+
+    #[test]
+    fn from_slice_works() {
+        let original: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn from_vec_works() {
+        let original = vec![0u8, 187, 61, 11, 250, 0];
+        let original_ptr = original.as_ptr();
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(binary.0.as_ptr(), original_ptr, "vector must not be copied");
+    }
+
+    #[test]
+    fn into_vec_works() {
+        let original = Binary(vec![0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = original.0.as_ptr();
+        let vec: Vec<u8> = original.into();
+        assert_eq!(vec.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(vec.as_ptr(), original_ptr, "vector must not be copied");
     }
 
     #[test]
