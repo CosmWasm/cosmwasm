@@ -8,6 +8,12 @@
   `Option<Vec<u8>>`.
 - `ReadonlyStorage::range` and all its implementations now return an iterator
   over `Option<KV>` instead of `Option<StdResult<KV>>`.
+- Trait `Querier` is not `Clone` and `Send` anymore.
+
+**cosmwasm-storage**
+
+- Remove `transactional_deps`. Use `transactional` that just provides a
+  transactional storage instead.
 
 **cosmwasm-vm**
 

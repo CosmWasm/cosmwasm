@@ -45,7 +45,6 @@ mod mock {
         Extern, Querier, QuerierResult,
     };
 
-    #[derive(Clone)]
     pub struct CustomQuerier {
         base: MockQuerier,
     }

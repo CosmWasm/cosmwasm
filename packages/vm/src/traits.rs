@@ -86,7 +86,7 @@ pub trait Api: Copy + Clone + Send {
 /// 3. Executing query in the contract
 pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
 
-pub trait Querier: Clone + Send + 'static {
+pub trait Querier: 'static {
     /// raw_query is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed

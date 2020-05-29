@@ -209,7 +209,6 @@ mod tests {
     };
     // import trait ReadonlyStorage to get access to read
     use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
-    use cosmwasm_storage::transactional_deps;
 
     #[test]
     fn proper_initialization() {
@@ -277,38 +276,6 @@ mod tests {
         let query_response = query(&deps, query_msg).unwrap();
         let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
         assert_eq!(bal.amount, vec![]);
-    }
-
-    #[test]
-    fn checkpointing_works_on_contract() {
-        let mut deps = mock_dependencies(20, &coins(1000, "earth"));
-
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-        let expected_state = State {
-            verifier: deps.api.canonical_address(&verifier).unwrap(),
-            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-            funder: deps.api.canonical_address(&creator).unwrap(),
-        };
-
-        // let's see if we can checkpoint on a contract
-        let res = transactional_deps(&mut deps, |deps| {
-            let msg = InitMsg {
-                verifier: verifier.clone(),
-                beneficiary: beneficiary.clone(),
-            };
-            let env = mock_env(&deps.api, creator.as_str(), &[]);
-
-            init(deps, env, msg)
-        })
-        .unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's check the state
-        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, expected_state);
     }
 
     #[test]

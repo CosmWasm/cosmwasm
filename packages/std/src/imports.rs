@@ -210,7 +210,6 @@ impl Api for ExternalApi {
 }
 
 /// A stateless convenience wrapper around imports provided by the VM
-#[derive(Copy, Clone)]
 pub struct ExternalQuerier {}
 
 impl ExternalQuerier {

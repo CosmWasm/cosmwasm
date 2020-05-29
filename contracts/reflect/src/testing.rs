@@ -6,7 +6,6 @@ use cosmwasm_std::{
     SystemError,
 };
 
-#[derive(Clone)]
 pub struct CustomQuerier {
     base: MockQuerier,
 }
