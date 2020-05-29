@@ -140,6 +140,13 @@ mod test {
     }
 
     #[test]
+    fn from_slice_works() {
+        let original: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
     fn serialization_works() {
         let binary = Binary(vec![0u8, 187, 61, 11, 250, 0]);
 
