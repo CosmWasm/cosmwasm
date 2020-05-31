@@ -172,18 +172,27 @@ pub fn get_gas_state<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
 
 #[cfg(feature = "default-singlepass")]
 pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
-    use crate::backends::get_gas_left;
+    use crate::backends::{get_gas_left, set_gas_limit};
     use crate::VmError;
 
     let ctx_data = get_context_data::<S, Q>(ctx);
     if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
         let instance = unsafe { instance_ptr.as_mut() };
+        let gas_state = &mut ctx_data.gas_state;
 
-        let gas_status = get_gas_state::<S, Q>(ctx);
-        let wasmer_used_gas = gas_status.gas_limit - get_gas_left(instance);
+        let wasmer_used_gas = gas_state.gas_limit.saturating_sub(get_gas_left(instance));
 
-        gas_status.use_gas(used_gas);
-        if gas_status.externally_used_gas + wasmer_used_gas > gas_status.gas_limit {
+        gas_state.use_gas(used_gas);
+        // These lines reduce the amount of gas available to wasmer
+        // so it can not consume gas that was consumed externally.
+        let new_limit = gas_state
+            .gas_limit
+            .saturating_sub(gas_state.externally_used_gas)
+            .saturating_sub(wasmer_used_gas);
+        // This tells wasmer how much more gas it can consume from this point in time.
+        set_gas_limit(instance, new_limit);
+
+        if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
         } else {
             Ok(())

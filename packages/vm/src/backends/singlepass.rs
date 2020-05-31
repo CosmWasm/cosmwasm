@@ -43,11 +43,7 @@ pub fn backend() -> &'static str {
 
 /// Set the amount of gas units that can be used in the instance.
 pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
-    let used = if limit > GAS_LIMIT {
-        0
-    } else {
-        GAS_LIMIT - limit
-    };
+    let used = GAS_LIMIT.saturating_sub(limit);
     metering::set_points_used(instance, used)
 }
 
@@ -55,9 +51,5 @@ pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
 pub fn get_gas_left(instance: &WasmerInstance) -> u64 {
     let used = metering::get_points_used(instance);
     // when running out of gas, get_points_used can exceed GAS_LIMIT
-    if used > GAS_LIMIT {
-        0
-    } else {
-        GAS_LIMIT - used
-    }
+    GAS_LIMIT.saturating_sub(used)
 }
