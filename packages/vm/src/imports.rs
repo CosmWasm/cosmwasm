@@ -246,9 +246,11 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
         Ok(order) => order,
         Err(_) => return Ok(errors::scan::INVALID_ORDER),
     };
-    let iterator = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+    let (iterator, used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order)?)
     })?;
+    // Gas is consumed for creating an iterator if the first key in the DB has a value
+    try_consume_gas::<S, Q>(ctx, used_gas)?;
 
     let new_id = add_iterator::<S, Q>(ctx, iterator);
     to_i32(new_id)

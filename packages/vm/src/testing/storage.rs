@@ -36,36 +36,42 @@ impl ReadonlyStorage for MockStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<Box<dyn Iterator<Item = StorageIteratorItem> + 'a>> {
+    ) -> FfiResult<(Box<dyn Iterator<Item = StorageIteratorItem> + 'a>, u64)> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
         // However, this cases represent just empty range and we treat it as such.
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Excluded(end)) if start > end => {
-                return Ok(Box::new(iter::empty()));
+                return Ok((Box::new(iter::empty()), 0));
             }
             _ => {}
         }
 
         let iter = self.data.range(bounds);
         Ok(match order {
-            Order::Ascending => Box::new(
-                iter.map(clone_item)
-                    .map(|item| {
-                        let gas_cost = (item.0.len() + item.1.len()) as u64;
-                        (item, gas_cost)
-                    })
-                    .map(FfiResult::Ok),
+            Order::Ascending => (
+                Box::new(
+                    iter.map(clone_item)
+                        .map(|item| {
+                            let gas_cost = (item.0.len() + item.1.len()) as u64;
+                            (item, gas_cost)
+                        })
+                        .map(FfiResult::Ok),
+                ),
+                0,
             ),
-            Order::Descending => Box::new(
-                iter.rev()
-                    .map(clone_item)
-                    .map(|item| {
-                        let gas_cost = (item.0.len() + item.1.len()) as u64;
-                        (item, gas_cost)
-                    })
-                    .map(FfiResult::Ok),
+            Order::Descending => (
+                Box::new(
+                    iter.rev()
+                        .map(clone_item)
+                        .map(|item| {
+                            let gas_cost = (item.0.len() + item.1.len()) as u64;
+                            (item, gas_cost)
+                        })
+                        .map(FfiResult::Ok),
+                ),
+                0,
             ),
         })
     }
@@ -116,7 +122,7 @@ mod test {
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
         assert_eq!(
-            store.range(None, None, Order::Ascending).unwrap().count(),
+            store.range(None, None, Order::Ascending).unwrap().0.count(),
             1
         );
 
@@ -130,7 +136,7 @@ mod test {
 
         // unbounded
         {
-            let iter = store.range(None, None, Order::Ascending).unwrap();
+            let iter = store.range(None, None, Order::Ascending).unwrap().0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -147,7 +153,7 @@ mod test {
 
         // unbounded (descending)
         {
-            let iter = store.range(None, None, Order::Descending).unwrap();
+            let iter = store.range(None, None, Order::Descending).unwrap().0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -166,7 +172,8 @@ mod test {
         {
             let iter = store
                 .range(Some(b"f"), Some(b"n"), Order::Ascending)
-                .unwrap();
+                .unwrap()
+                .0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -178,7 +185,8 @@ mod test {
         {
             let iter = store
                 .range(Some(b"air"), Some(b"loop"), Order::Descending)
-                .unwrap();
+                .unwrap()
+                .0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -196,7 +204,8 @@ mod test {
         {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
-                .unwrap();
+                .unwrap()
+                .0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -208,7 +217,8 @@ mod test {
         {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Descending)
-                .unwrap();
+                .unwrap()
+                .0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -220,7 +230,8 @@ mod test {
         {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Ascending)
-                .unwrap();
+                .unwrap()
+                .0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -232,7 +243,8 @@ mod test {
         {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Descending)
-                .unwrap();
+                .unwrap()
+                .0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -242,7 +254,7 @@ mod test {
 
         // right unbounded
         {
-            let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap();
+            let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap().0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -258,7 +270,7 @@ mod test {
 
         // right unbounded (descending)
         {
-            let iter = store.range(Some(b"f"), None, Order::Descending).unwrap();
+            let iter = store.range(Some(b"f"), None, Order::Descending).unwrap().0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -274,7 +286,7 @@ mod test {
 
         // left unbounded
         {
-            let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap();
+            let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap().0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)
@@ -284,7 +296,7 @@ mod test {
 
         // left unbounded (descending)
         {
-            let iter = store.range(None, Some(b"no"), Order::Descending).unwrap();
+            let iter = store.range(None, Some(b"no"), Order::Descending).unwrap().0;
             let elements: Vec<KV> = iter
                 .filter_map(FfiResult::ok)
                 .map(|(item, _gas)| item)

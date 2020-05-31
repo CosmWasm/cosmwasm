@@ -53,7 +53,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<Box<dyn Iterator<Item = StorageIteratorItem> + 'a>>;
+    ) -> FfiResult<(Box<dyn Iterator<Item = StorageIteratorItem> + 'a>, u64)>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
