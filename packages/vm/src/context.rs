@@ -30,7 +30,7 @@ pub struct GasState {
     /// Gas limit for the computation.
     gas_limit: u64,
     /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
-    #[cfg(feature = "default-singlepass")]
+    #[allow(unused)]
     externally_used_gas: u64,
 }
 
@@ -38,12 +38,11 @@ impl GasState {
     fn with_limit(gas_limit: u64) -> Self {
         Self {
             gas_limit,
-            #[cfg(feature = "default-singlepass")]
             externally_used_gas: 0,
         }
     }
 
-    #[cfg(feature = "default-singlepass")]
+    #[allow(unused)]
     fn use_gas(&mut self, amount: u64) {
         self.externally_used_gas += amount;
     }
