@@ -26,6 +26,7 @@ use crate::traits::{Querier, Storage};
 
 /** context data **/
 
+#[derive(Clone, PartialEq, Debug, Default)]
 pub struct GasState {
     /// Gas limit for the computation.
     gas_limit: u64,
