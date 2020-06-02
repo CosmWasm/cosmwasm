@@ -13,7 +13,7 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
+    get_gas_state, move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
     with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
@@ -59,7 +59,8 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> VmResult<Self> {
-        let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
+        let mut import_obj =
+            imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
@@ -140,6 +141,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas_limit(wasmer_instance.as_mut(), gas_limit);
+        get_gas_state::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
@@ -470,7 +472,7 @@ mod test {
         // initial check
         instance
             .with_storage(|store| {
-                assert!(store.get(b"foo").unwrap().is_none());
+                assert!(store.get(b"foo").unwrap().0.is_none());
                 Ok(())
             })
             .unwrap();
@@ -486,7 +488,7 @@ mod test {
         // read some data
         instance
             .with_storage(|store| {
-                assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+                assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
                 Ok(())
             })
             .unwrap();
@@ -620,7 +622,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 65186);
+        assert_eq!(init_used, 65320);
     }
 
     #[test]
@@ -644,7 +646,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 96570);
+        assert_eq!(handle_used, 96576);
     }
 
     #[test]
@@ -679,6 +681,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 32552);
+        assert_eq!(query_used, 32558);
     }
 }

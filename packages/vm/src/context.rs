@@ -20,30 +20,79 @@ use cosmwasm_std::KV;
 #[cfg(feature = "iterator")]
 use crate::errors::{make_iterator_does_not_exist, FfiResult};
 use crate::errors::{make_uninitialized_context_data, VmResult};
+#[cfg(feature = "iterator")]
+use crate::traits::StorageIteratorItem;
 use crate::traits::{Querier, Storage};
 
 /** context data **/
 
+#[derive(Clone, PartialEq, Debug, Default)]
+pub struct GasState {
+    /// Gas limit for the computation.
+    gas_limit: u64,
+    /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
+    #[allow(unused)]
+    externally_used_gas: u64,
+}
+
+impl GasState {
+    fn with_limit(gas_limit: u64) -> Self {
+        Self {
+            gas_limit,
+            externally_used_gas: 0,
+        }
+    }
+
+    #[allow(unused)]
+    fn use_gas(&mut self, amount: u64) {
+        self.externally_used_gas += amount;
+    }
+
+    pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
+        self.gas_limit = gas_limit;
+    }
+
+    /// Get the amount of gas units still left for the rest of the calculation.
+    ///
+    /// We need the amount of gas used in wasmer since it is not tracked inside this object.
+    fn get_gas_left(&self, wasmer_used_gas: u64) -> u64 {
+        self.gas_limit
+            .saturating_sub(self.externally_used_gas)
+            .saturating_sub(wasmer_used_gas)
+    }
+
+    /// Get the amount of gas units used so far inside wasmer.
+    ///
+    /// We need the amount of gas left in wasmer since it is not tracked inside this object.
+    fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
+        self.gas_limit
+            .saturating_sub(self.externally_used_gas)
+            .saturating_sub(wasmer_gas_left)
+    }
+}
+
 struct ContextData<'a, S: Storage, Q: Querier> {
+    gas_state: GasState,
     storage: Option<S>,
     querier: Option<Q>,
     /// A non-owning link to the wasmer instance
     wasmer_instance: Option<NonNull<WasmerInstance>>,
     #[cfg(feature = "iterator")]
-    iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<KV>> + 'a>>,
+    iterators: HashMap<u32, Box<dyn Iterator<Item = StorageIteratorItem> + 'a>>,
     #[cfg(not(feature = "iterator"))]
     iterators: PhantomData<&'a mut ()>,
 }
 
-pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void)) {
+pub fn setup_context<S: Storage, Q: Querier>(gas_limit: u64) -> (*mut c_void, fn(*mut c_void)) {
     (
-        create_unmanaged_context_data::<S, Q>(),
+        create_unmanaged_context_data::<S, Q>(gas_limit),
         destroy_unmanaged_context_data::<S, Q>,
     )
 }
 
-fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
+fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut c_void {
     let data = ContextData::<S, Q> {
+        gas_state: GasState::with_limit(gas_limit),
         storage: None,
         querier: None,
         wasmer_instance: None,
@@ -135,13 +184,51 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
+pub fn get_gas_state<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
+    &mut get_context_data::<S, Q>(ctx).gas_state
+}
+
+#[cfg(feature = "default-singlepass")]
+pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
+    use crate::backends::{get_gas_left, set_gas_limit};
+    use crate::VmError;
+
+    let ctx_data = get_context_data::<S, Q>(ctx);
+    if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
+        let instance = unsafe { instance_ptr.as_mut() };
+        let gas_state = &mut ctx_data.gas_state;
+
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance));
+
+        gas_state.use_gas(used_gas);
+        // These lines reduce the amount of gas available to wasmer
+        // so it can not consume gas that was consumed externally.
+        let new_limit = gas_state.get_gas_left(wasmer_used_gas);
+        // This tells wasmer how much more gas it can consume from this point in time.
+        set_gas_limit(instance, new_limit);
+
+        if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
+            Err(VmError::GasDepletion)
+        } else {
+            Ok(())
+        }
+    } else {
+        Err(make_uninitialized_context_data("wasmer_instance"))
+    }
+}
+
+#[cfg(feature = "default-cranelift")]
+pub fn try_consume_gas<S: Storage, Q: Querier>(_ctx: &mut Ctx, _used_gas: u64) -> VmResult<()> {
+    Ok(())
+}
+
 /// Add the iterator to the context's data. A new ID is assigned and returned.
 /// IDs are guaranteed to be in the range [0, 2**31-1], i.e. fit in the non-negative part if type i32.
 #[cfg(feature = "iterator")]
 #[must_use = "without the returned iterator ID, the iterator cannot be accessed"]
 pub fn add_iterator<'a, S: Storage, Q: Querier>(
     ctx: &mut Ctx,
-    iter: Box<dyn Iterator<Item = FfiResult<KV>> + 'a>,
+    iter: Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>,
 ) -> u32 {
     let b = get_context_data::<S, Q>(ctx);
     let last_id: u32 = b
@@ -221,7 +308,7 @@ pub(crate) fn with_iterator_from_context<'a, 'b, S, Q, F, T>(
 where
     S: Storage,
     Q: Querier,
-    F: FnOnce(&'b mut (dyn Iterator<Item = FfiResult<KV>>)) -> VmResult<T>,
+    F: FnOnce(&'b mut (dyn Iterator<Item = FfiResult<(KV, u64)>>)) -> VmResult<T>,
 {
     let b = get_context_data::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
@@ -233,7 +320,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::backends::compile;
+    use crate::backends::{compile, get_gas_left, set_gas_limit};
     use crate::errors::VmError;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
@@ -256,11 +343,16 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
+    #[cfg(feature = "singlepass")]
+    use crate::backends::singlepass::GAS_LIMIT;
+    #[cfg(not(feature = "singlepass"))]
+    const GAS_LIMIT: u64 = 10_000_000_000;
+
     fn make_instance() -> Box<WasmerInstance> {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
-            || { setup_context::<MockStorage, MockQuerier>() },
+            || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
                 "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
@@ -307,12 +399,65 @@ mod test {
         let (s, q) = move_out_of_context::<MS, MQ>(ctx);
         assert!(s.is_some());
         assert!(q.is_some());
-        assert_eq!(s.unwrap().get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
+        assert_eq!(
+            s.unwrap().get(INIT_KEY).unwrap().0,
+            Some(INIT_VALUE.to_vec())
+        );
 
         // now is empty again
         let (ends, endq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn gas_tracking_works_correctly() {
+        let mut instance = make_instance();
+
+        let gas_limit = 100;
+        set_gas_limit(instance.as_mut(), gas_limit);
+        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        let context = instance.context_mut();
+
+        // Consume all the Gas that we allocated
+        try_consume_gas::<MS, MQ>(context, 70).unwrap();
+        try_consume_gas::<MS, MQ>(context, 4).unwrap();
+        try_consume_gas::<MS, MQ>(context, 6).unwrap();
+        try_consume_gas::<MS, MQ>(context, 20).unwrap();
+        // Using one more unit of gas triggers a failure
+        match try_consume_gas::<MS, MQ>(context, 1).unwrap_err() {
+            VmError::GasDepletion => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
+        let mut instance = make_instance();
+
+        let gas_limit = 100;
+        set_gas_limit(instance.as_mut(), gas_limit);
+        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        let context = instance.context_mut();
+
+        // Consume all the Gas that we allocated
+        try_consume_gas::<MS, MQ>(context, 50).unwrap();
+        try_consume_gas::<MS, MQ>(context, 4).unwrap();
+
+        // consume 20 gas directly in wasmer
+        let new_limit = get_gas_left(instance.as_mut()) - 20;
+        set_gas_limit(instance.as_mut(), new_limit);
+
+        let context = instance.context_mut();
+        try_consume_gas::<MS, MQ>(context, 6).unwrap();
+        try_consume_gas::<MS, MQ>(context, 20).unwrap();
+        // Using one more unit of gas triggers a failure
+        match try_consume_gas::<MS, MQ>(context, 1).unwrap_err() {
+            VmError::GasDepletion => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
     }
 
     #[test]
@@ -390,7 +535,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(INIT_KEY).expect("error getting value"))
         })
         .unwrap();
@@ -406,8 +551,8 @@ mod test {
         .unwrap();
 
         with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            assert_eq!(store.get(INIT_KEY).unwrap(), Some(INIT_VALUE.to_vec()));
-            assert_eq!(store.get(set_key).unwrap(), Some(set_value.to_vec()));
+            assert_eq!(store.get(INIT_KEY).unwrap().0, Some(INIT_VALUE.to_vec()));
+            assert_eq!(store.get(set_key).unwrap().0, Some(set_value.to_vec()));
             Ok(())
         })
         .unwrap();
