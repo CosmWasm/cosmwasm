@@ -15,6 +15,8 @@
 - Deprecated `Instance::get_gas` in favour of `Instance::get_gas_left`. The old
   method will remain available for a while but will issue a deprecation warning
   when used.
+- Disable instance caching by treating every cache size as 0. Instance caching
+  is not safe as the same Wasm memory is reused across multiple executions.
 
 ## 0.8.0 (2020-05-25)
 
