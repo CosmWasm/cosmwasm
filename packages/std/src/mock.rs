@@ -1,8 +1,9 @@
+use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError};
+use crate::errors::{generic_err, invalid_utf8, StdResult, SystemError, SystemResult};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator, ValidatorsResponse,
@@ -126,22 +127,36 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
     }
 }
 
+/// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
+/// cosmwasm-vm. It might diverge from QuerierResult at some point.
+pub type MockQuerierCustomHandlerResult = SystemResult<StdResult<Binary>>;
+
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-#[derive(Clone, Default)]
-pub struct MockQuerier {
+pub struct MockQuerier<C: DeserializeOwned = Never> {
     bank: BankQuerier,
     staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
+    /// A handler to handle custom queries. This is set to a dummy handler that
+    /// always errors by default. Update it via `with_custom_handler`.
+    ///
+    /// Use box to avoid the need of another generic type
+    custom_handler: Box<dyn for<'a> Fn(&'a C) -> MockQuerierCustomHandlerResult>,
 }
 
-impl MockQuerier {
+impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
+            // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
+            custom_handler: Box::from(|_: &_| -> MockQuerierCustomHandlerResult {
+                Err(SystemError::UnsupportedRequest {
+                    kind: "custom".to_string(),
+                })
+            }),
         }
     }
 
@@ -163,12 +178,19 @@ impl MockQuerier {
     ) {
         self.staking = StakingQuerier::new(denom, validators, delegations);
     }
+
+    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
+    where
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
+    {
+        self.custom_handler = Box::from(handler);
+        self
+    }
 }
 
-impl Querier for MockQuerier {
+impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        // MockQuerier doesn't support Custom, so we ignore it completely here
-        let request: QueryRequest<Never> = match from_slice(bin_request) {
+        let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
                 return Err(SystemError::InvalidRequest {
@@ -181,13 +203,11 @@ impl Querier for MockQuerier {
     }
 }
 
-impl MockQuerier {
-    pub fn handle_query<T>(&self, request: &QueryRequest<T>) -> QuerierResult {
+impl<C: DeserializeOwned> MockQuerier<C> {
+    pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
-            QueryRequest::Custom(_) => Err(SystemError::UnsupportedRequest {
-                kind: "custom".to_string(),
-            }),
+            QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
         }

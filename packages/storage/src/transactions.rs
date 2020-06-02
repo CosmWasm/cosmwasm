@@ -8,9 +8,9 @@ use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
-use cosmwasm_std::{Api, Extern, Querier, ReadonlyStorage, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
+use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
 
 #[cfg(feature = "iterator")]
 /// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
@@ -262,28 +262,6 @@ where
     let res = callback(&mut stx)?;
     stx.prepare().commit(storage)?;
     Ok(res)
-}
-
-pub fn transactional_deps<S, A, Q, C, T>(deps: &mut Extern<S, A, Q>, callback: C) -> StdResult<T>
-where
-    S: Storage,
-    A: Api,
-    Q: Querier,
-    C: FnOnce(&mut Extern<StorageTransaction<S>, A, Q>) -> StdResult<T>,
-{
-    let c = StorageTransaction::new(&deps.storage);
-    let mut stx_deps = Extern {
-        storage: c,
-        api: deps.api,
-        querier: deps.querier.clone(),
-    };
-    let res = callback(&mut stx_deps);
-    if res.is_ok() {
-        stx_deps.storage.prepare().commit(&mut deps.storage)?;
-    } else {
-        stx_deps.storage.rollback();
-    }
-    res
 }
 
 #[cfg(feature = "iterator")]

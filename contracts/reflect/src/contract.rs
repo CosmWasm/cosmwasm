@@ -103,13 +103,13 @@ fn query_reflect<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::testing::mock_dependencies;
+    use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::mock_env;
     use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn reflect() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -149,7 +149,7 @@ mod tests {
 
     #[test]
     fn reflect_requires_owner() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -176,7 +176,7 @@ mod tests {
 
     #[test]
     fn reflect_reject_empty_msgs() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -199,7 +199,7 @@ mod tests {
 
     #[test]
     fn reflect_multiple_messages() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -232,7 +232,7 @@ mod tests {
 
     #[test]
     fn transfer() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -254,7 +254,7 @@ mod tests {
 
     #[test]
     fn transfer_requires_owner() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(2, "token"));
@@ -275,7 +275,7 @@ mod tests {
 
     #[test]
     fn dispatch_custom_query() {
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies_with_custom_querier(20, &[]);
 
         // we don't even initialize, just trigger a query
         let res = query(

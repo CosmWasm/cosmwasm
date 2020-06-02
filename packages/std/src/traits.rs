@@ -87,7 +87,7 @@ pub trait Api: Copy + Clone + Send {
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
 pub type QuerierResult = SystemResult<StdResult<Binary>>;
 
-pub trait Querier: Clone + Send {
+pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed

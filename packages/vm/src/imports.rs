@@ -357,7 +357,7 @@ mod test {
         let mut storage = MockStorage::new();
         storage.set(KEY1, VALUE1).expect("error setting");
         storage.set(KEY2, VALUE2).expect("error setting");
-        let querier =
+        let querier: MockQuerier<Never> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(ctx, storage, querier);
     }
