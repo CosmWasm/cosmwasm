@@ -44,6 +44,8 @@ where
 {
     /// new stores the data for cache under base_dir
     ///
+    /// Instance caching is disabled since 0.8.1 and any cache size value will be treated as 0.
+    ///
     /// # Safety
     ///
     /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
@@ -52,7 +54,7 @@ where
     pub unsafe fn new<P: Into<PathBuf>>(
         base_dir: P,
         supported_features: HashSet<String>,
-        cache_size: usize,
+        _cache_size: usize,
     ) -> VmResult<Self> {
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
@@ -61,11 +63,7 @@ where
 
         let modules = FileSystemCache::new(base.join(MODULES_DIR))
             .map_err(|e| make_cache_err(format!("Error file system cache: {}", e)))?;
-        let instances = if cache_size > 0 {
-            Some(LruCache::new(cache_size))
-        } else {
-            None
-        };
+        let instances = None;
         Ok(CosmCache {
             wasm_path,
             supported_features,
@@ -132,16 +130,11 @@ where
 
     pub fn store_instance(
         &mut self,
-        checksum: &Checksum,
+        _checksum: &Checksum,
         instance: Instance<S, A, Q>,
     ) -> Option<Extern<S, A, Q>> {
-        if let Some(cache) = &mut self.instances {
-            let (wasmer_instance, ext) = Instance::recycle(instance);
-            cache.put(*checksum, wasmer_instance);
-            ext
-        } else {
-            None
-        }
+        let (_, deps) = Instance::recycle(instance);
+        deps
     }
 }
 
@@ -340,8 +333,8 @@ mod test {
         cache.store_instance(&id, instance2);
         let instance3 = cache.get_instance(&id, deps3, TESTING_GAS_LIMIT).unwrap();
         cache.store_instance(&id, instance3);
-        assert_eq!(cache.stats.hits_instance, 2);
-        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_instance, 0);
+        assert_eq!(cache.stats.hits_module, 3);
         assert_eq!(cache.stats.misses, 0);
     }
 
@@ -462,8 +455,8 @@ mod test {
 
         // Init from instance cache
         let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        assert_eq!(cache.stats.hits_module, 1);
-        assert_eq!(cache.stats.hits_instance, 1);
+        assert_eq!(cache.stats.hits_instance, 0);
+        assert_eq!(cache.stats.hits_module, 2);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
     }
@@ -496,8 +489,8 @@ mod test {
 
         // Init from instance cache
         let mut instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        assert_eq!(cache.stats.hits_module, 1);
-        assert_eq!(cache.stats.hits_instance, 1);
+        assert_eq!(cache.stats.hits_instance, 0);
+        assert_eq!(cache.stats.hits_module, 2);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
