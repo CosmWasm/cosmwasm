@@ -60,6 +60,15 @@ impl GasState {
             .saturating_sub(self.externally_used_gas)
             .saturating_sub(wasmer_used_gas)
     }
+
+    /// Get the amount of gas units used so far inside wasmer.
+    ///
+    /// We need the amount of gas left in wasmer since it is not tracked inside this object.
+    fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
+        self.gas_limit
+            .saturating_sub(self.externally_used_gas)
+            .saturating_sub(wasmer_gas_left)
+    }
 }
 
 struct ContextData<'a, S: Storage, Q: Querier> {
@@ -189,7 +198,7 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
         let instance = unsafe { instance_ptr.as_mut() };
         let gas_state = &mut ctx_data.gas_state;
 
-        let wasmer_used_gas = gas_state.gas_limit.saturating_sub(get_gas_left(instance));
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance));
 
         gas_state.use_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
@@ -311,7 +320,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::backends::compile;
+    use crate::backends::{compile, get_gas_left, set_gas_limit};
     use crate::errors::VmError;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
@@ -399,6 +408,56 @@ mod test {
         let (ends, endq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn gas_tracking_works_correctly() {
+        let mut instance = make_instance();
+
+        let gas_limit = 100;
+        set_gas_limit(instance.as_mut(), gas_limit);
+        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        let context = instance.context_mut();
+
+        // Consume all the Gas that we allocated
+        try_consume_gas::<MS, MQ>(context, 70).unwrap();
+        try_consume_gas::<MS, MQ>(context, 4).unwrap();
+        try_consume_gas::<MS, MQ>(context, 6).unwrap();
+        try_consume_gas::<MS, MQ>(context, 20).unwrap();
+        // Using one more unit of gas triggers a failure
+        match try_consume_gas::<MS, MQ>(context, 1).unwrap_err() {
+            VmError::GasDepletion => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
+        let mut instance = make_instance();
+
+        let gas_limit = 100;
+        set_gas_limit(instance.as_mut(), gas_limit);
+        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        let context = instance.context_mut();
+
+        // Consume all the Gas that we allocated
+        try_consume_gas::<MS, MQ>(context, 50).unwrap();
+        try_consume_gas::<MS, MQ>(context, 4).unwrap();
+
+        // consume 20 gas directly in wasmer
+        let new_limit = get_gas_left(instance.as_mut()) - 20;
+        set_gas_limit(instance.as_mut(), new_limit);
+
+        let context = instance.context_mut();
+        try_consume_gas::<MS, MQ>(context, 6).unwrap();
+        try_consume_gas::<MS, MQ>(context, 20).unwrap();
+        // Using one more unit of gas triggers a failure
+        match try_consume_gas::<MS, MQ>(context, 1).unwrap_err() {
+            VmError::GasDepletion => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
     }
 
     #[test]
