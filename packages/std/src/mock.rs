@@ -147,18 +147,16 @@ pub struct MockQuerier<C: DeserializeOwned = Never> {
 
 impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
-        // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
-        let no_handler = |_: &_| -> MockQuerierCustomHandlerResult {
-            Err(SystemError::UnsupportedRequest {
-                kind: "custom".to_string(),
-            })
-        };
-
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
-            custom_handler: Box::from(no_handler),
+            // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
+            custom_handler: Box::from(|_: &_| -> MockQuerierCustomHandlerResult {
+                Err(SystemError::UnsupportedRequest {
+                    kind: "custom".to_string(),
+                })
+            }),
         }
     }
 
