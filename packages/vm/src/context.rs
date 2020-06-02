@@ -51,6 +51,15 @@ impl GasState {
     pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
         self.gas_limit = gas_limit;
     }
+
+    /// Get the amount of gas units still left for the rest of the calculation.
+    ///
+    /// We need the amount of gas used in wasmer since it is not tracked inside this object.
+    fn get_gas_left(&self, wasmer_used_gas: u64) -> u64 {
+        self.gas_limit
+            .saturating_sub(self.externally_used_gas)
+            .saturating_sub(wasmer_used_gas)
+    }
 }
 
 struct ContextData<'a, S: Storage, Q: Querier> {
@@ -185,10 +194,7 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
         gas_state.use_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
-        let new_limit = gas_state
-            .gas_limit
-            .saturating_sub(gas_state.externally_used_gas)
-            .saturating_sub(wasmer_used_gas);
+        let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
         set_gas_limit(instance, new_limit);
 
