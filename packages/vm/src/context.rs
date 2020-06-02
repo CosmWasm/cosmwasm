@@ -184,7 +184,7 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
-pub fn get_gas_state<S: Storage, Q: Querier>(ctx: &mut Ctx) -> &mut GasState {
+pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a mut Ctx) -> &'b mut GasState {
     &mut get_context_data::<S, Q>(ctx).gas_state
 }
 
@@ -267,7 +267,7 @@ where
     }
 }
 
-pub(crate) fn with_storage_from_context<'a, 'b, S, Q, F, T>(
+pub(crate) fn with_storage_from_context<'a, 'b, S, Q: 'b, F, T>(
     ctx: &'a mut Ctx,
     func: F,
 ) -> VmResult<T>
@@ -283,7 +283,7 @@ where
     }
 }
 
-pub(crate) fn with_querier_from_context<'a, 'b, S, Q, F, T>(
+pub(crate) fn with_querier_from_context<'a, 'b, S, Q: 'b, F, T>(
     ctx: &'a mut Ctx,
     func: F,
 ) -> VmResult<T>
@@ -300,7 +300,7 @@ where
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn with_iterator_from_context<'a, 'b, S, Q, F, T>(
+pub(crate) fn with_iterator_from_context<'a, 'b, S, Q: 'b, F, T>(
     ctx: &'a mut Ctx,
     iterator_id: u32,
     func: F,
