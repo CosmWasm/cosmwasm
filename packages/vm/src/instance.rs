@@ -13,7 +13,7 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
+    get_gas_state, move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
     with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
@@ -59,7 +59,8 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> VmResult<Self> {
-        let mut import_obj = imports! { || { setup_context::<S, Q>() }, "env" => {}, };
+        let mut import_obj =
+            imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
@@ -140,6 +141,7 @@ where
         gas_limit: u64,
     ) -> Self {
         set_gas_limit(wasmer_instance.as_mut(), gas_limit);
+        get_gas_state::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
@@ -245,9 +247,11 @@ mod test {
     use super::*;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_dependencies, mock_instance, mock_instance_with_balances, mock_instance_with_gas_limit,
+        mock_dependencies, mock_env, mock_instance, mock_instance_with_balances,
+        mock_instance_with_failing_api, mock_instance_with_gas_limit, MockApi, MOCK_CONTRACT_ADDR,
     };
     use crate::traits::ReadonlyStorage;
+    use crate::{call_init, FfiError};
     use cosmwasm_std::{
         coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,
         QueryRequest,
@@ -382,6 +386,27 @@ mod test {
     }
 
     #[test]
+    fn errors_in_imports_are_unwrapped_from_wasmer_errors() {
+        // set up an instance that will experience an error in an import
+        let error_message = "Api failed intentionally";
+        let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
+        let init_result = call_init::<_, _, _, serde_json::Value>(
+            &mut instance,
+            &mock_env(&MockApi::new(MOCK_CONTRACT_ADDR.len()), "someone", &[]),
+            b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
+        );
+
+        // in this case we get a `VmError::FfiError` rather than a `VmError::RuntimeErr` because the conversion
+        // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
+        match init_result.unwrap_err() {
+            VmError::FfiErr {
+                source: FfiError::Other { error, .. },
+            } if error == error_message => {}
+            other => panic!("unexpected error: {:?}", other),
+        }
+    }
+
+    #[test]
     fn read_memory_errors_when_when_length_is_too_long() {
         let length = 6;
         let max_length = 5;
@@ -447,7 +472,7 @@ mod test {
         // initial check
         instance
             .with_storage(|store| {
-                assert!(store.get(b"foo").unwrap().is_none());
+                assert!(store.get(b"foo").unwrap().0.is_none());
                 Ok(())
             })
             .unwrap();
@@ -463,7 +488,7 @@ mod test {
         // read some data
         instance
             .with_storage(|store| {
-                assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+                assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
                 Ok(())
             })
             .unwrap();
@@ -597,7 +622,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 65186);
+        assert_eq!(init_used, 65320);
     }
 
     #[test]
@@ -621,7 +646,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 96570);
+        assert_eq!(handle_used, 96576);
     }
 
     #[test]
@@ -656,6 +681,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 32552);
+        assert_eq!(query_used, 32558);
     }
 }

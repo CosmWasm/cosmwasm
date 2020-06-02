@@ -27,3 +27,6 @@ pub use crate::instance::Instance;
 pub use crate::modules::FileSystemCache;
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
+
+#[cfg(feature = "iterator")]
+pub use crate::traits::StorageIteratorItem;
