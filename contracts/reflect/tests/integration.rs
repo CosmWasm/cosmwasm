@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, testing::MockQuerierCustomHandlerResult, BankMsg, Binary, Coin,
-    HandleResponse, HandleResult, HumanAddr, InitResponse, StakingMsg, StdError,
+    coin, coins, from_binary, BankMsg, Binary, Coin, HandleResponse, HandleResult, HumanAddr,
+    InitResponse, StakingMsg, StdError,
 };
 use cosmwasm_vm::{
     testing::{
@@ -45,13 +45,10 @@ pub fn mock_dependencies_with_custom_querier(
     canonical_length: usize,
     contract_balance: &[Coin],
 ) -> Extern<MockStorage, MockApi, MockQuerier<CustomQuery>> {
-    fn execute(query: &CustomQuery) -> MockQuerierCustomHandlerResult {
-        Ok(custom_query_execute(query))
-    }
-
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<CustomQuery> =
-        MockQuerier::new(&[(&contract_addr, contract_balance)]).with_custom_handler(execute);
+        MockQuerier::new(&[(&contract_addr, contract_balance)])
+            .with_custom_handler(|query| Ok(custom_query_execute(query)));
 
     Extern {
         storage: MockStorage::default(),
