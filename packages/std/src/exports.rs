@@ -17,9 +17,7 @@ use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::{
-    Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResponse, QueryResult,
-};
+use crate::{Env, HandleResult, InitResult, MigrateResult, QueryResponse, QueryResult};
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -53,7 +51,7 @@ pub fn do_init<T, U>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<InitResponse<U>>,
+    ) -> InitResult<U>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -72,7 +70,7 @@ pub fn do_handle<T, U>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<HandleResponse<U>>,
+    ) -> HandleResult<U>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -105,7 +103,7 @@ pub fn do_migrate<T, U>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<InitResponse<U>>,
+    ) -> MigrateResult<U>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -113,7 +111,7 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: InitResult<U> =
+    let res: MigrateResult<U> =
         _do_migrate(migrate_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
@@ -124,10 +122,10 @@ fn _do_init<T, U>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<InitResponse<U>>,
+    ) -> InitResult<U>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> StdResult<InitResponse<U>>
+) -> InitResult<U>
 where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -145,10 +143,10 @@ fn _do_handle<T, U>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<HandleResponse<U>>,
+    ) -> HandleResult<U>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> StdResult<HandleResponse<U>>
+) -> HandleResult<U>
 where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -181,10 +179,10 @@ fn _do_migrate<T, U>(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         T,
-    ) -> StdResult<InitResponse<U>>,
+    ) -> MigrateResult<U>,
     env_ptr: *mut c_void,
     msg_ptr: *mut c_void,
-) -> StdResult<InitResponse<U>>
+) -> MigrateResult<U>
 where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,

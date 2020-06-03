@@ -169,6 +169,32 @@ where
     }
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MigrateResponse<T = Never>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
+    pub messages: Vec<CosmosMsg<T>>,
+    pub log: Vec<LogAttribute>, // abci defines this as string
+    pub data: Option<Binary>,   // abci defines this as bytes
+}
+
+pub type MigrateResult<U = Never> = StdResult<MigrateResponse<U>>;
+
+impl<T> Default for MigrateResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn default() -> Self {
+        MigrateResponse {
+            messages: vec![],
+            log: vec![],
+            data: None,
+        }
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;

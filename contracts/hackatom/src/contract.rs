@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{
     from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, AllBalanceResponse,
     Api, BankMsg, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    Querier, QueryResponse, StdResult, Storage,
+    MigrateResponse, Querier, QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -81,7 +81,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
     msg: MigrateMsg,
-) -> StdResult<InitResponse> {
+) -> StdResult<MigrateResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -89,7 +89,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     let mut config: State = from_slice(&data)?;
     config.verifier = deps.api.canonical_address(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?)?;
-    Ok(InitResponse::default())
+    Ok(MigrateResponse::default())
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(

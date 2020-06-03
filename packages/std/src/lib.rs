@@ -21,7 +21,7 @@ pub use crate::errors::{
 };
 pub use crate::init_handle::{
     log, BankMsg, CosmosMsg, HandleResponse, HandleResult, InitResponse, InitResult, LogAttribute,
-    StakingMsg, WasmMsg,
+    MigrateResponse, MigrateResult, StakingMsg, WasmMsg,
 };
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
