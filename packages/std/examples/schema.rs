@@ -2,7 +2,7 @@ use std::env::current_dir;
 use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, export_schema_with_title, schema_for};
-use cosmwasm_std::{CosmosMsg, Env, HandleResult, InitResult, QueryResult};
+use cosmwasm_std::{CosmosMsg, Env, HandleResult, InitResult, MigrateResult, QueryResult};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -13,5 +13,6 @@ fn main() {
     export_schema(&schema_for!(CosmosMsg), &out_dir);
     export_schema_with_title(&mut schema_for!(InitResult), &out_dir, "InitResult");
     export_schema_with_title(&mut schema_for!(HandleResult), &out_dir, "HandleResult");
+    export_schema_with_title(&mut schema_for!(MigrateResult), &out_dir, "MigrateResult");
     export_schema_with_title(&mut schema_for!(QueryResult), &out_dir, "QueryResult");
 }
