@@ -99,6 +99,26 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
     release_buffer(v) as u32
 }
 
+/// do_migrate should be wrapped in an external "C" export, containing a contract-specific function as arg
+pub fn do_migrate<T, U>(
+    migrate_fn: &dyn Fn(
+        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        Env,
+        T,
+    ) -> StdResult<InitResponse<U>>,
+    env_ptr: u32,
+    msg_ptr: u32,
+) -> u32
+where
+    T: DeserializeOwned + JsonSchema,
+    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    let res: InitResult<U> =
+        _do_migrate(migrate_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
+    let v = to_vec(&res).unwrap();
+    release_buffer(v) as u32
+}
+
 fn _do_init<T, U>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
@@ -154,6 +174,27 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
     let msg: T = from_slice(&msg)?;
     let deps = make_dependencies();
     query_fn(&deps, msg)
+}
+
+fn _do_migrate<T, U>(
+    migrate_fn: &dyn Fn(
+        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        Env,
+        T,
+    ) -> StdResult<InitResponse<U>>,
+    env_ptr: *mut c_void,
+    msg_ptr: *mut c_void,
+) -> StdResult<InitResponse<U>>
+where
+    T: DeserializeOwned + JsonSchema,
+    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+    let env: Env = from_slice(&env)?;
+    let msg: T = from_slice(&msg)?;
+    let mut deps = make_dependencies();
+    migrate_fn(&mut deps, env, msg)
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
