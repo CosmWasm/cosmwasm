@@ -584,6 +584,7 @@ mod test {
             Ok(querier.raw_query(&to_vec(&req).unwrap())?)
         })
         .unwrap()
+        .0
         .unwrap()
         .unwrap();
         let balance: AllBalanceResponse = from_binary(&res).unwrap();

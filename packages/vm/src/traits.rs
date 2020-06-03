@@ -84,13 +84,12 @@ pub trait Api: Copy + Clone + Send {
 /// 1. Passing the query message to the backend
 /// 2. Accessing the contract
 /// 3. Executing query in the contract
-pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
+pub type QuerierResult = FfiResult<(SystemResult<StdResult<Binary>>, u64)>;
 
 pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
-    /// types. People using the querier probably want one of the simpler auto-generated
-    /// helper methods
+    /// types.
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 }

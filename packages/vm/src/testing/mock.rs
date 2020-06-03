@@ -182,8 +182,9 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let res = self.querier.raw_query(bin_request);
+        let used_gas = (bin_request.len() + to_binary(&res).unwrap().len()) as u64;
         // We don't use FFI, so FfiResult is always Ok() regardless of error on other levels
-        Ok(res)
+        Ok((res, used_gas))
     }
 }
 
@@ -193,10 +194,14 @@ impl MockQuerier {
         let bin = match to_binary(request) {
             Ok(raw) => raw,
             Err(e) => {
-                return Ok(Err(SystemError::InvalidRequest {
-                    error: format!("Serializing query request: {}", e),
-                    request: Binary(b"N/A".to_vec()),
-                }));
+                let used_gas = e.to_string().len() as u64;
+                return Ok((
+                    Err(SystemError::InvalidRequest {
+                        error: format!("Serializing query request: {}", e),
+                        request: Binary(b"N/A".to_vec()),
+                    }),
+                    used_gas,
+                ));
             }
         };
         self.raw_query(bin.as_slice())
@@ -284,6 +289,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
@@ -306,6 +312,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&fly).unwrap();
@@ -321,6 +328,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
@@ -342,6 +350,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
@@ -357,6 +366,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();

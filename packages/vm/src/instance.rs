@@ -518,6 +518,7 @@ mod test {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))?
+                    .0
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -534,6 +535,7 @@ mod test {
                     .handle_query::<Never>(&QueryRequest::Bank(BankQuery::AllBalances {
                         address: rich_addr.clone(),
                     }))?
+                    .0
                     .unwrap()
                     .unwrap();
                 let AllBalanceResponse { amount } = from_binary(&response).unwrap();
@@ -564,6 +566,7 @@ mod test {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))?
+                    .0
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -588,6 +591,7 @@ mod test {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))?
+                    .0
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -646,7 +650,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 96576);
+        assert_eq!(handle_used, 96667);
     }
 
     #[test]
