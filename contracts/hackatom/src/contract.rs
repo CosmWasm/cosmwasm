@@ -278,6 +278,41 @@ mod tests {
     }
 
     #[test]
+    fn migrate_verifier() {
+        let mut deps = mock_dependencies(20, &[]);
+
+        let verifier = HumanAddr::from("verifies");
+        let beneficiary = HumanAddr::from("benefits");
+        let creator = HumanAddr::from("creator");
+        let msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary,
+        };
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let res = init(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'verifies'
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+
+        // change the verifier via migrate
+        let msg = MigrateMsg {
+            verifier: HumanAddr::from("someone else"),
+        };
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let res = migrate(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'someone else'
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(
+            query_response.as_slice(),
+            b"{\"verifier\":\"someone else\"}"
+        );
+    }
+
+    #[test]
     fn querier_callbacks_work() {
         let rich_addr = HumanAddr::from("foobar");
         let rich_balance = coins(10000, "gold");
