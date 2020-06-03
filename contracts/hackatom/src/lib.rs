@@ -4,7 +4,7 @@ pub mod contract;
 mod wasm {
     use super::contract;
     use cosmwasm_std::{
-        do_handle, do_init, do_query, ExternalApi, ExternalQuerier, ExternalStorage,
+        do_handle, do_init, do_migrate, do_query, ExternalApi, ExternalQuerier, ExternalStorage,
     };
 
     #[no_mangle]
@@ -20,6 +20,15 @@ mod wasm {
     extern "C" fn handle(env_ptr: u32, msg_ptr: u32) -> u32 {
         do_handle(
             &contract::handle::<ExternalStorage, ExternalApi, ExternalQuerier>,
+            env_ptr,
+            msg_ptr,
+        )
+    }
+
+    #[no_mangle]
+    extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32 {
+        do_migrate(
+            &contract::migrate::<ExternalStorage, ExternalApi, ExternalQuerier>,
             env_ptr,
             msg_ptr,
         )

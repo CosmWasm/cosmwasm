@@ -14,6 +14,11 @@ pub struct InitMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MigrateMsg {
+    pub verifier: HumanAddr,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub verifier: CanonicalAddr,
     pub beneficiary: CanonicalAddr,
@@ -69,6 +74,21 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
             funder: env.message.sender,
         })?,
     );
+    Ok(InitResponse::default())
+}
+
+pub fn migrate<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    _env: Env,
+    msg: MigrateMsg,
+) -> StdResult<InitResponse> {
+    let data = deps
+        .storage
+        .get(CONFIG_KEY)
+        .ok_or_else(|| not_found("State"))?;
+    let mut config: State = from_slice(&data)?;
+    config.verifier = deps.api.canonical_address(&msg.verifier)?;
+    deps.storage.set(CONFIG_KEY, &to_vec(&config)?)?;
     Ok(InitResponse::default())
 }
 
