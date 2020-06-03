@@ -5,7 +5,9 @@ use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
-use cosmwasm_std::{to_vec, Env, HandleResult, InitResult, QueryResponse, StdResult};
+use cosmwasm_std::{
+    to_vec, Env, HandleResult, InitResult, MigrateResult, QueryResponse, StdResult,
+};
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
 use crate::instance::Instance;
@@ -60,7 +62,7 @@ pub fn migrate<
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: T,
-) -> HandleResult<U> {
+) -> MigrateResult<U> {
     let serialized_msg = to_vec(&msg)?;
     call_migrate(instance, &env, &serialized_msg).expect("VM error")
 }
