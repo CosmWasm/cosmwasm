@@ -10,10 +10,10 @@ use wasmer_runtime_core::vm::Ctx;
 
 #[cfg(feature = "iterator")]
 use crate::context::{add_iterator, with_iterator_from_context};
-use crate::context::{with_querier_from_context, with_storage_from_context};
+use crate::context::{is_storage_readonly, with_querier_from_context, with_storage_from_context};
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{VmError, VmResult};
+use crate::errors::{make_generic_err, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
@@ -171,6 +171,12 @@ pub fn do_write<S: Storage, Q: Querier>(
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<i32> {
+    if is_storage_readonly::<S, Q>(ctx) {
+        return Err(make_generic_err(
+            "Writing to storage is prohibited in this context.",
+        ));
+    }
+
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
     let value = read_region!(ctx, value_ptr, MAX_LENGTH_DB_VALUE);
     with_storage_from_context::<S, Q, _, ()>(ctx, |store| Ok(store.set(&key, &value)?))
@@ -178,6 +184,12 @@ pub fn do_write<S: Storage, Q: Querier>(
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
+    if is_storage_readonly::<S, Q>(ctx) {
+        return Err(make_generic_err(
+            "Writing to storage is prohibited in this context.",
+        ));
+    }
+
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
     with_storage_from_context::<S, Q, _, ()>(ctx, |store| Ok(store.remove(&key)?))
         .and(Ok(errors::NONE))
@@ -294,7 +306,7 @@ mod test {
     use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{move_into_context, setup_context};
+    use crate::context::{move_into_context, set_storage_readonly, setup_context};
     #[cfg(feature = "iterator")]
     use crate::conversion::to_u32;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
@@ -523,6 +535,26 @@ mod test {
     }
 
     #[test]
+    fn do_write_is_prohibited_in_readonly_contexts() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, b"new storage key");
+        let value_ptr = write_data(&mut instance, b"new value");
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+        set_storage_readonly::<MS, MQ>(ctx, true);
+
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        match result.unwrap_err() {
+            VmError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "Writing to storage is prohibited in this context.")
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
     fn do_remove_works() {
         let mut instance = make_instance();
 
@@ -574,6 +606,25 @@ mod test {
 
         let result = do_remove::<MS, MQ>(ctx, key_ptr);
         assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+    }
+
+    #[test]
+    fn do_remove_is_prohibited_in_readonly_contexts() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, b"a storage key");
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+        set_storage_readonly::<MS, MQ>(ctx, true);
+
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
+        match result.unwrap_err() {
+            VmError::GenericErr { msg, .. } => {
+                assert_eq!(msg, "Writing to storage is prohibited in this context.")
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
     }
 
     #[test]
