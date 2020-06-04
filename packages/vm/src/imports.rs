@@ -13,7 +13,7 @@ use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{is_storage_readonly, with_querier_from_context, with_storage_from_context};
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
-use crate::errors::{make_generic_err, VmError, VmResult};
+use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
@@ -172,9 +172,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     value_ptr: u32,
 ) -> VmResult<i32> {
     if is_storage_readonly::<S, Q>(ctx) {
-        return Err(make_generic_err(
-            "Writing to storage is prohibited in this context.",
-        ));
+        return Err(VmError::write_access_denied());
     }
 
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
@@ -185,9 +183,7 @@ pub fn do_write<S: Storage, Q: Querier>(
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
     if is_storage_readonly::<S, Q>(ctx) {
-        return Err(make_generic_err(
-            "Writing to storage is prohibited in this context.",
-        ));
+        return Err(VmError::write_access_denied());
     }
 
     let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
@@ -547,9 +543,7 @@ mod test {
 
         let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
         match result.unwrap_err() {
-            VmError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Writing to storage is prohibited in this context.")
-            }
+            VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -620,9 +614,7 @@ mod test {
 
         let result = do_remove::<MS, MQ>(ctx, key_ptr);
         match result.unwrap_err() {
-            VmError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "Writing to storage is prohibited in this context.")
-            }
+            VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }
