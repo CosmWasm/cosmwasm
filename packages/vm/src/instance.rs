@@ -76,7 +76,7 @@ where
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
                 // Returns 0 on success. Returns negative value on error.
-                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<i32> {
+                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<()> {
                     do_write::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
                 // Removes the value at the given key. Different than writing &[] as future

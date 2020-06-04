@@ -4,7 +4,6 @@ use std::iter;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
-use crate::errors::StdResult;
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
@@ -73,14 +72,12 @@ fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
 }
 
 impl Storage for MemoryStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) {
         self.data.insert(key.to_vec(), value.to_vec());
-        Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
+    fn remove(&mut self, key: &[u8]) {
         self.data.remove(key);
-        Ok(())
     }
 }
 
@@ -247,7 +244,7 @@ mod test {
     fn get_and_set() {
         let mut store = MemoryStorage::new();
         assert_eq!(store.get(b"foo"), None);
-        store.set(b"foo", b"bar").unwrap();
+        store.set(b"foo", b"bar");
         assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(store.get(b"food"), None);
     }
@@ -255,9 +252,9 @@ mod test {
     #[test]
     fn delete() {
         let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar").unwrap();
-        store.set(b"food", b"bank").unwrap();
-        store.remove(b"foo").unwrap();
+        store.set(b"foo", b"bar");
+        store.set(b"food", b"bank");
+        store.remove(b"foo");
 
         assert_eq!(store.get(b"foo"), None);
         assert_eq!(store.get(b"food"), Some(b"bank".to_vec()));
