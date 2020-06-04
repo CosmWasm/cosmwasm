@@ -213,19 +213,24 @@ pub fn do_humanize_address<A: Api>(
     Ok(write_region!(ctx, human_ptr, human.as_str().as_bytes()))
 }
 
-pub fn do_query_chain<S: Storage, Q: Querier>(
-    ctx: &mut Ctx,
-    request_ptr: u32,
-    response_ptr: u32,
-) -> VmResult<i32> {
-    let request = read_region!(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST);
+pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
+    let request = read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
     let (res, used_gas) =
         with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)?))?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
     let serialized = to_vec(&res)?;
-    Ok(write_region!(ctx, response_ptr, &serialized))
+    let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
+        let out_size = to_u32(serialized.len())?;
+        let ptr = allocate.call(out_size)?;
+        if ptr == 0 {
+            return Err(CommunicationError::zero_address().into());
+        }
+        Ok(ptr)
+    })?;
+    write_region(ctx, out_ptr, &serialized)?;
+    Ok(out_ptr)
 }
 
 #[cfg(feature = "iterator")]

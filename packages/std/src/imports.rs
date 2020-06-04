@@ -2,7 +2,7 @@ use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::encoding::Binary;
-use crate::errors::{generic_err, StdResult, SystemError};
+use crate::errors::{generic_err, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -10,10 +10,6 @@ use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
-/// A kibi (kilo binary)
-static KI: usize = 1024;
-/// The number of bytes of the memory region we pre-allocate for the result data in queries
-static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 32;
 /// An upper bound for typical human readable address formats (e.g. 42 for Ethereum hex addresses or 90 for bech32)
@@ -38,7 +34,7 @@ extern "C" {
 
     // query_chain will launch a query on the chain (import)
     // different than query which will query the state of the contract (export)
-    fn query_chain(request: *const c_void, response: *mut c_void) -> i32;
+    fn query_chain(request: *const c_void) -> u32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -223,22 +219,10 @@ impl Querier for ExternalQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let req = build_region(bin_request);
         let request_ptr = &*req as *const Region as *const c_void;
-        let response_ptr = alloc(QUERY_RESULT_BUFFER_LENGTH);
 
-        let result_code = unsafe { query_chain(request_ptr, response_ptr) };
-        if result_code < 0 {
-            return Err(SystemError::Unknown {});
-        }
+        let response_ptr = unsafe { query_chain(request_ptr) };
 
-        let process = |region_ptr| -> StdResult<QuerierResult> {
-            let out = unsafe { consume_region(region_ptr) };
-            let parsed: QuerierResult = from_slice(&out)?;
-            Ok(parsed)
-        };
-
-        match process(response_ptr) {
-            Ok(api_response) => api_response,
-            Err(err) => Ok(Err(err)),
-        }
+        let response = unsafe { consume_region(response_ptr as *mut c_void) };
+        from_slice(&response).unwrap_or_else(|err| Ok(Err(err)))
     }
 }

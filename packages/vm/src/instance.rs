@@ -101,8 +101,8 @@ where
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> VmResult<i32> {
                     do_humanize_address(api, ctx, canonical_ptr, human_ptr)
                 }),
-                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32, response_ptr: u32| -> VmResult<i32> {
-                    do_query_chain::<S, Q>(ctx, request_ptr, response_ptr)
+                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
+                    do_query_chain::<S, Q>(ctx, request_ptr)
                 }),
             },
         });
