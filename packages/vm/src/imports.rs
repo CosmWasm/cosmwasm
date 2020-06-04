@@ -66,11 +66,7 @@ mod errors {
     // pub mod humanize {
     // }
 
-    /// query_chain errors (-1_003_0xx)
-    pub mod query_chain {
-        /// Cannot serialize query response
-        pub static CANNOT_SERIALIZE_RESPONSE: i32 = -1_003_001;
-    }
+    // query_chain errors (-1_003_0xx)
 
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
 
@@ -227,10 +223,8 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
     let res =
         with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)?))?;
 
-    Ok(match to_vec(&res) {
-        Ok(serialized) => write_region!(ctx, response_ptr, &serialized),
-        Err(_) => errors::query_chain::CANNOT_SERIALIZE_RESPONSE,
-    })
+    let serialized = to_vec(&res)?;
+    Ok(write_region!(ctx, response_ptr, &serialized))
 }
 
 #[cfg(feature = "iterator")]
