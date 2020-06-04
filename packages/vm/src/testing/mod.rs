@@ -5,7 +5,7 @@ mod instance;
 mod mock;
 mod storage;
 
-pub use calls::{handle, init, query};
+pub use calls::{handle, init, migrate, query};
 pub use instance::{
     mock_instance, mock_instance_with_balances, mock_instance_with_failing_api,
     mock_instance_with_gas_limit, mock_instance_with_options, test_io, MockInstanceOptions,
