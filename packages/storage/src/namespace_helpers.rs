@@ -1,6 +1,6 @@
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
+use cosmwasm_std::{Order, StdResult, KV};
+use cosmwasm_std::{ReadonlyStorage, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
     storage: &S,
@@ -15,16 +15,12 @@ pub(crate) fn set_with_prefix<S: Storage>(
     namespace: &[u8],
     key: &[u8],
     value: &[u8],
-) -> StdResult<()> {
-    storage.set(&concat(namespace, key), value)
+) {
+    storage.set(&concat(namespace, key), value);
 }
 
-pub(crate) fn remove_with_prefix<S: Storage>(
-    storage: &mut S,
-    namespace: &[u8],
-    key: &[u8],
-) -> StdResult<()> {
-    storage.remove(&concat(namespace, key))
+pub(crate) fn remove_with_prefix<S: Storage>(storage: &mut S, namespace: &[u8], key: &[u8]) {
+    storage.remove(&concat(namespace, key));
 }
 
 #[inline]
@@ -97,7 +93,7 @@ mod test {
         let mut storage = MockStorage::new();
         let prefix = to_length_prefixed(b"foo");
 
-        set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha").unwrap();
+        set_with_prefix(&mut storage, &prefix, b"bar", b"gotcha");
         let rfoo = get_with_prefix(&storage, &prefix, b"bar");
         assert_eq!(rfoo, Some(b"gotcha".to_vec()));
 

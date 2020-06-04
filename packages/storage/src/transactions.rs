@@ -89,21 +89,19 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) {
         let op = Op::Set {
             key: key.to_vec(),
             value: value.to_vec(),
         };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
-        Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
+    fn remove(&mut self, key: &[u8]) {
         let op = Op::Delete { key: key.to_vec() };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
-        Ok(())
     }
 }
 
@@ -125,7 +123,7 @@ impl RepLog {
     /// applies the stored list of `Op`s to the provided `Storage`
     pub fn commit<S: Storage>(self, storage: &mut S) -> StdResult<()> {
         for op in self.ops_log {
-            op.apply(storage)?;
+            op.apply(storage);
         }
         Ok(())
     }
@@ -146,7 +144,7 @@ enum Op {
 
 impl Op {
     /// applies this `Op` to the provided storage
-    pub fn apply<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
+    pub fn apply<S: Storage>(&self, storage: &mut S) {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
             Op::Delete { key } => storage.remove(&key),
@@ -436,9 +434,9 @@ mod test {
     fn delete_local() {
         let mut base = MemoryStorage::new();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"foo", b"bar").unwrap();
-        check.set(b"food", b"bank").unwrap();
-        check.remove(b"foo").unwrap();
+        check.set(b"foo", b"bar");
+        check.set(b"food", b"bank");
+        check.remove(b"foo");
 
         assert_eq!(check.get(b"foo"), None);
         assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
@@ -452,10 +450,10 @@ mod test {
     #[test]
     fn delete_from_base() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
         let mut check = StorageTransaction::new(&base);
-        check.set(b"food", b"bank").unwrap();
-        check.remove(b"foo").unwrap();
+        check.set(b"food", b"bank");
+        check.remove(b"foo");
 
         assert_eq!(check.get(b"foo"), None);
         assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
@@ -498,11 +496,11 @@ mod test {
     #[test]
     fn commit_writes_through() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works").unwrap();
+        check.set(b"subtx", b"works");
         check.prepare().commit(&mut base).unwrap();
 
         assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
@@ -511,13 +509,13 @@ mod test {
     #[test]
     fn storage_remains_readable() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut stxn1 = StorageTransaction::new(&base);
 
         assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
 
-        stxn1.set(b"subtx", b"works").unwrap();
+        stxn1.set(b"subtx", b"works");
         assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
 
         // Can still read from base, txn is not yet committed
@@ -530,11 +528,11 @@ mod test {
     #[test]
     fn rollback_has_no_effect() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works").unwrap();
+        check.set(b"subtx", b"works");
         check.rollback();
 
         assert_eq!(base.get(b"subtx"), None);
@@ -543,11 +541,11 @@ mod test {
     #[test]
     fn ignore_same_as_rollback() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works").unwrap();
+        check.set(b"subtx", b"works");
 
         assert_eq!(base.get(b"subtx"), None);
     }
@@ -555,14 +553,14 @@ mod test {
     #[test]
     fn transactional_works() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         // writes on success
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             // we write in the Ok case
-            store.set(b"good", b"one").unwrap();
+            store.set(b"good", b"one");
             Ok(5)
         });
         assert_eq!(res.unwrap(), 5);
@@ -574,7 +572,7 @@ mod test {
             assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
             // we write in the Error case
-            store.set(b"bad", b"value").unwrap();
+            store.set(b"bad", b"value");
             Err(unauthorized())
         });
         assert!(res.is_err());
