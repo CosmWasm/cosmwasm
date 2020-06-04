@@ -4,9 +4,12 @@ use std::iter;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
-#[cfg(feature = "iterator")]
-use crate::iterator::{Order, KV};
 use crate::traits::{ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::{
+    iterator::{Order, KV},
+    StdResult,
+};
 
 #[derive(Default)]
 pub struct MemoryStorage {
