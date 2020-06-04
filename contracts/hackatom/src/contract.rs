@@ -68,7 +68,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
             funder: env.message.sender,
         })?,
-    )?;
+    );
     Ok(InitResponse::default())
 }
 
@@ -134,7 +134,7 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     let mut test_case = 0u64;
     loop {
         deps.storage
-            .set(b"test.key", test_case.to_string().as_bytes())?;
+            .set(b"test.key", test_case.to_string().as_bytes());
         test_case += 1;
     }
 }

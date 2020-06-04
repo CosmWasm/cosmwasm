@@ -55,6 +55,7 @@ impl GasState {
     /// Get the amount of gas units still left for the rest of the calculation.
     ///
     /// We need the amount of gas used in wasmer since it is not tracked inside this object.
+    #[allow(unused)]
     fn get_gas_left(&self, wasmer_used_gas: u64) -> u64 {
         self.gas_limit
             .saturating_sub(self.externally_used_gas)
@@ -64,6 +65,7 @@ impl GasState {
     /// Get the amount of gas units used so far inside wasmer.
     ///
     /// We need the amount of gas left in wasmer since it is not tracked inside this object.
+    #[allow(unused)]
     fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
         self.gas_limit
             .saturating_sub(self.externally_used_gas)
@@ -355,8 +357,8 @@ mod test {
             || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
                 "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
-                "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
-                "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
+                "db_write" => Func::new(|_a: i32, _b: i32| {}),
+                "db_remove" => Func::new(|_a: i32| {}),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: i32| -> i32 { 0 }),

@@ -98,25 +98,6 @@ macro_rules! read_region {
     };
 }
 
-#[cfg(feature = "iterator")]
-/// This macro wraps the maybe_read_region function for the purposes of the functions below which need to report errors
-/// in its operation to the caller in the WASM runtime.
-/// On success, the optionally read data is returned from the expression.
-/// On failure, an error number is wrapped in `Ok` and returned from the function.
-macro_rules! maybe_read_region {
-    ($ctx: expr, $ptr: expr, $length: expr) => {
-        match maybe_read_region($ctx, $ptr, $length) {
-            Ok(data) => data,
-            Err(err) => {
-                return Ok(match err {
-                    VmError::RegionLengthTooBig { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
-                    _ => errors::REGION_READ_UNKNOWN,
-                })
-            }
-        }
-    };
-}
-
 /// This macro wraps the write_region function for the purposes of the functions below which need to report errors
 /// in its operation to the caller in the WASM runtime.
 /// On success, `errors::NONE` is returned from the expression.
@@ -165,22 +146,22 @@ pub fn do_write<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     key_ptr: u32,
     value_ptr: u32,
-) -> VmResult<i32> {
-    let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
-    let value = read_region!(ctx, value_ptr, MAX_LENGTH_DB_VALUE);
+) -> VmResult<()> {
+    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
     let used_gas =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)?))?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
-    Ok(errors::NONE)
+    Ok(())
 }
 
-pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<i32> {
-    let key = read_region!(ctx, key_ptr, MAX_LENGTH_DB_KEY);
+pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<()> {
+    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let used_gas = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
-    Ok(errors::NONE)
+    Ok(())
 }
 
 pub fn do_canonicalize_address<A: Api>(
@@ -240,8 +221,8 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     end_ptr: u32,
     order: i32,
 ) -> VmResult<i32> {
-    let start = maybe_read_region!(ctx, start_ptr, MAX_LENGTH_DB_KEY);
-    let end = maybe_read_region!(ctx, end_ptr, MAX_LENGTH_DB_KEY);
+    let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = match order.try_into() {
         Ok(order) => order,
         Err(_) => return Ok(errors::scan::INVALID_ORDER),
@@ -335,8 +316,8 @@ mod test {
             || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
                 "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
-                "db_write" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
-                "db_remove" => Func::new(|_a: i32| -> i32 { 0 }),
+                "db_write" => Func::new(|_a: i32, _b: i32| {}),
+                "db_remove" => Func::new(|_a: i32| {}),
                 "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: i32| -> i32 { 0 }),
@@ -436,8 +417,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
         let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -456,8 +436,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
         let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(KEY1).expect("error getting value"))
@@ -476,8 +455,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
         let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -496,8 +474,15 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err() {
+            VmError::RegionLengthTooBig {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, 300 * 1024);
+                assert_eq!(max_length, MAX_LENGTH_DB_KEY);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        };
     }
 
     #[test]
@@ -510,8 +495,15 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err() {
+            VmError::RegionLengthTooBig {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, 300 * 1024);
+                assert_eq!(max_length, MAX_LENGTH_DB_VALUE);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        };
     }
 
     #[test]
@@ -524,8 +516,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_remove::<MS, MQ>(ctx, key_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
 
         let (value, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(existing_key).expect("error getting value"))
@@ -544,9 +535,8 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_remove::<MS, MQ>(ctx, key_ptr);
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
 
         let (value, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(non_existent_key).expect("error getting value"))
@@ -564,8 +554,15 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_remove::<MS, MQ>(ctx, key_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match do_remove::<MS, MQ>(ctx, key_ptr).unwrap_err() {
+            VmError::RegionLengthTooBig {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, 300 * 1024);
+                assert_eq!(max_length, MAX_LENGTH_DB_KEY);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        };
     }
 
     #[test]
