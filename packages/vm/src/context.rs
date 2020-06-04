@@ -79,7 +79,7 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 // elsewhere where we try to add iterators to the context. That's not legal according to Rust's rules, and it
 // complains that we're trying to borrow ctx mutably twice. This needs a better solution because this function
 // probably triggers unsoundness.
-fn get_context_data<'a, 'b, S: Storage, Q: Querier>(
+fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<'b, S, Q> {
     let owned = unsafe {
@@ -101,7 +101,7 @@ fn destroy_iterators<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {
 pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
     source: &mut Ctx,
 ) -> (Option<S>, Option<Q>) {
-    let mut b = get_context_data::<S, Q>(source);
+    let mut b = get_context_data_mut::<S, Q>(source);
     // Destroy all existing iterators which are (in contrast to the storage)
     // not reused between different instances.
     // This is also important because the iterators are pointers to Go memory which should not be stored long term
@@ -113,19 +113,19 @@ pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
 /// Moves owned instances of storage and querier into the context.
 /// Should be followed by exactly one call to move_out_of_context when the instance is finished.
 pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storage: S, querier: Q) {
-    let b = get_context_data::<S, Q>(target);
+    let b = get_context_data_mut::<S, Q>(target);
     b.storage = Some(storage);
     b.querier = Some(querier);
 }
 
 /// Returns true iff the storage is set to readonly mode
 pub fn is_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx) -> bool {
-    let context_data = get_context_data::<S, Q>(ctx);
+    let context_data = get_context_data_mut::<S, Q>(ctx);
     context_data.storage_readonly
 }
 
 pub fn set_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx, new_value: bool) {
-    let mut context_data = get_context_data::<S, Q>(ctx);
+    let mut context_data = get_context_data_mut::<S, Q>(ctx);
     context_data.storage_readonly = new_value;
 }
 
@@ -137,7 +137,7 @@ pub fn add_iterator<'a, S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     iter: Box<dyn Iterator<Item = FfiResult<KV>> + 'a>,
 ) -> u32 {
-    let b = get_context_data::<S, Q>(ctx);
+    let b = get_context_data_mut::<S, Q>(ctx);
     let last_id: u32 = b
         .iterators
         .len()
@@ -161,7 +161,7 @@ where
     Q: Querier,
     F: FnOnce(&'b mut S) -> VmResult<T>,
 {
-    let b = get_context_data::<S, Q>(ctx);
+    let b = get_context_data_mut::<S, Q>(ctx);
     match b.storage.as_mut() {
         Some(data) => func(data),
         None => Err(make_uninitialized_context_data("storage")),
@@ -177,7 +177,7 @@ where
     Q: Querier,
     F: FnOnce(&'b mut Q) -> VmResult<T>,
 {
-    let b = get_context_data::<S, Q>(ctx);
+    let b = get_context_data_mut::<S, Q>(ctx);
     match b.querier.as_mut() {
         Some(q) => func(q),
         None => Err(make_uninitialized_context_data("querier")),
@@ -195,7 +195,7 @@ where
     Q: Querier,
     F: FnOnce(&'b mut (dyn Iterator<Item = FfiResult<KV>>)) -> VmResult<T>,
 {
-    let b = get_context_data::<S, Q>(ctx);
+    let b = get_context_data_mut::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
         Some(iterator) => func(iterator),
         None => Err(make_iterator_does_not_exist(iterator_id)),
@@ -319,14 +319,20 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        assert_eq!(get_context_data::<MS, MQ>(ctx).iterators.len(), 0);
+        assert_eq!(get_context_data_mut::<MS, MQ>(ctx).iterators.len(), 0);
         let id1 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
         let id2 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
         let id3 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
-        assert_eq!(get_context_data::<MS, MQ>(ctx).iterators.len(), 3);
-        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id1));
-        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id2));
-        assert!(get_context_data::<MS, MQ>(ctx).iterators.contains_key(&id3));
+        assert_eq!(get_context_data_mut::<MS, MQ>(ctx).iterators.len(), 3);
+        assert!(get_context_data_mut::<MS, MQ>(ctx)
+            .iterators
+            .contains_key(&id1));
+        assert!(get_context_data_mut::<MS, MQ>(ctx)
+            .iterators
+            .contains_key(&id2));
+        assert!(get_context_data_mut::<MS, MQ>(ctx)
+            .iterators
+            .contains_key(&id3));
     }
 
     #[test]
