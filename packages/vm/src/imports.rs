@@ -240,8 +240,8 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     end_ptr: u32,
     order: i32,
 ) -> VmResult<i32> {
-    let start = maybe_read_region!(ctx, start_ptr, MAX_LENGTH_DB_KEY);
-    let end = maybe_read_region!(ctx, end_ptr, MAX_LENGTH_DB_KEY);
+    let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = match order.try_into() {
         Ok(order) => order,
         Err(_) => return Ok(errors::scan::INVALID_ORDER),
