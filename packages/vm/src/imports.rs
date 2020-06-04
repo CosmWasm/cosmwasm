@@ -436,8 +436,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
         let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -456,8 +455,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
         let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(KEY1).expect("error getting value"))
@@ -476,8 +474,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
         let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
@@ -496,8 +493,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err();
     }
 
     #[test]
@@ -510,8 +506,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err();
     }
 
     #[test]
