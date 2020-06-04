@@ -724,13 +724,11 @@ mod test {
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
         let request_ptr = write_data(&mut instance, &request_data);
-        let response_ptr = create_empty(&mut instance, 1000);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_query_chain::<MS, MQ>(ctx, request_ptr, response_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        let response_ptr = do_query_chain::<MS, MQ>(ctx, request_ptr).unwrap();
         let response = force_read(ctx, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
@@ -747,13 +745,11 @@ mod test {
 
         let request = b"Not valid JSON for sure";
         let request_ptr = write_data(&mut instance, request);
-        let response_ptr = create_empty(&mut instance, 1000);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_query_chain::<MS, MQ>(ctx, request_ptr, response_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        let response_ptr = do_query_chain::<MS, MQ>(ctx, request_ptr).unwrap();
         let response = force_read(ctx, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
@@ -777,13 +773,11 @@ mod test {
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
         let request_ptr = write_data(&mut instance, &request_data);
-        let response_ptr = create_empty(&mut instance, 1000);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let result = do_query_chain::<MS, MQ>(ctx, request_ptr, response_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        let response_ptr = do_query_chain::<MS, MQ>(ctx, request_ptr).unwrap();
         let response = force_read(ctx, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
