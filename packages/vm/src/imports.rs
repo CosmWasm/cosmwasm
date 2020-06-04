@@ -29,9 +29,9 @@ static MAX_LENGTH_DB_KEY: usize = 64 * KI;
 /// value for db_read/db_next (see DB_READ_VALUE_BUFFER_LENGTH in packages/std/src/imports.rs)
 static MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 /// Typically 20 (Cosmos SDK, Ethereum) or 32 (Nano, Substrate)
-static MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
+const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
-static MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
+const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
 // TODO convert these numbers to a single enum.

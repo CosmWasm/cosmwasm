@@ -20,9 +20,10 @@ static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
 static DB_READ_VALUE_BUFFER_LENGTH: usize = 128 * KI;
 /// The number of bytes of the memory region we pre-allocate for the result data in queries
 static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
-// this is the maximum allowed size for bech32
-// https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32
-static ADDR_BUFFER_LENGTH: usize = 90;
+/// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
+const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 32;
+/// An upper bound for typical human readable address formats (e.g. 42 for Ethereum hex addresses or 90 for bech32)
+const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 
 // This interface will compile into required Wasm imports.
 // A complete documentation those functions is available in the VM that provides them:
@@ -202,7 +203,7 @@ impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
         let send_ptr = &*send as *const Region as *const c_void;
-        let canon = alloc(ADDR_BUFFER_LENGTH);
+        let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
 
         let read = unsafe { canonicalize_address(send_ptr, canon) };
         if read < 0 {
@@ -216,7 +217,7 @@ impl Api for ExternalApi {
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         let send = build_region(canonical.as_slice());
         let send_ptr = &*send as *const Region as *const c_void;
-        let human = alloc(ADDR_BUFFER_LENGTH);
+        let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 
         let read = unsafe { humanize_address(send_ptr, human) };
         if read < 0 {
