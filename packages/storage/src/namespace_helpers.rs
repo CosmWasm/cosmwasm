@@ -111,11 +111,11 @@ mod test {
         let other_prefix = to_length_prefixed(b"food");
 
         // set some values in this range
-        set_with_prefix(&mut storage, &prefix, b"bar", b"none").unwrap();
-        set_with_prefix(&mut storage, &prefix, b"snowy", b"day").unwrap();
+        set_with_prefix(&mut storage, &prefix, b"bar", b"none");
+        set_with_prefix(&mut storage, &prefix, b"snowy", b"day");
 
         // set some values outside this range
-        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy").unwrap();
+        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
 
         // ensure we get proper result from prefixed_range iterator
         let mut iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending).unwrap();
@@ -145,11 +145,11 @@ mod test {
         let other_prefix = to_length_prefixed(b"f\xff\x44");
 
         // set some values in this range
-        set_with_prefix(&mut storage, &prefix, b"bar", b"none").unwrap();
-        set_with_prefix(&mut storage, &prefix, b"snowy", b"day").unwrap();
+        set_with_prefix(&mut storage, &prefix, b"bar", b"none");
+        set_with_prefix(&mut storage, &prefix, b"snowy", b"day");
 
         // set some values outside this range
-        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy").unwrap();
+        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
 
         // ensure we get proper result from prefixed_range iterator
         let iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending).unwrap();
@@ -172,11 +172,11 @@ mod test {
         let other_prefix = to_length_prefixed(b"f\xff\x44");
 
         // set some values in this range
-        set_with_prefix(&mut storage, &prefix, b"bar", b"none").unwrap();
-        set_with_prefix(&mut storage, &prefix, b"snowy", b"day").unwrap();
+        set_with_prefix(&mut storage, &prefix, b"bar", b"none");
+        set_with_prefix(&mut storage, &prefix, b"snowy", b"day");
 
         // set some values outside this range
-        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy").unwrap();
+        set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
 
         // make sure start and end are applied properly
         let res: Vec<KV> =

@@ -1,5 +1,5 @@
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
+use cosmwasm_std::{Order, StdResult, KV};
 use cosmwasm_std::{ReadonlyStorage, Storage};
 
 use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};

@@ -288,12 +288,12 @@ mod test {
         );
 
         // setup - add some data, and delete part of it as well
-        store.set(b"ant", b"hill").expect("error setting value");
-        store.set(b"ze", b"bra").expect("error setting value");
+        store.set(b"ant", b"hill");
+        store.set(b"ze", b"bra");
 
         // noise that should be ignored
-        store.set(b"bye", b"bye").expect("error setting value");
-        store.remove(b"bye").expect("error removing key");
+        store.set(b"bye", b"bye");
+        store.remove(b"bye");
 
         // unbounded
         {
@@ -469,7 +469,7 @@ mod test {
     fn storage_transaction_iterator_empty_base() {
         let base = MemoryStorage::new();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"foo", b"bar").expect("error setting value");
+        check.set(b"foo", b"bar");
         iterator_test_suite(&mut check);
     }
 
@@ -477,7 +477,7 @@ mod test {
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_with_base_data() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").expect("error setting value");
+        base.set(b"foo", b"bar");
         let mut check = StorageTransaction::new(&base);
         iterator_test_suite(&mut check);
     }
@@ -486,10 +486,10 @@ mod test {
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_removed_items_from_base() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").expect("error setting value");
-        base.set(b"food", b"bank").expect("error setting value");
+        base.set(b"foo", b"bar");
+        base.set(b"food", b"bank");
         let mut check = StorageTransaction::new(&base);
-        check.remove(b"food").expect("error removing key");
+        check.remove(b"food");
         iterator_test_suite(&mut check);
     }
 
