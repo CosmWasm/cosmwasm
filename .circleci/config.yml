@@ -524,13 +524,21 @@ jobs:
           working_directory: ~/project/packages/storage
           command: cargo clippy --features iterator -- -D warnings
       - run:
-          name: Clippy linting on vm (no feature flags)
+          name: Clippy linting on vm (singlepass; no feature flags)
           working_directory: ~/project/packages/vm
           command: cargo +$NIGHTLY_TOOLCHAIN clippy -- -D warnings
       - run:
-          name: Clippy linting on vm (all feature flags)
+          name: Clippy linting on vm (singlepass; all feature flags)
           working_directory: ~/project/packages/vm
           command: cargo +$NIGHTLY_TOOLCHAIN clippy --features iterator -- -D warnings
+      - run:
+          name: Clippy linting on vm (cranelift; no feature flags)
+          working_directory: ~/project/packages/vm
+          command: cargo +$NIGHTLY_TOOLCHAIN clippy --no-default-features --features default-cranelift -- -D warnings
+      - run:
+          name: Clippy linting on vm (cranelift; all feature flags)
+          working_directory: ~/project/packages/vm
+          command: cargo +$NIGHTLY_TOOLCHAIN clippy --no-default-features --features default-cranelift,iterator -- -D warnings
       #
       # Contracts
       #
