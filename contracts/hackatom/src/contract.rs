@@ -4,13 +4,25 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{
     from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, AllBalanceResponse,
     Api, BankMsg, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    Querier, QueryResponse, StdResult, Storage,
+    MigrateResponse, Querier, QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     pub verifier: HumanAddr,
     pub beneficiary: HumanAddr,
+}
+
+/// MigrateMsg allows a priviledged contract administrator to run
+/// a migration on the contract. In this (demo) case it is just migrating
+/// from one hackatom code to the same code, but taking advantage of the
+/// migration step to set a new validator.
+///
+/// Note that the contract doesn't enforce permissions here, this is done
+/// by blockchain logic (in the future by blockchain governance)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MigrateMsg {
+    pub verifier: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -70,6 +82,21 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         })?,
     );
     Ok(InitResponse::default())
+}
+
+pub fn migrate<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    _env: Env,
+    msg: MigrateMsg,
+) -> StdResult<MigrateResponse> {
+    let data = deps
+        .storage
+        .get(CONFIG_KEY)
+        .ok_or_else(|| not_found("State"))?;
+    let mut config: State = from_slice(&data)?;
+    config.verifier = deps.api.canonical_address(&msg.verifier)?;
+    deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
+    Ok(MigrateResponse::default())
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
@@ -255,6 +282,41 @@ mod tests {
         // now let's query
         let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    }
+
+    #[test]
+    fn migrate_verifier() {
+        let mut deps = mock_dependencies(20, &[]);
+
+        let verifier = HumanAddr::from("verifies");
+        let beneficiary = HumanAddr::from("benefits");
+        let creator = HumanAddr::from("creator");
+        let msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary,
+        };
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let res = init(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'verifies'
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+
+        // change the verifier via migrate
+        let msg = MigrateMsg {
+            verifier: HumanAddr::from("someone else"),
+        };
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let res = migrate(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'someone else'
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(
+            query_response.as_slice(),
+            b"{\"verifier\":\"someone else\"}"
+        );
     }
 
     #[test]
