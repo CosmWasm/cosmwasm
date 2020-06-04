@@ -88,6 +88,13 @@ fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     Box::leak(owned) // give up ownership
 }
 
+fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
+    let owned = unsafe {
+        Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
+    };
+    Box::leak(owned) // give up ownership
+}
+
 #[cfg(feature = "iterator")]
 fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
     context.iterators.clear();
@@ -119,8 +126,8 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
 }
 
 /// Returns true iff the storage is set to readonly mode
-pub fn is_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx) -> bool {
-    let context_data = get_context_data_mut::<S, Q>(ctx);
+pub fn is_storage_readonly<S: Storage, Q: Querier>(ctx: &Ctx) -> bool {
+    let context_data = get_context_data::<S, Q>(ctx);
     context_data.storage_readonly
 }
 
