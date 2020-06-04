@@ -95,7 +95,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
         .ok_or_else(|| not_found("State"))?;
     let mut config: State = from_slice(&data)?;
     config.verifier = deps.api.canonical_address(&msg.verifier)?;
-    deps.storage.set(CONFIG_KEY, &to_vec(&config)?)?;
+    deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
     Ok(MigrateResponse::default())
 }
 
