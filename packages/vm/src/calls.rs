@@ -3,7 +3,7 @@ use std::fmt;
 
 use cosmwasm_std::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
 
-use crate::errors::{make_generic_err, make_resolve_err, VmResult};
+use crate::errors::{make_generic_err, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::{Api, Querier, Storage};
@@ -108,12 +108,7 @@ pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'st
     env: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
-    // first check if migrate is not implemented and return a standard error message
-    if instance.func::<(u32, u32), u32>("migrate").is_err() {
-        Err(make_resolve_err("no migrate function exported by contract"))
-    } else {
-        call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
-    }
+    call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
