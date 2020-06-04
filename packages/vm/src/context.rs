@@ -21,6 +21,7 @@ use crate::traits::{Querier, Storage};
 
 struct ContextData<'a, S: Storage, Q: Querier> {
     storage: Option<S>,
+    storage_readonly: bool,
     querier: Option<Q>,
     #[cfg(feature = "iterator")]
     iterators: HashMap<u32, Box<dyn Iterator<Item = FfiResult<KV>> + 'a>>,
@@ -38,6 +39,7 @@ pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void))
 fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
         storage: None,
+        storage_readonly: false, // TODO: Change this default to true in 0.9 for extra safety
         querier: None,
         #[cfg(feature = "iterator")]
         iterators: HashMap::new(),
@@ -114,6 +116,17 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     let b = get_context_data::<S, Q>(target);
     b.storage = Some(storage);
     b.querier = Some(querier);
+}
+
+/// Returns true iff the storage is set to readonly mode
+pub fn is_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx) -> bool {
+    let context_data = get_context_data::<S, Q>(ctx);
+    context_data.storage_readonly
+}
+
+pub fn set_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx, new_value: bool) {
+    let mut context_data = get_context_data::<S, Q>(ctx);
+    context_data.storage_readonly = new_value;
 }
 
 /// Add the iterator to the context's data. A new ID is assigned and returned.
@@ -269,6 +282,34 @@ mod test {
         let (ends, endq) = move_out_of_context::<MS, MQ>(ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
+    }
+
+    #[test]
+    fn is_storage_readonly_defaults_to_false() {
+        let mut instance = make_instance();
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+    }
+
+    #[test]
+    fn set_storage_readonly_can_change_flag() {
+        let mut instance = make_instance();
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        // change
+        set_storage_readonly::<MS, MQ>(ctx, true);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
+
+        // still true
+        set_storage_readonly::<MS, MQ>(ctx, true);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
+
+        // change back
+        set_storage_readonly::<MS, MQ>(ctx, false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
     }
 
     #[test]
