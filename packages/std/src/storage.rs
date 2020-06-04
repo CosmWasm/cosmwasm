@@ -101,12 +101,12 @@ mod test {
         );
 
         // setup - add some data, and delete part of it as well
-        store.set(b"ant", b"hill").expect("error setting value");
-        store.set(b"ze", b"bra").expect("error setting value");
+        store.set(b"ant", b"hill");
+        store.set(b"ze", b"bra");
 
         // noise that should be ignored
-        store.set(b"bye", b"bye").expect("error setting value");
-        store.remove(b"bye").expect("error removing key");
+        store.set(b"bye", b"bye");
+        store.remove(b"bye");
 
         // unbounded
         {
@@ -267,7 +267,7 @@ mod test {
     #[cfg(feature = "iterator")]
     fn iterator() {
         let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar").expect("error setting value");
+        store.set(b"foo", b"bar");
         iterator_test_suite(&mut store);
     }
 }
