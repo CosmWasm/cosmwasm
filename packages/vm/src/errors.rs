@@ -100,7 +100,7 @@ pub enum VmError {
 }
 
 impl VmError {
-    pub fn write_access_denied() -> Self {
+    pub(crate) fn write_access_denied() -> Self {
         WriteAccessDenied {}.build()
     }
 }
