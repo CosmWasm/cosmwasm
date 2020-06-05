@@ -454,18 +454,6 @@ mod test {
 
         assert_eq!(
             is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            false
-        );
-
-        instance.set_storage_readonly(true);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            true
-        );
-
-        instance.set_storage_readonly(true);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
             true
         );
 
@@ -473,6 +461,18 @@ mod test {
         assert_eq!(
             is_storage_readonly::<MS, MQ>(instance.inner.context()),
             false
+        );
+
+        instance.set_storage_readonly(false);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            false
+        );
+
+        instance.set_storage_readonly(true);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            true
         );
     }
 
