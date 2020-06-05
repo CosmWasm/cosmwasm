@@ -277,26 +277,26 @@ mod test {
 
     #[test]
     fn vm_error_cache_err_works() {
-        let err = VmError::cache_err("something went wrong");
-        match err {
+        let error = VmError::cache_err("something went wrong");
+        match error {
             VmError::CacheErr { msg, .. } => assert_eq!(msg, "something went wrong"),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_compile_err_works() {
-        let err = VmError::compile_err("something went wrong");
-        match err {
+        let error = VmError::compile_err("something went wrong");
+        match error {
             VmError::CompileErr { msg, .. } => assert_eq!(msg, "something went wrong"),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_conversion_err_works() {
-        let err = VmError::conversion_err("i32", "u32", "-9");
-        match err {
+        let error = VmError::conversion_err("i32", "u32", "-9");
+        match error {
             VmError::ConversionErr {
                 from_type,
                 to_type,
@@ -307,7 +307,7 @@ mod test {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "-9");
             }
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -319,35 +319,35 @@ mod test {
             VmError::GenericErr { msg, .. } => {
                 assert_eq!(msg, String::from("7 is too low"));
             }
-            e => panic!("unexpected error, {:?}", e),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_instantiation_err_works() {
-        let err = VmError::instantiation_err("something went wrong");
-        match err {
+        let error = VmError::instantiation_err("something went wrong");
+        match error {
             VmError::InstantiationErr { msg, .. } => assert_eq!(msg, "something went wrong"),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_integrity_err_works() {
-        let err = VmError::integrity_err();
-        match err {
+        let error = VmError::integrity_err();
+        match error {
             VmError::IntegrityErr { .. } => {}
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     #[cfg(feature = "iterator")]
     fn vm_error_iterator_does_not_exist_works() {
-        let err = VmError::iterator_does_not_exist(15);
-        match err {
+        let error = VmError::iterator_does_not_exist(15);
+        match error {
             VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -359,7 +359,7 @@ mod test {
                 assert_eq!(target, "Book");
                 assert_eq!(msg, "Missing field: title");
             }
-            _ => panic!("expect different error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -371,7 +371,7 @@ mod test {
                 assert_eq!(source, "Book");
                 assert_eq!(msg, "Content too long");
             }
-            _ => panic!("expect different error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -380,42 +380,42 @@ mod test {
         let error = VmError::resolve_err("function has different signature");
         match error {
             VmError::ResolveErr { msg, .. } => assert_eq!(msg, "function has different signature"),
-            _ => panic!("expect different error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_region_length_too_big_works() {
-        let err = VmError::region_length_too_big(50, 20);
-        match err {
+        let error = VmError::region_length_too_big(50, 20);
+        match error {
             VmError::RegionLengthTooBig {
                 length, max_length, ..
             } => {
                 assert_eq!(length, 50);
                 assert_eq!(max_length, 20);
             }
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_region_too_small_works() {
-        let err = VmError::region_too_small(12, 33);
-        match err {
+        let error = VmError::region_too_small(12, 33);
+        match error {
             VmError::RegionTooSmall { size, required, .. } => {
                 assert_eq!(size, 12);
                 assert_eq!(required, 33);
             }
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_runtime_err_works() {
-        let err = VmError::runtime_err("something went wrong");
-        match err {
+        let error = VmError::runtime_err("something went wrong");
+        match error {
             VmError::RuntimeErr { msg, .. } => assert_eq!(msg, "something went wrong"),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
@@ -424,23 +424,23 @@ mod test {
         let error = VmError::static_validation_err("export xy missing");
         match error {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(msg, "export xy missing"),
-            _ => panic!("expect different error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_uninitialized_context_data_works() {
-        let err = VmError::uninitialized_context_data("foo");
-        match err {
+        let error = VmError::uninitialized_context_data("foo");
+        match error {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn vm_error_write_access_denied() {
-        let err = VmError::write_access_denied();
-        match err {
+        let error = VmError::write_access_denied();
+        match error {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -450,37 +450,37 @@ mod test {
 
     #[test]
     fn ffi_error_foreign_panic() {
-        let err = FfiError::foreign_panic();
-        match err {
+        let error = FfiError::foreign_panic();
+        match error {
             FfiError::ForeignPanic { .. } => {}
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn ffi_error_bad_argument() {
-        let err = FfiError::bad_argument();
-        match err {
+        let error = FfiError::bad_argument();
+        match error {
             FfiError::BadArgument { .. } => {}
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn ffi_error_out_of_gas() {
-        let err = FfiError::out_of_gas();
-        match err {
+        let error = FfiError::out_of_gas();
+        match error {
             FfiError::OutOfGas { .. } => {}
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
     #[test]
     fn ffi_error_other() {
-        let err = FfiError::other("broken");
-        match err {
+        let error = FfiError::other("broken");
+        match error {
             FfiError::Other { error, .. } => assert_eq!(error, "broken"),
-            _ => panic!("Unexpected error"),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 }
