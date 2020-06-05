@@ -185,14 +185,6 @@ where
         get_gas_left(&self.inner)
     }
 
-    /// Returns the currently remaining gas.
-    ///
-    /// DEPRECATED: renamed to `get_gas_left`.
-    #[deprecated(note = "renamed to `get_gas_left`")]
-    pub fn get_gas(&self) -> u64 {
-        self.get_gas_left()
-    }
-
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
         with_storage_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
     }

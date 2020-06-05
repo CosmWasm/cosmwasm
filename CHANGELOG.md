@@ -26,6 +26,7 @@
   value as part of the call and returns a pointer to the region as `u32`. The
   data in the region is stored in the format `value || key || keylen`. As
   before, an empty key means _no more value_.
+- Remove `Instance::get_gas` in favour of `Instance::get_gas_left`.
 
 ## 0.8.1 (not yet released)
 
