@@ -16,7 +16,7 @@ use crate::context::{
     with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
-use crate::errors::{make_instantiation_err, VmResult};
+use crate::errors::{VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
@@ -129,7 +129,7 @@ where
         });
 
         let wasmer_instance = Box::from(module.instantiate(&import_obj).map_err(|original| {
-            make_instantiation_err(format!("Error instantiating module: {:?}", original))
+            VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
         })?);
         Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
     }

@@ -13,8 +13,8 @@ use wasmer_runtime_core::vm::Ctx;
 use cosmwasm_std::KV;
 
 #[cfg(feature = "iterator")]
-use crate::errors::{make_iterator_does_not_exist, FfiResult};
-use crate::errors::{make_uninitialized_context_data, VmResult};
+use crate::errors::FfiResult;
+use crate::errors::{VmError, VmResult};
 use crate::traits::{Querier, Storage};
 
 /** context data **/
@@ -171,7 +171,7 @@ where
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.storage.as_mut() {
         Some(data) => func(data),
-        None => Err(make_uninitialized_context_data("storage")),
+        None => Err(VmError::uninitialized_context_data("storage")),
     }
 }
 
@@ -187,7 +187,7 @@ where
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.querier.as_mut() {
         Some(q) => func(q),
-        None => Err(make_uninitialized_context_data("querier")),
+        None => Err(VmError::uninitialized_context_data("querier")),
     }
 }
 
@@ -205,7 +205,7 @@ where
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
         Some(iterator) => func(iterator),
-        None => Err(make_iterator_does_not_exist(iterator_id)),
+        None => Err(VmError::iterator_does_not_exist(iterator_id)),
     }
 }
 

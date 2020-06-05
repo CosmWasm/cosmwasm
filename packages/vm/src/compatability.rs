@@ -3,7 +3,7 @@ use std::collections::BTreeSet;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-use crate::errors::{make_static_validation_err, VmResult};
+use crate::errors::{VmError, VmResult};
 use crate::features::required_features_from_module;
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
@@ -40,7 +40,7 @@ pub fn check_wasm(wasm_code: &[u8], supported_features: &HashSet<String>) -> VmR
     let module = match deserialize_buffer(&wasm_code) {
         Ok(deserialized) => deserialized,
         Err(err) => {
-            return Err(make_static_validation_err(format!(
+            return Err(VmError::static_validation_err(format!(
                 "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
                 err
             )));
@@ -57,7 +57,7 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
     let section = match module.memory_section() {
         Some(section) => section,
         None => {
-            return Err(make_static_validation_err(
+            return Err(VmError::static_validation_err(
                 "Wasm contract doesn't have a memory section",
             ));
         }
@@ -65,7 +65,7 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
 
     let memories = section.entries();
     if memories.len() != 1 {
-        return Err(make_static_validation_err(
+        return Err(VmError::static_validation_err(
             "Wasm contract must contain exactly one memory",
         ));
     }
@@ -75,14 +75,14 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
     let limits = memory.limits();
 
     if limits.initial() > MEMORY_LIMIT {
-        return Err(make_static_validation_err(format!(
+        return Err(VmError::static_validation_err(format!(
             "Wasm contract memory's minimum must not exceed {} pages.",
             MEMORY_LIMIT
         )));
     }
 
     if limits.maximum() != None {
-        return Err(make_static_validation_err(
+        return Err(VmError::static_validation_err(
             "Wasm contract memory's maximum must be unset. The host will set it for you.",
         ));
     }
@@ -100,7 +100,7 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
 
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.iter().any(|x| x == required_export) {
-            return Err(make_static_validation_err(format!(
+            return Err(VmError::static_validation_err(format!(
                 "Wasm contract doesn't have required export: \"{}\". Exports required by VM: {:?}. Contract version too old for this VM?",
                 required_export, REQUIRED_EXPORTS
             )));
@@ -120,7 +120,7 @@ fn check_wasm_imports(module: &Module) -> VmResult<()> {
     for required_import in required_imports {
         let full_name = format!("{}.{}", required_import.module(), required_import.field());
         if !SUPPORTED_IMPORTS.contains(&full_name.as_str()) {
-            return Err(make_static_validation_err(format!(
+            return Err(VmError::static_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
                 full_name, SUPPORTED_IMPORTS
             )));
@@ -128,7 +128,7 @@ fn check_wasm_imports(module: &Module) -> VmResult<()> {
 
         match required_import.external() {
             External::Function(_) => {}, // ok
-            _ => return Err(make_static_validation_err(format!(
+            _ => return Err(VmError::static_validation_err(format!(
                 "Wasm contract requires non-function import: \"{}\". Right now, all supported imports are functions.",
                 full_name
             ))),
@@ -142,7 +142,7 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
     if !required_features.is_subset(supported_features) {
         // We switch to BTreeSet to get a sorted error message
         let unsupported = BTreeSet::from_iter(required_features.difference(&supported_features));
-        return Err(make_static_validation_err(format!(
+        return Err(VmError::static_validation_err(format!(
             "Wasm contract requires unsupported features: {:?}",
             unsupported
         )));

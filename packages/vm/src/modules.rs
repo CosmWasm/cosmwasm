@@ -12,7 +12,7 @@ use wasmer_runtime_core::{cache::Artifact, module::Module};
 
 use crate::backends::{backend, compiler_for_backend};
 use crate::checksum::Checksum;
-use crate::errors::{make_cache_err, VmResult};
+use crate::errors::{VmError, VmResult};
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -66,16 +66,16 @@ impl FileSystemCache {
         let filename = checksum.to_hex();
         let file_path = self.path.clone().join(backend).join(filename);
         let file = File::open(file_path)
-            .map_err(|e| make_cache_err(format!("Error opening module file: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error opening module file: {}", e)))?;
         let mmap = unsafe { Mmap::map(&file) }
-            .map_err(|e| make_cache_err(format!("Mmap error: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
         let serialized_cache = Artifact::deserialize(&mmap[..])?;
         let module = unsafe {
             wasmer_runtime_core::load_cache_with(
                 serialized_cache,
                 compiler_for_backend(backend)
-                    .ok_or_else(|| make_cache_err(format!("Unsupported backend: {}", backend)))?
+                    .ok_or_else(|| VmError::cache_err(format!("Unsupported backend: {}", backend)))?
                     .as_ref(),
             )
         }?;
@@ -86,16 +86,16 @@ impl FileSystemCache {
         let backend_str = module.info().backend.to_string();
         let modules_dir = self.path.clone().join(backend_str);
         fs::create_dir_all(&modules_dir)
-            .map_err(|e| make_cache_err(format!("Error creating direcory: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
 
         let serialized_cache = module.cache()?;
         let buffer = serialized_cache.serialize()?;
 
         let filename = checksum.to_hex();
         let mut file = File::create(modules_dir.join(filename))
-            .map_err(|e| make_cache_err(format!("Error creating module file: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error creating module file: {}", e)))?;
         file.write_all(&buffer)
-            .map_err(|e| make_cache_err(format!("Error writing module to disk: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
 
         Ok(())
     }

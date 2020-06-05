@@ -2,14 +2,14 @@ use std::any::type_name;
 use std::convert::TryInto;
 use std::fmt::Display;
 
-use crate::errors::{make_conversion_err, VmResult};
+use crate::errors::{VmError, VmResult};
 
 /// Safely converts input of type T to u32.
 /// Errors with a cosmwasm_vm::errors::VmError::ConversionErr if conversion cannot be done.
 pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> VmResult<u32> {
-    input
-        .try_into()
-        .map_err(|_| make_conversion_err(type_name::<T>(), type_name::<u32>(), input.to_string()))
+    input.try_into().map_err(|_| {
+        VmError::conversion_err(type_name::<T>(), type_name::<u32>(), input.to_string())
+    })
 }
 
 /// Safely converts input of type T to i32.
@@ -18,9 +18,9 @@ pub fn to_u32<T: TryInto<u32> + Display + Copy>(input: T) -> VmResult<u32> {
 /// Used in tests and in iterator, but not with default build
 #[allow(dead_code)]
 pub fn to_i32<T: TryInto<i32> + Display + Copy>(input: T) -> VmResult<i32> {
-    input
-        .try_into()
-        .map_err(|_| make_conversion_err(type_name::<T>(), type_name::<i32>(), input.to_string()))
+    input.try_into().map_err(|_| {
+        VmError::conversion_err(type_name::<T>(), type_name::<i32>(), input.to_string())
+    })
 }
 
 #[cfg(test)]
