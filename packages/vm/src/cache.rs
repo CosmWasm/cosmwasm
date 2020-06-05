@@ -113,15 +113,6 @@ where
         self.stats.misses += 1;
         Instance::from_code(&wasm, deps, gas_limit)
     }
-
-    pub fn store_instance(
-        &mut self,
-        _checksum: &Checksum,
-        instance: Instance<S, A, Q>,
-    ) -> Option<Extern<S, A, Q>> {
-        let (_, deps) = Instance::recycle(instance);
-        deps
-    }
 }
 
 /// save stores the wasm code in the given directory and returns an ID for lookup.
@@ -312,12 +303,9 @@ mod test {
         let deps1 = mock_dependencies(20, &[]);
         let deps2 = mock_dependencies(20, &[]);
         let deps3 = mock_dependencies(20, &[]);
-        let instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
-        cache.store_instance(&id, instance1);
-        let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        cache.store_instance(&id, instance2);
-        let instance3 = cache.get_instance(&id, deps3, TESTING_GAS_LIMIT).unwrap();
-        cache.store_instance(&id, instance3);
+        let _instance1 = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
+        let _instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
+        let _instance3 = cache.get_instance(&id, deps3, TESTING_GAS_LIMIT).unwrap();
         assert_eq!(cache.stats.hits_module, 3);
         assert_eq!(cache.stats.misses, 0);
     }
@@ -381,7 +369,7 @@ mod test {
         let res = call_init::<_, _, _, Never>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let deps1 = cache.store_instance(&id, instance).unwrap();
+        let deps1 = instance.recycle().unwrap();
 
         // init instance 2
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
@@ -390,7 +378,7 @@ mod test {
         let res = call_init::<_, _, _, Never>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let deps2 = cache.store_instance(&id, instance).unwrap();
+        let deps2 = instance.recycle().unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
@@ -399,7 +387,6 @@ mod test {
         let res = call_handle::<_, _, _, Never>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
-        let _ = cache.store_instance(&id, instance).unwrap();
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
@@ -408,7 +395,6 @@ mod test {
         let res = call_handle::<_, _, _, Never>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
-        let _ = cache.store_instance(&id, instance);
     }
 
     #[test]
@@ -434,7 +420,6 @@ mod test {
             .unwrap()
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
-        cache.store_instance(&id, instance1).unwrap();
 
         // Init from instance cache
         let instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
@@ -466,7 +451,6 @@ mod test {
             e => panic!("unexpected error, {:?}", e),
         }
         assert_eq!(instance1.get_gas_left(), 0);
-        cache.store_instance(&id, instance1).unwrap();
 
         // Init from instance cache
         let mut instance2 = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();

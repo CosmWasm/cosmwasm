@@ -155,21 +155,18 @@ where
         }
     }
 
-    /// Takes ownership of instance and decomposes it into its components.
-    /// The components we want to preserve are returned, the rest is dropped.
-    pub(crate) fn recycle(mut instance: Self) -> (Box<WasmerInstance>, Option<Extern<S, A, Q>>) {
-        let ext = if let (Some(storage), Some(querier)) =
-            move_out_of_context(instance.inner.context_mut())
-        {
+    /// Decomposes this instance into its components.
+    /// External dependencies are returned for reuse, the rest is dropped.
+    pub fn recycle(mut self) -> Option<Extern<S, A, Q>> {
+        if let (Some(storage), Some(querier)) = move_out_of_context(self.inner.context_mut()) {
             Some(Extern {
                 storage,
-                api: instance.api,
+                api: self.api,
                 querier,
             })
         } else {
             None
-        };
-        (instance.inner, ext)
+        }
     }
 
     /// Returns the size of the default memory in bytes.
