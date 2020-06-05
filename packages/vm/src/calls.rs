@@ -117,6 +117,7 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stat
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(true);
     call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
 }
 

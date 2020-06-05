@@ -45,6 +45,12 @@
   when used.
 - Disable instance caching by treating every cache size as 0. Instance caching
   is not safe as the same Wasm memory is reused across multiple executions.
+- The storage of an `Instance` can now be set into readonly mode, which is
+  checked by the writing storage imports `db_write` and `db_remove`. Read-only
+  mode is off by default for backwards compatibility. `call_query_raw` now sets
+  the instance's storage to readonly.
+- The new error case `VmError::WriteAccessDenied` is returned when a contract
+  calls an import that potentially writes to storage during a query.
 
 ## 0.8.0 (2020-05-25)
 

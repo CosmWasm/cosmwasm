@@ -11,7 +11,8 @@ use wasmer_runtime_core::vm::Ctx;
 #[cfg(feature = "iterator")]
 use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{
-    try_consume_gas, with_func_from_context, with_querier_from_context, with_storage_from_context,
+    is_storage_readonly, try_consume_gas, with_func_from_context, with_querier_from_context,
+    with_storage_from_context,
 };
 #[cfg(feature = "iterator")]
 use crate::conversion::to_i32;
@@ -147,6 +148,10 @@ pub fn do_write<S: Storage, Q: Querier>(
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
+    if is_storage_readonly::<S, Q>(ctx) {
+        return Err(VmError::write_access_denied());
+    }
+
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
     let used_gas =
@@ -157,6 +162,10 @@ pub fn do_write<S: Storage, Q: Querier>(
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<()> {
+    if is_storage_readonly::<S, Q>(ctx) {
+        return Err(VmError::write_access_denied());
+    }
+
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let used_gas = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
@@ -280,7 +289,9 @@ mod test {
     use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{move_into_context, set_wasmer_instance, setup_context};
+    use crate::context::{
+        move_into_context, set_storage_readonly, set_wasmer_instance, setup_context,
+    };
     #[cfg(feature = "iterator")]
     use crate::conversion::to_u32;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
@@ -507,6 +518,24 @@ mod test {
     }
 
     #[test]
+    fn do_write_is_prohibited_in_readonly_contexts() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, b"new storage key");
+        let value_ptr = write_data(&mut instance, b"new value");
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+        set_storage_readonly::<MS, MQ>(ctx, true);
+
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        match result.unwrap_err() {
+            VmError::WriteAccessDenied { .. } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
     fn do_remove_works() {
         let mut instance = make_instance();
 
@@ -563,6 +592,23 @@ mod test {
             }
             err => panic!("unexpected error: {:?}", err),
         };
+    }
+
+    #[test]
+    fn do_remove_is_prohibited_in_readonly_contexts() {
+        let mut instance = make_instance();
+
+        let key_ptr = write_data(&mut instance, b"a storage key");
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+        set_storage_readonly::<MS, MQ>(ctx, true);
+
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
+        match result.unwrap_err() {
+            VmError::WriteAccessDenied { .. } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
     }
 
     #[test]

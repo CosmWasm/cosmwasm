@@ -13,8 +13,8 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    get_gas_state, move_into_context, move_out_of_context, set_wasmer_instance, setup_context,
-    with_querier_from_context, with_storage_from_context,
+    get_gas_state, move_into_context, move_out_of_context, set_storage_readonly,
+    set_wasmer_instance, setup_context, with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
 use crate::errors::{make_instantiation_err, CommunicationError, VmResult};
@@ -185,6 +185,10 @@ where
         get_gas_left(&self.inner)
     }
 
+    pub fn set_storage_readonly(&mut self, new_value: bool) {
+        set_storage_readonly::<S, Q>(self.inner.context_mut(), new_value);
+    }
+
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
         with_storage_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
     }
@@ -237,10 +241,12 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::context::is_storage_readonly;
     use crate::errors::VmError;
     use crate::testing::{
         mock_dependencies, mock_env, mock_instance, mock_instance_with_balances,
-        mock_instance_with_failing_api, mock_instance_with_gas_limit, MockApi, MOCK_CONTRACT_ADDR,
+        mock_instance_with_failing_api, mock_instance_with_gas_limit, MockApi, MockQuerier,
+        MockStorage, MOCK_CONTRACT_ADDR,
     };
     use crate::traits::ReadonlyStorage;
     use crate::{call_init, FfiError};
@@ -254,6 +260,10 @@ mod test {
     static MIB: usize = 1024 * 1024;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
     static DEFAULT_GAS_LIMIT: u64 = 500_000;
+
+    // shorthands for function generics below
+    type MS = MockStorage;
+    type MQ = MockQuerier;
 
     #[test]
     fn required_features_works() {
@@ -455,6 +465,34 @@ mod test {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
+    }
+
+    #[test]
+    fn set_storage_readonly_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            false
+        );
+
+        instance.set_storage_readonly(true);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            true
+        );
+
+        instance.set_storage_readonly(true);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            true
+        );
+
+        instance.set_storage_readonly(false);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            false
+        );
     }
 
     #[test]

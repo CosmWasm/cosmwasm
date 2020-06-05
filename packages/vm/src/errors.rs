@@ -100,6 +100,14 @@ pub enum VmError {
     },
     #[snafu(display("Ran out of gas during contract execution"))]
     GasDepletion,
+    #[snafu(display("Must not call a writing storage function in this context."))]
+    WriteAccessDenied { backtrace: snafu::Backtrace },
+}
+
+impl VmError {
+    pub fn write_access_denied() -> Self {
+        WriteAccessDenied {}.build()
+    }
 }
 
 impl From<wasmer_runtime_core::cache::Error> for VmError {
@@ -310,6 +318,19 @@ pub type FfiResult<T> = core::result::Result<T, FfiError>;
 #[cfg(test)]
 mod test {
     use super::*;
+
+    // VmError constructors
+
+    #[test]
+    fn vm_error_write_access_denied() {
+        let err = VmError::write_access_denied();
+        match err {
+            VmError::WriteAccessDenied { .. } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    // VmError build helpers
 
     #[test]
     fn make_cache_err_works() {
