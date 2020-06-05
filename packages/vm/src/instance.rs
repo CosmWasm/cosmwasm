@@ -189,6 +189,9 @@ where
         self.get_gas_left()
     }
 
+    /// Sets the readonly storage flag on this instance. Since one instance can be used
+    /// for multiple calls in integration tests, this should be set to the desired value
+    /// right before every call.
     pub fn set_storage_readonly(&mut self, new_value: bool) {
         set_storage_readonly::<S, Q>(self.inner.context_mut(), new_value);
     }

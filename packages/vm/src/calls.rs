@@ -73,6 +73,7 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     env: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(false);
     call_raw(instance, "init", &[env, msg], MAX_LENGTH_INIT)
 }
 
@@ -83,6 +84,7 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'sta
     env: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(false);
     call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
 }
 
