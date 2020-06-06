@@ -2,7 +2,7 @@ use std::convert::TryFrom;
 
 use sha2::{Digest, Sha256};
 
-use crate::errors::{make_cache_err, VmError};
+use crate::errors::VmError;
 
 /// A SHA-256 checksum of a Wasm blob, used to identify a Wasm code.
 /// This must remain stable since this checksum is stored in the blockchain state.
@@ -34,7 +34,7 @@ impl TryFrom<&[u8]> for Checksum {
 
     fn try_from(value: &[u8]) -> Result<Self, Self::Error> {
         if value.len() != 32 {
-            return Err(make_cache_err("Checksum not of length 32"));
+            return Err(VmError::cache_err("Checksum not of length 32"));
         }
         let mut data = [0u8; 32];
         data.copy_from_slice(value);
