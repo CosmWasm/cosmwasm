@@ -342,7 +342,8 @@ mod test {
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
-        let instance = Box::from(module.instantiate(&import_obj).unwrap());
+        let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
+        set_storage_readonly::<MS, MQ>(instance.context_mut(), false);
         instance
     }
 

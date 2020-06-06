@@ -189,6 +189,9 @@ where
         self.get_gas_left()
     }
 
+    /// Sets the readonly storage flag on this instance. Since one instance can be used
+    /// for multiple calls in integration tests, this should be set to the desired value
+    /// right before every call.
     pub fn set_storage_readonly(&mut self, new_value: bool) {
         set_storage_readonly::<S, Q>(self.inner.context_mut(), new_value);
     }
@@ -451,18 +454,6 @@ mod test {
 
         assert_eq!(
             is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            false
-        );
-
-        instance.set_storage_readonly(true);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            true
-        );
-
-        instance.set_storage_readonly(true);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
             true
         );
 
@@ -470,6 +461,18 @@ mod test {
         assert_eq!(
             is_storage_readonly::<MS, MQ>(instance.inner.context()),
             false
+        );
+
+        instance.set_storage_readonly(false);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            false
+        );
+
+        instance.set_storage_readonly(true);
+        assert_eq!(
+            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            true
         );
     }
 

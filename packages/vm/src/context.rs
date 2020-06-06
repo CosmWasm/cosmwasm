@@ -39,7 +39,7 @@ pub fn setup_context<S: Storage, Q: Querier>() -> (*mut c_void, fn(*mut c_void))
 fn create_unmanaged_context_data<S: Storage, Q: Querier>() -> *mut c_void {
     let data = ContextData::<S, Q> {
         storage: None,
-        storage_readonly: false, // TODO: Change this default to true in 0.9 for extra safety
+        storage_readonly: true,
         querier: None,
         #[cfg(feature = "iterator")]
         iterators: HashMap::new(),
@@ -292,12 +292,12 @@ mod test {
     }
 
     #[test]
-    fn is_storage_readonly_defaults_to_false() {
+    fn is_storage_readonly_defaults_to_true() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
     }
 
     #[test]
@@ -307,16 +307,16 @@ mod test {
         leave_default_data(ctx);
 
         // change
-        set_storage_readonly::<MS, MQ>(ctx, true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
-
-        // still true
-        set_storage_readonly::<MS, MQ>(ctx, true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
-
-        // change back
         set_storage_readonly::<MS, MQ>(ctx, false);
         assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+
+        // still false
+        set_storage_readonly::<MS, MQ>(ctx, false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+
+        // change back
+        set_storage_readonly::<MS, MQ>(ctx, true);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
     }
 
     #[test]
