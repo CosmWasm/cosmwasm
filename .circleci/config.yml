@@ -15,7 +15,14 @@ workflows:
       - contract_staking
       - fmt
       - clippy
-      - deploy
+  deploy:
+    jobs:
+      - build_and_upload_devcontracts:
+          filters:
+            tags:
+              only: /^v[0-9]+\.[0-9]+\.[0-9]+.*/
+            branches:
+              ignore: /.*/
 
 jobs:
   package_schema:
@@ -580,7 +587,7 @@ jobs:
           key: cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
-  deploy:
+  build_and_upload_devcontracts:
     docker:
       # Image from https://github.com/cibuilds/github, based on alpine
       - image: cibuilds/github:0.13
@@ -618,8 +625,7 @@ jobs:
       - run:
           name: Publish artifacts on GitHub
           command: |
-            VERSION="0.0.1234"
-            TAG="v$VERSION"
+            TAG="$CIRCLE_TAG"
             TITLE="$TAG"
             BODY="Attached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
             ghr -t "$GITHUB_TOKEN" \
