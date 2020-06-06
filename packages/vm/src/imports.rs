@@ -340,6 +340,7 @@ mod test {
 
         let instance_ptr = NonNull::from(instance.as_ref());
         set_wasmer_instance::<MS, MQ>(instance.context_mut(), Some(instance_ptr));
+        set_storage_readonly::<MS, MQ>(instance.context_mut(), false);
 
         instance
     }

@@ -9,7 +9,7 @@ use wasmer_runtime_core::Instance as WasmerInstance;
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
 use crate::compatability::check_wasm;
-use crate::errors::{make_cache_err, make_integrity_err, VmResult};
+use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
 use crate::traits::{Api, Extern, Querier, Storage};
@@ -59,10 +59,10 @@ where
         let base = base_dir.into();
         let wasm_path = base.join(WASM_DIR);
         create_dir_all(&wasm_path)
-            .map_err(|e| make_cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
 
         let modules = FileSystemCache::new(base.join(MODULES_DIR))
-            .map_err(|e| make_cache_err(format!("Error file system cache: {}", e)))?;
+            .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         let instances = None;
         Ok(CosmCache {
             wasm_path,
@@ -93,7 +93,7 @@ where
         let code = load_wasm_from_disk(&self.wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {
-            Err(make_integrity_err())
+            Err(VmError::integrity_err())
         } else {
             Ok(code)
         }
@@ -154,9 +154,9 @@ fn save_wasm_to_disk<P: Into<PathBuf>>(dir: P, wasm: &[u8]) -> VmResult<Checksum
         .write(true)
         .create(true)
         .open(filepath)
-        .map_err(|e| make_cache_err(format!("Error opening Wasm file for writing: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for writing: {}", e)))?;
     file.write_all(wasm)
-        .map_err(|e| make_cache_err(format!("Error writing Wasm file: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error writing Wasm file: {}", e)))?;
 
     Ok(checksum)
 }
@@ -165,11 +165,11 @@ fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResul
     // this requires the directory and file to exist
     let path = dir.into().join(checksum.to_hex());
     let mut file = File::open(path)
-        .map_err(|e| make_cache_err(format!("Error opening Wasm file for reading: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error opening Wasm file for reading: {}", e)))?;
 
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm)
-        .map_err(|e| make_cache_err(format!("Error reading Wasm file: {}", e)))?;
+        .map_err(|e| VmError::cache_err(format!("Error reading Wasm file: {}", e)))?;
     Ok(wasm)
 }
 

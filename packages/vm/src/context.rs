@@ -18,8 +18,8 @@ use wasmer_runtime_core::{
 use cosmwasm_std::KV;
 
 #[cfg(feature = "iterator")]
-use crate::errors::{make_iterator_does_not_exist, FfiResult};
-use crate::errors::{make_uninitialized_context_data, VmResult};
+use crate::errors::FfiResult;
+use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIteratorItem;
 use crate::traits::{Querier, Storage};
@@ -97,7 +97,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut
     let data = ContextData::<S, Q> {
         gas_state: GasState::with_limit(gas_limit),
         storage: None,
-        storage_readonly: false, // TODO: Change this default to true in 0.9 for extra safety
+        storage_readonly: true,
         querier: None,
         wasmer_instance: None,
         #[cfg(feature = "iterator")]
@@ -202,7 +202,6 @@ pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a mut Ctx) -> &
 #[cfg(feature = "default-singlepass")]
 pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
     use crate::backends::{get_gas_left, set_gas_limit};
-    use crate::VmError;
 
     let ctx_data = get_context_data_mut::<S, Q>(ctx);
     if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
@@ -224,7 +223,7 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
             Ok(())
         }
     } else {
-        Err(make_uninitialized_context_data("wasmer_instance"))
+        Err(VmError::uninitialized_context_data("wasmer_instance"))
     }
 }
 
@@ -285,7 +284,7 @@ where
             let func = unsafe { instance_ptr.as_ref() }.exports.get(name)?;
             callback(func)
         }
-        None => Err(make_uninitialized_context_data("wasmer_instance")),
+        None => Err(VmError::uninitialized_context_data("wasmer_instance")),
     }
 }
 
@@ -301,7 +300,7 @@ where
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.storage.as_mut() {
         Some(data) => func(data),
-        None => Err(make_uninitialized_context_data("storage")),
+        None => Err(VmError::uninitialized_context_data("storage")),
     }
 }
 
@@ -317,7 +316,7 @@ where
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.querier.as_mut() {
         Some(q) => func(q),
-        None => Err(make_uninitialized_context_data("querier")),
+        None => Err(VmError::uninitialized_context_data("querier")),
     }
 }
 
@@ -335,7 +334,7 @@ where
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
         Some(iterator) => func(iterator),
-        None => Err(make_iterator_does_not_exist(iterator_id)),
+        None => Err(VmError::iterator_does_not_exist(iterator_id)),
     }
 }
 
@@ -483,12 +482,12 @@ mod test {
     }
 
     #[test]
-    fn is_storage_readonly_defaults_to_false() {
+    fn is_storage_readonly_defaults_to_true() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
     }
 
     #[test]
@@ -498,16 +497,16 @@ mod test {
         leave_default_data(ctx);
 
         // change
-        set_storage_readonly::<MS, MQ>(ctx, true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
-
-        // still true
-        set_storage_readonly::<MS, MQ>(ctx, true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
-
-        // change back
         set_storage_readonly::<MS, MQ>(ctx, false);
         assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+
+        // still false
+        set_storage_readonly::<MS, MQ>(ctx, false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+
+        // change back
+        set_storage_readonly::<MS, MQ>(ctx, true);
+        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
     }
 
     #[test]

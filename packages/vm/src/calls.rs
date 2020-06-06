@@ -3,7 +3,7 @@ use std::fmt;
 
 use cosmwasm_std::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
 
-use crate::errors::{make_generic_err, VmResult};
+use crate::errors::{VmError, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::{Api, Querier, Storage};
@@ -74,8 +74,9 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
 
     // Ensure query response is valid JSON
     if let Ok(binary_response) = &result {
-        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice())
-            .map_err(|e| make_generic_err(format!("Query response must be valid JSON. {}", e)))?;
+        serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
+            VmError::generic_err(format!("Query response must be valid JSON. {}", e))
+        })?;
     }
 
     Ok(result)
@@ -88,6 +89,7 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
     env: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(false);
     call_raw(instance, "init", &[env, msg], MAX_LENGTH_INIT)
 }
 
@@ -98,6 +100,7 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'sta
     env: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(false);
     call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
 }
 
@@ -108,6 +111,7 @@ pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'st
     env: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(false);
     call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
 }
 

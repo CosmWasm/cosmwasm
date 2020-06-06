@@ -5,18 +5,18 @@
 use serde::{Deserialize, Serialize};
 use std::any::type_name;
 
-use crate::errors::{make_parse_err, make_serialize_err, VmResult};
+use crate::errors::{VmError, VmResult};
 
 pub fn from_slice<'a, T>(value: &'a [u8]) -> VmResult<T>
 where
     T: Deserialize<'a>,
 {
-    serde_json::from_slice(value).map_err(|e| make_parse_err(type_name::<T>(), e))
+    serde_json::from_slice(value).map_err(|e| VmError::parse_err(type_name::<T>(), e))
 }
 
 pub fn to_vec<T>(data: &T) -> VmResult<Vec<u8>>
 where
     T: Serialize + ?Sized,
 {
-    serde_json::to_vec(data).map_err(|e| make_serialize_err(type_name::<T>(), e))
+    serde_json::to_vec(data).map_err(|e| VmError::serialize_err(type_name::<T>(), e))
 }
