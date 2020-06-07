@@ -496,7 +496,7 @@ jobs:
           command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
-            - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -556,4 +556,16 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}
+            - contracts/hackatom/target/debug/.fingerprint
+            - contracts/hackatom/target/debug/build
+            - contracts/hackatom/target/debug/deps
+            - contracts/queue/target/debug/.fingerprint
+            - contracts/queue/target/debug/build
+            - contracts/queue/target/debug/deps
+            - contracts/reflect/target/debug/.fingerprint
+            - contracts/reflect/target/debug/build
+            - contracts/reflect/target/debug/deps
+            - contracts/staking/target/debug/.fingerprint
+            - contracts/staking/target/debug/build
+            - contracts/staking/target/debug/deps
+          key: cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
