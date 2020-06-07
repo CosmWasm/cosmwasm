@@ -13,7 +13,7 @@
 - Trait `Querier` is not `Clone` and `Send` anymore.
 - `consume_region` panics on null pointers and returns `Vec<u8>` instead of
   `StdResult<Vec<u8>>`.
-- Added contract migration mechanism. Contracts are now also expected to expose a `migrate`
+- Added contract migration mechanism. Contracts can now optionally export a `migrate`
   function with the following definition:
   ```rust
   extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
