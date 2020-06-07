@@ -121,11 +121,10 @@ impl RepLog {
     }
 
     /// applies the stored list of `Op`s to the provided `Storage`
-    pub fn commit<S: Storage>(self, storage: &mut S) -> StdResult<()> {
+    pub fn commit<S: Storage>(self, storage: &mut S) {
         for op in self.ops_log {
             op.apply(storage);
         }
-        Ok(())
     }
 }
 
@@ -258,7 +257,7 @@ where
 {
     let mut stx = StorageTransaction::new(storage);
     let res = callback(&mut stx)?;
-    stx.prepare().commit(storage)?;
+    stx.prepare().commit(storage);
     Ok(res)
 }
 
@@ -442,7 +441,7 @@ mod test {
         assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
-        check.prepare().commit(&mut base).unwrap();
+        check.prepare().commit(&mut base);
         assert_eq!(base.get(b"foo"), None);
         assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
@@ -459,7 +458,7 @@ mod test {
         assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
-        check.prepare().commit(&mut base).unwrap();
+        check.prepare().commit(&mut base);
         assert_eq!(base.get(b"foo"), None);
         assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
@@ -501,7 +500,7 @@ mod test {
         let mut check = StorageTransaction::new(&base);
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
-        check.prepare().commit(&mut base).unwrap();
+        check.prepare().commit(&mut base);
 
         assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
@@ -521,7 +520,7 @@ mod test {
         // Can still read from base, txn is not yet committed
         assert_eq!(base.get(b"subtx"), None);
 
-        stxn1.prepare().commit(&mut base).unwrap();
+        stxn1.prepare().commit(&mut base);
         assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
