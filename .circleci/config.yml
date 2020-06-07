@@ -621,7 +621,7 @@ jobs:
       - run:
           name: Create checksums
           working_directory: artifacts
-          command: sha256sum *.wasm > checksums.sha256 && cat checksums.sha256
+          command: sha256sum *.wasm > checksums.txt && cat checksums.txt
       - run:
           name: Publish artifacts on GitHub
           command: |
