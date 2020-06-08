@@ -54,7 +54,11 @@ fn proper_initialization() {
     };
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     let res: InitResponse = init(&mut deps, env, msg).unwrap();
-    assert_eq!(0, res.messages.len());
+    assert_eq!(res.messages.len(), 0);
+    assert_eq!(res.log.len(), 1);
+    assert_eq!(res.log[0].key, "Let the");
+    assert_eq!(res.log[0].value, "hacking begin");
+    assert_eq!(res.data, Some((b"\xF0\x0B\xAA" as &[u8]).into()));
 
     // it worked, let's check the state
     let state: State = deps

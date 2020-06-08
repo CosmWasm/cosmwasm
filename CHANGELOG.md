@@ -48,7 +48,7 @@
   Remove `CosmCache::store_instance`; you can not call `Instance::recylce`
   directly to get back the external dependencies.
 
-## 0.8.1 (not yet released)
+## 0.8.1 (2020-06-08)
 
 **cosmwasm-std**
 
