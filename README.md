@@ -106,6 +106,7 @@ extern "C" fn deallocate(pointer: u32);
 extern "C" fn init(env_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn handle(env_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn query(msg_ptr: u32) -> u32;
+extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
@@ -122,15 +123,25 @@ The imports provided to give the contract access to the environment are:
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/CosmWasm/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 //
-// TODO: use feature switches to enable precompile dependencies in the future,
-// so contracts that need less
 extern "C" {
-    fn db_read(key: *const c_void, value: *mut c_void) -> i32;
-    fn db_write(key: *const c_void, value: *mut c_void) -> i32;
-    fn db_remove(key: *const c_void) -> i32;
+    fn db_read(key: *const c_void) -> u32;
+    fn db_write(key: *const c_void, value: *mut c_void);
+    fn db_remove(key: *const c_void);
+
+    // scan creates an iterator, which can be read by consecutive next() calls
+    #[cfg(feature = "iterator")]
+    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    #[cfg(feature = "iterator")]
+    fn db_next(iterator_id: u32) -> u32;
+
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+
+    // query_chain will launch a query on the chain (import)
+    // different than query which will query the state of the contract (export)
+    fn query_chain(request: *const c_void) -> u32;
 }
+
 ```
 
 (from

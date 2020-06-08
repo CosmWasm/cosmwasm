@@ -45,19 +45,20 @@ where
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, key: &[u8], data: &T) -> StdResult<()> {
-        self.storage.set(key, &to_vec(data)?)
+        self.storage.set(key, &to_vec(data)?);
+        Ok(())
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = self.storage.get(key)?;
+        let value = self.storage.get(key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = self.storage.get(key)?;
+        let value = self.storage.get(key);
         may_deserialize(&value)
     }
 
@@ -71,7 +72,7 @@ where
         let mapped = self
             .storage
             .range(start, end, order)?
-            .map(|item| item.and_then(deserialize_kv::<T>));
+            .map(deserialize_kv::<T>);
         Ok(Box::new(mapped))
     }
 
@@ -112,14 +113,14 @@ where
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = self.storage.get(key)?;
+        let value = self.storage.get(key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = self.storage.get(key)?;
+        let value = self.storage.get(key);
         may_deserialize(&value)
     }
 
@@ -133,7 +134,7 @@ where
         let mapped = self
             .storage
             .range(start, end, order)?
-            .map(|item| item.and_then(deserialize_kv::<T>));
+            .map(deserialize_kv::<T>);
         Ok(Box::new(mapped))
     }
 }

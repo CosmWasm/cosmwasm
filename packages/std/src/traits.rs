@@ -39,13 +39,12 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
 
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage {
-    /// Returns Err on error.
-    /// Returns Ok(None) when key does not exist.
-    /// Returns Ok(Some(Vec<u8>)) when key exists.
+    /// Returns None when key does not exist.
+    /// Returns Some(Vec<u8>) when key exists.
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>>;
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>>;
 
     #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
@@ -58,17 +57,17 @@ pub trait ReadonlyStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'a>>;
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
 pub trait Storage: ReadonlyStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()>;
+    fn set(&mut self, key: &[u8], value: &[u8]);
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
-    fn remove(&mut self, key: &[u8]) -> StdResult<()>;
+    fn remove(&mut self, key: &[u8]);
 }
 
 /// Api are callbacks to system functions defined outside of the wasm modules.
@@ -88,7 +87,7 @@ pub trait Api: Copy + Clone + Send {
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
 pub type QuerierResult = SystemResult<StdResult<Binary>>;
 
-pub trait Querier: Clone + Send {
+pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed

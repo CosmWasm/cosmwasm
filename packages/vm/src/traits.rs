@@ -26,6 +26,9 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
     }
 }
 
+#[cfg(feature = "iterator")]
+pub type StorageIteratorItem = FfiResult<(KV, u64)>;
+
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage
 where
@@ -37,7 +40,7 @@ where
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
-    fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>>;
+    fn get(&self, key: &[u8]) -> FfiResult<(Option<Vec<u8>>, u64)>;
 
     #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
@@ -50,17 +53,17 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<Box<dyn Iterator<Item = FfiResult<KV>> + 'a>>;
+    ) -> FfiResult<(Box<dyn Iterator<Item = StorageIteratorItem> + 'a>, u64)>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access
 pub trait Storage: ReadonlyStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()>;
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64>;
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
-    fn remove(&mut self, key: &[u8]) -> FfiResult<()>;
+    fn remove(&mut self, key: &[u8]) -> FfiResult<u64>;
 }
 
 /// Api are callbacks to system functions defined outside of the wasm modules.
@@ -81,13 +84,12 @@ pub trait Api: Copy + Clone + Send {
 /// 1. Passing the query message to the backend
 /// 2. Accessing the contract
 /// 3. Executing query in the contract
-pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
+pub type QuerierResult = FfiResult<(SystemResult<StdResult<Binary>>, u64)>;
 
-pub trait Querier: Clone + Send + 'static {
+pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
-    /// types. People using the querier probably want one of the simpler auto-generated
-    /// helper methods
+    /// types.
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 }

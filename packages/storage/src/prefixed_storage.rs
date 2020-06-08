@@ -1,6 +1,6 @@
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
+use cosmwasm_std::{Order, StdResult, KV};
+use cosmwasm_std::{ReadonlyStorage, Storage};
 
 use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
@@ -44,7 +44,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
 }
 
 impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
@@ -55,7 +55,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
@@ -84,7 +84,7 @@ impl<'a, T: Storage> PrefixedStorage<'a, T> {
 }
 
 impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
@@ -96,18 +96,18 @@ impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
     }
 }
 
 impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
-        set_with_prefix(self.storage, &self.prefix, key, value)
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        set_with_prefix(self.storage, &self.prefix, key, value);
     }
 
-    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
-        remove_with_prefix(self.storage, &self.prefix, key)
+    fn remove(&mut self, key: &[u8]) {
+        remove_with_prefix(self.storage, &self.prefix, key);
     }
 }
 
@@ -122,16 +122,16 @@ mod test {
 
         // we use a block scope here to release the &mut before we use it in the next storage
         let mut foo = PrefixedStorage::new(b"foo", &mut storage);
-        foo.set(b"bar", b"gotcha").unwrap();
-        assert_eq!(Some(b"gotcha".to_vec()), foo.get(b"bar").unwrap());
+        foo.set(b"bar", b"gotcha");
+        assert_eq!(foo.get(b"bar"), Some(b"gotcha".to_vec()));
 
         // try readonly correctly
         let rfoo = ReadonlyPrefixedStorage::new(b"foo", &storage);
-        assert_eq!(Some(b"gotcha".to_vec()), rfoo.get(b"bar").unwrap());
+        assert_eq!(rfoo.get(b"bar"), Some(b"gotcha".to_vec()));
 
         // no collisions with other prefixes
         let fo = ReadonlyPrefixedStorage::new(b"fo", &storage);
-        assert_eq!(None, fo.get(b"obar").unwrap());
+        assert_eq!(fo.get(b"obar"), None);
 
         // Note: explicit scoping is not required, but you must not refer to `foo` anytime after you
         // initialize a different PrefixedStorage. Uncomment this to see errors:
@@ -145,18 +145,18 @@ mod test {
         // set with nested
         let mut foo = PrefixedStorage::new(b"foo", &mut storage);
         let mut bar = PrefixedStorage::new(b"bar", &mut foo);
-        bar.set(b"baz", b"winner").unwrap();
+        bar.set(b"baz", b"winner");
 
         // we can nest them the same encoding with one operation
         let loader = ReadonlyPrefixedStorage::multilevel(&[b"foo", b"bar"], &storage);
-        assert_eq!(Some(b"winner".to_vec()), loader.get(b"baz").unwrap());
+        assert_eq!(loader.get(b"baz"), Some(b"winner".to_vec()));
 
         // set with multilevel
         let mut foobar = PrefixedStorage::multilevel(&[b"foo", b"bar"], &mut storage);
-        foobar.set(b"second", b"time").unwrap();
+        foobar.set(b"second", b"time");
 
         let a = ReadonlyPrefixedStorage::new(b"foo", &storage);
         let b = ReadonlyPrefixedStorage::new(b"bar", &a);
-        assert_eq!(Some(b"time".to_vec()), b.get(b"second").unwrap());
+        assert_eq!(b.get(b"second"), Some(b"time".to_vec()));
     }
 }

@@ -13,5 +13,5 @@ pub use length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 pub use prefixed_storage::{prefixed, prefixed_read, PrefixedStorage, ReadonlyPrefixedStorage};
 pub use sequence::{currval, nextval, sequence};
 pub use singleton::{singleton, singleton_read, ReadonlySingleton, Singleton};
-pub use transactions::{transactional, transactional_deps, RepLog, StorageTransaction};
+pub use transactions::{transactional, RepLog, StorageTransaction};
 pub use typed::{typed, typed_read, ReadonlyTypedStorage, TypedStorage};

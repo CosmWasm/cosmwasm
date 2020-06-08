@@ -1,9 +1,9 @@
-use serde::Serialize;
+use serde::{de::DeserializeOwned, Serialize};
 
-use cosmwasm_std::testing::MockQuerier as StdMockQuerier;
+use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
     to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-    Querier as _, QueryRequest, SystemError,
+    Never, Querier as _, QueryRequest, SystemError,
 };
 
 use super::storage::MockStorage;
@@ -44,11 +44,22 @@ pub fn mock_dependencies_with_balances(
 #[derive(Copy, Clone)]
 pub struct MockApi {
     canonical_length: usize,
+    error_message: Option<&'static str>,
 }
 
 impl MockApi {
     pub fn new(canonical_length: usize) -> Self {
-        MockApi { canonical_length }
+        MockApi {
+            canonical_length,
+            error_message: None,
+        }
+    }
+
+    pub fn new_failing(canonical_length: usize, error_message: &'static str) -> Self {
+        MockApi {
+            canonical_length,
+            error_message: Some(error_message),
+        }
     }
 }
 
@@ -60,6 +71,10 @@ impl Default for MockApi {
 
 impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
+        if let Some(error_message) = self.error_message {
+            return Err(FfiError::other(error_message));
+        }
+
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
             return Err(FfiError::other("Invalid input: human address too short"));
@@ -77,6 +92,10 @@ impl Api for MockApi {
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
+        if let Some(error_message) = self.error_message {
+            return Err(FfiError::other(error_message));
+        }
+
         if canonical.len() != self.canonical_length {
             return Err(FfiError::other(
                 "Invalid input: canonical address length not correct",
@@ -121,12 +140,11 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-#[derive(Clone, Default)]
-pub struct MockQuerier {
-    querier: StdMockQuerier,
+pub struct MockQuerier<C: DeserializeOwned = Never> {
+    querier: StdMockQuerier<C>,
 }
 
-impl MockQuerier {
+impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             querier: StdMockQuerier::new(balances),
@@ -151,13 +169,22 @@ impl MockQuerier {
     ) {
         self.querier.with_staking(denom, validators, delegations);
     }
+
+    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
+    where
+        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
+    {
+        self.querier = self.querier.with_custom_handler(handler);
+        self
+    }
 }
 
-impl Querier for MockQuerier {
+impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let res = self.querier.raw_query(bin_request);
+        let used_gas = (bin_request.len() + to_binary(&res).unwrap().len()) as u64;
         // We don't use FFI, so FfiResult is always Ok() regardless of error on other levels
-        Ok(res)
+        Ok((res, used_gas))
     }
 }
 
@@ -167,10 +194,14 @@ impl MockQuerier {
         let bin = match to_binary(request) {
             Ok(raw) => raw,
             Err(e) => {
-                return Ok(Err(SystemError::InvalidRequest {
-                    error: format!("Serializing query request: {}", e),
-                    request: Binary(b"N/A".to_vec()),
-                }));
+                let used_gas = e.to_string().len() as u64;
+                return Ok((
+                    Err(SystemError::InvalidRequest {
+                        error: format!("Serializing query request: {}", e),
+                        request: Binary(b"N/A".to_vec()),
+                    }),
+                    used_gas,
+                ));
             }
         };
         self.raw_query(bin.as_slice())
@@ -258,6 +289,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
@@ -280,6 +312,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&fly).unwrap();
@@ -295,6 +328,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();
@@ -316,6 +350,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
@@ -331,6 +366,7 @@ mod test {
                 .into(),
             )
             .unwrap()
+            .0
             .unwrap()
             .unwrap();
         let res: BalanceResponse = from_binary(&miss).unwrap();

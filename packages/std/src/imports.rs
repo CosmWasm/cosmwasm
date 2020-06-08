@@ -2,7 +2,7 @@ use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::encoding::Binary;
-use crate::errors::{generic_err, StdResult, SystemError};
+use crate::errors::{generic_err, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -10,16 +10,6 @@ use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 use crate::types::{CanonicalAddr, HumanAddr};
 
-/// A kibi (kilo binary)
-static KI: usize = 1024;
-/// The number of bytes of the memory region we pre-allocate for the result data in ExternalIterator.next
-#[cfg(feature = "iterator")]
-static DB_READ_KEY_BUFFER_LENGTH: usize = 64 * KI;
-/// The number of bytes of the memory region we pre-allocate for the result data in ExternalStorage.get
-/// and ExternalIterator.next
-static DB_READ_VALUE_BUFFER_LENGTH: usize = 128 * KI;
-/// The number of bytes of the memory region we pre-allocate for the result data in queries
-static QUERY_RESULT_BUFFER_LENGTH: usize = 128 * KI;
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 32;
 /// An upper bound for typical human readable address formats (e.g. 42 for Ethereum hex addresses or 90 for bech32)
@@ -29,22 +19,22 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn db_read(key: *const c_void, value: *mut c_void) -> i32;
-    fn db_write(key: *const c_void, value: *mut c_void) -> i32;
-    fn db_remove(key: *const c_void) -> i32;
+    fn db_read(key: *const c_void) -> u32;
+    fn db_write(key: *const c_void, value: *mut c_void);
+    fn db_remove(key: *const c_void);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
     fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
     #[cfg(feature = "iterator")]
-    fn db_next(iterator_id: u32, key: *mut c_void, value: *mut c_void) -> i32;
+    fn db_next(iterator_id: u32) -> u32;
 
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 
     // query_chain will launch a query on the chain (import)
     // different than query which will query the state of the contract (export)
-    fn query_chain(request: *const c_void, response: *mut c_void) -> i32;
+    fn query_chain(request: *const c_void) -> u32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -55,38 +45,22 @@ impl ExternalStorage {
     pub fn new() -> ExternalStorage {
         ExternalStorage {}
     }
-
-    pub fn get_with_result_length(
-        &self,
-        key: &[u8],
-        result_length: usize,
-    ) -> StdResult<Option<Vec<u8>>> {
-        let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
-        let value_ptr = alloc(result_length);
-
-        let read = unsafe { db_read(key_ptr, value_ptr) };
-        if read == -1_000_001 {
-            return Err(generic_err("Allocated memory too small to hold the database value for the given key. \
-                You can specify custom result buffer lengths by using ExternalStorage.get_with_result_length explicitely."));
-        } else if read == -1_001_001 {
-            // key does not exist in external storage
-            return Ok(None);
-        } else if read < 0 {
-            return Err(generic_err(format!(
-                "Error reading from database. Error code: {}",
-                read
-            )));
-        }
-
-        let data = unsafe { consume_region(value_ptr) }?;
-        Ok(Some(data))
-    }
 }
 
 impl ReadonlyStorage for ExternalStorage {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
-        self.get_with_result_length(key, DB_READ_VALUE_BUFFER_LENGTH)
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as *const c_void;
+
+        let read = unsafe { db_read(key_ptr) };
+        if read == 0 {
+            // key does not exist in external storage
+            return None;
+        }
+
+        let value_ptr = read as *mut c_void;
+        let data = unsafe { consume_region(value_ptr) };
+        Some(data)
     }
 
     #[cfg(feature = "iterator")]
@@ -95,7 +69,7 @@ impl ReadonlyStorage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>>>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV>>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -125,34 +99,20 @@ impl ReadonlyStorage for ExternalStorage {
 }
 
 impl Storage for ExternalStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
         let mut value = build_region(value);
         let value_ptr = &mut *value as *mut Region as *mut c_void;
-        let result = unsafe { db_write(key_ptr, value_ptr) };
-        if result < 0 {
-            return Err(generic_err(format!(
-                "Error writing to database. Error code: {}",
-                result
-            )));
-        }
-        Ok(())
+        unsafe { db_write(key_ptr, value_ptr) };
     }
 
-    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
+    fn remove(&mut self, key: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
         let key_ptr = &*key as *const Region as *const c_void;
-        let result = unsafe { db_remove(key_ptr) };
-        if result < 0 {
-            return Err(generic_err(format!(
-                "Error deleting from database. Error code: {}",
-                result
-            )));
-        }
-        Ok(())
+        unsafe { db_remove(key_ptr) };
     }
 }
 
@@ -165,27 +125,28 @@ struct ExternalIterator {
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
-    type Item = StdResult<KV>;
+    type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let key_ptr = alloc(DB_READ_KEY_BUFFER_LENGTH);
-        let value_ptr = alloc(DB_READ_VALUE_BUFFER_LENGTH);
+        let next_result = unsafe { db_next(self.iterator_id) };
+        let kv_region_ptr = next_result as *mut c_void;
+        let mut kv = unsafe { consume_region(kv_region_ptr) };
 
-        let db_next_result = unsafe { db_next(self.iterator_id, key_ptr, value_ptr) };
-        if db_next_result < 0 {
-            let result = Err(generic_err(format!(
-                "Unknown error from db_next: {}",
-                db_next_result
-            )));
-            return Some(result);
-        }
-
-        let key = unsafe { consume_region(key_ptr).unwrap() };
-        let value = unsafe { consume_region(value_ptr).unwrap() };
-        if key.is_empty() {
+        // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value
+        let keylen = u32::from_be_bytes([
+            kv[kv.len() - 4],
+            kv[kv.len() - 3],
+            kv[kv.len() - 2],
+            kv[kv.len() - 1],
+        ]) as usize;
+        if keylen == 0 {
             return None;
         }
-        Some(Ok((key, value)))
+
+        kv.truncate(kv.len() - 4);
+        let key = kv.split_off(kv.len() - keylen);
+        let value = kv;
+        Some((key, value))
     }
 }
 
@@ -210,7 +171,7 @@ impl Api for ExternalApi {
             return Err(generic_err("canonicalize_address returned error"));
         }
 
-        let out = unsafe { consume_region(canon)? };
+        let out = unsafe { consume_region(canon) };
         Ok(CanonicalAddr(Binary(out)))
     }
 
@@ -224,7 +185,7 @@ impl Api for ExternalApi {
             return Err(generic_err("humanize_address returned error"));
         }
 
-        let out = unsafe { consume_region(human)? };
+        let out = unsafe { consume_region(human) };
         // we know input was correct when created, so let's save some bytes
         let result = unsafe { String::from_utf8_unchecked(out) };
         Ok(HumanAddr(result))
@@ -232,7 +193,6 @@ impl Api for ExternalApi {
 }
 
 /// A stateless convenience wrapper around imports provided by the VM
-#[derive(Copy, Clone)]
 pub struct ExternalQuerier {}
 
 impl ExternalQuerier {
@@ -245,22 +205,10 @@ impl Querier for ExternalQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let req = build_region(bin_request);
         let request_ptr = &*req as *const Region as *const c_void;
-        let response_ptr = alloc(QUERY_RESULT_BUFFER_LENGTH);
 
-        let result_code = unsafe { query_chain(request_ptr, response_ptr) };
-        if result_code < 0 {
-            return Err(SystemError::Unknown {});
-        }
+        let response_ptr = unsafe { query_chain(request_ptr) };
 
-        let process = |region_ptr| -> StdResult<QuerierResult> {
-            let out = unsafe { consume_region(region_ptr)? };
-            let parsed: QuerierResult = from_slice(&out)?;
-            Ok(parsed)
-        };
-
-        match process(response_ptr) {
-            Ok(api_response) => api_response,
-            Err(err) => Ok(Err(err)),
-        }
+        let response = unsafe { consume_region(response_ptr as *mut c_void) };
+        from_slice(&response).unwrap_or_else(|err| Ok(Err(err)))
     }
 }

@@ -8,9 +8,9 @@ use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
-use cosmwasm_std::{Api, Extern, Querier, ReadonlyStorage, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
+use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
 
 #[cfg(feature = "iterator")]
 /// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
@@ -45,12 +45,12 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
-    fn get(&self, key: &[u8]) -> StdResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
-            Some(val) => Ok(match val {
+            Some(val) => match val {
                 Delta::Set { value } => Some(value.clone()),
                 Delta::Delete {} => None,
-            }),
+            },
             None => self.storage.get(key),
         }
     }
@@ -63,7 +63,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV>> + 'b>> {
+    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -89,21 +89,19 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
 }
 
 impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> StdResult<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) {
         let op = Op::Set {
             key: key.to_vec(),
             value: value.to_vec(),
         };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
-        Ok(())
     }
 
-    fn remove(&mut self, key: &[u8]) -> StdResult<()> {
+    fn remove(&mut self, key: &[u8]) {
         let op = Op::Delete { key: key.to_vec() };
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
-        Ok(())
     }
 }
 
@@ -123,11 +121,10 @@ impl RepLog {
     }
 
     /// applies the stored list of `Op`s to the provided `Storage`
-    pub fn commit<S: Storage>(self, storage: &mut S) -> StdResult<()> {
+    pub fn commit<S: Storage>(self, storage: &mut S) {
         for op in self.ops_log {
-            op.apply(storage)?;
+            op.apply(storage);
         }
-        Ok(())
     }
 }
 
@@ -146,7 +143,7 @@ enum Op {
 
 impl Op {
     /// applies this `Op` to the provided storage
-    pub fn apply<S: Storage>(&self, storage: &mut S) -> StdResult<()> {
+    pub fn apply<S: Storage>(&self, storage: &mut S) {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
             Op::Delete { key } => storage.remove(&key),
@@ -176,7 +173,7 @@ enum Delta {
 struct MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
     left: Peekable<L>,
     right: Peekable<R>,
@@ -187,7 +184,7 @@ where
 impl<'a, L, R> MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
     fn new(left: L, right: R, order: Order) -> Self {
         MergeOverlay {
@@ -197,7 +194,7 @@ where
         }
     }
 
-    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<StdResult<KV>> {
+    fn pick_match(&mut self, lkey: Vec<u8>, rkey: Vec<u8>) -> Option<KV> {
         // compare keys - result is such that Ordering::Less => return left side
         let order = match self.order {
             Order::Ascending => lkey.cmp(&rkey),
@@ -217,10 +214,10 @@ where
     }
 
     /// take_left must only be called when we know self.left.next() will return Some
-    fn take_left(&mut self) -> Option<StdResult<KV>> {
+    fn take_left(&mut self) -> Option<KV> {
         let (lkey, lval) = self.left.next().unwrap();
         match lval {
-            Delta::Set { value } => Some(Ok((lkey.clone(), value.clone()))),
+            Delta::Set { value } => Some((lkey.clone(), value.clone())),
             Delta::Delete {} => self.next(),
         }
     }
@@ -230,16 +227,16 @@ where
 impl<'a, L, R> Iterator for MergeOverlay<'a, L, R>
 where
     L: Iterator<Item = BTreeMapPairRef<'a, Delta>>,
-    R: Iterator<Item = StdResult<KV>>,
+    R: Iterator<Item = KV>,
 {
-    type Item = StdResult<KV>;
+    type Item = KV;
 
     fn next(&mut self) -> Option<Self::Item> {
         let (left, right) = (self.left.peek(), self.right.peek());
         match (left, right) {
             (Some(litem), Some(ritem)) => {
                 let (lkey, _) = litem;
-                let (rkey, _) = ritem.as_ref().expect("error items not yet supported");
+                let (rkey, _) = ritem;
 
                 // we just use cloned keys to avoid double mutable references
                 // (we must release the return value from peek, before beginning to call next or other mut methods
@@ -260,30 +257,8 @@ where
 {
     let mut stx = StorageTransaction::new(storage);
     let res = callback(&mut stx)?;
-    stx.prepare().commit(storage)?;
+    stx.prepare().commit(storage);
     Ok(res)
-}
-
-pub fn transactional_deps<S, A, Q, C, T>(deps: &mut Extern<S, A, Q>, callback: C) -> StdResult<T>
-where
-    S: Storage,
-    A: Api,
-    Q: Querier,
-    C: FnOnce(&mut Extern<StorageTransaction<S>, A, Q>) -> StdResult<T>,
-{
-    let c = StorageTransaction::new(&deps.storage);
-    let mut stx_deps = Extern {
-        storage: c,
-        api: deps.api,
-        querier: deps.querier.clone(),
-    };
-    let res = callback(&mut stx_deps);
-    if res.is_ok() {
-        stx_deps.storage.prepare().commit(&mut deps.storage)?;
-    } else {
-        stx_deps.storage.rollback();
-    }
-    res
 }
 
 #[cfg(feature = "iterator")]
@@ -305,24 +280,24 @@ mod test {
     // (this allows us to test StorageTransaction and other wrapped storage better)
     fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
-        assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(
             store.range(None, None, Order::Ascending).unwrap().count(),
             1
         );
 
         // setup - add some data, and delete part of it as well
-        store.set(b"ant", b"hill").expect("error setting value");
-        store.set(b"ze", b"bra").expect("error setting value");
+        store.set(b"ant", b"hill");
+        store.set(b"ze", b"bra");
 
         // noise that should be ignored
-        store.set(b"bye", b"bye").expect("error setting value");
-        store.remove(b"bye").expect("error removing key");
+        store.set(b"bye", b"bye");
+        store.remove(b"bye");
 
         // unbounded
         {
             let iter = store.range(None, None, Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -336,7 +311,7 @@ mod test {
         // unbounded (descending)
         {
             let iter = store.range(None, None, Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -352,7 +327,7 @@ mod test {
             let iter = store
                 .range(Some(b"f"), Some(b"n"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
@@ -361,7 +336,7 @@ mod test {
             let iter = store
                 .range(Some(b"air"), Some(b"loop"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -376,7 +351,7 @@ mod test {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -385,7 +360,7 @@ mod test {
             let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -394,7 +369,7 @@ mod test {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Ascending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
@@ -403,14 +378,14 @@ mod test {
             let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Descending)
                 .unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // right unbounded
         {
             let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -423,7 +398,7 @@ mod test {
         // right unbounded (descending)
         {
             let iter = store.range(Some(b"f"), None, Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -436,14 +411,14 @@ mod test {
         // left unbounded
         {
             let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // left unbounded (descending)
         {
             let iter = store.range(None, Some(b"no"), Order::Descending).unwrap();
-            let elements: Vec<KV> = iter.filter_map(StdResult::ok).collect();
+            let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
                 vec![
@@ -458,34 +433,34 @@ mod test {
     fn delete_local() {
         let mut base = MemoryStorage::new();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"foo", b"bar").unwrap();
-        check.set(b"food", b"bank").unwrap();
-        check.remove(b"foo").unwrap();
+        check.set(b"foo", b"bar");
+        check.set(b"food", b"bank");
+        check.remove(b"foo");
 
-        assert_eq!(None, check.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
+        assert_eq!(check.get(b"foo"), None);
+        assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
-        check.prepare().commit(&mut base).unwrap();
-        assert_eq!(None, base.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
+        check.prepare().commit(&mut base);
+        assert_eq!(base.get(b"foo"), None);
+        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
     fn delete_from_base() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
         let mut check = StorageTransaction::new(&base);
-        check.set(b"food", b"bank").unwrap();
-        check.remove(b"foo").unwrap();
+        check.set(b"food", b"bank");
+        check.remove(b"foo");
 
-        assert_eq!(None, check.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), check.get(b"food").unwrap());
+        assert_eq!(check.get(b"foo"), None);
+        assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
-        check.prepare().commit(&mut base).unwrap();
-        assert_eq!(None, base.get(b"foo").unwrap());
-        assert_eq!(Some(b"bank".to_vec()), base.get(b"food").unwrap());
+        check.prepare().commit(&mut base);
+        assert_eq!(base.get(b"foo"), None);
+        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
@@ -493,7 +468,7 @@ mod test {
     fn storage_transaction_iterator_empty_base() {
         let base = MemoryStorage::new();
         let mut check = StorageTransaction::new(&base);
-        check.set(b"foo", b"bar").expect("error setting value");
+        check.set(b"foo", b"bar");
         iterator_test_suite(&mut check);
     }
 
@@ -501,7 +476,7 @@ mod test {
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_with_base_data() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").expect("error setting value");
+        base.set(b"foo", b"bar");
         let mut check = StorageTransaction::new(&base);
         iterator_test_suite(&mut check);
     }
@@ -510,96 +485,96 @@ mod test {
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_removed_items_from_base() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").expect("error setting value");
-        base.set(b"food", b"bank").expect("error setting value");
+        base.set(b"foo", b"bar");
+        base.set(b"food", b"bank");
         let mut check = StorageTransaction::new(&base);
-        check.remove(b"food").expect("error removing key");
+        check.remove(b"food");
         iterator_test_suite(&mut check);
     }
 
     #[test]
     fn commit_writes_through() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works").unwrap();
-        check.prepare().commit(&mut base).unwrap();
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works");
+        check.prepare().commit(&mut base);
 
-        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
     fn storage_remains_readable() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut stxn1 = StorageTransaction::new(&base);
 
-        assert_eq!(stxn1.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+        assert_eq!(stxn1.get(b"foo"), Some(b"bar".to_vec()));
 
-        stxn1.set(b"subtx", b"works").unwrap();
-        assert_eq!(stxn1.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        stxn1.set(b"subtx", b"works");
+        assert_eq!(stxn1.get(b"subtx"), Some(b"works".to_vec()));
 
         // Can still read from base, txn is not yet committed
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
 
-        stxn1.prepare().commit(&mut base).unwrap();
-        assert_eq!(base.get(b"subtx").unwrap(), Some(b"works".to_vec()));
+        stxn1.prepare().commit(&mut base);
+        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
     fn rollback_has_no_effect() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works").unwrap();
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works");
         check.rollback();
 
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
     }
 
     #[test]
     fn ignore_same_as_rollback() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         let mut check = StorageTransaction::new(&base);
-        assert_eq!(check.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-        check.set(b"subtx", b"works").unwrap();
+        assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
+        check.set(b"subtx", b"works");
 
-        assert_eq!(base.get(b"subtx").unwrap(), None);
+        assert_eq!(base.get(b"subtx"), None);
     }
 
     #[test]
     fn transactional_works() {
         let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar").unwrap();
+        base.set(b"foo", b"bar");
 
         // writes on success
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             // we write in the Ok case
-            store.set(b"good", b"one").unwrap();
+            store.set(b"good", b"one");
             Ok(5)
         });
-        assert_eq!(5, res.unwrap());
-        assert_eq!(base.get(b"good").unwrap(), Some(b"one".to_vec()));
+        assert_eq!(res.unwrap(), 5);
+        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
 
         // rejects on error
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo").unwrap(), Some(b"bar".to_vec()));
-            assert_eq!(store.get(b"good").unwrap(), Some(b"one".to_vec()));
+            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
             // we write in the Error case
-            store.set(b"bad", b"value").unwrap();
+            store.set(b"bad", b"value");
             Err(unauthorized())
         });
         assert!(res.is_err());
-        assert_eq!(base.get(b"bad").unwrap(), None);
+        assert_eq!(base.get(b"bad"), None);
     }
 }

@@ -19,18 +19,18 @@
 
 use cosmwasm_std::{
     coins, from_binary, log, AllBalanceResponse, BankMsg, HandleResponse, HandleResult, HumanAddr,
-    InitResponse, InitResult, StdError,
+    InitResponse, InitResult, MigrateResponse, StdError,
 };
 use cosmwasm_vm::{
     from_slice,
     testing::{
-        handle, init, mock_env, mock_instance, mock_instance_with_balances, query, test_io,
-        MOCK_CONTRACT_ADDR,
+        handle, init, migrate, mock_env, mock_instance, mock_instance_with_balances, query,
+        test_io, MOCK_CONTRACT_ADDR,
     },
     Api, ReadonlyStorage,
 };
 
-use hackatom::contract::{HandleMsg, InitMsg, QueryMsg, State, CONFIG_KEY};
+use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, CONFIG_KEY};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
@@ -66,6 +66,7 @@ fn proper_initialization() {
             let data = store
                 .get(CONFIG_KEY)
                 .expect("error reading db")
+                .0
                 .expect("no data stored");
             from_slice(&data)
         })
@@ -98,6 +99,41 @@ fn init_and_query() {
         StdError::ParseErr { .. } => {}
         _ => panic!("Expected parse error"),
     }
+}
+
+#[test]
+fn migrate_verifier() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let verifier = HumanAddr::from("verifies");
+    let beneficiary = HumanAddr::from("benefits");
+    let creator = HumanAddr::from("creator");
+    let msg = InitMsg {
+        verifier: verifier.clone(),
+        beneficiary,
+    };
+    let env = mock_env(&deps.api, creator.as_str(), &[]);
+    let res: InitResponse = init(&mut deps, env, msg).unwrap();
+    assert_eq!(0, res.messages.len());
+
+    // check it is 'verifies'
+    let query_response = query(&mut deps, QueryMsg::Verifier {}).unwrap();
+    assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+
+    // change the verifier via migrate
+    let msg = MigrateMsg {
+        verifier: HumanAddr::from("someone else"),
+    };
+    let env = mock_env(&deps.api, creator.as_str(), &[]);
+    let res: MigrateResponse = migrate(&mut deps, env, msg).unwrap();
+    assert_eq!(0, res.messages.len());
+
+    // check it is 'someone else'
+    let query_response = query(&mut deps, QueryMsg::Verifier {}).unwrap();
+    assert_eq!(
+        query_response.as_slice(),
+        b"{\"verifier\":\"someone else\"}"
+    );
 }
 
 #[test]
@@ -219,6 +255,7 @@ fn handle_release_fails_for_wrong_sender() {
             Ok(store
                 .get(CONFIG_KEY)
                 .expect("error reading db")
+                .0
                 .expect("no data stored"))
         })
         .unwrap();

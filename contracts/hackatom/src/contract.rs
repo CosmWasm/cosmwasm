@@ -4,13 +4,25 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{
     from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, AllBalanceResponse,
     Api, BankMsg, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    Querier, QueryResponse, StdResult, Storage,
+    MigrateResponse, Querier, QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     pub verifier: HumanAddr,
     pub beneficiary: HumanAddr,
+}
+
+/// MigrateMsg allows a priviledged contract administrator to run
+/// a migration on the contract. In this (demo) case it is just migrating
+/// from one hackatom code to the same code, but taking advantage of the
+/// migration step to set a new validator.
+///
+/// Note that the contract doesn't enforce permissions here, this is done
+/// by blockchain logic (in the future by blockchain governance)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct MigrateMsg {
+    pub verifier: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -68,7 +80,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
             funder: env.message.sender,
         })?,
-    )?;
+    );
 
     // This adds some unrelated data and log for testing purposes
     Ok(InitResponse {
@@ -76,6 +88,21 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         log: vec![log("Let the", "hacking begin")],
         ..InitResponse::default()
     })
+}
+
+pub fn migrate<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    _env: Env,
+    msg: MigrateMsg,
+) -> StdResult<MigrateResponse> {
+    let data = deps
+        .storage
+        .get(CONFIG_KEY)
+        .ok_or_else(|| not_found("State"))?;
+    let mut config: State = from_slice(&data)?;
+    config.verifier = deps.api.canonical_address(&msg.verifier)?;
+    deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
+    Ok(MigrateResponse::default())
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
@@ -99,7 +126,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)?
+        .get(CONFIG_KEY)
         .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
 
@@ -140,7 +167,7 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     let mut test_case = 0u64;
     loop {
         deps.storage
-            .set(b"test.key", test_case.to_string().as_bytes())?;
+            .set(b"test.key", test_case.to_string().as_bytes());
         test_case += 1;
     }
 }
@@ -192,7 +219,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<QueryResponse> {
     let data = deps
         .storage
-        .get(CONFIG_KEY)?
+        .get(CONFIG_KEY)
         .ok_or_else(|| not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
@@ -215,7 +242,6 @@ mod tests {
     };
     // import trait ReadonlyStorage to get access to read
     use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
-    use cosmwasm_storage::transactional_deps;
 
     #[test]
     fn proper_initialization() {
@@ -243,11 +269,7 @@ mod tests {
         assert_eq!(res.data, Some((b"\xF0\x0B\xAA" as &[u8]).into()));
 
         // it worked, let's check the state
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(state, expected_state);
     }
@@ -273,6 +295,41 @@ mod tests {
     }
 
     #[test]
+    fn migrate_verifier() {
+        let mut deps = mock_dependencies(20, &[]);
+
+        let verifier = HumanAddr::from("verifies");
+        let beneficiary = HumanAddr::from("benefits");
+        let creator = HumanAddr::from("creator");
+        let msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary,
+        };
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let res = init(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'verifies'
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+
+        // change the verifier via migrate
+        let msg = MigrateMsg {
+            verifier: HumanAddr::from("someone else"),
+        };
+        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let res = migrate(&mut deps, env, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'someone else'
+        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        assert_eq!(
+            query_response.as_slice(),
+            b"{\"verifier\":\"someone else\"}"
+        );
+    }
+
+    #[test]
     fn querier_callbacks_work() {
         let rich_addr = HumanAddr::from("foobar");
         let rich_balance = coins(10000, "gold");
@@ -291,42 +348,6 @@ mod tests {
         let query_response = query(&deps, query_msg).unwrap();
         let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
         assert_eq!(bal.amount, vec![]);
-    }
-
-    #[test]
-    fn checkpointing_works_on_contract() {
-        let mut deps = mock_dependencies(20, &coins(1000, "earth"));
-
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
-        let expected_state = State {
-            verifier: deps.api.canonical_address(&verifier).unwrap(),
-            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-            funder: deps.api.canonical_address(&creator).unwrap(),
-        };
-
-        // let's see if we can checkpoint on a contract
-        let res = transactional_deps(&mut deps, |deps| {
-            let msg = InitMsg {
-                verifier: verifier.clone(),
-                beneficiary: beneficiary.clone(),
-            };
-            let env = mock_env(&deps.api, creator.as_str(), &[]);
-
-            init(deps, env, msg)
-        })
-        .unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // it worked, let's check the state
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
-        let state: State = from_slice(&data).unwrap();
-        assert_eq!(state, expected_state);
     }
 
     #[test]
@@ -402,11 +423,7 @@ mod tests {
         }
 
         // state should not change
-        let data = deps
-            .storage
-            .get(CONFIG_KEY)
-            .expect("error reading db")
-            .expect("no data stored");
+        let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
         let state: State = from_slice(&data).unwrap();
         assert_eq!(
             state,

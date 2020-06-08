@@ -10,6 +10,11 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Error in guest/host communication: {}", source))]
+    CommunicationErr {
+        #[snafu(backtrace)]
+        source: CommunicationError,
+    },
     #[snafu(display("Error compiling Wasm: {}", msg))]
     CompileErr {
         msg: String,
@@ -203,11 +208,52 @@ impl From<wasmer_runtime_core::error::ResolveError> for VmError {
 
 impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
     fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
-        VmError::runtime_err(format!("Wasmer runtime error: {:?}", original))
+        use wasmer_runtime_core::error::{InvokeError, RuntimeError};
+
+        fn runtime_error(err: RuntimeError) -> VmError {
+            VmError::runtime_err(format!("Wasmer runtime error: {:?}", err))
+        }
+
+        match original {
+            // TODO: fix the issue described below:
+            // `InvokeError::FailedWithNoError` happens when running out of gas in singlepass v0.17
+            // but it's supposed to indicate bugs in Wasmer...
+            // https://github.com/wasmerio/wasmer/issues/1452
+            // https://github.com/CosmWasm/cosmwasm/issues/375
+            RuntimeError::InvokeError(InvokeError::FailedWithNoError) => VmError::GasDepletion,
+            // This variant contains the error we return from imports.
+            RuntimeError::User(err) => match err.downcast::<VmError>() {
+                Ok(err) => *err,
+                Err(err) => runtime_error(RuntimeError::User(err)),
+            },
+            _ => runtime_error(original),
+        }
     }
 }
 
 pub type VmResult<T> = core::result::Result<T, VmError>;
+
+/// An error in the communcation between contract and host. Those happen around imports and exports.
+#[derive(Debug, Snafu)]
+#[non_exhaustive]
+pub enum CommunicationError {
+    #[snafu(display("Got a zero Wasm address"))]
+    ZeroAddress { backtrace: snafu::Backtrace },
+}
+
+impl CommunicationError {
+    pub fn zero_address() -> Self {
+        ZeroAddress {}.build()
+    }
+}
+
+impl From<CommunicationError> for VmError {
+    fn from(communication_error: CommunicationError) -> Self {
+        VmError::CommunicationErr {
+            source: communication_error,
+        }
+    }
+}
 
 #[derive(Debug, Snafu)]
 pub enum FfiError {
@@ -442,6 +488,18 @@ mod test {
         let error = VmError::write_access_denied();
         match error {
             VmError::WriteAccessDenied { .. } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    // CommunicationError constructors
+
+    #[allow(unreachable_patterns)] // since CommunicationError is non_exhaustive, this should not create a warning. But it does :(
+    #[test]
+    fn communication_error_zero_address() {
+        let error = CommunicationError::zero_address();
+        match error {
+            CommunicationError::ZeroAddress { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }

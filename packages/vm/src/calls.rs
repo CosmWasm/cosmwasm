@@ -1,10 +1,7 @@
 use serde::de::DeserializeOwned;
 use std::fmt;
 
-use cosmwasm_std::{
-    Env, HandleResponse, HandleResult, InitResponse, InitResult, QueryResponse, QueryResult,
-    StdResult,
-};
+use cosmwasm_std::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
 
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Func, Instance};
@@ -12,15 +9,16 @@ use crate::serde::{from_slice, to_vec};
 use crate::traits::{Api, Querier, Storage};
 use schemars::JsonSchema;
 
-static MAX_LENGTH_INIT: usize = 100_000;
-static MAX_LENGTH_HANDLE: usize = 100_000;
-static MAX_LENGTH_QUERY: usize = 100_000;
+const MAX_LENGTH_INIT: usize = 100_000;
+const MAX_LENGTH_HANDLE: usize = 100_000;
+const MAX_LENGTH_MIGRATE: usize = 100_000;
+const MAX_LENGTH_QUERY: usize = 100_000;
 
 pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<StdResult<InitResponse<U>>>
+) -> VmResult<InitResult<U>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -37,7 +35,7 @@ pub fn call_handle<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<StdResult<HandleResponse<U>>>
+) -> VmResult<HandleResult<U>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -50,10 +48,27 @@ where
     Ok(result)
 }
 
+pub fn call_migrate<S, A, Q, U>(
+    instance: &mut Instance<S, A, Q>,
+    env: &Env,
+    msg: &[u8],
+) -> VmResult<MigrateResult<U>>
+where
+    S: Storage + 'static,
+    A: Api + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+{
+    let env = to_vec(env)?;
+    let data = call_migrate_raw(instance, &env, msg)?;
+    let result: MigrateResult<U> = from_slice(&data)?;
+    Ok(result)
+}
+
 pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
-) -> VmResult<StdResult<QueryResponse>> {
+) -> VmResult<QueryResult> {
     let data = call_query_raw(instance, msg)?;
     let result: QueryResult = from_slice(&data)?;
 
@@ -87,6 +102,17 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'sta
 ) -> VmResult<Vec<u8>> {
     instance.set_storage_readonly(false);
     call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
+}
+
+/// Calls Wasm export "migrate" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>> {
+    instance.set_storage_readonly(false);
+    call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
