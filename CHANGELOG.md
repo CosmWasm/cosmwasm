@@ -44,6 +44,9 @@
   (This is represented by replacing the return value with `(value, used_gas)`).
   Gas usage across the system is then tracked in the VM layer, which allows us to halt the
   contract during an import, as soon as we can prove that we used all allocated gas.
+- Remove instance caching, which is disabled since 0.8.1 as it is not stable.
+  Remove `CosmCache::store_instance`; you can not call `Instance::recylce`
+  directly to get back the external dependencies.
 
 ## 0.8.1 (not yet released)
 
