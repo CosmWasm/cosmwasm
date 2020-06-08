@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.8.1 (not yet released)
+## 0.8.1 (2020-06-08)
 
 **cosmwasm-std**
 
