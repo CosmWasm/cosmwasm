@@ -84,9 +84,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 
     // This adds some unrelated data and log for testing purposes
     Ok(InitResponse {
-        data: Some(vec![0xF0, 0x0B, 0xAA].into()),
         log: vec![log("Let the", "hacking begin")],
-        ..InitResponse::default()
+        messages: vec![],
     })
 }
 
@@ -266,7 +265,6 @@ mod tests {
         assert_eq!(res.log.len(), 1);
         assert_eq!(res.log[0].key, "Let the");
         assert_eq!(res.log[0].value, "hacking begin");
-        assert_eq!(res.data, Some((b"\xF0\x0B\xAA" as &[u8]).into()));
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
