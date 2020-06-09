@@ -1,78 +1,57 @@
-use cosmwasm_std::{
-    to_binary, unauthorized, Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier,
-    StdResult, Storage,
-};
+use cosmwasm_std::{Api, Binary, Env, Extern, HandleResponse, InitResponse, Querier, StdResult, Storage, generic_err, Order, MigrateResponse, BankMsg, log};
 
-use crate::msg::{CountResponse, HandleMsg, InitMsg, QueryMsg};
-use crate::state::{config, config_read, State};
+use crate::msg::{MigrateMsg, EmptyMsg};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
-    env: Env,
-    msg: InitMsg,
+    _deps: &mut Extern<S, A, Q>,
+    _env: Env,
+    _msg: EmptyMsg,
 ) -> StdResult<InitResponse> {
-    let state = State {
-        count: msg.count,
-        owner: env.message.sender,
-    };
-
-    config(&mut deps.storage).save(&state)?;
-
-    Ok(InitResponse::default())
+    Err(generic_err("You can only use this contract for migrations"))
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
-    env: Env,
-    msg: HandleMsg,
-) -> StdResult<HandleResponse> {
-    match msg {
-        HandleMsg::Increment {} => try_increment(deps, env),
-        HandleMsg::Reset { count } => try_reset(deps, env, count),
-    }
-}
-
-pub fn try_increment<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    _deps: &mut Extern<S, A, Q>,
     _env: Env,
+    _msg: EmptyMsg,
 ) -> StdResult<HandleResponse> {
-    config(&mut deps.storage).update(|mut state| {
-        state.count += 1;
-        Ok(state)
-    })?;
-
-    Ok(HandleResponse::default())
+    Err(generic_err("You can only use this contract for migrations"))
 }
 
-pub fn try_reset<S: Storage, A: Api, Q: Querier>(
+pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-    count: i32,
-) -> StdResult<HandleResponse> {
-    config(&mut deps.storage).update(|mut state| {
-        if env.message.sender != state.owner {
-            return Err(unauthorized());
-        }
-        state.count = count;
-        Ok(state)
-    })?;
-    Ok(HandleResponse::default())
+    msg: MigrateMsg,
+) -> StdResult<MigrateResponse> {
+    // delete all state
+    let keys: Vec<_> = deps.storage.range(None, None, Order::Ascending)?.map(|(k, _)| k).collect();
+    for k in keys {
+        deps.storage.remove(&k);
+    }
+
+    // get balance and send all to recipient
+    let from_addr = deps.api.human_address(&env.contract.address)?;
+    let balance = deps.querier.query_all_balances(&from_addr)?;
+    let send = BankMsg::Send {
+        from_address: from_addr,
+        to_address: msg.payout.clone(),
+        amount: balance,
+    };
+
+    Ok(MigrateResponse{
+        messages: vec![send.into()],
+        log: vec![log("action", "burn"), log("payout", msg.payout)],
+        data: Some(Binary::from(b"burnt".to_vec())),
+    })
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
-    msg: QueryMsg,
+    _deps: &Extern<S, A, Q>,
+    _msg: EmptyMsg,
 ) -> StdResult<Binary> {
-    match msg {
-        QueryMsg::GetCount {} => query_count(deps),
-    }
+    Err(generic_err("You can only use this contract for migrations"))
 }
 
-fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<Binary> {
-    let state = config_read(&deps.storage).load()?;
-    let resp = CountResponse { count: state.count };
-    to_binary(&resp)
-}
 
 #[cfg(test)]
 mod tests {
