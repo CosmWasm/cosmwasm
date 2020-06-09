@@ -137,16 +137,6 @@
         "messages"
       ],
       "properties": {
-        "data": {
-          "anyOf": [
-            {
-              "$ref": "#/definitions/Binary"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
         "log": {
           "type": "array",
           "items": {
