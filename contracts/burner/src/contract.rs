@@ -62,8 +62,8 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env};
-    use cosmwasm_std::{coins, StdError};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage, StdError};
 
     #[test]
     fn init_fails() {
@@ -81,31 +81,47 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn migrate_cleans_up_data() {
-    //     let mut deps = mock_dependencies(20, &coins(2, "token"));
-    //
-    //     let msg = InitMsg { count: 17 };
-    //     let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    //     let _res = init(&mut deps, env, msg).unwrap();
-    //
-    //     // beneficiary can release it
-    //     let unauth_env = mock_env(&deps.api, "anyone", &coins(2, "token"));
-    //     let msg = HandleMsg::Reset { count: 5 };
-    //     let res = handle(&mut deps, unauth_env, msg);
-    //     match res {
-    //         Err(StdError::Unauthorized { .. }) => {}
-    //         _ => panic!("Must return unauthorized error"),
-    //     }
-    //
-    //     // only the original creator can reset the counter
-    //     let auth_env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    //     let msg = HandleMsg::Reset { count: 5 };
-    //     let _res = handle(&mut deps, auth_env, msg).unwrap();
-    //
-    //     // should now be 5
-    //     let res = query(&deps, QueryMsg::GetCount {}).unwrap();
-    //     let value: CountResponse = from_binary(&res).unwrap();
-    //     assert_eq!(5, value.count);
-    // }
+    #[test]
+    fn migrate_cleans_up_data() {
+        let mut deps = mock_dependencies(20, &coins(123456, "gold"));
+
+        // store some sample data
+        deps.storage.set(b"foo", b"bar");
+        deps.storage.set(b"key2", b"data2");
+        deps.storage.set(b"key3", b"cool stuff");
+        let cnt = deps
+            .storage
+            .range(None, None, Order::Ascending)
+            .unwrap()
+            .count();
+        assert_eq!(3, cnt);
+
+        // change the verifier via migrate
+        let payout = HumanAddr::from("someone else");
+        let msg = MigrateMsg {
+            payout: payout.clone(),
+        };
+        let env = mock_env(&deps.api, "creator", &[]);
+        let res = migrate(&mut deps, env, msg).unwrap();
+        // check payout
+        assert_eq!(1, res.messages.len());
+        let msg = res.messages.get(0).expect("no message");
+        assert_eq!(
+            msg,
+            &BankMsg::Send {
+                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
+                to_address: payout,
+                amount: coins(123456, "gold"),
+            }
+            .into(),
+        );
+
+        // check there is no data in storage
+        let cnt = deps
+            .storage
+            .range(None, None, Order::Ascending)
+            .unwrap()
+            .count();
+        assert_eq!(0, cnt);
+    }
 }

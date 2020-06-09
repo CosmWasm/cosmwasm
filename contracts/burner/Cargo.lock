@@ -104,7 +104,6 @@ version = "0.1.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
- "cosmwasm-storage",
  "cosmwasm-vm",
  "schemars",
  "serde",
@@ -167,14 +166,6 @@ dependencies = [
  "serde",
  "serde-json-wasm",
  "snafu",
-]
-
-[[package]]
-name = "cosmwasm-storage"
-version = "0.8.1"
-dependencies = [
- "cosmwasm-std",
- "serde",
 ]
 
 [[package]]

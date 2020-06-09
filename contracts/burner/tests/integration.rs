@@ -17,10 +17,11 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coins, InitResult, StdError};
-use cosmwasm_vm::testing::{init, mock_env, mock_instance};
+use cosmwasm_std::{coins, BankMsg, HumanAddr, InitResult, MigrateResponse, Order, StdError};
+use cosmwasm_vm::testing::{init, migrate, mock_env, mock_instance, MOCK_CONTRACT_ADDR};
 
-use burner::msg::EmptyMsg;
+use burner::msg::{EmptyMsg, MigrateMsg};
+use cosmwasm_vm::{ReadonlyStorage, Storage};
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/burner.wasm");
@@ -41,4 +42,56 @@ fn init_fails() {
         }
         _ => panic!("expected migrate error message"),
     }
+}
+
+#[test]
+fn migrate_cleans_up_data() {
+    let mut deps = mock_instance(WASM, &coins(123456, "gold"));
+
+    // store some sample data
+    deps.with_storage(|storage| {
+        storage.set(b"foo", b"bar").unwrap();
+        storage.set(b"key2", b"data2").unwrap();
+        storage.set(b"key3", b"cool stuff").unwrap();
+        let cnt = storage
+            .range(None, None, Order::Ascending)
+            .unwrap()
+            .0
+            .count();
+        assert_eq!(3, cnt);
+        Ok(())
+    })
+    .unwrap();
+
+    // change the verifier via migrate
+    let payout = HumanAddr::from("someone else");
+    let msg = MigrateMsg {
+        payout: payout.clone(),
+    };
+    let env = mock_env(&deps.api, "creator", &[]);
+    let res: MigrateResponse = migrate(&mut deps, env, msg).unwrap();
+    // check payout
+    assert_eq!(1, res.messages.len());
+    let msg = res.messages.get(0).expect("no message");
+    assert_eq!(
+        msg,
+        &BankMsg::Send {
+            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
+            to_address: payout,
+            amount: coins(123456, "gold"),
+        }
+        .into(),
+    );
+
+    // check there is no data in storage
+    deps.with_storage(|storage| {
+        let cnt = storage
+            .range(None, None, Order::Ascending)
+            .unwrap()
+            .0
+            .count();
+        assert_eq!(0, cnt);
+        Ok(())
+    })
+    .unwrap();
 }
