@@ -212,6 +212,7 @@ fn handle_release_works() {
         handle_res.log,
         vec![log("action", "release"), log("destination", "benefits"),],
     );
+    assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
 }
 
 #[test]
