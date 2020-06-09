@@ -17,10 +17,10 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coins, from_binary, HandleResponse, HandleResult, InitResponse, StdError};
-use cosmwasm_vm::testing::{handle, init, mock_env, mock_instance, query};
+use cosmwasm_std::{coins, InitResult, StdError};
+use cosmwasm_vm::testing::{init, mock_env, mock_instance};
 
-use burner::msg::{CountResponse, HandleMsg, InitMsg, QueryMsg};
+use burner::msg::EmptyMsg;
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/burner.wasm");
@@ -28,65 +28,17 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/bu
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 #[test]
-fn proper_initialization() {
+fn init_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { count: 17 };
+    let msg = EmptyMsg {};
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
-
     // we can just call .unwrap() to assert this was a success
-    let res: InitResponse = init(&mut deps, env, msg).unwrap();
-    assert_eq!(0, res.messages.len());
-
-    // it worked, let's query the state
-    let res = query(&mut deps, QueryMsg::GetCount {}).unwrap();
-    let value: CountResponse = from_binary(&res).unwrap();
-    assert_eq!(17, value.count);
-}
-
-#[test]
-fn increment() {
-    let mut deps = mock_instance(WASM, &coins(2, "token"));
-
-    let msg = InitMsg { count: 17 };
-    let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let _res: InitResponse = init(&mut deps, env, msg).unwrap();
-
-    // beneficiary can release it
-    let env = mock_env(&deps.api, "anyone", &coins(2, "token"));
-    let msg = HandleMsg::Increment {};
-    let _res: HandleResponse = handle(&mut deps, env, msg).unwrap();
-
-    // should increase counter by 1
-    let res = query(&mut deps, QueryMsg::GetCount {}).unwrap();
-    let value: CountResponse = from_binary(&res).unwrap();
-    assert_eq!(18, value.count);
-}
-
-#[test]
-fn reset() {
-    let mut deps = mock_instance(WASM, &coins(2, "token"));
-
-    let msg = InitMsg { count: 17 };
-    let env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let _res: InitResponse = init(&mut deps, env, msg).unwrap();
-
-    // beneficiary can release it
-    let unauth_env = mock_env(&deps.api, "anyone", &coins(2, "token"));
-    let msg = HandleMsg::Reset { count: 5 };
-    let res: HandleResult = handle(&mut deps, unauth_env, msg);
+    let res: InitResult = init(&mut deps, env, msg);
     match res.unwrap_err() {
-        StdError::Unauthorized { .. } => {}
-        _ => panic!("Expected unauthorized"),
+        StdError::GenericErr { msg, .. } => {
+            assert_eq!(msg, "You can only use this contract for migrations")
+        }
+        _ => panic!("expected migrate error message"),
     }
-
-    // only the original creator can reset the counter
-    let auth_env = mock_env(&deps.api, "creator", &coins(2, "token"));
-    let msg = HandleMsg::Reset { count: 5 };
-    let _res: HandleResponse = handle(&mut deps, auth_env, msg).unwrap();
-
-    // should now be 5
-    let res = query(&mut deps, QueryMsg::GetCount {}).unwrap();
-    let value: CountResponse = from_binary(&res).unwrap();
-    assert_eq!(5, value.count);
 }
