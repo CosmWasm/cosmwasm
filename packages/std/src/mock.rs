@@ -477,7 +477,7 @@ mod test {
             max_change_rate: Decimal::permille(5),
         };
 
-        let staking = StakingQuerier::new("stake", &[val1.clone(), val2.clone()], &[]);
+        let staking = StakingQuerier::new("ustake", &[val1.clone(), val2.clone()], &[]);
 
         // one match
         let raw = staking
@@ -528,38 +528,38 @@ mod test {
         let del1a = FullDelegation {
             delegator: user_a.clone(),
             validator: val1.clone(),
-            amount: coin(100, "stake"),
-            can_redelegate: coin(100, "stake"),
-            accumulated_rewards: coin(5, "stake"),
+            amount: coin(100, "ustake"),
+            can_redelegate: coin(100, "ustake"),
+            accumulated_rewards: coin(5, "ustake"),
         };
         let del2a = FullDelegation {
             delegator: user_a.clone(),
             validator: val2.clone(),
-            amount: coin(500, "stake"),
-            can_redelegate: coin(500, "stake"),
-            accumulated_rewards: coin(20, "stake"),
+            amount: coin(500, "ustake"),
+            can_redelegate: coin(500, "ustake"),
+            accumulated_rewards: coin(20, "ustake"),
         };
 
         // note we cannot have multiple delegations on one validator, they are collapsed into one
         let del1b = FullDelegation {
             delegator: user_b.clone(),
             validator: val1.clone(),
-            amount: coin(500, "stake"),
-            can_redelegate: coin(0, "stake"),
-            accumulated_rewards: coin(0, "stake"),
+            amount: coin(500, "ustake"),
+            can_redelegate: coin(0, "ustake"),
+            accumulated_rewards: coin(0, "ustake"),
         };
 
         // and another one on val2
         let del2c = FullDelegation {
             delegator: user_c.clone(),
             validator: val2.clone(),
-            amount: coin(8888, "stake"),
-            can_redelegate: coin(4567, "stake"),
-            accumulated_rewards: coin(900, "stake"),
+            amount: coin(8888, "ustake"),
+            can_redelegate: coin(4567, "ustake"),
+            accumulated_rewards: coin(900, "ustake"),
         };
 
         let staking = StakingQuerier::new(
-            "stake",
+            "ustake",
             &[],
             &[del1a.clone(), del1b.clone(), del2a.clone(), del2c.clone()],
         );
