@@ -8,6 +8,14 @@ pub struct MigrateMsg {
     pub payout: HumanAddr,
 }
 
-/// EmptyMsg is a placeholder where we don't take any input
+/// InitMsg is a placeholder where we don't take any input
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct EmptyMsg {}
+pub struct InitMsg {}
+
+/// HandleMsg is a placeholder where we don't take any input
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct HandleMsg {}
+
+/// QueryMsg is a placeholder where we don't take any input
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct QueryMsg {}

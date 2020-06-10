@@ -3,12 +3,12 @@ use cosmwasm_std::{
     MigrateResponse, Order, Querier, StdResult, Storage,
 };
 
-use crate::msg::{EmptyMsg, MigrateMsg};
+use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     _deps: &mut Extern<S, A, Q>,
     _env: Env,
-    _msg: EmptyMsg,
+    _msg: InitMsg,
 ) -> StdResult<InitResponse> {
     Err(generic_err("You can only use this contract for migrations"))
 }
@@ -16,7 +16,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 pub fn handle<S: Storage, A: Api, Q: Querier>(
     _deps: &mut Extern<S, A, Q>,
     _env: Env,
-    _msg: EmptyMsg,
+    _msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     Err(generic_err("You can only use this contract for migrations"))
 }
@@ -32,6 +32,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
         .range(None, None, Order::Ascending)?
         .map(|(k, _)| k)
         .collect();
+    let count = keys.len();
     for k in keys {
         deps.storage.remove(&k);
     }
@@ -45,16 +46,18 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
         amount: balance,
     };
 
+    let data_msg = format!("burnt {} keys", count).into_bytes();
+
     Ok(MigrateResponse {
         messages: vec![send.into()],
         log: vec![log("action", "burn"), log("payout", msg.payout)],
-        data: Some(Binary::from(b"burnt".to_vec())),
+        data: Some(data_msg.into()),
     })
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
     _deps: &Extern<S, A, Q>,
-    _msg: EmptyMsg,
+    _msg: QueryMsg,
 ) -> StdResult<Binary> {
     Err(generic_err("You can only use this contract for migrations"))
 }
@@ -69,7 +72,7 @@ mod tests {
     fn init_fails() {
         let mut deps = mock_dependencies(20, &[]);
 
-        let msg = EmptyMsg {};
+        let msg = InitMsg {};
         let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
         let res = init(&mut deps, env, msg);

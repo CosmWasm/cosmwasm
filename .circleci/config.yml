@@ -509,6 +509,10 @@ jobs:
           name: Check formatting of workspace
           command: cargo fmt -- --check
       - run:
+          name: Check formatting of contract burner
+          working_directory: ~/project/contracts/burner
+          command: cargo fmt -- --check
+      - run:
           name: Check formatting of contract hackatom
           working_directory: ~/project/contracts/hackatom
           command: cargo fmt -- --check
@@ -600,6 +604,10 @@ jobs:
       #
       # Contracts
       #
+      - run:
+          name: Clippy linting on burner
+          working_directory: ~/project/contracts/burner
+          command: cargo clippy -- -D warnings
       - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom

@@ -20,7 +20,7 @@
 use cosmwasm_std::{coins, BankMsg, HumanAddr, InitResult, MigrateResponse, Order, StdError};
 use cosmwasm_vm::testing::{init, migrate, mock_env, mock_instance, MOCK_CONTRACT_ADDR};
 
-use burner::msg::{EmptyMsg, MigrateMsg};
+use burner::msg::{InitMsg, MigrateMsg};
 use cosmwasm_vm::{ReadonlyStorage, Storage};
 
 // This line will test the output of cargo wasm
@@ -32,7 +32,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/bu
 fn init_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = EmptyMsg {};
+    let msg = InitMsg {};
     let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
     let res: InitResult = init(&mut deps, env, msg);
