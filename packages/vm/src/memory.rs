@@ -83,11 +83,11 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
             }
             Ok(result)
         }
-        None => panic!(
+        None => Err(CommunicationError::deref_err(region.offset, format!(
             "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
             region,
             memory.size().bytes().0
-        ),
+        )).into()),
     }
 }
 
@@ -125,11 +125,11 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
             set_region(ctx, ptr, region)?;
             Ok(())
         },
-        None => panic!(
+        None => Err(CommunicationError::deref_err(region.offset, format!(
             "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
             region,
             memory.size().bytes().0
-        ),
+        )).into()),
     }
 }
 
