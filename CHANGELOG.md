@@ -57,6 +57,9 @@
   directly to get back the external dependencies.
 - Rename `MockQuerier::with_staking` to `MockQuerier::update_staking` to match
   `::update_balance`.
+- Instead of panicking, `read_region`/`write_region`/`get_region`/`set_region`
+  now return a new `CommunicationError::DerefErr` when dereferencing a pointer
+  provided by the contract fails.
 
 ## 0.8.1 (2020-06-08)
 
