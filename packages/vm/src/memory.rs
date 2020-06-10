@@ -140,6 +140,7 @@ fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
     match wptr.deref(memory) {
         Some(cell) => Ok(cell.get()),
         None => Err(CommunicationError::deref_err(
+            ptr,
             "Could not dereference this pointer to a Region",
         )),
     }
@@ -156,6 +157,7 @@ fn set_region(ctx: &Ctx, ptr: u32, data: Region) -> CommunicationResult<()> {
             Ok(())
         }
         None => Err(CommunicationError::deref_err(
+            ptr,
             "Could not dereference this pointer to a Region",
         )),
     }

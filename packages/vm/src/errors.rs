@@ -240,10 +240,13 @@ pub enum CommunicationError {
     #[snafu(display("Got a zero Wasm address"))]
     ZeroAddress { backtrace: snafu::Backtrace },
     #[snafu(display(
-        "A Wasm memory address provided by the contract could not be dereferenced: {}",
+        "The Wasm memory address {} provided by the contract could not be dereferenced: {}",
+        offset,
         msg
     ))]
     DerefErr {
+        /// the position in a Wasm linear memory
+        offset: u32,
         msg: String,
         backtrace: snafu::Backtrace,
     },
@@ -254,8 +257,12 @@ impl CommunicationError {
         ZeroAddress {}.build()
     }
 
-    pub fn deref_err<S: Into<String>>(msg: S) -> Self {
-        DerefErr { msg: msg.into() }.build()
+    pub fn deref_err<S: Into<String>>(offset: u32, msg: S) -> Self {
+        DerefErr {
+            offset,
+            msg: msg.into(),
+        }
+        .build()
     }
 }
 
@@ -519,9 +526,12 @@ mod test {
 
     #[test]
     fn communication_error_deref_err() {
-        let error = CommunicationError::deref_err("broken stuff");
+        let error = CommunicationError::deref_err(345, "broken stuff");
         match error {
-            CommunicationError::DerefErr { msg, .. } => assert_eq!(msg, "broken stuff"),
+            CommunicationError::DerefErr { offset, msg, .. } => {
+                assert_eq!(offset, 345);
+                assert_eq!(msg, "broken stuff");
+            }
             e => panic!("Unexpected error: {:?}", e),
         }
     }
