@@ -8,6 +8,7 @@ workflows:
       - package_storage
       - package_vm_cranelift
       - package_vm_singlepass
+      - contract_burner
       - contract_hackatom
       - contract_hackatom_in_singlepass_vm
       - contract_queue
@@ -209,6 +210,55 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+
+  contract_burner:
+    docker:
+      - image: rust:1.41.1
+    working_directory: ~/cosmwasm/contracts/burner
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_burner-rust:1.41.1-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Build wasm binary
+          command: cargo wasm --locked
+      - run:
+          name: Unit tests
+          env: RUST_BACKTRACE=1
+          command: cargo unit-test --locked
+      - run:
+          name: Integration tests
+          command: cargo integration-test --locked
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_burner-rust:1.41.1-{{ checksum "Cargo.lock" }}
 
   contract_hackatom:
     docker:
@@ -459,6 +509,10 @@ jobs:
           name: Check formatting of workspace
           command: cargo fmt -- --check
       - run:
+          name: Check formatting of contract burner
+          working_directory: ~/project/contracts/burner
+          command: cargo fmt -- --check
+      - run:
           name: Check formatting of contract hackatom
           working_directory: ~/project/contracts/hackatom
           command: cargo fmt -- --check
@@ -504,7 +558,7 @@ jobs:
           command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
-            - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -551,6 +605,10 @@ jobs:
       # Contracts
       #
       - run:
+          name: Clippy linting on burner
+          working_directory: ~/project/contracts/burner
+          command: cargo clippy -- -D warnings
+      - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
           command: cargo clippy -- -D warnings
@@ -572,6 +630,9 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
+            - contracts/burner/target/debug/.fingerprint
+            - contracts/burner/target/debug/build
+            - contracts/burner/target/debug/deps
             - contracts/hackatom/target/debug/.fingerprint
             - contracts/hackatom/target/debug/build
             - contracts/hackatom/target/debug/deps
@@ -584,7 +645,7 @@ jobs:
             - contracts/staking/target/debug/.fingerprint
             - contracts/staking/target/debug/build
             - contracts/staking/target/debug/deps
-          key: cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: cargocache-v2-clippy-rust:1.41.1-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:

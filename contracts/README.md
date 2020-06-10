@@ -15,6 +15,11 @@ To rebuild all contracts as part of a release use the following commands:
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.8.0 ./contracts/burner
+
+docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.8.0 ./contracts/hackatom
