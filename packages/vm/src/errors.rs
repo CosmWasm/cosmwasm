@@ -259,6 +259,8 @@ impl CommunicationError {
     }
 }
 
+pub type CommunicationResult<T> = core::result::Result<T, CommunicationError>;
+
 impl From<CommunicationError> for VmError {
     fn from(communication_error: CommunicationError) -> Self {
         VmError::CommunicationErr {
