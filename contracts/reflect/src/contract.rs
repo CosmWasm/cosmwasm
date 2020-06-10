@@ -218,7 +218,7 @@ mod tests {
             CustomMsg::Debug("Hi, Dad!".to_string()).into(),
             StakingMsg::Delegate {
                 validator: HumanAddr::from("validator"),
-                amount: coin(100, "stake"),
+                amount: coin(100, "ustake"),
             }
             .into(),
         ];

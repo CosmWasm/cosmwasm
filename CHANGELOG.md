@@ -21,6 +21,8 @@
 - InitResponse no longer has a data field. We always return the contract address
   in the data field in the blockchain and don't allow you to override. `handle`
   can still make use of the field.
+- Rename `MockQuerier::with_staking` to `MockQuerier::update_staking` to match
+  `::update_balance`.
 
 **cosmwasm-storage**
 
@@ -53,6 +55,8 @@
 - Remove instance caching, which is disabled since 0.8.1 as it is not stable.
   Remove `CosmCache::store_instance`; you can not call `Instance::recylce`
   directly to get back the external dependencies.
+- Rename `MockQuerier::with_staking` to `MockQuerier::update_staking` to match
+  `::update_balance`.
 
 ## 0.8.1 (2020-06-08)
 

@@ -161,13 +161,13 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn with_staking(
+    pub fn update_staking(
         &mut self,
         denom: &str,
         validators: &[cosmwasm_std::Validator],
         delegations: &[cosmwasm_std::FullDelegation],
     ) {
-        self.querier.with_staking(denom, validators, delegations);
+        self.querier.update_staking(denom, validators, delegations);
     }
 
     pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
