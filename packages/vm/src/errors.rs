@@ -239,11 +239,23 @@ pub type VmResult<T> = core::result::Result<T, VmError>;
 pub enum CommunicationError {
     #[snafu(display("Got a zero Wasm address"))]
     ZeroAddress { backtrace: snafu::Backtrace },
+    #[snafu(display(
+        "A Wasm memory address provided by the contract could not be dereferenced: {}",
+        msg
+    ))]
+    DerefErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
 }
 
 impl CommunicationError {
     pub fn zero_address() -> Self {
         ZeroAddress {}.build()
+    }
+
+    pub fn deref_err<S: Into<String>>(msg: S) -> Self {
+        DerefErr { msg: msg.into() }.build()
     }
 }
 
@@ -494,12 +506,20 @@ mod test {
 
     // CommunicationError constructors
 
-    #[allow(unreachable_patterns)] // since CommunicationError is non_exhaustive, this should not create a warning. But it does :(
     #[test]
     fn communication_error_zero_address() {
         let error = CommunicationError::zero_address();
         match error {
             CommunicationError::ZeroAddress { .. } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_deref_err() {
+        let error = CommunicationError::deref_err("broken stuff");
+        match error {
+            CommunicationError::DerefErr { msg, .. } => assert_eq!(msg, "broken stuff"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
