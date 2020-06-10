@@ -58,7 +58,6 @@ fn proper_initialization() {
     assert_eq!(res.log.len(), 1);
     assert_eq!(res.log[0].key, "Let the");
     assert_eq!(res.log[0].value, "hacking begin");
-    assert_eq!(res.data, Some((b"\xF0\x0B\xAA" as &[u8]).into()));
 
     // it worked, let's check the state
     let state: State = deps
@@ -213,6 +212,7 @@ fn handle_release_works() {
         handle_res.log,
         vec![log("action", "release"), log("destination", "benefits"),],
     );
+    assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
 }
 
 #[test]

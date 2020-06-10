@@ -8,23 +8,28 @@
   `Option<Vec<u8>>`.
 - `ReadonlyStorage::range` and all its implementations now return an iterator
   over `Option<KV>` instead of `Option<StdResult<KV>>`.
-- `Storage::{set, remove}` and all their implementations no longer have a return value.
-  Previously they returned `StdResult<()>`.
+- `Storage::{set, remove}` and all their implementations no longer have a return
+  value. Previously they returned `StdResult<()>`.
 - Trait `Querier` is not `Clone` and `Send` anymore.
 - `consume_region` panics on null pointers and returns `Vec<u8>` instead of
   `StdResult<Vec<u8>>`.
-- Added contract migration mechanism. Contracts can now optionally export a `migrate`
-  function with the following definition:
+- Added contract migration mechanism. Contracts can now optionally export a
+  `migrate` function with the following definition:
   ```rust
   extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
   ```
+- InitResponse no longer has a data field. We always return the contract address
+  in the data field in the blockchain and don't allow you to override. `handle`
+  can still make use of the field.
 
 **cosmwasm-storage**
 
 - Remove `transactional_deps`. Use `transactional` that just provides a
   transactional storage instead.
-- `get_with_prefix` returns `Option<Vec<u8>>` instead of `StdResult<Option<Vec<u8>>>`.
-- `set_with_prefix` and `remove_with_prefix` return nothing instead of `StdResult<()>`.
+- `get_with_prefix` returns `Option<Vec<u8>>` instead of
+  `StdResult<Option<Vec<u8>>>`.
+- `set_with_prefix` and `remove_with_prefix` return nothing instead of
+  `StdResult<()>`.
 - `RepLog::commit` no longer returns any value (always succeeds).
 - `Op::apply` no longer returns any value (always succeeds).
 
@@ -40,10 +45,11 @@
   data in the region is stored in the format `value || key || keylen`. As
   before, an empty key means _no more value_.
 - Remove `Instance::get_gas` in favour of `Instance::get_gas_left`.
-- All calls from the VM layer to the chain layer also return the amount of gas used on success.
-  (This is represented by replacing the return value with `(value, used_gas)`).
-  Gas usage across the system is then tracked in the VM layer, which allows us to halt the
-  contract during an import, as soon as we can prove that we used all allocated gas.
+- All calls from the VM layer to the chain layer also return the amount of gas
+  used on success. (This is represented by replacing the return value with
+  `(value, used_gas)`). Gas usage across the system is then tracked in the VM
+  layer, which allows us to halt the contract during an import, as soon as we
+  can prove that we used all allocated gas.
 - Remove instance caching, which is disabled since 0.8.1 as it is not stable.
   Remove `CosmCache::store_instance`; you can not call `Instance::recylce`
   directly to get back the external dependencies.

@@ -122,10 +122,8 @@ pub struct InitResponse<T = Never>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg<T>>,
-    pub log: Vec<LogAttribute>, // abci defines this as string
-    pub data: Option<Binary>,   // abci defines this as bytes
+    pub log: Vec<LogAttribute>,
 }
 
 pub type InitResult<U = Never> = StdResult<InitResponse<U>>;
@@ -138,7 +136,6 @@ where
         InitResponse {
             messages: vec![],
             log: vec![],
-            data: None,
         }
     }
 }
@@ -148,10 +145,9 @@ pub struct HandleResponse<T = Never>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg<T>>,
-    pub log: Vec<LogAttribute>, // abci defines this as string
-    pub data: Option<Binary>,   // abci defines this as bytes
+    pub log: Vec<LogAttribute>,
+    pub data: Option<Binary>,
 }
 
 pub type HandleResult<U = Never> = StdResult<HandleResponse<U>>;
@@ -174,10 +170,9 @@ pub struct MigrateResponse<T = Never>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    // let's make the positive case a struct, it contrains Msg: {...}, but also Data, Log, maybe later Events, etc.
     pub messages: Vec<CosmosMsg<T>>,
-    pub log: Vec<LogAttribute>, // abci defines this as string
-    pub data: Option<Binary>,   // abci defines this as bytes
+    pub log: Vec<LogAttribute>,
+    pub data: Option<Binary>,
 }
 
 pub type MigrateResult<U = Never> = StdResult<MigrateResponse<U>>;
@@ -238,7 +233,6 @@ mod test {
                 key: "action".to_string(),
                 value: "release".to_string(),
             }],
-            data: None,
         });
         let bin = to_vec(&send).expect("encode contract result");
         println!("ok: {}", std::str::from_utf8(&bin).unwrap());
