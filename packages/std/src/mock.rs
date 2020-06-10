@@ -170,7 +170,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn with_staking(
+    pub fn update_staking(
         &mut self,
         denom: &str,
         validators: &[crate::query::Validator],

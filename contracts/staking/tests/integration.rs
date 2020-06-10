@@ -45,7 +45,7 @@ fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
 fn initialization_with_missing_validator() {
     let mut ext = mock_dependencies(20, &[]);
     ext.querier
-        .with_staking("stake", &[sample_validator("john")], &[]);
+        .update_staking("stake", &[sample_validator("john")], &[]);
     let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
 
     let creator = HumanAddr::from("creator");
@@ -73,7 +73,7 @@ fn initialization_with_missing_validator() {
 fn proper_initialization() {
     // we need to use the verbose approach here to customize the querier with staking info
     let mut ext = mock_dependencies(20, &[]);
-    ext.querier.with_staking(
+    ext.querier.update_staking(
         "stake",
         &[
             sample_validator("john"),

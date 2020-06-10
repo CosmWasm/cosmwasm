@@ -477,11 +477,11 @@ mod tests {
     }
 
     fn set_validator(querier: &mut MockQuerier) {
-        querier.with_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
+        querier.update_staking("stake", &[sample_validator(DEFAULT_VALIDATOR)], &[]);
     }
 
     fn set_delegation(querier: &mut MockQuerier, amount: u128, denom: &str) {
-        querier.with_staking(
+        querier.update_staking(
             "stake",
             &[sample_validator(DEFAULT_VALIDATOR)],
             &[sample_delegation(DEFAULT_VALIDATOR, coin(amount, denom))],
@@ -529,7 +529,7 @@ mod tests {
     fn initialization_with_missing_validator() {
         let mut deps = mock_dependencies(20, &[]);
         deps.querier
-            .with_staking("stake", &[sample_validator("john")], &[]);
+            .update_staking("stake", &[sample_validator("john")], &[]);
 
         let creator = HumanAddr::from("creator");
         let msg = InitMsg {
@@ -555,7 +555,7 @@ mod tests {
     #[test]
     fn proper_initialization() {
         let mut deps = mock_dependencies(20, &[]);
-        deps.querier.with_staking(
+        deps.querier.update_staking(
             "stake",
             &[
                 sample_validator("john"),
