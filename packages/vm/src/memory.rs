@@ -5,7 +5,7 @@ use wasmer_runtime_core::{
 };
 
 use crate::conversion::to_u32;
-use crate::errors::{VmError, VmResult};
+use crate::errors::{CommunicationError, CommunicationResult, VmError, VmResult};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -62,7 +62,7 @@ pub fn get_memory_info(ctx: &Ctx) -> MemoryInfo {
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
 pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-    let region = get_region(ctx, ptr);
+    let region = get_region(ctx, ptr)?;
 
     if region.length > to_u32(max_length)? {
         return Err(VmError::region_length_too_big(
@@ -83,11 +83,11 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
             }
             Ok(result)
         }
-        None => panic!(
-            "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
+        None => Err(CommunicationError::deref_err(region.offset, format!(
+            "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
             region,
             memory.size().bytes().0
-        ),
+        )).into()),
     }
 }
 
@@ -106,7 +106,7 @@ pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Opt
 ///
 /// Returns number of bytes written on success.
 pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
-    let mut region = get_region(ctx, ptr);
+    let mut region = get_region(ctx, ptr)?;
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
@@ -122,29 +122,43 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
                 cells[i].set(data[i])
             }
             region.length = data.len() as u32;
-            set_region(ctx, ptr, region);
+            set_region(ctx, ptr, region)?;
             Ok(())
         },
-        None => panic!(
-            "Error dereferencing region {:?} in wasm memory of size {}. This typically happens when the given pointer does not point to a Region struct.",
+        None => Err(CommunicationError::deref_err(region.offset, format!(
+            "Tried to access memory of region {:?} in wasm memory of size {} bytes. This typically happens when the given Region pointer does not point to a proper Region struct.",
             region,
             memory.size().bytes().0
-        ),
+        )).into()),
     }
 }
 
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
-fn get_region(ctx: &Ctx, ptr: u32) -> Region {
+fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Region>::new(ptr);
-    let cell = wptr.deref(memory).unwrap();
-    cell.get()
+    match wptr.deref(memory) {
+        Some(cell) => Ok(cell.get()),
+        None => Err(CommunicationError::deref_err(
+            ptr,
+            "Could not dereference this pointer to a Region",
+        )),
+    }
 }
 
 /// Overrides a Region at ptr in wasm memory with data
-fn set_region(ctx: &Ctx, ptr: u32, data: Region) {
+fn set_region(ctx: &Ctx, ptr: u32, data: Region) -> CommunicationResult<()> {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Region>::new(ptr);
-    let cell = wptr.deref(memory).unwrap();
-    cell.set(data);
+
+    match wptr.deref(memory) {
+        Some(cell) => {
+            cell.set(data);
+            Ok(())
+        }
+        None => Err(CommunicationError::deref_err(
+            ptr,
+            "Could not dereference this pointer to a Region",
+        )),
+    }
 }
