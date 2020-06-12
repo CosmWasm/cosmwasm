@@ -25,7 +25,7 @@ extern "C" {
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
@@ -85,14 +85,8 @@ impl ReadonlyStorage for ExternalStorage {
         let order = order as i32;
 
         let scan_result = unsafe { db_scan(start_ptr, end_ptr, order) };
-        if scan_result < 0 {
-            return Err(generic_err(format!(
-                "Error creating iterator (via db_scan). Error code: {}",
-                scan_result
-            )));
-        }
         let iter = ExternalIterator {
-            iterator_id: scan_result as u32, // Cast is safe since we tested for negative values above
+            iterator_id: scan_result,
         };
         Ok(Box::new(iter))
     }

@@ -134,7 +134,7 @@ extern "C" {
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
