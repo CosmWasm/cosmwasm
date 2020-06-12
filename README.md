@@ -1,9 +1,13 @@
 # CosmWasm
 
 [![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
-[![Docs](https://docs.rs/cosmwasm/badge.svg)](https://docs.rs/cosmwasm)
-[![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)
-[![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)
+
+| Crate            | Download                                                                                                                            | Docs                                                                                    |
+| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| cosmwasm-schema  | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema)    | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema)   |
+| cosmwasm-std     | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)             | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)         |
+| cosmwasm-storage | [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage) | [![Docs](https://docs.rs/cosmwasm-storage/badge.svg)](https://docs.rs/cosmwasm-storage) |
+| cosmwasm-vm      | [![cosmwasm-vm on crates.io](https://img.shields.io/crates/v/cosmwasm-vm.svg)](https://crates.io/crates/cosmwasm-vm)                | [![Docs](https://docs.rs/cosmwasm-vm/badge.svg)](https://docs.rs/cosmwasm-vm)           |
 
 **WebAssembly Smart Contracts for the Cosmos SDK**
 
