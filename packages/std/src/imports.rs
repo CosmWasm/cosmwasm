@@ -69,7 +69,7 @@ impl ReadonlyStorage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = KV>>> {
+    ) -> Box<dyn Iterator<Item = KV>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -88,7 +88,7 @@ impl ReadonlyStorage for ExternalStorage {
         let iter = ExternalIterator {
             iterator_id: scan_result,
         };
-        Ok(Box::new(iter))
+        Box::new(iter)
     }
 }
 
