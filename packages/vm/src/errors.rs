@@ -237,8 +237,6 @@ pub type VmResult<T> = core::result::Result<T, VmError>;
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum CommunicationError {
-    #[snafu(display("Got a zero Wasm address"))]
-    ZeroAddress { backtrace: snafu::Backtrace },
     #[snafu(display(
         "The Wasm memory address {} provided by the contract could not be dereferenced: {}",
         offset,
@@ -250,19 +248,21 @@ pub enum CommunicationError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Got a zero Wasm address"))]
+    ZeroAddress { backtrace: snafu::Backtrace },
 }
 
 impl CommunicationError {
-    pub fn zero_address() -> Self {
-        ZeroAddress {}.build()
-    }
-
     pub fn deref_err<S: Into<String>>(offset: u32, msg: S) -> Self {
         DerefErr {
             offset,
             msg: msg.into(),
         }
         .build()
+    }
+
+    pub fn zero_address() -> Self {
+        ZeroAddress {}.build()
     }
 }
 
@@ -506,15 +506,6 @@ mod test {
     // CommunicationError constructors
 
     #[test]
-    fn communication_error_zero_address() {
-        let error = CommunicationError::zero_address();
-        match error {
-            CommunicationError::ZeroAddress { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
     fn communication_error_deref_err() {
         let error = CommunicationError::deref_err(345, "broken stuff");
         match error {
@@ -522,6 +513,15 @@ mod test {
                 assert_eq!(offset, 345);
                 assert_eq!(msg, "broken stuff");
             }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_zero_address() {
+        let error = CommunicationError::zero_address();
+        match error {
+            CommunicationError::ZeroAddress { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }
