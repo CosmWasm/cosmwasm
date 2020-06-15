@@ -84,10 +84,8 @@ impl ReadonlyStorage for ExternalStorage {
         };
         let order = order as i32;
 
-        let scan_result = unsafe { db_scan(start_ptr, end_ptr, order) };
-        let iter = ExternalIterator {
-            iterator_id: scan_result,
-        };
+        let iterator_id = unsafe { db_scan(start_ptr, end_ptr, order) };
+        let iter = ExternalIterator { iterator_id };
         Box::new(iter)
     }
 }
