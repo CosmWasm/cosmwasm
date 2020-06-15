@@ -60,6 +60,8 @@
 - Instead of panicking, `read_region`/`write_region`/`get_region`/`set_region`
   now return a new `CommunicationError::DerefErr` when dereferencing a pointer
   provided by the contract fails.
+- `FfiError::set_message` was removed because errors should be immutable. Use
+  `FfiError::other` to create an error with the desired error message.
 
 ## 0.8.1 (2020-06-08)
 

@@ -313,16 +313,6 @@ impl FfiError {
         }
         .build()
     }
-
-    pub fn set_message<S>(&mut self, message: S) -> &mut Self
-    where
-        S: Into<String>,
-    {
-        if let FfiError::Other { error, .. } = self {
-            *error = message.into()
-        }
-        self
-    }
 }
 
 impl From<FfiError> for VmError {
