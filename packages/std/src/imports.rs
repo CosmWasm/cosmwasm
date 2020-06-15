@@ -25,7 +25,7 @@ extern "C" {
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> i32;
+    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
@@ -69,7 +69,7 @@ impl ReadonlyStorage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = KV>>> {
+    ) -> Box<dyn Iterator<Item = KV>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
@@ -84,17 +84,9 @@ impl ReadonlyStorage for ExternalStorage {
         };
         let order = order as i32;
 
-        let scan_result = unsafe { db_scan(start_ptr, end_ptr, order) };
-        if scan_result < 0 {
-            return Err(generic_err(format!(
-                "Error creating iterator (via db_scan). Error code: {}",
-                scan_result
-            )));
-        }
-        let iter = ExternalIterator {
-            iterator_id: scan_result as u32, // Cast is safe since we tested for negative values above
-        };
-        Ok(Box::new(iter))
+        let iterator_id = unsafe { db_scan(start_ptr, end_ptr, order) };
+        let iter = ExternalIterator { iterator_id };
+        Box::new(iter)
     }
 }
 

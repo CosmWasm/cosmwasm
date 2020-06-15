@@ -1,5 +1,5 @@
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, StdResult, KV};
+use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, Storage};
 
 pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
@@ -37,7 +37,7 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     start: Option<&[u8]>,
     end: Option<&[u8]>,
     order: Order,
-) -> StdResult<Box<dyn Iterator<Item = KV> + 'a>> {
+) -> Box<dyn Iterator<Item = KV> + 'a> {
     // prepare start, end with prefix
     let start = match start {
         Some(s) => concat(namespace, s),
@@ -50,12 +50,12 @@ pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
     };
 
     // get iterator from storage
-    let base_iterator = storage.range(Some(&start), Some(&end), order)?;
+    let base_iterator = storage.range(Some(&start), Some(&end), order);
 
     // make a copy for the closure to handle lifetimes safely
     let prefix = namespace.to_vec();
     let mapped = base_iterator.map(move |(k, v)| (trim(&prefix, &k), v));
-    Ok(Box::new(mapped))
+    Box::new(mapped)
 }
 
 #[cfg(feature = "iterator")]
@@ -118,7 +118,7 @@ mod test {
         set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
 
         // ensure we get proper result from prefixed_range iterator
-        let mut iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending).unwrap();
+        let mut iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending);
         let first = iter.next().unwrap();
         assert_eq!(first, (b"snowy".to_vec(), b"day".to_vec()));
         let second = iter.next().unwrap();
@@ -126,11 +126,11 @@ mod test {
         assert!(iter.next().is_none());
 
         // ensure we get raw result from base range
-        let iter = storage.range(None, None, Order::Ascending).unwrap();
+        let iter = storage.range(None, None, Order::Ascending);
         assert_eq!(3, iter.count());
 
         // foo comes first
-        let mut iter = storage.range(None, None, Order::Ascending).unwrap();
+        let mut iter = storage.range(None, None, Order::Ascending);
         let first = iter.next().unwrap();
         let expected_key = concat(&prefix, b"bar");
         assert_eq!(first, (expected_key, b"none".to_vec()));
@@ -152,7 +152,7 @@ mod test {
         set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
 
         // ensure we get proper result from prefixed_range iterator
-        let iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending).unwrap();
+        let iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending);
         let elements: Vec<KV> = iter.collect();
         assert_eq!(
             elements,
@@ -181,7 +181,6 @@ mod test {
         // make sure start and end are applied properly
         let res: Vec<KV> =
             range_with_prefix(&storage, &prefix, Some(b"b"), Some(b"c"), Order::Ascending)
-                .unwrap()
                 .collect();
         assert_eq!(res.len(), 1);
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
@@ -194,14 +193,11 @@ mod test {
             Some(b"sno"),
             Order::Ascending,
         )
-        .unwrap()
         .collect();
         assert_eq!(res.len(), 0);
 
         let res: Vec<KV> =
-            range_with_prefix(&storage, &prefix, Some(b"ant"), None, Order::Ascending)
-                .unwrap()
-                .collect();
+            range_with_prefix(&storage, &prefix, Some(b"ant"), None, Order::Ascending).collect();
         assert_eq!(res.len(), 2);
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
         assert_eq!(res[1], (b"snowy".to_vec(), b"day".to_vec()));

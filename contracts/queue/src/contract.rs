@@ -80,7 +80,7 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
     value: i32,
 ) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
-    let last_item = deps.storage.range(None, None, Order::Descending)?.next();
+    let last_item = deps.storage.range(None, None, Order::Descending).next();
 
     let new_key = match last_item {
         None => FIRST_KEY,
@@ -99,7 +99,7 @@ fn dequeue<S: Storage, A: Api, Q: Querier>(
     _env: Env,
 ) -> StdResult<HandleResponse> {
     // find the first element in the queue and extract value
-    let first = deps.storage.range(None, None, Order::Ascending)?.next();
+    let first = deps.storage.range(None, None, Order::Ascending).next();
 
     let mut res = HandleResponse::default();
     if let Some((key, value)) = first {
@@ -124,14 +124,14 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
-    let count = deps.storage.range(None, None, Order::Ascending)?.count() as u32;
+    let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
     Ok(Binary(to_vec(&CountResponse { count })?))
 }
 
 fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
-        .range(None, None, Order::Ascending)?
+        .range(None, None, Order::Ascending)
         .map(|(_, v)| from_slice(&v))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
@@ -145,7 +145,7 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     // val: StdResult<Item>
     for val in deps
         .storage
-        .range(None, None, Order::Ascending)?
+        .range(None, None, Order::Ascending)
         .map(|(_, v)| from_slice::<Item>(&v))
     {
         // this returns error on parse error
@@ -153,7 +153,7 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
         // now, let's do second iterator
         let sum: i32 = deps
             .storage
-            .range(None, None, Order::Ascending)?
+            .range(None, None, Order::Ascending)
             // get value. ignore parse errors, just count as 0
             .map(|(_, v)| {
                 from_slice::<Item>(&v)

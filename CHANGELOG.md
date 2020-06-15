@@ -6,8 +6,9 @@
 
 - `ReadonlyStorage::get` and all its implementations now return
   `Option<Vec<u8>>`.
-- `ReadonlyStorage::range` and all its implementations now return an iterator
-  over `Option<KV>` instead of `Option<StdResult<KV>>`.
+- `ReadonlyStorage::range` and all its implementations now always succeed and
+  return an iterator instead of a result. This is now an iterator over
+  `Option<KV>` instead of `Option<StdResult<KV>>`.
 - `Storage::{set, remove}` and all their implementations no longer have a return
   value. Previously they returned `StdResult<()>`.
 - Trait `Querier` is not `Clone` and `Send` anymore.
@@ -62,6 +63,8 @@
   provided by the contract fails.
 - `FfiError::set_message` was removed because errors should be immutable. Use
   `FfiError::other` to create an error with the desired error message.
+- The import implementation of `db_scan` now errors instead of returning an
+  error code for an invalid order value. The return type was changed to `u32`.
 
 ## 0.8.1 (2020-06-08)
 

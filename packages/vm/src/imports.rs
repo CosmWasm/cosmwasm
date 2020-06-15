@@ -14,8 +14,6 @@ use crate::context::{
     is_storage_readonly, try_consume_gas, with_func_from_context, with_querier_from_context,
     with_storage_from_context,
 };
-#[cfg(feature = "iterator")]
-use crate::conversion::to_i32;
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
@@ -70,14 +68,7 @@ mod errors {
     // query_chain errors (-1_003_0xx)
 
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
-
-    /// db_scan errors (-2_000_0xx)
-    #[cfg(feature = "iterator")]
-    pub mod scan {
-        /// Invalid Order enum value passed into scan
-        pub static INVALID_ORDER: i32 = -2_000_002;
-    }
-
+    // db_scan errors (-2_000_0xx)
     // db_next errors (-2_000_1xx)
 }
 
@@ -229,13 +220,12 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
-) -> VmResult<i32> {
+) -> VmResult<u32> {
     let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
     let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
-    let order: Order = match order.try_into() {
-        Ok(order) => order,
-        Err(_) => return Ok(errors::scan::INVALID_ORDER),
-    };
+    let order: Order = order
+        .try_into()
+        .map_err(|_| CommunicationError::invalid_order(order))?;
     let (iterator, used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order)?)
     })?;
@@ -243,7 +233,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
     let new_id = add_iterator::<S, Q>(ctx, iterator);
-    to_i32(new_id)
+    Ok(new_id)
 }
 
 #[cfg(feature = "iterator")]
@@ -292,8 +282,6 @@ mod test {
     use crate::context::{
         move_into_context, set_storage_readonly, set_wasmer_instance, setup_context,
     };
-    #[cfg(feature = "iterator")]
-    use crate::conversion::to_u32;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
     use crate::FfiError;
@@ -329,7 +317,7 @@ mod test {
                 "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| {}),
                 "db_remove" => Func::new(|_a: i32| {}),
-                "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> i32 { 0 }),
+                "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> u32 { 0 }),
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: i32| -> i32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
@@ -843,8 +831,7 @@ mod test {
         leave_default_data(ctx);
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
-            .expect("ID must not be negative");
+        let id = do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap();
         assert_eq!(1, id);
 
         let item =
@@ -868,8 +855,7 @@ mod test {
         leave_default_data(ctx);
 
         // set up iterator over all space
-        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap())
-            .expect("ID must not be negative");
+        let id = do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(1, id);
 
         let item =
@@ -896,8 +882,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<MS, MQ>(ctx, start, end, Order::Ascending.into()).unwrap())
-            .expect("ID must not be negative");
+        let id = do_scan::<MS, MQ>(ctx, start, end, Order::Ascending.into()).unwrap();
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
@@ -916,10 +901,8 @@ mod test {
         leave_default_data(ctx);
 
         // unbounded, ascending and descending
-        let id1 = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
-            .expect("ID must not be negative");
-        let id2 = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap())
-            .expect("ID must not be negative");
+        let id1 = do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap();
+        let id2 = do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
@@ -951,14 +934,30 @@ mod test {
 
     #[test]
     #[cfg(feature = "iterator")]
+    fn do_scan_errors_for_invalid_order_value() {
+        let mut instance = make_instance();
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        // set up iterator over all space
+        let result = do_scan::<MS, MQ>(ctx, 0, 0, 42);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::InvalidOrder { .. },
+            } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
     fn do_next_works() {
         let mut instance = make_instance();
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = to_u32(do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap())
-            .expect("ID must not be negative");
+        let id = do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap();
 
         // Entry 1
         let kv_region_ptr = do_next::<MS, MQ>(ctx, id).unwrap();

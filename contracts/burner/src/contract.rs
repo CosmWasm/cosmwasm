@@ -29,7 +29,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     // delete all state
     let keys: Vec<_> = deps
         .storage
-        .range(None, None, Order::Ascending)?
+        .range(None, None, Order::Ascending)
         .map(|(k, _)| k)
         .collect();
     let count = keys.len();
@@ -92,11 +92,7 @@ mod tests {
         deps.storage.set(b"foo", b"bar");
         deps.storage.set(b"key2", b"data2");
         deps.storage.set(b"key3", b"cool stuff");
-        let cnt = deps
-            .storage
-            .range(None, None, Order::Ascending)
-            .unwrap()
-            .count();
+        let cnt = deps.storage.range(None, None, Order::Ascending).count();
         assert_eq!(3, cnt);
 
         // change the verifier via migrate
@@ -120,11 +116,7 @@ mod tests {
         );
 
         // check there is no data in storage
-        let cnt = deps
-            .storage
-            .range(None, None, Order::Ascending)
-            .unwrap()
-            .count();
+        let cnt = deps.storage.range(None, None, Order::Ascending).count();
         assert_eq!(0, cnt);
     }
 }

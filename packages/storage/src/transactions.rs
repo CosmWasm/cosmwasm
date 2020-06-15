@@ -63,7 +63,7 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> StdResult<Box<dyn Iterator<Item = KV> + 'b>> {
+    ) -> Box<dyn Iterator<Item = KV> + 'b> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -82,9 +82,9 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
                 }
             };
 
-        let base = self.storage.range(start, end, order)?;
+        let base = self.storage.range(start, end, order);
         let merged = MergeOverlay::new(local, base, order);
-        Ok(Box::new(merged))
+        Box::new(merged)
     }
 }
 
@@ -281,10 +281,7 @@ mod test {
     fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-        assert_eq!(
-            store.range(None, None, Order::Ascending).unwrap().count(),
-            1
-        );
+        assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
 
         // setup - add some data, and delete part of it as well
         store.set(b"ant", b"hill");
@@ -296,7 +293,7 @@ mod test {
 
         // unbounded
         {
-            let iter = store.range(None, None, Order::Ascending).unwrap();
+            let iter = store.range(None, None, Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
@@ -310,7 +307,7 @@ mod test {
 
         // unbounded (descending)
         {
-            let iter = store.range(None, None, Order::Descending).unwrap();
+            let iter = store.range(None, None, Order::Descending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
@@ -324,18 +321,14 @@ mod test {
 
         // bounded
         {
-            let iter = store
-                .range(Some(b"f"), Some(b"n"), Order::Ascending)
-                .unwrap();
+            let iter = store.range(Some(b"f"), Some(b"n"), Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"foo".to_vec(), b"bar".to_vec())]);
         }
 
         // bounded (descending)
         {
-            let iter = store
-                .range(Some(b"air"), Some(b"loop"), Order::Descending)
-                .unwrap();
+            let iter = store.range(Some(b"air"), Some(b"loop"), Order::Descending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
@@ -348,43 +341,35 @@ mod test {
 
         // bounded empty [a, a)
         {
-            let iter = store
-                .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
-                .unwrap();
+            let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // bounded empty [a, a) (descending)
         {
-            let iter = store
-                .range(Some(b"foo"), Some(b"foo"), Order::Descending)
-                .unwrap();
+            let iter = store.range(Some(b"foo"), Some(b"foo"), Order::Descending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // bounded empty [a, b) with b < a
         {
-            let iter = store
-                .range(Some(b"z"), Some(b"a"), Order::Ascending)
-                .unwrap();
+            let iter = store.range(Some(b"z"), Some(b"a"), Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // bounded empty [a, b) with b < a (descending)
         {
-            let iter = store
-                .range(Some(b"z"), Some(b"a"), Order::Descending)
-                .unwrap();
+            let iter = store.range(Some(b"z"), Some(b"a"), Order::Descending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![]);
         }
 
         // right unbounded
         {
-            let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap();
+            let iter = store.range(Some(b"f"), None, Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
@@ -397,7 +382,7 @@ mod test {
 
         // right unbounded (descending)
         {
-            let iter = store.range(Some(b"f"), None, Order::Descending).unwrap();
+            let iter = store.range(Some(b"f"), None, Order::Descending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
@@ -410,14 +395,14 @@ mod test {
 
         // left unbounded
         {
-            let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap();
+            let iter = store.range(None, Some(b"f"), Order::Ascending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // left unbounded (descending)
         {
-            let iter = store.range(None, Some(b"no"), Order::Descending).unwrap();
+            let iter = store.range(None, Some(b"no"), Order::Descending);
             let elements: Vec<KV> = iter.collect();
             assert_eq!(
                 elements,
