@@ -225,7 +225,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
-        .map_err(|_| CommunicationError::invalid_order())?;
+        .map_err(|_| CommunicationError::invalid_order(order))?;
     let (iterator, used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order)?)
     })?;
