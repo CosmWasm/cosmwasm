@@ -13,7 +13,7 @@ use crate::{FfiResult, ReadonlyStorage, Storage};
 /// as a data source, which does not provide a gas value for the last iteration.
 #[cfg(feature = "iterator")]
 pub struct MockIterator<'a> {
-    source: Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>,
+    source: Box<dyn Iterator<Item = (KV, u64)> + 'a>,
 }
 
 #[cfg(feature = "iterator")]
@@ -33,7 +33,7 @@ impl StorageIterator for MockIterator<'_> {
     fn next(&mut self) -> FfiResult<NextItem> {
         let item = match self.source.next() {
             Some(pair) => {
-                let (kv, gas_used) = pair?;
+                let (kv, gas_used) = pair;
                 (Some(kv), gas_used)
             }
             None => (None, DUMMY_GAS_COST),
@@ -81,26 +81,15 @@ impl ReadonlyStorage for MockStorage {
         }
 
         let original_iter = self.data.range(bounds);
-        let iter: Box<dyn Iterator<Item = FfiResult<(KV, u64)>>> = match order {
-            Order::Ascending => Box::new(
-                original_iter
-                    .map(clone_item)
-                    .map(|item| {
-                        let gas_cost = (item.0.len() + item.1.len()) as u64;
-                        (item, gas_cost)
-                    })
-                    .map(FfiResult::Ok),
-            ),
-            Order::Descending => Box::new(
-                original_iter
-                    .rev()
-                    .map(clone_item)
-                    .map(|item| {
-                        let gas_cost = (item.0.len() + item.1.len()) as u64;
-                        (item, gas_cost)
-                    })
-                    .map(FfiResult::Ok),
-            ),
+        let iter: Box<dyn Iterator<Item = (KV, u64)>> = match order {
+            Order::Ascending => Box::new(original_iter.map(clone_item).map(|item| {
+                let gas_cost = (item.0.len() + item.1.len()) as u64;
+                (item, gas_cost)
+            })),
+            Order::Descending => Box::new(original_iter.rev().map(clone_item).map(|item| {
+                let gas_cost = (item.0.len() + item.1.len()) as u64;
+                (item, gas_cost)
+            })),
         };
 
         Ok((Box::new(MockIterator { source: iter }), gas_cost_range))
