@@ -62,6 +62,8 @@
   provided by the contract fails.
 - `FfiError::set_message` was removed because errors should be immutable. Use
   `FfiError::other` to create an error with the desired error message.
+- The import implementation of `db_scan` now errors instead of returning an
+  error code for an invalid order value.
 
 ## 0.8.1 (2020-06-08)
 

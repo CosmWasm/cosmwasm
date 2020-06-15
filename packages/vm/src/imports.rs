@@ -70,14 +70,7 @@ mod errors {
     // query_chain errors (-1_003_0xx)
 
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
-
-    /// db_scan errors (-2_000_0xx)
-    #[cfg(feature = "iterator")]
-    pub mod scan {
-        /// Invalid Order enum value passed into scan
-        pub static INVALID_ORDER: i32 = -2_000_002;
-    }
-
+    // db_scan errors (-2_000_0xx)
     // db_next errors (-2_000_1xx)
 }
 
@@ -232,10 +225,9 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 ) -> VmResult<i32> {
     let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
     let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
-    let order: Order = match order.try_into() {
-        Ok(order) => order,
-        Err(_) => return Ok(errors::scan::INVALID_ORDER),
-    };
+    let order: Order = order
+        .try_into()
+        .map_err(|_| CommunicationError::invalid_order())?;
     let (iterator, used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order)?)
     })?;
@@ -947,6 +939,23 @@ mod test {
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
         assert_eq!(item.unwrap().unwrap().0, (KEY1.to_vec(), VALUE1.to_vec()));
+    }
+
+    #[test]
+    #[cfg(feature = "iterator")]
+    fn do_scan_errors_for_invalid_order_value() {
+        let mut instance = make_instance();
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        // set up iterator over all space
+        let result = do_scan::<MS, MQ>(ctx, 0, 0, 42);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::InvalidOrder { .. },
+            } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
     }
 
     #[test]

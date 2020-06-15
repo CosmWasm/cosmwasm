@@ -248,6 +248,8 @@ pub enum CommunicationError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Got an invalid value for iteration order"))]
+    InvalidOrder { backtrace: snafu::Backtrace },
     #[snafu(display("Got a zero Wasm address"))]
     ZeroAddress { backtrace: snafu::Backtrace },
 }
@@ -259,6 +261,10 @@ impl CommunicationError {
             msg: msg.into(),
         }
         .build()
+    }
+
+    pub fn invalid_order() -> Self {
+        InvalidOrder {}.build()
     }
 
     pub fn zero_address() -> Self {
@@ -513,6 +519,15 @@ mod test {
                 assert_eq!(offset, 345);
                 assert_eq!(msg, "broken stuff");
             }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_invalid_order() {
+        let error = CommunicationError::invalid_order();
+        match error {
+            CommunicationError::InvalidOrder { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }
