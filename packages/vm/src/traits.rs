@@ -27,7 +27,26 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
 }
 
 #[cfg(feature = "iterator")]
-pub type StorageIteratorItem = FfiResult<(KV, u64)>;
+pub type NextItem = (Option<KV>, u64);
+
+#[cfg(feature = "iterator")]
+pub trait StorageIterator {
+    fn next(&mut self) -> FfiResult<NextItem>;
+
+    /// Collects all elements, ignoring gas costs
+    fn elements(&mut self) -> FfiResult<Vec<KV>> {
+        let mut out: Vec<KV> = Vec::new();
+        loop {
+            let (next, _gas_used) = self.next()?;
+            if let Some(kv) = next {
+                out.push(kv);
+            } else {
+                break;
+            }
+        }
+        Ok(out)
+    }
+}
 
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage
@@ -53,7 +72,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<(Box<dyn Iterator<Item = StorageIteratorItem> + 'a>, u64)>;
+    ) -> FfiResult<(Box<dyn StorageIterator + 'a>, u64)>;
 }
 
 // Storage extends ReadonlyStorage to give mutable access

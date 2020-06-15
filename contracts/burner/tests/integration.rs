@@ -57,7 +57,9 @@ fn migrate_cleans_up_data() {
             .range(None, None, Order::Ascending)
             .unwrap()
             .0
-            .count();
+            .elements()
+            .unwrap()
+            .len();
         assert_eq!(3, cnt);
         Ok(())
     })
@@ -89,7 +91,9 @@ fn migrate_cleans_up_data() {
             .range(None, None, Order::Ascending)
             .unwrap()
             .0
-            .count();
+            .elements()
+            .unwrap()
+            .len();
         assert_eq!(0, cnt);
         Ok(())
     })

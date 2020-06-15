@@ -14,4 +14,6 @@ pub use mock::{
     mock_dependencies, mock_dependencies_with_balances, mock_env, MockApi, MockQuerier,
     MOCK_CONTRACT_ADDR,
 };
+#[cfg(feature = "iterator")]
+pub use storage::MockIterator;
 pub use storage::MockStorage;

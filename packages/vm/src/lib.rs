@@ -30,4 +30,4 @@ pub use crate::serde::{from_slice, to_vec};
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
 
 #[cfg(feature = "iterator")]
-pub use crate::traits::StorageIteratorItem;
+pub use crate::traits::{NextItem, StorageIterator};
