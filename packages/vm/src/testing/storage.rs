@@ -9,6 +9,12 @@ use cosmwasm_std::{Order, KV};
 use crate::traits::{NextItem, StorageIterator};
 use crate::{FfiResult, ReadonlyStorage, Storage};
 
+#[cfg(feature = "iterator")]
+const GAS_COST_LAST_ITERATION: u64 = 37;
+
+#[cfg(feature = "iterator")]
+const GAS_COST_RANGE: u64 = 11;
+
 /// A storage iterator for testing only. This type uses a Rust iterator
 /// as a data source, which does not provide a gas value for the last iteration.
 #[cfg(feature = "iterator")]
@@ -26,17 +32,11 @@ impl MockIterator<'_> {
 }
 
 #[cfg(feature = "iterator")]
-const DUMMY_GAS_COST: u64 = 37;
-
-#[cfg(feature = "iterator")]
 impl StorageIterator for MockIterator<'_> {
     fn next(&mut self) -> FfiResult<NextItem> {
         let item = match self.source.next() {
-            Some(pair) => {
-                let (kv, gas_used) = pair;
-                (Some(kv), gas_used)
-            }
-            None => (None, DUMMY_GAS_COST),
+            Some((kv, gas_used)) => (Some(kv), gas_used),
+            None => (None, GAS_COST_LAST_ITERATION),
         };
         Ok(item)
     }
@@ -68,14 +68,13 @@ impl ReadonlyStorage for MockStorage {
         end: Option<&[u8]>,
         order: Order,
     ) -> FfiResult<(Box<dyn StorageIterator + 'a>, u64)> {
-        let gas_cost_range: u64 = 11;
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
         // However, this cases represent just empty range and we treat it as such.
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Excluded(end)) if start > end => {
-                return Ok((Box::new(MockIterator::empty()), gas_cost_range));
+                return Ok((Box::new(MockIterator::empty()), GAS_COST_RANGE));
             }
             _ => {}
         }
@@ -92,7 +91,7 @@ impl ReadonlyStorage for MockStorage {
             })),
         };
 
-        Ok((Box::new(MockIterator { source: iter }), gas_cost_range))
+        Ok((Box::new(MockIterator { source: iter }), GAS_COST_RANGE))
     }
 }
 
