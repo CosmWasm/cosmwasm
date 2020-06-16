@@ -19,6 +19,7 @@
 
 use cosmwasm_std::{coins, BankMsg, HumanAddr, InitResult, MigrateResponse, Order, StdError};
 use cosmwasm_vm::testing::{init, migrate, mock_env, mock_instance, MOCK_CONTRACT_ADDR};
+use cosmwasm_vm::StorageIterator;
 
 use burner::msg::{InitMsg, MigrateMsg};
 use cosmwasm_vm::{ReadonlyStorage, Storage};
