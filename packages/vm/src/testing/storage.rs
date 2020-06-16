@@ -160,7 +160,7 @@ mod test {
 
         // unbounded
         {
-            let mut iter = store.range(None, None, Order::Ascending).unwrap().0;
+            let iter = store.range(None, None, Order::Ascending).unwrap().0;
             let elements = iter.elements().unwrap();
             assert_eq!(
                 elements,
@@ -174,7 +174,7 @@ mod test {
 
         // unbounded (descending)
         {
-            let mut iter = store.range(None, None, Order::Descending).unwrap().0;
+            let iter = store.range(None, None, Order::Descending).unwrap().0;
             let elements = iter.elements().unwrap();
             assert_eq!(
                 elements,
@@ -188,7 +188,7 @@ mod test {
 
         // bounded
         {
-            let mut iter = store
+            let iter = store
                 .range(Some(b"f"), Some(b"n"), Order::Ascending)
                 .unwrap()
                 .0;
@@ -198,7 +198,7 @@ mod test {
 
         // bounded (descending)
         {
-            let mut iter = store
+            let iter = store
                 .range(Some(b"air"), Some(b"loop"), Order::Descending)
                 .unwrap()
                 .0;
@@ -214,7 +214,7 @@ mod test {
 
         // bounded empty [a, a)
         {
-            let mut iter = store
+            let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Ascending)
                 .unwrap()
                 .0;
@@ -224,7 +224,7 @@ mod test {
 
         // bounded empty [a, a) (descending)
         {
-            let mut iter = store
+            let iter = store
                 .range(Some(b"foo"), Some(b"foo"), Order::Descending)
                 .unwrap()
                 .0;
@@ -234,7 +234,7 @@ mod test {
 
         // bounded empty [a, b) with b < a
         {
-            let mut iter = store
+            let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Ascending)
                 .unwrap()
                 .0;
@@ -244,7 +244,7 @@ mod test {
 
         // bounded empty [a, b) with b < a (descending)
         {
-            let mut iter = store
+            let iter = store
                 .range(Some(b"z"), Some(b"a"), Order::Descending)
                 .unwrap()
                 .0;
@@ -254,7 +254,7 @@ mod test {
 
         // right unbounded
         {
-            let mut iter = store.range(Some(b"f"), None, Order::Ascending).unwrap().0;
+            let iter = store.range(Some(b"f"), None, Order::Ascending).unwrap().0;
             let elements = iter.elements().unwrap();
             assert_eq!(
                 elements,
@@ -267,7 +267,7 @@ mod test {
 
         // right unbounded (descending)
         {
-            let mut iter = store.range(Some(b"f"), None, Order::Descending).unwrap().0;
+            let iter = store.range(Some(b"f"), None, Order::Descending).unwrap().0;
             let elements = iter.elements().unwrap();
             assert_eq!(
                 elements,
@@ -280,14 +280,14 @@ mod test {
 
         // left unbounded
         {
-            let mut iter = store.range(None, Some(b"f"), Order::Ascending).unwrap().0;
+            let iter = store.range(None, Some(b"f"), Order::Ascending).unwrap().0;
             let elements = iter.elements().unwrap();
             assert_eq!(elements, vec![(b"ant".to_vec(), b"hill".to_vec()),]);
         }
 
         // left unbounded (descending)
         {
-            let mut iter = store.range(None, Some(b"no"), Order::Descending).unwrap().0;
+            let iter = store.range(None, Some(b"no"), Order::Descending).unwrap().0;
             let elements = iter.elements().unwrap();
             assert_eq!(
                 elements,

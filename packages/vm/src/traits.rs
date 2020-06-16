@@ -34,7 +34,10 @@ pub trait StorageIterator {
     fn next(&mut self) -> FfiResult<NextItem>;
 
     /// Collects all elements, ignoring gas costs
-    fn elements(&mut self) -> FfiResult<Vec<KV>> {
+    fn elements(mut self) -> FfiResult<Vec<KV>>
+    where
+        Self: Sized,
+    {
         let mut out: Vec<KV> = Vec::new();
         loop {
             let (next, _gas_used) = self.next()?;
@@ -45,6 +48,12 @@ pub trait StorageIterator {
             }
         }
         Ok(out)
+    }
+}
+
+impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
+    fn next(&mut self) -> FfiResult<NextItem> {
+        (**self).next()
     }
 }
 
