@@ -136,17 +136,11 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<'b, S, Q> {
-    let owned = unsafe {
-        Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
-    };
-    Box::leak(owned) // give up ownership
+    unsafe { &mut *(ctx.data as *mut ContextData<S, Q>) }
 }
 
 fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
-    let owned = unsafe {
-        Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
-    };
-    Box::leak(owned) // give up ownership
+    unsafe { &*(ctx.data as *mut ContextData<S, Q>) }
 }
 
 /// Creates a back reference from a contact to its partent instance
