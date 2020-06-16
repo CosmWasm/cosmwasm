@@ -51,6 +51,7 @@ pub trait StorageIterator {
     }
 }
 
+#[cfg(feature = "iterator")]
 impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
     fn next(&mut self) -> FfiResult<NextItem> {
         (**self).next()
