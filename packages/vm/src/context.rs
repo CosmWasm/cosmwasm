@@ -136,17 +136,19 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<'b, S, Q> {
-    let owned = unsafe {
-        Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
-    };
-    Box::leak(owned) // give up ownership
+    unsafe {
+        let ptr = ctx.data as *mut ContextData<S, Q>;
+        ptr.as_mut()
+            .expect("The pointer ctx.data was null in get_context_data_mut; this is a bug.")
+    }
 }
 
 fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
-    let owned = unsafe {
-        Box::from_raw(ctx.data as *mut ContextData<S, Q>) // obtain ownership
-    };
-    Box::leak(owned) // give up ownership
+    unsafe {
+        let ptr = ctx.data as *mut ContextData<S, Q>;
+        ptr.as_ref()
+            .expect("The pointer ctx.data was null in get_context_data; this is a bug.")
+    }
 }
 
 /// Creates a back reference from a contact to its partent instance
