@@ -25,7 +25,7 @@ extern "C" {
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> u32;
+    fn db_scan(start_ptr: u32, end_ptr: u32, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
@@ -74,13 +74,13 @@ impl ReadonlyStorage for ExternalStorage {
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
         let start_ptr = match start {
-            Some(reg) => &*reg as *const Region as *const c_void,
-            None => std::ptr::null(),
+            Some(reg) => &*reg as *const Region as u32,
+            None => 0,
         };
         let end = end.map(|e| build_region(e));
         let end_ptr = match end {
-            Some(reg) => &*reg as *const Region as *const c_void,
-            None => std::ptr::null(),
+            Some(reg) => &*reg as *const Region as u32,
+            None => 0,
         };
         let order = order as i32;
 

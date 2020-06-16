@@ -375,7 +375,7 @@ mod test {
                 "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
                 "db_write" => Func::new(|_a: i32, _b: i32| {}),
                 "db_remove" => Func::new(|_a: i32| {}),
-                "db_scan" => Func::new(|_a: i32, _b: i32, _c: i32| -> u32 { 0 }),
+                "db_scan" => Func::new(|_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: i32| -> i32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),

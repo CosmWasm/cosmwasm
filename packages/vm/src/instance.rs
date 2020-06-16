@@ -110,8 +110,10 @@ where
         #[cfg(feature = "iterator")]
         import_obj.extend(imports! {
             "env" => {
-                // Creates an iterator that will go from start to end
-                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
+                // Creates an iterator that will go from start to end.
+                // If start_ptr == 0, the start is unbounded.
+                // If end_ptr == 0, the end is unbounded.
+                // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns an iterator ID.
                 "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> VmResult<u32> {
