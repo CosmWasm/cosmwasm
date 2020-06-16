@@ -137,17 +137,17 @@ fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<'b, S, Q> {
     unsafe {
-        let data_ptr = ctx.data as *mut ContextData<S, Q>;
-        // Null-unchecked pointer to reference (https://doc.rust-lang.org/std/primitive.pointer.html#null-unchecked-version)
-        &mut *data_ptr
+        let ptr = ctx.data as *mut ContextData<S, Q>;
+        ptr.as_mut()
+            .expect("The pointer ctx.data was null in get_context_data_mut; this is a bug.")
     }
 }
 
 fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
     unsafe {
-        let data_ptr = ctx.data as *mut ContextData<S, Q>;
-        // Null-unchecked pointer to reference (https://doc.rust-lang.org/std/primitive.pointer.html#null-unchecked-version)
-        &*data_ptr
+        let ptr = ctx.data as *mut ContextData<S, Q>;
+        ptr.as_ref()
+            .expect("The pointer ctx.data was null in get_context_data; this is a bug.")
     }
 }
 
