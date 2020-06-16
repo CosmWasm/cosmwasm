@@ -136,11 +136,19 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<'b, S, Q> {
-    unsafe { &mut *(ctx.data as *mut ContextData<S, Q>) }
+    unsafe {
+        let data_ptr = ctx.data as *mut ContextData<S, Q>;
+        // Null-unchecked pointer to reference (https://doc.rust-lang.org/std/primitive.pointer.html#null-unchecked-version)
+        &mut *data_ptr
+    }
 }
 
 fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
-    unsafe { &*(ctx.data as *mut ContextData<S, Q>) }
+    unsafe {
+        let data_ptr = ctx.data as *mut ContextData<S, Q>;
+        // Null-unchecked pointer to reference (https://doc.rust-lang.org/std/primitive.pointer.html#null-unchecked-version)
+        &*data_ptr
+    }
 }
 
 /// Creates a back reference from a contact to its partent instance
