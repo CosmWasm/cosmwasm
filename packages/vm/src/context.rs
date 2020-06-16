@@ -328,7 +328,7 @@ where
 {
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
-        Some(iterator) => func(&mut **iterator),
+        Some(iterator) => func(iterator),
         None => Err(VmError::iterator_does_not_exist(iterator_id)),
     }
 }
