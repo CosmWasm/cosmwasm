@@ -14,14 +14,9 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
-#[cfg(feature = "iterator")]
-use cosmwasm_std::KV;
-
-#[cfg(feature = "iterator")]
-use crate::errors::FfiResult;
 use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
-use crate::traits::StorageIteratorItem;
+use crate::traits::StorageIterator;
 use crate::traits::{Querier, Storage};
 
 /** context data **/
@@ -81,7 +76,7 @@ struct ContextData<'a, S: Storage, Q: Querier> {
     /// A non-owning link to the wasmer instance
     wasmer_instance: Option<NonNull<WasmerInstance>>,
     #[cfg(feature = "iterator")]
-    iterators: HashMap<u32, Box<dyn Iterator<Item = StorageIteratorItem> + 'a>>,
+    iterators: HashMap<u32, Box<dyn StorageIterator + 'a>>,
     #[cfg(not(feature = "iterator"))]
     iterators: PhantomData<&'a mut ()>,
 }
@@ -249,7 +244,7 @@ pub fn set_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx, new_value: bo
 #[must_use = "without the returned iterator ID, the iterator cannot be accessed"]
 pub fn add_iterator<'a, S: Storage, Q: Querier>(
     ctx: &mut Ctx,
-    iter: Box<dyn Iterator<Item = FfiResult<(KV, u64)>> + 'a>,
+    iter: Box<dyn StorageIterator + 'a>,
 ) -> u32 {
     let b = get_context_data_mut::<S, Q>(ctx);
     let last_id: u32 = b
@@ -329,7 +324,7 @@ pub(crate) fn with_iterator_from_context<'a, 'b, S, Q: 'b, F, T>(
 where
     S: Storage,
     Q: Querier,
-    F: FnOnce(&'b mut (dyn Iterator<Item = FfiResult<(KV, u64)>>)) -> VmResult<T>,
+    F: FnOnce(&'b mut (dyn StorageIterator + 'b)) -> VmResult<T>,
 {
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
@@ -343,6 +338,8 @@ mod test {
     use super::*;
     use crate::backends::{compile, get_gas_left, set_gas_limit};
     use crate::errors::VmError;
+    #[cfg(feature = "iterator")]
+    use crate::testing::MockIterator;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::traits::ReadonlyStorage;
     use cosmwasm_std::{
@@ -517,9 +514,9 @@ mod test {
         leave_default_data(ctx);
 
         assert_eq!(get_context_data_mut::<MS, MQ>(ctx).iterators.len(), 0);
-        let id1 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
-        let id2 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
-        let id3 = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        let id1 = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
+        let id2 = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
+        let id3 = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
         assert_eq!(get_context_data_mut::<MS, MQ>(ctx).iterators.len(), 3);
         assert!(get_context_data_mut::<MS, MQ>(ctx)
             .iterators
@@ -667,9 +664,9 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let id = add_iterator::<MS, MQ>(ctx, Box::new(std::iter::empty()));
+        let id = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
         with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
-            assert!(iter.next().is_none());
+            assert!(iter.next().unwrap().0.is_none());
             Ok(())
         })
         .expect("must not error");

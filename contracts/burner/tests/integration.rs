@@ -19,6 +19,7 @@
 
 use cosmwasm_std::{coins, BankMsg, HumanAddr, InitResult, MigrateResponse, Order, StdError};
 use cosmwasm_vm::testing::{init, migrate, mock_env, mock_instance, MOCK_CONTRACT_ADDR};
+use cosmwasm_vm::StorageIterator;
 
 use burner::msg::{InitMsg, MigrateMsg};
 use cosmwasm_vm::{ReadonlyStorage, Storage};
@@ -57,7 +58,9 @@ fn migrate_cleans_up_data() {
             .range(None, None, Order::Ascending)
             .unwrap()
             .0
-            .count();
+            .elements()
+            .unwrap()
+            .len();
         assert_eq!(3, cnt);
         Ok(())
     })
@@ -89,7 +92,9 @@ fn migrate_cleans_up_data() {
             .range(None, None, Order::Ascending)
             .unwrap()
             .0
-            .count();
+            .elements()
+            .unwrap()
+            .len();
         assert_eq!(0, cnt);
         Ok(())
     })

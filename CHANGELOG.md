@@ -65,6 +65,10 @@
   `FfiError::other` to create an error with the desired error message.
 - The import implementation of `db_scan` now errors instead of returning an
   error code for an invalid order value. The return type was changed to `u32`.
+- Remove `StorageIteratorItem` in favour of the new types `StorageIterator` and
+  `NextItem`. `StorageIterator` is a custom iterator type that does not
+  implement Rust's `Iterator` trait, allowing it to communicate the used gas
+  value of the last `next` call to the VM.
 
 ## 0.8.1 (2020-06-08)
 
