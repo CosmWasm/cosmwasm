@@ -324,11 +324,11 @@ pub(crate) fn with_iterator_from_context<'a, 'b, S, Q: 'b, F, T>(
 where
     S: Storage,
     Q: Querier,
-    F: FnOnce(&'b mut Box<dyn StorageIterator + 'b>) -> VmResult<T>,
+    F: FnOnce(&'b mut (dyn StorageIterator + 'b)) -> VmResult<T>,
 {
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.iterators.get_mut(&iterator_id) {
-        Some(iterator) => func(iterator),
+        Some(iterator) => func(&mut **iterator),
         None => Err(VmError::iterator_does_not_exist(iterator_id)),
     }
 }
