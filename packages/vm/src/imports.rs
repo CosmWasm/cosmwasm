@@ -243,12 +243,8 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
     let (kv, used_gas) = item?;
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
-    // Prepare return values. Both key and value are Options and will be written if set.
-    let (key, value) = if let Some(kv) = kv {
-        kv
-    } else {
-        (Vec::<u8>::new(), Vec::<u8>::new()) // Empty key will later be treated as _no more element_.
-    };
+    // Empty key will later be treated as _no more element_.
+    let (key, value) = kv.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
     // Build value || key || keylen
     let keylen_bytes = to_u32(key.len())?.to_be_bytes();
