@@ -69,6 +69,10 @@
   `NextItem`. `StorageIterator` is a custom iterator type that does not
   implement Rust's `Iterator` trait, allowing it to communicate the used gas
   value of the last `next` call to the VM.
+- Don't report any `VmError` back to the contract in `canonicalize_address` and
+  `humanize_address`. Only invalid inputs should be reported.
+- Move error cases `VmError::RegionLengthTooBig` and `VmError::RegionTooSmall`
+  into `CommunicationError`.
 
 ## 0.8.1 (2020-06-08)
 
