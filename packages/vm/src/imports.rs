@@ -42,10 +42,6 @@ mod errors {
     pub static REGION_WRITE_UNKNOWN: i32 = -1_000_000;
     /// Could not write to region because it is too small
     pub static REGION_WRITE_TOO_SMALL: i32 = -1_000_001;
-    /// An unknown error occurred when reading region
-    pub static REGION_READ_UNKNOWN: i32 = -1_000_100;
-    /// The contract sent us a Region we're not willing to read because it is too big
-    pub static REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_101;
 
     // unused block (-1_000_2xx)
     // unused block (-1_000_3xx)
@@ -70,24 +66,6 @@ mod errors {
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
     // db_scan errors (-2_000_0xx)
     // db_next errors (-2_000_1xx)
-}
-
-/// This macro wraps the read_region function for the purposes of the functions below which need to report errors
-/// in its operation to the caller in the WASM runtime.
-/// On success, the read data is returned from the expression.
-/// On failure, an error number is wrapped in `Ok` and returned from the function.
-macro_rules! read_region {
-    ($ctx: expr, $ptr: expr, $length: expr) => {
-        match read_region($ctx, $ptr, $length) {
-            Ok(data) => data,
-            Err(err) => {
-                return Ok(match err {
-                    VmError::RegionLengthTooBig { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
-                    _ => errors::REGION_READ_UNKNOWN,
-                })
-            }
-        }
-    };
 }
 
 /// This macro wraps the write_region function for the purposes of the functions below which need to report errors
@@ -170,7 +148,7 @@ pub fn do_canonicalize_address<A: Api>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<i32> {
-    let human_data = read_region!(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS);
+    let human_data = read_region(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
         Err(_) => return Ok(errors::canonicalize::INVALID_INPUT),
@@ -185,7 +163,7 @@ pub fn do_humanize_address<A: Api>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<i32> {
-    let canonical = Binary(read_region!(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS));
+    let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
     let human = api.human_address(&CanonicalAddr(canonical))?;
     Ok(write_region!(
         ctx,
@@ -660,7 +638,15 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match result.unwrap_err() {
+            VmError::RegionLengthTooBig {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, 100);
+                assert_eq!(max_length, 90);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
@@ -726,7 +712,15 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match result.unwrap_err() {
+            VmError::RegionLengthTooBig {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, 33);
+                assert_eq!(max_length, 32);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
