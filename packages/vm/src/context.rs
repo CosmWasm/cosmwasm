@@ -372,9 +372,9 @@ mod test {
         let import_obj = imports! {
             || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
-                "db_read" => Func::new(|_a: i32| -> u32 { 0 }),
-                "db_write" => Func::new(|_a: i32, _b: i32| {}),
-                "db_remove" => Func::new(|_a: i32| {}),
+                "db_read" => Func::new(|_a: u32| -> u32 { 0 }),
+                "db_write" => Func::new(|_a: u32, _b: u32| {}),
+                "db_remove" => Func::new(|_a: u32| {}),
                 "db_scan" => Func::new(|_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: i32| -> i32 { 0 }),

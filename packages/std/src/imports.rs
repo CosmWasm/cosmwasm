@@ -19,9 +19,9 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn db_read(key: *const c_void) -> u32;
-    fn db_write(key: *const c_void, value: *mut c_void);
-    fn db_remove(key: *const c_void);
+    fn db_read(key: u32) -> u32;
+    fn db_write(key: u32, value: u32);
+    fn db_remove(key: u32);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
@@ -50,7 +50,7 @@ impl ExternalStorage {
 impl ReadonlyStorage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
+        let key_ptr = &*key as *const Region as u32;
 
         let read = unsafe { db_read(key_ptr) };
         if read == 0 {
@@ -94,16 +94,16 @@ impl Storage for ExternalStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
+        let key_ptr = &*key as *const Region as u32;
         let mut value = build_region(value);
-        let value_ptr = &mut *value as *mut Region as *mut c_void;
+        let value_ptr = &mut *value as *mut Region as u32;
         unsafe { db_write(key_ptr, value_ptr) };
     }
 
     fn remove(&mut self, key: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
+        let key_ptr = &*key as *const Region as u32;
         unsafe { db_remove(key_ptr) };
     }
 }

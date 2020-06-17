@@ -128,9 +128,9 @@ The imports provided to give the contract access to the environment are:
 // https://github.com/CosmWasm/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 //
 extern "C" {
-    fn db_read(key: *const c_void) -> u32;
-    fn db_write(key: *const c_void, value: *mut c_void);
-    fn db_remove(key: *const c_void);
+    fn db_read(key: u32) -> u32;
+    fn db_write(key: u32, value: u32);
+    fn db_remove(key: u32);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
