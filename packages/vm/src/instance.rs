@@ -92,14 +92,16 @@ where
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "canonicalize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
-                    do_canonicalize_address(api, ctx, source_ptr, destination_ptr)
+                    do_canonicalize_address(api, ctx, source_ptr, destination_ptr)?;
+                    Ok(0) // TODO: work out error handling strategy (https://github.com/CosmWasm/cosmwasm/issues/433)
                 }),
                 // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
                 // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
-                    do_humanize_address(api, ctx, source_ptr, destination_ptr)
+                    do_humanize_address(api, ctx, source_ptr, destination_ptr)?;
+                    Ok(0) // TODO: work out error handling strategy (https://github.com/CosmWasm/cosmwasm/issues/433)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
@@ -422,15 +424,18 @@ mod test {
             .write_memory(region_ptr, &data)
             .expect("error writing");
 
-        match instance.read_memory(region_ptr, max_length) {
-            Err(VmError::RegionLengthTooBig {
-                length, max_length, ..
-            }) => {
+        let result = instance.read_memory(region_ptr, max_length);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+            } => {
                 assert_eq!(length, 6);
                 assert_eq!(max_length, 5);
             }
-            Err(err) => panic!("unexpected error: {:?}", err),
-            Ok(_) => panic!("must not succeed"),
+            err => panic!("unexpected error: {:?}", err),
         };
 
         instance.deallocate(region_ptr).expect("error deallocating");

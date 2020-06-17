@@ -18,7 +18,7 @@ use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
-use crate::memory::{read_region, write_region};
+use crate::memory::{read_region, read_string_region, write_region};
 use crate::serde::to_vec;
 use crate::traits::{Api, Querier, Storage};
 
@@ -33,80 +33,6 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
-
-// TODO convert these numbers to a single enum.
-mod errors {
-    /// Success
-    pub static NONE: i32 = 0;
-    /// An unknown error occurred when writing to region
-    pub static REGION_WRITE_UNKNOWN: i32 = -1_000_000;
-    /// Could not write to region because it is too small
-    pub static REGION_WRITE_TOO_SMALL: i32 = -1_000_001;
-    /// An unknown error occurred when reading region
-    pub static REGION_READ_UNKNOWN: i32 = -1_000_100;
-    /// The contract sent us a Region we're not willing to read because it is too big
-    pub static REGION_READ_LENGTH_TOO_BIG: i32 = -1_000_101;
-
-    // unused block (-1_000_2xx)
-    // unused block (-1_000_3xx)
-    // unused block (-1_000_4xx)
-
-    /// db_read errors (-1_001_0xx)
-    /// db_write errors (-1_001_1xx)
-    /// db_remove errors (-1_001_2xx)
-
-    /// canonicalize_address errors (-1_002_0xx)
-    pub mod canonicalize {
-        /// The input address (human address) was invalid
-        pub static INVALID_INPUT: i32 = -1_002_001;
-    }
-
-    // /// humanize_address errors (-1_002_1xx)
-    // pub mod humanize {
-    // }
-
-    // query_chain errors (-1_003_0xx)
-
-    // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
-    // db_scan errors (-2_000_0xx)
-    // db_next errors (-2_000_1xx)
-}
-
-/// This macro wraps the read_region function for the purposes of the functions below which need to report errors
-/// in its operation to the caller in the WASM runtime.
-/// On success, the read data is returned from the expression.
-/// On failure, an error number is wrapped in `Ok` and returned from the function.
-macro_rules! read_region {
-    ($ctx: expr, $ptr: expr, $length: expr) => {
-        match read_region($ctx, $ptr, $length) {
-            Ok(data) => data,
-            Err(err) => {
-                return Ok(match err {
-                    VmError::RegionLengthTooBig { .. } => errors::REGION_READ_LENGTH_TOO_BIG,
-                    _ => errors::REGION_READ_UNKNOWN,
-                })
-            }
-        }
-    };
-}
-
-/// This macro wraps the write_region function for the purposes of the functions below which need to report errors
-/// in its operation to the caller in the WASM runtime.
-/// On success, `errors::NONE` is returned from the expression.
-/// On failure, an error number is wrapped in `Ok` and returned from the function.
-macro_rules! write_region {
-    ($ctx: expr, $ptr: expr, $buffer: expr) => {
-        match write_region($ctx, $ptr, $buffer) {
-            Ok(()) => errors::NONE,
-            Err(err) => {
-                return Ok(match err {
-                    VmError::RegionTooSmall { .. } => errors::REGION_WRITE_TOO_SMALL,
-                    _ => errors::REGION_WRITE_UNKNOWN,
-                })
-            }
-        }
-    };
-}
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
@@ -169,14 +95,11 @@ pub fn do_canonicalize_address<A: Api>(
     ctx: &mut Ctx,
     source_ptr: u32,
     destination_ptr: u32,
-) -> VmResult<i32> {
-    let human_data = read_region!(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS);
-    let human = match String::from_utf8(human_data) {
-        Ok(human_str) => HumanAddr(human_str),
-        Err(_) => return Ok(errors::canonicalize::INVALID_INPUT),
-    };
+) -> VmResult<()> {
+    let human: HumanAddr = read_string_region(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?.into();
     let canon = api.canonical_address(&human)?;
-    Ok(write_region!(ctx, destination_ptr, canon.as_slice()))
+    write_region(ctx, destination_ptr, canon.as_slice())?;
+    Ok(())
 }
 
 pub fn do_humanize_address<A: Api>(
@@ -184,14 +107,11 @@ pub fn do_humanize_address<A: Api>(
     ctx: &mut Ctx,
     source_ptr: u32,
     destination_ptr: u32,
-) -> VmResult<i32> {
-    let canonical = Binary(read_region!(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS));
+) -> VmResult<()> {
+    let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
     let human = api.human_address(&CanonicalAddr(canonical))?;
-    Ok(write_region!(
-        ctx,
-        destination_ptr,
-        human.as_str().as_bytes()
-    ))
+    write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
+    Ok(())
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
@@ -399,7 +319,9 @@ mod test {
         let ctx = instance.context_mut();
         let result = do_read::<MS, MQ>(ctx, key_ptr);
         match result.unwrap_err() {
-            VmError::RegionLengthTooBig { length, .. } => assert_eq!(length, 300 * 1024),
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+            } => assert_eq!(length, 300 * 1024),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -471,9 +393,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        match do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_KEY);
@@ -492,9 +418,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        match do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_VALUE);
@@ -569,9 +499,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        match do_remove::<MS, MQ>(ctx, key_ptr).unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_KEY);
@@ -608,8 +542,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_canonicalize_address(api, ctx, source_ptr, dest_ptr).unwrap();
         assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
     }
 
@@ -627,7 +560,12 @@ mod test {
         let api = MockApi::new(8);
 
         let result = do_canonicalize_address(api, ctx, source_ptr1, dest_ptr);
-        assert_eq!(result.unwrap(), errors::canonicalize::INVALID_INPUT);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::InvalidUtf8 { .. },
+            } => {}
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
 
         // TODO: would be nice if do_canonicalize_address could differentiate between different errors
         // from Api.canonical_address and return INVALID_INPUT for those cases as well.
@@ -660,7 +598,18 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+            } => {
+                assert_eq!(length, 100);
+                assert_eq!(max_length, 90);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
@@ -675,7 +624,15 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionTooSmall { size, required, .. },
+            } => {
+                assert_eq!(size, 7);
+                assert_eq!(required, 8);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
@@ -689,8 +646,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::NONE);
+        do_humanize_address(api, ctx, source_ptr, dest_ptr).unwrap();
         assert_eq!(force_read(ctx, dest_ptr), b"foo");
     }
 
@@ -726,7 +682,18 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_READ_LENGTH_TOO_BIG);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+            } => {
+                assert_eq!(length, 33);
+                assert_eq!(max_length, 32);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
@@ -741,7 +708,15 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionTooSmall { size, required, .. },
+            } => {
+                assert_eq!(size, 2);
+                assert_eq!(required, 3);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]

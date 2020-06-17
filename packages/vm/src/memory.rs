@@ -5,7 +5,7 @@ use wasmer_runtime_core::{
 };
 
 use crate::conversion::to_u32;
-use crate::errors::{CommunicationError, CommunicationResult, VmError, VmResult};
+use crate::errors::{CommunicationError, CommunicationResult, VmResult};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -65,10 +65,9 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
     let region = get_region(ctx, ptr)?;
 
     if region.length > to_u32(max_length)? {
-        return Err(VmError::region_length_too_big(
-            region.length as usize,
-            max_length,
-        ));
+        return Err(
+            CommunicationError::region_length_too_big(region.length as usize, max_length).into(),
+        );
     }
 
     let memory = ctx.memory(0);
@@ -91,6 +90,12 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
     }
 }
 
+pub fn read_string_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<String> {
+    let data = read_region(ctx, ptr, max_length)?;
+    let out = String::from_utf8(data).map_err(CommunicationError::invalid_utf8)?;
+    Ok(out)
+}
+
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]
@@ -110,7 +115,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
-        return Err(VmError::region_too_small(region_capacity, data.len()));
+        return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
 
     let memory = ctx.memory(0);
