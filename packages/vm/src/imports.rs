@@ -38,10 +38,6 @@ static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 mod errors {
     /// Success
     pub static NONE: i32 = 0;
-    /// An unknown error occurred when writing to region
-    pub static REGION_WRITE_UNKNOWN: i32 = -1_000_000;
-    /// Could not write to region because it is too small
-    pub static REGION_WRITE_TOO_SMALL: i32 = -1_000_001;
 
     // unused block (-1_000_2xx)
     // unused block (-1_000_3xx)
@@ -66,24 +62,6 @@ mod errors {
     // The -2_xxx_xxx namespace is reserved for #[cfg(feature = "iterator")]
     // db_scan errors (-2_000_0xx)
     // db_next errors (-2_000_1xx)
-}
-
-/// This macro wraps the write_region function for the purposes of the functions below which need to report errors
-/// in its operation to the caller in the WASM runtime.
-/// On success, `errors::NONE` is returned from the expression.
-/// On failure, an error number is wrapped in `Ok` and returned from the function.
-macro_rules! write_region {
-    ($ctx: expr, $ptr: expr, $buffer: expr) => {
-        match write_region($ctx, $ptr, $buffer) {
-            Ok(()) => errors::NONE,
-            Err(err) => {
-                return Ok(match err {
-                    VmError::RegionTooSmall { .. } => errors::REGION_WRITE_TOO_SMALL,
-                    _ => errors::REGION_WRITE_UNKNOWN,
-                })
-            }
-        }
-    };
 }
 
 /// Reads a storage entry from the VM's storage into Wasm memory
@@ -154,7 +132,8 @@ pub fn do_canonicalize_address<A: Api>(
         Err(_) => return Ok(errors::canonicalize::INVALID_INPUT),
     };
     let canon = api.canonical_address(&human)?;
-    Ok(write_region!(ctx, destination_ptr, canon.as_slice()))
+    write_region(ctx, destination_ptr, canon.as_slice())?;
+    Ok(errors::NONE)
 }
 
 pub fn do_humanize_address<A: Api>(
@@ -165,11 +144,8 @@ pub fn do_humanize_address<A: Api>(
 ) -> VmResult<i32> {
     let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
     let human = api.human_address(&CanonicalAddr(canonical))?;
-    Ok(write_region!(
-        ctx,
-        destination_ptr,
-        human.as_str().as_bytes()
-    ))
+    write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
+    Ok(errors::NONE)
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
@@ -661,7 +637,13 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
+        match result.unwrap_err() {
+            VmError::RegionTooSmall { size, required, .. } => {
+                assert_eq!(size, 7);
+                assert_eq!(required, 8);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
@@ -735,7 +717,13 @@ mod test {
 
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
-        assert_eq!(result.unwrap(), errors::REGION_WRITE_TOO_SMALL);
+        match result.unwrap_err() {
+            VmError::RegionTooSmall { size, required, .. } => {
+                assert_eq!(size, 2);
+                assert_eq!(required, 3);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
     }
 
     #[test]
