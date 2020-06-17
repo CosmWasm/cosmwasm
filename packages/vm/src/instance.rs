@@ -87,19 +87,19 @@ where
                 "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<()> {
                     do_remove::<S, Q>(ctx, key_ptr)
                 }),
-                // Reads human address from human_ptr and writes canonicalized representation to canonical_ptr.
-                // A prepared and sufficiently large memory Region is expected at canonical_ptr that points to pre-allocated memory.
+                // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
+                // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, human_ptr: u32, canonical_ptr: u32| -> VmResult<i32> {
-                    do_canonicalize_address(api, ctx, human_ptr, canonical_ptr)
+                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
+                    do_canonicalize_address(api, ctx, source_ptr, destination_ptr)
                 }),
-                // Reads canonical address from canonical_ptr and writes humanized representation to human_ptr.
-                // A prepared and sufficiently large memory Region is expected at human_ptr that points to pre-allocated memory.
+                // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
+                // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns negative value on error.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, canonical_ptr: u32, human_ptr: u32| -> VmResult<i32> {
-                    do_humanize_address(api, ctx, canonical_ptr, human_ptr)
+                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
+                    do_humanize_address(api, ctx, source_ptr, destination_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
@@ -110,8 +110,10 @@ where
         #[cfg(feature = "iterator")]
         import_obj.extend(imports! {
             "env" => {
-                // Creates an iterator that will go from start to end
-                // Order is defined in cosmwasm::traits::Order and may be 1/Ascending or 2/Descending.
+                // Creates an iterator that will go from start to end.
+                // If start_ptr == 0, the start is unbounded.
+                // If end_ptr == 0, the end is unbounded.
+                // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns an iterator ID.
                 "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> VmResult<u32> {

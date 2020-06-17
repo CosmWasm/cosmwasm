@@ -1,6 +1,5 @@
 use std::convert::TryFrom;
 use std::mem;
-use std::os::raw::c_void;
 use std::vec::Vec;
 
 /// Refers to some heap allocated data in Wasm.
@@ -18,7 +17,7 @@ pub struct Region {
 
 /// Creates a memory region of capacity `size` and length 0. Returns a pointer to the Region.
 /// This is the same as the `allocate` export, but designed to be called internally.
-pub fn alloc(size: usize) -> *mut c_void {
+pub fn alloc(size: usize) -> *mut Region {
     let data: Vec<u8> = Vec::with_capacity(size);
     let data_ptr = data.as_ptr() as usize;
 
@@ -28,17 +27,17 @@ pub fn alloc(size: usize) -> *mut c_void {
         0,
     );
     mem::forget(data);
-    Box::into_raw(region) as *mut c_void
+    Box::into_raw(region)
 }
 
 /// Similar to alloc, but instead of creating a new vector it consumes an existing one and returns
 /// a pointer to the Region (preventing the memory from being freed until explicitly called later).
 ///
 /// The resulting Region has capacity = length, i.e. the buffer's capacity is ignored.
-pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
+pub fn release_buffer(buffer: Vec<u8>) -> *mut Region {
     let region = build_region(&buffer);
     mem::forget(buffer);
-    Box::into_raw(region) as *mut c_void
+    Box::into_raw(region)
 }
 
 /// Return the data referenced by the Region and
@@ -54,9 +53,9 @@ pub fn release_buffer(buffer: Vec<u8>) -> *mut c_void {
 /// Naturally, calling this function twice on the same pointer will double deallocate data
 /// and lead to a crash. Make sure to call it exactly once (either consuming the input in
 /// the wasm code OR deallocating the buffer from the caller).
-pub unsafe fn consume_region(ptr: *mut c_void) -> Vec<u8> {
+pub unsafe fn consume_region(ptr: *mut Region) -> Vec<u8> {
     assert!(!ptr.is_null(), "Region pointer is null");
-    let region = Box::from_raw(ptr as *mut Region);
+    let region = Box::from_raw(ptr);
 
     let region_start = region.offset as *mut u8;
     // This case is explicitely disallowed by Vec

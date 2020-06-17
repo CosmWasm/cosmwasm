@@ -128,22 +128,22 @@ The imports provided to give the contract access to the environment are:
 // https://github.com/CosmWasm/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 //
 extern "C" {
-    fn db_read(key: *const c_void) -> u32;
-    fn db_write(key: *const c_void, value: *mut c_void);
-    fn db_remove(key: *const c_void);
+    fn db_read(key: u32) -> u32;
+    fn db_write(key: u32, value: u32);
+    fn db_remove(key: u32);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> u32;
+    fn db_scan(start: u32, end: u32, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn canonicalize_address(source: u32, destination: u32) -> i32;
+    fn humanize_address(source: u32, destination: u32) -> i32;
 
-    // query_chain will launch a query on the chain (import)
-    // different than query which will query the state of the contract (export)
-    fn query_chain(request: *const c_void) -> u32;
+    /// Executes a query on the chain (import). Not to be confused with the
+    /// query export, which queries the state of the contract.
+    fn query_chain(request: u32) -> u32;
 }
 
 ```

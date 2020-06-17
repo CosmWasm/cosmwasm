@@ -1,4 +1,3 @@
-use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::encoding::Binary;
@@ -19,22 +18,22 @@ const HUMAN_ADDRESS_BUFFER_LENGTH: usize = 90;
 // A complete documentation those functions is available in the VM that provides them:
 // https://github.com/confio/cosmwasm/blob/0.7/lib/vm/src/instance.rs#L43
 extern "C" {
-    fn db_read(key: *const c_void) -> u32;
-    fn db_write(key: *const c_void, value: *mut c_void);
-    fn db_remove(key: *const c_void);
+    fn db_read(key: u32) -> u32;
+    fn db_write(key: u32, value: u32);
+    fn db_remove(key: u32);
 
     // scan creates an iterator, which can be read by consecutive next() calls
     #[cfg(feature = "iterator")]
-    fn db_scan(start: *const c_void, end: *const c_void, order: i32) -> u32;
+    fn db_scan(start_ptr: u32, end_ptr: u32, order: i32) -> u32;
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn canonicalize_address(source: u32, destination: u32) -> i32;
+    fn humanize_address(source: u32, destination: u32) -> i32;
 
-    // query_chain will launch a query on the chain (import)
-    // different than query which will query the state of the contract (export)
-    fn query_chain(request: *const c_void) -> u32;
+    /// Executes a query on the chain (import). Not to be confused with the
+    /// query export, which queries the state of the contract.
+    fn query_chain(request: u32) -> u32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -50,7 +49,7 @@ impl ExternalStorage {
 impl ReadonlyStorage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
+        let key_ptr = &*key as *const Region as u32;
 
         let read = unsafe { db_read(key_ptr) };
         if read == 0 {
@@ -58,7 +57,7 @@ impl ReadonlyStorage for ExternalStorage {
             return None;
         }
 
-        let value_ptr = read as *mut c_void;
+        let value_ptr = read as *mut Region;
         let data = unsafe { consume_region(value_ptr) };
         Some(data)
     }
@@ -74,13 +73,13 @@ impl ReadonlyStorage for ExternalStorage {
         // thus they are not inside a block
         let start = start.map(|s| build_region(s));
         let start_ptr = match start {
-            Some(reg) => &*reg as *const Region as *const c_void,
-            None => std::ptr::null(),
+            Some(reg) => &*reg as *const Region as u32,
+            None => 0,
         };
         let end = end.map(|e| build_region(e));
         let end_ptr = match end {
-            Some(reg) => &*reg as *const Region as *const c_void,
-            None => std::ptr::null(),
+            Some(reg) => &*reg as *const Region as u32,
+            None => 0,
         };
         let order = order as i32;
 
@@ -94,16 +93,16 @@ impl Storage for ExternalStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
+        let key_ptr = &*key as *const Region as u32;
         let mut value = build_region(value);
-        let value_ptr = &mut *value as *mut Region as *mut c_void;
+        let value_ptr = &mut *value as *mut Region as u32;
         unsafe { db_write(key_ptr, value_ptr) };
     }
 
     fn remove(&mut self, key: &[u8]) {
         // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
         let key = build_region(key);
-        let key_ptr = &*key as *const Region as *const c_void;
+        let key_ptr = &*key as *const Region as u32;
         unsafe { db_remove(key_ptr) };
     }
 }
@@ -121,7 +120,7 @@ impl Iterator for ExternalIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
-        let kv_region_ptr = next_result as *mut c_void;
+        let kv_region_ptr = next_result as *mut Region;
         let mut kv = unsafe { consume_region(kv_region_ptr) };
 
         // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value
@@ -155,10 +154,10 @@ impl ExternalApi {
 impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
-        let send_ptr = &*send as *const Region as *const c_void;
+        let send_ptr = &*send as *const Region as u32;
         let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
 
-        let read = unsafe { canonicalize_address(send_ptr, canon) };
+        let read = unsafe { canonicalize_address(send_ptr, canon as u32) };
         if read < 0 {
             return Err(generic_err("canonicalize_address returned error"));
         }
@@ -169,10 +168,10 @@ impl Api for ExternalApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         let send = build_region(canonical.as_slice());
-        let send_ptr = &*send as *const Region as *const c_void;
+        let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 
-        let read = unsafe { humanize_address(send_ptr, human) };
+        let read = unsafe { humanize_address(send_ptr, human as u32) };
         if read < 0 {
             return Err(generic_err("humanize_address returned error"));
         }
@@ -196,11 +195,11 @@ impl ExternalQuerier {
 impl Querier for ExternalQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let req = build_region(bin_request);
-        let request_ptr = &*req as *const Region as *const c_void;
+        let request_ptr = &*req as *const Region as u32;
 
         let response_ptr = unsafe { query_chain(request_ptr) };
 
-        let response = unsafe { consume_region(response_ptr as *mut c_void) };
+        let response = unsafe { consume_region(response_ptr as *mut Region) };
         from_slice(&response).unwrap_or_else(|err| Ok(Err(err)))
     }
 }
