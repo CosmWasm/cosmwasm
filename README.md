@@ -138,8 +138,8 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn canonicalize_address(source: u32, destination: u32) -> i32;
+    fn humanize_address(source: u32, destination: u32) -> i32;
 
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.

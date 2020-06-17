@@ -29,8 +29,8 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
-    fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
+    fn canonicalize_address(source: u32, destination: u32) -> i32;
+    fn humanize_address(source: u32, destination: u32) -> i32;
 
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
@@ -155,10 +155,10 @@ impl ExternalApi {
 impl Api for ExternalApi {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
-        let send_ptr = &*send as *const Region as *const c_void;
+        let send_ptr = &*send as *const Region as u32;
         let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
 
-        let read = unsafe { canonicalize_address(send_ptr, canon) };
+        let read = unsafe { canonicalize_address(send_ptr, canon as u32) };
         if read < 0 {
             return Err(generic_err("canonicalize_address returned error"));
         }
@@ -169,10 +169,10 @@ impl Api for ExternalApi {
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         let send = build_region(canonical.as_slice());
-        let send_ptr = &*send as *const Region as *const c_void;
+        let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 
-        let read = unsafe { humanize_address(send_ptr, human) };
+        let read = unsafe { humanize_address(send_ptr, human as u32) };
         if read < 0 {
             return Err(generic_err("humanize_address returned error"));
         }

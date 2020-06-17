@@ -167,31 +167,31 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
 pub fn do_canonicalize_address<A: Api>(
     api: A,
     ctx: &mut Ctx,
-    human_ptr: u32,
-    canonical_ptr: u32,
+    source_ptr: u32,
+    destination_ptr: u32,
 ) -> VmResult<i32> {
-    let human_data = read_region!(ctx, human_ptr, MAX_LENGTH_HUMAN_ADDRESS);
+    let human_data = read_region!(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS);
     let human = match String::from_utf8(human_data) {
         Ok(human_str) => HumanAddr(human_str),
         Err(_) => return Ok(errors::canonicalize::INVALID_INPUT),
     };
     let canon = api.canonical_address(&human)?;
-    Ok(write_region!(ctx, canonical_ptr, canon.as_slice()))
+    Ok(write_region!(ctx, destination_ptr, canon.as_slice()))
 }
 
 pub fn do_humanize_address<A: Api>(
     api: A,
     ctx: &mut Ctx,
-    canonical_ptr: u32,
-    human_ptr: u32,
+    source_ptr: u32,
+    destination_ptr: u32,
 ) -> VmResult<i32> {
-    let canonical = Binary(read_region!(
-        ctx,
-        canonical_ptr,
-        MAX_LENGTH_CANONICAL_ADDRESS
-    ));
+    let canonical = Binary(read_region!(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS));
     let human = api.human_address(&CanonicalAddr(canonical))?;
-    Ok(write_region!(ctx, human_ptr, human.as_str().as_bytes()))
+    Ok(write_region!(
+        ctx,
+        destination_ptr,
+        human.as_str().as_bytes()
+    ))
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
