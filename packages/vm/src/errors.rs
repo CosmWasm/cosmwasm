@@ -256,7 +256,7 @@ pub enum CommunicationError {
 }
 
 impl CommunicationError {
-    pub fn deref_err<S: Into<String>>(offset: u32, msg: S) -> Self {
+    pub(crate) fn deref_err<S: Into<String>>(offset: u32, msg: S) -> Self {
         DerefErr {
             offset,
             msg: msg.into(),
@@ -264,26 +264,27 @@ impl CommunicationError {
         .build()
     }
 
-    pub fn invalid_order(value: i32) -> Self {
+    #[allow(dead_code)]
+    pub(crate) fn invalid_order(value: i32) -> Self {
         InvalidOrder { value }.build()
     }
 
-    pub fn invalid_utf8<S: ToString>(msg: S) -> Self {
+    pub(crate) fn invalid_utf8<S: ToString>(msg: S) -> Self {
         InvalidUtf8 {
             msg: msg.to_string(),
         }
         .build()
     }
 
-    pub fn region_length_too_big(length: usize, max_length: usize) -> Self {
+    pub(crate) fn region_length_too_big(length: usize, max_length: usize) -> Self {
         RegionLengthTooBig { length, max_length }.build()
     }
 
-    pub fn region_too_small(size: usize, required: usize) -> Self {
+    pub(crate) fn region_too_small(size: usize, required: usize) -> Self {
         RegionTooSmall { size, required }.build()
     }
 
-    pub fn zero_address() -> Self {
+    pub(crate) fn zero_address() -> Self {
         ZeroAddress {}.build()
     }
 }
