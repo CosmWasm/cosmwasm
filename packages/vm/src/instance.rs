@@ -422,15 +422,18 @@ mod test {
             .write_memory(region_ptr, &data)
             .expect("error writing");
 
-        match instance.read_memory(region_ptr, max_length) {
-            Err(VmError::RegionLengthTooBig {
-                length, max_length, ..
-            }) => {
+        let result = instance.read_memory(region_ptr, max_length);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+            } => {
                 assert_eq!(length, 6);
                 assert_eq!(max_length, 5);
             }
-            Err(err) => panic!("unexpected error: {:?}", err),
-            Ok(_) => panic!("must not succeed"),
+            err => panic!("unexpected error: {:?}", err),
         };
 
         instance.deallocate(region_ptr).expect("error deallocating");

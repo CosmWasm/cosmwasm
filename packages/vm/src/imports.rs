@@ -353,7 +353,9 @@ mod test {
         let ctx = instance.context_mut();
         let result = do_read::<MS, MQ>(ctx, key_ptr);
         match result.unwrap_err() {
-            VmError::RegionLengthTooBig { length, .. } => assert_eq!(length, 300 * 1024),
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+            } => assert_eq!(length, 300 * 1024),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -425,9 +427,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        match do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_KEY);
@@ -446,9 +452,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        match do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_VALUE);
@@ -523,9 +533,13 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        match do_remove::<MS, MQ>(ctx, key_ptr).unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+        let result = do_remove::<MS, MQ>(ctx, key_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_KEY);
@@ -615,8 +629,11 @@ mod test {
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 100);
                 assert_eq!(max_length, 90);
@@ -638,7 +655,9 @@ mod test {
         let api = MockApi::new(8);
         let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
-            VmError::RegionTooSmall { size, required, .. } => {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionTooSmall { size, required, .. },
+            } => {
                 assert_eq!(size, 7);
                 assert_eq!(required, 8);
             }
@@ -695,8 +714,11 @@ mod test {
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
             } => {
                 assert_eq!(length, 33);
                 assert_eq!(max_length, 32);
@@ -718,7 +740,9 @@ mod test {
         let api = MockApi::new(8);
         let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
-            VmError::RegionTooSmall { size, required, .. } => {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionTooSmall { size, required, .. },
+            } => {
                 assert_eq!(size, 2);
                 assert_eq!(required, 3);
             }

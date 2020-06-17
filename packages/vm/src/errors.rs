@@ -65,19 +65,6 @@ pub enum VmError {
         msg: String,
         backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
-    // Note: this only checks length, not capacity
-    RegionLengthTooBig {
-        length: usize,
-        max_length: usize,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Region too small. Got {}, required {}", size, required))]
-    RegionTooSmall {
-        size: usize,
-        required: usize,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Error executing Wasm: {}", msg))]
     RuntimeErr {
         msg: String,
@@ -163,14 +150,6 @@ impl VmError {
         ResolveErr { msg: msg.into() }.build()
     }
 
-    pub(crate) fn region_length_too_big(length: usize, max_length: usize) -> Self {
-        RegionLengthTooBig { length, max_length }.build()
-    }
-
-    pub(crate) fn region_too_small(size: usize, required: usize) -> Self {
-        RegionTooSmall { size, required }.build()
-    }
-
     pub(crate) fn runtime_err<S: Into<String>>(msg: S) -> Self {
         RuntimeErr { msg: msg.into() }.build()
     }
@@ -253,6 +232,19 @@ pub enum CommunicationError {
         value: i32,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
+    // Note: this only checks length, not capacity
+    RegionLengthTooBig {
+        length: usize,
+        max_length: usize,
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display("Region too small. Got {}, required {}", size, required))]
+    RegionTooSmall {
+        size: usize,
+        required: usize,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Got a zero Wasm address"))]
     ZeroAddress { backtrace: snafu::Backtrace },
 }
@@ -268,6 +260,14 @@ impl CommunicationError {
 
     pub fn invalid_order(value: i32) -> Self {
         InvalidOrder { value }.build()
+    }
+
+    pub fn region_length_too_big(length: usize, max_length: usize) -> Self {
+        RegionLengthTooBig { length, max_length }.build()
+    }
+
+    pub fn region_too_small(size: usize, required: usize) -> Self {
+        RegionTooSmall { size, required }.build()
     }
 
     pub fn zero_address() -> Self {
@@ -451,32 +451,6 @@ mod test {
     }
 
     #[test]
-    fn vm_error_region_length_too_big_works() {
-        let error = VmError::region_length_too_big(50, 20);
-        match error {
-            VmError::RegionLengthTooBig {
-                length, max_length, ..
-            } => {
-                assert_eq!(length, 50);
-                assert_eq!(max_length, 20);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn vm_error_region_too_small_works() {
-        let error = VmError::region_too_small(12, 33);
-        match error {
-            VmError::RegionTooSmall { size, required, .. } => {
-                assert_eq!(size, 12);
-                assert_eq!(required, 33);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
     fn vm_error_runtime_err_works() {
         let error = VmError::runtime_err("something went wrong");
         match error {
@@ -531,6 +505,32 @@ mod test {
         let error = CommunicationError::invalid_order(-745);
         match error {
             CommunicationError::InvalidOrder { value, .. } => assert_eq!(value, -745),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_region_length_too_big_works() {
+        let error = CommunicationError::region_length_too_big(50, 20);
+        match error {
+            CommunicationError::RegionLengthTooBig {
+                length, max_length, ..
+            } => {
+                assert_eq!(length, 50);
+                assert_eq!(max_length, 20);
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_region_too_small_works() {
+        let error = CommunicationError::region_too_small(12, 33);
+        match error {
+            CommunicationError::RegionTooSmall { size, required, .. } => {
+                assert_eq!(size, 12);
+                assert_eq!(required, 33);
+            }
             e => panic!("Unexpected error: {:?}", e),
         }
     }
