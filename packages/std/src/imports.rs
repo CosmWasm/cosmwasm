@@ -32,9 +32,9 @@ extern "C" {
     fn canonicalize_address(human: *const c_void, canonical: *mut c_void) -> i32;
     fn humanize_address(canonical: *const c_void, human: *mut c_void) -> i32;
 
-    // query_chain will launch a query on the chain (import)
-    // different than query which will query the state of the contract (export)
-    fn query_chain(request: *const c_void) -> u32;
+    /// Executes a query on the chain (import). Not to be confused with the
+    /// query export, which queries the state of the contract.
+    fn query_chain(request: u32) -> u32;
 }
 
 /// A stateless convenience wrapper around database imports provided by the VM.
@@ -196,7 +196,7 @@ impl ExternalQuerier {
 impl Querier for ExternalQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let req = build_region(bin_request);
-        let request_ptr = &*req as *const Region as *const c_void;
+        let request_ptr = &*req as *const Region as u32;
 
         let response_ptr = unsafe { query_chain(request_ptr) };
 
