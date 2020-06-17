@@ -232,6 +232,12 @@ pub enum CommunicationError {
         value: i32,
         backtrace: snafu::Backtrace,
     },
+    /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
+    #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
+    InvalidUtf8 {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
     // Note: this only checks length, not capacity
     RegionLengthTooBig {
@@ -260,6 +266,13 @@ impl CommunicationError {
 
     pub fn invalid_order(value: i32) -> Self {
         InvalidOrder { value }.build()
+    }
+
+    pub fn invalid_utf8<S: ToString>(msg: S) -> Self {
+        InvalidUtf8 {
+            msg: msg.to_string(),
+        }
+        .build()
     }
 
     pub fn region_length_too_big(length: usize, max_length: usize) -> Self {
@@ -505,6 +518,15 @@ mod test {
         let error = CommunicationError::invalid_order(-745);
         match error {
             CommunicationError::InvalidOrder { value, .. } => assert_eq!(value, -745),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_invalid_utf8() {
+        let error = CommunicationError::invalid_utf8("broken");
+        match error {
+            CommunicationError::InvalidUtf8 { msg, .. } => assert_eq!(msg, "broken"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }

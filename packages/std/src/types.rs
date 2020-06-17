@@ -49,6 +49,12 @@ impl From<&&HumanAddr> for HumanAddr {
     }
 }
 
+impl From<String> for HumanAddr {
+    fn from(addr: String) -> Self {
+        HumanAddr(addr)
+    }
+}
+
 impl CanonicalAddr {
     pub fn as_slice(&self) -> &[u8] {
         &self.0.as_slice()
