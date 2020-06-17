@@ -6,7 +6,6 @@
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
 //! including the contract-specific init/handle function pointer.
 use std::fmt;
-use std::os::raw::c_void;
 use std::vec::Vec;
 
 use schemars::JsonSchema;
@@ -14,7 +13,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::errors::StdResult;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
-use crate::memory::{alloc, consume_region, release_buffer};
+use crate::memory::{alloc, consume_region, release_buffer, Region};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::{Env, HandleResult, InitResult, MigrateResult, QueryResponse, QueryResult};
@@ -42,7 +41,7 @@ extern "C" fn allocate(size: usize) -> u32 {
 #[no_mangle]
 extern "C" fn deallocate(pointer: u32) {
     // auto-drop Region on function end
-    let _ = unsafe { consume_region(pointer as *mut c_void) };
+    let _ = unsafe { consume_region(pointer as *mut Region) };
 }
 
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -59,7 +58,7 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: InitResult<U> = _do_init(init_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
+    let res: InitResult<U> = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -79,7 +78,7 @@ where
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     let res: HandleResult<U> =
-        _do_handle(handle_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
+        _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -92,7 +91,7 @@ pub fn do_query<T: DeserializeOwned + JsonSchema>(
     ) -> StdResult<QueryResponse>,
     msg_ptr: u32,
 ) -> u32 {
-    let res: QueryResult = _do_query(query_fn, msg_ptr as *mut c_void);
+    let res: QueryResult = _do_query(query_fn, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -112,7 +111,7 @@ where
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     let res: MigrateResult<U> =
-        _do_migrate(migrate_fn, env_ptr as *mut c_void, msg_ptr as *mut c_void);
+        _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -123,8 +122,8 @@ fn _do_init<T, U>(
         Env,
         T,
     ) -> InitResult<U>,
-    env_ptr: *mut c_void,
-    msg_ptr: *mut c_void,
+    env_ptr: *mut Region,
+    msg_ptr: *mut Region,
 ) -> InitResult<U>
 where
     T: DeserializeOwned + JsonSchema,
@@ -144,8 +143,8 @@ fn _do_handle<T, U>(
         Env,
         T,
     ) -> HandleResult<U>,
-    env_ptr: *mut c_void,
-    msg_ptr: *mut c_void,
+    env_ptr: *mut Region,
+    msg_ptr: *mut Region,
 ) -> HandleResult<U>
 where
     T: DeserializeOwned + JsonSchema,
@@ -165,7 +164,7 @@ fn _do_query<T: DeserializeOwned + JsonSchema>(
         &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         T,
     ) -> StdResult<QueryResponse>,
-    msg_ptr: *mut c_void,
+    msg_ptr: *mut Region,
 ) -> StdResult<QueryResponse> {
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
@@ -180,8 +179,8 @@ fn _do_migrate<T, U>(
         Env,
         T,
     ) -> MigrateResult<U>,
-    env_ptr: *mut c_void,
-    msg_ptr: *mut c_void,
+    env_ptr: *mut Region,
+    msg_ptr: *mut Region,
 ) -> MigrateResult<U>
 where
     T: DeserializeOwned + JsonSchema,

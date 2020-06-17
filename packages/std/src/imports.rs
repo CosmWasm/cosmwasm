@@ -1,4 +1,3 @@
-use std::ffi::c_void;
 use std::vec::Vec;
 
 use crate::encoding::Binary;
@@ -58,7 +57,7 @@ impl ReadonlyStorage for ExternalStorage {
             return None;
         }
 
-        let value_ptr = read as *mut c_void;
+        let value_ptr = read as *mut Region;
         let data = unsafe { consume_region(value_ptr) };
         Some(data)
     }
@@ -121,7 +120,7 @@ impl Iterator for ExternalIterator {
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
-        let kv_region_ptr = next_result as *mut c_void;
+        let kv_region_ptr = next_result as *mut Region;
         let mut kv = unsafe { consume_region(kv_region_ptr) };
 
         // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value
@@ -200,7 +199,7 @@ impl Querier for ExternalQuerier {
 
         let response_ptr = unsafe { query_chain(request_ptr) };
 
-        let response = unsafe { consume_region(response_ptr as *mut c_void) };
+        let response = unsafe { consume_region(response_ptr as *mut Region) };
         from_slice(&response).unwrap_or_else(|err| Ok(Err(err)))
     }
 }
