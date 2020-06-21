@@ -1,7 +1,7 @@
 /// This macro generates the boilerplate required to call into the
 /// contract-specific logic from the entry-points to the WASM module.
 ///
-/// This macro should be invoced in a global scope, and the argument to the macro
+/// It macro should be invoked in a global scope, and the argument to the macro
 /// should be the name of a rust module that is imported in the invocation scope.
 /// The module should export three functions with the following signatures:
 /// ```
@@ -37,6 +37,14 @@
 /// }
 /// ```
 /// Where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`
+///
+/// # Example
+///
+/// ```ignore
+/// use contract; // The contract module
+///
+/// cosmwasm_std::entry_points!(contract);
+/// ```
 #[macro_export]
 macro_rules! entry_points {
     (@migration; $contract:ident, true) => {
@@ -113,6 +121,14 @@ macro_rules! entry_points {
 /// }
 /// ```
 /// Where `MigrateMsg` is a type that implements `DeserializeOwned + JsonSchema`
+///
+/// # Example
+///
+/// ```ignore
+/// use contract; // The contract module
+///
+/// cosmwasm_std::entry_points_with_migration!(contract);
+/// ```
 #[macro_export]
 macro_rules! entry_points_with_migration {
     ($contract:ident) => {
