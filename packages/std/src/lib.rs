@@ -2,6 +2,7 @@
 
 mod coins;
 mod encoding;
+mod entry_points;
 mod errors;
 mod init_handle;
 #[cfg(feature = "iterator")]
