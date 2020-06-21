@@ -7,7 +7,7 @@
 /// ```
 /// # use cosmwasm_std::{
 /// #     Storage, Api, Querier, Extern, Env, StdResult, Binary,
-/// #     InitResult, HandleResult, QueryResult, MigrateResult,
+/// #     InitResult, HandleResult, QueryResult,
 /// # };
 ///
 /// # type InitMsg = ();
@@ -16,15 +16,6 @@
 ///     env: Env,
 ///     msg: InitMsg,
 /// ) -> InitResult {
-/// #   Ok(Default::default())
-/// }
-///
-/// # type MigrateMsg = ();
-/// pub fn migrate<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Extern<S, A, Q>,
-///     _env: Env,
-///     msg: MigrateMsg,
-/// ) -> MigrateResult {
 /// #   Ok(Default::default())
 /// }
 ///
@@ -47,7 +38,20 @@
 /// ```
 #[macro_export]
 macro_rules! entry_points {
-    ($contract:ident) => {
+    (@migration; $contract:ident, true) => {
+        #[no_mangle]
+        extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32 {
+            do_migrate(
+                &$contract::migrate::<ExternalStorage, ExternalApi, ExternalQuerier>,
+                env_ptr,
+                msg_ptr,
+            )
+        }
+    };
+
+    (@migration; $contract:ident, false) => {};
+
+    (@inner; $contract:ident, migration = $migration:tt) => {
         mod wasm {
             use super::$contract;
             use cosmwasm_std::{
@@ -81,17 +85,35 @@ macro_rules! entry_points {
                 )
             }
 
-            #[no_mangle]
-            extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32 {
-                do_migrate(
-                    &$contract::migrate::<ExternalStorage, ExternalApi, ExternalQuerier>,
-                    env_ptr,
-                    msg_ptr,
-                )
-            }
+            $crate::entry_points!(@migration; $contract, $migration);
 
             // Other C externs like cosmwasm_vm_version_1, allocate, deallocate are available
             // automatically because we `use cosmwasm_std`.
         }
+    };
+
+    ($contract:ident) => {
+        $crate::entry_points!(@inner; $contract, migration = false);
+    };
+}
+
+/// This macro is very similar to the `entry_points` macro, except it also requires the `migrate` method:
+/// ```
+/// # use cosmwasm_std::{
+/// #     Storage, Api, Querier, Extern, Env, StdResult, Binary, MigrateResult,
+/// # };
+/// # type MigrateMsg = ();
+/// pub fn migrate<S: Storage, A: Api, Q: Querier>(
+///     deps: &mut Extern<S, A, Q>,
+///     _env: Env,
+///     msg: MigrateMsg,
+/// ) -> MigrateResult {
+/// #   Ok(Default::default())
+/// }
+/// ```
+#[macro_export]
+macro_rules! entry_points_with_migration {
+    ($contract:ident) => {
+        $crate::entry_points!(@inner; $contract, migration = true);
     };
 }
