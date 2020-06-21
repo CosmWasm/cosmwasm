@@ -3,13 +3,13 @@
 ///
 /// This macro should be invoced in a global scope, and the argument to the macro
 /// should be the name of a rust module that is imported in the invocation scope.
-/// The module should export four functions with the following signatures:
+/// The module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
 /// #     Storage, Api, Querier, Extern, Env, StdResult, Binary,
 /// #     InitResult, HandleResult, QueryResult,
 /// # };
-///
+/// #
 /// # type InitMsg = ();
 /// pub fn init<S: Storage, A: Api, Q: Querier>(
 ///     deps: &mut Extern<S, A, Q>,
