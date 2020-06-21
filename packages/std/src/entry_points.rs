@@ -36,6 +36,7 @@
 /// #   Ok(Binary(Vec::new()))
 /// }
 /// ```
+/// Where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`
 #[macro_export]
 macro_rules! entry_points {
     (@migration; $contract:ident, true) => {
@@ -111,6 +112,7 @@ macro_rules! entry_points {
 /// #   Ok(Default::default())
 /// }
 /// ```
+/// Where `MigrateMsg` is a type that implements `DeserializeOwned + JsonSchema`
 #[macro_export]
 macro_rules! entry_points_with_migration {
     ($contract:ident) => {
