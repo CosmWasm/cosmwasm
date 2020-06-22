@@ -4,6 +4,48 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.8 -> 0.9
+
+`dependencies`/`dev-dependencies` in `Cargo.toml`:
+
+- Replace `cosmwasm-schema = "0.8"` with `cosmwasm-schema = "0.9"`
+- Replace `cosmwasm-std = "0.8"` with `cosmwasm-std = "0.9"`
+- Replace `cosmwasm-storage = "0.8"` with `cosmwasm-storage = "0.9"`
+- Replace `cosmwasm-vm = "0.8"` with `cosmwasm-vm = "0.9"`
+
+`lib.rs`:
+
+- The C export boilerplate can now be reduced to the following code (see e.g. in
+  [hackatom/src/lib.rs](https://github.com/CosmWasm/cosmwasm/blob/0a5b3e8121/contracts/hackatom/src/lib.rs)):
+
+  ```rust
+  mod contract; // contains init, handle, query
+  // maybe additional modules here
+
+  #[cfg(target_arch = "wasm32")]
+  cosmwasm_std::create_entry_points!(contract);
+  ```
+
+Contract code and uni tests:
+
+- `cosmwasm_storage::get_with_prefix`, `cosmwasm_storage::set_with_prefix`,
+  `cosmwasm_storage::RepLog::commit`, `cosmwasm_std::ReadonlyStorage::get`,
+  `cosmwasm_std::ReadonlyStorage::range`, `cosmwasm_std::Storage::set` and
+  `cosmwasm_std::Storage::remove` now return the value directly that was wrapped
+  in a result before.
+- Error creator functions are now in type itself, e.g.
+  `StdError::invalid_base64` instead of `invalid_base64`. The free functions are
+  deprecated and will be removed before 1.0.
+- Remove `InitResponse.data` in `init`. Before 0.9 this was not stored to chain
+  but ignored.
+- Use `cosmwasm_storage::transactional` instead of the removed
+  `cosmwasm_storage::transactional_deps`.
+
+Integration tests:
+
+- Replace `cosmwasm_vm::ReadonlyStorage` with `cosmwasm_vm::Storage`, which now
+  contains all backend storage methods.
+
 ## 0.7.2 -> 0.8
 
 ### Update wasm code
