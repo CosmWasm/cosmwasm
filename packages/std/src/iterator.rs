@@ -1,4 +1,4 @@
-use crate::errors::{generic_err, StdError};
+use crate::errors::StdError;
 use std::convert::TryFrom;
 
 /// KV is a Key-Value pair, returned from our iterators
@@ -18,7 +18,7 @@ impl TryFrom<i32> for Order {
         match value {
             1 => Ok(Order::Ascending),
             2 => Ok(Order::Descending),
-            _ => Err(generic_err("Order must be 1 or 2")),
+            _ => Err(StdError::generic_err("Order must be 1 or 2")),
         }
     }
 }

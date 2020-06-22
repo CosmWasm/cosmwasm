@@ -168,7 +168,7 @@ where
 mod test {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
-    use cosmwasm_std::{generic_err, not_found};
+    use cosmwasm_std::StdError;
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -267,7 +267,7 @@ mod test {
 
         // it's my birthday
         let birthday = |mayd: Option<Data>| -> StdResult<Data> {
-            let mut d = mayd.ok_or(not_found("Data"))?;
+            let mut d = mayd.ok_or(StdError::not_found("Data"))?;
             d.age += 1;
             Ok(d)
         };
@@ -297,7 +297,7 @@ mod test {
         let mut old_age = 0i32;
         bucket
             .update(b"maria", |mayd: Option<Data>| {
-                let mut d = mayd.ok_or(not_found("Data"))?;
+                let mut d = mayd.ok_or(StdError::not_found("Data"))?;
                 old_age = d.age;
                 d.age += 1;
                 Ok(d)
@@ -319,7 +319,9 @@ mod test {
         bucket.save(b"maria", &init).unwrap();
 
         // it's my birthday
-        let output = bucket.update(b"maria", |_d| Err(generic_err("cuz i feel like it")));
+        let output = bucket.update(b"maria", |_d| {
+            Err(StdError::generic_err("cuz i feel like it"))
+        });
         assert!(output.is_err());
 
         // load it properly
@@ -340,7 +342,7 @@ mod test {
         // it's my birthday
         let output = bucket
             .update(b"maria", |d| match d {
-                Some(_) => Err(generic_err("Ensure this was empty")),
+                Some(_) => Err(StdError::generic_err("Ensure this was empty")),
                 None => Ok(init_value.clone()),
             })
             .unwrap();

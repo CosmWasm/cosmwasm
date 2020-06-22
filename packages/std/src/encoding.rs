@@ -3,7 +3,7 @@ use std::fmt;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
-use crate::errors::{invalid_base64, StdResult};
+use crate::errors::{StdError, StdResult};
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -16,7 +16,7 @@ impl Binary {
     /// take an (untrusted) string and decode it into bytes.
     /// fails if it is not valid base64
     pub fn from_base64(encoded: &str) -> StdResult<Self> {
-        let binary = base64::decode(&encoded).map_err(invalid_base64)?;
+        let binary = base64::decode(&encoded).map_err(StdError::invalid_base64)?;
         Ok(Binary(binary))
     }
 

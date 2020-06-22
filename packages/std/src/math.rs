@@ -5,7 +5,7 @@ use std::fmt::{self, Write};
 use std::ops;
 use std::str::FromStr;
 
-use crate::errors::{generic_err, underflow, StdError, StdResult};
+use crate::errors::{StdError, StdResult};
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
@@ -69,35 +69,36 @@ impl FromStr for Decimal {
             1 => {
                 let whole = parts[0]
                     .parse::<u128>()
-                    .map_err(|_| generic_err("Error parsing whole"))?;
+                    .map_err(|_| StdError::generic_err("Error parsing whole"))?;
 
                 let whole_as_atomics = whole
                     .checked_mul(DECIMAL_FRACTIONAL)
-                    .ok_or_else(|| generic_err("Value too big"))?;
+                    .ok_or_else(|| StdError::generic_err("Value too big"))?;
                 Ok(Decimal(whole_as_atomics))
             }
             2 => {
                 let whole = parts[0]
                     .parse::<u128>()
-                    .map_err(|_| generic_err("Error parsing whole"))?;
+                    .map_err(|_| StdError::generic_err("Error parsing whole"))?;
                 let fractional = parts[1]
                     .parse::<u128>()
-                    .map_err(|_| generic_err("Error parsing fractional"))?;
-                let exp = (18usize.checked_sub(parts[1].len()))
-                    .ok_or_else(|| generic_err("Cannot parse more than 18 fractional digits"))?;
+                    .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+                let exp = (18usize.checked_sub(parts[1].len())).ok_or_else(|| {
+                    StdError::generic_err("Cannot parse more than 18 fractional digits")
+                })?;
                 let fractional_factor = 10u128
                     .checked_pow(exp.try_into().unwrap())
-                    .ok_or_else(|| generic_err("Cannot compute fractional factor"))?;
+                    .ok_or_else(|| StdError::generic_err("Cannot compute fractional factor"))?;
 
                 let whole_as_atomics = whole
                     .checked_mul(DECIMAL_FRACTIONAL)
-                    .ok_or_else(|| generic_err("Value too big"))?;
+                    .ok_or_else(|| StdError::generic_err("Value too big"))?;
                 let atomics = whole_as_atomics
                     .checked_add(fractional * fractional_factor)
-                    .ok_or_else(|| generic_err("Value too big"))?;
+                    .ok_or_else(|| StdError::generic_err("Value too big"))?;
                 Ok(Decimal(atomics))
             }
-            _ => Err(generic_err("Unexpected number of dots")),
+            _ => Err(StdError::generic_err("Unexpected number of dots")),
         }
     }
 }
@@ -205,7 +206,7 @@ impl TryFrom<&str> for Uint128 {
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(generic_err(format!("Parsing coin: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing coin: {}", e))),
         }
     }
 }
@@ -248,7 +249,7 @@ impl ops::Sub for Uint128 {
     fn sub(self, other: Self) -> StdResult<Self> {
         let (min, sub) = (self.u128(), other.u128());
         if sub > min {
-            Err(underflow(min, sub))
+            Err(StdError::underflow(min, sub))
         } else {
             Ok(Uint128(min - sub))
         }

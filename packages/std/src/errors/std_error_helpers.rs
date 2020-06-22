@@ -1,60 +1,48 @@
 use std::fmt::Display;
 
-use super::std_error::{
-    GenericErr, InvalidBase64, InvalidUtf8, NotFound, ParseErr, SerializeErr, StdError,
-    Unauthorized, Underflow,
-};
+use super::std_error::StdError;
 
+#[deprecated(note = "Please use StdError::generic_err function instead")]
 pub fn generic_err<S: Into<String>>(msg: S) -> StdError {
-    GenericErr { msg: msg.into() }.build()
+    StdError::generic_err(msg)
 }
 
+#[deprecated(note = "Please use StdError::invalid_base64 function instead")]
 pub fn invalid_base64<S: Display>(msg: S) -> StdError {
-    InvalidBase64 {
-        msg: msg.to_string(),
-    }
-    .build()
+    StdError::invalid_base64(msg)
 }
 
+#[deprecated(note = "Please use StdError::invalid_utf8 function instead")]
 pub fn invalid_utf8<S: Display>(msg: S) -> StdError {
-    InvalidUtf8 {
-        msg: msg.to_string(),
-    }
-    .build()
+    StdError::invalid_utf8(msg)
 }
 
+#[deprecated(note = "Please use StdError::not_found function instead")]
 pub fn not_found<S: Into<String>>(kind: S) -> StdError {
-    NotFound { kind: kind.into() }.build()
+    StdError::not_found(kind)
 }
 
+#[deprecated(note = "Please use StdError::parse_err function instead")]
 pub fn parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> StdError {
-    ParseErr {
-        target: target.into(),
-        msg: msg.to_string(),
-    }
-    .build()
+    StdError::parse_err(target, msg)
 }
 
+#[deprecated(note = "Please use StdError::serialize_err function instead")]
 pub fn serialize_err<S: Into<String>, M: Display>(source: S, msg: M) -> StdError {
-    SerializeErr {
-        source: source.into(),
-        msg: msg.to_string(),
-    }
-    .build()
+    StdError::serialize_err(source, msg)
 }
 
+#[deprecated(note = "Please use StdError::underflow function instead")]
 pub fn underflow<U: ToString>(minuend: U, subtrahend: U) -> StdError {
-    Underflow {
-        minuend: minuend.to_string(),
-        subtrahend: subtrahend.to_string(),
-    }
-    .build()
+    StdError::underflow(minuend, subtrahend)
 }
 
+#[deprecated(note = "Please use StdError::unauthorized function instead")]
 pub fn unauthorized() -> StdError {
-    Unauthorized {}.build()
+    StdError::unauthorized()
 }
 
+#[allow(deprecated)]
 #[cfg(test)]
 mod test {
     use super::super::std_error::StdError;

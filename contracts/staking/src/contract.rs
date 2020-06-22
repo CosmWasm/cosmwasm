@@ -1,7 +1,6 @@
 use cosmwasm_std::{
-    coin, generic_err, log, to_binary, unauthorized, Api, BankMsg, Binary, Decimal, Env, Extern,
-    HandleResponse, HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage,
-    Uint128, WasmMsg,
+    coin, log, to_binary, Api, BankMsg, Binary, Decimal, Env, Extern, HandleResponse, HumanAddr,
+    InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 
 use crate::msg::{
@@ -23,7 +22,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
     if !vals.iter().any(|v| v.address == msg.validator) {
-        return Err(generic_err(format!(
+        return Err(StdError::generic_err(format!(
             "{} is not in the current validator set",
             msg.validator
         )));
@@ -109,7 +108,7 @@ fn get_bonded<Q: Querier>(querier: &Q, contract: &HumanAddr) -> StdResult<Uint12
     bonds.iter().fold(Ok(Uint128(0)), |racc, d| {
         let acc = racc?;
         if d.amount.denom.as_str() != denom {
-            Err(generic_err(format!(
+            Err(StdError::generic_err(format!(
                 "different denoms in bonds: '{}' vs '{}'",
                 denom, &d.amount.denom
             )))
@@ -121,7 +120,7 @@ fn get_bonded<Q: Querier>(querier: &Q, contract: &HumanAddr) -> StdResult<Uint12
 
 fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
     if supply.bonded != bonded {
-        Err(generic_err(format!(
+        Err(StdError::generic_err(format!(
             "Stored bonded {}, but query bonded: {}",
             supply.bonded, bonded
         )))
@@ -144,7 +143,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
         .sent_funds
         .iter()
         .find(|x| x.denom == invest.bond_denom)
-        .ok_or_else(|| generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
+        .ok_or_else(|| StdError::generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
 
     // re-calculate bonded to ensure we have real values
     let contract_addr = deps.api.human_address(&env.contract.address)?;
@@ -198,7 +197,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     let invest = invest_info_read(&deps.storage).load()?;
     // ensure it is big enough to care
     if amount < invest.min_withdrawal {
-        return Err(generic_err(format!(
+        return Err(StdError::generic_err(format!(
             "Must unbond at least {} {}",
             invest.min_withdrawal, invest.bond_denom
         )));
@@ -269,7 +268,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
         .querier
         .query_balance(&contract_human, &invest.bond_denom)?;
     if balance.amount < invest.min_withdrawal {
-        return Err(generic_err(
+        return Err(StdError::generic_err(
             "Insufficient balance in contract to process claim",
         ));
     }
@@ -278,7 +277,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     let sender_raw = env.message.sender;
     let mut to_send = balance.amount;
     claims(&mut deps.storage).update(sender_raw.as_slice(), |claim| {
-        let claim = claim.ok_or_else(|| generic_err("no claim for this address"))?;
+        let claim = claim.ok_or_else(|| StdError::generic_err("no claim for this address"))?;
         to_send = to_send.min(claim);
         claim - to_send
     })?;
@@ -347,7 +346,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     // this is just meant as a call-back to ourself
     if env.message.sender != env.contract.address {
-        return Err(unauthorized());
+        return Err(StdError::unauthorized());
     }
 
     // find how many tokens we have to bond

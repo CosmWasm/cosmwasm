@@ -1,7 +1,7 @@
 use std::vec::Vec;
 
 use crate::encoding::Binary;
-use crate::errors::{generic_err, StdResult};
+use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, Region};
@@ -159,7 +159,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { canonicalize_address(send_ptr, canon as u32) };
         if read < 0 {
-            return Err(generic_err("canonicalize_address returned error"));
+            return Err(StdError::generic_err("canonicalize_address returned error"));
         }
 
         let out = unsafe { consume_region(canon) };
@@ -173,7 +173,7 @@ impl Api for ExternalApi {
 
         let read = unsafe { humanize_address(send_ptr, human as u32) };
         if read < 0 {
-            return Err(generic_err("humanize_address returned error"));
+            return Err(StdError::generic_err("humanize_address returned error"));
         }
 
         let out = unsafe { consume_region(human) };
