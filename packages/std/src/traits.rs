@@ -2,7 +2,7 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{generic_err, StdResult, SystemResult};
+use crate::errors::{StdError, StdResult, SystemResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
@@ -114,10 +114,18 @@ pub trait Querier {
     ) -> StdResult<U> {
         let raw = match to_vec(request) {
             Ok(raw) => raw,
-            Err(e) => return Err(generic_err(format!("Serializing QueryRequest: {}", e))),
+            Err(e) => {
+                return Err(StdError::generic_err(format!(
+                    "Serializing QueryRequest: {}",
+                    e
+                )))
+            }
         };
         match self.raw_query(&raw) {
-            Err(sys) => Err(generic_err(format!("Querier system error: {}", sys))),
+            Err(sys) => Err(StdError::generic_err(format!(
+                "Querier system error: {}",
+                sys
+            ))),
             Ok(Err(err)) => Err(err),
             // in theory we would process the response, but here it is the same type, so just pass through
             Ok(Ok(res)) => from_binary(&res),

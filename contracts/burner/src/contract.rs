@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    generic_err, log, Api, BankMsg, Binary, Env, Extern, HandleResponse, InitResponse,
-    MigrateResponse, Order, Querier, StdResult, Storage,
+    log, Api, BankMsg, Binary, Env, Extern, HandleResponse, InitResponse, MigrateResponse, Order,
+    Querier, StdError, StdResult, Storage,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
@@ -10,7 +10,9 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     _env: Env,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
-    Err(generic_err("You can only use this contract for migrations"))
+    Err(StdError::generic_err(
+        "You can only use this contract for migrations",
+    ))
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
@@ -18,7 +20,9 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     _env: Env,
     _msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
-    Err(generic_err("You can only use this contract for migrations"))
+    Err(StdError::generic_err(
+        "You can only use this contract for migrations",
+    ))
 }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
@@ -59,7 +63,9 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     _deps: &Extern<S, A, Q>,
     _msg: QueryMsg,
 ) -> StdResult<Binary> {
-    Err(generic_err("You can only use this contract for migrations"))
+    Err(StdError::generic_err(
+        "You can only use this contract for migrations",
+    ))
 }
 
 #[cfg(test)]

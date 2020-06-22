@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, generic_err, log, not_found, to_binary, to_vec, unauthorized, AllBalanceResponse,
-    Api, BankMsg, Binary, CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    MigrateResponse, Querier, QueryResponse, StdResult, Storage,
+    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
+    Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
+    StdError, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -97,7 +97,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| not_found("State"))?;
+        .ok_or_else(|| StdError::not_found("State"))?;
     let mut config: State = from_slice(&data)?;
     config.verifier = deps.api.canonical_address(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
@@ -126,7 +126,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| not_found("State"))?;
+        .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
     if env.message.sender == state.verifier {
@@ -146,7 +146,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         };
         Ok(res)
     } else {
-        Err(unauthorized())
+        Err(StdError::unauthorized())
     }
 }
 
@@ -190,13 +190,13 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
         let pages = 1_600; // 100 MiB
         let ptr = wasm32::memory_grow(0, pages);
         if ptr == usize::max_value() {
-            return Err(generic_err("Error in memory.grow instruction"));
+            return Err(StdError::generic_err("Error in memory.grow instruction"));
         }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(generic_err("Unsupported architecture"))
+    Err(StdError::generic_err("Unsupported architecture"))
 }
 
 fn do_panic() -> StdResult<HandleResponse> {
@@ -219,7 +219,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
     let data = deps
         .storage
         .get(CONFIG_KEY)
-        .ok_or_else(|| not_found("State"))?;
+        .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
     Ok(Binary(to_vec(&VerifierResponse { verifier: addr })?))

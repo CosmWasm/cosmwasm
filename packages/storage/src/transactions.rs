@@ -272,7 +272,7 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::{unauthorized, MemoryStorage};
+    use cosmwasm_std::{MemoryStorage, StdError};
 
     #[cfg(feature = "iterator")]
     // iterator_test_suite takes a storage, adds data and runs iterator tests
@@ -557,7 +557,7 @@ mod test {
             assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
             // we write in the Error case
             store.set(b"bad", b"value");
-            Err(unauthorized())
+            Err(StdError::unauthorized())
         });
         assert!(res.is_err());
         assert_eq!(base.get(b"bad"), None);
