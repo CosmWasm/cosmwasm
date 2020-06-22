@@ -371,17 +371,6 @@
         {
           "type": "object",
           "required": [
-            "null_pointer"
-          ],
-          "properties": {
-            "null_pointer": {
-              "type": "object"
-            }
-          }
-        },
-        {
-          "type": "object",
-          "required": [
             "parse_err"
           ],
           "properties": {

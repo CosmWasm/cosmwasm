@@ -1,8 +1,8 @@
 use std::fmt::Display;
 
 use super::std_error::{
-    GenericErr, InvalidBase64, InvalidUtf8, NotFound, NullPointer, ParseErr, SerializeErr,
-    StdError, Unauthorized, Underflow,
+    GenericErr, InvalidBase64, InvalidUtf8, NotFound, ParseErr, SerializeErr, StdError,
+    Unauthorized, Underflow,
 };
 
 pub fn generic_err<S: Into<String>>(msg: S) -> StdError {
@@ -25,10 +25,6 @@ pub fn invalid_utf8<S: Display>(msg: S) -> StdError {
 
 pub fn not_found<S: Into<String>>(kind: S) -> StdError {
     NotFound { kind: kind.into() }.build()
-}
-
-pub fn null_pointer() -> StdError {
-    NullPointer {}.build()
 }
 
 pub fn parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> StdError {
@@ -138,15 +134,6 @@ mod test {
         let error: StdError = not_found("gold");
         match error {
             StdError::NotFound { kind, .. } => assert_eq!(kind, "gold"),
-            _ => panic!("expect different error"),
-        }
-    }
-
-    #[test]
-    fn null_pointer_works() {
-        let error: StdError = null_pointer();
-        match error {
-            StdError::NullPointer { .. } => {}
             _ => panic!("expect different error"),
         }
     }

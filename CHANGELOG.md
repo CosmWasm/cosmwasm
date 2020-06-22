@@ -24,6 +24,7 @@
   can still make use of the field.
 - Rename `MockQuerier::with_staking` to `MockQuerier::update_staking` to match
   `::update_balance`.
+- The obsolete `StdError::NullPointer` and `null_pointer` were removed.
 
 **cosmwasm-storage**
 

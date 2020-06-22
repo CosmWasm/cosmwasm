@@ -51,11 +51,6 @@ pub enum StdError {
         #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
-    #[snafu(display("Received null pointer, refuse to use"))]
-    NullPointer {
-        #[serde(skip)]
-        backtrace: Option<snafu::Backtrace>,
-    },
     #[snafu(display("Error parsing into type {}: {}", target, msg))]
     ParseErr {
         /// the target type that was attempted
@@ -126,9 +121,6 @@ impl PartialEq for StdError {
                     backtrace: _,
                 },
             ) => kind == kind2,
-            (StdError::NullPointer { backtrace: _ }, StdError::NullPointer { backtrace: _ }) => {
-                true
-            }
             (
                 StdError::ParseErr {
                     target,
@@ -277,11 +269,6 @@ mod test {
     #[test]
     fn unauthorized_conversion() {
         assert_conversion(Unauthorized {}.build());
-    }
-
-    #[test]
-    fn null_pointer_conversion() {
-        assert_conversion(NullPointer {}.build());
     }
 
     #[test]
