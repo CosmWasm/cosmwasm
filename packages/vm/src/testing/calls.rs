@@ -11,14 +11,14 @@ use cosmwasm_std::{
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
 use crate::instance::Instance;
-use crate::{Api, BackendStorage, Querier};
+use crate::{Api, Querier, Storage};
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn init<S, A, Q, M, U>(instance: &mut Instance<S, A, Q>, env: Env, msg: M) -> InitResult<U>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
@@ -33,7 +33,7 @@ where
 // this is inefficient here, but only used in test code
 pub fn handle<S, A, Q, M, U>(instance: &mut Instance<S, A, Q>, env: Env, msg: M) -> HandleResult<U>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
@@ -52,7 +52,7 @@ pub fn migrate<S, A, Q, M, U>(
     msg: M,
 ) -> MigrateResult<U>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
@@ -67,7 +67,7 @@ where
 // this is inefficient here, but only used in test code
 pub fn query<S, A, Q, M>(instance: &mut Instance<S, A, Q>, msg: M) -> StdResult<QueryResponse>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,

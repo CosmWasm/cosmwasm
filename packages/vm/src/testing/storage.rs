@@ -7,7 +7,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::traits::{NextItem, StorageIterator};
-use crate::{BackendStorage, FfiResult};
+use crate::{FfiResult, Storage};
 
 #[cfg(feature = "iterator")]
 const GAS_COST_LAST_ITERATION: u64 = 37;
@@ -53,7 +53,7 @@ impl MockStorage {
     }
 }
 
-impl BackendStorage for MockStorage {
+impl Storage for MockStorage {
     fn get(&self, key: &[u8]) -> FfiResult<(Option<Vec<u8>>, u64)> {
         let gas_cost = key.len() as u64;
         Ok((self.data.get(key).cloned(), gas_cost))
@@ -134,7 +134,7 @@ mod test {
     // iterator_test_suite takes a storage, adds data and runs iterator tests
     // the storage must previously have exactly one key: "foo" = "bar"
     // (this allows us to test StorageTransaction and other wrapped storage better)
-    fn iterator_test_suite<S: BackendStorage>(store: &mut S) {
+    fn iterator_test_suite<S: Storage>(store: &mut S) {
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
         assert_eq!(

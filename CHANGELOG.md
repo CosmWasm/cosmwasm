@@ -81,7 +81,7 @@
   in `CommunicationError::InvalidUtf8`, which is not reported back to the
   contract. A standard library should ensure this never happens by correctly
   encoding string input values.
-- Merge `ReadonlyStorage` and `Storage` into `BackendStorage`.
+- Merge trait `ReadonlyStorage` into `Storage`.
 
 ## 0.8.1 (2020-06-08)
 

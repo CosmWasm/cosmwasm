@@ -6,7 +6,7 @@ use cosmwasm_std::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
-use crate::traits::{Api, BackendStorage, Querier};
+use crate::traits::{Api, Querier, Storage};
 use schemars::JsonSchema;
 
 const MAX_LENGTH_INIT: usize = 100_000;
@@ -20,7 +20,7 @@ pub fn call_init<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<InitResult<U>>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -37,7 +37,7 @@ pub fn call_handle<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<HandleResult<U>>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -54,7 +54,7 @@ pub fn call_migrate<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<MigrateResult<U>>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -65,7 +65,7 @@ where
     Ok(result)
 }
 
-pub fn call_query<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
 ) -> VmResult<QueryResult> {
@@ -84,7 +84,7 @@ pub fn call_query<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 's
 
 /// Calls Wasm export "init" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_init_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
@@ -95,7 +95,7 @@ pub fn call_init_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier +
 
 /// Calls Wasm export "handle" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_handle_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
@@ -106,7 +106,7 @@ pub fn call_handle_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_migrate_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
@@ -117,7 +117,7 @@ pub fn call_migrate_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querie
 
 /// Calls Wasm export "query" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_query_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
@@ -125,7 +125,7 @@ pub fn call_query_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier 
     call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
 }
 
-fn call_raw<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     name: &str,
     args: &[&[u8]],

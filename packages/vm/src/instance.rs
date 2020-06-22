@@ -25,11 +25,11 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
-use crate::traits::{Api, BackendStorage, Extern, Querier};
+use crate::traits::{Api, Extern, Querier, Storage};
 
 static WASM_PAGE_SIZE: u64 = 64 * 1024;
 
-pub struct Instance<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static> {
+pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
@@ -43,7 +43,7 @@ pub struct Instance<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 
 
 impl<S, A, Q> Instance<S, A, Q>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
 {
@@ -251,7 +251,7 @@ mod test {
         mock_instance_with_failing_api, mock_instance_with_gas_limit, MockApi, MockQuerier,
         MockStorage, MOCK_CONTRACT_ADDR,
     };
-    use crate::traits::BackendStorage;
+    use crate::traits::Storage;
     use crate::{call_init, FfiError};
     use cosmwasm_std::{
         coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,

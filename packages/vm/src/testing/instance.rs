@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use crate::compatability::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::Instance;
-use crate::{Api, BackendStorage, Extern, Querier};
+use crate::{Api, Extern, Querier, Storage};
 
 use super::mock::{MockApi, MockQuerier, MOCK_CONTRACT_ADDR};
 use super::storage::MockStorage;
@@ -130,7 +130,7 @@ pub fn mock_instance_with_options(
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
 /// This could be especially useful when run with some kind of leak detector.
-pub fn test_io<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn test_io<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
 ) {
     let sizes: Vec<usize> = vec![0, 1, 3, 10, 200, 2000, 5 * 1024];

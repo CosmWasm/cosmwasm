@@ -10,7 +10,7 @@ use crate::compatability::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
-use crate::traits::{Api, BackendStorage, Extern, Querier};
+use crate::traits::{Api, Extern, Querier, Storage};
 
 static WASM_DIR: &str = "wasm";
 static MODULES_DIR: &str = "modules";
@@ -21,7 +21,7 @@ struct Stats {
     misses: u32,
 }
 
-pub struct CosmCache<S: BackendStorage + 'static, A: Api + 'static, Q: Querier + 'static> {
+pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     modules: FileSystemCache,
@@ -34,7 +34,7 @@ pub struct CosmCache<S: BackendStorage + 'static, A: Api + 'static, Q: Querier +
 
 impl<S, A, Q> CosmCache<S, A, Q>
 where
-    S: BackendStorage + 'static,
+    S: Storage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
 {
