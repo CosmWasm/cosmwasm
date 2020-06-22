@@ -13,7 +13,7 @@ pub(crate) fn may_deserialize<T: DeserializeOwned>(
     value: &Option<Vec<u8>>,
 ) -> StdResult<Option<T>> {
     match value {
-        Some(d) => Ok(Some(from_slice(d.as_slice())?)),
+        Some(vec) => Ok(Some(from_slice(&vec)?)),
         None => Ok(None),
     }
 }
@@ -21,7 +21,7 @@ pub(crate) fn may_deserialize<T: DeserializeOwned>(
 /// must_deserialize parses json bytes from storage (Option), returning NotFound error if no data present
 pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> StdResult<T> {
     match value {
-        Some(d) => from_slice(&d),
+        Some(vec) => from_slice(&vec),
         None => Err(not_found(type_name::<T>())),
     }
 }
@@ -40,43 +40,50 @@ mod test {
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
-    struct Data {
+    struct Person {
         pub name: String,
         pub age: i32,
     }
 
     #[test]
-    fn serialize_and_deserialize() {
-        // save data
-        let data = Data {
+    fn may_deserialize_handles_some() {
+        let person = Person {
             name: "Maria".to_string(),
             age: 42,
         };
-        let value = to_vec(&data).unwrap();
-        let loaded = Some(value);
+        let value = to_vec(&person).unwrap();
 
-        //        let parsed: Data = deserialize(loaded.map(|s| s.as_slice())).unwrap();
-        //        assert_eq!(parsed, data);
-        let parsed: Data = must_deserialize(&loaded).unwrap();
-        assert_eq!(parsed, data);
-
-        let may_parse: Option<Data> = may_deserialize(&loaded).unwrap();
-        assert_eq!(may_parse, Some(data));
+        let may_parse: Option<Person> = may_deserialize(&Some(value)).unwrap();
+        assert_eq!(may_parse, Some(person));
     }
 
     #[test]
-    fn handle_none() {
-        let may_parse = may_deserialize::<Data>(&None).unwrap();
+    fn may_deserialize_handles_none() {
+        let may_parse = may_deserialize::<Person>(&None).unwrap();
         assert_eq!(may_parse, None);
+    }
 
-        let parsed = must_deserialize::<Data>(&None);
-        match parsed {
-            // if we used short_type_name, this would just be Data
-            Err(StdError::NotFound { kind, .. }) => {
-                assert_eq!(kind, "cosmwasm_storage::type_helpers::test::Data")
+    #[test]
+    fn must_deserialize_handles_some() {
+        let person = Person {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        let value = to_vec(&person).unwrap();
+        let loaded = Some(value);
+
+        let parsed: Person = must_deserialize(&loaded).unwrap();
+        assert_eq!(parsed, person);
+    }
+
+    #[test]
+    fn must_deserialize_handles_none() {
+        let parsed = must_deserialize::<Person>(&None);
+        match parsed.unwrap_err() {
+            StdError::NotFound { kind, .. } => {
+                assert_eq!(kind, "cosmwasm_storage::type_helpers::test::Person")
             }
-            Err(e) => panic!("Unexpected error {}", e),
-            Ok(_) => panic!("should error"),
+            e => panic!("Unexpected error {}", e),
         }
     }
 }
