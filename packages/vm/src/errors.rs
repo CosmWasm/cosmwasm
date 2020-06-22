@@ -269,6 +269,7 @@ impl CommunicationError {
         InvalidOrder { value }.build()
     }
 
+    #[allow(dead_code)]
     pub(crate) fn invalid_utf8<S: ToString>(msg: S) -> Self {
         InvalidUtf8 {
             msg: msg.to_string(),

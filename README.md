@@ -138,7 +138,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(source: u32, destination: u32) -> i32;
+    fn canonicalize_address(source: u32, destination: u32) -> u32;
     fn humanize_address(source: u32, destination: u32) -> i32;
 
     /// Executes a query on the chain (import). Not to be confused with the

@@ -90,12 +90,6 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
     }
 }
 
-pub fn read_string_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<String> {
-    let data = read_region(ctx, ptr, max_length)?;
-    let out = String::from_utf8(data).map_err(CommunicationError::invalid_utf8)?;
-    Ok(out)
-}
-
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]

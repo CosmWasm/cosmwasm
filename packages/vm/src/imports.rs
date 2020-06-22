@@ -18,7 +18,7 @@ use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
-use crate::memory::{read_region, read_string_region, write_region};
+use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
 use crate::traits::{Api, Querier, Storage};
 
@@ -90,16 +90,37 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
     Ok(())
 }
 
-pub fn do_canonicalize_address<A: Api>(
+pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     api: A,
     ctx: &mut Ctx,
     source_ptr: u32,
     destination_ptr: u32,
-) -> VmResult<()> {
-    let human: HumanAddr = read_string_region(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?.into();
-    let canon = api.canonical_address(&human)?;
-    write_region(ctx, destination_ptr, canon.as_slice())?;
-    Ok(())
+) -> VmResult<u32> {
+    let source_data = read_region(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    if source_data.is_empty() {
+        return Ok(create_error_region::<S, Q>(ctx, "Input is empty")?);
+    }
+
+    let source_string = match String::from_utf8(source_data) {
+        Ok(s) => s,
+        Err(_) => {
+            return Ok(create_error_region::<S, Q>(
+                ctx,
+                "Input is not valid UTF-8",
+            )?)
+        }
+    };
+    let human: HumanAddr = source_string.into();
+    match api.canonical_address(&human) {
+        Ok(canon) => {
+            write_region(ctx, destination_ptr, canon.as_slice())?;
+            Ok(0)
+        }
+        // This check is unrelyable since we cannot tell by the error type if the error should be
+        // reported to the contract or indicates a broken backend.
+        // Err(FfiError::Other { error, .. }) => Ok(create_error_region::<S, Q>(ctx, &error)?),
+        Err(error) => Err(error.into()),
+    }
 }
 
 pub fn do_humanize_address<A: Api>(
@@ -112,6 +133,19 @@ pub fn do_humanize_address<A: Api>(
     let human = api.human_address(&CanonicalAddr(canonical))?;
     write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
     Ok(())
+}
+
+fn create_error_region<S: Storage, Q: Querier>(ctx: &mut Ctx, string: &str) -> VmResult<u32> {
+    let error_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
+        let out_size = to_u32(string.len())?;
+        let ptr = allocate.call(out_size)?;
+        if ptr == 0 {
+            return Err(CommunicationError::zero_address().into());
+        }
+        Ok(ptr)
+    })?;
+    write_region(ctx, error_ptr, string.as_bytes())?;
+    Ok(error_ptr)
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
@@ -206,6 +240,7 @@ mod test {
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     // shorthands for function generics below
+    type MA = MockApi;
     type MS = MockStorage;
     type MQ = MockQuerier;
 
@@ -237,7 +272,7 @@ mod test {
                 "db_scan" => Func::new(|_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: u32| -> u32 { 0 }),
-                "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
             },
         };
@@ -542,7 +577,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        do_canonicalize_address(api, ctx, source_ptr, dest_ptr).unwrap();
+        do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
         assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
     }
 
@@ -559,31 +594,25 @@ mod test {
         leave_default_data(ctx);
         let api = MockApi::new(8);
 
-        let result = do_canonicalize_address(api, ctx, source_ptr1, dest_ptr);
+        let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr1, dest_ptr).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        assert_eq!(err, "Input is not valid UTF-8");
+
+        let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr2, dest_ptr).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        assert_eq!(err, "Input is empty");
+
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr3, dest_ptr);
         match result.unwrap_err() {
-            VmError::CommunicationErr {
-                source: CommunicationError::InvalidUtf8 { .. },
-            } => {}
+            VmError::FfiErr {
+                source: FfiError::Other { error, .. },
+            } => {
+                assert_eq!(error, "Invalid input: human address too long");
+            }
             err => panic!("Incorrect error returned: {:?}", err),
         }
-
-        // TODO: would be nice if do_canonicalize_address could differentiate between different errors
-        // from Api.canonical_address and return INVALID_INPUT for those cases as well.
-        let result = do_canonicalize_address(api, ctx, source_ptr2, dest_ptr);
-        match result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::Other { .. },
-            } => {}
-            err => panic!("Incorrect error returned: {:?}", err),
-        };
-
-        let result = do_canonicalize_address(api, ctx, source_ptr3, dest_ptr);
-        match result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::Other { .. },
-            } => {}
-            err => panic!("Incorrect error returned: {:?}", err),
-        };
     }
 
     #[test]
@@ -597,7 +626,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -623,7 +652,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_canonicalize_address(api, ctx, source_ptr, dest_ptr);
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
