@@ -17,7 +17,7 @@ use wasmer_runtime_core::{
 use crate::errors::{VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
-use crate::traits::{Querier, Storage};
+use crate::traits::{BackendStorage, Querier};
 
 /** context data **/
 
@@ -68,7 +68,7 @@ impl GasState {
     }
 }
 
-struct ContextData<'a, S: Storage, Q: Querier> {
+struct ContextData<'a, S: BackendStorage, Q: Querier> {
     gas_state: GasState,
     storage: Option<S>,
     storage_readonly: bool,
@@ -81,14 +81,16 @@ struct ContextData<'a, S: Storage, Q: Querier> {
     iterators: PhantomData<&'a mut ()>,
 }
 
-pub fn setup_context<S: Storage, Q: Querier>(gas_limit: u64) -> (*mut c_void, fn(*mut c_void)) {
+pub fn setup_context<S: BackendStorage, Q: Querier>(
+    gas_limit: u64,
+) -> (*mut c_void, fn(*mut c_void)) {
     (
         create_unmanaged_context_data::<S, Q>(gas_limit),
         destroy_unmanaged_context_data::<S, Q>,
     )
 }
 
-fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut c_void {
+fn create_unmanaged_context_data<S: BackendStorage, Q: Querier>(gas_limit: u64) -> *mut c_void {
     let data = ContextData::<S, Q> {
         gas_state: GasState::with_limit(gas_limit),
         storage: None,
@@ -104,7 +106,7 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut
     Box::into_raw(heap_data) as *mut c_void // give up ownership
 }
 
-fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
+fn destroy_unmanaged_context_data<S: BackendStorage, Q: Querier>(ptr: *mut c_void) {
     if !ptr.is_null() {
         // obtain ownership and drop instance of ContextData when box gets out of scope
         let mut dying = unsafe { Box::from_raw(ptr as *mut ContextData<S, Q>) };
@@ -121,7 +123,7 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 //                                                   |
 // Ctx ->> ContextData +-> iterators: Box<dyn Iterator + 'a> --+
 //                     |                                       |
-//                     +-> storage: impl Storage <<------------+
+//                     +-> storage: impl BackendStorage <<-----+
 //                     |
 //                     +-> querier: impl Querier
 //
@@ -133,7 +135,7 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 // elsewhere where we try to add iterators to the context. That's not legal according to Rust's rules, and it
 // complains that we're trying to borrow ctx mutably twice. This needs a better solution because this function
 // probably triggers unsoundness.
-fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
+fn get_context_data_mut<'a, 'b, S: BackendStorage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<'b, S, Q> {
     unsafe {
@@ -143,7 +145,9 @@ fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     }
 }
 
-fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
+fn get_context_data<'a, 'b, S: BackendStorage, Q: Querier>(
+    ctx: &'a Ctx,
+) -> &'b ContextData<'b, S, Q> {
     unsafe {
         let ptr = ctx.data as *mut ContextData<S, Q>;
         ptr.as_ref()
@@ -152,7 +156,7 @@ fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b Context
 }
 
 /// Creates a back reference from a contact to its partent instance
-pub fn set_wasmer_instance<S: Storage, Q: Querier>(
+pub fn set_wasmer_instance<S: BackendStorage, Q: Querier>(
     ctx: &mut Ctx,
     wasmer_instance: Option<NonNull<WasmerInstance>>,
 ) {
@@ -163,16 +167,16 @@ pub fn set_wasmer_instance<S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
+fn destroy_iterators<S: BackendStorage, Q: Querier>(context: &mut ContextData<S, Q>) {
     context.iterators.clear();
 }
 
 #[cfg(not(feature = "iterator"))]
-fn destroy_iterators<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
+fn destroy_iterators<S: BackendStorage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
 
 /// Returns the original storage and querier as owned instances, and closes any remaining
 /// iterators. This is meant to be called when recycling the instance.
-pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
+pub(crate) fn move_out_of_context<S: BackendStorage, Q: Querier>(
     source: &mut Ctx,
 ) -> (Option<S>, Option<Q>) {
     let mut b = get_context_data_mut::<S, Q>(source);
@@ -186,18 +190,27 @@ pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
 
 /// Moves owned instances of storage and querier into the context.
 /// Should be followed by exactly one call to move_out_of_context when the instance is finished.
-pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storage: S, querier: Q) {
+pub(crate) fn move_into_context<S: BackendStorage, Q: Querier>(
+    target: &mut Ctx,
+    storage: S,
+    querier: Q,
+) {
     let b = get_context_data_mut::<S, Q>(target);
     b.storage = Some(storage);
     b.querier = Some(querier);
 }
 
-pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a mut Ctx) -> &'b mut GasState {
+pub fn get_gas_state<'a, 'b, S: BackendStorage, Q: Querier + 'b>(
+    ctx: &'a mut Ctx,
+) -> &'b mut GasState {
     &mut get_context_data_mut::<S, Q>(ctx).gas_state
 }
 
 #[cfg(feature = "default-singlepass")]
-pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
+pub fn try_consume_gas<S: BackendStorage, Q: Querier>(
+    ctx: &mut Ctx,
+    used_gas: u64,
+) -> VmResult<()> {
     use crate::backends::{get_gas_left, set_gas_limit};
 
     let ctx_data = get_context_data_mut::<S, Q>(ctx);
@@ -225,17 +238,20 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
 }
 
 #[cfg(feature = "default-cranelift")]
-pub fn try_consume_gas<S: Storage, Q: Querier>(_ctx: &mut Ctx, _used_gas: u64) -> VmResult<()> {
+pub fn try_consume_gas<S: BackendStorage, Q: Querier>(
+    _ctx: &mut Ctx,
+    _used_gas: u64,
+) -> VmResult<()> {
     Ok(())
 }
 
 /// Returns true iff the storage is set to readonly mode
-pub fn is_storage_readonly<S: Storage, Q: Querier>(ctx: &Ctx) -> bool {
+pub fn is_storage_readonly<S: BackendStorage, Q: Querier>(ctx: &Ctx) -> bool {
     let context_data = get_context_data::<S, Q>(ctx);
     context_data.storage_readonly
 }
 
-pub fn set_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx, new_value: bool) {
+pub fn set_storage_readonly<S: BackendStorage, Q: Querier>(ctx: &mut Ctx, new_value: bool) {
     let mut context_data = get_context_data_mut::<S, Q>(ctx);
     context_data.storage_readonly = new_value;
 }
@@ -244,7 +260,7 @@ pub fn set_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx, new_value: bo
 /// IDs are guaranteed to be in the range [0, 2**31-1], i.e. fit in the non-negative part if type i32.
 #[cfg(feature = "iterator")]
 #[must_use = "without the returned iterator ID, the iterator cannot be accessed"]
-pub fn add_iterator<'a, S: Storage, Q: Querier>(
+pub fn add_iterator<'a, S: BackendStorage, Q: Querier>(
     ctx: &mut Ctx,
     iter: Box<dyn StorageIterator + 'a>,
 ) -> u32 {
@@ -269,7 +285,7 @@ pub(crate) fn with_func_from_context<S, Q, Args, Rets, Callback, CallbackData>(
     callback: Callback,
 ) -> VmResult<CallbackData>
 where
-    S: Storage,
+    S: BackendStorage,
     Q: Querier,
     Args: WasmTypeList,
     Rets: WasmTypeList,
@@ -290,7 +306,7 @@ pub(crate) fn with_storage_from_context<'a, 'b, S, Q: 'b, F, T>(
     func: F,
 ) -> VmResult<T>
 where
-    S: Storage,
+    S: BackendStorage,
     Q: Querier,
     F: FnOnce(&'b mut S) -> VmResult<T>,
 {
@@ -306,7 +322,7 @@ pub(crate) fn with_querier_from_context<'a, 'b, S, Q: 'b, F, T>(
     func: F,
 ) -> VmResult<T>
 where
-    S: Storage,
+    S: BackendStorage,
     Q: Querier,
     F: FnOnce(&'b mut Q) -> VmResult<T>,
 {
@@ -324,7 +340,7 @@ pub(crate) fn with_iterator_from_context<'a, 'b, S, Q: 'b, F, T>(
     func: F,
 ) -> VmResult<T>
 where
-    S: Storage,
+    S: BackendStorage,
     Q: Querier,
     F: FnOnce(&'b mut (dyn StorageIterator + 'b)) -> VmResult<T>,
 {
@@ -343,7 +359,7 @@ mod test {
     #[cfg(feature = "iterator")]
     use crate::testing::MockIterator;
     use crate::testing::{MockQuerier, MockStorage};
-    use crate::traits::ReadonlyStorage;
+    use crate::traits::BackendStorage;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };

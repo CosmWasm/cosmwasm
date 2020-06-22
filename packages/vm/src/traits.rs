@@ -7,13 +7,13 @@ use cosmwasm_std::{Order, KV};
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Extern<S: Storage, A: Api, Q: Querier> {
+pub struct Extern<S: BackendStorage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
     pub querier: Q,
 }
 
-impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
+impl<S: BackendStorage, A: Api, Q: Querier> Extern<S, A, Q> {
     /// change_querier is a helper mainly for test code when swapping out the Querier
     /// from the auto-generated one from mock_dependencies. This changes the type of
     /// Extern so replaces requires some boilerplate.
@@ -53,8 +53,8 @@ impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
     }
 }
 
-/// ReadonlyStorage is access to the contracts persistent data store
-pub trait ReadonlyStorage
+/// Access to the VM's backend storage, i.e. the chain
+pub trait BackendStorage
 where
     Self: 'static,
 {
@@ -78,11 +78,9 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> FfiResult<(Box<dyn StorageIterator + 'a>, u64)>;
-}
 
-// Storage extends ReadonlyStorage to give mutable access
-pub trait Storage: ReadonlyStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64>;
+
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed

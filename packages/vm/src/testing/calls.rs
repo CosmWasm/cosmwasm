@@ -11,13 +11,13 @@ use cosmwasm_std::{
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
 use crate::instance::Instance;
-use crate::{Api, Querier, Storage};
+use crate::{Api, BackendStorage, Querier};
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn init<
-    S: Storage + 'static,
+    S: BackendStorage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,
@@ -35,7 +35,7 @@ pub fn init<
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn handle<
-    S: Storage + 'static,
+    S: BackendStorage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,
@@ -53,7 +53,7 @@ pub fn handle<
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn migrate<
-    S: Storage + 'static,
+    S: BackendStorage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,
@@ -71,7 +71,7 @@ pub fn migrate<
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
 pub fn query<
-    S: Storage + 'static,
+    S: BackendStorage + 'static,
     A: Api + 'static,
     Q: Querier + 'static,
     T: Serialize + JsonSchema,

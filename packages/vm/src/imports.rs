@@ -20,7 +20,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, read_string_region, write_region};
 use crate::serde::to_vec;
-use crate::traits::{Api, Querier, Storage};
+use crate::traits::{Api, BackendStorage, Querier};
 
 /// A kibi (kilo binary)
 static KI: usize = 1024;
@@ -35,7 +35,7 @@ const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
+pub fn do_read<S: BackendStorage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     // `Ok(expr?)` used to convert the error variant.
     let (value, used_gas): (Option<Vec<u8>>, u64) =
@@ -60,7 +60,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-pub fn do_write<S: Storage, Q: Querier>(
+pub fn do_write<S: BackendStorage, Q: Querier>(
     ctx: &mut Ctx,
     key_ptr: u32,
     value_ptr: u32,
@@ -78,7 +78,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     Ok(())
 }
 
-pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<()> {
+pub fn do_remove<S: BackendStorage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<()> {
     if is_storage_readonly::<S, Q>(ctx) {
         return Err(VmError::write_access_denied());
     }
@@ -114,7 +114,10 @@ pub fn do_humanize_address<A: Api>(
     Ok(())
 }
 
-pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
+pub fn do_query_chain<S: BackendStorage, Q: Querier>(
+    ctx: &mut Ctx,
+    request_ptr: u32,
+) -> VmResult<u32> {
     let request = read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
     let (res, used_gas) =
@@ -135,7 +138,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_scan<S: Storage + 'static, Q: Querier>(
+pub fn do_scan<S: BackendStorage + 'static, Q: Querier>(
     ctx: &mut Ctx,
     start_ptr: u32,
     end_ptr: u32,
@@ -157,7 +160,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
+pub fn do_next<S: BackendStorage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
     let item = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
 
     let (kv, used_gas) = item?;
@@ -200,7 +203,7 @@ mod test {
         move_into_context, set_storage_readonly, set_wasmer_instance, setup_context,
     };
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::traits::ReadonlyStorage;
+    use crate::traits::BackendStorage;
     use crate::FfiError;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
