@@ -75,7 +75,6 @@ where
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
-                // Returns 0 on success. Returns negative value on error.
                 "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<()> {
                     do_write::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
@@ -83,7 +82,6 @@ where
                 // scans will not find this key.
                 // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
                 // Ownership of both key pointer is not transferred to the host.
-                // Returns 0 on success. Returns negative value on error.
                 "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<()> {
                     do_remove::<S, Q>(ctx, key_ptr)
                 }),
