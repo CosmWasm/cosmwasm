@@ -43,10 +43,10 @@
 /// ```ignore
 /// use contract; // The contract module
 ///
-/// cosmwasm_std::entry_points!(contract);
+/// cosmwasm_std::create_entry_points!(contract);
 /// ```
 #[macro_export]
-macro_rules! entry_points {
+macro_rules! create_entry_points {
     (@migration; $contract:ident, true) => {
         #[no_mangle]
         extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32 {
@@ -94,7 +94,7 @@ macro_rules! entry_points {
                 )
             }
 
-            $crate::entry_points!(@migration; $contract, $migration);
+            $crate::create_entry_points!(@migration; $contract, $migration);
 
             // Other C externs like cosmwasm_vm_version_1, allocate, deallocate are available
             // automatically because we `use cosmwasm_std`.
@@ -102,11 +102,11 @@ macro_rules! entry_points {
     };
 
     ($contract:ident) => {
-        $crate::entry_points!(@inner; $contract, migration = false);
+        $crate::create_entry_points!(@inner; $contract, migration = false);
     };
 }
 
-/// This macro is very similar to the `entry_points` macro, except it also requires the `migrate` method:
+/// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
 /// #     Storage, Api, Querier, Extern, Env, StdResult, Binary, MigrateResult,
@@ -127,11 +127,11 @@ macro_rules! entry_points {
 /// ```ignore
 /// use contract; // The contract module
 ///
-/// cosmwasm_std::entry_points_with_migration!(contract);
+/// cosmwasm_std::create_entry_points_with_migration!(contract);
 /// ```
 #[macro_export]
-macro_rules! entry_points_with_migration {
+macro_rules! create_entry_points_with_migration {
     ($contract:ident) => {
-        $crate::entry_points!(@inner; $contract, migration = true);
+        $crate::create_entry_points!(@inner; $contract, migration = true);
     };
 }
