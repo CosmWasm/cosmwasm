@@ -1,9 +1,9 @@
 /// This macro generates the boilerplate required to call into the
-/// contract-specific logic from the entry-points to the WASM module.
+/// contract-specific logic from the entry-points to the Wasm module.
 ///
-/// It macro should be invoked in a global scope, and the argument to the macro
-/// should be the name of a rust module that is imported in the invocation scope.
-/// The module should export three functions with the following signatures:
+/// It should be invoked in a module scope(that is, not inside a function), and the argument to the macro
+/// should be the name of a second rust module that is imported in the invocation scope.
+/// The second module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
 /// #     Storage, Api, Querier, Extern, Env, StdResult, Binary,
