@@ -251,7 +251,7 @@ mod test {
         mock_instance_with_failing_api, mock_instance_with_gas_limit, MockApi, MockQuerier,
         MockStorage, MOCK_CONTRACT_ADDR,
     };
-    use crate::traits::ReadonlyStorage;
+    use crate::traits::Storage;
     use crate::{call_init, FfiError};
     use cosmwasm_std::{
         coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,

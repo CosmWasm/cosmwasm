@@ -7,7 +7,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::traits::{NextItem, StorageIterator};
-use crate::{FfiResult, ReadonlyStorage, Storage};
+use crate::{FfiResult, Storage};
 
 #[cfg(feature = "iterator")]
 const GAS_COST_LAST_ITERATION: u64 = 37;
@@ -53,7 +53,7 @@ impl MockStorage {
     }
 }
 
-impl ReadonlyStorage for MockStorage {
+impl Storage for MockStorage {
     fn get(&self, key: &[u8]) -> FfiResult<(Option<Vec<u8>>, u64)> {
         let gas_cost = key.len() as u64;
         Ok((self.data.get(key).cloned(), gas_cost))
@@ -93,6 +93,18 @@ impl ReadonlyStorage for MockStorage {
 
         Ok((Box::new(MockIterator { source: iter }), GAS_COST_RANGE))
     }
+
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64> {
+        self.data.insert(key.to_vec(), value.to_vec());
+        let gas_cost = (key.len() + value.len()) as u64;
+        Ok(gas_cost)
+    }
+
+    fn remove(&mut self, key: &[u8]) -> FfiResult<u64> {
+        self.data.remove(key);
+        let gas_cost = key.len() as u64;
+        Ok(gas_cost)
+    }
 }
 
 #[cfg(feature = "iterator")]
@@ -112,20 +124,6 @@ type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
     let (key, value) = item_ref;
     (key.clone(), value.clone())
-}
-
-impl Storage for MockStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64> {
-        self.data.insert(key.to_vec(), value.to_vec());
-        let gas_cost = (key.len() + value.len()) as u64;
-        Ok(gas_cost)
-    }
-
-    fn remove(&mut self, key: &[u8]) -> FfiResult<u64> {
-        self.data.remove(key);
-        let gas_cost = key.len() as u64;
-        Ok(gas_cost)
-    }
 }
 
 #[cfg(test)]

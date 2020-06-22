@@ -343,7 +343,7 @@ mod test {
     #[cfg(feature = "iterator")]
     use crate::testing::MockIterator;
     use crate::testing::{MockQuerier, MockStorage};
-    use crate::traits::ReadonlyStorage;
+    use crate::traits::Storage;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
     };

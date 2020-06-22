@@ -53,8 +53,8 @@ impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
     }
 }
 
-/// ReadonlyStorage is access to the contracts persistent data store
-pub trait ReadonlyStorage
+/// Access to the VM's backend storage, i.e. the chain
+pub trait Storage
 where
     Self: 'static,
 {
@@ -78,11 +78,9 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> FfiResult<(Box<dyn StorageIterator + 'a>, u64)>;
-}
 
-// Storage extends ReadonlyStorage to give mutable access
-pub trait Storage: ReadonlyStorage {
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64>;
+
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed

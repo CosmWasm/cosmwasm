@@ -200,7 +200,7 @@ mod test {
         move_into_context, set_storage_readonly, set_wasmer_instance, setup_context,
     };
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::traits::ReadonlyStorage;
+    use crate::traits::Storage;
     use crate::FfiError;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
