@@ -75,7 +75,6 @@ where
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
-                // Returns 0 on success. Returns negative value on error.
                 "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<()> {
                     do_write::<S, Q>(ctx, key_ptr, value_ptr)
                 }),
@@ -83,25 +82,22 @@ where
                 // scans will not find this key.
                 // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
                 // Ownership of both key pointer is not transferred to the host.
-                // Returns 0 on success. Returns negative value on error.
                 "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<()> {
                     do_remove::<S, Q>(ctx, key_ptr)
                 }),
                 // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
                 // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns negative value on error.
+                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
-                    do_canonicalize_address(api, ctx, source_ptr, destination_ptr)?;
-                    Ok(0) // TODO: work out error handling strategy (https://github.com/CosmWasm/cosmwasm/issues/433)
+                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
+                    do_canonicalize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
                 }),
                 // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
                 // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns negative value on error.
+                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
-                    do_humanize_address(api, ctx, source_ptr, destination_ptr)?;
-                    Ok(0) // TODO: work out error handling strategy (https://github.com/CosmWasm/cosmwasm/issues/433)
+                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
+                    do_humanize_address(api, ctx, source_ptr, destination_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
@@ -662,7 +658,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 65338);
+        assert_eq!(init_used, 70810);
     }
 
     #[test]
@@ -686,7 +682,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 96318);
+        assert_eq!(handle_used, 97825);
     }
 
     #[test]

@@ -82,6 +82,9 @@
   contract. A standard library should ensure this never happens by correctly
   encoding string input values.
 - Merge trait `ReadonlyStorage` into `Storage`.
+- The imports `canonicalize_address` and `humanize_address` now return a memory
+  address to an error `Region`. If this address is 0, the call succeeded.
+- Bump `cosmwasm_vm_version_1` to `cosmwasm_vm_version_2`.
 
 ## 0.8.1 (2020-06-08)
 
