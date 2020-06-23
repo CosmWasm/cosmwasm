@@ -159,8 +159,7 @@ impl Api for ExternalApi {
 
         let result = unsafe { canonicalize_address(send_ptr, canon as u32) };
         if result != 0 {
-            let error_data = unsafe { consume_region(result as *mut Region) };
-            let error = String::from_utf8_lossy(&error_data);
+            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
                 "canonicalize_address errored: {}",
                 error
@@ -178,19 +177,24 @@ impl Api for ExternalApi {
 
         let result = unsafe { humanize_address(send_ptr, human as u32) };
         if result != 0 {
-            let error_data = unsafe { consume_region(result as *mut Region) };
-            let error = String::from_utf8_lossy(&error_data);
+            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
                 "humanize_address errored: {}",
                 error
             )));
         }
 
-        let out = unsafe { consume_region(human) };
-        // We trust the VM/chain to return correct UTF-8, so let's save some gas
-        let out_string = unsafe { String::from_utf8_unchecked(out) };
-        Ok(HumanAddr(out_string))
+        let address = unsafe { consume_string_region_written_by_vm(human) };
+        Ok(address.into())
     }
+}
+
+/// Takes a pointer to a Region and reads the data into a String.
+/// This is for trusted string sources only.
+unsafe fn consume_string_region_written_by_vm(from: *mut Region) -> String {
+    let data = consume_region(from);
+    // We trust the VM/chain to return correct UTF-8, so let's save some gas
+    String::from_utf8_unchecked(data)
 }
 
 /// A stateless convenience wrapper around imports provided by the VM
