@@ -45,6 +45,10 @@ Integration tests:
 
 - Replace `cosmwasm_vm::ReadonlyStorage` with `cosmwasm_vm::Storage`, which now
   contains all backend storage methods.
+- Storage getters (and iterators) now return a result of
+  `(Option<Vec<u8>>, u64)`, where the first component is the element and the
+  second one is the gas cost. Thus in a few places `.0` must be added to access
+  the element.
 
 ## 0.7.2 -> 0.8
 
