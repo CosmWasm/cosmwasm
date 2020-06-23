@@ -98,17 +98,12 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let source_data = read_region(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return Ok(create_error_region::<S, Q>(ctx, "Input is empty")?);
+        return Ok(write_to_contract::<S, Q>(ctx, b"Input is empty")?);
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => {
-            return Ok(create_error_region::<S, Q>(
-                ctx,
-                "Input is not valid UTF-8",
-            )?)
-        }
+        Err(_) => return Ok(write_to_contract::<S, Q>(ctx, b"Input is not valid UTF-8")?),
     };
     let human: HumanAddr = source_string.into();
     match api.canonical_address(&human) {
@@ -118,7 +113,7 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
         }
         // This check is unrelyable since we cannot tell by the error type if the error should be
         // reported to the contract or indicates a broken backend.
-        // Err(FfiError::Other { error, .. }) => Ok(create_error_region::<S, Q>(ctx, &error)?),
+        // Err(FfiError::Other { error, .. }) => Ok(write_to_contract::<S, Q>(ctx, &error.as_bytes())?),
         Err(error) => Err(error.into()),
     }
 }
@@ -136,17 +131,17 @@ pub fn do_humanize_address<A: Api>(
     Ok(0)
 }
 
-fn create_error_region<S: Storage, Q: Querier>(ctx: &mut Ctx, string: &str) -> VmResult<u32> {
-    let error_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
-        let out_size = to_u32(string.len())?;
+fn write_to_contract<S: Storage, Q: Querier>(ctx: &mut Ctx, input: &[u8]) -> VmResult<u32> {
+    let target_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
+        let out_size = to_u32(input.len())?;
         let ptr = allocate.call(out_size)?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
         }
         Ok(ptr)
     })?;
-    write_region(ctx, error_ptr, string.as_bytes())?;
-    Ok(error_ptr)
+    write_region(ctx, target_ptr, input)?;
+    Ok(target_ptr)
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
