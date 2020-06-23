@@ -658,7 +658,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 65338);
+        assert_eq!(init_used, 70810);
     }
 
     #[test]
@@ -682,7 +682,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 96318);
+        assert_eq!(handle_used, 97825);
     }
 
     #[test]
