@@ -46,17 +46,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
         Some(data) => data,
         None => return Ok(0),
     };
-
-    let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
-        let out_size = to_u32(out_data.len())?;
-        let ptr = allocate.call(out_size)?;
-        if ptr == 0 {
-            return Err(CommunicationError::zero_address().into());
-        }
-        Ok(ptr)
-    })?;
-    write_region(ctx, out_ptr, &out_data)?;
-    Ok(out_ptr)
+    write_to_contract::<S, Q>(ctx, &out_data)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
@@ -131,6 +121,7 @@ pub fn do_humanize_address<A: Api>(
     Ok(0)
 }
 
+/// Creates a Region in the contract, writes the given data to it and returns the memory location
 fn write_to_contract<S: Storage, Q: Querier>(ctx: &mut Ctx, input: &[u8]) -> VmResult<u32> {
     let target_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
         let out_size = to_u32(input.len())?;
@@ -152,16 +143,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -
     try_consume_gas::<S, Q>(ctx, used_gas)?;
 
     let serialized = to_vec(&res)?;
-    let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
-        let out_size = to_u32(serialized.len())?;
-        let ptr = allocate.call(out_size)?;
-        if ptr == 0 {
-            return Err(CommunicationError::zero_address().into());
-        }
-        Ok(ptr)
-    })?;
-    write_region(ctx, out_ptr, &serialized)?;
-    Ok(out_ptr)
+    write_to_contract::<S, Q>(ctx, &serialized)
 }
 
 #[cfg(feature = "iterator")]
@@ -203,16 +185,7 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
     out_data.extend(key);
     out_data.extend_from_slice(&keylen_bytes);
 
-    let out_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
-        let out_size = to_u32(out_data.len())?;
-        let ptr = allocate.call(out_size)?;
-        if ptr == 0 {
-            return Err(CommunicationError::zero_address().into());
-        }
-        Ok(ptr)
-    })?;
-    write_region(ctx, out_ptr, &out_data)?;
-    Ok(out_ptr)
+    write_to_contract::<S, Q>(ctx, &out_data)
 }
 
 #[cfg(test)]
