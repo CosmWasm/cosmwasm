@@ -128,11 +128,12 @@ pub fn do_humanize_address<A: Api>(
     ctx: &mut Ctx,
     source_ptr: u32,
     destination_ptr: u32,
-) -> VmResult<()> {
+) -> VmResult<u32> {
     let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
+    // TODO: how to report API errors back to the contract?
     let human = api.human_address(&CanonicalAddr(canonical))?;
     write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
-    Ok(())
+    Ok(0)
 }
 
 fn create_error_region<S: Storage, Q: Querier>(ctx: &mut Ctx, string: &str) -> VmResult<u32> {
@@ -273,7 +274,7 @@ mod test {
                 "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
                 "query_chain" => Func::new(|_a: u32| -> u32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
-                "humanize_address" => Func::new(|_a: i32, _b: i32| -> i32 { 0 }),
+                "humanize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
             },
         };
         let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
@@ -675,7 +676,8 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        do_humanize_address(api, ctx, source_ptr, dest_ptr).unwrap();
+        let error_ptr = do_humanize_address(api, ctx, source_ptr, dest_ptr).unwrap();
+        assert_eq!(error_ptr, 0);
         assert_eq!(force_read(ctx, dest_ptr), b"foo");
     }
 

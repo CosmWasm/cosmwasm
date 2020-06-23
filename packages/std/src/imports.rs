@@ -29,7 +29,7 @@ extern "C" {
     fn db_next(iterator_id: u32) -> u32;
 
     fn canonicalize_address(source: u32, destination: u32) -> u32;
-    fn humanize_address(source: u32, destination: u32) -> i32;
+    fn humanize_address(source: u32, destination: u32) -> u32;
 
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
@@ -176,15 +176,20 @@ impl Api for ExternalApi {
         let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 
-        let read = unsafe { humanize_address(send_ptr, human as u32) };
-        if read < 0 {
-            return Err(StdError::generic_err("humanize_address returned error"));
+        let result = unsafe { humanize_address(send_ptr, human as u32) };
+        if result != 0 {
+            let error_data = unsafe { consume_region(result as *mut Region) };
+            let error = String::from_utf8_lossy(&error_data);
+            return Err(StdError::generic_err(format!(
+                "humanize_address errored: {}",
+                error
+            )));
         }
 
         let out = unsafe { consume_region(human) };
-        // we know input was correct when created, so let's save some bytes
-        let result = unsafe { String::from_utf8_unchecked(out) };
-        Ok(HumanAddr(result))
+        // We trust the VM/chain to return correct UTF-8, so let's save some gas
+        let out_string = unsafe { String::from_utf8_unchecked(out) };
+        Ok(HumanAddr(out_string))
     }
 }
 

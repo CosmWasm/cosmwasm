@@ -94,11 +94,10 @@ where
                 }),
                 // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
                 // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns negative value on error.
+                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<i32> {
-                    do_humanize_address(api, ctx, source_ptr, destination_ptr)?;
-                    Ok(0) // TODO: work out error handling strategy (https://github.com/CosmWasm/cosmwasm/issues/433)
+                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
+                    do_humanize_address(api, ctx, source_ptr, destination_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
