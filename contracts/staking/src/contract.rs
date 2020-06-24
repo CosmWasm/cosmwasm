@@ -389,45 +389,44 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<Binary> {
     match msg {
-        QueryMsg::TokenInfo {} => query_token_info(deps),
-        QueryMsg::Investment {} => query_investment(deps),
-        QueryMsg::Balance { address } => query_balance(deps, address),
-        QueryMsg::Claims { address } => query_claims(deps, address),
+        QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
+        QueryMsg::Investment {} => to_binary(&query_investment(deps)?),
+        QueryMsg::Balance { address } => to_binary(&query_balance(deps, address)?),
+        QueryMsg::Claims { address } => to_binary(&query_claims(deps, address)?),
     }
 }
 
 pub fn query_token_info<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
-) -> StdResult<Binary> {
-    let info = token_info_read(&deps.storage).load()?;
-    to_binary(&info)
+) -> StdResult<TokenInfoResponse> {
+    token_info_read(&deps.storage).load()
 }
 
 pub fn query_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
-) -> StdResult<Binary> {
+) -> StdResult<BalanceResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
     let balance = balances_read(&deps.storage)
         .may_load(address_raw.as_slice())?
         .unwrap_or_default();
-    to_binary(&BalanceResponse { balance })
+    Ok(BalanceResponse { balance })
 }
 
 pub fn query_claims<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
-) -> StdResult<Binary> {
+) -> StdResult<ClaimsResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
     let claims = claims_read(&deps.storage)
         .may_load(address_raw.as_slice())?
         .unwrap_or_default();
-    to_binary(&ClaimsResponse { claims })
+    Ok(ClaimsResponse { claims })
 }
 
 pub fn query_investment<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
-) -> StdResult<Binary> {
+) -> StdResult<InvestmentResponse> {
     let invest = invest_info_read(&deps.storage).load()?;
     let supply = total_supply_read(&deps.storage).load()?;
 
@@ -444,14 +443,14 @@ pub fn query_investment<S: Storage, A: Api, Q: Querier>(
             Decimal::from_ratio(supply.bonded, supply.issued)
         },
     };
-    to_binary(&res)
+    Ok(res)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockQuerier, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{coins, from_binary, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
+    use cosmwasm_std::{coins, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
@@ -504,24 +503,14 @@ mod tests {
         deps: &Extern<S, A, Q>,
         addr: U,
     ) -> Uint128 {
-        let query_msg = QueryMsg::Balance {
-            address: addr.into(),
-        };
-        let res = query(&deps, query_msg).unwrap();
-        let bal: BalanceResponse = from_binary(&res).unwrap();
-        bal.balance
+        query_balance(&deps, addr.into()).unwrap().balance
     }
 
     fn get_claims<S: Storage, A: Api, Q: Querier, U: Into<HumanAddr>>(
         deps: &Extern<S, A, Q>,
         addr: U,
     ) -> Uint128 {
-        let query_msg = QueryMsg::Claims {
-            address: addr.into(),
-        };
-        let res = query(&deps, query_msg).unwrap();
-        let claim: ClaimsResponse = from_binary(&res).unwrap();
-        claim.claims
+        query_claims(&deps, addr.into()).unwrap().claims
     }
 
     #[test]
@@ -580,8 +569,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // token info is proper
-        let res = query(&deps, QueryMsg::TokenInfo {}).unwrap();
-        let token: TokenInfoResponse = from_binary(&res).unwrap();
+        let token = query_token_info(&deps).unwrap();
         assert_eq!(&token.name, &msg.name);
         assert_eq!(&token.symbol, &msg.symbol);
         assert_eq!(token.decimals, msg.decimals);
@@ -592,8 +580,7 @@ mod tests {
         assert_eq!(get_claims(&deps, &creator), Uint128(0));
 
         // investment info correct
-        let res = query(&deps, QueryMsg::Investment {}).unwrap();
-        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        let invest = query_investment(&deps).unwrap();
         assert_eq!(&invest.owner, &creator);
         assert_eq!(&invest.validator, &msg.validator);
         assert_eq!(invest.exit_tax, msg.exit_tax);
@@ -638,8 +625,7 @@ mod tests {
         assert_eq!(get_balance(&deps, &bob), Uint128(1000));
 
         // investment info correct (updated supply)
-        let res = query(&deps, QueryMsg::Investment {}).unwrap();
-        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        let invest = query_investment(&deps).unwrap();
         assert_eq!(invest.token_supply, Uint128(1000));
         assert_eq!(invest.staked_tokens, coin(1000, "ustake"));
         assert_eq!(invest.nominal_value, Decimal::one());
@@ -680,8 +666,7 @@ mod tests {
         set_delegation(&mut deps.querier, 1500, "ustake");
 
         // we should now see 1000 issues and 1500 bonded (and a price of 1.5)
-        let res = query(&deps, QueryMsg::Investment {}).unwrap();
-        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        let invest = query_investment(&deps).unwrap();
         assert_eq!(invest.token_supply, Uint128(1000));
         assert_eq!(invest.staked_tokens, coin(1500, "ustake"));
         let ratio = Decimal::from_str("1.5").unwrap();
@@ -700,8 +685,7 @@ mod tests {
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
         assert_eq!(get_balance(&deps, &alice), Uint128(2000));
 
-        let res = query(&deps, QueryMsg::Investment {}).unwrap();
-        let invest: InvestmentResponse = from_binary(&res).unwrap();
+        let invest = query_investment(&deps).unwrap();
         assert_eq!(invest.token_supply, Uint128(3000));
         assert_eq!(invest.staked_tokens, coin(4500, "ustake"));
         assert_eq!(invest.nominal_value, ratio);
@@ -813,9 +797,7 @@ mod tests {
         // supplies updated, ratio the same (1.5)
         let ratio = Decimal::from_str("1.5").unwrap();
 
-        let res = query(&deps, QueryMsg::Investment {}).unwrap();
-        let invest: InvestmentResponse = from_binary(&res).unwrap();
-        print!("invest: {:?}", &invest);
+        let invest = query_investment(&deps).unwrap();
         assert_eq!(invest.token_supply, bobs_balance + owner_cut);
         assert_eq!(invest.staked_tokens, coin(690, "ustake")); // 1500 - 810
         assert_eq!(invest.nominal_value, ratio);

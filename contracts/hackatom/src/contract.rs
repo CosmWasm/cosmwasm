@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
+    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Env,
+    Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
     StdError, StdResult, Storage,
 };
 
@@ -208,29 +208,29 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => query_verifier(deps),
-        QueryMsg::OtherBalance { address } => query_other_balance(deps, address),
+        QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
+        QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
     }
 }
 
 fn query_verifier<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
-) -> StdResult<QueryResponse> {
+) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
-    Ok(Binary(to_vec(&VerifierResponse { verifier: addr })?))
+    Ok(VerifierResponse { verifier: addr })
 }
 
 fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
-) -> StdResult<QueryResponse> {
+) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
-    to_binary(&AllBalanceResponse { amount })
+    Ok(AllBalanceResponse { amount })
 }
 
 #[cfg(test)]
@@ -240,7 +240,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, from_binary, AllBalanceResponse, ReadonlyStorage, StdError};
+    use cosmwasm_std::{coins, ReadonlyStorage, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -288,8 +288,8 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // now let's query
-        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
-        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+        let query_response = query_verifier(&deps).unwrap();
+        assert_eq!(query_response.verifier, verifier);
     }
 
     #[test]
@@ -312,19 +312,17 @@ mod tests {
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
+        let new_verifier = HumanAddr::from("someone else");
         let msg = MigrateMsg {
-            verifier: HumanAddr::from("someone else"),
+            verifier: new_verifier.clone(),
         };
         let env = mock_env(&deps.api, creator.as_str(), &[]);
         let res = migrate(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
-        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
-        assert_eq!(
-            query_response.as_slice(),
-            b"{\"verifier\":\"someone else\"}"
-        );
+        let query_response = query_verifier(&deps).unwrap();
+        assert_eq!(query_response.verifier, new_verifier);
     }
 
     #[test]
@@ -334,17 +332,11 @@ mod tests {
         let deps = mock_dependencies_with_balances(20, &[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
-        let query_msg = QueryMsg::OtherBalance { address: rich_addr };
-        let query_response = query(&deps, query_msg).unwrap();
-        let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+        let bal = query_other_balance(&deps, rich_addr).unwrap();
         assert_eq!(bal.amount, rich_balance);
 
         // querying other accounts gets none
-        let query_msg = QueryMsg::OtherBalance {
-            address: HumanAddr::from("someone else"),
-        };
-        let query_response = query(&deps, query_msg).unwrap();
-        let bal: AllBalanceResponse = from_binary(&query_response).unwrap();
+        let bal = query_other_balance(&deps, HumanAddr::from("someone else")).unwrap();
         assert_eq!(bal.amount, vec![]);
     }
 
