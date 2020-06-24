@@ -30,13 +30,6 @@ where
     to_vec(data).map(Binary)
 }
 
-pub fn into_binary<T>(data: T) -> StdResult<Binary>
-where
-    T: Serialize,
-{
-    to_vec(&data).map(Binary)
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
