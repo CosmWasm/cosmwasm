@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
+    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Env,
+    Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
     StdError, StdResult, Storage,
 };
 
@@ -208,29 +208,31 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => query_verifier(deps),
-        QueryMsg::OtherBalance { address } => query_other_balance(deps, address),
+        QueryMsg::Verifier {} => query_verifier(deps).and_then(|r| to_binary(&r)),
+        QueryMsg::OtherBalance { address } => {
+            query_other_balance(deps, address).and_then(|r| to_binary(&r))
+        }
     }
 }
 
 fn query_verifier<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
-) -> StdResult<QueryResponse> {
+) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
     let addr = deps.api.human_address(&state.verifier)?;
-    Ok(Binary(to_vec(&VerifierResponse { verifier: addr })?))
+    Ok(VerifierResponse { verifier: addr })
 }
 
 fn query_other_balance<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     address: HumanAddr,
-) -> StdResult<QueryResponse> {
+) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
-    to_binary(&AllBalanceResponse { amount })
+    Ok(AllBalanceResponse { amount })
 }
 
 #[cfg(test)]
