@@ -77,27 +77,25 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<Binary> {
     match msg {
-        QueryMsg::Owner {} => query_owner(deps),
-        QueryMsg::ReflectCustom { text } => query_reflect(deps, text),
+        QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
+        QueryMsg::ReflectCustom { text } => to_binary(&query_reflect(deps, text)?),
     }
 }
 
-fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<Binary> {
+fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<OwnerResponse> {
     let state = config_read(&deps.storage).load()?;
-
     let resp = OwnerResponse {
         owner: deps.api.human_address(&state.owner)?,
     };
-    to_binary(&resp)
+    Ok(resp)
 }
 
 fn query_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     text: String,
-) -> StdResult<Binary> {
+) -> StdResult<CustomResponse> {
     let req = CustomQuery::Capital { text }.into();
-    let resp: CustomResponse = deps.querier.custom_query(&req)?;
-    to_binary(&resp)
+    deps.querier.custom_query(&req)
 }
 
 #[cfg(test)]
@@ -105,7 +103,7 @@ mod tests {
     use super::*;
     use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::mock_env;
-    use cosmwasm_std::{coin, coins, from_binary, BankMsg, Binary, StakingMsg, StdError};
+    use cosmwasm_std::{coin, coins, BankMsg, Binary, StakingMsg, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -119,8 +117,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
-        let res = query(&deps, QueryMsg::Owner {}).unwrap();
-        let value: OwnerResponse = from_binary(&res).unwrap();
+        let value = query_owner(&deps).unwrap();
         assert_eq!("creator", value.owner.as_str());
     }
 
@@ -247,8 +244,7 @@ mod tests {
 
         // should change state
         assert_eq!(0, res.messages.len());
-        let res = query(&deps, QueryMsg::Owner {}).unwrap();
-        let value: OwnerResponse = from_binary(&res).unwrap();
+        let value = query_owner(&deps).unwrap();
         assert_eq!("friend", value.owner.as_str());
     }
 
@@ -278,14 +274,7 @@ mod tests {
         let deps = mock_dependencies_with_custom_querier(20, &[]);
 
         // we don't even initialize, just trigger a query
-        let res = query(
-            &deps,
-            QueryMsg::ReflectCustom {
-                text: "demo one".to_string(),
-            },
-        )
-        .unwrap();
-        let value: CustomResponse = from_binary(&res).unwrap();
+        let value = query_reflect(&deps, "demo one".to_string()).unwrap();
         assert_eq!(value.msg, "DEMO ONE");
     }
 }
