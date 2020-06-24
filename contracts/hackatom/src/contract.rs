@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, into_binary, log, to_vec, AllBalanceResponse, Api, BankMsg,
-    CanonicalAddr, Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier,
-    QueryResponse, StdError, StdResult, Storage,
+    from_slice, into_binary, log, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Env,
+    Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
+    StdError, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
