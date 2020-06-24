@@ -33,7 +33,7 @@ pub use crate::query::{
     Delegation, FullDelegation, QueryRequest, QueryResponse, QueryResult, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
-pub use crate::serde::{from_binary, from_slice, into_binary, to_binary, to_vec};
+pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
 pub use crate::types::{

@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, into_binary, log, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Env,
+    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Env,
     Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
     StdError, StdResult, Storage,
 };
@@ -208,10 +208,8 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => query_verifier(deps).and_then(into_binary),
-        QueryMsg::OtherBalance { address } => {
-            query_other_balance(deps, address).and_then(into_binary)
-        }
+        QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
+        QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
     }
 }
 
