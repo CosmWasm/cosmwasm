@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order, Querier,
-    QueryResponse, StdResult, Storage,
+    from_slice, to_binary, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order,
+    Querier, QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -117,30 +117,30 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Count {} => query_count(deps),
-        QueryMsg::Sum {} => query_sum(deps),
-        QueryMsg::Reducer {} => query_reducer(deps),
+        QueryMsg::Count {} => to_binary(&query_count(deps)?),
+        QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
+        QueryMsg::Reducer {} => to_binary(&query_reducer(deps)?),
     }
 }
 
-fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
+fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<CountResponse> {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
-    Ok(Binary(to_vec(&CountResponse { count })?))
+    Ok(CountResponse { count })
 }
 
-fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<QueryResponse> {
+fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<SumResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)
         .map(|(_, v)| from_slice(&v))
         .collect();
     let sum = values?.iter().fold(0, |s, v| s + v.value);
-    Ok(Binary(to_vec(&SumResponse { sum })?))
+    Ok(SumResponse { sum })
 }
 
 fn query_reducer<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
-) -> StdResult<QueryResponse> {
+) -> StdResult<ReducerResponse> {
     let mut out: Vec<(i32, i32)> = vec![];
     // val: StdResult<Item>
     for val in deps
@@ -164,14 +164,14 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
             .sum();
         out.push((my_val, sum))
     }
-    Ok(Binary(to_vec(&ReducerResponse { counters: out })?))
+    Ok(ReducerResponse { counters: out })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::{coins, from_binary};
 
     fn create_contract() -> (Extern<MockStorage, MockApi, MockQuerier>, Env) {
         let mut deps = mock_dependencies(20, &coins(1000, "earth"));
@@ -182,15 +182,11 @@ mod tests {
     }
 
     fn get_count(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> u32 {
-        let data = query(deps, QueryMsg::Count {}).unwrap();
-        let res: CountResponse = from_binary(&data).unwrap();
-        res.count
+        query_count(deps).unwrap().count
     }
 
     fn get_sum(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> i32 {
-        let data = query(deps, QueryMsg::Sum {}).unwrap();
-        let res: SumResponse = from_binary(&data).unwrap();
-        res.sum
+        query_sum(deps).unwrap().sum
     }
 
     #[test]
@@ -243,8 +239,7 @@ mod tests {
         handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: -10 }).unwrap();
         assert_eq!(get_count(&deps), 4);
         assert_eq!(get_sum(&deps), 130);
-        let data = query(&deps, QueryMsg::Reducer {}).unwrap();
-        let counters = from_binary::<ReducerResponse>(&data).unwrap().counters;
+        let counters = query_reducer(&deps).unwrap().counters;
         assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
     }
 }
