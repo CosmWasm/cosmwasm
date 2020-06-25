@@ -130,11 +130,32 @@ fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
 mod test {
     use super::*;
 
+    #[test]
+    fn get_and_set() {
+        let mut store = MockStorage::new();
+        assert_eq!(None, store.get(b"foo").unwrap().0);
+        store.set(b"foo", b"bar").unwrap();
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo").unwrap().0);
+        assert_eq!(None, store.get(b"food").unwrap().0);
+    }
+
+    #[test]
+    fn delete() {
+        let mut store = MockStorage::new();
+        store.set(b"foo", b"bar").unwrap();
+        store.set(b"food", b"bank").unwrap();
+        store.remove(b"foo").unwrap();
+
+        assert_eq!(None, store.get(b"foo").unwrap().0);
+        assert_eq!(Some(b"bank".to_vec()), store.get(b"food").unwrap().0);
+    }
+
+    #[test]
     #[cfg(feature = "iterator")]
-    // iterator_test_suite takes a storage, adds data and runs iterator tests
-    // the storage must previously have exactly one key: "foo" = "bar"
-    // (this allows us to test StorageTransaction and other wrapped storage better)
-    fn iterator_test_suite<S: Storage>(store: &mut S) {
+    fn iterator() {
+        let mut store = MockStorage::new();
+        store.set(b"foo", b"bar").expect("error setting value");
+
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
         assert_eq!(
@@ -295,33 +316,5 @@ mod test {
                 ]
             );
         }
-    }
-
-    #[test]
-    fn get_and_set() {
-        let mut store = MockStorage::new();
-        assert_eq!(None, store.get(b"foo").unwrap().0);
-        store.set(b"foo", b"bar").unwrap();
-        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo").unwrap().0);
-        assert_eq!(None, store.get(b"food").unwrap().0);
-    }
-
-    #[test]
-    fn delete() {
-        let mut store = MockStorage::new();
-        store.set(b"foo", b"bar").unwrap();
-        store.set(b"food", b"bank").unwrap();
-        store.remove(b"foo").unwrap();
-
-        assert_eq!(None, store.get(b"foo").unwrap().0);
-        assert_eq!(Some(b"bank".to_vec()), store.get(b"food").unwrap().0);
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn iterator() {
-        let mut store = MockStorage::new();
-        store.set(b"foo", b"bar").expect("error setting value");
-        iterator_test_suite(&mut store);
     }
 }
