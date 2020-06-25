@@ -192,7 +192,7 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
 mod test {
     use super::*;
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, BankQuery, HumanAddr, Never, QueryRequest,
+        coins, from_binary, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
         SystemError, WasmQuery,
     };
     use std::ptr::NonNull;
@@ -259,7 +259,7 @@ mod test {
         let mut storage = MockStorage::new();
         storage.set(KEY1, VALUE1).expect("error setting");
         storage.set(KEY2, VALUE2).expect("error setting");
-        let querier: MockQuerier<Never> =
+        let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(ctx, storage, querier);
     }
@@ -722,7 +722,7 @@ mod test {
     fn do_query_chain_works() {
         let mut instance = make_instance();
 
-        let request: QueryRequest<Never> = QueryRequest::Bank(BankQuery::AllBalances {
+        let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
             address: HumanAddr::from(INIT_ADDR),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
@@ -770,7 +770,7 @@ mod test {
     fn do_query_chain_fails_for_missing_contract() {
         let mut instance = make_instance();
 
-        let request: QueryRequest<Never> = QueryRequest::Wasm(WasmQuery::Smart {
+        let request: QueryRequest<Empty> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: HumanAddr::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });

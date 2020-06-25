@@ -1,6 +1,16 @@
 # CHANGELOG
 
+## 0.9.1 (not yet released)
+
+**cosmwasm-std**
+
+- Replace type `Never` with `Empty` because enums with no cases cannot be
+  expressed in valid JSON Schema.
+
 ## 0.9.0 (2020-06-25)
+
+Note: this version contains an API bug and should not be used (see
+https://github.com/CosmWasm/cosmwasm/issues/451).
 
 **all**
 

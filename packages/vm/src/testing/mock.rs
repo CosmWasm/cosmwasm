@@ -2,8 +2,8 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
-    to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-    Never, Querier as _, QueryRequest, SystemError,
+    to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Empty, Env, HumanAddr,
+    MessageInfo, Querier as _, QueryRequest, SystemError,
 };
 
 use super::storage::MockStorage;
@@ -140,7 +140,7 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-pub struct MockQuerier<C: DeserializeOwned = Never> {
+pub struct MockQuerier<C: DeserializeOwned = Empty> {
     querier: StdMockQuerier<C>,
 }
 
@@ -213,7 +213,7 @@ mod test {
     use super::*;
     use crate::FfiError;
     use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Never,
+        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
     };
 
     #[test]
@@ -282,7 +282,7 @@ mod test {
 
         // all
         let all = querier
-            .handle_query::<Never>(
+            .handle_query::<Empty>(
                 &BankQuery::AllBalances {
                     address: addr.clone(),
                 }
@@ -304,7 +304,7 @@ mod test {
 
         // one match
         let fly = querier
-            .handle_query::<Never>(
+            .handle_query::<Empty>(
                 &BankQuery::Balance {
                     address: addr.clone(),
                     denom: "FLY".to_string(),
@@ -320,7 +320,7 @@ mod test {
 
         // missing denom
         let miss = querier
-            .handle_query::<Never>(
+            .handle_query::<Empty>(
                 &BankQuery::Balance {
                     address: addr.clone(),
                     denom: "MISS".to_string(),
@@ -343,7 +343,7 @@ mod test {
 
         // all balances on empty account is empty vec
         let all = querier
-            .handle_query::<Never>(
+            .handle_query::<Empty>(
                 &BankQuery::AllBalances {
                     address: HumanAddr::from("elsewhere"),
                 }
@@ -358,7 +358,7 @@ mod test {
 
         // any denom on balances on empty account is empty coin
         let miss = querier
-            .handle_query::<Never>(
+            .handle_query::<Empty>(
                 &BankQuery::Balance {
                     address: HumanAddr::from("elsewhere"),
                     denom: "ELF".to_string(),
