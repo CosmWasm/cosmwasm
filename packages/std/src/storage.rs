@@ -85,11 +85,32 @@ impl Storage for MemoryStorage {
 mod test {
     use super::*;
 
+    #[test]
+    fn get_and_set() {
+        let mut store = MemoryStorage::new();
+        assert_eq!(store.get(b"foo"), None);
+        store.set(b"foo", b"bar");
+        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
+        assert_eq!(store.get(b"food"), None);
+    }
+
+    #[test]
+    fn delete() {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
+        store.set(b"food", b"bank");
+        store.remove(b"foo");
+
+        assert_eq!(store.get(b"foo"), None);
+        assert_eq!(store.get(b"food"), Some(b"bank".to_vec()));
+    }
+
+    #[test]
     #[cfg(feature = "iterator")]
-    // iterator_test_suite takes a storage, adds data and runs iterator tests
-    // the storage must previously have exactly one key: "foo" = "bar"
-    // (this allows us to test StorageTransaction and other wrapped storage better)
-    fn iterator_test_suite<S: Storage>(store: &mut S) {
+    fn iterator() {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"bar");
+
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(store.range(None, None, Order::Ascending).count(), 1);
@@ -223,33 +244,5 @@ mod test {
                 ]
             );
         }
-    }
-
-    #[test]
-    fn get_and_set() {
-        let mut store = MemoryStorage::new();
-        assert_eq!(store.get(b"foo"), None);
-        store.set(b"foo", b"bar");
-        assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-        assert_eq!(store.get(b"food"), None);
-    }
-
-    #[test]
-    fn delete() {
-        let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar");
-        store.set(b"food", b"bank");
-        store.remove(b"foo");
-
-        assert_eq!(store.get(b"foo"), None);
-        assert_eq!(store.get(b"food"), Some(b"bank".to_vec()));
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn iterator() {
-        let mut store = MemoryStorage::new();
-        store.set(b"foo", b"bar");
-        iterator_test_suite(&mut store);
     }
 }
