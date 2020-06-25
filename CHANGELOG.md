@@ -2,6 +2,11 @@
 
 ## 0.9.0 (not yet released)
 
+**all**
+
+- Upgrade wasmer to 0.17.1.
+- Drop support for Rust versions lower than 1.43.1
+
 **cosmwasm-std**
 
 - `ReadonlyStorage::get` and all its implementations now return
