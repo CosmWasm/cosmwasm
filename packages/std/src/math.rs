@@ -16,7 +16,7 @@ pub struct Decimal(#[schemars(with = "String")] u128);
 const DECIMAL_FRACTIONAL: u128 = 1_000_000_000_000_000_000;
 
 impl Decimal {
-    pub const MAX: Decimal = Decimal(std::u128::MAX);
+    pub const MAX: Decimal = Decimal(u128::MAX);
 
     /// Create a 1.0 Decimal
     pub const fn one() -> Decimal {
