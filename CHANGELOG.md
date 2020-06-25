@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.9.0 (not yet released)
+## 0.9.0 (2020-06-25)
 
 **all**
 
