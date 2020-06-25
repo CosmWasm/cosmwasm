@@ -40,6 +40,7 @@ Contract code and uni tests:
   but ignored.
 - Use `cosmwasm_storage::transactional` instead of the removed
   `cosmwasm_storage::transactional_deps`.
+- Replace `cosmwasm_std::Never` with `cosmwasm_std::Empty`.
 
 Integration tests:
 

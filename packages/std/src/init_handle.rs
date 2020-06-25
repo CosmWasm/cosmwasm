@@ -7,12 +7,12 @@ use std::fmt;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
-use crate::types::{HumanAddr, Never};
+use crate::types::{Empty, HumanAddr};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 // See https://github.com/serde-rs/serde/issues/1296 why we cannot add De-Serialize trait bounds to T
-pub enum CosmosMsg<T = Never>
+pub enum CosmosMsg<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -118,7 +118,7 @@ pub fn log<K: ToString, V: ToString>(key: K, value: V) -> LogAttribute {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitResponse<T = Never>
+pub struct InitResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -126,7 +126,7 @@ where
     pub log: Vec<LogAttribute>,
 }
 
-pub type InitResult<U = Never> = StdResult<InitResponse<U>>;
+pub type InitResult<U = Empty> = StdResult<InitResponse<U>>;
 
 impl<T> Default for InitResponse<T>
 where
@@ -141,7 +141,7 @@ where
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct HandleResponse<T = Never>
+pub struct HandleResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -150,7 +150,7 @@ where
     pub data: Option<Binary>,
 }
 
-pub type HandleResult<U = Never> = StdResult<HandleResponse<U>>;
+pub type HandleResult<U = Empty> = StdResult<HandleResponse<U>>;
 
 impl<T> Default for HandleResponse<T>
 where
@@ -166,7 +166,7 @@ where
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MigrateResponse<T = Never>
+pub struct MigrateResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -175,7 +175,7 @@ where
     pub data: Option<Binary>,
 }
 
-pub type MigrateResult<U = Never> = StdResult<MigrateResponse<U>>;
+pub type MigrateResult<U = Empty> = StdResult<MigrateResponse<U>>;
 
 impl<T> Default for MigrateResponse<T>
 where

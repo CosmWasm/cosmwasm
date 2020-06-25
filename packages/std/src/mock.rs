@@ -12,7 +12,7 @@ use crate::query::{
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
-use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Env, HumanAddr, MessageInfo, Never};
+use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Empty, Env, HumanAddr, MessageInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -137,7 +137,7 @@ pub type MockQuerierCustomHandlerResult = SystemResult<StdResult<Binary>>;
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-pub struct MockQuerier<C: DeserializeOwned = Never> {
+pub struct MockQuerier<C: DeserializeOwned = Empty> {
     bank: BankQuerier,
     staking: StakingQuerier,
     // placeholder to add support later

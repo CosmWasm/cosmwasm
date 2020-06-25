@@ -12,7 +12,7 @@ use crate::query::{
     StakingQuery, Validator, ValidatorsResponse,
 };
 use crate::serde::{from_binary, to_vec};
-use crate::types::{CanonicalAddr, HumanAddr, Never};
+use crate::types::{CanonicalAddr, Empty, HumanAddr};
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -96,8 +96,8 @@ pub trait Querier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
 
     /// query is a shorthand for custom_query when we are not using a custom type,
-    /// this allows us to avoid specifying "Never" in all the type definitions.
-    fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Never>) -> StdResult<T> {
+    /// this allows us to avoid specifying "Empty" in all the type definitions.
+    fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Empty>) -> StdResult<T> {
         self.custom_query(request)
     }
 

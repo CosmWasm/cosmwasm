@@ -250,7 +250,7 @@ mod test {
     use crate::traits::Storage;
     use crate::{call_init, FfiError};
     use cosmwasm_std::{
-        coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, HumanAddr, Never,
+        coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
     };
     use wabt::wat2wasm;
@@ -546,7 +546,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::Balance {
+                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))?
@@ -564,7 +564,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::AllBalances {
+                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
                         address: rich_addr.clone(),
                     }))?
                     .0
@@ -594,7 +594,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::Balance {
+                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))?
@@ -619,7 +619,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Never>(&QueryRequest::Bank(BankQuery::Balance {
+                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))?
@@ -637,7 +637,7 @@ mod test {
 #[cfg(test)]
 #[cfg(feature = "default-singlepass")]
 mod singlepass_test {
-    use cosmwasm_std::{coins, Never};
+    use cosmwasm_std::{coins, Empty};
 
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_env, mock_instance, mock_instance_with_gas_limit};
@@ -652,7 +652,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Never>(&mut instance, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
@@ -668,7 +668,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Never>(&mut instance, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
@@ -676,7 +676,7 @@ mod singlepass_test {
         let gas_before_handle = instance.get_gas_left();
         let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_handle::<_, _, _, Never>(&mut instance, &env, msg)
+        call_handle::<_, _, _, Empty>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 
@@ -692,7 +692,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init::<_, _, _, Never>(&mut instance, &env, msg);
+        let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg);
         assert!(res.is_err());
     }
 
@@ -703,7 +703,7 @@ mod singlepass_test {
         // init contract
         let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let _res = call_init::<_, _, _, Never>(&mut instance, &env, msg)
+        let _res = call_init::<_, _, _, Empty>(&mut instance, &env, msg)
             .unwrap()
             .unwrap();
 

@@ -9,7 +9,7 @@
       ],
       "properties": {
         "Ok": {
-          "$ref": "#/definitions/HandleResponse_for_Never"
+          "$ref": "#/definitions/HandleResponse_for_Empty"
         }
       }
     },
@@ -79,7 +79,7 @@
         }
       }
     },
-    "CosmosMsg_for_Never": {
+    "CosmosMsg_for_Empty": {
       "anyOf": [
         {
           "type": "object",
@@ -99,7 +99,7 @@
           ],
           "properties": {
             "custom": {
-              "$ref": "#/definitions/Never"
+              "$ref": "#/definitions/Empty"
             }
           }
         },
@@ -127,7 +127,11 @@
         }
       ]
     },
-    "HandleResponse_for_Never": {
+    "Empty": {
+      "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
+      "type": "object"
+    },
+    "HandleResponse_for_Empty": {
       "type": "object",
       "required": [
         "log",
@@ -153,7 +157,7 @@
         "messages": {
           "type": "array",
           "items": {
-            "$ref": "#/definitions/CosmosMsg_for_Never"
+            "$ref": "#/definitions/CosmosMsg_for_Empty"
           }
         }
       }
@@ -175,10 +179,6 @@
           "type": "string"
         }
       }
-    },
-    "Never": {
-      "description": "Never can never be instantiated and is a no-op placeholder for unsupported enums, such as contracts that don't set a custom message.",
-      "enum": []
     },
     "StakingMsg": {
       "anyOf": [
