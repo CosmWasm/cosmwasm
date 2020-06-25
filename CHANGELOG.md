@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.9.1 (not yet released)
+## 0.9.1 (2020-06-25)
 
 **cosmwasm-std**
 
