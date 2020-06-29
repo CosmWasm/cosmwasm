@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.9.2 (not yet released)
+## 0.9.2 (2020-06-29)
 
 - Downgrade wasmer to 0.17.0.
 
