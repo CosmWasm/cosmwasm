@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.9.2 (not yet released)
+
+- Downgrade wasmer to 0.17.0.
+
 ## 0.9.1 (2020-06-25)
 
 **cosmwasm-std**
