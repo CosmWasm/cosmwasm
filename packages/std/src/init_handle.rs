@@ -72,6 +72,8 @@ pub enum WasmMsg {
         /// msg is the json-encoded HandleMsg struct (as raw Binary)
         msg: Binary,
         send: Vec<Coin>,
+        /// sender is the one who sends the msg
+        sender: HumanAddr
     },
     /// this instantiates a new contracts from previously uploaded wasm code
     Instantiate {
