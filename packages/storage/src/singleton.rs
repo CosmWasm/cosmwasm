@@ -57,6 +57,10 @@ where
         Ok(())
     }
 
+    pub fn remove(&mut self) {
+        self.storage.remove(&self.key)
+    }
+
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self) -> StdResult<T> {
         let value = self.storage.get(&self.key);

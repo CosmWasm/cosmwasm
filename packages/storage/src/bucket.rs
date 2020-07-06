@@ -8,7 +8,7 @@ use cosmwasm_std::{Order, KV};
 use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
-use crate::namespace_helpers::{get_with_prefix, set_with_prefix};
+use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
 #[cfg(feature = "iterator")]
 use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
@@ -64,6 +64,10 @@ where
     pub fn save(&mut self, key: &[u8], data: &T) -> StdResult<()> {
         set_with_prefix(self.storage, &self.prefix, key, &to_vec(data)?);
         Ok(())
+    }
+
+    pub fn remove(&mut self, key: &[u8]) {
+        remove_with_prefix(self.storage, &self.prefix, key)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
