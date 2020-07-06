@@ -199,6 +199,28 @@ mod test {
     }
 
     #[test]
+    fn remove_works() {
+        let mut store = MockStorage::new();
+        let mut bucket = bucket::<_, Data>(b"data", &mut store);
+
+        // save data
+        let data = Data {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        bucket.save(b"maria", &data).unwrap();
+        assert_eq!(data, bucket.load(b"maria").unwrap());
+
+        // deleting random key does nothing
+        bucket.remove(b"foobar");
+        assert_eq!(data, bucket.load(b"maria").unwrap());
+
+        // deleting maria removes the data
+        bucket.remove(b"maria");
+        assert_eq!(None, bucket.may_load(b"maria").unwrap());
+    }
+
+    #[test]
     fn readonly_works() {
         let mut store = MockStorage::new();
         let mut bucket = bucket::<_, Data>(b"data", &mut store);

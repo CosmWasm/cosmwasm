@@ -159,6 +159,28 @@ mod test {
     }
 
     #[test]
+    fn remove_works() {
+        let mut store = MockStorage::new();
+        let mut single = Singleton::<_, Config>::new(&mut store, b"config");
+
+        // store data
+        let cfg = Config {
+            owner: "admin".to_string(),
+            max_tokens: 1234,
+        };
+        single.save(&cfg).unwrap();
+        assert_eq!(cfg, single.load().unwrap());
+
+        // remove it and loads None
+        single.remove();
+        assert_eq!(None, single.may_load().unwrap());
+
+        // safe to remove 2 times
+        single.remove();
+        assert_eq!(None, single.may_load().unwrap());
+    }
+
+    #[test]
     fn isolated_reads() {
         let mut store = MockStorage::new();
         let mut writer = singleton::<_, Config>(&mut store, b"config");
