@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.9.3 (unreleased)
+
+- `cosmwasm-storage`: Add `.remove()` method to `Bucket` and `Singleton`
+
 ## 0.9.2 (2020-06-29)
 
 - Downgrade wasmer to 0.17.0.
