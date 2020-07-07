@@ -57,6 +57,10 @@ where
         Ok(())
     }
 
+    pub fn remove(&mut self) {
+        self.storage.remove(&self.key)
+    }
+
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self) -> StdResult<T> {
         let value = self.storage.get(&self.key);
@@ -152,6 +156,28 @@ mod test {
         single.save(&cfg).unwrap();
 
         assert_eq!(cfg, single.load().unwrap());
+    }
+
+    #[test]
+    fn remove_works() {
+        let mut store = MockStorage::new();
+        let mut single = Singleton::<_, Config>::new(&mut store, b"config");
+
+        // store data
+        let cfg = Config {
+            owner: "admin".to_string(),
+            max_tokens: 1234,
+        };
+        single.save(&cfg).unwrap();
+        assert_eq!(cfg, single.load().unwrap());
+
+        // remove it and loads None
+        single.remove();
+        assert_eq!(None, single.may_load().unwrap());
+
+        // safe to remove 2 times
+        single.remove();
+        assert_eq!(None, single.may_load().unwrap());
     }
 
     #[test]
