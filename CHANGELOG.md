@@ -8,6 +8,10 @@
   `not_found`, `parse_err`, `serialize_err`, `underflow`, `unauthorized` in
   favour of `StdError::generic_err` and friends.
 
+**cosmwasm-vm**
+
+- Remove unused cache size argument from `CosmCache`.
+
 ## 0.9.3 (2020-07-08)
 
 **cosmwasm-storage**
