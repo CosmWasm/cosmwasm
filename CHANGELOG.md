@@ -1,8 +1,10 @@
 # CHANGELOG
 
-## 0.9.3 (unreleased)
+## 0.9.3 (2020-07-08)
 
-- `cosmwasm-storage`: Add `.remove()` method to `Bucket` and `Singleton`
+**cosmwasm-storage**
+
+- Add `.remove()` method to `Bucket` and `Singleton`.
 
 ## 0.9.2 (2020-06-29)
 
