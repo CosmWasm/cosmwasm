@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## 0.10.0 (unreleased)
+
+**cosmwasm-std**
+
+- Remove error helpers `generic_err`, `invalid_base64`, `invalid_utf8`,
+  `not_found`, `parse_err`, `serialize_err`, `underflow`, `unauthorized` in
+  favour of `StdError::generic_err` and friends.
+
 ## 0.9.3 (2020-07-08)
 
 **cosmwasm-storage**
