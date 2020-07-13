@@ -11,6 +11,10 @@
 **cosmwasm-vm**
 
 - Remove unused cache size argument from `CosmCache`.
+- `set_gas_limit` now panics if the given gas limit exceeds the max. supported
+  value.
+- Increase the max. supported value for gas limit from 10_000_000_000 to
+  0x7FFFFFFFFFFFFFFF.
 
 ## 0.9.3 (2020-07-08)
 

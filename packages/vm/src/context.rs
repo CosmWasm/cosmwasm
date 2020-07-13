@@ -363,10 +363,7 @@ mod test {
     static INIT_AMOUNT: u128 = 500;
     static INIT_DENOM: &str = "TOKEN";
 
-    #[cfg(feature = "singlepass")]
-    use crate::backends::singlepass::GAS_LIMIT;
-    #[cfg(not(feature = "singlepass"))]
-    const GAS_LIMIT: u64 = 10_000_000_000;
+    const GAS_LIMIT: u64 = 5_000_000;
 
     fn make_instance() -> Box<WasmerInstance> {
         let module = compile(&CONTRACT).unwrap();
