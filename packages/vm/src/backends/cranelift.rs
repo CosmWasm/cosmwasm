@@ -7,7 +7,7 @@ use wasmer_runtime_core::{
 
 use crate::errors::VmResult;
 
-static FAKE_GAS_AVAILABLE: u64 = 1_000_000;
+const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let config = CompilerConfig {

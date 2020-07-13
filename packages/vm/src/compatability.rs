@@ -8,7 +8,7 @@ use crate::features::required_features_from_module;
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
-static SUPPORTED_IMPORTS: &[&str] = &[
+const SUPPORTED_IMPORTS: &[&str] = &[
     "env.db_read",
     "env.db_write",
     "env.db_remove",
@@ -24,7 +24,7 @@ static SUPPORTED_IMPORTS: &[&str] = &[
 /// Lists all entry points we expect to be present when calling a contract.
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
-static REQUIRED_EXPORTS: &[&str] = &[
+const REQUIRED_EXPORTS: &[&str] = &[
     "cosmwasm_vm_version_2",
     "query",
     "init",
@@ -33,7 +33,7 @@ static REQUIRED_EXPORTS: &[&str] = &[
     "deallocate",
 ];
 
-static MEMORY_LIMIT: u32 = 512; // in pages
+const MEMORY_LIMIT: u32 = 512; // in pages
 
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], supported_features: &HashSet<String>) -> VmResult<()> {
@@ -295,7 +295,7 @@ mod test {
     #[test]
     fn test_check_wasm_exports() {
         // this is invalid, as it doesn't contain all required exports
-        static WAT_MISSING_EXPORTS: &'static str = r#"
+        const WAT_MISSING_EXPORTS: &'static str = r#"
             (module
               (type $t0 (func (param i32) (result i32)))
               (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)

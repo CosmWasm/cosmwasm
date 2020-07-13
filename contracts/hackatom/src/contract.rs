@@ -66,7 +66,7 @@ pub struct VerifierResponse {
     pub verifier: HumanAddr,
 }
 
-pub static CONFIG_KEY: &[u8] = b"config";
+pub const CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,

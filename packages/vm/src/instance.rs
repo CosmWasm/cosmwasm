@@ -27,7 +27,7 @@ use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
 
-static WASM_PAGE_SIZE: u64 = 64 * 1024;
+const WASM_PAGE_SIZE: u64 = 64 * 1024;
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     /// We put this instance in a box to maintain a constant memory address for the entire
@@ -255,10 +255,10 @@ mod test {
     };
     use wabt::wat2wasm;
 
-    static KIB: usize = 1024;
-    static MIB: usize = 1024 * 1024;
+    const KIB: usize = 1024;
+    const MIB: usize = 1024 * 1024;
+    const DEFAULT_GAS_LIMIT: u64 = 500_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-    static DEFAULT_GAS_LIMIT: u64 = 500_000;
 
     // shorthands for function generics below
     type MS = MockStorage;
