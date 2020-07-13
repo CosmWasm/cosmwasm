@@ -20,7 +20,7 @@ use crate::middleware::DeterministicMiddleware;
 /// the assumption that users won't request more than this amount of gas. Then to set a gas limit below that figure,
 /// we pretend to consume the difference between the two in `set_gas_limit`, so the amount of units left is equal to
 /// the requested gas limit.
-pub const GAS_LIMIT: u64 = 10_000_000_000;
+const GAS_LIMIT: u64 = 10_000_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = compile_with(code, compiler().as_ref())?;
