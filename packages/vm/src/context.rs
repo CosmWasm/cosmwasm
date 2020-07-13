@@ -255,9 +255,8 @@ pub fn add_iterator<'a, S: Storage, Q: Querier>(
         .try_into()
         .expect("Found more iterator IDs than supported");
     let new_id = last_id + 1;
-    const INT32_MAX_VALUE: u32 = 2_147_483_647;
-    if new_id > INT32_MAX_VALUE {
-        panic!("Iterator ID exceeded INT32_MAX_VALUE. This must not happen.");
+    if new_id > (i32::MAX as u32) {
+        panic!("Iterator ID exceeded i32::MAX. This must not happen.");
     }
     b.iterators.insert(new_id, iter);
     new_id
