@@ -20,7 +20,7 @@ use crate::middleware::DeterministicMiddleware;
 /// the assumption that users won't request more than this amount of gas. Then to set a gas limit below that figure,
 /// we pretend to consume the difference between the two in `set_gas_limit`, so the amount of units left is equal to
 /// the requested gas limit.
-const GAS_LIMIT: u64 = 10_000_000_000;
+const MAX_GAS_LIMIT: u64 = 10_000_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = compile_with(code, compiler().as_ref())?;
@@ -31,7 +31,7 @@ pub fn compiler() -> Box<dyn Compiler> {
     let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
         let mut chain = MiddlewareChain::new();
         chain.push(DeterministicMiddleware::new());
-        chain.push(metering::Metering::new(GAS_LIMIT));
+        chain.push(metering::Metering::new(MAX_GAS_LIMIT));
         chain
     });
     Box::new(c)
@@ -43,13 +43,13 @@ pub fn backend() -> &'static str {
 
 /// Set the amount of gas units that can be used in the instance.
 pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
-    if limit > GAS_LIMIT {
+    if limit > MAX_GAS_LIMIT {
         panic!(
             "Attempted to set gas limit larger than max gas limit (got: {}; maximum: {}).",
-            limit, GAS_LIMIT
+            limit, MAX_GAS_LIMIT
         );
     } else {
-        let used = GAS_LIMIT - limit;
+        let used = MAX_GAS_LIMIT - limit;
         metering::set_points_used(instance, used);
     }
 }
@@ -57,8 +57,8 @@ pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
 /// Get how many more gas units can be used in the instance.
 pub fn get_gas_left(instance: &WasmerInstance) -> u64 {
     let used = metering::get_points_used(instance);
-    // when running out of gas, get_points_used can exceed GAS_LIMIT
-    GAS_LIMIT.saturating_sub(used)
+    // when running out of gas, get_points_used can exceed MAX_GAS_LIMIT
+    MAX_GAS_LIMIT.saturating_sub(used)
 }
 
 #[cfg(test)]
@@ -78,7 +78,7 @@ mod test {
         let wasm = wat2wasm("(module)").unwrap();
         let instance = instantiate(&wasm);
         let gas_left = get_gas_left(&instance);
-        assert_eq!(gas_left, GAS_LIMIT);
+        assert_eq!(gas_left, MAX_GAS_LIMIT);
     }
 
     #[test]
@@ -98,7 +98,7 @@ mod test {
         set_gas_limit(&mut instance, limit);
         assert_eq!(get_gas_left(&instance), limit);
 
-        let limit = GAS_LIMIT;
+        let limit = MAX_GAS_LIMIT;
         set_gas_limit(&mut instance, limit);
         assert_eq!(get_gas_left(&instance), limit);
     }
@@ -111,7 +111,7 @@ mod test {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
-        let limit = GAS_LIMIT + 1;
+        let limit = MAX_GAS_LIMIT + 1;
         set_gas_limit(&mut instance, limit);
     }
 }
