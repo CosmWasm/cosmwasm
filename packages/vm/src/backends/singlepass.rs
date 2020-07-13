@@ -12,15 +12,16 @@ use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 use crate::errors::VmResult;
 use crate::middleware::DeterministicMiddleware;
 
-/// In Wasmer, The gas limit on instances is set during compile time and is included in the compiled binaries.
-/// This causes issues when trying to reuse the same precompiled binaries for another instance with a different
-/// gas limit.
-/// https://github.com/wasmerio/wasmer/pull/996
-/// To work around that, we set the gas limit of all Wasmer instances to this very-high gas limit value, under
-/// the assumption that users won't request more than this amount of gas. Then to set a gas limit below that figure,
-/// we pretend to consume the difference between the two in `set_gas_limit`, so the amount of units left is equal to
-/// the requested gas limit.
-const MAX_GAS_LIMIT: u64 = 10_000_000_000;
+/// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
+/// This causes issues when trying to instantiate the same compiled module with a different gas limit.
+/// A fix for this is proposed here: https://github.com/wasmerio/wasmer/pull/996.
+///
+/// To work around this limitation, we set the gas limit of all Wasmer instances to this very high value,
+/// assuming users won't request more than this amount of gas. In order to set the real gas limit, we pretend
+/// to consume the difference between the two in `set_gas_limit` ("points used" in the metering middleware).
+/// Since we observed overflow behaviour in the points used, we ensure both MAX_GAS_LIMIT and points used stay
+/// far below u64::MAX.
+const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = compile_with(code, compiler().as_ref())?;
@@ -105,7 +106,7 @@ mod test {
 
     #[test]
     #[should_panic(
-        expected = "Attempted to set gas limit larger than max gas limit (got: 10000000001; maximum: 10000000000)."
+        expected = "Attempted to set gas limit larger than max gas limit (got: 9223372036854775808; maximum: 9223372036854775807)."
     )]
     fn set_gas_limit_panic_for_values_too_large() {
         let wasm = wat2wasm("(module)").unwrap();
