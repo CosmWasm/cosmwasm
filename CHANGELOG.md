@@ -15,6 +15,9 @@
   value.
 - Increase the max. supported value for gas limit from 10_000_000_000 to
   0x7FFFFFFFFFFFFFFF.
+- Add checks to `get_region` for failing early when the contract sends a Region
+  pointer to the VM that is not backed by a plausible Region. This helps
+  development of standard libraries.
 
 ## 0.9.3 (2020-07-08)
 

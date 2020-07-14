@@ -137,7 +137,11 @@ fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Region>::new(ptr);
     match wptr.deref(memory) {
-        Some(cell) => Ok(cell.get()),
+        Some(cell) => {
+            let region = cell.get();
+            validate_region(&region)?;
+            Ok(region)
+        }
         None => Err(CommunicationError::deref_err(
             ptr,
             "Could not dereference this pointer to a Region",
