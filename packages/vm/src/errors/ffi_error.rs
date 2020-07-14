@@ -47,7 +47,7 @@ mod test {
     // constructors
 
     #[test]
-    fn ffi_error_foreign_panic() {
+    fn foreign_panic() {
         let error = FfiError::foreign_panic();
         match error {
             FfiError::ForeignPanic { .. } => {}
@@ -56,7 +56,7 @@ mod test {
     }
 
     #[test]
-    fn ffi_error_bad_argument() {
+    fn bad_argument() {
         let error = FfiError::bad_argument();
         match error {
             FfiError::BadArgument { .. } => {}
@@ -65,7 +65,7 @@ mod test {
     }
 
     #[test]
-    fn ffi_error_out_of_gas() {
+    fn out_of_gas() {
         let error = FfiError::out_of_gas();
         match error {
             FfiError::OutOfGas { .. } => {}
@@ -74,7 +74,7 @@ mod test {
     }
 
     #[test]
-    fn ffi_error_other() {
+    fn other() {
         let error = FfiError::other("broken");
         match error {
             FfiError::Other { error, .. } => assert_eq!(error, "broken"),

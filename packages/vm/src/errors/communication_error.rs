@@ -114,7 +114,7 @@ mod test {
     // constructors
 
     #[test]
-    fn communication_error_deref_err() {
+    fn deref_err() {
         let error = CommunicationError::deref_err(345, "broken stuff");
         match error {
             CommunicationError::DerefErr { offset, msg, .. } => {
@@ -126,7 +126,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_invalid_order() {
+    fn invalid_order() {
         let error = CommunicationError::invalid_order(-745);
         match error {
             CommunicationError::InvalidOrder { value, .. } => assert_eq!(value, -745),
@@ -135,7 +135,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_invalid_utf8() {
+    fn invalid_utf8() {
         let error = CommunicationError::invalid_utf8("broken");
         match error {
             CommunicationError::InvalidUtf8 { msg, .. } => assert_eq!(msg, "broken"),
@@ -144,7 +144,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_region_length_too_big_works() {
+    fn region_length_too_big_works() {
         let error = CommunicationError::region_length_too_big(50, 20);
         match error {
             CommunicationError::RegionLengthTooBig {
@@ -158,7 +158,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_region_length_exceeds_capacity_works() {
+    fn region_length_exceeds_capacity_works() {
         let error = CommunicationError::region_length_exceeds_capacity(50, 20);
         match error {
             CommunicationError::RegionLengthExceedsCapacity {
@@ -172,7 +172,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_region_out_of_range_works() {
+    fn region_out_of_range_works() {
         let error = CommunicationError::region_out_of_range(u32::MAX, 1);
         match error {
             CommunicationError::RegionOutOfRange {
@@ -186,7 +186,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_region_too_small_works() {
+    fn region_too_small_works() {
         let error = CommunicationError::region_too_small(12, 33);
         match error {
             CommunicationError::RegionTooSmall { size, required, .. } => {
@@ -198,7 +198,7 @@ mod test {
     }
 
     #[test]
-    fn communication_error_zero_address() {
+    fn zero_address() {
         let error = CommunicationError::zero_address();
         match error {
             CommunicationError::ZeroAddress { .. } => {}

@@ -236,7 +236,7 @@ mod test {
     // constructors
 
     #[test]
-    fn vm_error_cache_err_works() {
+    fn cache_err_works() {
         let error = VmError::cache_err("something went wrong");
         match error {
             VmError::CacheErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -245,7 +245,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_compile_err_works() {
+    fn compile_err_works() {
         let error = VmError::compile_err("something went wrong");
         match error {
             VmError::CompileErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -254,7 +254,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_conversion_err_works() {
+    fn conversion_err_works() {
         let error = VmError::conversion_err("i32", "u32", "-9");
         match error {
             VmError::ConversionErr {
@@ -272,7 +272,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_generic_err_works() {
+    fn generic_err_works() {
         let guess = 7;
         let error = VmError::generic_err(format!("{} is too low", guess));
         match error {
@@ -284,7 +284,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_instantiation_err_works() {
+    fn instantiation_err_works() {
         let error = VmError::instantiation_err("something went wrong");
         match error {
             VmError::InstantiationErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -293,7 +293,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_integrity_err_works() {
+    fn integrity_err_works() {
         let error = VmError::integrity_err();
         match error {
             VmError::IntegrityErr { .. } => {}
@@ -303,7 +303,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn vm_error_iterator_does_not_exist_works() {
+    fn iterator_does_not_exist_works() {
         let error = VmError::iterator_does_not_exist(15);
         match error {
             VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
@@ -312,7 +312,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_parse_err_works() {
+    fn parse_err_works() {
         let error = VmError::parse_err("Book", "Missing field: title");
         match error {
             VmError::ParseErr { target, msg, .. } => {
@@ -324,7 +324,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_serialize_err_works() {
+    fn serialize_err_works() {
         let error = VmError::serialize_err("Book", "Content too long");
         match error {
             VmError::SerializeErr { source, msg, .. } => {
@@ -336,7 +336,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_resolve_err_works() {
+    fn resolve_err_works() {
         let error = VmError::resolve_err("function has different signature");
         match error {
             VmError::ResolveErr { msg, .. } => assert_eq!(msg, "function has different signature"),
@@ -345,7 +345,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_runtime_err_works() {
+    fn runtime_err_works() {
         let error = VmError::runtime_err("something went wrong");
         match error {
             VmError::RuntimeErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -354,7 +354,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_static_validation_err_works() {
+    fn static_validation_err_works() {
         let error = VmError::static_validation_err("export xy missing");
         match error {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(msg, "export xy missing"),
@@ -363,7 +363,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_uninitialized_context_data_works() {
+    fn uninitialized_context_data_works() {
         let error = VmError::uninitialized_context_data("foo");
         match error {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
@@ -372,7 +372,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_write_access_denied() {
+    fn write_access_denied() {
         let error = VmError::write_access_denied();
         match error {
             VmError::WriteAccessDenied { .. } => {}
