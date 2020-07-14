@@ -23,16 +23,16 @@ use crate::serde::to_vec;
 use crate::traits::{Api, Querier, Storage};
 
 /// A kibi (kilo binary)
-static KI: usize = 1024;
+const KI: usize = 1024;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory)
-static MAX_LENGTH_DB_KEY: usize = 64 * KI;
+const MAX_LENGTH_DB_KEY: usize = 64 * KI;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory)
-static MAX_LENGTH_DB_VALUE: usize = 128 * KI;
+const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 /// Typically 20 (Cosmos SDK, Ethereum) or 32 (Nano, Substrate)
 const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
-static MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
+const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
@@ -214,15 +214,15 @@ mod test {
     type MQ = MockQuerier;
 
     // prepared data
-    static KEY1: &[u8] = b"ant";
-    static VALUE1: &[u8] = b"insect";
-    static KEY2: &[u8] = b"tree";
-    static VALUE2: &[u8] = b"plant";
+    const KEY1: &[u8] = b"ant";
+    const VALUE1: &[u8] = b"insect";
+    const KEY2: &[u8] = b"tree";
+    const VALUE2: &[u8] = b"plant";
 
     // this account has some coins
-    static INIT_ADDR: &str = "someone";
-    static INIT_AMOUNT: u128 = 500;
-    static INIT_DENOM: &str = "TOKEN";
+    const INIT_ADDR: &str = "someone";
+    const INIT_AMOUNT: u128 = 500;
+    const INIT_DENOM: &str = "TOKEN";
 
     const GAS_LIMIT: u64 = 5_000_000;
 

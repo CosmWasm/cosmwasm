@@ -12,8 +12,8 @@ use crate::instance::Instance;
 use crate::modules::FileSystemCache;
 use crate::traits::{Api, Extern, Querier, Storage};
 
-static WASM_DIR: &str = "wasm";
-static MODULES_DIR: &str = "modules";
+const WASM_DIR: &str = "wasm";
+const MODULES_DIR: &str = "modules";
 
 #[derive(Debug, Default, Clone)]
 struct Stats {
@@ -162,7 +162,7 @@ mod test {
     use tempfile::TempDir;
     use wabt::wat2wasm;
 
-    static TESTING_GAS_LIMIT: u64 = 400_000;
+    const TESTING_GAS_LIMIT: u64 = 400_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     fn default_features() -> HashSet<String> {

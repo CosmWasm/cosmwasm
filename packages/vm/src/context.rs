@@ -255,9 +255,8 @@ pub fn add_iterator<'a, S: Storage, Q: Querier>(
         .try_into()
         .expect("Found more iterator IDs than supported");
     let new_id = last_id + 1;
-    static INT32_MAX_VALUE: u32 = 2_147_483_647;
-    if new_id > INT32_MAX_VALUE {
-        panic!("Iterator ID exceeded INT32_MAX_VALUE. This must not happen.");
+    if new_id > (i32::MAX as u32) {
+        panic!("Iterator ID exceeded i32::MAX. This must not happen.");
     }
     b.iterators.insert(new_id, iter);
     new_id
@@ -356,12 +355,12 @@ mod test {
     type MQ = MockQuerier;
 
     // prepared data
-    static INIT_KEY: &[u8] = b"foo";
-    static INIT_VALUE: &[u8] = b"bar";
+    const INIT_KEY: &[u8] = b"foo";
+    const INIT_VALUE: &[u8] = b"bar";
     // this account has some coins
-    static INIT_ADDR: &str = "someone";
-    static INIT_AMOUNT: u128 = 500;
-    static INIT_DENOM: &str = "TOKEN";
+    const INIT_ADDR: &str = "someone";
+    const INIT_AMOUNT: u128 = 500;
+    const INIT_DENOM: &str = "TOKEN";
 
     const GAS_LIMIT: u64 = 5_000_000;
 

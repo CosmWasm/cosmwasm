@@ -3,7 +3,7 @@ use std::collections::HashSet;
 use std::iter::FromIterator;
 use wasmer_runtime_core::{export::Export, Instance as WasmerInstance};
 
-static REQUIRES_PREFIX: &str = "requires_";
+const REQUIRES_PREFIX: &str = "requires_";
 
 /// Takes a comma-separated string, splits it by commas, removes empty elements and returns a set of features.
 /// This can be used e.g. to initialize the cache.
