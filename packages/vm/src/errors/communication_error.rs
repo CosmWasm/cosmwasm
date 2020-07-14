@@ -1,6 +1,8 @@
 use snafu::Snafu;
 use std::fmt::Debug;
 
+use super::region_validation_error::RegionValidationError;
+
 /// An error in the communcation between contract and host. Those happen around imports and exports.
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
@@ -21,6 +23,11 @@ pub enum CommunicationError {
         value: i32,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Got an invalid region: {}", source))]
+    InvalidRegion {
+        #[snafu(backtrace)]
+        source: RegionValidationError,
+    },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
     InvalidUtf8 {
@@ -32,26 +39,6 @@ pub enum CommunicationError {
     RegionLengthTooBig {
         length: usize,
         max_length: usize,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display(
-        "Region length exceeds capacity. Length {}, capacity {}",
-        length,
-        capacity
-    ))]
-    RegionLengthExceedsCapacity {
-        length: u32,
-        capacity: u32,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display(
-        "Region exceeds address space. Offset {}, capacity {}",
-        offset,
-        capacity
-    ))]
-    RegionOutOfRange {
-        offset: u32,
-        capacity: u32,
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Region too small. Got {}, required {}", size, required))]
@@ -90,20 +77,20 @@ impl CommunicationError {
         RegionLengthTooBig { length, max_length }.build()
     }
 
-    pub(crate) fn region_length_exceeds_capacity(length: u32, capacity: u32) -> Self {
-        RegionLengthExceedsCapacity { length, capacity }.build()
-    }
-
-    pub(crate) fn region_out_of_range(offset: u32, capacity: u32) -> Self {
-        RegionOutOfRange { offset, capacity }.build()
-    }
-
     pub(crate) fn region_too_small(size: usize, required: usize) -> Self {
         RegionTooSmall { size, required }.build()
     }
 
     pub(crate) fn zero_address() -> Self {
         ZeroAddress {}.build()
+    }
+}
+
+impl From<RegionValidationError> for CommunicationError {
+    fn from(region_validation_error: RegionValidationError) -> Self {
+        CommunicationError::InvalidRegion {
+            source: region_validation_error,
+        }
     }
 }
 
@@ -152,34 +139,6 @@ mod test {
             } => {
                 assert_eq!(length, 50);
                 assert_eq!(max_length, 20);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn region_length_exceeds_capacity_works() {
-        let error = CommunicationError::region_length_exceeds_capacity(50, 20);
-        match error {
-            CommunicationError::RegionLengthExceedsCapacity {
-                length, capacity, ..
-            } => {
-                assert_eq!(length, 50);
-                assert_eq!(capacity, 20);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn region_out_of_range_works() {
-        let error = CommunicationError::region_out_of_range(u32::MAX, 1);
-        match error {
-            CommunicationError::RegionOutOfRange {
-                offset, capacity, ..
-            } => {
-                assert_eq!(offset, u32::MAX);
-                assert_eq!(capacity, 1);
             }
             e => panic!("Unexpected error: {:?}", e),
         }

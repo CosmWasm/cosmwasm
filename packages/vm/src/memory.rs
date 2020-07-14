@@ -5,7 +5,10 @@ use wasmer_runtime_core::{
 };
 
 use crate::conversion::to_u32;
-use crate::errors::{CommunicationError, CommunicationResult, VmResult};
+use crate::errors::{
+    CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
+    VmResult,
+};
 
 /****** read/write to wasm memory buffer ****/
 
@@ -151,18 +154,18 @@ fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
 
 /// Performs plausibility checks in the given Region. Regions are always created by the
 /// contract and this can be used to detect problems in the standard library of the contract.
-fn validate_region(region: &Region) -> CommunicationResult<()> {
+fn validate_region(region: &Region) -> RegionValidationResult<()> {
     if region.offset == 0 {
-        return Err(CommunicationError::zero_address());
+        return Err(RegionValidationError::zero_offset());
     }
     if region.length > region.capacity {
-        return Err(CommunicationError::region_length_exceeds_capacity(
+        return Err(RegionValidationError::length_exceeds_capacity(
             region.length,
             region.capacity,
         ));
     }
     if region.capacity > (u32::MAX - region.offset) {
-        return Err(CommunicationError::region_out_of_range(
+        return Err(RegionValidationError::out_of_range(
             region.offset,
             region.capacity,
         ));
@@ -243,7 +246,7 @@ mod test {
         };
         let result = validate_region(&region);
         match result.unwrap_err() {
-            CommunicationError::ZeroAddress { .. } => {}
+            RegionValidationError::ZeroOffset { .. } => {}
             e => panic!("Got unexpected error: {:?}", e),
         }
     }
@@ -257,7 +260,7 @@ mod test {
         };
         let result = validate_region(&region);
         match result.unwrap_err() {
-            CommunicationError::RegionLengthExceedsCapacity {
+            RegionValidationError::LengthExceedsCapacity {
                 length, capacity, ..
             } => {
                 assert_eq!(length, 501);
@@ -276,7 +279,7 @@ mod test {
         };
         let result = validate_region(&region);
         match result.unwrap_err() {
-            CommunicationError::RegionOutOfRange {
+            RegionValidationError::OutOfRange {
                 offset, capacity, ..
             } => {
                 assert_eq!(offset, 23);
@@ -292,7 +295,7 @@ mod test {
         };
         let result = validate_region(&region);
         match result.unwrap_err() {
-            CommunicationError::RegionOutOfRange {
+            RegionValidationError::OutOfRange {
                 offset, capacity, ..
             } => {
                 assert_eq!(offset, u32::MAX);
