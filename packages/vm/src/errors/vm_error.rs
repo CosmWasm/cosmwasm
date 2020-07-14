@@ -1,6 +1,8 @@
+use snafu::Snafu;
 use std::fmt::{Debug, Display};
 
-use snafu::Snafu;
+use super::communication_error::CommunicationError;
+use super::ffi_error::FfiError;
 
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
@@ -167,6 +169,23 @@ impl VmError {
     }
 }
 
+impl From<CommunicationError> for VmError {
+    fn from(communication_error: CommunicationError) -> Self {
+        VmError::CommunicationErr {
+            source: communication_error,
+        }
+    }
+}
+
+impl From<FfiError> for VmError {
+    fn from(ffi_error: FfiError) -> Self {
+        match ffi_error {
+            FfiError::OutOfGas {} => VmError::GasDepletion,
+            _ => VmError::FfiErr { source: ffi_error },
+        }
+    }
+}
+
 impl From<wasmer_runtime_core::cache::Error> for VmError {
     fn from(original: wasmer_runtime_core::cache::Error) -> Self {
         VmError::cache_err(format!("Wasmer cache error: {:?}", original))
@@ -210,182 +229,14 @@ impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
     }
 }
 
-pub type VmResult<T> = core::result::Result<T, VmError>;
-
-/// An error in the communcation between contract and host. Those happen around imports and exports.
-#[derive(Debug, Snafu)]
-#[non_exhaustive]
-pub enum CommunicationError {
-    #[snafu(display(
-        "The Wasm memory address {} provided by the contract could not be dereferenced: {}",
-        offset,
-        msg
-    ))]
-    DerefErr {
-        /// the position in a Wasm linear memory
-        offset: u32,
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Got an invalid value for iteration order: {}", value))]
-    InvalidOrder {
-        value: i32,
-        backtrace: snafu::Backtrace,
-    },
-    /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
-    #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
-    InvalidUtf8 {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Region length too big. Got {}, limit {}", length, max_length))]
-    // Note: this only checks length, not capacity
-    RegionLengthTooBig {
-        length: usize,
-        max_length: usize,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display(
-        "Region length exceeds capacity. Length {}, capacity {}",
-        length,
-        capacity
-    ))]
-    RegionLengthExceedsCapacity {
-        length: u32,
-        capacity: u32,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display(
-        "Region exceeds address space. Offset {}, capacity {}",
-        offset,
-        capacity
-    ))]
-    RegionOutOfRange {
-        offset: u32,
-        capacity: u32,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Region too small. Got {}, required {}", size, required))]
-    RegionTooSmall {
-        size: usize,
-        required: usize,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Got a zero Wasm address"))]
-    ZeroAddress { backtrace: snafu::Backtrace },
-}
-
-impl CommunicationError {
-    pub(crate) fn deref_err<S: Into<String>>(offset: u32, msg: S) -> Self {
-        DerefErr {
-            offset,
-            msg: msg.into(),
-        }
-        .build()
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn invalid_order(value: i32) -> Self {
-        InvalidOrder { value }.build()
-    }
-
-    #[allow(dead_code)]
-    pub(crate) fn invalid_utf8<S: ToString>(msg: S) -> Self {
-        InvalidUtf8 {
-            msg: msg.to_string(),
-        }
-        .build()
-    }
-
-    pub(crate) fn region_length_too_big(length: usize, max_length: usize) -> Self {
-        RegionLengthTooBig { length, max_length }.build()
-    }
-
-    pub(crate) fn region_length_exceeds_capacity(length: u32, capacity: u32) -> Self {
-        RegionLengthExceedsCapacity { length, capacity }.build()
-    }
-
-    pub(crate) fn region_out_of_range(offset: u32, capacity: u32) -> Self {
-        RegionOutOfRange { offset, capacity }.build()
-    }
-
-    pub(crate) fn region_too_small(size: usize, required: usize) -> Self {
-        RegionTooSmall { size, required }.build()
-    }
-
-    pub(crate) fn zero_address() -> Self {
-        ZeroAddress {}.build()
-    }
-}
-
-pub type CommunicationResult<T> = core::result::Result<T, CommunicationError>;
-
-impl From<CommunicationError> for VmError {
-    fn from(communication_error: CommunicationError) -> Self {
-        VmError::CommunicationErr {
-            source: communication_error,
-        }
-    }
-}
-
-#[derive(Debug, Snafu)]
-pub enum FfiError {
-    #[snafu(display("Panic in FFI call"))]
-    ForeignPanic { backtrace: snafu::Backtrace },
-    #[snafu(display("bad argument passed to FFI"))]
-    BadArgument { backtrace: snafu::Backtrace },
-    #[snafu(display("Ran out of gas during FFI call"))]
-    OutOfGas {},
-    #[snafu(display("Error during FFI call: {}", error))]
-    Other {
-        error: String,
-        backtrace: snafu::Backtrace,
-    },
-}
-
-impl FfiError {
-    pub fn foreign_panic() -> Self {
-        ForeignPanic {}.build()
-    }
-
-    pub fn bad_argument() -> Self {
-        BadArgument {}.build()
-    }
-
-    pub fn out_of_gas() -> Self {
-        OutOfGas {}.build()
-    }
-
-    pub fn other<S>(error: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Other {
-            error: error.into(),
-        }
-        .build()
-    }
-}
-
-impl From<FfiError> for VmError {
-    fn from(ffi_error: FfiError) -> Self {
-        match ffi_error {
-            FfiError::OutOfGas {} => VmError::GasDepletion,
-            _ => VmError::FfiErr { source: ffi_error },
-        }
-    }
-}
-
-pub type FfiResult<T> = core::result::Result<T, FfiError>;
-
 #[cfg(test)]
 mod test {
     use super::*;
 
-    // VmError constructors
+    // constructors
 
     #[test]
-    fn vm_error_cache_err_works() {
+    fn cache_err_works() {
         let error = VmError::cache_err("something went wrong");
         match error {
             VmError::CacheErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -394,7 +245,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_compile_err_works() {
+    fn compile_err_works() {
         let error = VmError::compile_err("something went wrong");
         match error {
             VmError::CompileErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -403,7 +254,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_conversion_err_works() {
+    fn conversion_err_works() {
         let error = VmError::conversion_err("i32", "u32", "-9");
         match error {
             VmError::ConversionErr {
@@ -421,7 +272,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_generic_err_works() {
+    fn generic_err_works() {
         let guess = 7;
         let error = VmError::generic_err(format!("{} is too low", guess));
         match error {
@@ -433,7 +284,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_instantiation_err_works() {
+    fn instantiation_err_works() {
         let error = VmError::instantiation_err("something went wrong");
         match error {
             VmError::InstantiationErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -442,7 +293,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_integrity_err_works() {
+    fn integrity_err_works() {
         let error = VmError::integrity_err();
         match error {
             VmError::IntegrityErr { .. } => {}
@@ -452,7 +303,7 @@ mod test {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn vm_error_iterator_does_not_exist_works() {
+    fn iterator_does_not_exist_works() {
         let error = VmError::iterator_does_not_exist(15);
         match error {
             VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
@@ -461,7 +312,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_parse_err_works() {
+    fn parse_err_works() {
         let error = VmError::parse_err("Book", "Missing field: title");
         match error {
             VmError::ParseErr { target, msg, .. } => {
@@ -473,7 +324,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_serialize_err_works() {
+    fn serialize_err_works() {
         let error = VmError::serialize_err("Book", "Content too long");
         match error {
             VmError::SerializeErr { source, msg, .. } => {
@@ -485,7 +336,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_resolve_err_works() {
+    fn resolve_err_works() {
         let error = VmError::resolve_err("function has different signature");
         match error {
             VmError::ResolveErr { msg, .. } => assert_eq!(msg, "function has different signature"),
@@ -494,7 +345,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_runtime_err_works() {
+    fn runtime_err_works() {
         let error = VmError::runtime_err("something went wrong");
         match error {
             VmError::RuntimeErr { msg, .. } => assert_eq!(msg, "something went wrong"),
@@ -503,7 +354,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_static_validation_err_works() {
+    fn static_validation_err_works() {
         let error = VmError::static_validation_err("export xy missing");
         match error {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(msg, "export xy missing"),
@@ -512,7 +363,7 @@ mod test {
     }
 
     #[test]
-    fn vm_error_uninitialized_context_data_works() {
+    fn uninitialized_context_data_works() {
         let error = VmError::uninitialized_context_data("foo");
         match error {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "foo"),
@@ -521,143 +372,10 @@ mod test {
     }
 
     #[test]
-    fn vm_error_write_access_denied() {
+    fn write_access_denied() {
         let error = VmError::write_access_denied();
         match error {
             VmError::WriteAccessDenied { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    // CommunicationError constructors
-
-    #[test]
-    fn communication_error_deref_err() {
-        let error = CommunicationError::deref_err(345, "broken stuff");
-        match error {
-            CommunicationError::DerefErr { offset, msg, .. } => {
-                assert_eq!(offset, 345);
-                assert_eq!(msg, "broken stuff");
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_invalid_order() {
-        let error = CommunicationError::invalid_order(-745);
-        match error {
-            CommunicationError::InvalidOrder { value, .. } => assert_eq!(value, -745),
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_invalid_utf8() {
-        let error = CommunicationError::invalid_utf8("broken");
-        match error {
-            CommunicationError::InvalidUtf8 { msg, .. } => assert_eq!(msg, "broken"),
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_region_length_too_big_works() {
-        let error = CommunicationError::region_length_too_big(50, 20);
-        match error {
-            CommunicationError::RegionLengthTooBig {
-                length, max_length, ..
-            } => {
-                assert_eq!(length, 50);
-                assert_eq!(max_length, 20);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_region_length_exceeds_capacity_works() {
-        let error = CommunicationError::region_length_exceeds_capacity(50, 20);
-        match error {
-            CommunicationError::RegionLengthExceedsCapacity {
-                length, capacity, ..
-            } => {
-                assert_eq!(length, 50);
-                assert_eq!(capacity, 20);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_region_out_of_range_works() {
-        let error = CommunicationError::region_out_of_range(u32::MAX, 1);
-        match error {
-            CommunicationError::RegionOutOfRange {
-                offset, capacity, ..
-            } => {
-                assert_eq!(offset, u32::MAX);
-                assert_eq!(capacity, 1);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_region_too_small_works() {
-        let error = CommunicationError::region_too_small(12, 33);
-        match error {
-            CommunicationError::RegionTooSmall { size, required, .. } => {
-                assert_eq!(size, 12);
-                assert_eq!(required, 33);
-            }
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn communication_error_zero_address() {
-        let error = CommunicationError::zero_address();
-        match error {
-            CommunicationError::ZeroAddress { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    // FfiError constructors
-
-    #[test]
-    fn ffi_error_foreign_panic() {
-        let error = FfiError::foreign_panic();
-        match error {
-            FfiError::ForeignPanic { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn ffi_error_bad_argument() {
-        let error = FfiError::bad_argument();
-        match error {
-            FfiError::BadArgument { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn ffi_error_out_of_gas() {
-        let error = FfiError::out_of_gas();
-        match error {
-            FfiError::OutOfGas { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn ffi_error_other() {
-        let error = FfiError::other("broken");
-        match error {
-            FfiError::Other { error, .. } => assert_eq!(error, "broken"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
