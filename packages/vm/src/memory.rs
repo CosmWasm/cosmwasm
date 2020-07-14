@@ -137,12 +137,37 @@ fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Region>::new(ptr);
     match wptr.deref(memory) {
-        Some(cell) => Ok(cell.get()),
+        Some(cell) => {
+            let region = cell.get();
+            validate_region(&region)?;
+            Ok(region)
+        }
         None => Err(CommunicationError::deref_err(
             ptr,
             "Could not dereference this pointer to a Region",
         )),
     }
+}
+
+/// Performs plausibility checks in the given Region. Regions are always created by the
+/// contract and this can be used to detect problems in the standard library of the contract.
+fn validate_region(region: &Region) -> CommunicationResult<()> {
+    if region.offset == 0 {
+        return Err(CommunicationError::zero_address());
+    }
+    if region.length > region.capacity {
+        return Err(CommunicationError::region_length_exceeds_capacity(
+            region.length,
+            region.capacity,
+        ));
+    }
+    if region.capacity > (u32::MAX - region.offset) {
+        return Err(CommunicationError::region_out_of_range(
+            region.offset,
+            region.capacity,
+        ));
+    }
+    Ok(())
 }
 
 /// Overrides a Region at ptr in wasm memory with data
@@ -159,5 +184,121 @@ fn set_region(ctx: &Ctx, ptr: u32, data: Region) -> CommunicationResult<()> {
             ptr,
             "Could not dereference this pointer to a Region",
         )),
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn validate_region_passes_for_valid_region() {
+        // empty
+        let region = Region {
+            offset: 23,
+            capacity: 500,
+            length: 0,
+        };
+        validate_region(&region).unwrap();
+
+        // half full
+        let region = Region {
+            offset: 23,
+            capacity: 500,
+            length: 250,
+        };
+        validate_region(&region).unwrap();
+
+        // full
+        let region = Region {
+            offset: 23,
+            capacity: 500,
+            length: 500,
+        };
+        validate_region(&region).unwrap();
+
+        // at end of linear memory (1)
+        let region = Region {
+            offset: u32::MAX,
+            capacity: 0,
+            length: 0,
+        };
+        validate_region(&region).unwrap();
+
+        // at end of linear memory (2)
+        let region = Region {
+            offset: 1,
+            capacity: u32::MAX - 1,
+            length: 0,
+        };
+        validate_region(&region).unwrap();
+    }
+
+    #[test]
+    fn validate_region_fails_for_zero_offset() {
+        let region = Region {
+            offset: 0,
+            capacity: 500,
+            length: 250,
+        };
+        let result = validate_region(&region);
+        match result.unwrap_err() {
+            CommunicationError::ZeroAddress { .. } => {}
+            e => panic!("Got unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn validate_region_fails_for_length_exceeding_capacity() {
+        let region = Region {
+            offset: 23,
+            capacity: 500,
+            length: 501,
+        };
+        let result = validate_region(&region);
+        match result.unwrap_err() {
+            CommunicationError::RegionLengthExceedsCapacity {
+                length, capacity, ..
+            } => {
+                assert_eq!(length, 501);
+                assert_eq!(capacity, 500);
+            }
+            e => panic!("Got unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn validate_region_fails_when_exceeding_address_space() {
+        let region = Region {
+            offset: 23,
+            capacity: u32::MAX,
+            length: 501,
+        };
+        let result = validate_region(&region);
+        match result.unwrap_err() {
+            CommunicationError::RegionOutOfRange {
+                offset, capacity, ..
+            } => {
+                assert_eq!(offset, 23);
+                assert_eq!(capacity, u32::MAX);
+            }
+            e => panic!("Got unexpected error: {:?}", e),
+        }
+
+        let region = Region {
+            offset: u32::MAX,
+            capacity: 1,
+            length: 0,
+        };
+        let result = validate_region(&region);
+        match result.unwrap_err() {
+            CommunicationError::RegionOutOfRange {
+                offset, capacity, ..
+            } => {
+                assert_eq!(offset, u32::MAX);
+                assert_eq!(capacity, 1);
+            }
+            e => panic!("Got unexpected error: {:?}", e),
+        }
     }
 }

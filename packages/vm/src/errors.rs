@@ -245,6 +245,26 @@ pub enum CommunicationError {
         max_length: usize,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display(
+        "Region length exceeds capacity. Length {}, capacity {}",
+        length,
+        capacity
+    ))]
+    RegionLengthExceedsCapacity {
+        length: u32,
+        capacity: u32,
+        backtrace: snafu::Backtrace,
+    },
+    #[snafu(display(
+        "Region exceeds address space. Offset {}, capacity {}",
+        offset,
+        capacity
+    ))]
+    RegionOutOfRange {
+        offset: u32,
+        capacity: u32,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Region too small. Got {}, required {}", size, required))]
     RegionTooSmall {
         size: usize,
@@ -279,6 +299,14 @@ impl CommunicationError {
 
     pub(crate) fn region_length_too_big(length: usize, max_length: usize) -> Self {
         RegionLengthTooBig { length, max_length }.build()
+    }
+
+    pub(crate) fn region_length_exceeds_capacity(length: u32, capacity: u32) -> Self {
+        RegionLengthExceedsCapacity { length, capacity }.build()
+    }
+
+    pub(crate) fn region_out_of_range(offset: u32, capacity: u32) -> Self {
+        RegionOutOfRange { offset, capacity }.build()
     }
 
     pub(crate) fn region_too_small(size: usize, required: usize) -> Self {
@@ -542,6 +570,34 @@ mod test {
             } => {
                 assert_eq!(length, 50);
                 assert_eq!(max_length, 20);
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_region_length_exceeds_capacity_works() {
+        let error = CommunicationError::region_length_exceeds_capacity(50, 20);
+        match error {
+            CommunicationError::RegionLengthExceedsCapacity {
+                length, capacity, ..
+            } => {
+                assert_eq!(length, 50);
+                assert_eq!(capacity, 20);
+            }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn communication_error_region_out_of_range_works() {
+        let error = CommunicationError::region_out_of_range(u32::MAX, 1);
+        match error {
+            CommunicationError::RegionOutOfRange {
+                offset, capacity, ..
+            } => {
+                assert_eq!(offset, u32::MAX);
+                assert_eq!(capacity, 1);
             }
             e => panic!("Unexpected error: {:?}", e),
         }
