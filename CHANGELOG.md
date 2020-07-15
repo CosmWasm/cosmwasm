@@ -2,6 +2,10 @@
 
 ## 0.10.0 (unreleased)
 
+**all**
+
+- Drop support for Rust versions lower than 1.44.1.
+
 **cosmwasm-std**
 
 - Remove error helpers `generic_err`, `invalid_base64`, `invalid_utf8`,
