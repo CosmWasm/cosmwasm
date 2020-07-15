@@ -415,6 +415,17 @@ mod test {
         move_into_context(ctx, storage, querier);
     }
 
+    /// This is a testing-only implementation that panics on overconsumption.
+    /// We currently don't have a production-ready version of this since only Wasmer consumes VM gas
+    /// directly. This might change in the future (https://github.com/CosmWasm/cosmwasm/pull/475)
+    fn decrease_gas_left(instance: &mut WasmerInstance, amount: u64) {
+        let current_limit = get_gas_left(instance);
+        let new_limit = current_limit
+            .checked_sub(amount)
+            .expect("Must not decrease more than available");
+        set_gas_limit(instance, new_limit);
+    }
+
     #[test]
     fn leave_and_take_context_data() {
         // this creates an instance
@@ -478,9 +489,8 @@ mod test {
         account_for_externally_used_gas::<MS, MQ>(context, 50).unwrap();
         account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
 
-        // consume 20 gas directly in wasmer
-        let new_limit = get_gas_left(instance.as_mut()) - 20;
-        set_gas_limit(instance.as_mut(), new_limit);
+        // Consume 20 gas directly in wasmer
+        decrease_gas_left(instance.as_mut(), 20);
 
         let context = instance.context_mut();
         account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();
