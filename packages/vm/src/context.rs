@@ -39,7 +39,7 @@ impl GasState {
     }
 
     #[allow(unused)]
-    fn use_gas(&mut self, amount: u64) {
+    fn increase_externally_used_gas(&mut self, amount: u64) {
         self.externally_used_gas += amount;
     }
 
@@ -196,8 +196,21 @@ pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a mut Ctx) -> &
     &mut get_context_data_mut::<S, Q>(ctx).gas_state
 }
 
+/// Use this function to adjust the VM's gas limit when a call into the backend
+/// reported there was externally metered gas used.
+/// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
+pub fn account_for_externally_used_gas<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    amount: u64,
+) -> VmResult<()> {
+    account_for_externally_used_gas_impl::<S, Q>(ctx, amount)
+}
+
 #[cfg(feature = "default-singlepass")]
-pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> VmResult<()> {
+fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
+    ctx: &mut Ctx,
+    used_gas: u64,
+) -> VmResult<()> {
     use crate::backends::{get_gas_left, set_gas_limit};
 
     let ctx_data = get_context_data_mut::<S, Q>(ctx);
@@ -207,7 +220,7 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
 
         let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance));
 
-        gas_state.use_gas(used_gas);
+        gas_state.increase_externally_used_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
@@ -225,7 +238,10 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
 }
 
 #[cfg(feature = "default-cranelift")]
-pub fn try_consume_gas<S: Storage, Q: Querier>(_ctx: &mut Ctx, _used_gas: u64) -> VmResult<()> {
+fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
+    _ctx: &mut Ctx,
+    _used_gas: u64,
+) -> VmResult<()> {
     Ok(())
 }
 
@@ -437,12 +453,12 @@ mod test {
         let context = instance.context_mut();
 
         // Consume all the Gas that we allocated
-        try_consume_gas::<MS, MQ>(context, 70).unwrap();
-        try_consume_gas::<MS, MQ>(context, 4).unwrap();
-        try_consume_gas::<MS, MQ>(context, 6).unwrap();
-        try_consume_gas::<MS, MQ>(context, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 70).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match try_consume_gas::<MS, MQ>(context, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(context, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -458,19 +474,19 @@ mod test {
         get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
-        // Consume all the Gas that we allocated
-        try_consume_gas::<MS, MQ>(context, 50).unwrap();
-        try_consume_gas::<MS, MQ>(context, 4).unwrap();
+        // Some gas was consumed externally
+        account_for_externally_used_gas::<MS, MQ>(context, 50).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
 
         // consume 20 gas directly in wasmer
         let new_limit = get_gas_left(instance.as_mut()) - 20;
         set_gas_limit(instance.as_mut(), new_limit);
 
         let context = instance.context_mut();
-        try_consume_gas::<MS, MQ>(context, 6).unwrap();
-        try_consume_gas::<MS, MQ>(context, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(context, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match try_consume_gas::<MS, MQ>(context, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(context, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
