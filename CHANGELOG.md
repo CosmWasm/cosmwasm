@@ -2,11 +2,17 @@
 
 ## 0.10.0 (unreleased)
 
+**all**
+
+- Drop support for Rust versions lower than 1.44.1.
+
 **cosmwasm-std**
 
 - Remove error helpers `generic_err`, `invalid_base64`, `invalid_utf8`,
   `not_found`, `parse_err`, `serialize_err`, `underflow`, `unauthorized` in
   favour of `StdError::generic_err` and friends.
+- Implement `From<&[u8; $N]> for Binary` and `From<[u8; $N]> for Binary` for all
+  `$N <= 32`.
 
 **cosmwasm-vm**
 

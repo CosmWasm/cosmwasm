@@ -48,6 +48,37 @@ impl From<&[u8]> for Binary {
     }
 }
 
+// Macro needed until https://rust-lang.github.io/rfcs/2000-const-generics.html is stable.
+// See https://users.rust-lang.org/t/how-to-implement-trait-for-fixed-size-array-of-any-size/31494
+macro_rules! implement_from_for_fixed_length_arrays {
+    ($($N:literal)+) => {
+        $(
+            // Reference
+            impl From<&[u8; $N]> for Binary {
+                fn from(source: &[u8; $N]) -> Self {
+                    Self(source.to_vec())
+                }
+            }
+
+            // Owned
+            impl From<[u8; $N]> for Binary {
+                fn from(source: [u8; $N]) -> Self {
+                    // Implementation available for $N <= 32.
+                    // Requires https://caniuse.rs/features/vec_from_array, avaiable since Rust 1.44.0.
+                    Self(source.into())
+                }
+            }
+        )+
+    }
+}
+
+implement_from_for_fixed_length_arrays! {
+     0  1  2  3  4  5  6  7  8  9
+    10 11 12 13 14 15 16 17 18 19
+    20 21 22 23 24 25 26 27 28 29
+    30 31 32
+}
+
 impl From<Vec<u8>> for Binary {
     fn from(vec: Vec<u8>) -> Self {
         Self(vec)
@@ -156,6 +187,84 @@ mod test {
         let original: &[u8] = &[0u8, 187, 61, 11, 250, 0];
         let binary: Binary = original.into();
         assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn from_fixed_length_array_works() {
+        let original = &[];
+        let binary: Binary = original.into();
+        assert_eq!(binary.len(), 0);
+
+        let original = &[0u8];
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8]);
+
+        let original = &[0u8, 187, 61, 11, 250, 0];
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+
+        let original = &[
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1,
+        ];
+        let binary: Binary = original.into();
+        assert_eq!(
+            binary.as_slice(),
+            [
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                1, 1, 1, 1,
+            ]
+        );
+    }
+
+    #[test]
+    fn from_owned_fixed_length_array_works() {
+        let original = [];
+        let binary: Binary = original.into();
+        assert_eq!(binary.len(), 0);
+
+        let original = [0u8];
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8]);
+
+        let original = [0u8, 187, 61, 11, 250, 0];
+        let binary: Binary = original.into();
+        assert_eq!(binary.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+
+        let original = [
+            1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            1, 1, 1,
+        ];
+        let binary: Binary = original.into();
+        assert_eq!(
+            binary.as_slice(),
+            [
+                1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                1, 1, 1, 1,
+            ]
+        );
+    }
+
+    #[test]
+    fn from_literal_works() {
+        let a: Binary = b"".into();
+        assert_eq!(a.len(), 0);
+
+        let a: Binary = b".".into();
+        assert_eq!(a.len(), 1);
+
+        let a: Binary = b"...".into();
+        assert_eq!(a.len(), 3);
+
+        let a: Binary = b"...............................".into();
+        assert_eq!(a.len(), 31);
+
+        let a: Binary = b"................................".into();
+        assert_eq!(a.len(), 32);
+
+        // for length > 32 we need to cast
+        let a: Binary = (b"................................." as &[u8]).into();
+        assert_eq!(a.len(), 33);
     }
 
     #[test]
