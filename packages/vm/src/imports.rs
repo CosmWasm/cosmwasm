@@ -8,12 +8,12 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 use wasmer_runtime_core::vm::Ctx;
 
+use crate::context::{
+    account_for_externally_used_gas, is_storage_readonly, with_func_from_context,
+    with_querier_from_context, with_storage_from_context,
+};
 #[cfg(feature = "iterator")]
 use crate::context::{add_iterator, with_iterator_from_context};
-use crate::context::{
-    is_storage_readonly, try_consume_gas, with_func_from_context, with_querier_from_context,
-    with_storage_from_context,
-};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
@@ -40,7 +40,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
     // `Ok(expr?)` used to convert the error variant.
     let (value, used_gas): (Option<Vec<u8>>, u64) =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)?))?;
-    try_consume_gas::<S, Q>(ctx, used_gas)?;
+    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
 
     let out_data = match value {
         Some(data) => data,
@@ -63,7 +63,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
     let used_gas =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)?))?;
-    try_consume_gas::<S, Q>(ctx, used_gas)?;
+    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
 
     Ok(())
 }
@@ -75,7 +75,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let used_gas = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
-    try_consume_gas::<S, Q>(ctx, used_gas)?;
+    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
 
     Ok(())
 }
@@ -140,7 +140,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -
 
     let (res, used_gas) =
         with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)?))?;
-    try_consume_gas::<S, Q>(ctx, used_gas)?;
+    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
 
     let serialized = to_vec(&res)?;
     write_to_contract::<S, Q>(ctx, &serialized)
@@ -162,7 +162,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
         Ok(store.range(start.as_deref(), end.as_deref(), order)?)
     })?;
     // Gas is consumed for creating an iterator if the first key in the DB has a value
-    try_consume_gas::<S, Q>(ctx, used_gas)?;
+    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
 
     let new_id = add_iterator::<S, Q>(ctx, iterator);
     Ok(new_id)
@@ -173,7 +173,7 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
     let item = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
 
     let (kv, used_gas) = item?;
-    try_consume_gas::<S, Q>(ctx, used_gas)?;
+    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
 
     // Empty key will later be treated as _no more element_.
     let (key, value) = kv.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
