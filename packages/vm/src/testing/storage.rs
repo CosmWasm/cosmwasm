@@ -6,7 +6,7 @@ use std::ops::{Bound, RangeBounds};
 use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
-use crate::traits::{NextItem, StorageIterator};
+use crate::traits::StorageIterator;
 use crate::{FfiResult, Storage};
 
 #[cfg(feature = "iterator")]
@@ -33,7 +33,7 @@ impl MockIterator<'_> {
 
 #[cfg(feature = "iterator")]
 impl StorageIterator for MockIterator<'_> {
-    fn next(&mut self) -> FfiResult<NextItem> {
+    fn next(&mut self) -> FfiResult<Option<KV>> {
         let item = match self.source.next() {
             Some((kv, gas_used)) => (Some(kv), gas_used),
             None => (None, GAS_COST_LAST_ITERATION),
@@ -54,7 +54,7 @@ impl MockStorage {
 }
 
 impl Storage for MockStorage {
-    fn get(&self, key: &[u8]) -> FfiResult<(Option<Vec<u8>>, u64)> {
+    fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>> {
         let gas_cost = key.len() as u64;
         Ok((self.data.get(key).cloned(), gas_cost))
     }
@@ -67,7 +67,7 @@ impl Storage for MockStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<(Box<dyn StorageIterator + 'a>, u64)> {
+    ) -> FfiResult<Box<dyn StorageIterator + 'a>> {
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
@@ -94,16 +94,16 @@ impl Storage for MockStorage {
         Ok((Box::new(MockIterator { source: iter }), GAS_COST_RANGE))
     }
 
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<u64> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
         let gas_cost = (key.len() + value.len()) as u64;
-        Ok(gas_cost)
+        Ok(((), gas_cost))
     }
 
-    fn remove(&mut self, key: &[u8]) -> FfiResult<u64> {
+    fn remove(&mut self, key: &[u8]) -> FfiResult<()> {
         self.data.remove(key);
         let gas_cost = key.len() as u64;
-        Ok(gas_cost)
+        Ok(((), gas_cost))
     }
 }
 

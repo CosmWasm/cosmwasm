@@ -110,7 +110,7 @@ where
                 // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
-                    do_humanize_address(api, ctx, source_ptr, destination_ptr)
+                    do_humanize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
@@ -742,7 +742,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 70810);
+        assert_eq!(init_used, 70920);
     }
 
     #[test]
@@ -766,7 +766,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 97825);
+        assert_eq!(handle_used, 97913);
     }
 
     #[test]
@@ -801,6 +801,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 32558);
+        assert_eq!(query_used, 32602);
     }
 }

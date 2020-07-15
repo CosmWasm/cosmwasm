@@ -10,6 +10,8 @@ use super::storage::MockStorage;
 use crate::{Api, Extern, FfiError, FfiResult, Querier, QuerierResult};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
+const GAS_COST_HUMANIZE: u64 = 44;
+const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -88,7 +90,7 @@ impl Api for MockApi {
         if append > 0 {
             out.extend(vec![0u8; append]);
         }
-        Ok(CanonicalAddr(Binary(out)))
+        Ok((CanonicalAddr(Binary(out)), GAS_COST_CANONICALIZE))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
@@ -112,7 +114,7 @@ impl Api for MockApi {
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed)
             .map_err(|_| FfiError::other("Could not parse human address result as utf-8"))?;
-        Ok(HumanAddr(human))
+        Ok((HumanAddr(human), GAS_COST_HUMANIZE))
     }
 }
 
@@ -127,13 +129,14 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            sender: api.canonical_address(&sender.into()).unwrap(),
+            sender: api.canonical_address(&sender.into()).unwrap().0,
             sent_funds: sent.to_vec(),
         },
         contract: ContractInfo {
             address: api
                 .canonical_address(&HumanAddr::from(MOCK_CONTRACT_ADDR))
-                .unwrap(),
+                .unwrap()
+                .0,
         },
     }
 }
@@ -235,12 +238,12 @@ mod test {
     fn flip_addresses() {
         let api = MockApi::new(20);
         let human = HumanAddr("shorty".to_string());
-        let canon = api.canonical_address(&human).unwrap();
+        let (canon, _gas_cost) = api.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
         assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
         assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
 
-        let recovered = api.human_address(&canon).unwrap();
+        let (recovered, _gas_cost) = api.human_address(&canon).unwrap();
         assert_eq!(human, recovered);
     }
 
