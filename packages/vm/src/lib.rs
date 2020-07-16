@@ -23,7 +23,7 @@ pub use crate::calls::{
 };
 pub use crate::checksum::Checksum;
 pub use crate::errors::{
-    CommunicationError, CommunicationResult, FfiError, FfiResult, FfiSuccess,
+    CommunicationError, CommunicationResult, FfiError, FfiResult, FfiSuccess, GasInfo,
     RegionValidationError, RegionValidationResult, VmError, VmResult,
 };
 pub use crate::features::features_from_csv;

@@ -7,7 +7,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
-use crate::{FfiResult, Storage};
+use crate::{FfiResult, GasInfo, Storage};
 
 #[cfg(feature = "iterator")]
 const GAS_COST_LAST_ITERATION: u64 = 37;
@@ -35,8 +35,8 @@ impl MockIterator<'_> {
 impl StorageIterator for MockIterator<'_> {
     fn next(&mut self) -> FfiResult<Option<KV>> {
         let item = match self.source.next() {
-            Some((kv, gas_used)) => (Some(kv), gas_used),
-            None => (None, GAS_COST_LAST_ITERATION),
+            Some((kv, gas_used)) => (Some(kv), GasInfo::with_externally_used(gas_used)),
+            None => (None, GasInfo::with_externally_used(GAS_COST_LAST_ITERATION)),
         };
         Ok(item)
     }
@@ -55,8 +55,8 @@ impl MockStorage {
 
 impl Storage for MockStorage {
     fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>> {
-        let gas_cost = key.len() as u64;
-        Ok((self.data.get(key).cloned(), gas_cost))
+        let gas_info = GasInfo::with_externally_used(key.len() as u64);
+        Ok((self.data.get(key).cloned(), gas_info))
     }
 
     #[cfg(feature = "iterator")]
@@ -68,13 +68,14 @@ impl Storage for MockStorage {
         end: Option<&[u8]>,
         order: Order,
     ) -> FfiResult<Box<dyn StorageIterator + 'a>> {
+        let gas_info = GasInfo::with_externally_used(GAS_COST_RANGE);
         let bounds = range_bounds(start, end);
 
         // BTreeMap.range panics if range is start > end.
         // However, this cases represent just empty range and we treat it as such.
         match (bounds.start_bound(), bounds.end_bound()) {
             (Bound::Included(start), Bound::Excluded(end)) if start > end => {
-                return Ok((Box::new(MockIterator::empty()), GAS_COST_RANGE));
+                return Ok((Box::new(MockIterator::empty()), gas_info));
             }
             _ => {}
         }
@@ -90,20 +91,19 @@ impl Storage for MockStorage {
                 (item, gas_cost)
             })),
         };
-
-        Ok((Box::new(MockIterator { source: iter }), GAS_COST_RANGE))
+        Ok((Box::new(MockIterator { source: iter }), gas_info))
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
-        let gas_cost = (key.len() + value.len()) as u64;
-        Ok(((), gas_cost))
+        let gas_info = GasInfo::with_externally_used((key.len() + value.len()) as u64);
+        Ok(((), gas_info))
     }
 
     fn remove(&mut self, key: &[u8]) -> FfiResult<()> {
         self.data.remove(key);
-        let gas_cost = key.len() as u64;
-        Ok(((), gas_cost))
+        let gas_info = GasInfo::with_externally_used(key.len() as u64);
+        Ok(((), gas_info))
     }
 }
 

@@ -14,7 +14,7 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
-use crate::errors::{VmError, VmResult};
+use crate::errors::{GasInfo, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
 use crate::traits::{Querier, Storage};
@@ -202,10 +202,16 @@ pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b G
     &get_context_data::<S, Q>(ctx).gas_state
 }
 
+pub fn process_gas_info<S: Storage, Q: Querier>(ctx: &mut Ctx, info: GasInfo) -> VmResult<()> {
+    // FIXME: process info.cost
+    account_for_externally_used_gas::<S, Q>(ctx, info.externally_used)?;
+    Ok(())
+}
+
 /// Use this function to adjust the VM's gas limit when a call into the backend
 /// reported there was externally metered gas used.
 /// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
-pub fn account_for_externally_used_gas<S: Storage, Q: Querier>(
+fn account_for_externally_used_gas<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     amount: u64,
 ) -> VmResult<()> {

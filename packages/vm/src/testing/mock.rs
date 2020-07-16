@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier, QuerierResult};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
@@ -90,7 +90,9 @@ impl Api for MockApi {
         if append > 0 {
             out.extend(vec![0u8; append]);
         }
-        Ok((CanonicalAddr(Binary(out)), GAS_COST_CANONICALIZE))
+
+        let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
+        Ok((CanonicalAddr(Binary(out)), gas_info))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
@@ -114,7 +116,9 @@ impl Api for MockApi {
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed)
             .map_err(|_| FfiError::other("Could not parse human address result as utf-8"))?;
-        Ok((HumanAddr(human), GAS_COST_HUMANIZE))
+
+        let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
+        Ok((HumanAddr(human), gas_info))
     }
 }
 
@@ -185,9 +189,12 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let res = self.querier.raw_query(bin_request);
-        let used_gas = (bin_request.len() + to_binary(&res).unwrap().len()) as u64;
+        // FIXME: is this correct? Was this charged already?
+        let gas_info = GasInfo::with_externally_used(
+            (bin_request.len() + to_binary(&res).unwrap().len()) as u64,
+        );
         // We don't use FFI, so FfiResult is always Ok() regardless of error on other levels
-        Ok((res, used_gas))
+        Ok((res, gas_info))
     }
 }
 
@@ -197,13 +204,14 @@ impl MockQuerier {
         let bin = match to_binary(request) {
             Ok(raw) => raw,
             Err(e) => {
-                let used_gas = e.to_string().len() as u64;
+                // FIXME: is this correct? Was this charged already?
+                let gas_info = GasInfo::with_externally_used(e.to_string().len() as u64);
                 return Ok((
                     Err(SystemError::InvalidRequest {
                         error: format!("Serializing query request: {}", e),
                         request: Binary(b"N/A".to_vec()),
                     }),
-                    used_gas,
+                    gas_info,
                 ));
             }
         };
