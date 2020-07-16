@@ -545,7 +545,7 @@ mod test {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 134);
-        assert_eq!(report2.used_internally, 70676);
+        assert_eq!(report2.used_internally, 70786);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,

@@ -14,6 +14,7 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
+use crate::backends::decrease_gas_left;
 use crate::errors::{GasInfo, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
@@ -203,7 +204,7 @@ pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b G
 }
 
 pub fn process_gas_info<S: Storage, Q: Querier>(ctx: &mut Ctx, info: GasInfo) -> VmResult<()> {
-    // FIXME: process info.cost
+    decrease_gas_left(ctx, info.cost);
     account_for_externally_used_gas::<S, Q>(ctx, info.externally_used)?;
     Ok(())
 }
@@ -365,7 +366,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::backends::{compile, get_gas_left, set_gas_limit};
+    use crate::backends::{compile, decrease_gas_left, set_gas_limit};
     use crate::errors::VmError;
     #[cfg(feature = "iterator")]
     use crate::testing::MockIterator;
@@ -425,17 +426,6 @@ mod test {
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(ctx, storage, querier);
-    }
-
-    /// This is a testing-only implementation that panics on overconsumption.
-    /// We currently don't have a production-ready version of this since only Wasmer consumes VM gas
-    /// directly. This might change in the future (https://github.com/CosmWasm/cosmwasm/pull/475)
-    fn decrease_gas_left(ctx: &mut Ctx, amount: u64) {
-        let current_limit = get_gas_left(ctx);
-        let new_limit = current_limit
-            .checked_sub(amount)
-            .expect("Must not decrease more than available");
-        set_gas_limit(ctx, new_limit);
     }
 
     #[test]
