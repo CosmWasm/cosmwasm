@@ -205,7 +205,7 @@ pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b G
 }
 
 pub fn process_gas_info<S: Storage, Q: Querier>(ctx: &mut Ctx, info: GasInfo) -> VmResult<()> {
-    decrease_gas_left(ctx, info.cost);
+    decrease_gas_left(ctx, info.cost)?;
     account_for_externally_used_gas::<S, Q>(ctx, info.externally_used)?;
     Ok(())
 }
@@ -493,7 +493,7 @@ mod test {
         account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(instance.context_mut(), 20);
+        decrease_gas_left(instance.context_mut(), 20).unwrap();
 
         let context = instance.context_mut();
         account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();

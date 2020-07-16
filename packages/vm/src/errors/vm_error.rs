@@ -2,6 +2,7 @@ use snafu::Snafu;
 use std::fmt::{Debug, Display};
 
 use super::communication_error::CommunicationError;
+use crate::backends::InsufficientGasLeft;
 use crate::ffi::FfiError;
 
 #[derive(Debug, Snafu)]
@@ -226,6 +227,12 @@ impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
             },
             _ => runtime_error(original),
         }
+    }
+}
+
+impl From<InsufficientGasLeft> for VmError {
+    fn from(_original: InsufficientGasLeft) -> Self {
+        VmError::GasDepletion
     }
 }
 
