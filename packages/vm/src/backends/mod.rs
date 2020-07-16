@@ -24,7 +24,7 @@ pub struct InsufficientGasLeft;
 pub fn decrease_gas_left(ctx: &mut Ctx, amount: u64) -> Result<(), InsufficientGasLeft> {
     let remaining = get_gas_left(ctx)
         .checked_sub(amount)
-        .ok_or(InsufficientGasLeft {})?;
+        .ok_or(InsufficientGasLeft)?;
     set_gas_left(ctx, remaining);
     Ok(())
 }
