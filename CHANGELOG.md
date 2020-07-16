@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.9.4 (unreleased)
+## 0.9.4 (2020-07-16)
 
 **cosmwasm-vm**
 
