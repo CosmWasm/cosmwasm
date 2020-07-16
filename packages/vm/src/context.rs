@@ -24,10 +24,10 @@ use crate::traits::{Querier, Storage};
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct GasState {
     /// Gas limit for the computation.
-    gas_limit: u64,
+    pub gas_limit: u64,
     /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
     #[allow(unused)]
-    externally_used_gas: u64,
+    pub externally_used_gas: u64,
 }
 
 impl GasState {
@@ -61,7 +61,7 @@ impl GasState {
     ///
     /// We need the amount of gas left in wasmer since it is not tracked inside this object.
     #[allow(unused)]
-    fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
+    pub(crate) fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
         self.gas_limit
             .saturating_sub(self.externally_used_gas)
             .saturating_sub(wasmer_gas_left)
@@ -192,8 +192,14 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
-pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a mut Ctx) -> &'b mut GasState {
+pub fn get_gas_state_mut<'a, 'b, S: Storage, Q: Querier + 'b>(
+    ctx: &'a mut Ctx,
+) -> &'b mut GasState {
     &mut get_context_data_mut::<S, Q>(ctx).gas_state
+}
+
+pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b GasState {
+    &get_context_data::<S, Q>(ctx).gas_state
 }
 
 /// Use this function to adjust the VM's gas limit when a call into the backend
@@ -218,14 +224,14 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
         let instance = unsafe { instance_ptr.as_mut() };
         let gas_state = &mut ctx_data.gas_state;
 
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance));
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance.context()));
 
         gas_state.increase_externally_used_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_limit(instance, new_limit);
+        set_gas_limit(instance.context_mut(), new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
@@ -418,12 +424,12 @@ mod test {
     /// This is a testing-only implementation that panics on overconsumption.
     /// We currently don't have a production-ready version of this since only Wasmer consumes VM gas
     /// directly. This might change in the future (https://github.com/CosmWasm/cosmwasm/pull/475)
-    fn decrease_gas_left(instance: &mut WasmerInstance, amount: u64) {
-        let current_limit = get_gas_left(instance);
+    fn decrease_gas_left(ctx: &mut Ctx, amount: u64) {
+        let current_limit = get_gas_left(ctx);
         let new_limit = current_limit
             .checked_sub(amount)
             .expect("Must not decrease more than available");
-        set_gas_limit(instance, new_limit);
+        set_gas_limit(ctx, new_limit);
     }
 
     #[test]
@@ -459,8 +465,8 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.as_mut(), gas_limit);
-        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_limit(instance.context_mut(), gas_limit);
+        get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
         // Consume all the Gas that we allocated
@@ -481,8 +487,8 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.as_mut(), gas_limit);
-        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_limit(instance.context_mut(), gas_limit);
+        get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
         // Some gas was consumed externally
@@ -490,7 +496,7 @@ mod test {
         account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(instance.as_mut(), 20);
+        decrease_gas_left(instance.context_mut(), 20);
 
         let context = instance.context_mut();
         account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();

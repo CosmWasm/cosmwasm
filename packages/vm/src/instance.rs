@@ -13,7 +13,7 @@ use wasmer_runtime_core::{
 
 use crate::backends::{compile, get_gas_left, set_gas_limit};
 use crate::context::{
-    get_gas_state, move_into_context, move_out_of_context, set_storage_readonly,
+    get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
     set_wasmer_instance, setup_context, with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
@@ -28,6 +28,19 @@ use crate::memory::{get_memory_info, read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
 
 const WASM_PAGE_SIZE: u64 = 64 * 1024;
+
+#[derive(Copy, Clone, Debug)]
+pub struct GasReport {
+    /// The original limit the instance was created with
+    pub limit: u64,
+    /// The remaining gas that can be spend
+    pub remaining: u64,
+    /// The amount of gas that was spend and metered externally in operations triggered by this instance
+    pub used_externally: u64,
+    /// The amount of gas that was spend and metered internally (i.e. by executing Wasm and calling
+    /// API methods which are not metered externally)
+    pub used_internally: u64,
+}
 
 pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
     /// We put this instance in a box to maintain a constant memory address for the entire
@@ -139,8 +152,8 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas_limit(wasmer_instance.as_mut(), gas_limit);
-        get_gas_state::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_limit(wasmer_instance.context_mut(), gas_limit);
+        get_gas_state_mut::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
@@ -178,7 +191,21 @@ where
 
     /// Returns the currently remaining gas.
     pub fn get_gas_left(&self) -> u64 {
-        get_gas_left(&self.inner)
+        self.create_gas_report().remaining
+    }
+
+    /// Creates and returns a gas report.
+    /// This is a snapshot and multiple reports can be created during the lifetime of
+    /// an instance.
+    pub fn create_gas_report(&self) -> GasReport {
+        let state = get_gas_state::<S, Q>(self.inner.context()).clone();
+        let gas_left = get_gas_left(self.inner.context());
+        GasReport {
+            limit: state.gas_limit,
+            remaining: gas_left,
+            used_externally: state.externally_used_gas,
+            used_internally: state.get_gas_used_in_wasmer(gas_left),
+        }
     }
 
     /// Sets the readonly storage flag on this instance. Since one instance can be used
@@ -250,7 +277,7 @@ mod test {
     use crate::traits::Storage;
     use crate::{call_init, FfiError};
     use cosmwasm_std::{
-        coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
+        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
     };
     use wabt::wat2wasm;
@@ -467,6 +494,63 @@ mod test {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
+    }
+
+    #[test]
+    #[cfg(feature = "default-cranelift")]
+    fn create_gas_report_works_cranelift() {
+        const LIMIT: u64 = 7_000_000;
+        /// Value hardcoded in cranelift backend
+        const FAKE_REMANING: u64 = 1_000_000;
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
+
+        let report1 = instance.create_gas_report();
+        assert_eq!(report1.used_externally, 0);
+        assert_eq!(report1.used_internally, LIMIT - FAKE_REMANING);
+        assert_eq!(report1.limit, LIMIT);
+        assert_eq!(report1.remaining, FAKE_REMANING);
+
+        // init contract
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+            .unwrap()
+            .unwrap();
+
+        let report2 = instance.create_gas_report();
+        assert_eq!(report2.used_externally, 0);
+        assert_eq!(report2.used_internally, LIMIT - FAKE_REMANING);
+        assert_eq!(report2.limit, LIMIT);
+        assert_eq!(report2.remaining, FAKE_REMANING);
+    }
+
+    #[test]
+    #[cfg(feature = "default-singlepass")]
+    fn create_gas_report_works_singlepass() {
+        const LIMIT: u64 = 7_000_000;
+        let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
+
+        let report1 = instance.create_gas_report();
+        assert_eq!(report1.used_externally, 0);
+        assert_eq!(report1.used_internally, 0);
+        assert_eq!(report1.limit, LIMIT);
+        assert_eq!(report1.remaining, LIMIT);
+
+        // init contract
+        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+            .unwrap()
+            .unwrap();
+
+        let report2 = instance.create_gas_report();
+        assert_eq!(report2.used_externally, 134);
+        assert_eq!(report2.used_internally, 70676);
+        assert_eq!(report2.limit, LIMIT);
+        assert_eq!(
+            report2.remaining,
+            LIMIT - report2.used_externally - report2.used_internally
+        );
     }
 
     #[test]

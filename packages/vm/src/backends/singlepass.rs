@@ -5,7 +5,7 @@ use wasmer_runtime_core::{
     codegen::{MiddlewareChain, StreamingCompiler},
     compile_with,
     module::Module,
-    Instance as WasmerInstance,
+    vm::Ctx,
 };
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
@@ -42,8 +42,8 @@ pub fn backend() -> &'static str {
     "singlepass"
 }
 
-/// Set the amount of gas units that can be used in the instance.
-pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
+/// Set the amount of gas units that can be used in the context.
+pub fn set_gas_limit(ctx: &mut Ctx, limit: u64) {
     if limit > MAX_GAS_LIMIT {
         panic!(
             "Attempted to set gas limit larger than max gas limit (got: {}; maximum: {}).",
@@ -51,13 +51,13 @@ pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
         );
     } else {
         let used = MAX_GAS_LIMIT - limit;
-        metering::set_points_used(instance, used);
+        metering::set_points_used_ctx(ctx, used);
     }
 }
 
-/// Get how many more gas units can be used in the instance.
-pub fn get_gas_left(instance: &WasmerInstance) -> u64 {
-    let used = metering::get_points_used(instance);
+/// Get how many more gas units can be used in the context.
+pub fn get_gas_left(ctx: &Ctx) -> u64 {
+    let used = metering::get_points_used_ctx(ctx);
     // when running out of gas, get_points_used can exceed MAX_GAS_LIMIT
     MAX_GAS_LIMIT.saturating_sub(used)
 }
@@ -66,7 +66,7 @@ pub fn get_gas_left(instance: &WasmerInstance) -> u64 {
 mod test {
     use super::*;
     use wabt::wat2wasm;
-    use wasmer_runtime_core::imports;
+    use wasmer_runtime_core::{imports, Instance as WasmerInstance};
 
     fn instantiate(code: &[u8]) -> WasmerInstance {
         let module = compile(code).unwrap();
@@ -78,7 +78,7 @@ mod test {
     fn get_gas_left_defaults_to_constant() {
         let wasm = wat2wasm("(module)").unwrap();
         let instance = instantiate(&wasm);
-        let gas_left = get_gas_left(&instance);
+        let gas_left = get_gas_left(instance.context());
         assert_eq!(gas_left, MAX_GAS_LIMIT);
     }
 
@@ -88,20 +88,20 @@ mod test {
         let mut instance = instantiate(&wasm);
 
         let limit = 3456789;
-        set_gas_limit(&mut instance, limit);
-        assert_eq!(get_gas_left(&instance), limit);
+        set_gas_limit(instance.context_mut(), limit);
+        assert_eq!(get_gas_left(instance.context()), limit);
 
         let limit = 1;
-        set_gas_limit(&mut instance, limit);
-        assert_eq!(get_gas_left(&instance), limit);
+        set_gas_limit(instance.context_mut(), limit);
+        assert_eq!(get_gas_left(instance.context()), limit);
 
         let limit = 0;
-        set_gas_limit(&mut instance, limit);
-        assert_eq!(get_gas_left(&instance), limit);
+        set_gas_limit(instance.context_mut(), limit);
+        assert_eq!(get_gas_left(instance.context()), limit);
 
         let limit = MAX_GAS_LIMIT;
-        set_gas_limit(&mut instance, limit);
-        assert_eq!(get_gas_left(&instance), limit);
+        set_gas_limit(instance.context_mut(), limit);
+        assert_eq!(get_gas_left(instance.context()), limit);
     }
 
     #[test]
@@ -113,6 +113,6 @@ mod test {
         let mut instance = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;
-        set_gas_limit(&mut instance, limit);
+        set_gas_limit(instance.context_mut(), limit);
     }
 }

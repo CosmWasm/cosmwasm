@@ -1,8 +1,7 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime_core::{
-    backend::Compiler, backend::CompilerConfig, compile_with_config, module::Module,
-    Instance as WasmerInstance,
+    backend::Compiler, backend::CompilerConfig, compile_with_config, module::Module, vm::Ctx,
 };
 
 use crate::errors::VmResult;
@@ -26,10 +25,10 @@ pub fn backend() -> &'static str {
     "cranelift"
 }
 
-/// Set the amount of gas units that can be used in the instance.
-pub fn set_gas_limit(_instance: &mut WasmerInstance, _limit: u64) {}
+/// Set the amount of gas units that can be used in the context.
+pub fn set_gas_limit(_ctx: &mut Ctx, _limit: u64) {}
 
-/// Get how many more gas units can be used in the instance.
-pub fn get_gas_left(_instance: &WasmerInstance) -> u64 {
+/// Get how many more gas units can be used in the context.
+pub fn get_gas_left(_ctx: &Ctx) -> u64 {
     FAKE_GAS_AVAILABLE
 }

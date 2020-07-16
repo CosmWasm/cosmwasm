@@ -27,7 +27,7 @@ pub use crate::errors::{
     RegionValidationResult, VmError, VmResult,
 };
 pub use crate::features::features_from_csv;
-pub use crate::instance::Instance;
+pub use crate::instance::{GasReport, Instance};
 pub use crate::modules::FileSystemCache;
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, Storage};
