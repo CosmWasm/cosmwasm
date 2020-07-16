@@ -3,8 +3,8 @@ use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr, StdResult, SystemResult};
 use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
-use crate::errors::FfiError;
-use crate::errors::FfiResult;
+use crate::ffi::FfiError;
+use crate::ffi::FfiResult;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.

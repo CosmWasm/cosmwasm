@@ -15,7 +15,8 @@ use wasmer_runtime_core::{
 };
 
 use crate::backends::decrease_gas_left;
-use crate::errors::{GasInfo, VmError, VmResult};
+use crate::errors::{VmError, VmResult};
+use crate::ffi::GasInfo;
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
 use crate::traits::{Querier, Storage};

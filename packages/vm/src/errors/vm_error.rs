@@ -2,7 +2,7 @@ use snafu::Snafu;
 use std::fmt::{Debug, Display};
 
 use super::communication_error::CommunicationError;
-use super::ffi_error::FfiError;
+use crate::ffi::FfiError;
 
 #[derive(Debug, Snafu)]
 #[non_exhaustive]

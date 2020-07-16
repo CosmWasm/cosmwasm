@@ -1,6 +1,36 @@
 use snafu::Snafu;
 use std::fmt::Debug;
 
+pub type FfiResult<T> = core::result::Result<FfiSuccess<T>, FfiError>;
+
+/// A return element and the gas cost of this FFI call
+pub type FfiSuccess<T> = (T, GasInfo);
+
+#[derive(Copy, Clone, Debug)]
+pub struct GasInfo {
+    /// The gas cost of a computation that was executed already but not yet charged
+    pub cost: u64,
+    /// Gas that was used and charged externally. This is needed to
+    /// adjust the VM's gas limit but does not affect the gas usage.
+    pub externally_used: u64,
+}
+
+impl GasInfo {
+    pub fn with_cost(amount: u64) -> Self {
+        GasInfo {
+            cost: amount,
+            externally_used: 0,
+        }
+    }
+
+    pub fn with_externally_used(amount: u64) -> Self {
+        GasInfo {
+            cost: 0,
+            externally_used: amount,
+        }
+    }
+}
+
 #[derive(Debug, Snafu)]
 pub enum FfiError {
     #[snafu(display("Panic in FFI call"))]
@@ -47,7 +77,7 @@ mod test {
     // constructors
 
     #[test]
-    fn foreign_panic() {
+    fn ffi_error_foreign_panic() {
         let error = FfiError::foreign_panic();
         match error {
             FfiError::ForeignPanic { .. } => {}
@@ -56,7 +86,7 @@ mod test {
     }
 
     #[test]
-    fn bad_argument() {
+    fn ffi_error_bad_argument() {
         let error = FfiError::bad_argument();
         match error {
             FfiError::BadArgument { .. } => {}
@@ -65,7 +95,7 @@ mod test {
     }
 
     #[test]
-    fn out_of_gas() {
+    fn ffi_error_out_of_gas() {
         let error = FfiError::out_of_gas();
         match error {
             FfiError::OutOfGas { .. } => {}
@@ -74,7 +104,7 @@ mod test {
     }
 
     #[test]
-    fn other() {
+    fn ffi_error_other() {
         let error = FfiError::other("broken");
         match error {
             FfiError::Other { error, .. } => assert_eq!(error, "broken"),
