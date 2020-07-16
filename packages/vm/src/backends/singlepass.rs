@@ -5,7 +5,7 @@ use wasmer_runtime_core::{
     codegen::{MiddlewareChain, StreamingCompiler},
     compile_with,
     module::Module,
-    Instance as WasmerInstance,
+    vm::Ctx,
 };
 use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
 
@@ -41,15 +41,15 @@ pub fn backend() -> &'static str {
     "singlepass"
 }
 
-/// Set the amount of gas units that can be used in the instance.
-pub fn set_gas_limit(instance: &mut WasmerInstance, limit: u64) {
+/// Set the amount of gas units that can be used in the context.
+pub fn set_gas_limit(ctx: &mut Ctx, limit: u64) {
     let used = GAS_LIMIT.saturating_sub(limit);
-    metering::set_points_used(instance, used)
+    metering::set_points_used_ctx(ctx, used)
 }
 
-/// Get how many more gas units can be used in the instance.
-pub fn get_gas_left(instance: &WasmerInstance) -> u64 {
-    let used = metering::get_points_used(instance);
-    // when running out of gas, get_points_used can exceed GAS_LIMIT
+/// Get how many more gas units can be used in the context.
+pub fn get_gas_left(ctx: &Ctx) -> u64 {
+    let used = metering::get_points_used_ctx(ctx);
+    // when running out of gas, get_points_used_ctx can exceed GAS_LIMIT
     GAS_LIMIT.saturating_sub(used)
 }

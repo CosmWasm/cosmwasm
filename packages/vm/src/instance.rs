@@ -139,7 +139,7 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas_limit(wasmer_instance.as_mut(), gas_limit);
+        set_gas_limit(wasmer_instance.context_mut(), gas_limit);
         get_gas_state::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
@@ -178,7 +178,7 @@ where
 
     /// Returns the currently remaining gas.
     pub fn get_gas_left(&self) -> u64 {
-        get_gas_left(&self.inner)
+        get_gas_left(self.inner.context())
     }
 
     /// Sets the readonly storage flag on this instance. Since one instance can be used

@@ -205,14 +205,14 @@ pub fn try_consume_gas<S: Storage, Q: Querier>(ctx: &mut Ctx, used_gas: u64) -> 
         let instance = unsafe { instance_ptr.as_mut() };
         let gas_state = &mut ctx_data.gas_state;
 
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance));
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance.context()));
 
         gas_state.use_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_limit(instance, new_limit);
+        set_gas_limit(instance.context_mut(), new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
@@ -436,7 +436,7 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.as_mut(), gas_limit);
+        set_gas_limit(instance.context_mut(), gas_limit);
         get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
@@ -458,7 +458,7 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.as_mut(), gas_limit);
+        set_gas_limit(instance.context_mut(), gas_limit);
         get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
@@ -467,8 +467,8 @@ mod test {
         try_consume_gas::<MS, MQ>(context, 4).unwrap();
 
         // consume 20 gas directly in wasmer
-        let new_limit = get_gas_left(instance.as_mut()) - 20;
-        set_gas_limit(instance.as_mut(), new_limit);
+        let new_limit = get_gas_left(instance.context()) - 20;
+        set_gas_limit(instance.context_mut(), new_limit);
 
         let context = instance.context_mut();
         try_consume_gas::<MS, MQ>(context, 6).unwrap();
