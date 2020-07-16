@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.9.4 (unreleased)
+
+**cosmwasm-vm**
+
+- Add `Instance::create_gas_report` returning a gas report including the
+  original limit, the remaining gas and the internally/externally used gas.
+
 ## 0.9.3 (2020-07-08)
 
 **cosmwasm-storage**

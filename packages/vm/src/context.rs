@@ -24,10 +24,10 @@ use crate::traits::{Querier, Storage};
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct GasState {
     /// Gas limit for the computation.
-    gas_limit: u64,
+    pub gas_limit: u64,
     /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
     #[allow(unused)]
-    externally_used_gas: u64,
+    pub externally_used_gas: u64,
 }
 
 impl GasState {
@@ -61,7 +61,7 @@ impl GasState {
     ///
     /// We need the amount of gas left in wasmer since it is not tracked inside this object.
     #[allow(unused)]
-    fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
+    pub(crate) fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
         self.gas_limit
             .saturating_sub(self.externally_used_gas)
             .saturating_sub(wasmer_gas_left)
@@ -198,7 +198,6 @@ pub fn get_gas_state_mut<'a, 'b, S: Storage, Q: Querier + 'b>(
     &mut get_context_data_mut::<S, Q>(ctx).gas_state
 }
 
-#[allow(unused)]
 pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b GasState {
     &get_context_data::<S, Q>(ctx).gas_state
 }
