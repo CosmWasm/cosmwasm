@@ -192,8 +192,15 @@ pub(crate) fn move_into_context<S: Storage, Q: Querier>(target: &mut Ctx, storag
     b.querier = Some(querier);
 }
 
-pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a mut Ctx) -> &'b mut GasState {
+pub fn get_gas_state_mut<'a, 'b, S: Storage, Q: Querier + 'b>(
+    ctx: &'a mut Ctx,
+) -> &'b mut GasState {
     &mut get_context_data_mut::<S, Q>(ctx).gas_state
+}
+
+#[allow(unused)]
+pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b GasState {
+    &get_context_data::<S, Q>(ctx).gas_state
 }
 
 #[cfg(feature = "default-singlepass")]
@@ -437,7 +444,7 @@ mod test {
 
         let gas_limit = 100;
         set_gas_limit(instance.context_mut(), gas_limit);
-        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
         // Consume all the Gas that we allocated
@@ -459,7 +466,7 @@ mod test {
 
         let gas_limit = 100;
         set_gas_limit(instance.context_mut(), gas_limit);
-        get_gas_state::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
         // Consume all the Gas that we allocated
