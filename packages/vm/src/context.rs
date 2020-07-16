@@ -225,7 +225,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     used_gas: u64,
 ) -> VmResult<()> {
-    use crate::backends::{get_gas_left, set_gas_limit};
+    use crate::backends::{get_gas_left, set_gas_left};
 
     let ctx_data = get_context_data_mut::<S, Q>(ctx);
     if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
@@ -239,7 +239,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_limit(instance.context_mut(), new_limit);
+        set_gas_left(instance.context_mut(), new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
@@ -367,7 +367,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::backends::{compile, decrease_gas_left, set_gas_limit};
+    use crate::backends::{compile, decrease_gas_left, set_gas_left};
     use crate::errors::VmError;
     #[cfg(feature = "iterator")]
     use crate::testing::MockIterator;
@@ -462,7 +462,7 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.context_mut(), gas_limit);
+        set_gas_left(instance.context_mut(), gas_limit);
         get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
@@ -484,7 +484,7 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.context_mut(), gas_limit);
+        set_gas_left(instance.context_mut(), gas_limit);
         get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 

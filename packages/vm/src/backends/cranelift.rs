@@ -26,7 +26,7 @@ pub fn backend() -> &'static str {
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_limit(_ctx: &mut Ctx, _limit: u64) {}
+pub fn set_gas_left(_ctx: &mut Ctx, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
 pub fn get_gas_left(_ctx: &Ctx) -> u64 {

@@ -20,11 +20,11 @@ pub fn compiler_for_backend(backend: &str) -> Option<Box<dyn Compiler>> {
 /// the remaining gas is set to 0.
 pub fn decrease_gas_left(ctx: &mut Ctx, amount: u64) {
     let remaining = get_gas_left(ctx).saturating_sub(amount);
-    set_gas_limit(ctx, remaining);
+    set_gas_left(ctx, remaining);
 }
 
 #[cfg(feature = "default-cranelift")]
-pub use cranelift::{backend, compile, get_gas_left, set_gas_limit};
+pub use cranelift::{backend, compile, get_gas_left, set_gas_left};
 
 #[cfg(feature = "default-singlepass")]
-pub use singlepass::{backend, compile, get_gas_left, set_gas_limit};
+pub use singlepass::{backend, compile, get_gas_left, set_gas_left};

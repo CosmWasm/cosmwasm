@@ -11,7 +11,7 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
-use crate::backends::{compile, get_gas_left, set_gas_limit};
+use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
     get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
     set_wasmer_instance, setup_context, with_querier_from_context, with_storage_from_context,
@@ -152,7 +152,7 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas_limit(wasmer_instance.context_mut(), gas_limit);
+        set_gas_left(wasmer_instance.context_mut(), gas_limit);
         get_gas_state_mut::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
