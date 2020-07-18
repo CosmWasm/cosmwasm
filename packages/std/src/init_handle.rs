@@ -8,6 +8,8 @@ use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
 use crate::types::{Empty, HumanAddr};
+use crate::StdError;
+use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -140,6 +142,26 @@ where
     }
 }
 
+impl<T> TryFrom<Context<T>> for InitResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    type Error = StdError;
+
+    fn try_from(ctx: Context<T>) -> Result<Self, Self::Error> {
+        if ctx.data.is_some() {
+            Err(StdError::generic_err(
+                "cannot convert Context with data to InitResponse",
+            ))
+        } else {
+            Ok(InitResponse {
+                messages: ctx.messages,
+                log: ctx.log,
+            })
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct HandleResponse<T = Empty>
 where
@@ -165,6 +187,21 @@ where
     }
 }
 
+impl<T> TryFrom<Context<T>> for HandleResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    type Error = StdError;
+
+    fn try_from(ctx: Context<T>) -> Result<Self, Self::Error> {
+        Ok(HandleResponse {
+            messages: ctx.messages,
+            log: ctx.log,
+            data: ctx.data,
+        })
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateResponse<T = Empty>
 where
@@ -187,6 +224,55 @@ where
             log: vec![],
             data: None,
         }
+    }
+}
+
+impl<T> TryFrom<Context<T>> for MigrateResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    type Error = StdError;
+
+    fn try_from(ctx: Context<T>) -> Result<Self, Self::Error> {
+        Ok(MigrateResponse {
+            messages: ctx.messages,
+            log: ctx.log,
+            data: ctx.data,
+        })
+    }
+}
+#[derive(Clone, Debug, PartialEq)]
+pub struct Context<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    messages: Vec<CosmosMsg<T>>,
+    log: Vec<LogAttribute>,
+    data: Option<Binary>,
+}
+
+impl<T> Context<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub fn new() -> Self {
+        Context {
+            messages: vec![],
+            log: vec![],
+            data: None,
+        }
+    }
+
+    pub fn emit<K: ToString, V: ToString>(&mut self, key: K, value: V) {
+        self.log.push(log(key, value));
+    }
+
+    pub fn send_action<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+        self.messages.push(msg.into());
+    }
+
+    pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
+        self.data = Some(data.into());
     }
 }
 
