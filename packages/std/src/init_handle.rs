@@ -251,16 +251,25 @@ where
     data: Option<Binary>,
 }
 
-impl<T> Context<T>
+impl<T> Default for Context<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    pub fn new() -> Self {
+    fn default() -> Self {
         Context {
             messages: vec![],
             log: vec![],
             data: None,
         }
+    }
+}
+
+impl<T> Context<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub fn new() -> Self {
+        Context::default()
     }
 
     pub fn emit<K: ToString, V: ToString>(&mut self, key: K, value: V) {
