@@ -208,8 +208,8 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
-        QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
+        QueryMsg::Verifier {} => query_verifier(deps).into(),
+        QueryMsg::OtherBalance { address } => query_other_balance(deps, address).into(),
     }
 }
 

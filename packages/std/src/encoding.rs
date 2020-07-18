@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
+use crate::to_binary;
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -45,6 +46,14 @@ impl fmt::Display for Binary {
 impl From<&[u8]> for Binary {
     fn from(binary: &[u8]) -> Self {
         Self(binary.to_vec())
+    }
+}
+
+// TODO: this doesn't compile for various reasons.
+// Can we figure a trick?
+impl<T: Serialize> From<StdResult<T>> for StdResult<Binary> {
+    fn from(typed: StdResult<T>) -> StdResult<Binary> {
+        typed.and_then(|obj| to_binary(&obj))
     }
 }
 
