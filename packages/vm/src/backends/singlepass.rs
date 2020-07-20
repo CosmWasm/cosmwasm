@@ -18,7 +18,7 @@ use crate::middleware::DeterministicMiddleware;
 ///
 /// To work around this limitation, we set the gas limit of all Wasmer instances to this very high value,
 /// assuming users won't request more than this amount of gas. In order to set the real gas limit, we pretend
-/// to consume the difference between the two in `set_gas_limit` ("points used" in the metering middleware).
+/// to consume the difference between the two in `set_gas_left` ("points used" in the metering middleware).
 /// Since we observed overflow behaviour in the points used, we ensure both MAX_GAS_LIMIT and points used stay
 /// far below u64::MAX.
 const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
@@ -43,14 +43,14 @@ pub fn backend() -> &'static str {
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_limit(ctx: &mut Ctx, limit: u64) {
-    if limit > MAX_GAS_LIMIT {
+pub fn set_gas_left(ctx: &mut Ctx, amount: u64) {
+    if amount > MAX_GAS_LIMIT {
         panic!(
             "Attempted to set gas limit larger than max gas limit (got: {}; maximum: {}).",
-            limit, MAX_GAS_LIMIT
+            amount, MAX_GAS_LIMIT
         );
     } else {
-        let used = MAX_GAS_LIMIT - limit;
+        let used = MAX_GAS_LIMIT - amount;
         metering::set_points_used_ctx(ctx, used);
     }
 }
@@ -83,24 +83,24 @@ mod test {
     }
 
     #[test]
-    fn set_gas_limit_works() {
+    fn set_gas_left_works() {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let limit = 3456789;
-        set_gas_limit(instance.context_mut(), limit);
+        set_gas_left(instance.context_mut(), limit);
         assert_eq!(get_gas_left(instance.context()), limit);
 
         let limit = 1;
-        set_gas_limit(instance.context_mut(), limit);
+        set_gas_left(instance.context_mut(), limit);
         assert_eq!(get_gas_left(instance.context()), limit);
 
         let limit = 0;
-        set_gas_limit(instance.context_mut(), limit);
+        set_gas_left(instance.context_mut(), limit);
         assert_eq!(get_gas_left(instance.context()), limit);
 
         let limit = MAX_GAS_LIMIT;
-        set_gas_limit(instance.context_mut(), limit);
+        set_gas_left(instance.context_mut(), limit);
         assert_eq!(get_gas_left(instance.context()), limit);
     }
 
@@ -108,11 +108,11 @@ mod test {
     #[should_panic(
         expected = "Attempted to set gas limit larger than max gas limit (got: 9223372036854775808; maximum: 9223372036854775807)."
     )]
-    fn set_gas_limit_panic_for_values_too_large() {
+    fn set_gas_left_panic_for_values_too_large() {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;
-        set_gas_limit(instance.context_mut(), limit);
+        set_gas_left(instance.context_mut(), limit);
     }
 }

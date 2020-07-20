@@ -7,9 +7,16 @@ use cosmwasm_std::{
 };
 
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier, QuerierResult};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
+const GAS_COST_HUMANIZE: u64 = 44;
+const GAS_COST_CANONICALIZE: u64 = 55;
+const GAS_COST_QUERY_FLAT: u64 = 100_000;
+/// Gas per request byte
+const GAS_COST_QUERY_REQUEST_MULTIPLIER: u64 = 0;
+/// Gas per reponse byte
+const GAS_COST_QUERY_RESPONSE_MULTIPLIER: u64 = 100;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -88,7 +95,9 @@ impl Api for MockApi {
         if append > 0 {
             out.extend(vec![0u8; append]);
         }
-        Ok(CanonicalAddr(Binary(out)))
+
+        let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
+        Ok((CanonicalAddr(Binary(out)), gas_info))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
@@ -112,7 +121,9 @@ impl Api for MockApi {
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed)
             .map_err(|_| FfiError::other("Could not parse human address result as utf-8"))?;
-        Ok(HumanAddr(human))
+
+        let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
+        Ok((HumanAddr(human), gas_info))
     }
 }
 
@@ -127,13 +138,14 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            sender: api.canonical_address(&sender.into()).unwrap(),
+            sender: api.canonical_address(&sender.into()).unwrap().0,
             sent_funds: sent.to_vec(),
         },
         contract: ContractInfo {
             address: api
                 .canonical_address(&HumanAddr::from(MOCK_CONTRACT_ADDR))
-                .unwrap(),
+                .unwrap()
+                .0,
         },
     }
 }
@@ -181,30 +193,35 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 
 impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let res = self.querier.raw_query(bin_request);
-        let used_gas = (bin_request.len() + to_binary(&res).unwrap().len()) as u64;
-        // We don't use FFI, so FfiResult is always Ok() regardless of error on other levels
-        Ok((res, used_gas))
+        let response = self.querier.raw_query(bin_request);
+        let gas_info = GasInfo::with_externally_used(
+            GAS_COST_QUERY_FLAT
+                + (GAS_COST_QUERY_REQUEST_MULTIPLIER * (bin_request.len() as u64))
+                + (GAS_COST_QUERY_RESPONSE_MULTIPLIER
+                    * (to_binary(&response).unwrap().len() as u64)),
+        );
+        // We don't use FFI in the mock implementation, so FfiResult is always Ok() regardless of error on other levels
+        Ok((response, gas_info))
     }
 }
 
 impl MockQuerier {
     pub fn handle_query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
         // encode the request, then call raw_query
-        let bin = match to_binary(request) {
+        let request_binary = match to_binary(request) {
             Ok(raw) => raw,
-            Err(e) => {
-                let used_gas = e.to_string().len() as u64;
+            Err(err) => {
+                let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
                 return Ok((
                     Err(SystemError::InvalidRequest {
-                        error: format!("Serializing query request: {}", e),
-                        request: Binary(b"N/A".to_vec()),
+                        error: format!("Serializing query request: {}", err),
+                        request: b"N/A".into(),
                     }),
-                    used_gas,
+                    gas_info,
                 ));
             }
         };
-        self.raw_query(bin.as_slice())
+        self.raw_query(request_binary.as_slice())
     }
 }
 
@@ -235,12 +252,12 @@ mod test {
     fn flip_addresses() {
         let api = MockApi::new(20);
         let human = HumanAddr("shorty".to_string());
-        let canon = api.canonical_address(&human).unwrap();
+        let (canon, _gas_cost) = api.canonical_address(&human).unwrap();
         assert_eq!(canon.len(), 20);
         assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
         assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
 
-        let recovered = api.human_address(&canon).unwrap();
+        let (recovered, _gas_cost) = api.human_address(&canon).unwrap();
         assert_eq!(human, recovered);
     }
 

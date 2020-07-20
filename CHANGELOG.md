@@ -25,6 +25,10 @@
   pointer to the VM that is not backed by a plausible Region. This helps
   development of standard libraries.
 - Create dedicated `RegionValidationError` and `RegionValidationResult`.
+- `Api::human_address` and `Api::canonical_address` now return a pair of return
+  data and gas usage.
+- Remove `NextItem` in favour of `FfiSuccess<T>`, which is used to store the
+  return data and the gas cost consistently across all APIs using `FfiResult`.
 
 ## 0.9.4 (2020-07-16)
 

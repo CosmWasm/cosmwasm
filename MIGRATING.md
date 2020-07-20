@@ -4,6 +4,27 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.9 -> 0.10
+
+Integration tests:
+
+- Calls to `Api::human_address` and `Api::canonical_address` now return a pair
+  of return data and gas usage. Change
+
+  ```rust
+  // before 1
+  verifier: deps.api.canonical_address(&verifier).unwrap(),
+
+  // after 1
+  verifier: deps.api.canonical_address(&verifier).unwrap().0,
+
+  // before 2
+  let contract_addr = deps.api.human_address(&init_env.contract.address).unwrap();
+
+  // after 2
+  let (contract_addr, _gas_used) = deps.api.human_address(&init_env.contract.address).unwrap();
+  ```
+
 ## 0.8 -> 0.9
 
 `dependencies`/`dev-dependencies` in `Cargo.toml`:

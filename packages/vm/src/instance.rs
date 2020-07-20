@@ -11,7 +11,7 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
-use crate::backends::{compile, get_gas_left, set_gas_limit};
+use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
     get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
     set_wasmer_instance, setup_context, with_querier_from_context, with_storage_from_context,
@@ -110,7 +110,7 @@ where
                 // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
-                    do_humanize_address(api, ctx, source_ptr, destination_ptr)
+                    do_humanize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
@@ -152,7 +152,7 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas_limit(wasmer_instance.context_mut(), gas_limit);
+        set_gas_left(wasmer_instance.context_mut(), gas_limit);
         get_gas_state_mut::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
@@ -545,7 +545,7 @@ mod test {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 134);
-        assert_eq!(report2.used_internally, 70676);
+        assert_eq!(report2.used_internally, 70786);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -742,7 +742,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 70810);
+        assert_eq!(init_used, 70920);
     }
 
     #[test]
@@ -766,7 +766,7 @@ mod singlepass_test {
 
         let handle_used = gas_before_handle - instance.get_gas_left();
         println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 97825);
+        assert_eq!(handle_used, 201422);
     }
 
     #[test]
@@ -801,6 +801,6 @@ mod singlepass_test {
 
         let query_used = gas_before_query - instance.get_gas_left();
         println!("query used: {}", query_used);
-        assert_eq!(query_used, 32558);
+        assert_eq!(query_used, 32602);
     }
 }

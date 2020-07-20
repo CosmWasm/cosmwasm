@@ -8,12 +8,12 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 use wasmer_runtime_core::vm::Ctx;
 
-use crate::context::{
-    account_for_externally_used_gas, is_storage_readonly, with_func_from_context,
-    with_querier_from_context, with_storage_from_context,
-};
 #[cfg(feature = "iterator")]
 use crate::context::{add_iterator, with_iterator_from_context};
+use crate::context::{
+    is_storage_readonly, process_gas_info, with_func_from_context, with_querier_from_context,
+    with_storage_from_context,
+};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
@@ -38,9 +38,9 @@ const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     // `Ok(expr?)` used to convert the error variant.
-    let (value, used_gas): (Option<Vec<u8>>, u64) =
+    let (value, gas_info) =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)?))?;
-    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
 
     let out_data = match value {
         Some(data) => data,
@@ -61,9 +61,9 @@ pub fn do_write<S: Storage, Q: Querier>(
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
-    let used_gas =
+    let (_, gas_info) =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)?))?;
-    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
 
     Ok(())
 }
@@ -74,8 +74,9 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
     }
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
-    let used_gas = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
-    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
+    let (_, gas_info) =
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
 
     Ok(())
 }
@@ -96,27 +97,26 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
         Err(_) => return Ok(write_to_contract::<S, Q>(ctx, b"Input is not valid UTF-8")?),
     };
     let human: HumanAddr = source_string.into();
-    match api.canonical_address(&human) {
-        Ok(canon) => {
-            write_region(ctx, destination_ptr, canon.as_slice())?;
-            Ok(0)
-        }
-        // This check is unrelyable since we cannot tell by the error type if the error should be
-        // reported to the contract or indicates a broken backend.
-        // Err(FfiError::Other { error, .. }) => Ok(write_to_contract::<S, Q>(ctx, &error.as_bytes())?),
-        Err(error) => Err(error.into()),
-    }
+
+    let (canonical, gas_info) = api.canonical_address(&human)?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+
+    write_region(ctx, destination_ptr, canonical.as_slice())?;
+    Ok(0)
 }
 
-pub fn do_humanize_address<A: Api>(
+pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     api: A,
     ctx: &mut Ctx,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
     let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
+
     // TODO: how to report API errors back to the contract?
-    let human = api.human_address(&CanonicalAddr(canonical))?;
+    let (human, gas_info) = api.human_address(&CanonicalAddr(canonical))?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+
     write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
     Ok(0)
 }
@@ -140,7 +140,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -
 
     let (res, used_gas) =
         with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)?))?;
-    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
+    process_gas_info::<S, Q>(ctx, used_gas)?;
 
     let serialized = to_vec(&res)?;
     write_to_contract::<S, Q>(ctx, &serialized)
@@ -162,7 +162,7 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
         Ok(store.range(start.as_deref(), end.as_deref(), order)?)
     })?;
     // Gas is consumed for creating an iterator if the first key in the DB has a value
-    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
+    process_gas_info::<S, Q>(ctx, used_gas)?;
 
     let new_id = add_iterator::<S, Q>(ctx, iterator);
     Ok(new_id)
@@ -173,7 +173,7 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
     let item = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
 
     let (kv, used_gas) = item?;
-    account_for_externally_used_gas::<S, Q>(ctx, used_gas)?;
+    process_gas_info::<S, Q>(ctx, used_gas)?;
 
     // Empty key will later be treated as _no more element_.
     let (key, value) = kv.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
@@ -641,7 +641,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let error_ptr = do_humanize_address(api, ctx, source_ptr, dest_ptr).unwrap();
+        let error_ptr = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
         assert_eq!(error_ptr, 0);
         assert_eq!(force_read(ctx, dest_ptr), b"foo");
     }
@@ -657,7 +657,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
                 source: FfiError::Other { .. },
@@ -677,7 +677,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -703,7 +703,7 @@ mod test {
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
-        let result = do_humanize_address(api, ctx, source_ptr, dest_ptr);
+        let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },

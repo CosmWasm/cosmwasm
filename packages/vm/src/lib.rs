@@ -7,6 +7,7 @@ mod context;
 mod conversion;
 mod errors;
 mod features;
+mod ffi;
 mod imports;
 mod instance;
 mod memory;
@@ -23,14 +24,15 @@ pub use crate::calls::{
 };
 pub use crate::checksum::Checksum;
 pub use crate::errors::{
-    CommunicationError, CommunicationResult, FfiError, FfiResult, RegionValidationError,
-    RegionValidationResult, VmError, VmResult,
+    CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
+    VmError, VmResult,
 };
 pub use crate::features::features_from_csv;
+pub use crate::ffi::{FfiError, FfiResult, FfiSuccess, GasInfo};
 pub use crate::instance::{GasReport, Instance};
 pub use crate::modules::FileSystemCache;
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, Storage};
 
 #[cfg(feature = "iterator")]
-pub use crate::traits::{NextItem, StorageIterator};
+pub use crate::traits::StorageIterator;

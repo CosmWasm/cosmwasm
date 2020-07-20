@@ -14,7 +14,9 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
+use crate::backends::decrease_gas_left;
 use crate::errors::{VmError, VmResult};
+use crate::ffi::GasInfo;
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
 use crate::traits::{Querier, Storage};
@@ -202,10 +204,16 @@ pub fn get_gas_state<'a, 'b, S: Storage, Q: Querier + 'b>(ctx: &'a Ctx) -> &'b G
     &get_context_data::<S, Q>(ctx).gas_state
 }
 
+pub fn process_gas_info<S: Storage, Q: Querier>(ctx: &mut Ctx, info: GasInfo) -> VmResult<()> {
+    decrease_gas_left(ctx, info.cost)?;
+    account_for_externally_used_gas::<S, Q>(ctx, info.externally_used)?;
+    Ok(())
+}
+
 /// Use this function to adjust the VM's gas limit when a call into the backend
 /// reported there was externally metered gas used.
 /// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
-pub fn account_for_externally_used_gas<S: Storage, Q: Querier>(
+fn account_for_externally_used_gas<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     amount: u64,
 ) -> VmResult<()> {
@@ -217,7 +225,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     used_gas: u64,
 ) -> VmResult<()> {
-    use crate::backends::{get_gas_left, set_gas_limit};
+    use crate::backends::{get_gas_left, set_gas_left};
 
     let ctx_data = get_context_data_mut::<S, Q>(ctx);
     if let Some(mut instance_ptr) = ctx_data.wasmer_instance {
@@ -231,7 +239,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_limit(instance.context_mut(), new_limit);
+        set_gas_left(instance.context_mut(), new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
@@ -359,7 +367,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::backends::{compile, get_gas_left, set_gas_limit};
+    use crate::backends::{compile, decrease_gas_left, set_gas_left};
     use crate::errors::VmError;
     #[cfg(feature = "iterator")]
     use crate::testing::MockIterator;
@@ -421,17 +429,6 @@ mod test {
         move_into_context(ctx, storage, querier);
     }
 
-    /// This is a testing-only implementation that panics on overconsumption.
-    /// We currently don't have a production-ready version of this since only Wasmer consumes VM gas
-    /// directly. This might change in the future (https://github.com/CosmWasm/cosmwasm/pull/475)
-    fn decrease_gas_left(ctx: &mut Ctx, amount: u64) {
-        let current_limit = get_gas_left(ctx);
-        let new_limit = current_limit
-            .checked_sub(amount)
-            .expect("Must not decrease more than available");
-        set_gas_limit(ctx, new_limit);
-    }
-
     #[test]
     fn leave_and_take_context_data() {
         // this creates an instance
@@ -465,7 +462,7 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.context_mut(), gas_limit);
+        set_gas_left(instance.context_mut(), gas_limit);
         get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
@@ -487,7 +484,7 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_limit(instance.context_mut(), gas_limit);
+        set_gas_left(instance.context_mut(), gas_limit);
         get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
@@ -496,7 +493,7 @@ mod test {
         account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(instance.context_mut(), 20);
+        decrease_gas_left(instance.context_mut(), 20).unwrap();
 
         let context = instance.context_mut();
         account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();

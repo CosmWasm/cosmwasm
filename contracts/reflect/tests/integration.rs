@@ -85,7 +85,7 @@ fn reflect() {
     let env = mock_env(&deps.api, "creator", &[]);
     let payload = vec![
         BankMsg::Send {
-            from_address: deps.api.human_address(&env.contract.address).unwrap(),
+            from_address: deps.api.human_address(&env.contract.address).unwrap().0,
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -119,7 +119,7 @@ fn reflect_requires_owner() {
     // signer is not owner
     let env = mock_env(&deps.api, "someone", &[]);
     let payload = vec![BankMsg::Send {
-        from_address: deps.api.human_address(&env.contract.address).unwrap(),
+        from_address: deps.api.human_address(&env.contract.address).unwrap().0,
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
     }
