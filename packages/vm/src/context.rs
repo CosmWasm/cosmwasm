@@ -423,6 +423,7 @@ mod test {
         let mut storage = MockStorage::new();
         storage
             .set(INIT_KEY, INIT_VALUE)
+            .0
             .expect("error setting value");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
@@ -624,7 +625,10 @@ mod test {
         let set_value: &[u8] = b"data";
 
         with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            store.set(set_key, set_value).expect("error setting value");
+            store
+                .set(set_key, set_value)
+                .0
+                .expect("error setting value");
             Ok(())
         })
         .unwrap();

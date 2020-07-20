@@ -596,7 +596,7 @@ mod test {
         // write some data
         instance
             .with_storage(|store| {
-                store.set(b"foo", b"bar").unwrap();
+                store.set(b"foo", b"bar").0.unwrap();
                 Ok(())
             })
             .unwrap();

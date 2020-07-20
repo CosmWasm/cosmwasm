@@ -84,13 +84,13 @@ where
         order: Order,
     ) -> FfiResult<Box<dyn StorageIterator + 'a>>;
 
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()>;
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult2<()>;
 
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
-    fn remove(&mut self, key: &[u8]) -> FfiResult<()>;
+    fn remove(&mut self, key: &[u8]) -> FfiResult2<()>;
 }
 
 /// Api are callbacks to system functions defined outside of the wasm modules.

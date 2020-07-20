@@ -71,18 +71,10 @@ pub fn do_write<S: Storage, Q: Querier>(
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
 
-    let ffi_result =
+    let (result, gas_info) =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)))?;
-    match ffi_result {
-        Ok(((), gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(())
-        }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
-    }?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    result?;
 
     Ok(())
 }
@@ -94,17 +86,10 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
 
-    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)))?;
-    match ffi_result {
-        Ok(((), gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(())
-        }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
-    }?;
+    let (result, gas_info) =
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)))?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    result?;
 
     Ok(())
 }
@@ -303,8 +288,8 @@ mod test {
     fn leave_default_data(ctx: &mut Ctx) {
         // create some mock data
         let mut storage = MockStorage::new();
-        storage.set(KEY1, VALUE1).expect("error setting");
-        storage.set(KEY2, VALUE2).expect("error setting");
+        storage.set(KEY1, VALUE1).0.expect("error setting");
+        storage.set(KEY2, VALUE2).0.expect("error setting");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
         move_into_context(ctx, storage, querier);

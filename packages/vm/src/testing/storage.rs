@@ -7,9 +7,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
-#[cfg(feature = "iterator")]
-use crate::FfiResult2;
-use crate::{FfiResult, GasInfo, Storage};
+use crate::{FfiResult, FfiResult2, GasInfo, Storage};
 
 #[cfg(feature = "iterator")]
 const GAS_COST_LAST_ITERATION: u64 = 37;
@@ -98,16 +96,16 @@ impl Storage for MockStorage {
         Ok((Box::new(MockIterator { source: iter }), gas_info))
     }
 
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult2<()> {
         self.data.insert(key.to_vec(), value.to_vec());
         let gas_info = GasInfo::with_externally_used((key.len() + value.len()) as u64);
-        Ok(((), gas_info))
+        (Ok(()), gas_info)
     }
 
-    fn remove(&mut self, key: &[u8]) -> FfiResult<()> {
+    fn remove(&mut self, key: &[u8]) -> FfiResult2<()> {
         self.data.remove(key);
         let gas_info = GasInfo::with_externally_used(key.len() as u64);
-        Ok(((), gas_info))
+        (Ok(()), gas_info)
     }
 }
 
@@ -138,7 +136,7 @@ mod test {
     fn get_and_set() {
         let mut store = MockStorage::new();
         assert_eq!(None, store.get(b"foo").unwrap().0);
-        store.set(b"foo", b"bar").unwrap();
+        store.set(b"foo", b"bar").0.unwrap();
         assert_eq!(Some(b"bar".to_vec()), store.get(b"foo").unwrap().0);
         assert_eq!(None, store.get(b"food").unwrap().0);
     }
@@ -146,9 +144,9 @@ mod test {
     #[test]
     fn delete() {
         let mut store = MockStorage::new();
-        store.set(b"foo", b"bar").unwrap();
-        store.set(b"food", b"bank").unwrap();
-        store.remove(b"foo").unwrap();
+        store.set(b"foo", b"bar").0.unwrap();
+        store.set(b"food", b"bank").0.unwrap();
+        store.remove(b"foo").0.unwrap();
 
         assert_eq!(None, store.get(b"foo").unwrap().0);
         assert_eq!(Some(b"bank".to_vec()), store.get(b"food").unwrap().0);
@@ -158,7 +156,7 @@ mod test {
     #[cfg(feature = "iterator")]
     fn iterator() {
         let mut store = MockStorage::new();
-        store.set(b"foo", b"bar").expect("error setting value");
+        store.set(b"foo", b"bar").0.expect("error setting value");
 
         // ensure we had previously set "foo" = "bar"
         assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
@@ -174,12 +172,12 @@ mod test {
         );
 
         // setup - add some data, and delete part of it as well
-        store.set(b"ant", b"hill").expect("error setting value");
-        store.set(b"ze", b"bra").expect("error setting value");
+        store.set(b"ant", b"hill").0.expect("error setting value");
+        store.set(b"ze", b"bra").0.expect("error setting value");
 
         // noise that should be ignored
-        store.set(b"bye", b"bye").expect("error setting value");
-        store.remove(b"bye").expect("error removing key");
+        store.set(b"bye", b"bye").0.expect("error setting value");
+        store.remove(b"bye").0.expect("error removing key");
 
         // unbounded
         {
