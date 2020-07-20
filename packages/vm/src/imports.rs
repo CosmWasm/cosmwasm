@@ -126,20 +126,15 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     };
     let human: HumanAddr = source_string.into();
 
-    match api.canonical_address(&human) {
-        (Ok(canonical), gas_info) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
+    let (result, gas_info) = api.canonical_address(&human);
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    match result {
+        Ok(canonical) => {
             write_region(ctx, destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
-        (Err(FfiError::UserErr { msg, .. }), gas_info) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?)
-        }
-        (Err(err), gas_info) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
+        Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?),
+        Err(err) => Err(VmError::from(err)),
     }
 }
 
