@@ -35,6 +35,7 @@
   sends invalid UTF-8 in places that expect strings.
 - Remove `FfiError::Other` in favour of `FfiError::UserErr` and
   `FfiError::Unknown`.
+- The `canonicalize_address` import now reports user errors to the contract.
 
 ## 0.9.4 (2020-07-16)
 

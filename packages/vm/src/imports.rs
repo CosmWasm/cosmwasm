@@ -16,6 +16,7 @@ use crate::context::{
 };
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
+use crate::ffi::FfiError;
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
@@ -127,20 +128,21 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     };
     let human: HumanAddr = source_string.into();
 
-    let canonical = match api.canonical_address(&human) {
+    match api.canonical_address(&human) {
         Ok((canonical, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(canonical)
+            write_region(ctx, destination_ptr, canonical.as_slice())?;
+            Ok(0)
         }
-        // TODO: Report UserErr back to contract
+        Err((FfiError::UserErr { msg, .. }, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?)
+        }
         Err((err, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
             Err(VmError::from(err))
         }
-    }?;
-
-    write_region(ctx, destination_ptr, canonical.as_slice())?;
-    Ok(0)
+    }
 }
 
 pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
@@ -622,7 +624,7 @@ mod test {
     }
 
     #[test]
-    fn do_canonicalize_address_fails_for_invalid_input() {
+    fn do_canonicalize_address_reports_invalid_input_back_to_contract() {
         let mut instance = make_instance();
 
         let source_ptr1 = write_data(&mut instance, b"fo\x80o"); // invalid UTF-8 (fo�o)
@@ -644,12 +646,29 @@ mod test {
         let err = String::from_utf8(force_read(ctx, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr3, dest_ptr);
+        let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr3, dest_ptr).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        assert_eq!(err, "Invalid input: human address too long");
+    }
+
+    #[test]
+    fn do_canonicalize_address_fails_for_broken_backend() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo");
+        let dest_ptr = create_empty(&mut instance, 7);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new_failing(8, "Temporarily unavailable");
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::UserErr { msg, .. },
+                source: FfiError::Unknown { msg, .. },
             } => {
-                assert_eq!(msg, "Invalid input: human address too long");
+                assert_eq!(msg.unwrap(), "Temporarily unavailable");
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
