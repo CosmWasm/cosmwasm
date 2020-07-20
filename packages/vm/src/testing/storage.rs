@@ -7,7 +7,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
-use crate::{FfiResult2, GasInfo, Storage};
+use crate::{FfiResult, GasInfo, Storage};
 
 #[cfg(feature = "iterator")]
 const GAS_COST_LAST_ITERATION: u64 = 37;
@@ -33,7 +33,7 @@ impl MockIterator<'_> {
 
 #[cfg(feature = "iterator")]
 impl StorageIterator for MockIterator<'_> {
-    fn next(&mut self) -> FfiResult2<Option<KV>> {
+    fn next(&mut self) -> FfiResult<Option<KV>> {
         match self.source.next() {
             Some((kv, gas_used)) => (Ok(Some(kv)), GasInfo::with_externally_used(gas_used)),
             None => (
@@ -56,7 +56,7 @@ impl MockStorage {
 }
 
 impl Storage for MockStorage {
-    fn get(&self, key: &[u8]) -> FfiResult2<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>> {
         let gas_info = GasInfo::with_externally_used(key.len() as u64);
         (Ok(self.data.get(key).cloned()), gas_info)
     }
@@ -69,7 +69,7 @@ impl Storage for MockStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult2<Box<dyn StorageIterator + 'a>> {
+    ) -> FfiResult<Box<dyn StorageIterator + 'a>> {
         let gas_info = GasInfo::with_externally_used(GAS_COST_RANGE);
         let bounds = range_bounds(start, end);
 
@@ -96,13 +96,13 @@ impl Storage for MockStorage {
         (Ok(Box::new(MockIterator { source: iter })), gas_info)
     }
 
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult2<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
         let gas_info = GasInfo::with_externally_used((key.len() + value.len()) as u64);
         (Ok(()), gas_info)
     }
 
-    fn remove(&mut self, key: &[u8]) -> FfiResult2<()> {
+    fn remove(&mut self, key: &[u8]) -> FfiResult<()> {
         self.data.remove(key);
         let gas_info = GasInfo::with_externally_used(key.len() as u64);
         (Ok(()), gas_info)

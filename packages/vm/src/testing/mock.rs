@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult2, GasInfo, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier, QuerierResult};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
@@ -78,7 +78,7 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn canonical_address(&self, human: &HumanAddr) -> FfiResult2<CanonicalAddr> {
+    fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         if let Some(backend_error) = self.backend_error {
@@ -108,7 +108,7 @@ impl Api for MockApi {
         (Ok(CanonicalAddr(Binary(out))), gas_info)
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult2<HumanAddr> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         if let Some(backend_error) = self.backend_error {

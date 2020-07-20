@@ -4,7 +4,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::ffi::FfiError;
-use crate::ffi::FfiResult2;
+use crate::ffi::FfiResult;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -31,7 +31,7 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
 
 #[cfg(feature = "iterator")]
 pub trait StorageIterator {
-    fn next(&mut self) -> FfiResult2<Option<KV>>;
+    fn next(&mut self) -> FfiResult<Option<KV>>;
 
     /// Collects all elements, ignoring gas costs
     fn elements(mut self) -> Result<Vec<KV>, FfiError>
@@ -53,7 +53,7 @@ pub trait StorageIterator {
 
 #[cfg(feature = "iterator")]
 impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
-    fn next(&mut self) -> FfiResult2<Option<KV>> {
+    fn next(&mut self) -> FfiResult<Option<KV>> {
         (**self).next()
     }
 }
@@ -69,7 +69,7 @@ where
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
-    fn get(&self, key: &[u8]) -> FfiResult2<Option<Vec<u8>>>;
+    fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>>;
 
     #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
@@ -82,15 +82,15 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult2<Box<dyn StorageIterator + 'a>>;
+    ) -> FfiResult<Box<dyn StorageIterator + 'a>>;
 
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult2<()>;
+    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()>;
 
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
-    fn remove(&mut self, key: &[u8]) -> FfiResult2<()>;
+    fn remove(&mut self, key: &[u8]) -> FfiResult<()>;
 }
 
 /// Api are callbacks to system functions defined outside of the wasm modules.
@@ -103,15 +103,15 @@ where
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api: Copy + Clone + Send {
-    fn canonical_address(&self, human: &HumanAddr) -> FfiResult2<CanonicalAddr>;
-    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult2<HumanAddr>;
+    fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr>;
+    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr>;
 }
 
 /// A short-hand alias for the three-level query result
 /// 1. Passing the query message to the backend
 /// 2. Accessing the contract
 /// 3. Executing query in the contract
-pub type QuerierResult = FfiResult2<SystemResult<StdResult<Binary>>>;
+pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
 
 pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
