@@ -588,7 +588,7 @@ mod test {
         // initial check
         instance
             .with_storage(|store| {
-                assert!(store.get(b"foo").unwrap().0.is_none());
+                assert!(store.get(b"foo").0.unwrap().is_none());
                 Ok(())
             })
             .unwrap();
@@ -604,7 +604,7 @@ mod test {
         // read some data
         instance
             .with_storage(|store| {
-                assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
+                assert_eq!(store.get(b"foo").0.unwrap(), Some(b"bar".to_vec()));
                 Ok(())
             })
             .unwrap();

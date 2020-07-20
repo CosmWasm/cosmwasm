@@ -447,7 +447,7 @@ mod test {
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
-            s.unwrap().get(INIT_KEY).unwrap().0,
+            s.unwrap().get(INIT_KEY).0.unwrap(),
             Some(INIT_VALUE.to_vec())
         );
 
@@ -615,8 +615,8 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(INIT_KEY).expect("error getting value"))
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store.get(INIT_KEY).0.expect("error getting value"))
         })
         .unwrap();
         assert_eq!(val, Some(INIT_VALUE.to_vec()));
@@ -634,8 +634,8 @@ mod test {
         .unwrap();
 
         with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            assert_eq!(store.get(INIT_KEY).unwrap().0, Some(INIT_VALUE.to_vec()));
-            assert_eq!(store.get(set_key).unwrap().0, Some(set_value.to_vec()));
+            assert_eq!(store.get(INIT_KEY).0.unwrap(), Some(INIT_VALUE.to_vec()));
+            assert_eq!(store.get(set_key).0.unwrap(), Some(set_value.to_vec()));
             Ok(())
         })
         .unwrap();

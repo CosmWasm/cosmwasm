@@ -4,7 +4,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::ffi::FfiError;
-use crate::ffi::{FfiResult, FfiResult2};
+use crate::ffi::FfiResult2;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -69,7 +69,7 @@ where
     ///
     /// Note: Support for differentiating between a non-existent key and a key with empty value
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
-    fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>>;
+    fn get(&self, key: &[u8]) -> FfiResult2<Option<Vec<u8>>>;
 
     #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
@@ -82,7 +82,7 @@ where
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> FfiResult<Box<dyn StorageIterator + 'a>>;
+    ) -> FfiResult2<Box<dyn StorageIterator + 'a>>;
 
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult2<()>;
 

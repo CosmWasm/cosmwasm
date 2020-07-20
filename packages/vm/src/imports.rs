@@ -39,16 +39,12 @@ const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
 
-    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)))?;
-    let value = match ffi_result {
-        Ok((value, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(value)
-        }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
+    let (result, gas_info) =
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)))?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    let value = match result {
+        Ok(value) => Ok(value),
+        Err(err) => Err(VmError::from(err)),
     }?;
 
     let out_data = match value {
@@ -180,19 +176,16 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
-    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+    let (result, gas_info) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order))
     })?;
-    let iterator_id = match ffi_result {
-        Ok((iterator, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    let iterator_id = match result {
+        Ok(iterator) => {
             let new_id = add_iterator::<S, Q>(ctx, iterator);
             Ok(new_id)
         }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
+        Err(err) => Err(VmError::from(err)),
     }?;
 
     Ok(iterator_id)
@@ -368,8 +361,11 @@ mod test {
 
         do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
-        let (val, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(b"new storage key").expect("error getting value"))
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store
+                .get(b"new storage key")
+                .0
+                .expect("error getting value"))
         })
         .unwrap();
         assert_eq!(val, Some(b"new value".to_vec()));
@@ -387,8 +383,8 @@ mod test {
 
         do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
-        let (val, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(KEY1).expect("error getting value"))
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store.get(KEY1).0.expect("error getting value"))
         })
         .unwrap();
         assert_eq!(val, Some(VALUE2.to_vec()));
@@ -406,8 +402,11 @@ mod test {
 
         do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
-        let (val, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(b"new storage key").expect("error getting value"))
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store
+                .get(b"new storage key")
+                .0
+                .expect("error getting value"))
         })
         .unwrap();
         assert_eq!(val, Some(b"".to_vec()));
@@ -493,8 +492,8 @@ mod test {
 
         do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
 
-        let (value, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(existing_key).expect("error getting value"))
+        let value = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store.get(existing_key).0.expect("error getting value"))
         })
         .unwrap();
         assert_eq!(value, None);
@@ -513,8 +512,8 @@ mod test {
         // Note: right now we cannot differnetiate between an existent and a non-existent key
         do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
 
-        let (value, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(non_existent_key).expect("error getting value"))
+        let value = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store.get(non_existent_key).0.expect("error getting value"))
         })
         .unwrap();
         assert_eq!(value, None);
