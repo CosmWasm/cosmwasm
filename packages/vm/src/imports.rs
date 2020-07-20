@@ -37,10 +37,19 @@ const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
-    // `Ok(expr?)` used to convert the error variant.
-    let (value, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)?))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+
+    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)))?;
+
+    let value = match ffi_result {
+        Ok((value, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(value)
+        }
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
 
     let out_data = match value {
         Some(data) => data,
@@ -61,9 +70,20 @@ pub fn do_write<S: Storage, Q: Querier>(
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
     let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
-    let (_, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)?))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+
+    let ffi_result =
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)))?;
+
+    let _ = match ffi_result {
+        Ok(((), gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(())
+        }
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
 
     Ok(())
 }
@@ -74,9 +94,18 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
     }
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
-    let (_, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)?))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)))?;
+
+    let _ = match ffi_result {
+        Ok(((), gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(())
+        }
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    };
 
     Ok(())
 }
@@ -98,8 +127,17 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     };
     let human: HumanAddr = source_string.into();
 
-    let (canonical, gas_info) = api.canonical_address(&human)?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    let canonical = match api.canonical_address(&human) {
+        Ok((canonical, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(canonical)
+        }
+        // TODO: Report UserErr back to contract
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
 
     write_region(ctx, destination_ptr, canonical.as_slice())?;
     Ok(0)
@@ -113,9 +151,17 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
 
-    // TODO: how to report API errors back to the contract?
-    let (human, gas_info) = api.human_address(&CanonicalAddr(canonical))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    let human = match api.human_address(&CanonicalAddr(canonical)) {
+        Ok((human, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(human)
+        }
+        // TODO: how to report API errors back to the contract?
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
 
     write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
     Ok(0)
@@ -138,9 +184,19 @@ fn write_to_contract<S: Storage, Q: Querier>(ctx: &mut Ctx, input: &[u8]) -> VmR
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
     let request = read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
-    let (res, used_gas) =
-        with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)?))?;
-    process_gas_info::<S, Q>(ctx, used_gas)?;
+    let ffi_result =
+        with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)))?;
+
+    let res = match ffi_result {
+        Ok((res, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(res)
+        }
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
 
     let serialized = to_vec(&res)?;
     write_to_contract::<S, Q>(ctx, &serialized)
@@ -158,22 +214,40 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
-    let (iterator, used_gas) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-        Ok(store.range(start.as_deref(), end.as_deref(), order)?)
+    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+        Ok(store.range(start.as_deref(), end.as_deref(), order))
     })?;
-    // Gas is consumed for creating an iterator if the first key in the DB has a value
-    process_gas_info::<S, Q>(ctx, used_gas)?;
 
-    let new_id = add_iterator::<S, Q>(ctx, iterator);
-    Ok(new_id)
+    let iterator_id = match ffi_result {
+        Ok((iterator, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            let new_id = add_iterator::<S, Q>(ctx, iterator);
+            Ok(new_id)
+        }
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
+
+    Ok(iterator_id)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
-    let item = with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
+    let ffi_result =
+        with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
 
-    let (kv, used_gas) = item?;
-    process_gas_info::<S, Q>(ctx, used_gas)?;
+    let kv = match ffi_result {
+        Ok((kv, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(kv)
+        }
+        Err((err, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Err(VmError::from(err))
+        }
+    }?;
 
     // Empty key will later be treated as _no more element_.
     let (key, value) = kv.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
@@ -339,7 +413,7 @@ mod test {
 
         do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
-        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let (val, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
         })
         .unwrap();
@@ -358,7 +432,7 @@ mod test {
 
         do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
-        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let (val, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(KEY1).expect("error getting value"))
         })
         .unwrap();
@@ -377,7 +451,7 @@ mod test {
 
         do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
 
-        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let (val, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(b"new storage key").expect("error getting value"))
         })
         .unwrap();
@@ -464,7 +538,7 @@ mod test {
 
         do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
 
-        let (value, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let (value, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(existing_key).expect("error getting value"))
         })
         .unwrap();
@@ -484,7 +558,7 @@ mod test {
         // Note: right now we cannot differnetiate between an existent and a non-existent key
         do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
 
-        let (value, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let (value, _gas_info) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
             Ok(store.get(non_existent_key).expect("error getting value"))
         })
         .unwrap();

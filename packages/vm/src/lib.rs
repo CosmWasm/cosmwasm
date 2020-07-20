@@ -28,7 +28,7 @@ pub use crate::errors::{
     VmError, VmResult,
 };
 pub use crate::features::features_from_csv;
-pub use crate::ffi::{FfiError, FfiResult, FfiSuccess, GasInfo};
+pub use crate::ffi::{FfiError, FfiFailure, FfiResult, FfiSuccess, GasInfo};
 pub use crate::instance::{GasReport, Instance};
 pub use crate::modules::FileSystemCache;
 pub use crate::serde::{from_slice, to_vec};

@@ -341,7 +341,7 @@ where
 {
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.querier.as_mut() {
-        Some(q) => func(q),
+        Some(querier) => func(querier),
         None => Err(VmError::uninitialized_context_data("querier")),
     }
 }
@@ -660,7 +660,9 @@ mod test {
             let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            Ok(querier.raw_query(&to_vec(&req).unwrap())?)
+            let ffi_result = querier.raw_query(&to_vec(&req).unwrap());
+            let ffi_success = ffi_result.unwrap();
+            Ok(ffi_success)
         })
         .unwrap()
         .0

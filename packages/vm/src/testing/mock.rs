@@ -79,16 +79,24 @@ impl Default for MockApi {
 
 impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
+        let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
+
         if let Some(backend_error) = self.backend_error {
-            return Err(FfiError::unknown(backend_error));
+            return Err((FfiError::unknown(backend_error), gas_info));
         }
 
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return Err(FfiError::user_err("Invalid input: human address too short"));
+            return Err((
+                FfiError::user_err("Invalid input: human address too short"),
+                gas_info,
+            ));
         }
         if human.len() > self.canonical_length {
-            return Err(FfiError::user_err("Invalid input: human address too long"));
+            return Err((
+                FfiError::user_err("Invalid input: human address too long"),
+                gas_info,
+            ));
         }
 
         let mut out = Vec::from(human.as_str());
@@ -97,18 +105,20 @@ impl Api for MockApi {
             out.extend(vec![0u8; append]);
         }
 
-        let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
         Ok((CanonicalAddr(Binary(out)), gas_info))
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
+        let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
+
         if let Some(backend_error) = self.backend_error {
-            return Err(FfiError::unknown(backend_error));
+            return Err((FfiError::unknown(backend_error), gas_info));
         }
 
         if canonical.len() != self.canonical_length {
-            return Err(FfiError::user_err(
-                "Invalid input: canonical address length not correct",
+            return Err((
+                FfiError::user_err("Invalid input: canonical address length not correct"),
+                gas_info,
             ));
         }
 
@@ -119,10 +129,11 @@ impl Api for MockApi {
             .cloned()
             .filter(|&x| x != 0)
             .collect();
-        let human = String::from_utf8(trimmed)?;
 
-        let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
-        Ok((HumanAddr(human), gas_info))
+        match String::from_utf8(trimmed) {
+            Ok(human) => Ok((HumanAddr(human), gas_info)),
+            Err(err) => Err((err.into(), gas_info)),
+        }
     }
 }
 
@@ -265,8 +276,8 @@ mod test {
         let api = MockApi::new(10);
         let input = CanonicalAddr(Binary(vec![61; 11]));
         match api.human_address(&input).unwrap_err() {
-            FfiError::UserErr { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            (FfiError::UserErr { .. }, _gas_info) => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -275,8 +286,8 @@ mod test {
         let api = MockApi::new(10);
         let human = HumanAddr("1".to_string());
         match api.canonical_address(&human).unwrap_err() {
-            FfiError::UserErr { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            (FfiError::UserErr { .. }, _gas_info) => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -285,8 +296,8 @@ mod test {
         let api = MockApi::new(10);
         let human = HumanAddr("longer-than-10".to_string());
         match api.canonical_address(&human).unwrap_err() {
-            FfiError::UserErr { .. } => {}
-            err => panic!("Unexpected error: {}", err),
+            (FfiError::UserErr { .. }, _gas_info) => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 

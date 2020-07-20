@@ -633,7 +633,8 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
-                    }))?
+                    }))
+                    .unwrap()
                     .0
                     .unwrap()
                     .unwrap();
@@ -650,7 +651,8 @@ mod test {
                 let response = querier
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
                         address: rich_addr.clone(),
-                    }))?
+                    }))
+                    .unwrap()
                     .0
                     .unwrap()
                     .unwrap();
@@ -681,7 +683,8 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
-                    }))?
+                    }))
+                    .unwrap()
                     .0
                     .unwrap()
                     .unwrap();
@@ -706,7 +709,8 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
-                    }))?
+                    }))
+                    .unwrap()
                     .0
                     .unwrap()
                     .unwrap();

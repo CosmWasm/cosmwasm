@@ -6,10 +6,13 @@ use std::string::FromUtf8Error;
 /// non-negligible computational cost and must always have gas information
 /// attached. In order to prevent new calls from forgetting such gas information
 /// to be passed, the inner success and failure types contain gas information.
-pub type FfiResult<T> = core::result::Result<FfiSuccess<T>, FfiError>;
+pub type FfiResult<T> = core::result::Result<FfiSuccess<T>, FfiFailure>;
 
 /// A return element and the gas cost of this FFI call
 pub type FfiSuccess<T> = (T, GasInfo);
+
+/// A return element and the gas cost of this FFI call
+pub type FfiFailure = (FfiError, GasInfo);
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasInfo {
