@@ -131,20 +131,15 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
 
-    match api.human_address(&CanonicalAddr(canonical)) {
-        Ok((human, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
+    let (result, gas_info) = api.human_address(&CanonicalAddr(canonical));
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    match result {
+        Ok(human) => {
             write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
             Ok(0)
         }
-        Err((FfiError::UserErr { msg, .. }, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?)
-        }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
+        Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?),
+        Err(err) => Err(VmError::from(err)),
     }
 }
 

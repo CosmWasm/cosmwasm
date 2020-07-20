@@ -7,7 +7,7 @@ use cosmwasm_std::{
 };
 
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, FfiResult2, GasInfo, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult2, GasInfo, Querier, QuerierResult};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
@@ -108,18 +108,20 @@ impl Api for MockApi {
         (Ok(CanonicalAddr(Binary(out))), gas_info)
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult2<HumanAddr> {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         if let Some(backend_error) = self.backend_error {
-            return Err((FfiError::unknown(backend_error), gas_info));
+            return (Err(FfiError::unknown(backend_error)), gas_info);
         }
 
         if canonical.len() != self.canonical_length {
-            return Err((
-                FfiError::user_err("Invalid input: canonical address length not correct"),
+            return (
+                Err(FfiError::user_err(
+                    "Invalid input: canonical address length not correct",
+                )),
                 gas_info,
-            ));
+            );
         }
 
         // remove trailing 0's (TODO: fix this - but fine for first tests)
@@ -130,10 +132,13 @@ impl Api for MockApi {
             .filter(|&x| x != 0)
             .collect();
 
-        match String::from_utf8(trimmed) {
-            Ok(human) => Ok((HumanAddr(human), gas_info)),
-            Err(err) => Err((err.into(), gas_info)),
-        }
+        (
+            match String::from_utf8(trimmed) {
+                Ok(human) => Ok(HumanAddr(human)),
+                Err(err) => Err(err.into()),
+            },
+            gas_info,
+        )
     }
 }
 
@@ -267,16 +272,17 @@ mod test {
         assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
         assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
 
-        let (recovered, _gas_cost) = api.human_address(&canon).unwrap();
-        assert_eq!(human, recovered);
+        let (recovered, _gas_cost) = api.human_address(&canon);
+        assert_eq!(recovered.unwrap(), human);
     }
 
     #[test]
     fn human_address_input_length() {
         let api = MockApi::new(10);
         let input = CanonicalAddr(Binary(vec![61; 11]));
-        match api.human_address(&input).unwrap_err() {
-            (FfiError::UserErr { .. }, _gas_info) => {}
+        let (result, _gas_info) = api.human_address(&input);
+        match result.unwrap_err() {
+            FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }

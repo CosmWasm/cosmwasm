@@ -104,7 +104,7 @@ where
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult2<CanonicalAddr>;
-    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr>;
+    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult2<HumanAddr>;
 }
 
 /// A short-hand alias for the three-level query result
