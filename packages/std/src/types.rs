@@ -100,13 +100,13 @@ pub struct MessageInfo {
     ///
     /// There is a discussion to open up this field to multiple initiators, which you're welcome to join
     /// if you have a specific need for that feature: https://github.com/CosmWasm/cosmwasm/issues/293
-    pub sender: CanonicalAddr,
+    pub sender: HumanAddr,
     pub sent_funds: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct ContractInfo {
-    pub address: CanonicalAddr,
+    pub address: HumanAddr,
 }
 
 /// An empty struct that serves as a placeholder in different places,

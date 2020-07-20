@@ -318,7 +318,7 @@ mod test {
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // run contract
-        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
+        let env = mock_env("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
@@ -337,14 +337,14 @@ mod test {
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // init contract
-        let env = mock_env(&instance.api, "creator", &coins(1000, "earth"));
+        let env = mock_env("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
         let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
 
         // run contract - just sanity check - results validate in contract unit tests
-        let env = mock_env(&instance.api, "verifies", &coins(15, "earth"));
+        let env = mock_env("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         let res = call_handle::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -363,7 +363,7 @@ mod test {
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env(&instance.api, "owner1", &coins(1000, "earth"));
+        let env = mock_env("owner1", &coins(1000, "earth"));
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -372,7 +372,7 @@ mod test {
 
         // init instance 2
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env(&instance.api, "owner2", &coins(500, "earth"));
+        let env = mock_env("owner2", &coins(500, "earth"));
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -381,7 +381,7 @@ mod test {
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env(&instance.api, "bob", &coins(15, "earth"));
+        let env = mock_env("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         let res = call_handle::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -389,7 +389,7 @@ mod test {
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env(&instance.api, "sue", &coins(15, "earth"));
+        let env = mock_env("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         let res = call_handle::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
         let msgs = res.unwrap().messages;
@@ -413,7 +413,7 @@ mod test {
         let original_gas = instance1.get_gas_left();
 
         // Consume some gas
-        let env = mock_env(&instance1.api, "owner1", &coins(1000, "earth"));
+        let env = mock_env("owner1", &coins(1000, "earth"));
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         call_init::<_, _, _, Empty>(&mut instance1, &env, msg)
             .unwrap()
@@ -443,7 +443,7 @@ mod test {
         assert_eq!(cache.stats.misses, 0);
 
         // Consume some gas. This fails
-        let env1 = mock_env(&instance1.api, "owner1", &coins(1000, "earth"));
+        let env1 = mock_env("owner1", &coins(1000, "earth"));
         let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         match call_init::<_, _, _, Empty>(&mut instance1, &env1, msg1).unwrap_err() {
             VmError::GasDepletion { .. } => (), // all good, continue
@@ -458,7 +458,7 @@ mod test {
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
         // Now it works
-        let env2 = mock_env(&instance2.api, "owner2", &coins(500, "earth"));
+        let env2 = mock_env("owner2", &coins(500, "earth"));
         let msg2 = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         call_init::<_, _, _, Empty>(&mut instance2, &env2, msg2)
             .unwrap()

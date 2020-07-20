@@ -143,7 +143,7 @@ impl Api for MockApi {
 /// Just set sender and sent funds for the message. The rest uses defaults.
 /// The sender will be canonicalized internally to allow developers pasing in human readable senders.
 /// This is intended for use in test code only.
-pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -> Env {
+pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
     Env {
         block: BlockInfo {
             height: 12_345,
@@ -151,14 +151,11 @@ pub fn mock_env<T: Api, U: Into<HumanAddr>>(api: &T, sender: U, sent: &[Coin]) -
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
-            sender: api.canonical_address(&sender.into()).0.unwrap(),
+            sender: sender.into(),
             sent_funds: sent.to_vec(),
         },
         contract: ContractInfo {
-            address: api
-                .canonical_address(&HumanAddr::from(MOCK_CONTRACT_ADDR))
-                .0
-                .unwrap(),
+            address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         },
     }
 }
@@ -249,12 +246,11 @@ mod test {
     #[test]
     fn mock_env_arguments() {
         let name = HumanAddr("my name".to_string());
-        let api = MockApi::new(20);
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env(&api, "my name", &coins(100, "atom"));
-        let b = mock_env(&api, &name, &coins(100, "atom"));
-        let c = mock_env(&api, name, &coins(100, "atom"));
+        let a = mock_env("my name", &coins(100, "atom"));
+        let b = mock_env(&name, &coins(100, "atom"));
+        let c = mock_env(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);
