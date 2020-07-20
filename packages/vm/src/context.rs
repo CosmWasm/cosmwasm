@@ -693,7 +693,7 @@ mod test {
 
         let id = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
         with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
-            assert!(iter.next().unwrap().0.is_none());
+            assert!(iter.next().0.unwrap().is_none());
             Ok(())
         })
         .expect("must not error");

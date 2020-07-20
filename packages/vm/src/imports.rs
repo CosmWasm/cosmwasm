@@ -220,21 +220,12 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 
 #[cfg(feature = "iterator")]
 pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
-    let ffi_result =
+    let (result, gas_info) =
         with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
-    let kv = match ffi_result {
-        Ok((kv, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(kv)
-        }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
-    }?;
+    process_gas_info::<S, Q>(ctx, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
-    let (key, value) = kv.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
+    let (key, value) = (result?).unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
     // Build value || key || keylen
     let keylen_bytes = to_u32(key.len())?.to_be_bytes();
@@ -896,15 +887,15 @@ mod test {
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert!(item.unwrap().0.is_none());
+        assert!(item.0.unwrap().is_none());
     }
 
     #[test]
@@ -920,15 +911,15 @@ mod test {
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert!(item.unwrap().0.is_none());
+        assert!(item.0.unwrap().is_none());
     }
 
     #[test]
@@ -946,11 +937,11 @@ mod test {
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
-        assert!(item.unwrap().0.is_none());
+        assert!(item.0.unwrap().is_none());
     }
 
     #[test]
@@ -969,27 +960,27 @@ mod test {
         // first item, first iterator
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
-        assert!(item.unwrap().0.is_none());
+        assert!(item.0.unwrap().is_none());
 
         // second item, second iterator
         let item =
             with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
-        assert_eq!(item.unwrap().0.unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
+        assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
 
     #[test]

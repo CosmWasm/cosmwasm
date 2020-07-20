@@ -31,7 +31,7 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
 
 #[cfg(feature = "iterator")]
 pub trait StorageIterator {
-    fn next(&mut self) -> FfiResult<Option<KV>>;
+    fn next(&mut self) -> FfiResult2<Option<KV>>;
 
     /// Collects all elements, ignoring gas costs
     fn elements(mut self) -> Result<Vec<KV>, FfiError>
@@ -40,10 +40,11 @@ pub trait StorageIterator {
     {
         let mut out: Vec<KV> = Vec::new();
         loop {
-            match self.next() {
-                Ok((Some(kv), _gas_info)) => out.push(kv),
-                Ok((None, _gas_info)) => break,
-                Err((err, _gas_info)) => return Err(err),
+            let (result, _gas_info) = self.next();
+            match result {
+                Ok(Some(kv)) => out.push(kv),
+                Ok(None) => break,
+                Err(err) => return Err(err),
             }
         }
         Ok(out)
@@ -52,7 +53,7 @@ pub trait StorageIterator {
 
 #[cfg(feature = "iterator")]
 impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
-    fn next(&mut self) -> FfiResult<Option<KV>> {
+    fn next(&mut self) -> FfiResult2<Option<KV>> {
         (**self).next()
     }
 }

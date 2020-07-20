@@ -7,6 +7,8 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::traits::StorageIterator;
+#[cfg(feature = "iterator")]
+use crate::FfiResult2;
 use crate::{FfiResult, GasInfo, Storage};
 
 #[cfg(feature = "iterator")]
@@ -33,12 +35,14 @@ impl MockIterator<'_> {
 
 #[cfg(feature = "iterator")]
 impl StorageIterator for MockIterator<'_> {
-    fn next(&mut self) -> FfiResult<Option<KV>> {
-        let item = match self.source.next() {
-            Some((kv, gas_used)) => (Some(kv), GasInfo::with_externally_used(gas_used)),
-            None => (None, GasInfo::with_externally_used(GAS_COST_LAST_ITERATION)),
-        };
-        Ok(item)
+    fn next(&mut self) -> FfiResult2<Option<KV>> {
+        match self.source.next() {
+            Some((kv, gas_used)) => (Ok(Some(kv)), GasInfo::with_externally_used(gas_used)),
+            None => (
+                Ok(None),
+                GasInfo::with_externally_used(GAS_COST_LAST_ITERATION),
+            ),
+        }
     }
 }
 
