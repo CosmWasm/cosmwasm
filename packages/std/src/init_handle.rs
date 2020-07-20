@@ -2,14 +2,13 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::convert::TryFrom;
 use std::fmt;
 
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::StdResult;
+use crate::errors::{StdError, StdResult};
 use crate::types::{Empty, HumanAddr};
-use crate::StdError;
-use std::convert::TryFrom;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
@@ -187,18 +186,16 @@ where
     }
 }
 
-impl<T> TryFrom<Context<T>> for HandleResponse<T>
+impl<T> From<Context<T>> for HandleResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    type Error = StdError;
-
-    fn try_from(ctx: Context<T>) -> Result<Self, Self::Error> {
-        Ok(HandleResponse {
+    fn from(ctx: Context<T>) -> Self {
+        HandleResponse {
             messages: ctx.messages,
             log: ctx.log,
             data: ctx.data,
-        })
+        }
     }
 }
 
@@ -227,20 +224,19 @@ where
     }
 }
 
-impl<T> TryFrom<Context<T>> for MigrateResponse<T>
+impl<T> From<Context<T>> for MigrateResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    type Error = StdError;
-
-    fn try_from(ctx: Context<T>) -> Result<Self, Self::Error> {
-        Ok(MigrateResponse {
+    fn from(ctx: Context<T>) -> Self {
+        MigrateResponse {
             messages: ctx.messages,
             log: ctx.log,
             data: ctx.data,
-        })
+        }
     }
 }
+
 #[derive(Clone, Debug, PartialEq)]
 pub struct Context<T = Empty>
 where
@@ -272,11 +268,11 @@ where
         Context::default()
     }
 
-    pub fn emit<K: ToString, V: ToString>(&mut self, key: K, value: V) {
+    pub fn add_event<K: ToString, V: ToString>(&mut self, key: K, value: V) {
         self.log.push(log(key, value));
     }
 
-    pub fn send_action<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
         self.messages.push(msg.into());
     }
 
@@ -372,9 +368,9 @@ mod test {
         let mut ctx = Context::new();
 
         // build it up with the builder commands
-        ctx.emit("sender", &HumanAddr::from("john"));
-        ctx.emit("action", "test");
-        ctx.send_action(BankMsg::Send {
+        ctx.add_event("sender", &HumanAddr::from("john"));
+        ctx.add_event("action", "test");
+        ctx.add_message(BankMsg::Send {
             from_address: HumanAddr::from("goo"),
             to_address: HumanAddr::from("foo"),
             amount: coins(128, "uint"),
