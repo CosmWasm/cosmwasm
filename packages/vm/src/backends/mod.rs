@@ -19,14 +19,18 @@ pub fn compiler_for_backend(backend: &str) -> Option<Box<dyn Compiler>> {
 #[derive(Debug)]
 pub struct InsufficientGasLeft;
 
-/// Decreases gas left by the given amount. If the amount exceeds the available gas,
-/// the remaining gas is set to 0.
+/// Decreases gas left by the given amount.
+/// If the amount exceeds the available gas, the remaining gas is set to 0 and
+/// an InsufficientGasLeft error is returned.
 pub fn decrease_gas_left(ctx: &mut Ctx, amount: u64) -> Result<(), InsufficientGasLeft> {
-    let remaining = get_gas_left(ctx)
-        .checked_sub(amount)
-        .ok_or(InsufficientGasLeft)?;
-    set_gas_left(ctx, remaining);
-    Ok(())
+    let remaining = get_gas_left(ctx);
+    if amount > remaining {
+        set_gas_left(ctx, 0);
+        Err(InsufficientGasLeft)
+    } else {
+        set_gas_left(ctx, remaining - amount);
+        Ok(())
+    }
 }
 
 #[cfg(feature = "default-cranelift")]
@@ -75,10 +79,12 @@ mod test {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
-        let remaining = get_gas_left(instance.context());
-        let result = decrease_gas_left(instance.context_mut(), remaining + 1);
+        let before = get_gas_left(instance.context());
+        let result = decrease_gas_left(instance.context_mut(), before + 1);
         match result.unwrap_err() {
             InsufficientGasLeft => {}
         }
+        let after = get_gas_left(instance.context());
+        assert_eq!(after, 0);
     }
 }
