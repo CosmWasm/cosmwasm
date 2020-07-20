@@ -40,7 +40,6 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)))?;
-
     let value = match ffi_result {
         Ok((value, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
@@ -74,8 +73,7 @@ pub fn do_write<S: Storage, Q: Querier>(
 
     let ffi_result =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)))?;
-
-    let _ = match ffi_result {
+    match ffi_result {
         Ok(((), gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
             Ok(())
@@ -95,9 +93,9 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
     }
 
     let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
-    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)))?;
 
-    let _ = match ffi_result {
+    let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)))?;
+    match ffi_result {
         Ok(((), gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
             Ok(())
@@ -106,7 +104,7 @@ pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResul
             process_gas_info::<S, Q>(ctx, gas_info)?;
             Err(VmError::from(err))
         }
-    };
+    }?;
 
     Ok(())
 }
@@ -189,7 +187,6 @@ pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -
 
     let ffi_result =
         with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)))?;
-
     let res = match ffi_result {
         Ok((res, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
@@ -217,10 +214,10 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
+
     let ffi_result = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order))
     })?;
-
     let iterator_id = match ffi_result {
         Ok((iterator, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
@@ -240,7 +237,6 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
 pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
     let ffi_result =
         with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
-
     let kv = match ffi_result {
         Ok((kv, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
