@@ -118,9 +118,7 @@ impl Api for MockApi {
             .cloned()
             .filter(|&x| x != 0)
             .collect();
-        // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed)
-            .map_err(|_| FfiError::other("Could not parse human address result as utf-8"))?;
+        let human = String::from_utf8(trimmed)?;
 
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
         Ok((HumanAddr(human), gas_info))

@@ -1,5 +1,6 @@
 use snafu::Snafu;
 use std::fmt::Debug;
+use std::string::FromUtf8Error;
 
 /// A result type for calling into the backend via FFI. Such a call causes
 /// non-negligible computational cost and must always have gas information
@@ -41,6 +42,8 @@ pub enum FfiError {
     ForeignPanic { backtrace: snafu::Backtrace },
     #[snafu(display("bad argument passed to FFI"))]
     BadArgument { backtrace: snafu::Backtrace },
+    #[snafu(display("VM received invalid UTF-8 data from backend"))]
+    InvalidUtf8 { backtrace: snafu::Backtrace },
     #[snafu(display("Ran out of gas during FFI call"))]
     OutOfGas {},
     #[snafu(display("Error during FFI call: {}", error))]
@@ -71,6 +74,12 @@ impl FfiError {
             error: error.into(),
         }
         .build()
+    }
+}
+
+impl From<FromUtf8Error> for FfiError {
+    fn from(_original: FromUtf8Error) -> Self {
+        InvalidUtf8 {}.build()
     }
 }
 
@@ -112,6 +121,17 @@ mod test {
         let error = FfiError::other("broken");
         match error {
             FfiError::Other { error, .. } => assert_eq!(error, "broken"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    // conversions
+
+    #[test]
+    fn convert_from_fromutf8error() {
+        let error: FfiError = String::from_utf8(vec![0x80]).unwrap_err().into();
+        match error {
+            FfiError::InvalidUtf8 { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }

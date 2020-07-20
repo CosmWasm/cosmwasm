@@ -29,6 +29,8 @@
   data and gas usage.
 - Remove `NextItem` in favour of `FfiSuccess<T>`, which is used to store the
   return data and the gas cost consistently across all APIs using `FfiResult`.
+- Create error type `FfiError::InvalidUtf8` for the cases where the backend
+  sends invalid UTF-8 in places that expect strings.
 
 ## 0.9.4 (2020-07-16)
 
