@@ -31,6 +31,8 @@
   return data and the gas cost consistently across all APIs using `FfiResult`.
 - Create error type `FfiError::InvalidUtf8` for the cases where the backend
   sends invalid UTF-8 in places that expect strings.
+- Remove `FfiError::Other` in favour of `FfiError::UserErr` and
+  `FfiError::Unknown`.
 
 ## 0.9.4 (2020-07-16)
 

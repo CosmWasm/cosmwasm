@@ -573,9 +573,9 @@ mod test {
         let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr3, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other { error, .. },
+                source: FfiError::UserErr { msg, .. },
             } => {
-                assert_eq!(error, "Invalid input: human address too long");
+                assert_eq!(msg, "Invalid input: human address too long");
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
@@ -660,7 +660,7 @@ mod test {
         let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other { .. },
+                source: FfiError::UserErr { .. },
             } => {}
             err => panic!("Incorrect error returned: {:?}", err),
         };

@@ -428,8 +428,8 @@ mod test {
         // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
         match init_result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other { error, .. },
-            } if error == error_message => {}
+                source: FfiError::Unknown { msg, .. },
+            } if msg == Some(error_message.to_string()) => {}
             other => panic!("unexpected error: {:?}", other),
         }
     }

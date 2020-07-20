@@ -28,13 +28,13 @@ pub fn mock_instance(
 pub fn mock_instance_with_failing_api(
     wasm: &[u8],
     contract_balance: &[Coin],
-    error_message: &'static str,
+    backend_error: &'static str,
 ) -> Instance<MockStorage, MockApi, MockQuerier> {
     mock_instance_with_options(
         wasm,
         MockInstanceOptions {
             contract_balance: Some(contract_balance),
-            error_message: Some(error_message),
+            backend_error: Some(backend_error),
             ..Default::default()
         },
     )
@@ -73,8 +73,8 @@ pub struct MockInstanceOptions<'a> {
     pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
     /// This option is merged into balances and might override an existing value
     pub contract_balance: Option<&'a [Coin]>,
-    /// When set to Some, all calls to the API fail with FfiError::Other containing this message
-    pub error_message: Option<&'static str>,
+    /// When set, all calls to the API fail with FfiError::Unknown containing this message
+    pub backend_error: Option<&'static str>,
 
     // instance
     pub supported_features: HashSet<String>,
@@ -88,7 +88,7 @@ impl Default for MockInstanceOptions<'_> {
             canonical_address_length: 20,
             balances: Default::default(),
             contract_balance: Default::default(),
-            error_message: None,
+            backend_error: None,
 
             // instance
             supported_features: features_from_csv("staking"),
@@ -114,8 +114,8 @@ pub fn mock_instance_with_options(
         balances.push((&contract_address, contract_balance));
     }
 
-    let api = if let Some(error_message) = options.error_message {
-        MockApi::new_failing(options.canonical_address_length, error_message)
+    let api = if let Some(backend_error) = options.backend_error {
+        MockApi::new_failing(options.canonical_address_length, backend_error)
     } else {
         MockApi::new(options.canonical_address_length)
     };

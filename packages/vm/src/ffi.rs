@@ -46,11 +46,6 @@ pub enum FfiError {
     InvalidUtf8 { backtrace: snafu::Backtrace },
     #[snafu(display("Ran out of gas during FFI call"))]
     OutOfGas {},
-    #[snafu(display("Error during FFI call: {}", error))]
-    Other {
-        error: String,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Unknown error during FFI call: {:?}", msg))]
     Unknown {
         msg: Option<String>,
@@ -75,16 +70,6 @@ impl FfiError {
 
     pub fn out_of_gas() -> Self {
         OutOfGas {}.build()
-    }
-
-    pub fn other<S>(error: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Other {
-            error: error.into(),
-        }
-        .build()
     }
 
     pub fn unknown<S: ToString>(msg: S) -> Self {
@@ -142,15 +127,6 @@ mod test {
         let error = FfiError::out_of_gas();
         match error {
             FfiError::OutOfGas { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn ffi_error_other() {
-        let error = FfiError::other("broken");
-        match error {
-            FfiError::Other { error, .. } => assert_eq!(error, "broken"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }

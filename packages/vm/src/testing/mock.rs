@@ -45,27 +45,28 @@ pub fn mock_dependencies_with_balances(
     }
 }
 
-// MockPrecompiles zero pads all human addresses to make them fit the canonical_length
-// it trims off zeros for the reverse operation.
-// not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
+/// Zero-pads all human addresses to make them fit the canonical_length and
+/// trims off zeros for the reverse operation.
+/// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
 #[derive(Copy, Clone)]
 pub struct MockApi {
     canonical_length: usize,
-    error_message: Option<&'static str>,
+    /// When set, all calls to the API fail with FfiError::Unknown containing this message
+    backend_error: Option<&'static str>,
 }
 
 impl MockApi {
     pub fn new(canonical_length: usize) -> Self {
         MockApi {
             canonical_length,
-            error_message: None,
+            backend_error: None,
         }
     }
 
-    pub fn new_failing(canonical_length: usize, error_message: &'static str) -> Self {
+    pub fn new_failing(canonical_length: usize, backend_error: &'static str) -> Self {
         MockApi {
             canonical_length,
-            error_message: Some(error_message),
+            backend_error: Some(backend_error),
         }
     }
 }
@@ -78,16 +79,16 @@ impl Default for MockApi {
 
 impl Api for MockApi {
     fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
-        if let Some(error_message) = self.error_message {
-            return Err(FfiError::other(error_message));
+        if let Some(backend_error) = self.backend_error {
+            return Err(FfiError::unknown(backend_error));
         }
 
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
-            return Err(FfiError::other("Invalid input: human address too short"));
+            return Err(FfiError::user_err("Invalid input: human address too short"));
         }
         if human.len() > self.canonical_length {
-            return Err(FfiError::other("Invalid input: human address too long"));
+            return Err(FfiError::user_err("Invalid input: human address too long"));
         }
 
         let mut out = Vec::from(human.as_str());
@@ -101,12 +102,12 @@ impl Api for MockApi {
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
-        if let Some(error_message) = self.error_message {
-            return Err(FfiError::other(error_message));
+        if let Some(backend_error) = self.backend_error {
+            return Err(FfiError::unknown(backend_error));
         }
 
         if canonical.len() != self.canonical_length {
-            return Err(FfiError::other(
+            return Err(FfiError::user_err(
                 "Invalid input: canonical address length not correct",
             ));
         }
@@ -264,7 +265,7 @@ mod test {
         let api = MockApi::new(10);
         let input = CanonicalAddr(Binary(vec![61; 11]));
         match api.human_address(&input).unwrap_err() {
-            FfiError::Other { .. } => {}
+            FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {}", err),
         }
     }
@@ -274,7 +275,7 @@ mod test {
         let api = MockApi::new(10);
         let human = HumanAddr("1".to_string());
         match api.canonical_address(&human).unwrap_err() {
-            FfiError::Other { .. } => {}
+            FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {}", err),
         }
     }
@@ -284,7 +285,7 @@ mod test {
         let api = MockApi::new(10);
         let human = HumanAddr("longer-than-10".to_string());
         match api.canonical_address(&human).unwrap_err() {
-            FfiError::Other { .. } => {}
+            FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {}", err),
         }
     }
