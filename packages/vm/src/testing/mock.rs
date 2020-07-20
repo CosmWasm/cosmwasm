@@ -201,21 +201,20 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
 impl MockQuerier {
     pub fn handle_query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
         // encode the request, then call raw_query
-        let bin = match to_binary(request) {
+        let request_binary = match to_binary(request) {
             Ok(raw) => raw,
-            Err(e) => {
-                // FIXME: is this correct? Was this charged already?
-                let gas_info = GasInfo::with_externally_used(e.to_string().len() as u64);
+            Err(err) => {
+                let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
                 return Ok((
                     Err(SystemError::InvalidRequest {
-                        error: format!("Serializing query request: {}", e),
-                        request: Binary(b"N/A".to_vec()),
+                        error: format!("Serializing query request: {}", err),
+                        request: b"N/A".into(),
                     }),
                     gas_info,
                 ));
             }
         };
-        self.raw_query(bin.as_slice())
+        self.raw_query(request_binary.as_slice())
     }
 }
 
