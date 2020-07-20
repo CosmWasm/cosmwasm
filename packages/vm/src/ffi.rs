@@ -7,6 +7,7 @@ use std::string::FromUtf8Error;
 /// attached. In order to prevent new calls from forgetting such gas information
 /// to be passed, the inner success and failure types contain gas information.
 pub type FfiResult<T> = core::result::Result<FfiSuccess<T>, FfiFailure>;
+pub type FfiResult2<T> = (core::result::Result<T, FfiError>, GasInfo);
 
 /// A return element and the gas cost of this FFI call
 pub type FfiSuccess<T> = (T, GasInfo);

@@ -4,7 +4,7 @@ use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
 use crate::ffi::FfiError;
-use crate::ffi::FfiResult;
+use crate::ffi::{FfiResult, FfiResult2};
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
@@ -102,7 +102,7 @@ where
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api: Copy + Clone + Send {
-    fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr>;
+    fn canonical_address(&self, human: &HumanAddr) -> FfiResult2<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr>;
 }
 
