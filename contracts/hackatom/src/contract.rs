@@ -1,8 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::convert::TryInto;
 
 use cosmwasm_std::{
-    from_slice, log, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Env,
+    from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Context, Env,
     Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
     StdError, StdResult, Storage,
 };
@@ -82,11 +83,10 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         })?,
     );
 
-    // This adds some unrelated data and log for testing purposes
-    Ok(InitResponse {
-        log: vec![log("Let the", "hacking begin")],
-        messages: vec![],
-    })
+    // This adds some unrelated log for testing purposes
+    let mut ctx = Context::new();
+    ctx.add_log("Let the", "hacking begin");
+    ctx.try_into()
 }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
@@ -101,6 +101,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     let mut config: State = from_slice(&data)?;
     config.verifier = deps.api.canonical_address(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
+
     Ok(MigrateResponse::default())
 }
 
@@ -134,17 +135,16 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         let from_addr = deps.api.human_address(&env.contract.address)?;
         let balance = deps.querier.query_all_balances(&from_addr)?;
 
-        let res = HandleResponse {
-            log: vec![log("action", "release"), log("destination", &to_addr)],
-            messages: vec![BankMsg::Send {
-                from_address: from_addr,
-                to_address: to_addr,
-                amount: balance,
-            }
-            .into()],
-            data: Some(vec![0xF0, 0x0B, 0xAA].into()),
-        };
-        Ok(res)
+        let mut ctx = Context::new();
+        ctx.add_log("action", "release");
+        ctx.add_log("destination", &to_addr);
+        ctx.add_message(BankMsg::Send {
+            from_address: from_addr,
+            to_address: to_addr,
+            amount: balance,
+        });
+        ctx.set_data(&[0xF0, 0x0B, 0xAA]);
+        Ok(ctx.into())
     } else {
         Err(StdError::unauthorized())
     }
@@ -240,7 +240,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, ReadonlyStorage, StdError};
+    use cosmwasm_std::{coins, log, ReadonlyStorage, StdError};
 
     #[test]
     fn proper_initialization() {
