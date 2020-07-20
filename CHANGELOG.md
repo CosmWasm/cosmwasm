@@ -16,6 +16,8 @@
 - Add `Context` object that can be used to build Init/Handle/Migrate response
   via `add_log`, `add_message`, `set_data` and then convert to the proper type
   via `into` or `try_into`. Option to simplify response construction.
+- Env uses `HumanAddr` for `message.sender` and `contract_address`
+- Remove `Api` argument from `mock_env`
 
 **cosmwasm-vm**
 

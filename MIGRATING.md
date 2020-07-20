@@ -21,6 +21,11 @@ Integration tests:
 
   The same applies for all calls of `Querier` and `Storage`.
 
+* All usages of `mock_env` will have to remove the first argument (no need of API).
+* All code that uses `message.sender` or `contract.address` should deal with
+  `HumanAddr` not `CanonicalAddr`. Many times this means you can remove
+  a conversion step.
+
 ## 0.8 -> 0.9
 
 `dependencies`/`dev-dependencies` in `Cargo.toml`:
