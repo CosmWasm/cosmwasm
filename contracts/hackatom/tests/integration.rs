@@ -404,7 +404,7 @@ mod singlepass_tests {
         // Gas consumtion is relatively small
         // Note: the exact gas usage depends on the Rust version used to compile WASM,
         // which we only fix when using cosmwasm-opt, not integration tests.
-        let expected = 42000; // +/- 20%
+        let expected = 35000; // +/- 20%
         assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
         assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
 

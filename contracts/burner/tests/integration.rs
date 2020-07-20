@@ -34,7 +34,7 @@ fn init_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
+    let env = mock_env("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
     let res: InitResult = init(&mut deps, env, msg);
     match res.unwrap_err() {
@@ -71,7 +71,7 @@ fn migrate_cleans_up_data() {
     let msg = MigrateMsg {
         payout: payout.clone(),
     };
-    let env = mock_env(&deps.api, "creator", &[]);
+    let env = mock_env("creator", &[]);
     let res: MigrateResponse = migrate(&mut deps, env, msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
