@@ -153,20 +153,21 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
 
-    let human = match api.human_address(&CanonicalAddr(canonical)) {
+    match api.human_address(&CanonicalAddr(canonical)) {
         Ok((human, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(human)
+            write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
+            Ok(0)
         }
-        // TODO: how to report API errors back to the contract?
+        Err((FfiError::UserErr { msg, .. }, gas_info)) => {
+            process_gas_info::<S, Q>(ctx, gas_info)?;
+            Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?)
+        }
         Err((err, gas_info)) => {
             process_gas_info::<S, Q>(ctx, gas_info)?;
             Err(VmError::from(err))
         }
-    }?;
-
-    write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
-    Ok(0)
+    }
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -740,21 +741,38 @@ mod test {
     }
 
     #[test]
-    fn do_humanize_address_fails_for_invalid_canonical_length() {
+    fn do_humanize_address_reports_invalid_input_back_to_contract() {
         let mut instance = make_instance();
 
-        let source_ptr = write_data(&mut instance, b"foo\0\0");
+        let source_ptr = write_data(&mut instance, b"foo"); // too short
         let dest_ptr = create_empty(&mut instance, 50);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
         let api = MockApi::new(8);
+        let res = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        assert_eq!(err, "Invalid input: canonical address length not correct");
+    }
+
+    #[test]
+    fn do_humanize_address_fails_for_broken_backend() {
+        let mut instance = make_instance();
+
+        let source_ptr = write_data(&mut instance, b"foo\0\0\0\0\0");
+        let dest_ptr = create_empty(&mut instance, 50);
+
+        let ctx = instance.context_mut();
+        leave_default_data(ctx);
+
+        let api = MockApi::new_failing(8, "Temporarily unavailable");
         let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::UserErr { .. },
-            } => {}
+                source: FfiError::Unknown { msg, .. },
+            } => assert_eq!(msg.unwrap(), "Temporarily unavailable"),
             err => panic!("Incorrect error returned: {:?}", err),
         };
     }
