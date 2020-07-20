@@ -14,8 +14,8 @@
 - Implement `From<&[u8; $N]> for Binary` and `From<[u8; $N]> for Binary` for all
   `$N <= 32`.
 - Add `Context` object that can be used to build Init/Handle/Migrate response
-  via `emit`, `send_action`, `set_data` and then convert to the proper type
-  via `try_into`. Option to simplify response construction.
+  via `add_event`, `add_message`, `set_data` and then convert to the proper type
+  via `into` or `try_into`. Option to simplify response construction.
 
 **cosmwasm-vm**
 
