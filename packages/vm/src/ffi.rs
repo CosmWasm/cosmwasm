@@ -51,6 +51,17 @@ pub enum FfiError {
         error: String,
         backtrace: snafu::Backtrace,
     },
+    #[snafu(display("Unknown error during FFI call: {:?}", msg))]
+    Unknown {
+        msg: Option<String>,
+        backtrace: snafu::Backtrace,
+    },
+    // This is the only error case of FfiError that is reported back to the contract.
+    #[snafu(display("User error during FFI call: {}", msg))]
+    UserErr {
+        msg: String,
+        backtrace: snafu::Backtrace,
+    },
 }
 
 impl FfiError {
@@ -72,6 +83,25 @@ impl FfiError {
     {
         Other {
             error: error.into(),
+        }
+        .build()
+    }
+
+    pub fn unknown<S: ToString>(msg: S) -> Self {
+        Unknown {
+            msg: Some(msg.to_string()),
+        }
+        .build()
+    }
+
+    /// Use `::unknown(msg: S)` if possible
+    pub fn unknown_without_message() -> Self {
+        Unknown { msg: None }.build()
+    }
+
+    pub fn user_err<S: ToString>(msg: S) -> Self {
+        UserErr {
+            msg: msg.to_string(),
         }
         .build()
     }
@@ -121,6 +151,33 @@ mod test {
         let error = FfiError::other("broken");
         match error {
             FfiError::Other { error, .. } => assert_eq!(error, "broken"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn ffi_error_unknown() {
+        let error = FfiError::unknown("broken");
+        match error {
+            FfiError::Unknown { msg, .. } => assert_eq!(msg.unwrap(), "broken"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn ffi_error_unknown_without_message() {
+        let error = FfiError::unknown_without_message();
+        match error {
+            FfiError::Unknown { msg, .. } => assert!(msg.is_none()),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn ffi_error_user_err() {
+        let error = FfiError::user_err("invalid input");
+        match error {
+            FfiError::UserErr { msg, .. } => assert_eq!(msg, "invalid input"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
