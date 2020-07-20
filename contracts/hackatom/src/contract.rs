@@ -85,7 +85,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 
     // This adds some unrelated log for testing purposes
     let mut ctx = Context::new();
-    ctx.add_event("Let the", "hacking begin");
+    ctx.add_log("Let the", "hacking begin");
     ctx.try_into()
 }
 
@@ -136,8 +136,8 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         let balance = deps.querier.query_all_balances(&from_addr)?;
 
         let mut ctx = Context::new();
-        ctx.add_event("action", "release");
-        ctx.add_event("destination", &to_addr);
+        ctx.add_log("action", "release");
+        ctx.add_log("destination", &to_addr);
         ctx.add_message(BankMsg::Send {
             from_address: from_addr,
             to_address: to_addr,

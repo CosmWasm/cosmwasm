@@ -268,7 +268,7 @@ where
         Context::default()
     }
 
-    pub fn add_event<K: ToString, V: ToString>(&mut self, key: K, value: V) {
+    pub fn add_log<K: ToString, V: ToString>(&mut self, key: K, value: V) {
         self.log.push(log(key, value));
     }
 
@@ -368,8 +368,8 @@ mod test {
         let mut ctx = Context::new();
 
         // build it up with the builder commands
-        ctx.add_event("sender", &HumanAddr::from("john"));
-        ctx.add_event("action", "test");
+        ctx.add_log("sender", &HumanAddr::from("john"));
+        ctx.add_log("action", "test");
         ctx.add_message(BankMsg::Send {
             from_address: HumanAddr::from("goo"),
             to_address: HumanAddr::from("foo"),
