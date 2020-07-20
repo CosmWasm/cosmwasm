@@ -634,8 +634,8 @@ mod test {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))
-                    .unwrap()
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -652,8 +652,8 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
                         address: rich_addr.clone(),
                     }))
-                    .unwrap()
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let AllBalanceResponse { amount } = from_binary(&response).unwrap();
@@ -684,8 +684,8 @@ mod test {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))
-                    .unwrap()
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -710,8 +710,8 @@ mod test {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))
-                    .unwrap()
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();

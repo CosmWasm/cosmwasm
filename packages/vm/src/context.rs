@@ -660,12 +660,10 @@ mod test {
             let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            let ffi_result = querier.raw_query(&to_vec(&req).unwrap());
-            let ffi_success = ffi_result.unwrap();
-            Ok(ffi_success)
+            let (result, _gas_info) = querier.raw_query(&to_vec(&req).unwrap());
+            Ok(result.unwrap())
         })
         .unwrap()
-        .0
         .unwrap()
         .unwrap();
         let balance: AllBalanceResponse = from_binary(&res).unwrap();

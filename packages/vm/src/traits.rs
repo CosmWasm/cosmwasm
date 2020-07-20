@@ -110,7 +110,7 @@ pub trait Api: Copy + Clone + Send {
 /// 1. Passing the query message to the backend
 /// 2. Accessing the contract
 /// 3. Executing query in the contract
-pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
+pub type QuerierResult = FfiResult2<SystemResult<StdResult<Binary>>>;
 
 pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.

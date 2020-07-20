@@ -180,17 +180,12 @@ fn write_to_contract<S: Storage, Q: Querier>(ctx: &mut Ctx, input: &[u8]) -> VmR
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
     let request = read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
-    let ffi_result =
+    let (result, gas_info) =
         with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)))?;
-    let res = match ffi_result {
-        Ok((res, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Ok(res)
-        }
-        Err((err, gas_info)) => {
-            process_gas_info::<S, Q>(ctx, gas_info)?;
-            Err(VmError::from(err))
-        }
+    process_gas_info::<S, Q>(ctx, gas_info)?;
+    let res = match result {
+        Ok(res) => Ok(res),
+        Err(err) => Err(VmError::from(err)),
     }?;
 
     let serialized = to_vec(&res)?;
