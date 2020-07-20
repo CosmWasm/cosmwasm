@@ -12,6 +12,11 @@ use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier, QuerierResult};
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
 const GAS_COST_CANONICALIZE: u64 = 55;
+const GAS_COST_QUERY_FLAT: u64 = 100_000;
+/// Gas per request byte
+const GAS_COST_QUERY_REQUEST_MULTIPLIER: u64 = 0;
+/// Gas per reponse byte
+const GAS_COST_QUERY_RESPONSE_MULTIPLIER: u64 = 100;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -188,13 +193,15 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 
 impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let res = self.querier.raw_query(bin_request);
-        // FIXME: is this correct? Was this charged already?
+        let response = self.querier.raw_query(bin_request);
         let gas_info = GasInfo::with_externally_used(
-            (bin_request.len() + to_binary(&res).unwrap().len()) as u64,
+            GAS_COST_QUERY_FLAT
+                + (GAS_COST_QUERY_REQUEST_MULTIPLIER * (bin_request.len() as u64))
+                + (GAS_COST_QUERY_RESPONSE_MULTIPLIER
+                    * (to_binary(&response).unwrap().len() as u64)),
         );
-        // We don't use FFI, so FfiResult is always Ok() regardless of error on other levels
-        Ok((res, gas_info))
+        // We don't use FFI in the mock implementation, so FfiResult is always Ok() regardless of error on other levels
+        Ok((response, gas_info))
     }
 }
 
