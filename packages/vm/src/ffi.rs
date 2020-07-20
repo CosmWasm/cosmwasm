@@ -1,6 +1,10 @@
 use snafu::Snafu;
 use std::fmt::Debug;
 
+/// A result type for calling into the backend via FFI. Such a call causes
+/// non-negligible computational cost and must always have gas information
+/// attached. In order to prevent new calls from forgetting such gas information
+/// to be passed, the inner success and failure types contain gas information.
 pub type FfiResult<T> = core::result::Result<FfiSuccess<T>, FfiError>;
 
 /// A return element and the gas cost of this FFI call
