@@ -189,7 +189,7 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
     process_gas_info::<S, Q>(ctx, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
-    let (key, value) = (result?).unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
+    let (key, value) = result?.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
     // Build value || key || keylen
     let keylen_bytes = to_u32(key.len())?.to_be_bytes();
