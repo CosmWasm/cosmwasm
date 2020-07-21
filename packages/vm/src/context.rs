@@ -341,7 +341,7 @@ where
 {
     let b = get_context_data_mut::<S, Q>(ctx);
     match b.querier.as_mut() {
-        Some(q) => func(q),
+        Some(querier) => func(querier),
         None => Err(VmError::uninitialized_context_data("querier")),
     }
 }
@@ -423,6 +423,7 @@ mod test {
         let mut storage = MockStorage::new();
         storage
             .set(INIT_KEY, INIT_VALUE)
+            .0
             .expect("error setting value");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
@@ -446,7 +447,7 @@ mod test {
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
-            s.unwrap().get(INIT_KEY).unwrap().0,
+            s.unwrap().get(INIT_KEY).0.unwrap(),
             Some(INIT_VALUE.to_vec())
         );
 
@@ -614,8 +615,8 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let (val, _used_gas) = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            Ok(store.get(INIT_KEY).expect("error getting value"))
+        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+            Ok(store.get(INIT_KEY).0.expect("error getting value"))
         })
         .unwrap();
         assert_eq!(val, Some(INIT_VALUE.to_vec()));
@@ -624,14 +625,17 @@ mod test {
         let set_value: &[u8] = b"data";
 
         with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            store.set(set_key, set_value).expect("error setting value");
+            store
+                .set(set_key, set_value)
+                .0
+                .expect("error setting value");
             Ok(())
         })
         .unwrap();
 
         with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
-            assert_eq!(store.get(INIT_KEY).unwrap().0, Some(INIT_VALUE.to_vec()));
-            assert_eq!(store.get(set_key).unwrap().0, Some(set_value.to_vec()));
+            assert_eq!(store.get(INIT_KEY).0.unwrap(), Some(INIT_VALUE.to_vec()));
+            assert_eq!(store.get(set_key).0.unwrap(), Some(set_value.to_vec()));
             Ok(())
         })
         .unwrap();
@@ -660,10 +664,10 @@ mod test {
             let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            Ok(querier.raw_query(&to_vec(&req).unwrap())?)
+            let (result, _gas_info) = querier.raw_query(&to_vec(&req).unwrap());
+            Ok(result.unwrap())
         })
         .unwrap()
-        .0
         .unwrap()
         .unwrap();
         let balance: AllBalanceResponse = from_binary(&res).unwrap();
@@ -693,7 +697,7 @@ mod test {
 
         let id = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
         with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
-            assert!(iter.next().unwrap().0.is_none());
+            assert!(iter.next().0.unwrap().is_none());
             Ok(())
         })
         .expect("must not error");

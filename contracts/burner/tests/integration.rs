@@ -51,13 +51,13 @@ fn migrate_cleans_up_data() {
 
     // store some sample data
     deps.with_storage(|storage| {
-        storage.set(b"foo", b"bar").unwrap();
-        storage.set(b"key2", b"data2").unwrap();
-        storage.set(b"key3", b"cool stuff").unwrap();
+        storage.set(b"foo", b"bar").0.unwrap();
+        storage.set(b"key2", b"data2").0.unwrap();
+        storage.set(b"key3", b"cool stuff").0.unwrap();
         let cnt = storage
             .range(None, None, Order::Ascending)
-            .unwrap()
             .0
+            .unwrap()
             .elements()
             .unwrap()
             .len();
@@ -90,8 +90,8 @@ fn migrate_cleans_up_data() {
     deps.with_storage(|storage| {
         let cnt = storage
             .range(None, None, Order::Ascending)
-            .unwrap()
             .0
+            .unwrap()
             .elements()
             .unwrap()
             .len();

@@ -428,8 +428,8 @@ mod test {
         // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
         match init_result.unwrap_err() {
             VmError::FfiErr {
-                source: FfiError::Other { error, .. },
-            } if error == error_message => {}
+                source: FfiError::Unknown { msg, .. },
+            } if msg == Some(error_message.to_string()) => {}
             other => panic!("unexpected error: {:?}", other),
         }
     }
@@ -588,7 +588,7 @@ mod test {
         // initial check
         instance
             .with_storage(|store| {
-                assert!(store.get(b"foo").unwrap().0.is_none());
+                assert!(store.get(b"foo").0.unwrap().is_none());
                 Ok(())
             })
             .unwrap();
@@ -596,7 +596,7 @@ mod test {
         // write some data
         instance
             .with_storage(|store| {
-                store.set(b"foo", b"bar").unwrap();
+                store.set(b"foo", b"bar").0.unwrap();
                 Ok(())
             })
             .unwrap();
@@ -604,7 +604,7 @@ mod test {
         // read some data
         instance
             .with_storage(|store| {
-                assert_eq!(store.get(b"foo").unwrap().0, Some(b"bar".to_vec()));
+                assert_eq!(store.get(b"foo").0.unwrap(), Some(b"bar".to_vec()));
                 Ok(())
             })
             .unwrap();
@@ -633,8 +633,9 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
-                    }))?
+                    }))
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -650,8 +651,9 @@ mod test {
                 let response = querier
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
                         address: rich_addr.clone(),
-                    }))?
+                    }))
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let AllBalanceResponse { amount } = from_binary(&response).unwrap();
@@ -681,8 +683,9 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
-                    }))?
+                    }))
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();
@@ -706,8 +709,9 @@ mod test {
                     .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
-                    }))?
+                    }))
                     .0
+                    .unwrap()
                     .unwrap()
                     .unwrap();
                 let BalanceResponse { amount } = from_binary(&response).unwrap();

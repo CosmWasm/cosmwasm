@@ -39,8 +39,13 @@ pub trait StorageIterator {
         Self: Sized,
     {
         let mut out: Vec<KV> = Vec::new();
-        while let (Some(kv), _gas_used) = self.next()? {
-            out.push(kv);
+        loop {
+            let (result, _gas_info) = self.next();
+            match result {
+                Ok(Some(kv)) => out.push(kv),
+                Ok(None) => break,
+                Err(err) => return Err(err),
+            }
         }
         Ok(out)
     }

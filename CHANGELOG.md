@@ -30,8 +30,15 @@
 - Create dedicated `RegionValidationError` and `RegionValidationResult`.
 - `Api::human_address` and `Api::canonical_address` now return a pair of return
   data and gas usage.
-- Remove `NextItem` in favour of `FfiSuccess<T>`, which is used to store the
-  return data and the gas cost consistently across all APIs using `FfiResult`.
+- Remove `NextItem` in favour of a more advanced `FfiResult<T>`, which is used
+  to store the return result and the gas information consistently across all
+  APIs. `FfiResult<T>` was changed to `(Result<T, FfiError>, GasInfo)`.
+- Create error type `FfiError::InvalidUtf8` for the cases where the backend
+  sends invalid UTF-8 in places that expect strings.
+- Remove `FfiError::Other` in favour of `FfiError::UserErr` and
+  `FfiError::Unknown`.
+- The `canonicalize_address` and `humanize_address` imports now report user
+  errors to the contract.
 
 ## 0.9.4 (2020-07-16)
 

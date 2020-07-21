@@ -1,14 +1,12 @@
 use snafu::Snafu;
 use std::fmt::Debug;
+use std::string::FromUtf8Error;
 
 /// A result type for calling into the backend via FFI. Such a call causes
 /// non-negligible computational cost and must always have gas information
 /// attached. In order to prevent new calls from forgetting such gas information
 /// to be passed, the inner success and failure types contain gas information.
-pub type FfiResult<T> = core::result::Result<FfiSuccess<T>, FfiError>;
-
-/// A return element and the gas cost of this FFI call
-pub type FfiSuccess<T> = (T, GasInfo);
+pub type FfiResult<T> = (core::result::Result<T, FfiError>, GasInfo);
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasInfo {
@@ -41,11 +39,19 @@ pub enum FfiError {
     ForeignPanic { backtrace: snafu::Backtrace },
     #[snafu(display("bad argument passed to FFI"))]
     BadArgument { backtrace: snafu::Backtrace },
+    #[snafu(display("VM received invalid UTF-8 data from backend"))]
+    InvalidUtf8 { backtrace: snafu::Backtrace },
     #[snafu(display("Ran out of gas during FFI call"))]
     OutOfGas {},
-    #[snafu(display("Error during FFI call: {}", error))]
-    Other {
-        error: String,
+    #[snafu(display("Unknown error during FFI call: {:?}", msg))]
+    Unknown {
+        msg: Option<String>,
+        backtrace: snafu::Backtrace,
+    },
+    // This is the only error case of FfiError that is reported back to the contract.
+    #[snafu(display("User error during FFI call: {}", msg))]
+    UserErr {
+        msg: String,
         backtrace: snafu::Backtrace,
     },
 }
@@ -63,14 +69,29 @@ impl FfiError {
         OutOfGas {}.build()
     }
 
-    pub fn other<S>(error: S) -> Self
-    where
-        S: Into<String>,
-    {
-        Other {
-            error: error.into(),
+    pub fn unknown<S: ToString>(msg: S) -> Self {
+        Unknown {
+            msg: Some(msg.to_string()),
         }
         .build()
+    }
+
+    /// Use `::unknown(msg: S)` if possible
+    pub fn unknown_without_message() -> Self {
+        Unknown { msg: None }.build()
+    }
+
+    pub fn user_err<S: ToString>(msg: S) -> Self {
+        UserErr {
+            msg: msg.to_string(),
+        }
+        .build()
+    }
+}
+
+impl From<FromUtf8Error> for FfiError {
+    fn from(_original: FromUtf8Error) -> Self {
+        InvalidUtf8 {}.build()
     }
 }
 
@@ -108,10 +129,39 @@ mod test {
     }
 
     #[test]
-    fn ffi_error_other() {
-        let error = FfiError::other("broken");
+    fn ffi_error_unknown() {
+        let error = FfiError::unknown("broken");
         match error {
-            FfiError::Other { error, .. } => assert_eq!(error, "broken"),
+            FfiError::Unknown { msg, .. } => assert_eq!(msg.unwrap(), "broken"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn ffi_error_unknown_without_message() {
+        let error = FfiError::unknown_without_message();
+        match error {
+            FfiError::Unknown { msg, .. } => assert!(msg.is_none()),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn ffi_error_user_err() {
+        let error = FfiError::user_err("invalid input");
+        match error {
+            FfiError::UserErr { msg, .. } => assert_eq!(msg, "invalid input"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    // conversions
+
+    #[test]
+    fn convert_from_fromutf8error() {
+        let error: FfiError = String::from_utf8(vec![0x80]).unwrap_err().into();
+        match error {
+            FfiError::InvalidUtf8 { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
     }

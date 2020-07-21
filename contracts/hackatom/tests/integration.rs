@@ -43,9 +43,9 @@ fn proper_initialization() {
     let beneficiary = HumanAddr(String::from("benefits"));
     let creator = HumanAddr(String::from("creator"));
     let expected_state = State {
-        verifier: deps.api.canonical_address(&verifier).unwrap().0,
-        beneficiary: deps.api.canonical_address(&beneficiary).unwrap().0,
-        funder: deps.api.canonical_address(&creator).unwrap().0,
+        verifier: deps.api.canonical_address(&verifier).0.unwrap(),
+        beneficiary: deps.api.canonical_address(&beneficiary).0.unwrap(),
+        funder: deps.api.canonical_address(&creator).0.unwrap(),
     };
 
     let msg = InitMsg {
@@ -64,8 +64,8 @@ fn proper_initialization() {
         .with_storage(|store| {
             let data = store
                 .get(CONFIG_KEY)
-                .expect("error reading db")
                 .0
+                .expect("error reading db")
                 .expect("no data stored");
             from_slice(&data)
         })
@@ -183,7 +183,11 @@ fn handle_release_works() {
     };
     let init_amount = coins(1000, "earth");
     let init_env = mock_env(&deps.api, creator.as_str(), &init_amount);
-    let (contract_addr, _gas_used) = deps.api.human_address(&init_env.contract.address).unwrap();
+    let contract_addr = deps
+        .api
+        .human_address(&init_env.contract.address)
+        .0
+        .unwrap();
     let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
@@ -230,7 +234,11 @@ fn handle_release_fails_for_wrong_sender() {
     };
     let init_amount = coins(1000, "earth");
     let init_env = mock_env(&deps.api, creator.as_str(), &init_amount);
-    let (contract_addr, _gas_used) = deps.api.human_address(&init_env.contract.address).unwrap();
+    let contract_addr = deps
+        .api
+        .human_address(&init_env.contract.address)
+        .0
+        .unwrap();
     let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
@@ -254,8 +262,8 @@ fn handle_release_fails_for_wrong_sender() {
         .with_storage(|store| {
             Ok(store
                 .get(CONFIG_KEY)
-                .expect("error reading db")
                 .0
+                .expect("error reading db")
                 .expect("no data stored"))
         })
         .unwrap();
@@ -263,9 +271,9 @@ fn handle_release_fails_for_wrong_sender() {
     assert_eq!(
         state,
         State {
-            verifier: deps.api.canonical_address(&verifier).unwrap().0,
-            beneficiary: deps.api.canonical_address(&beneficiary).unwrap().0,
-            funder: deps.api.canonical_address(&creator).unwrap().0,
+            verifier: deps.api.canonical_address(&verifier).0.unwrap(),
+            beneficiary: deps.api.canonical_address(&beneficiary).0.unwrap(),
+            funder: deps.api.canonical_address(&creator).0.unwrap(),
         }
     );
 }
