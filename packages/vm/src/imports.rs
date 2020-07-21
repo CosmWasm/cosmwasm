@@ -180,14 +180,8 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
         Ok(store.range(start.as_deref(), end.as_deref(), order))
     })?;
     process_gas_info::<S, Q>(ctx, gas_info)?;
-    let iterator_id = match result {
-        Ok(iterator) => {
-            let new_id = add_iterator::<S, Q>(ctx, iterator);
-            Ok(new_id)
-        }
-        Err(err) => Err(VmError::from(err)),
-    }?;
-
+    let iterator = result?;
+    let iterator_id = add_iterator::<S, Q>(ctx, iterator);
     Ok(iterator_id)
 }
 
