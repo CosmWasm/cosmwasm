@@ -132,13 +132,11 @@ impl Api for MockApi {
             .filter(|&x| x != 0)
             .collect();
 
-        (
-            match String::from_utf8(trimmed) {
-                Ok(human) => Ok(HumanAddr(human)),
-                Err(err) => Err(err.into()),
-            },
-            gas_info,
-        )
+        let result = match String::from_utf8(trimmed) {
+            Ok(human) => Ok(HumanAddr(human)),
+            Err(err) => Err(err.into()),
+        };
+        (result, gas_info)
     }
 }
 
