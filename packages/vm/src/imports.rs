@@ -42,10 +42,7 @@ pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<
     let (result, gas_info) =
         with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)))?;
     process_gas_info::<S, Q>(ctx, gas_info)?;
-    let value = match result {
-        Ok(value) => Ok(value),
-        Err(err) => Err(VmError::from(err)),
-    }?;
+    let value = result?;
 
     let out_data = match value {
         Some(data) => data,
