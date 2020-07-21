@@ -96,7 +96,7 @@ macro_rules! create_entry_points {
 
             $crate::create_entry_points!(@migration; $contract, $migration);
 
-            // Other C externs like cosmwasm_vm_version_2, allocate, deallocate are available
+            // Other C externs like cosmwasm_vm_version_3, allocate, deallocate are available
             // automatically because we `use cosmwasm_std`.
         }
     };

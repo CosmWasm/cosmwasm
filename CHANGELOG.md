@@ -39,6 +39,7 @@
   `FfiError::Unknown`.
 - The `canonicalize_address` and `humanize_address` imports now report user
   errors to the contract.
+- Bump `cosmwasm_vm_version_2` to `cosmwasm_vm_version_3`.
 
 ## 0.9.4 (2020-07-16)
 

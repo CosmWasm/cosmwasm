@@ -1,6 +1,6 @@
 //! exports exposes the public wasm API
 //!
-//! cosmwasm_vm_version_2, allocate and deallocate turn into Wasm exports
+//! cosmwasm_vm_version_3, allocate and deallocate turn into Wasm exports
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
@@ -26,7 +26,7 @@ extern "C" fn requires_staking() -> () {}
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-extern "C" fn cosmwasm_vm_version_2() -> () {}
+extern "C" fn cosmwasm_vm_version_3() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
