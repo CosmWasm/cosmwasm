@@ -25,7 +25,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
 const REQUIRED_EXPORTS: &[&str] = &[
-    "cosmwasm_vm_version_2",
+    "cosmwasm_vm_version_3",
     "query",
     "init",
     "handle",
@@ -176,7 +176,7 @@ mod test {
     fn test_check_wasm_old_contract() {
         match check_wasm(CONTRACT_0_7, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
-                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_2\""
+                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_3\""
             )),
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
@@ -184,7 +184,7 @@ mod test {
 
         match check_wasm(CONTRACT_0_6, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
-                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_2\""
+                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_3\""
             )),
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
@@ -309,7 +309,7 @@ mod test {
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
-                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_2\""
+                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_3\""
                 ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
@@ -323,7 +323,7 @@ mod test {
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
-                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_2\""
+                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_3\""
                 ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
