@@ -3,6 +3,7 @@
   "title": "QueryMsg",
   "anyOf": [
     {
+      "description": "returns a human-readable representation of the verifier use to ensure query path works in integration tests",
       "type": "object",
       "required": [
         "verifier"
@@ -14,6 +15,7 @@
       }
     },
     {
+      "description": "This returns cosmwasm_std::AllBalanceResponse to demo use of the querier",
       "type": "object",
       "required": [
         "other_balance"
@@ -27,6 +29,38 @@
           "properties": {
             "address": {
               "$ref": "#/definitions/HumanAddr"
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Recurse will execute a query into itself up to depth-times and return Each step of the recursion may perform some extra work to test gas metering (`work` rounds of sha256 on contract). Contract should be the set to be the address of the original contract, we pass it in as query doesn't have access to env.",
+      "type": "object",
+      "required": [
+        "recurse"
+      ],
+      "properties": {
+        "recurse": {
+          "type": "object",
+          "required": [
+            "contract",
+            "depth",
+            "work"
+          ],
+          "properties": {
+            "contract": {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            "depth": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "work": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
             }
           }
         }

@@ -15,6 +15,7 @@
       }
     },
     {
+      "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
       "type": "object",
       "required": [
         "cpu_loop"
@@ -26,6 +27,7 @@
       }
     },
     {
+      "description": "Infinite loop making storage calls (to test when their limit hits)",
       "type": "object",
       "required": [
         "storage_loop"
@@ -61,6 +63,7 @@
       }
     },
     {
+      "description": "Trigger a panic to ensure framework handles gracefully",
       "type": "object",
       "required": [
         "panic"
