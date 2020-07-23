@@ -31,6 +31,16 @@ impl GasInfo {
             externally_used: amount,
         }
     }
+
+    /// Creates a gas information with no cost for the caller and with zero externally used gas.
+    ///
+    /// Caution: when using this you need to make sure no gas was metered externally to keep the gas values in sync.
+    pub fn free() -> Self {
+        GasInfo {
+            cost: 0,
+            externally_used: 0,
+        }
+    }
 }
 
 #[derive(Debug, Snafu)]
@@ -111,6 +121,13 @@ mod test {
         let gas_info = GasInfo::with_externally_used(65);
         assert_eq!(gas_info.cost, 0);
         assert_eq!(gas_info.externally_used, 65);
+    }
+
+    #[test]
+    fn gas_info_free_works() {
+        let gas_info = GasInfo::free();
+        assert_eq!(gas_info.cost, 0);
+        assert_eq!(gas_info.externally_used, 0);
     }
 
     // constructors
