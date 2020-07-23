@@ -99,6 +99,20 @@ impl From<FromUtf8Error> for FfiError {
 mod test {
     use super::*;
 
+    #[test]
+    fn gas_info_with_cost_works() {
+        let gas_info = GasInfo::with_cost(21);
+        assert_eq!(gas_info.cost, 21);
+        assert_eq!(gas_info.externally_used, 0);
+    }
+
+    #[test]
+    fn gas_info_with_externally_used_works() {
+        let gas_info = GasInfo::with_externally_used(65);
+        assert_eq!(gas_info.cost, 0);
+        assert_eq!(gas_info.externally_used, 65);
+    }
+
     // constructors
 
     #[test]
