@@ -1,11 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Context, Env,
-    Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryResponse,
-    StdError, StdResult, Storage,
+    Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryRequest,
+    QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -40,31 +41,47 @@ pub struct State {
 pub enum HandleMsg {
     /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
     Release {},
-    // Infinite loop to burn cpu cycles (only run when metering is enabled)
+    /// Infinite loop to burn cpu cycles (only run when metering is enabled)
     CpuLoop {},
-    // Infinite loop making storage calls (to test when their limit hits)
+    /// Infinite loop making storage calls (to test when their limit hits)
     StorageLoop {},
     /// Infinite loop reading and writing memory
     MemoryLoop {},
     /// Allocate large amounts of memory without consuming much gas
     AllocateLargeMemory {},
-    // Trigger a panic to ensure framework handles gracefully
+    /// Trigger a panic to ensure framework handles gracefully
     Panic {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    // returns a human-readable representation of the verifier
-    // use to ensure query path works in integration tests
+    /// returns a human-readable representation of the verifier
+    /// use to ensure query path works in integration tests
     Verifier {},
-    // This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
+    /// This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
     OtherBalance { address: HumanAddr },
+    /// Recurse will execute a query into itself up to depth-times and return
+    /// Each step of the recursion may perform some extra work to test gas metering
+    /// (`work` rounds of sha256 on contract).
+    /// Contract should be the set to be the address of the original contract,
+    /// we pass it in as query doesn't have access to env.
+    Recurse {
+        depth: u32,
+        work: u32,
+        contract: HumanAddr,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct VerifierResponse {
     pub verifier: HumanAddr,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct RecurseResponse {
+    /// hashed is the result of running sha256 "work+1" times on the contract's human address
+    pub hashed: Vec<u8>,
 }
 
 pub const CONFIG_KEY: &[u8] = b"config";
@@ -209,6 +226,11 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
+        QueryMsg::Recurse {
+            depth,
+            work,
+            contract,
+        } => to_binary(&query_recurse(deps, depth, work, contract)?),
     }
 }
 
@@ -230,6 +252,40 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
     Ok(AllBalanceResponse { amount })
+}
+
+fn query_recurse<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    depth: u32,
+    work: u32,
+    contract: HumanAddr,
+) -> StdResult<RecurseResponse> {
+    // perform all hashes as requested
+    let mut hashed: Vec<u8> = contract.as_str().as_bytes().to_vec();
+    if work > 0 {
+        let mut step = Sha256::digest(&hashed);
+        for _ in 1..work {
+            step = Sha256::digest(&step);
+        }
+        hashed = step.to_vec();
+    }
+
+    // the last contract should return the response
+    if depth == 0 {
+        Ok(RecurseResponse { hashed })
+    } else {
+        // otherwise, we go one level deeper and return the response of the next level
+        let req = QueryMsg::Recurse {
+            depth: depth - 1,
+            work,
+            contract: contract.clone(),
+        };
+        let query = QueryRequest::Wasm(WasmQuery::Smart {
+            contract_addr: contract,
+            msg: to_binary(&req)?,
+        });
+        deps.querier.query(&query)
+    }
 }
 
 #[cfg(test)]
@@ -446,5 +502,27 @@ mod tests {
         let handle_env = mock_env(beneficiary.as_str(), &[]);
         // this should panic
         let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
+    }
+
+    #[test]
+    fn query_recursive() {
+        // the test framework doesn't handle contracts querying contracts yet,
+        // let's just make sure the last step looks right
+
+        let deps = mock_dependencies(20, &[]);
+        let contract = HumanAddr::from("my-contract");
+        let bin_contract = b"my-contract".to_vec();
+
+        // return the unhashed value here
+        let no_work_query = query_recurse(&deps, 0, 0, contract.clone()).unwrap();
+        assert_eq!(no_work_query.hashed, bin_contract.clone());
+
+        // let's see if 5 hashes are done right
+        let mut expected_hash = Sha256::digest(&bin_contract);
+        for _ in 0..4 {
+            expected_hash = Sha256::digest(&expected_hash);
+        }
+        let work_query = query_recurse(&deps, 0, 5, contract).unwrap();
+        assert_eq!(work_query.hashed, expected_hash.to_vec());
     }
 }
