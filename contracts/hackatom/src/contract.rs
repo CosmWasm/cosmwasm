@@ -79,7 +79,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         &to_vec(&State {
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: env.message.sender,
+            funder: deps.api.canonical_address(&env.message.sender)?,
         })?,
     );
 
@@ -130,16 +130,15 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if env.message.sender == state.verifier {
+    if deps.api.canonical_address(&env.message.sender)? == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
-        let from_addr = deps.api.human_address(&env.contract.address)?;
-        let balance = deps.querier.query_all_balances(&from_addr)?;
+        let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
         let mut ctx = Context::new();
         ctx.add_log("action", "release");
         ctx.add_log("destination", &to_addr);
         ctx.add_message(BankMsg::Send {
-            from_address: from_addr,
+            from_address: env.contract.address,
             to_address: to_addr,
             amount: balance,
         });
@@ -259,7 +258,7 @@ mod tests {
             verifier,
             beneficiary,
         };
-        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let env = mock_env(creator.as_str(), &[]);
         let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.log.len(), 1);
@@ -283,7 +282,7 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let env = mock_env(creator.as_str(), &[]);
         let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -303,7 +302,7 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let env = mock_env(creator.as_str(), &[]);
         let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -316,7 +315,7 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let env = mock_env(&deps.api, creator.as_str(), &[]);
+        let env = mock_env(creator.as_str(), &[]);
         let res = migrate(&mut deps, env, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -354,8 +353,8 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_env = mock_env(&deps.api, creator.as_str(), &init_amount);
-        let contract_addr = deps.api.human_address(&init_env.contract.address).unwrap();
+        let init_env = mock_env(creator.as_str(), &init_amount);
+        let contract_addr = init_env.contract.address.clone();
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
@@ -363,7 +362,7 @@ mod tests {
         deps.querier.update_balance(&contract_addr, init_amount);
 
         // beneficiary can release it
-        let handle_env = mock_env(&deps.api, verifier.as_str(), &[]);
+        let handle_env = mock_env(verifier.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
         assert_eq!(handle_res.messages.len(), 1);
         let msg = handle_res.messages.get(0).expect("no message");
@@ -397,8 +396,8 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_env = mock_env(&deps.api, creator.as_str(), &init_amount);
-        let contract_addr = deps.api.human_address(&init_env.contract.address).unwrap();
+        let init_env = mock_env(creator.as_str(), &init_amount);
+        let contract_addr = init_env.contract.address.clone();
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
@@ -406,7 +405,7 @@ mod tests {
         deps.querier.update_balance(&contract_addr, init_amount);
 
         // beneficiary cannot release it
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
+        let handle_env = mock_env(beneficiary.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
         match handle_res.unwrap_err() {
             StdError::Unauthorized { .. } => {}
@@ -440,11 +439,11 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_env = mock_env(&deps.api, creator.as_str(), &coins(1000, "earth"));
+        let init_env = mock_env(creator.as_str(), &coins(1000, "earth"));
         let init_res = init(&mut deps, init_env, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(&deps.api, beneficiary.as_str(), &[]);
+        let handle_env = mock_env(beneficiary.as_str(), &[]);
         // this should panic
         let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
     }

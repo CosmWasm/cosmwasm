@@ -26,7 +26,7 @@ use cosmwasm_vm::{
         handle, init, mock_env, mock_instance, query, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
-    Api, Extern, Instance,
+    Extern, Instance,
 };
 
 use reflect::msg::{
@@ -62,7 +62,7 @@ fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env(&deps.api, "creator", &coins(1000, "earth"));
+    let env = mock_env("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
     let res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
@@ -79,13 +79,12 @@ fn reflect() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env(&deps.api, "creator", &coins(2, "token"));
+    let env = mock_env("creator", &coins(2, "token"));
     let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
 
-    let env = mock_env(&deps.api, "creator", &[]);
     let payload = vec![
         BankMsg::Send {
-            from_address: deps.api.human_address(&env.contract.address).0.unwrap(),
+            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -102,6 +101,7 @@ fn reflect() {
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };
+    let env = mock_env("creator", &[]);
     let res: HandleResponse<CustomMsg> = handle(&mut deps, env, msg).unwrap();
 
     // should return payload
@@ -113,13 +113,12 @@ fn reflect_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env(&deps.api, "creator", &coins(2, "token"));
+    let env = mock_env("creator", &coins(2, "token"));
     let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
 
     // signer is not owner
-    let env = mock_env(&deps.api, "someone", &[]);
     let payload = vec![BankMsg::Send {
-        from_address: deps.api.human_address(&env.contract.address).0.unwrap(),
+        from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
     }
@@ -128,6 +127,7 @@ fn reflect_requires_owner() {
         msgs: payload.clone(),
     };
 
+    let env = mock_env("someone", &[]);
     let res: HandleResult<CustomMsg> = handle(&mut deps, env, msg);
     match res {
         Err(StdError::Unauthorized { .. }) => {}
@@ -140,10 +140,10 @@ fn transfer() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env(&deps.api, "creator", &coins(2, "token"));
+    let env = mock_env("creator", &coins(2, "token"));
     let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
 
-    let env = mock_env(&deps.api, "creator", &[]);
+    let env = mock_env("creator", &[]);
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner {
         owner: new_owner.clone(),
@@ -162,10 +162,10 @@ fn transfer_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env(&deps.api, "creator", &coins(2, "token"));
+    let env = mock_env("creator", &coins(2, "token"));
     let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
 
-    let env = mock_env(&deps.api, "random", &[]);
+    let env = mock_env("random", &[]);
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner {
         owner: new_owner.clone(),

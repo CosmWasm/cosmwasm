@@ -32,7 +32,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/qu
 fn create_contract() -> (Instance<MockStorage, MockApi, MockQuerier>, Env) {
     let mut deps = mock_instance(WASM, &[]);
     let creator = HumanAddr(String::from("creator"));
-    let env = mock_env(&deps.api, creator.as_str(), &[]);
+    let env = mock_env(creator.as_str(), &[]);
     let res: InitResponse = init(&mut deps, env.clone(), InitMsg {}).unwrap();
     assert_eq!(0, res.messages.len());
     (deps, env)
