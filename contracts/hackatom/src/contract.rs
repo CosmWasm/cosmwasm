@@ -4,9 +4,9 @@ use sha2::{Digest, Sha256};
 use std::convert::TryInto;
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr, Context, Env,
-    Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier, QueryRequest,
-    QueryResponse, StdError, StdResult, Storage, WasmQuery,
+    from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
+    Context, Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier,
+    QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -81,7 +81,7 @@ pub struct VerifierResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct RecurseResponse {
     /// hashed is the result of running sha256 "work+1" times on the contract's human address
-    pub hashed: Vec<u8>,
+    pub hashed: Binary,
 }
 
 pub const CONFIG_KEY: &[u8] = b"config";
@@ -262,17 +262,15 @@ fn query_recurse<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<RecurseResponse> {
     // perform all hashes as requested
     let mut hashed: Vec<u8> = contract.as_str().as_bytes().to_vec();
-    if work > 0 {
-        let mut step = Sha256::digest(&hashed);
-        for _ in 1..work {
-            step = Sha256::digest(&step);
-        }
-        hashed = step.to_vec();
+    for _ in 0..work {
+        hashed = Sha256::digest(&hashed).to_vec()
     }
 
     // the last contract should return the response
     if depth == 0 {
-        Ok(RecurseResponse { hashed })
+        Ok(RecurseResponse {
+            hashed: hashed.into(),
+        })
     } else {
         // otherwise, we go one level deeper and return the response of the next level
         let req = QueryMsg::Recurse {
@@ -511,18 +509,18 @@ mod tests {
 
         let deps = mock_dependencies(20, &[]);
         let contract = HumanAddr::from("my-contract");
-        let bin_contract = b"my-contract".to_vec();
+        let bin_contract: &[u8] = b"my-contract";
 
         // return the unhashed value here
         let no_work_query = query_recurse(&deps, 0, 0, contract.clone()).unwrap();
-        assert_eq!(no_work_query.hashed, bin_contract.clone());
+        assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
 
         // let's see if 5 hashes are done right
-        let mut expected_hash = Sha256::digest(&bin_contract);
+        let mut expected_hash = Sha256::digest(bin_contract);
         for _ in 0..4 {
             expected_hash = Sha256::digest(&expected_hash);
         }
         let work_query = query_recurse(&deps, 0, 5, contract).unwrap();
-        assert_eq!(work_query.hashed, expected_hash.to_vec());
+        assert_eq!(work_query.hashed, expected_hash.to_vec().into());
     }
 }
