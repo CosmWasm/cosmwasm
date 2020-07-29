@@ -2,8 +2,8 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
-    to_binary, Binary, Coin, Empty, HumanAddr, Querier as _, QueryRequest, StdResult, SystemError,
-    SystemResult,
+    to_binary, to_vec, Binary, Coin, Empty, HumanAddr, Querier as _, QueryRequest, StdResult,
+    SystemError, SystemResult,
 };
 
 use crate::{FfiResult, GasInfo, Querier};
@@ -75,7 +75,7 @@ impl MockQuerier {
         request: &QueryRequest<T>,
     ) -> FfiResult<SystemResult<StdResult<Binary>>> {
         // encode the request, then call raw_query
-        let request_binary = match to_binary(request) {
+        let request_binary = match to_vec(request) {
             Ok(raw) => raw,
             Err(err) => {
                 let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
@@ -88,7 +88,7 @@ impl MockQuerier {
                 );
             }
         };
-        self.query_raw(request_binary.as_slice())
+        self.query_raw(&request_binary)
     }
 }
 
