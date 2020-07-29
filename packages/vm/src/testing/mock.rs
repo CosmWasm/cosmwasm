@@ -3,11 +3,11 @@ use serde::{de::DeserializeOwned, Serialize};
 use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
     to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Empty, Env, HumanAddr,
-    MessageInfo, Querier as _, QueryRequest, SystemError,
+    MessageInfo, Querier as _, QueryRequest, StdResult, SystemError, SystemResult,
 };
 
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
@@ -202,7 +202,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 }
 
 impl<C: DeserializeOwned> Querier for MockQuerier<C> {
-    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+    fn query_raw(&self, bin_request: &[u8]) -> FfiResult<SystemResult<StdResult<Binary>>> {
         let response = self.querier.raw_query(bin_request);
         let gas_info = GasInfo::with_externally_used(
             GAS_COST_QUERY_FLAT
@@ -216,7 +216,10 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
 }
 
 impl MockQuerier {
-    pub fn handle_query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
+    pub fn query<T: Serialize>(
+        &self,
+        request: &QueryRequest<T>,
+    ) -> FfiResult<SystemResult<StdResult<Binary>>> {
         // encode the request, then call raw_query
         let request_binary = match to_binary(request) {
             Ok(raw) => raw,
@@ -231,7 +234,7 @@ impl MockQuerier {
                 );
             }
         };
-        self.raw_query(request_binary.as_slice())
+        self.query_raw(request_binary.as_slice())
     }
 }
 
@@ -309,7 +312,7 @@ mod test {
 
         // all
         let all = querier
-            .handle_query::<Empty>(
+            .query::<Empty>(
                 &BankQuery::AllBalances {
                     address: addr.clone(),
                 }
@@ -331,7 +334,7 @@ mod test {
 
         // one match
         let fly = querier
-            .handle_query::<Empty>(
+            .query::<Empty>(
                 &BankQuery::Balance {
                     address: addr.clone(),
                     denom: "FLY".to_string(),
@@ -347,7 +350,7 @@ mod test {
 
         // missing denom
         let miss = querier
-            .handle_query::<Empty>(
+            .query::<Empty>(
                 &BankQuery::Balance {
                     address: addr.clone(),
                     denom: "MISS".to_string(),
@@ -370,7 +373,7 @@ mod test {
 
         // all balances on empty account is empty vec
         let all = querier
-            .handle_query::<Empty>(
+            .query::<Empty>(
                 &BankQuery::AllBalances {
                     address: HumanAddr::from("elsewhere"),
                 }
@@ -385,7 +388,7 @@ mod test {
 
         // any denom on balances on empty account is empty coin
         let miss = querier
-            .handle_query::<Empty>(
+            .query::<Empty>(
                 &BankQuery::Balance {
                     address: HumanAddr::from("elsewhere"),
                     denom: "ELF".to_string(),

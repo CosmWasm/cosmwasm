@@ -629,7 +629,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
+                    .query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))
@@ -648,7 +648,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
+                    .query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
                         address: rich_addr.clone(),
                     }))
                     .0
@@ -679,7 +679,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
+                    .query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))
@@ -705,7 +705,7 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
+                    .query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
                         address: rich_addr.clone(),
                         denom: "silver".to_string(),
                     }))

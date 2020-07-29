@@ -664,7 +664,7 @@ mod test {
             let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            let (result, _gas_info) = querier.raw_query(&to_vec(&req).unwrap());
+            let (result, _gas_info) = querier.query_raw(&to_vec(&req).unwrap());
             Ok(result.unwrap())
         })
         .unwrap()
