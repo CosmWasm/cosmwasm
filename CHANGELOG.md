@@ -42,6 +42,8 @@
 - The `canonicalize_address` and `humanize_address` imports now report user
   errors to the contract.
 - Bump `cosmwasm_vm_version_2` to `cosmwasm_vm_version_3`.
+- `Querier::raw_query` and `QuerierResult` were removed in favour of the new
+  `Querier::query_raw`, which includes a gas limit parameter for the query.
 
 ## 0.9.4 (2020-07-16)
 

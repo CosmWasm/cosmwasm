@@ -8,6 +8,7 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 use wasmer_runtime_core::vm::Ctx;
 
+use crate::backends::get_gas_left;
 #[cfg(feature = "iterator")]
 use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{
@@ -153,8 +154,10 @@ fn write_to_contract<S: Storage, Q: Querier>(ctx: &mut Ctx, input: &[u8]) -> VmR
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
     let request = read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
-    let (result, gas_info) =
-        with_querier_from_context::<S, Q, _, _>(ctx, |querier| Ok(querier.raw_query(&request)))?;
+    let gas_remaining = get_gas_left(ctx);
+    let (result, gas_info) = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+        Ok(querier.query_raw(&request, gas_remaining))
+    })?;
     process_gas_info::<S, Q>(ctx, gas_info)?;
     let serialized = to_vec(&result?)?;
     write_to_contract::<S, Q>(ctx, &serialized)

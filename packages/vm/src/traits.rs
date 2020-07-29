@@ -107,16 +107,19 @@ pub trait Api: Copy + Clone + Send {
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr>;
 }
 
-/// A short-hand alias for the three-level query result
-/// 1. Passing the query message to the backend
-/// 2. Accessing the contract
-/// 3. Executing query in the contract
-pub type QuerierResult = FfiResult<SystemResult<StdResult<Binary>>>;
-
 pub trait Querier {
-    /// raw_query is all that must be implemented for the Querier.
+    /// This is all that must be implemented for the Querier.
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
     /// types.
-    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
+    ///
+    /// The gas limit describes how much VM gas this particular query is allowed
+    /// to comsume when measured separately from the rest of the contract.
+    /// The returned gas info (in FfiResult) can exceed the gas limit in cases
+    /// where the query could not be aborted exactly at the limit.
+    fn query_raw(
+        &self,
+        request: &[u8],
+        gas_limit: u64,
+    ) -> FfiResult<SystemResult<StdResult<Binary>>>;
 }

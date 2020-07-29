@@ -393,6 +393,7 @@ mod test {
     const INIT_DENOM: &str = "TOKEN";
 
     const GAS_LIMIT: u64 = 5_000_000;
+    const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
     fn make_instance() -> Box<WasmerInstance> {
         let module = compile(&CONTRACT).unwrap();
@@ -664,7 +665,8 @@ mod test {
             let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
-            let (result, _gas_info) = querier.raw_query(&to_vec(&req).unwrap());
+            let (result, _gas_info) =
+                querier.query_raw(&to_vec(&req).unwrap(), DEFAULT_QUERY_GAS_LIMIT);
             Ok(result.unwrap())
         })
         .unwrap()

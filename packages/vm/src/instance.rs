@@ -284,6 +284,7 @@ mod test {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_GAS_LIMIT: u64 = 500_000;
+    const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     // shorthands for function generics below
@@ -629,10 +630,13 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
-                        address: rich_addr.clone(),
-                        denom: "silver".to_string(),
-                    }))
+                    .query::<Empty>(
+                        &QueryRequest::Bank(BankQuery::Balance {
+                            address: rich_addr.clone(),
+                            denom: "silver".to_string(),
+                        }),
+                        DEFAULT_QUERY_GAS_LIMIT,
+                    )
                     .0
                     .unwrap()
                     .unwrap()
@@ -648,9 +652,12 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::AllBalances {
-                        address: rich_addr.clone(),
-                    }))
+                    .query::<Empty>(
+                        &QueryRequest::Bank(BankQuery::AllBalances {
+                            address: rich_addr.clone(),
+                        }),
+                        DEFAULT_QUERY_GAS_LIMIT,
+                    )
                     .0
                     .unwrap()
                     .unwrap()
@@ -679,10 +686,13 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
-                        address: rich_addr.clone(),
-                        denom: "silver".to_string(),
-                    }))
+                    .query::<Empty>(
+                        &QueryRequest::Bank(BankQuery::Balance {
+                            address: rich_addr.clone(),
+                            denom: "silver".to_string(),
+                        }),
+                        DEFAULT_QUERY_GAS_LIMIT,
+                    )
                     .0
                     .unwrap()
                     .unwrap()
@@ -705,10 +715,13 @@ mod test {
         instance
             .with_querier(|querier| {
                 let response = querier
-                    .handle_query::<Empty>(&QueryRequest::Bank(BankQuery::Balance {
-                        address: rich_addr.clone(),
-                        denom: "silver".to_string(),
-                    }))
+                    .query::<Empty>(
+                        &QueryRequest::Bank(BankQuery::Balance {
+                            address: rich_addr.clone(),
+                            denom: "silver".to_string(),
+                        }),
+                        DEFAULT_QUERY_GAS_LIMIT,
+                    )
                     .0
                     .unwrap()
                     .unwrap()

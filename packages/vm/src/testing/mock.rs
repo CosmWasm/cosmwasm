@@ -1,22 +1,14 @@
-use serde::{de::DeserializeOwned, Serialize};
-
-use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
-    to_binary, Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Empty, Env, HumanAddr,
-    MessageInfo, Querier as _, QueryRequest, SystemError,
+    Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
 };
 
+use super::querier::MockQuerier;
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, GasInfo, Querier, QuerierResult};
+use crate::{Api, Extern, FfiError, FfiResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
 const GAS_COST_CANONICALIZE: u64 = 55;
-const GAS_COST_QUERY_FLAT: u64 = 100_000;
-/// Gas per request byte
-const GAS_COST_QUERY_REQUEST_MULTIPLIER: u64 = 0;
-/// Gas per reponse byte
-const GAS_COST_QUERY_RESPONSE_MULTIPLIER: u64 = 100;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -160,88 +152,11 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
     }
 }
 
-/// MockQuerier holds an immutable table of bank balances
-/// TODO: also allow querying contracts
-pub struct MockQuerier<C: DeserializeOwned = Empty> {
-    querier: StdMockQuerier<C>,
-}
-
-impl<C: DeserializeOwned> MockQuerier<C> {
-    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
-        MockQuerier {
-            querier: StdMockQuerier::new(balances),
-        }
-    }
-
-    // set a new balance for the given address and return the old balance
-    pub fn update_balance<U: Into<HumanAddr>>(
-        &mut self,
-        addr: U,
-        balance: Vec<Coin>,
-    ) -> Option<Vec<Coin>> {
-        self.querier.update_balance(addr, balance)
-    }
-
-    #[cfg(feature = "staking")]
-    pub fn update_staking(
-        &mut self,
-        denom: &str,
-        validators: &[cosmwasm_std::Validator],
-        delegations: &[cosmwasm_std::FullDelegation],
-    ) {
-        self.querier.update_staking(denom, validators, delegations);
-    }
-
-    pub fn with_custom_handler<CH: 'static>(mut self, handler: CH) -> Self
-    where
-        CH: Fn(&C) -> MockQuerierCustomHandlerResult,
-    {
-        self.querier = self.querier.with_custom_handler(handler);
-        self
-    }
-}
-
-impl<C: DeserializeOwned> Querier for MockQuerier<C> {
-    fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        let response = self.querier.raw_query(bin_request);
-        let gas_info = GasInfo::with_externally_used(
-            GAS_COST_QUERY_FLAT
-                + (GAS_COST_QUERY_REQUEST_MULTIPLIER * (bin_request.len() as u64))
-                + (GAS_COST_QUERY_RESPONSE_MULTIPLIER
-                    * (to_binary(&response).unwrap().len() as u64)),
-        );
-        // We don't use FFI in the mock implementation, so FfiResult is always Ok() regardless of error on other levels
-        (Ok(response), gas_info)
-    }
-}
-
-impl MockQuerier {
-    pub fn handle_query<T: Serialize>(&self, request: &QueryRequest<T>) -> QuerierResult {
-        // encode the request, then call raw_query
-        let request_binary = match to_binary(request) {
-            Ok(raw) => raw,
-            Err(err) => {
-                let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
-                return (
-                    Ok(Err(SystemError::InvalidRequest {
-                        error: format!("Serializing query request: {}", err),
-                        request: b"N/A".into(),
-                    })),
-                    gas_info,
-                );
-            }
-        };
-        self.raw_query(request_binary.as_slice())
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::FfiError;
-    use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
-    };
+    use cosmwasm_std::coins;
 
     #[test]
     fn mock_env_arguments() {
@@ -299,104 +214,5 @@ mod test {
             FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
-    }
-
-    #[test]
-    fn bank_querier_all_balances() {
-        let addr = HumanAddr::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let querier = MockQuerier::new(&[(&addr, &balance)]);
-
-        // all
-        let all = querier
-            .handle_query::<Empty>(
-                &BankQuery::AllBalances {
-                    address: addr.clone(),
-                }
-                .into(),
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_binary(&all).unwrap();
-        assert_eq!(&res.amount, &balance);
-    }
-
-    #[test]
-    fn bank_querier_one_balance() {
-        let addr = HumanAddr::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let querier = MockQuerier::new(&[(&addr, &balance)]);
-
-        // one match
-        let fly = querier
-            .handle_query::<Empty>(
-                &BankQuery::Balance {
-                    address: addr.clone(),
-                    denom: "FLY".to_string(),
-                }
-                .into(),
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: BalanceResponse = from_binary(&fly).unwrap();
-        assert_eq!(res.amount, coin(777, "FLY"));
-
-        // missing denom
-        let miss = querier
-            .handle_query::<Empty>(
-                &BankQuery::Balance {
-                    address: addr.clone(),
-                    denom: "MISS".to_string(),
-                }
-                .into(),
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: BalanceResponse = from_binary(&miss).unwrap();
-        assert_eq!(res.amount, coin(0, "MISS"));
-    }
-
-    #[test]
-    fn bank_querier_missing_account() {
-        let addr = HumanAddr::from("foobar");
-        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
-        let querier = MockQuerier::new(&[(&addr, &balance)]);
-
-        // all balances on empty account is empty vec
-        let all = querier
-            .handle_query::<Empty>(
-                &BankQuery::AllBalances {
-                    address: HumanAddr::from("elsewhere"),
-                }
-                .into(),
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: AllBalanceResponse = from_binary(&all).unwrap();
-        assert_eq!(res.amount, vec![]);
-
-        // any denom on balances on empty account is empty coin
-        let miss = querier
-            .handle_query::<Empty>(
-                &BankQuery::Balance {
-                    address: HumanAddr::from("elsewhere"),
-                    denom: "ELF".to_string(),
-                }
-                .into(),
-            )
-            .0
-            .unwrap()
-            .unwrap()
-            .unwrap();
-        let res: BalanceResponse = from_binary(&miss).unwrap();
-        assert_eq!(res.amount, coin(0, "ELF"));
     }
 }
