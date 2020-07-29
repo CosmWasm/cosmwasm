@@ -23,7 +23,8 @@ Integration tests:
 
 All Tests:
 
-All usages of `mock_env` will have to remove the first argument (no need of API).
+All usages of `mock_env` will have to remove the first argument (no need of
+API).
 
 ```rust
 // before
@@ -35,9 +36,9 @@ let env = mock_env("creator", &coins(1000, "earth"));
 
 Contracts:
 
-* All code that uses `message.sender` or `contract.address` should deal with
-  `HumanAddr` not `CanonicalAddr`. Many times this means you can remove
-  a conversion step.
+- All code that uses `message.sender` or `contract.address` should deal with
+  `HumanAddr` not `CanonicalAddr`. Many times this means you can remove a
+  conversion step.
 
 ## 0.8 -> 0.9
 
