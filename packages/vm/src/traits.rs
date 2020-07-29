@@ -112,5 +112,14 @@ pub trait Querier {
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
     /// types.
-    fn query_raw(&self, request: &[u8]) -> FfiResult<SystemResult<StdResult<Binary>>>;
+    ///
+    /// The gas limit describes how much VM gas this particular query is allowed
+    /// to comsume when measured separately from the rest of the contract.
+    /// The returned gas info (in FfiResult) can exceed the gas limit in cases
+    /// where the query could not be aborted exactly at the limit.
+    fn query_raw(
+        &self,
+        request: &[u8],
+        gas_limit: u64,
+    ) -> FfiResult<SystemResult<StdResult<Binary>>>;
 }

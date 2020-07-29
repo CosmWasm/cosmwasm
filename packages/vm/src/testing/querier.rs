@@ -6,7 +6,7 @@ use cosmwasm_std::{
     SystemError, SystemResult,
 };
 
-use crate::{FfiResult, GasInfo, Querier};
+use crate::{FfiError, FfiResult, GasInfo, Querier};
 
 const GAS_COST_QUERY_FLAT: u64 = 100_000;
 /// Gas per request byte
@@ -56,7 +56,11 @@ impl<C: DeserializeOwned> MockQuerier<C> {
 }
 
 impl<C: DeserializeOwned> Querier for MockQuerier<C> {
-    fn query_raw(&self, bin_request: &[u8]) -> FfiResult<SystemResult<StdResult<Binary>>> {
+    fn query_raw(
+        &self,
+        bin_request: &[u8],
+        gas_limit: u64,
+    ) -> FfiResult<SystemResult<StdResult<Binary>>> {
         let response = self.querier.raw_query(bin_request);
         let gas_info = GasInfo::with_externally_used(
             GAS_COST_QUERY_FLAT
@@ -64,6 +68,13 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
                 + (GAS_COST_QUERY_RESPONSE_MULTIPLIER
                     * (to_binary(&response).unwrap().len() as u64)),
         );
+
+        // In a production implementation, this should stop the query execution in the middle of the computation.
+        // Thus no query response is returned to the caller.
+        if gas_info.externally_used > gas_limit {
+            return (Err(FfiError::out_of_gas()), gas_info);
+        }
+
         // We don't use FFI in the mock implementation, so FfiResult is always Ok() regardless of error on other levels
         (Ok(response), gas_info)
     }
@@ -73,6 +84,7 @@ impl MockQuerier {
     pub fn query<T: Serialize>(
         &self,
         request: &QueryRequest<T>,
+        gas_limit: u64,
     ) -> FfiResult<SystemResult<StdResult<Binary>>> {
         // encode the request, then call raw_query
         let request_binary = match to_vec(request) {
@@ -88,7 +100,7 @@ impl MockQuerier {
                 );
             }
         };
-        self.query_raw(&request_binary)
+        self.query_raw(&request_binary, gas_limit)
     }
 }
 
@@ -96,6 +108,8 @@ impl MockQuerier {
 mod test {
     use super::*;
     use cosmwasm_std::{coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty};
+
+    const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
     #[test]
     fn bank_querier_all_balances() {
@@ -110,6 +124,7 @@ mod test {
                     address: addr.clone(),
                 }
                 .into(),
+                DEFAULT_QUERY_GAS_LIMIT,
             )
             .0
             .unwrap()
@@ -133,6 +148,7 @@ mod test {
                     denom: "FLY".to_string(),
                 }
                 .into(),
+                DEFAULT_QUERY_GAS_LIMIT,
             )
             .0
             .unwrap()
@@ -149,6 +165,7 @@ mod test {
                     denom: "MISS".to_string(),
                 }
                 .into(),
+                DEFAULT_QUERY_GAS_LIMIT,
             )
             .0
             .unwrap()
@@ -171,6 +188,7 @@ mod test {
                     address: HumanAddr::from("elsewhere"),
                 }
                 .into(),
+                DEFAULT_QUERY_GAS_LIMIT,
             )
             .0
             .unwrap()
@@ -187,6 +205,7 @@ mod test {
                     denom: "ELF".to_string(),
                 }
                 .into(),
+                DEFAULT_QUERY_GAS_LIMIT,
             )
             .0
             .unwrap()
