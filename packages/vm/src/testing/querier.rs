@@ -112,6 +112,20 @@ mod test {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
     #[test]
+    fn query_raw_fails_when_out_of_gas() {
+        let addr = HumanAddr::from("foobar");
+        let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
+        let querier: MockQuerier<Empty> = MockQuerier::new(&[(&addr, &balance)]);
+
+        let gas_limit = 20;
+        let (result, _gas_info) = querier.query_raw(b"broken request", gas_limit);
+        match result.unwrap_err() {
+            FfiError::OutOfGas {} => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
     fn bank_querier_all_balances() {
         let addr = HumanAddr::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
