@@ -9,7 +9,8 @@ use crate::features::features_from_csv;
 use crate::instance::Instance;
 use crate::{Api, Extern, Querier, Storage};
 
-use super::mock::{MockApi, MockQuerier, MOCK_CONTRACT_ADDR};
+use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
+use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
 pub fn mock_instance(
