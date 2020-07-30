@@ -229,13 +229,23 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
     let empty = HumanAddr::from("");
     match api.canonical_address(&empty).unwrap_err() {
         StdError::GenericErr { .. } => {}
-        err => panic!("Unexpected error: {:?}", err),
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
     }
 
     let invalid_bech32 = HumanAddr::from("bn93hg934hg08q340g8u4jcau3");
     match api.canonical_address(&invalid_bech32).unwrap_err() {
         StdError::GenericErr { .. } => {}
-        err => panic!("Unexpected error: {:?}", err),
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
     }
 
     // Humanize
@@ -243,19 +253,34 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
     let empty: CanonicalAddr = vec![].into();
     match api.human_address(&empty).unwrap_err() {
         StdError::GenericErr { .. } => {}
-        err => panic!("Unexpected error: {:?}", err),
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
     }
 
     let too_short: CanonicalAddr = vec![0xAA, 0xBB, 0xCC].into();
     match api.human_address(&too_short).unwrap_err() {
         StdError::GenericErr { .. } => {}
-        err => panic!("Unexpected error: {:?}", err),
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
     }
 
     let wrong_length: CanonicalAddr = vec![0xA6; 17].into();
     match api.human_address(&wrong_length).unwrap_err() {
         StdError::GenericErr { .. } => {}
-        err => panic!("Unexpected error: {:?}", err),
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
     }
 
     Ok(HandleResponse::default())
