@@ -34,6 +34,19 @@ use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, CONFIG
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
+fn make_init_msg() -> (InitMsg, HumanAddr) {
+    let verifier = HumanAddr::from("verifies");
+    let beneficiary = HumanAddr::from("benefits");
+    let creator = HumanAddr::from("creator");
+    (
+        InitMsg {
+            verifier: verifier.clone(),
+            beneficiary: beneficiary.clone(),
+        },
+        creator,
+    )
+}
+
 #[test]
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
@@ -271,6 +284,19 @@ fn handle_release_fails_for_wrong_sender() {
 }
 
 #[test]
+fn handle_user_errors_in_api_calls() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let (init_msg, creator) = make_init_msg();
+    let init_env = mock_env(creator.as_str(), &[]);
+    let _init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
+
+    let handle_env = mock_env(creator.as_str(), &[]);
+    let _handle_res: HandleResponse =
+        handle(&mut deps, handle_env, HandleMsg::UserErrorsInApiCalls {}).unwrap();
+}
+
+#[test]
 fn passes_io_tests() {
     let mut deps = mock_instance(WASM, &[]);
     test_io(&mut deps);
@@ -282,19 +308,6 @@ mod singlepass_tests {
 
     use cosmwasm_std::{to_vec, Empty};
     use cosmwasm_vm::call_handle;
-
-    fn make_init_msg() -> (InitMsg, HumanAddr) {
-        let verifier = HumanAddr::from("verifies");
-        let beneficiary = HumanAddr::from("benefits");
-        let creator = HumanAddr::from("creator");
-        (
-            InitMsg {
-                verifier: verifier.clone(),
-                beneficiary: beneficiary.clone(),
-            },
-            creator,
-        )
-    }
 
     #[test]
     fn handle_panic() {
