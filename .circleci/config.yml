@@ -2,6 +2,7 @@ version: 2
 workflows:
   version: 2
   test:
+    # Keep those job names in sync with .mergify.yml
     jobs:
       - package_schema
       - package_std
