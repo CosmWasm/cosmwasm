@@ -121,7 +121,7 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.10.0-alpha3"
+version = "0.10.0"
 dependencies = [
  "schemars",
  "serde_json",
@@ -129,7 +129,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.10.0-alpha3"
+version = "0.10.0"
 dependencies = [
  "base64",
  "schemars",
@@ -140,7 +140,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.10.0-alpha3"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -148,7 +148,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.10.0-alpha3"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-std",
  "hex",
@@ -401,7 +401,7 @@ dependencies = [
 
 [[package]]
 name = "hackatom"
-version = "0.10.0-alpha3"
+version = "0.10.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
