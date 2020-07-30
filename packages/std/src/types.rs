@@ -10,9 +10,6 @@ use crate::encoding::Binary;
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, Hash)]
 pub struct HumanAddr(pub String);
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct CanonicalAddr(pub Binary);
-
 impl HumanAddr {
     pub fn as_str(&self) -> &str {
         &self.0
@@ -52,6 +49,21 @@ impl From<&&HumanAddr> for HumanAddr {
 impl From<String> for HumanAddr {
     fn from(addr: String) -> Self {
         HumanAddr(addr)
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+pub struct CanonicalAddr(pub Binary);
+
+impl From<&[u8]> for CanonicalAddr {
+    fn from(source: &[u8]) -> Self {
+        Self(source.into())
+    }
+}
+
+impl From<Vec<u8>> for CanonicalAddr {
+    fn from(source: Vec<u8>) -> Self {
+        Self(source.into())
     }
 }
 

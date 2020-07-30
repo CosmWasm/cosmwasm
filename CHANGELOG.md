@@ -18,6 +18,7 @@
   via `into` or `try_into`. Option to simplify response construction.
 - Env uses `HumanAddr` for `message.sender` and `contract_address`
 - Remove `Api` argument from `mock_env`
+- Implement `From<&[u8]>` and `From<Vec<u8>>` for `CanonicalAddr`
 
 **cosmwasm-vm**
 
