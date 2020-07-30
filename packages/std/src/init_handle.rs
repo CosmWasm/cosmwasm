@@ -5,10 +5,11 @@ use serde::{Deserialize, Serialize};
 use std::convert::TryFrom;
 use std::fmt;
 
+use crate::addresses::HumanAddr;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult};
-use crate::types::{Empty, HumanAddr};
+use crate::types::Empty;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
