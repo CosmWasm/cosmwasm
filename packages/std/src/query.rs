@@ -2,11 +2,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use crate::addresses::HumanAddr;
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::StdResult;
 use crate::math::Decimal;
-use crate::types::HumanAddr;
 
 pub type QueryResponse = Binary;
 

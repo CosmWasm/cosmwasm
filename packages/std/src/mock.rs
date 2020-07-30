@@ -1,6 +1,7 @@
 use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
+use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemError, SystemResult};
@@ -12,7 +13,7 @@ use crate::query::{
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
-use crate::types::{BlockInfo, CanonicalAddr, ContractInfo, Empty, Env, HumanAddr, MessageInfo};
+use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 

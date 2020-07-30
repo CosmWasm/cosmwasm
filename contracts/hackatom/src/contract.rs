@@ -51,6 +51,9 @@ pub enum HandleMsg {
     AllocateLargeMemory {},
     /// Trigger a panic to ensure framework handles gracefully
     Panic {},
+    /// Starting with CosmWasm 0.10, some API calls return user errors back to the contract.
+    /// This triggers such user errors, ensuring the transaction does not fail in the backend.
+    UserErrorsInApiCalls {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -134,6 +137,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::MemoryLoop {} => do_memory_loop(),
         HandleMsg::AllocateLargeMemory {} => do_allocate_large_memory(),
         HandleMsg::Panic {} => do_panic(),
+        HandleMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(&deps.api),
     }
 }
 
@@ -217,6 +221,69 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
 
 fn do_panic() -> StdResult<HandleResponse> {
     panic!("This page intentionally faulted");
+}
+
+fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
+    // Canonicalize
+
+    let empty = HumanAddr::from("");
+    match api.canonical_address(&empty).unwrap_err() {
+        StdError::GenericErr { .. } => {}
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
+    }
+
+    let invalid_bech32 = HumanAddr::from("bn93hg934hg08q340g8u4jcau3");
+    match api.canonical_address(&invalid_bech32).unwrap_err() {
+        StdError::GenericErr { .. } => {}
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
+    }
+
+    // Humanize
+
+    let empty: CanonicalAddr = vec![].into();
+    match api.human_address(&empty).unwrap_err() {
+        StdError::GenericErr { .. } => {}
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
+    }
+
+    let too_short: CanonicalAddr = vec![0xAA, 0xBB, 0xCC].into();
+    match api.human_address(&too_short).unwrap_err() {
+        StdError::GenericErr { .. } => {}
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
+    }
+
+    let wrong_length: CanonicalAddr = vec![0xA6; 17].into();
+    match api.human_address(&wrong_length).unwrap_err() {
+        StdError::GenericErr { .. } => {}
+        err => {
+            return Err(StdError::generic_err(format!(
+                "Unexpected error in do_user_errors_in_api_calls: {:?}",
+                err
+            )))
+        }
+    }
+
+    Ok(HandleResponse::default())
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
@@ -500,6 +567,22 @@ mod tests {
         let handle_env = mock_env(beneficiary.as_str(), &[]);
         // this should panic
         let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
+    }
+
+    #[test]
+    fn handle_user_errors_in_api_calls() {
+        let mut deps = mock_dependencies(20, &[]);
+
+        let init_msg = InitMsg {
+            verifier: HumanAddr::from("verifies"),
+            beneficiary: HumanAddr::from("benefits"),
+        };
+        let init_env = mock_env("creator", &coins(1000, "earth"));
+        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        assert_eq!(0, init_res.messages.len());
+
+        let handle_env = mock_env("anyone", &[]);
+        handle(&mut deps, handle_env, HandleMsg::UserErrorsInApiCalls {}).unwrap();
     }
 
     #[test]

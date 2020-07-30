@@ -1,5 +1,6 @@
 // Exposed on all platforms
 
+mod addresses;
 mod coins;
 mod encoding;
 mod entry_points;
@@ -14,6 +15,7 @@ mod storage;
 mod traits;
 mod types;
 
+pub use crate::addresses::{CanonicalAddr, HumanAddr};
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::encoding::Binary;
 pub use crate::errors::{StdError, StdResult, SystemError, SystemResult};
@@ -32,9 +34,7 @@ pub use crate::query::{
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
-pub use crate::types::{
-    BlockInfo, CanonicalAddr, ContractInfo, Empty, Env, HumanAddr, MessageInfo,
-};
+pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 // Exposed in wasm build only
 

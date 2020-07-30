@@ -73,6 +73,18 @@
           "type": "object"
         }
       }
+    },
+    {
+      "description": "Starting with CosmWasm 0.10, some API calls return user errors back to the contract. This triggers such user errors, ensuring the transaction does not fail in the backend.",
+      "type": "object",
+      "required": [
+        "user_errors_in_api_calls"
+      ],
+      "properties": {
+        "user_errors_in_api_calls": {
+          "type": "object"
+        }
+      }
     }
   ]
 }

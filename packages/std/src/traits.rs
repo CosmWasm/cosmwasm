@@ -1,5 +1,6 @@
 use serde::{de::DeserializeOwned, Serialize};
 
+use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemResult};
@@ -12,7 +13,7 @@ use crate::query::{
     StakingQuery, Validator, ValidatorsResponse,
 };
 use crate::serde::{from_binary, to_vec};
-use crate::types::{CanonicalAddr, Empty, HumanAddr};
+use crate::types::Empty;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
