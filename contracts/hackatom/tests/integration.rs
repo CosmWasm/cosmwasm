@@ -18,16 +18,16 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coins, from_binary, log, AllBalanceResponse, BankMsg, HandleResponse, HandleResult, HumanAddr,
-    InitResponse, InitResult, MigrateResponse, StdError,
+    coins, from_binary, log, to_vec, AllBalanceResponse, BankMsg, Empty, HandleResponse,
+    HandleResult, HumanAddr, InitResponse, InitResult, MigrateResponse, StdError,
 };
 use cosmwasm_vm::{
-    from_slice,
+    call_handle, from_slice,
     testing::{
         handle, init, migrate, mock_env, mock_instance, mock_instance_with_balances, query,
         test_io, MOCK_CONTRACT_ADDR,
     },
-    Api, Storage,
+    Api, Storage, VmError,
 };
 
 use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, CONFIG_KEY};
@@ -284,6 +284,29 @@ fn handle_release_fails_for_wrong_sender() {
 }
 
 #[test]
+fn handle_panic() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let (init_msg, creator) = make_init_msg();
+    let init_env = mock_env(creator.as_str(), &[]);
+    let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let handle_env = mock_env(creator.as_str(), &[]);
+    // panic inside contract should not panic out here
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    let handle_res = call_handle::<_, _, _, Empty>(
+        &mut deps,
+        &handle_env,
+        &to_vec(&HandleMsg::Panic {}).unwrap(),
+    );
+    match handle_res.unwrap_err() {
+        VmError::RuntimeErr { .. } => {}
+        err => panic!("Unexpected error: {:?}", err),
+    }
+}
+
+#[test]
 fn handle_user_errors_in_api_calls() {
     let mut deps = mock_instance(WASM, &[]);
 
@@ -305,29 +328,6 @@ fn passes_io_tests() {
 #[cfg(feature = "singlepass")]
 mod singlepass_tests {
     use super::*;
-
-    use cosmwasm_std::{to_vec, Empty};
-    use cosmwasm_vm::call_handle;
-
-    #[test]
-    fn handle_panic() {
-        let mut deps = mock_instance(WASM, &[]);
-
-        let (init_msg, creator) = make_init_msg();
-        let init_env = mock_env(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, init_env, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let handle_env = mock_env(creator.as_str(), &[]);
-        // panic inside contract should not panic out here
-        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, Empty>(
-            &mut deps,
-            &handle_env,
-            &to_vec(&HandleMsg::Panic {}).unwrap(),
-        );
-        assert!(handle_res.is_err());
-    }
 
     #[test]
     fn handle_cpu_loop() {
