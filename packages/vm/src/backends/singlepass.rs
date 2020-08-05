@@ -1,16 +1,11 @@
 #![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
-use wasmer_middleware_common::metering;
-use wasmer_runtime_core::{
-    backend::Compiler,
-    codegen::{MiddlewareChain, StreamingCompiler},
-    compile_with,
-    module::Module,
-    vm::Ctx,
-};
-use wasmer_singlepass_backend::ModuleCodeGenerator as SinglePassMCG;
+
+// use wasmer_middleware_common::metering;
+use wasmer_runtime_core::{backend::Compiler, compile_with, module::Module, vm::Ctx};
+use wasmer_singlepass_backend::SinglepassCompiler;
 
 use crate::errors::VmResult;
-use crate::middleware::DeterministicMiddleware;
+// use crate::middleware::DeterministicMiddleware;
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
 /// This causes issues when trying to instantiate the same compiled module with a different gas limit.
@@ -23,19 +18,21 @@ use crate::middleware::DeterministicMiddleware;
 /// far below u64::MAX.
 const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
 
+const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
+
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = compile_with(code, compiler().as_ref())?;
     Ok(module)
 }
 
 pub fn compiler() -> Box<dyn Compiler> {
-    let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
-        let mut chain = MiddlewareChain::new();
-        chain.push(DeterministicMiddleware::new());
-        chain.push(metering::Metering::new(MAX_GAS_LIMIT));
-        chain
-    });
-    Box::new(c)
+    // let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
+    //     let mut chain = MiddlewareChain::new();
+    //     chain.push(DeterministicMiddleware::new());
+    //     chain.push(metering::Metering::new(MAX_GAS_LIMIT));
+    //     chain
+    // });
+    Box::new(SinglepassCompiler::new())
 }
 
 pub fn backend() -> &'static str {
@@ -43,24 +40,32 @@ pub fn backend() -> &'static str {
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left(ctx: &mut Ctx, amount: u64) {
-    if amount > MAX_GAS_LIMIT {
-        panic!(
-            "Attempted to set gas limit larger than max gas limit (got: {}; maximum: {}).",
-            amount, MAX_GAS_LIMIT
-        );
-    } else {
-        let used = MAX_GAS_LIMIT - amount;
-        metering::set_points_used_ctx(ctx, used);
-    }
-}
+pub fn set_gas_left(_ctx: &mut Ctx, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
-pub fn get_gas_left(ctx: &Ctx) -> u64 {
-    let used = metering::get_points_used_ctx(ctx);
-    // when running out of gas, get_points_used can exceed MAX_GAS_LIMIT
-    MAX_GAS_LIMIT.saturating_sub(used)
+pub fn get_gas_left(_ctx: &Ctx) -> u64 {
+    FAKE_GAS_AVAILABLE
 }
+
+// /// Set the amount of gas units that can be used in the context.
+// pub fn set_gas_left(ctx: &mut Ctx, amount: u64) {
+//     if amount > MAX_GAS_LIMIT {
+//         panic!(
+//             "Attempted to set gas limit larger than max gas limit (got: {}; maximum: {}).",
+//             amount, MAX_GAS_LIMIT
+//         );
+//     } else {
+//         let used = MAX_GAS_LIMIT - amount;
+//         metering::set_points_used_ctx(ctx, used);
+//     }
+// }
+
+// /// Get how many more gas units can be used in the context.
+// pub fn get_gas_left(ctx: &Ctx) -> u64 {
+//     let used = metering::get_points_used_ctx(ctx);
+//     // when running out of gas, get_points_used can exceed MAX_GAS_LIMIT
+//     MAX_GAS_LIMIT.saturating_sub(used)
+// }
 
 #[cfg(test)]
 mod test {
