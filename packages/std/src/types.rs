@@ -21,7 +21,8 @@ pub struct BlockInfo {
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
-    /// The `sender` field from the wasm/store-code, wasm/instantiate or wasm/execute message.
+    /// The `sender` field from the `wasm/MsgStoreCode`, `wasm/MsgInstantiateContract`, `wasm/MsgMigrateContract`
+    /// or `wasm/MsgExecuteContract` message.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
     /// means exactly heavily depends on the application.
     ///
