@@ -14,7 +14,10 @@ pub struct Env {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct BlockInfo {
     pub height: u64,
-    // time is seconds since epoch begin (Jan. 1, 1970)
+    /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
+    ///
+    /// The source of this is the [BFT Time in Tendermint](https://docs.tendermint.com/master/spec/consensus/bft-time.html),
+    /// converted from millisecond to second precision in an undefined way.
     pub time: u64,
     pub chain_id: String,
 }
