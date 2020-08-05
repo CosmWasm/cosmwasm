@@ -14,14 +14,18 @@ pub struct Env {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct BlockInfo {
     pub height: u64,
-    // time is seconds since epoch begin (Jan. 1, 1970)
+    /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
+    ///
+    /// The source of this is the [BFT Time in Tendermint](https://docs.tendermint.com/master/spec/consensus/bft-time.html),
+    /// converted from millisecond to second precision in an undefined way.
     pub time: u64,
     pub chain_id: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
-    /// The `sender` field from the wasm/store-code, wasm/instantiate or wasm/execute message.
+    /// The `sender` field from the `wasm/MsgStoreCode`, `wasm/MsgInstantiateContract`, `wasm/MsgMigrateContract`
+    /// or `wasm/MsgExecuteContract` message.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
     /// means exactly heavily depends on the application.
     ///
