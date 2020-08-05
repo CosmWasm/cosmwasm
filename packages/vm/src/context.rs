@@ -9,7 +9,7 @@ use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use wasmer_runtime_core::{
-    typed_func::{Func, Wasm, WasmTypeList},
+    typed_func::{Func, WasmTypeList},
     vm::Ctx,
     Instance as WasmerInstance,
 };
@@ -232,14 +232,14 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
         let instance = unsafe { instance_ptr.as_mut() };
         let gas_state = &mut ctx_data.gas_state;
 
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(instance.context()));
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(&instance.context()));
 
         gas_state.increase_externally_used_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_left(instance.context_mut(), new_limit);
+        set_gas_left(&mut instance.context_mut(), new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
@@ -300,9 +300,9 @@ pub(crate) fn with_func_from_context<S, Q, Args, Rets, Callback, CallbackData>(
 where
     S: Storage,
     Q: Querier,
-    Args: WasmTypeList,
-    Rets: WasmTypeList,
-    Callback: FnOnce(Func<Args, Rets, Wasm>) -> VmResult<CallbackData>,
+    Args: WasmTypeList + Clone,
+    Rets: WasmTypeList + Clone,
+    Callback: FnOnce(Func<Args, Rets>) -> VmResult<CallbackData>,
 {
     let ctx_data = get_context_data::<S, Q>(ctx);
     match ctx_data.wasmer_instance {
@@ -376,7 +376,7 @@ mod test {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
-    use wasmer_runtime_core::{imports, typed_func::Func};
+    use wasmer_runtime_core::imports;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -399,23 +399,22 @@ mod test {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
-            || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
-                "db_read" => Func::new(|_a: u32| -> u32 { 0 }),
-                "db_write" => Func::new(|_a: u32, _b: u32| {}),
-                "db_remove" => Func::new(|_a: u32| {}),
-                "db_scan" => Func::new(|_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
-                "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
-                "query_chain" => Func::new(|_a: u32| -> u32 { 0 }),
-                "canonicalize_address" => Func::new(|_a: u32, _b: u32| -> u32 { 0 }),
-                "humanize_address" => Func::new(|_a: u32, _b: u32| -> u32 { 0 }),
-                "debug" => Func::new(|_a: u32| {}),
+                "db_read" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
+                "db_write" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| {}),
+                "db_remove" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
+                "db_scan" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32, _c: i32| -> u32 { 0 }),
+                "db_next" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
+                "query_chain" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
+                "canonicalize_address" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| -> u32 { 0 }),
+                "humanize_address" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| -> u32 { 0 }),
+                "debug" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
             },
         };
         let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
-        set_wasmer_instance::<MS, MQ>(instance.context_mut(), Some(instance_ptr));
+        set_wasmer_instance::<MS, MQ>(&mut instance.context_mut(), Some(instance_ptr));
 
         instance
     }
@@ -439,13 +438,13 @@ mod test {
         let ctx = instance.context_mut();
 
         // empty data on start
-        let (inits, initq) = move_out_of_context::<MS, MQ>(ctx);
+        let (inits, initq) = move_out_of_context::<MS, MQ>(&mut ctx);
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
-        leave_default_data(ctx);
-        let (s, q) = move_out_of_context::<MS, MQ>(ctx);
+        leave_default_data(&mut ctx);
+        let (s, q) = move_out_of_context::<MS, MQ>(&mut ctx);
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
@@ -454,7 +453,7 @@ mod test {
         );
 
         // now is empty again
-        let (ends, endq) = move_out_of_context::<MS, MQ>(ctx);
+        let (ends, endq) = move_out_of_context::<MS, MQ>(&mut ctx);
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
@@ -465,17 +464,17 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(instance.context_mut(), gas_limit);
-        get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_left(&mut instance.context_mut(), gas_limit);
+        get_gas_state_mut::<MS, MQ>(&mut instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
         // Consume all the Gas that we allocated
-        account_for_externally_used_gas::<MS, MQ>(context, 70).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(context, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 70).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(context, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(&mut context, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -487,22 +486,22 @@ mod test {
         let mut instance = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(instance.context_mut(), gas_limit);
-        get_gas_state_mut::<MS, MQ>(instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_left(&mut instance.context_mut(), gas_limit);
+        get_gas_state_mut::<MS, MQ>(&mut instance.context_mut()).set_gas_limit(gas_limit);
         let context = instance.context_mut();
 
         // Some gas was consumed externally
-        account_for_externally_used_gas::<MS, MQ>(context, 50).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(context, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 50).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(instance.context_mut(), 20).unwrap();
+        decrease_gas_left(&mut instance.context_mut(), 20).unwrap();
 
         let context = instance.context_mut();
-        account_for_externally_used_gas::<MS, MQ>(context, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(context, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut context, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(context, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(&mut context, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -512,28 +511,28 @@ mod test {
     fn is_storage_readonly_defaults_to_true() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
+        assert_eq!(is_storage_readonly::<MS, MQ>(&ctx), true);
     }
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         // change
-        set_storage_readonly::<MS, MQ>(ctx, false);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+        set_storage_readonly::<MS, MQ>(&mut ctx, false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(&ctx), false);
 
         // still false
-        set_storage_readonly::<MS, MQ>(ctx, false);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), false);
+        set_storage_readonly::<MS, MQ>(&mut ctx, false);
+        assert_eq!(is_storage_readonly::<MS, MQ>(&ctx), false);
 
         // change back
-        set_storage_readonly::<MS, MQ>(ctx, true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(ctx), true);
+        set_storage_readonly::<MS, MQ>(&mut ctx, true);
+        assert_eq!(is_storage_readonly::<MS, MQ>(&ctx), true);
     }
 
     #[test]
@@ -562,29 +561,31 @@ mod test {
     #[test]
     fn with_func_from_context_works() {
         let mut instance = make_instance();
-        leave_default_data(instance.context_mut());
+        leave_default_data(&mut instance.context_mut());
 
         let ctx = instance.context_mut();
-        let ptr = with_func_from_context::<MS, MQ, u32, u32, _, _>(ctx, "allocate", |alloc_func| {
-            let ptr = alloc_func.call(10)?;
-            Ok(ptr)
-        })
-        .unwrap();
+        let ptr =
+            with_func_from_context::<MS, MQ, u32, u32, _, _>(&mut ctx, "allocate", |alloc_func| {
+                let ptr = alloc_func.call(10)?;
+                Ok(ptr)
+            })
+            .unwrap();
         assert!(ptr > 0);
     }
 
     #[test]
     fn with_func_from_context_fails_for_missing_instance() {
         let mut instance = make_instance();
-        leave_default_data(instance.context_mut());
+        leave_default_data(&mut instance.context_mut());
 
         // Clear context's wasmer_instance
-        set_wasmer_instance::<MS, MQ>(instance.context_mut(), None);
+        set_wasmer_instance::<MS, MQ>(&mut instance.context_mut(), None);
 
         let ctx = instance.context_mut();
-        let res = with_func_from_context::<MS, MQ, u32, u32, _, ()>(ctx, "allocate", |_func| {
-            panic!("unexpected callback call");
-        });
+        let res =
+            with_func_from_context::<MS, MQ, u32, u32, _, ()>(&mut ctx, "allocate", |_func| {
+                panic!("unexpected callback call");
+            });
         match res.unwrap_err() {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
             e => panic!("Unexpected error: {}", e),
@@ -594,12 +595,13 @@ mod test {
     #[test]
     fn with_func_from_context_fails_for_missing_function() {
         let mut instance = make_instance();
-        leave_default_data(instance.context_mut());
+        leave_default_data(&mut instance.context_mut());
 
         let ctx = instance.context_mut();
-        let res = with_func_from_context::<MS, MQ, u32, u32, _, ()>(ctx, "doesnt_exist", |_func| {
-            panic!("unexpected callback call");
-        });
+        let res =
+            with_func_from_context::<MS, MQ, u32, u32, _, ()>(&mut ctx, "doesnt_exist", |_func| {
+                panic!("unexpected callback call");
+            });
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
                 assert_eq!(
@@ -615,9 +617,9 @@ mod test {
     fn with_storage_from_context_set_get() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             Ok(store.get(INIT_KEY).0.expect("error getting value"))
         })
         .unwrap();
@@ -626,7 +628,7 @@ mod test {
         let set_key: &[u8] = b"more";
         let set_value: &[u8] = b"data";
 
-        with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(&mut &mut ctx, |store| {
             store
                 .set(set_key, set_value)
                 .0
@@ -635,7 +637,7 @@ mod test {
         })
         .unwrap();
 
-        with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             assert_eq!(store.get(INIT_KEY).0.unwrap(), Some(INIT_VALUE.to_vec()));
             assert_eq!(store.get(set_key).0.unwrap(), Some(set_value.to_vec()));
             Ok(())
@@ -648,9 +650,9 @@ mod test {
     fn with_storage_from_context_handles_panics() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        with_storage_from_context::<MS, MQ, _, ()>(ctx, |_store| {
+        with_storage_from_context::<MS, MQ, _, ()>(&mut ctx, |_store| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
@@ -660,9 +662,9 @@ mod test {
     fn with_querier_from_context_works() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let res = with_querier_from_context::<MS, MQ, _, _>(ctx, |querier| {
+        let res = with_querier_from_context::<MS, MQ, _, _>(&mut ctx, |querier| {
             let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
                 address: HumanAddr::from(INIT_ADDR),
             });
@@ -683,9 +685,9 @@ mod test {
     fn with_querier_from_context_handles_panics() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        with_querier_from_context::<MS, MQ, _, ()>(ctx, |_querier| {
+        with_querier_from_context::<MS, MQ, _, ()>(&mut ctx, |_querier| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();

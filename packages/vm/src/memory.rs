@@ -1,3 +1,4 @@
+use wasm_common::MemoryIndex;
 use wasmer_runtime_core::{
     memory::ptr::{Array, WasmPtr},
     types::ValueType,
@@ -49,15 +50,17 @@ pub struct MemoryInfo {
 
 /// Get information about the default memory `memory(0)`
 pub fn get_memory_info(ctx: &Ctx) -> MemoryInfo {
-    let memory = ctx.memory(0);
-    let descriptor = memory.descriptor();
+    let memory_type = (*ctx.module_info)
+        .memories
+        .get(MemoryIndex::from_u32(0))
+        .unwrap();
     MemoryInfo {
         descriptor: MemoryDescriptor {
-            minimum: descriptor.minimum.0,
-            maximum: descriptor.maximum.map(|pages| pages.0),
-            shared: descriptor.shared,
+            minimum: memory_type.minimum.0,
+            maximum: memory_type.maximum.map(|pages| pages.0),
+            shared: memory_type.shared,
         },
-        size: memory.size().0,
+        size: 0,
     }
 }
 

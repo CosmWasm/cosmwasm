@@ -8,9 +8,9 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer_runtime_core::{cache::Artifact, module::Module};
+use wasmer_runtime_core::{cache::Artifact, load_cache_with, module::Module};
 
-use crate::backends::{backend, compiler_for_backend};
+use crate::backends::backend;
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
 
@@ -71,20 +71,12 @@ impl FileSystemCache {
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
         let serialized_cache = Artifact::deserialize(&mmap[..])?;
-        let module = unsafe {
-            wasmer_runtime_core::load_cache_with(
-                serialized_cache,
-                compiler_for_backend(backend)
-                    .ok_or_else(|| VmError::cache_err(format!("Unsupported backend: {}", backend)))?
-                    .as_ref(),
-            )
-        }?;
+        let module = unsafe { load_cache_with(serialized_cache) }?;
         Ok(module)
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        let backend_str = module.info().backend.to_string();
-        let modules_dir = self.path.clone().join(backend_str);
+        let modules_dir = self.path.clone().join(backend());
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
 
@@ -125,9 +117,6 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         let module = compile(&wasm).unwrap();
-
-        // assert we are using the proper backend
-        assert_eq!(backend().to_string(), module.info().backend.to_string());
 
         let cache_dir = env::temp_dir();
         let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };

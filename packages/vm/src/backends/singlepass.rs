@@ -1,8 +1,13 @@
 #![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
 
 // use wasmer_middleware_common::metering;
-use wasmer_runtime_core::{backend::Compiler, compile_with, module::Module, vm::Ctx};
-use wasmer_singlepass_backend::SinglepassCompiler;
+use wasmer_compiler_singlepass::{Singlepass, SinglepassCompiler};
+use wasmer_runtime_core::{
+    backend::{Backend, Compiler},
+    compile_with,
+    module::Module,
+    vm::Ctx,
+};
 
 use crate::errors::VmResult;
 // use crate::middleware::DeterministicMiddleware;
@@ -21,18 +26,13 @@ const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
 const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
-    let module = compile_with(code, compiler().as_ref())?;
+    let module = compile_with(code, Backend::Auto)?;
     Ok(module)
 }
 
 pub fn compiler() -> Box<dyn Compiler> {
-    // let c: StreamingCompiler<SinglePassMCG, _, _, _, _> = StreamingCompiler::new(move || {
-    //     let mut chain = MiddlewareChain::new();
-    //     chain.push(DeterministicMiddleware::new());
-    //     chain.push(metering::Metering::new(MAX_GAS_LIMIT));
-    //     chain
-    // });
-    Box::new(SinglepassCompiler::new())
+    let config = Singlepass::default();
+    Box::new(SinglepassCompiler::new(&config))
 }
 
 pub fn backend() -> &'static str {
@@ -83,7 +83,7 @@ mod test {
     fn get_gas_left_defaults_to_constant() {
         let wasm = wat2wasm("(module)").unwrap();
         let instance = instantiate(&wasm);
-        let gas_left = get_gas_left(instance.context());
+        let gas_left = get_gas_left(&instance.context());
         assert_eq!(gas_left, MAX_GAS_LIMIT);
     }
 
@@ -93,20 +93,20 @@ mod test {
         let mut instance = instantiate(&wasm);
 
         let limit = 3456789;
-        set_gas_left(instance.context_mut(), limit);
-        assert_eq!(get_gas_left(instance.context()), limit);
+        set_gas_left(&mut instance.context_mut(), limit);
+        assert_eq!(get_gas_left(&instance.context()), limit);
 
         let limit = 1;
-        set_gas_left(instance.context_mut(), limit);
-        assert_eq!(get_gas_left(instance.context()), limit);
+        set_gas_left(&mut instance.context_mut(), limit);
+        assert_eq!(get_gas_left(&instance.context()), limit);
 
         let limit = 0;
-        set_gas_left(instance.context_mut(), limit);
-        assert_eq!(get_gas_left(instance.context()), limit);
+        set_gas_left(&mut instance.context_mut(), limit);
+        assert_eq!(get_gas_left(&instance.context()), limit);
 
         let limit = MAX_GAS_LIMIT;
-        set_gas_left(instance.context_mut(), limit);
-        assert_eq!(get_gas_left(instance.context()), limit);
+        set_gas_left(&mut instance.context_mut(), limit);
+        assert_eq!(get_gas_left(&instance.context()), limit);
     }
 
     #[test]
@@ -118,6 +118,6 @@ mod test {
         let mut instance = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;
-        set_gas_left(instance.context_mut(), limit);
+        set_gas_left(&mut instance.context_mut(), limit);
     }
 }

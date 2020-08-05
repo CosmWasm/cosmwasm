@@ -42,18 +42,18 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
-    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&mut ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.get(&key)))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+        with_storage_from_context::<S, Q, _, _>(&mut ctx, |store| Ok(store.get(&key)))?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     let value = result?;
 
     let out_data = match value {
         Some(data) => data,
         None => return Ok(0),
     };
-    write_to_contract::<S, Q>(ctx, &out_data)
+    write_to_contract::<S, Q>(&mut ctx, &out_data)
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
@@ -62,31 +62,31 @@ pub fn do_write<S: Storage, Q: Querier>(
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
-    if is_storage_readonly::<S, Q>(ctx) {
+    if is_storage_readonly::<S, Q>(&mut ctx) {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
-    let value = read_region(ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
+    let key = read_region(&mut ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let value = read_region(&mut ctx, value_ptr, MAX_LENGTH_DB_VALUE)?;
 
     let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.set(&key, &value)))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+        with_storage_from_context::<S, Q, _, _>(&mut ctx, |store| Ok(store.set(&key, &value)))?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     result?;
 
     Ok(())
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<()> {
-    if is_storage_readonly::<S, Q>(ctx) {
+    if is_storage_readonly::<S, Q>(&mut ctx) {
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&mut ctx, key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.remove(&key)))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+        with_storage_from_context::<S, Q, _, _>(&mut ctx, |store| Ok(store.remove(&key)))?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     result?;
 
     Ok(())
@@ -98,25 +98,32 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let source_data = read_region(ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    let source_data = read_region(&mut ctx, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return Ok(write_to_contract::<S, Q>(ctx, b"Input is empty")?);
+        return Ok(write_to_contract::<S, Q>(&mut ctx, b"Input is empty")?);
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => return Ok(write_to_contract::<S, Q>(ctx, b"Input is not valid UTF-8")?),
+        Err(_) => {
+            return Ok(write_to_contract::<S, Q>(
+                &mut ctx,
+                b"Input is not valid UTF-8",
+            )?)
+        }
     };
     let human: HumanAddr = source_string.into();
 
     let (result, gas_info) = api.canonical_address(&human);
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     match result {
         Ok(canonical) => {
-            write_region(ctx, destination_ptr, canonical.as_slice())?;
+            write_region(&mut ctx, destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
-        Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?),
+        Err(FfiError::UserErr { msg, .. }) => {
+            Ok(write_to_contract::<S, Q>(&mut ctx, msg.as_bytes())?)
+        }
         Err(err) => Err(VmError::from(err)),
     }
 }
@@ -127,16 +134,22 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let canonical = Binary(read_region(ctx, source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?);
+    let canonical = Binary(read_region(
+        &mut ctx,
+        source_ptr,
+        MAX_LENGTH_CANONICAL_ADDRESS,
+    )?);
 
     let (result, gas_info) = api.human_address(&CanonicalAddr(canonical));
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     match result {
         Ok(human) => {
-            write_region(ctx, destination_ptr, human.as_str().as_bytes())?;
+            write_region(&mut ctx, destination_ptr, human.as_str().as_bytes())?;
             Ok(0)
         }
-        Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?),
+        Err(FfiError::UserErr { msg, .. }) => {
+            Ok(write_to_contract::<S, Q>(&mut ctx, msg.as_bytes())?)
+        }
         Err(err) => Err(VmError::from(err)),
     }
 }
@@ -152,28 +165,29 @@ pub fn print_debug_message(ctx: &mut Ctx, message_ptr: u32) -> VmResult<()> {
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
 fn write_to_contract<S: Storage, Q: Querier>(ctx: &mut Ctx, input: &[u8]) -> VmResult<u32> {
-    let target_ptr = with_func_from_context::<S, Q, u32, u32, _, _>(ctx, "allocate", |allocate| {
-        let out_size = to_u32(input.len())?;
-        let ptr = allocate.call(out_size)?;
-        if ptr == 0 {
-            return Err(CommunicationError::zero_address().into());
-        }
-        Ok(ptr)
-    })?;
-    write_region(ctx, target_ptr, input)?;
+    let target_ptr =
+        with_func_from_context::<S, Q, u32, u32, _, _>(&mut ctx, "allocate", |allocate| {
+            let out_size = to_u32(input.len())?;
+            let ptr = allocate.call(out_size)?;
+            if ptr == 0 {
+                return Err(CommunicationError::zero_address().into());
+            }
+            Ok(ptr)
+        })?;
+    write_region(&mut ctx, target_ptr, input)?;
     Ok(target_ptr)
 }
 
 pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -> VmResult<u32> {
-    let request = read_region(ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
+    let request = read_region(&mut ctx, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
-    let gas_remaining = get_gas_left(ctx);
-    let (result, gas_info) = with_querier_from_context::<S, Q, _, _>(ctx, |querier| {
+    let gas_remaining = get_gas_left(&mut ctx);
+    let (result, gas_info) = with_querier_from_context::<S, Q, _, _>(&mut ctx, |querier| {
         Ok(querier.query_raw(&request, gas_remaining))
     })?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     let serialized = to_vec(&result?)?;
-    write_to_contract::<S, Q>(ctx, &serialized)
+    write_to_contract::<S, Q>(&mut ctx, &serialized)
 }
 
 #[cfg(feature = "iterator")]
@@ -183,26 +197,26 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     end_ptr: u32,
     order: i32,
 ) -> VmResult<u32> {
-    let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
-    let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
+    let start = maybe_read_region(&mut ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(&mut ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
-    let (result, gas_info) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
+    let (result, gas_info) = with_storage_from_context::<S, Q, _, _>(&mut ctx, |store| {
         Ok(store.range(start.as_deref(), end.as_deref(), order))
     })?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
     let iterator = result?;
-    let iterator_id = add_iterator::<S, Q>(ctx, iterator);
+    let iterator_id = add_iterator::<S, Q>(&mut ctx, iterator);
     Ok(iterator_id)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
     let (result, gas_info) =
-        with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
-    process_gas_info::<S, Q>(ctx, gas_info)?;
+        with_iterator_from_context::<S, Q, _, _>(&mut ctx, iterator_id, |iter| Ok(iter.next()))?;
+    process_gas_info::<S, Q>(&mut ctx, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
     let (key, value) = result?.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
@@ -214,7 +228,7 @@ pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmRes
     out_data.extend(key);
     out_data.extend_from_slice(&keylen_bytes);
 
-    write_to_contract::<S, Q>(ctx, &out_data)
+    write_to_contract::<S, Q>(&mut ctx, &out_data)
 }
 
 #[cfg(test)]
@@ -228,9 +242,7 @@ mod test {
     use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{
-        move_into_context, set_storage_readonly, set_wasmer_instance, setup_context,
-    };
+    use crate::context::{move_into_context, set_storage_readonly, set_wasmer_instance};
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::Storage;
     use crate::FfiError;
@@ -259,24 +271,23 @@ mod test {
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
-            || { setup_context::<MockStorage, MockQuerier>(GAS_LIMIT) },
             "env" => {
-                "db_read" => Func::new(|_a: u32| -> u32 { 0 }),
-                "db_write" => Func::new(|_a: u32, _b: u32| {}),
-                "db_remove" => Func::new(|_a: u32| {}),
-                "db_scan" => Func::new(|_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
-                "db_next" => Func::new(|_a: u32| -> u32 { 0 }),
-                "query_chain" => Func::new(|_a: u32| -> u32 { 0 }),
-                "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
-                "humanize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
-                "debug" => Func::new(|_a: u32| {}),
+                "db_read" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
+                "db_write" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| {}),
+                "db_remove" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
+                "db_scan" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32, _c: i32| -> u32 { 0 }),
+                "db_next" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
+                "query_chain" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
+                "canonicalize_address" => Func::new(|_ctx: &mut Ctx, _a: i32, _b: i32| -> u32 { 0 }),
+                "humanize_address" => Func::new(|_ctx: &mut Ctx, _a: i32, _b: i32| -> u32 { 0 }),
+                "debug" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
             },
         };
         let mut instance = Box::from(module.instantiate(&import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
-        set_wasmer_instance::<MS, MQ>(instance.context_mut(), Some(instance_ptr));
-        set_storage_readonly::<MS, MQ>(instance.context_mut(), false);
+        set_wasmer_instance::<MS, MQ>(&mut instance.context_mut(), Some(instance_ptr));
+        set_storage_readonly::<MS, MQ>(&mut instance.context_mut(), false);
 
         instance
     }
@@ -288,7 +299,7 @@ mod test {
         storage.set(KEY2, VALUE2).0.expect("error setting");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_context(ctx, storage, querier);
+        move_into_context(&mut ctx, storage, querier);
     }
 
     fn write_data(wasmer_instance: &mut WasmerInstance, data: &[u8]) -> u32 {
@@ -299,7 +310,7 @@ mod test {
         let region_ptr = allocate
             .call(data.len() as u32)
             .expect("error calling allocate");
-        write_region(wasmer_instance.context_mut(), region_ptr, data).expect("error writing");
+        write_region(&mut wasmer_instance.context_mut(), region_ptr, data).expect("error writing");
         region_ptr
     }
 
@@ -314,41 +325,41 @@ mod test {
 
     /// A Region reader that is just good enough for the tests in this file
     fn force_read(ctx: &mut Ctx, region_ptr: u32) -> Vec<u8> {
-        read_region(ctx, region_ptr, 5000).unwrap()
+        read_region(&mut ctx, region_ptr, 5000).unwrap()
     }
 
     #[test]
     fn do_read_works() {
         let mut instance = make_instance();
-        leave_default_data(instance.context_mut());
+        leave_default_data(&mut instance.context_mut());
 
         let key_ptr = write_data(&mut instance, KEY1);
         let ctx = instance.context_mut();
-        let result = do_read::<MS, MQ>(ctx, key_ptr);
+        let result = do_read::<MS, MQ>(&mut ctx, key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
-        assert_eq!(force_read(ctx, value_ptr as u32), VALUE1);
+        assert_eq!(force_read(&mut ctx, value_ptr as u32), VALUE1);
     }
 
     #[test]
     fn do_read_works_for_non_existent_key() {
         let mut instance = make_instance();
-        leave_default_data(instance.context_mut());
+        leave_default_data(&mut instance.context_mut());
 
         let key_ptr = write_data(&mut instance, b"I do not exist in storage");
         let ctx = instance.context_mut();
-        let result = do_read::<MS, MQ>(ctx, key_ptr);
+        let result = do_read::<MS, MQ>(&mut ctx, key_ptr);
         assert_eq!(result.unwrap(), 0);
     }
 
     #[test]
     fn do_read_fails_for_large_key() {
         let mut instance = make_instance();
-        leave_default_data(instance.context_mut());
+        leave_default_data(&mut instance.context_mut());
 
         let key_ptr = write_data(&mut instance, &vec![7u8; 300 * 1024]);
         let ctx = instance.context_mut();
-        let result = do_read::<MS, MQ>(ctx, key_ptr);
+        let result = do_read::<MS, MQ>(&mut ctx, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
@@ -365,11 +376,11 @@ mod test {
         let value_ptr = write_data(&mut instance, b"new value");
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
+        do_write::<MS, MQ>(&mut ctx, key_ptr, value_ptr).unwrap();
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             Ok(store
                 .get(b"new storage key")
                 .0
@@ -387,11 +398,11 @@ mod test {
         let value_ptr = write_data(&mut instance, VALUE2);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
+        do_write::<MS, MQ>(&mut ctx, key_ptr, value_ptr).unwrap();
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             Ok(store.get(KEY1).0.expect("error getting value"))
         })
         .unwrap();
@@ -406,11 +417,11 @@ mod test {
         let value_ptr = write_data(&mut instance, b"");
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        do_write::<MS, MQ>(ctx, key_ptr, value_ptr).unwrap();
+        do_write::<MS, MQ>(&mut ctx, key_ptr, value_ptr).unwrap();
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let val = with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             Ok(store
                 .get(b"new storage key")
                 .0
@@ -428,9 +439,9 @@ mod test {
         let value_ptr = write_data(&mut instance, b"new value");
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(&mut ctx, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -453,9 +464,9 @@ mod test {
         let value_ptr = write_data(&mut instance, &vec![5u8; 300 * 1024]);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(&mut ctx, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -478,10 +489,10 @@ mod test {
         let value_ptr = write_data(&mut instance, b"new value");
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
-        set_storage_readonly::<MS, MQ>(ctx, true);
+        leave_default_data(&mut ctx);
+        set_storage_readonly::<MS, MQ>(&mut ctx, true);
 
-        let result = do_write::<MS, MQ>(ctx, key_ptr, value_ptr);
+        let result = do_write::<MS, MQ>(&mut ctx, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -496,11 +507,11 @@ mod test {
         let key_ptr = write_data(&mut instance, existing_key);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
+        do_remove::<MS, MQ>(&mut ctx, key_ptr).unwrap();
 
-        let value = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let value = with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             Ok(store.get(existing_key).0.expect("error getting value"))
         })
         .unwrap();
@@ -515,12 +526,12 @@ mod test {
         let key_ptr = write_data(&mut instance, non_existent_key);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        do_remove::<MS, MQ>(ctx, key_ptr).unwrap();
+        do_remove::<MS, MQ>(&mut ctx, key_ptr).unwrap();
 
-        let value = with_storage_from_context::<MS, MQ, _, _>(ctx, |store| {
+        let value = with_storage_from_context::<MS, MQ, _, _>(&mut ctx, |store| {
             Ok(store.get(non_existent_key).0.expect("error getting value"))
         })
         .unwrap();
@@ -534,9 +545,9 @@ mod test {
         let key_ptr = write_data(&mut instance, &vec![26u8; 300 * 1024]);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let result = do_remove::<MS, MQ>(ctx, key_ptr);
+        let result = do_remove::<MS, MQ>(&mut ctx, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -558,10 +569,10 @@ mod test {
         let key_ptr = write_data(&mut instance, b"a storage key");
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
-        set_storage_readonly::<MS, MQ>(ctx, true);
+        leave_default_data(&mut ctx);
+        set_storage_readonly::<MS, MQ>(&mut ctx, true);
 
-        let result = do_remove::<MS, MQ>(ctx, key_ptr);
+        let result = do_remove::<MS, MQ>(&mut ctx, key_ptr);
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -576,11 +587,11 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 8);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
-        assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
+        do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr).unwrap();
+        assert_eq!(force_read(&mut ctx, dest_ptr), b"foo\0\0\0\0\0");
     }
 
     #[test]
@@ -593,22 +604,25 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 8);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
         let api = MockApi::new(8);
 
-        let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr1, dest_ptr).unwrap();
+        let res =
+            do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr1, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut ctx, res)).unwrap();
         assert_eq!(err, "Input is not valid UTF-8");
 
-        let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr2, dest_ptr).unwrap();
+        let res =
+            do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr2, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut ctx, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr3, dest_ptr).unwrap();
+        let res =
+            do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr3, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut ctx, res)).unwrap();
         assert_eq!(err, "Invalid input: human address too long");
     }
 
@@ -620,10 +634,10 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 7);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new_failing(8, "Temporarily unavailable");
-        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
                 source: FfiError::Unknown { msg, .. },
@@ -642,10 +656,10 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 8);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -668,10 +682,10 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 7);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
+        let result = do_canonicalize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
@@ -691,12 +705,13 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 50);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        let error_ptr = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
+        let error_ptr =
+            do_humanize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr).unwrap();
         assert_eq!(error_ptr, 0);
-        assert_eq!(force_read(ctx, dest_ptr), b"foo");
+        assert_eq!(force_read(&mut ctx, dest_ptr), b"foo");
     }
 
     #[test]
@@ -707,12 +722,12 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 50);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        let res = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
+        let res = do_humanize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr).unwrap();
         assert_ne!(res, 0);
-        let err = String::from_utf8(force_read(ctx, res)).unwrap();
+        let err = String::from_utf8(force_read(&mut ctx, res)).unwrap();
         assert_eq!(err, "Invalid input: canonical address length not correct");
     }
 
@@ -724,10 +739,10 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 50);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new_failing(8, "Temporarily unavailable");
-        let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
+        let result = do_humanize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
                 source: FfiError::Unknown { msg, .. },
@@ -744,10 +759,10 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 50);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
+        let result = do_humanize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -770,10 +785,10 @@ mod test {
         let dest_ptr = create_empty(&mut instance, 2);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let api = MockApi::new(8);
-        let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
+        let result = do_humanize_address::<MA, MS, MQ>(api, &mut ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
@@ -796,10 +811,10 @@ mod test {
         let request_ptr = write_data(&mut instance, &request_data);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let response_ptr = do_query_chain::<MS, MQ>(ctx, request_ptr).unwrap();
-        let response = force_read(ctx, response_ptr);
+        let response_ptr = do_query_chain::<MS, MQ>(&mut ctx, request_ptr).unwrap();
+        let response = force_read(&mut ctx, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
@@ -817,10 +832,10 @@ mod test {
         let request_ptr = write_data(&mut instance, request);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let response_ptr = do_query_chain::<MS, MQ>(ctx, request_ptr).unwrap();
-        let response = force_read(ctx, response_ptr);
+        let response_ptr = do_query_chain::<MS, MQ>(&mut ctx, request_ptr).unwrap();
+        let response = force_read(&mut ctx, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
@@ -845,10 +860,10 @@ mod test {
         let request_ptr = write_data(&mut instance, &request_data);
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let response_ptr = do_query_chain::<MS, MQ>(ctx, request_ptr).unwrap();
-        let response = force_read(ctx, response_ptr);
+        let response_ptr = do_query_chain::<MS, MQ>(&mut ctx, request_ptr).unwrap();
+        let response = force_read(&mut ctx, response_ptr);
 
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
@@ -866,22 +881,22 @@ mod test {
     fn do_scan_unbound_works() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         // set up iterator over all space
-        let id = do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_scan::<MS, MQ>(&mut ctx, 0, 0, Order::Ascending.into()).unwrap();
         assert_eq!(1, id);
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -890,22 +905,22 @@ mod test {
     fn do_scan_unbound_descending_works() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         // set up iterator over all space
-        let id = do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap();
+        let id = do_scan::<MS, MQ>(&mut ctx, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(1, id);
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -918,16 +933,16 @@ mod test {
         let end = write_data(&mut instance, b"bert");
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let id = do_scan::<MS, MQ>(ctx, start, end, Order::Ascending.into()).unwrap();
+        let id = do_scan::<MS, MQ>(&mut ctx, start, end, Order::Ascending.into()).unwrap();
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+        let item = with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id, |iter| Ok(iter.next()))
+            .unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -936,37 +951,42 @@ mod test {
     fn do_scan_multiple_iterators() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         // unbounded, ascending and descending
-        let id1 = do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap();
-        let id2 = do_scan::<MS, MQ>(ctx, 0, 0, Order::Descending.into()).unwrap();
+        let id1 = do_scan::<MS, MQ>(&mut ctx, 0, 0, Order::Ascending.into()).unwrap();
+        let id2 = do_scan::<MS, MQ>(&mut ctx, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
         // first item, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id1, |iter| Ok(iter.next()))
+                .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id1, |iter| Ok(iter.next()))
+                .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id2, |iter| Ok(iter.next()))
+                .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id1, |iter| Ok(iter.next()))
+                .unwrap();
         assert!(item.0.unwrap().is_none());
 
         // second item, second iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
+            with_iterator_from_context::<MS, MQ, _, _>(&mut ctx, id2, |iter| Ok(iter.next()))
+                .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
 
@@ -975,10 +995,10 @@ mod test {
     fn do_scan_errors_for_invalid_order_value() {
         let mut instance = make_instance();
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         // set up iterator over all space
-        let result = do_scan::<MS, MQ>(ctx, 0, 0, 42);
+        let result = do_scan::<MS, MQ>(&mut ctx, 0, 0, 42);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::InvalidOrder { .. },
@@ -993,27 +1013,27 @@ mod test {
         let mut instance = make_instance();
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
-        let id = do_scan::<MS, MQ>(ctx, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_scan::<MS, MQ>(&mut ctx, 0, 0, Order::Ascending.into()).unwrap();
 
         // Entry 1
-        let kv_region_ptr = do_next::<MS, MQ>(ctx, id).unwrap();
+        let kv_region_ptr = do_next::<MS, MQ>(&mut ctx, id).unwrap();
         assert_eq!(
-            force_read(ctx, kv_region_ptr),
+            force_read(&mut ctx, kv_region_ptr),
             [VALUE1, KEY1, b"\0\0\0\x03"].concat()
         );
 
         // Entry 2
-        let kv_region_ptr = do_next::<MS, MQ>(ctx, id).unwrap();
+        let kv_region_ptr = do_next::<MS, MQ>(&mut ctx, id).unwrap();
         assert_eq!(
-            force_read(ctx, kv_region_ptr),
+            force_read(&mut ctx, kv_region_ptr),
             [VALUE2, KEY2, b"\0\0\0\x04"].concat()
         );
 
         // End
-        let kv_region_ptr = do_next::<MS, MQ>(ctx, id).unwrap();
-        assert_eq!(force_read(ctx, kv_region_ptr), b"\0\0\0\0");
+        let kv_region_ptr = do_next::<MS, MQ>(&mut ctx, id).unwrap();
+        assert_eq!(force_read(&mut ctx, kv_region_ptr), b"\0\0\0\0");
         // API makes no guarantees for value_ptr in this case
     }
 
@@ -1023,10 +1043,10 @@ mod test {
         let mut instance = make_instance();
 
         let ctx = instance.context_mut();
-        leave_default_data(ctx);
+        leave_default_data(&mut ctx);
 
         let non_existent_id = 42u32;
-        let result = do_next::<MS, MQ>(ctx, non_existent_id);
+        let result = do_next::<MS, MQ>(&mut ctx, non_existent_id);
         match result.unwrap_err() {
             VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),

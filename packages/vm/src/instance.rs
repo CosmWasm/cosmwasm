@@ -4,17 +4,13 @@ use std::ptr::NonNull;
 
 pub use wasmer_runtime_core::typed_func::Func;
 use wasmer_runtime_core::{
-    imports,
-    module::Module,
-    typed_func::{Wasm, WasmTypeList},
-    vm::Ctx,
-    Instance as WasmerInstance,
+    imports, module::Module, typed_func::WasmTypeList, vm::Ctx, Instance as WasmerInstance,
 };
 
 use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
     get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
-    set_wasmer_instance, setup_context, with_querier_from_context, with_storage_from_context,
+    set_wasmer_instance, with_querier_from_context, with_storage_from_context,
 };
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -79,12 +75,9 @@ where
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
-        let mut import_obj =
-            imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
-
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
-        import_obj.extend(imports! {
+        let import_obj = imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // Returns 0 if key does not exist and pointer to result region otherwise.
@@ -132,12 +125,6 @@ where
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
                 }),
-            },
-        });
-
-        #[cfg(feature = "iterator")]
-        import_obj.extend(imports! {
-            "env" => {
                 // Creates an iterator that will go from start to end.
                 // If start_ptr == 0, the start is unbounded.
                 // If end_ptr == 0, the end is unbounded.
@@ -145,7 +132,14 @@ where
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns an iterator ID.
                 "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> VmResult<u32> {
-                    do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
+                    #[cfg(feature = "iterator")]
+                    {
+                        do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
+                    }
+                    #[cfg(not(feature = "iterator"))]
+                    {
+                        Err(VmError::generic_err("Import db_scan not implemented due to missing iterator feature"))
+                    }
                 }),
                 // Get next element of iterator with ID `iterator_id`.
                 // Creates a region containing both key and value and returns its address.
@@ -153,10 +147,17 @@ where
                 // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
                 // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
                 "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32| -> VmResult<u32> {
-                    do_next::<S, Q>(ctx, iterator_id)
+                    #[cfg(feature = "iterator")]
+                    {
+                        do_next::<S, Q>(ctx, iterator_id)
+                    }
+                    #[cfg(not(feature = "iterator"))]
+                    {
+                        Err(VmError::generic_err("Import db_next not implemented due to missing iterator feature"))
+                    }
                 }),
             },
-        });
+        };
 
         let wasmer_instance = Box::from(module.instantiate(&import_obj).map_err(|original| {
             VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
@@ -169,12 +170,16 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas_left(wasmer_instance.context_mut(), gas_limit);
-        get_gas_state_mut::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_left(&mut wasmer_instance.context_mut(), gas_limit);
+        get_gas_state_mut::<S, Q>(&mut wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
-        set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
-        move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
+        set_wasmer_instance::<S, Q>(&mut wasmer_instance.context_mut(), Some(instance_ptr));
+        move_into_context(
+            &mut wasmer_instance.context_mut(),
+            deps.storage,
+            deps.querier,
+        );
         Instance {
             inner: wasmer_instance,
             api: deps.api,
@@ -187,7 +192,7 @@ where
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
     pub fn recycle(mut self) -> Option<Extern<S, A, Q>> {
-        if let (Some(storage), Some(querier)) = move_out_of_context(self.inner.context_mut()) {
+        if let (Some(storage), Some(querier)) = move_out_of_context(&mut self.inner.context_mut()) {
             Some(Extern {
                 storage,
                 api: self.api,
@@ -203,7 +208,7 @@ where
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
     pub fn get_memory_size(&self) -> u64 {
-        (get_memory_info(self.inner.context()).size as u64) * WASM_PAGE_SIZE
+        (get_memory_info(&self.inner.context()).size as u64) * WASM_PAGE_SIZE
     }
 
     /// Returns the currently remaining gas.
@@ -215,8 +220,8 @@ where
     /// This is a snapshot and multiple reports can be created during the lifetime of
     /// an instance.
     pub fn create_gas_report(&self) -> GasReport {
-        let state = get_gas_state::<S, Q>(self.inner.context()).clone();
-        let gas_left = get_gas_left(self.inner.context());
+        let state = get_gas_state::<S, Q>(&self.inner.context()).clone();
+        let gas_left = get_gas_left(&self.inner.context());
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,
@@ -229,15 +234,15 @@ where
     /// for multiple calls in integration tests, this should be set to the desired value
     /// right before every call.
     pub fn set_storage_readonly(&mut self, new_value: bool) {
-        set_storage_readonly::<S, Q>(self.inner.context_mut(), new_value);
+        set_storage_readonly::<S, Q>(&mut self.inner.context_mut(), new_value);
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
+        with_storage_from_context::<S, Q, F, T>(&mut self.inner.context_mut(), func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
+        with_querier_from_context::<S, Q, F, T>(&mut self.inner.context_mut(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
@@ -262,19 +267,19 @@ where
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(self.inner.context(), region_ptr, max_length)
+        read_region(&self.inner.context(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(self.inner.context(), region_ptr, data)?;
+        write_region(&self.inner.context(), region_ptr, data)?;
         Ok(())
     }
 
-    pub(crate) fn func<Args, Rets>(&self, name: &str) -> VmResult<Func<Args, Rets, Wasm>>
+    pub(crate) fn func<Args, Rets>(&self, name: &str) -> VmResult<Func<Args, Rets>>
     where
-        Args: WasmTypeList,
-        Rets: WasmTypeList,
+        Args: WasmTypeList + Clone,
+        Rets: WasmTypeList + Clone,
     {
         let function = self.inner.exports.get(name)?;
         Ok(function)
@@ -575,25 +580,25 @@ mod test {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
             true
         );
 
         instance.set_storage_readonly(false);
         assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
             false
         );
 
         instance.set_storage_readonly(false);
         assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
             false
         );
 
         instance.set_storage_readonly(true);
         assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
+            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
             true
         );
     }

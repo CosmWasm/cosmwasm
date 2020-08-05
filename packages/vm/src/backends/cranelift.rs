@@ -1,4 +1,5 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
+
 use wasmer_clif_backend::CraneliftCompiler;
 use wasmer_runtime_core::{
     backend::Compiler, backend::CompilerConfig, compile_with_config, module::Module, vm::Ctx,

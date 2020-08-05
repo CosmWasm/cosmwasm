@@ -57,9 +57,9 @@ mod test {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
-        let before = get_gas_left(instance.context());
-        decrease_gas_left(instance.context_mut(), 32).unwrap();
-        let after = get_gas_left(instance.context());
+        let before = get_gas_left(&instance.context());
+        decrease_gas_left(&mut instance.context_mut(), 32).unwrap();
+        let after = get_gas_left(&instance.context());
         assert_eq!(after, before - 32);
     }
 
@@ -68,9 +68,9 @@ mod test {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
-        let before = get_gas_left(instance.context());
-        decrease_gas_left(instance.context_mut(), before).unwrap();
-        let after = get_gas_left(instance.context());
+        let before = get_gas_left(&instance.context());
+        decrease_gas_left(&mut instance.context_mut(), before).unwrap();
+        let after = get_gas_left(&instance.context());
         assert_eq!(after, 0);
     }
 
@@ -79,12 +79,12 @@ mod test {
         let wasm = wat2wasm("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
-        let before = get_gas_left(instance.context());
-        let result = decrease_gas_left(instance.context_mut(), before + 1);
+        let before = get_gas_left(&instance.context());
+        let result = decrease_gas_left(&mut instance.context_mut(), before + 1);
         match result.unwrap_err() {
             InsufficientGasLeft => {}
         }
-        let after = get_gas_left(instance.context());
+        let after = get_gas_left(&instance.context());
         assert_eq!(after, 0);
     }
 }
