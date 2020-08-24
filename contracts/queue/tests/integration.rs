@@ -24,7 +24,7 @@ use cosmwasm_vm::{
 };
 
 use queue::contract::{
-    CountResponse, HandleMsg, InitMsg, Item, QueryMsg, ReducerResponse, SumResponse,
+    CountResponse, HandleMsg, InitMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
 };
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
@@ -113,4 +113,14 @@ fn push_and_reduce() {
     let data = query(&mut deps, QueryMsg::Reducer {}).unwrap();
     let counters = from_binary::<ReducerResponse>(&data).unwrap().counters;
     assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
+}
+
+#[test]
+fn query_list() {
+    let (mut deps, _env) = create_contract();
+
+    //let _query_binary: StdResult<QueryResponse> = query(&mut deps, QueryMsg::List {});
+    let query_msg = QueryMsg::List {};
+    let ids: ListResponse = from_binary(&query(&mut deps, query_msg).unwrap()).unwrap();
+    assert_eq!(0, ids.swaps.len());
 }

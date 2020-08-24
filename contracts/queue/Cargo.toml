@@ -30,6 +30,7 @@ singlepass = ["cosmwasm-vm/default-singlepass"]
 
 [dependencies]
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
+cosmwasm-storage = { path = "../../packages/storage", features = ["iterator"] }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 

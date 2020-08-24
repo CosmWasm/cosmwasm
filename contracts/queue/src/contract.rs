@@ -3,8 +3,9 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order,
-    Querier, QueryResponse, StdResult, Storage,
+    Querier, QueryResponse, ReadonlyStorage, StdError, StdResult, Storage,
 };
+use cosmwasm_storage::prefixed_read;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
@@ -33,6 +34,7 @@ pub enum QueryMsg {
     Sum {},
     // Reducer holds open two iterators at once
     Reducer {},
+    List {},
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -50,6 +52,12 @@ pub struct SumResponse {
 // (value of item i, sum of all elements where value > value[i])
 pub struct ReducerResponse {
     pub counters: Vec<(i32, i32)>,
+}
+
+#[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
+pub struct ListResponse {
+    /// List all open swap ids
+    pub swaps: Vec<String>,
 }
 
 // init is a no-op, just empty data
@@ -120,6 +128,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
         QueryMsg::Count {} => to_binary(&query_count(deps)?),
         QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
         QueryMsg::Reducer {} => to_binary(&query_reducer(deps)?),
+        QueryMsg::List {} => to_binary(&query_list(deps)?),
     }
 }
 
@@ -167,11 +176,27 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     Ok(ReducerResponse { counters: out })
 }
 
+pub const PREFIX_SWAP: &[u8] = b"atomic_swap";
+
+fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<ListResponse> {
+    Ok(ListResponse {
+        swaps: all_swap_ids(&deps.storage)?,
+    })
+}
+
+/// This returns the list of ids for all active swaps
+pub fn all_swap_ids<S: ReadonlyStorage>(storage: &S) -> StdResult<Vec<String>> {
+    prefixed_read(PREFIX_SWAP, storage)
+        .range(None, None, Order::Ascending)
+        .map(|(k, _)| String::from_utf8(k).map_err(|_| StdError::invalid_utf8("Parsing swap id")))
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::coins;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::{coins, from_binary};
 
     fn create_contract() -> (Extern<MockStorage, MockApi, MockQuerier>, Env) {
         let mut deps = mock_dependencies(20, &coins(1000, "earth"));
@@ -241,5 +266,15 @@ mod tests {
         assert_eq!(get_sum(&deps), 130);
         let counters = query_reducer(&deps).unwrap().counters;
         assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
+    }
+
+    #[test]
+    fn query_list() {
+        let (mut deps, _env) = create_contract();
+
+        //let _query_binary: StdResult<QueryResponse> = query(&mut deps, QueryMsg::List {});
+        let query_msg = QueryMsg::List {};
+        let ids: ListResponse = from_binary(&query(&mut deps, query_msg).unwrap()).unwrap();
+        assert_eq!(0, ids.swaps.len());
     }
 }
