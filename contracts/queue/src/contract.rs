@@ -5,7 +5,6 @@ use cosmwasm_std::{
     from_slice, to_binary, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order,
     Querier, QueryResponse, ReadonlyStorage, StdError, StdResult, Storage,
 };
-use cosmwasm_storage::prefixed_read;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
@@ -176,8 +175,6 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     Ok(ReducerResponse { counters: out })
 }
 
-pub const PREFIX_SWAP: &[u8] = b"atomic_swap";
-
 fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<ListResponse> {
     Ok(ListResponse {
         swaps: all_swap_ids(&deps.storage)?,
@@ -186,8 +183,10 @@ fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResu
 
 /// This returns the list of ids for all active swaps
 pub fn all_swap_ids<S: ReadonlyStorage>(storage: &S) -> StdResult<Vec<String>> {
-    prefixed_read(PREFIX_SWAP, storage)
-        .range(None, None, Order::Ascending)
+    storage
+        .range(Some(b"atomic_swap"), Some(b"atomic_swaq"), Order::Ascending)
+        // .range(None, Some(b"atomic_swaq"), Order::Ascending)
+        // .range(Some(b"atomic_swap"), None, Order::Ascending)
         .map(|(k, _)| String::from_utf8(k).map_err(|_| StdError::invalid_utf8("Parsing swap id")))
         .collect()
 }

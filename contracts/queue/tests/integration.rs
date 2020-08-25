@@ -57,6 +57,7 @@ fn init_and_query() {
     assert_eq!(get_sum(&mut deps), 0);
 }
 
+#[ignore]
 #[test]
 fn push_and_query() {
     let (mut deps, env) = create_contract();
@@ -66,6 +67,7 @@ fn push_and_query() {
     assert_eq!(get_sum(&mut deps), 25);
 }
 
+#[ignore]
 #[test]
 fn multiple_push() {
     let (mut deps, env) = create_contract();
@@ -79,6 +81,7 @@ fn multiple_push() {
     assert_eq!(get_sum(&mut deps), 105);
 }
 
+#[ignore]
 #[test]
 fn push_and_pop() {
     let (mut deps, env) = create_contract();
@@ -97,6 +100,7 @@ fn push_and_pop() {
     assert_eq!(get_sum(&mut deps), 17);
 }
 
+#[ignore]
 #[test]
 fn push_and_reduce() {
     let (mut deps, env) = create_contract();
