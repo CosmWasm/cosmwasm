@@ -80,12 +80,12 @@ impl ReadonlyStorage for ExternalStorage {
                 let start = build_region(s);
                 let start_ptr = &*start as *const Region as u32;
                 unsafe { db_scan(start_ptr, 0, order) }
-            },
+            }
             (None, Some(e)) => {
                 let end = build_region(e);
                 let end_ptr = &*end as *const Region as u32;
                 unsafe { db_scan(0, end_ptr, order) }
-            },
+            }
             (Some(s), Some(e)) => {
                 let start = build_region(s);
                 let start_ptr = &*start as *const Region as u32;
