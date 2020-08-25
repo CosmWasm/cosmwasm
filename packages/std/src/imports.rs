@@ -69,21 +69,31 @@ impl ReadonlyStorage for ExternalStorage {
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = KV>> {
-        // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
-        // thus they are not inside a block
-        let start = start.map(|s| build_region(s));
-        let start_ptr = match start {
-            Some(reg) => &*reg as *const Region as u32,
-            None => 0,
-        };
-        let end = end.map(|e| build_region(e));
-        let end_ptr = match end {
-            Some(reg) => &*reg as *const Region as u32,
-            None => 0,
-        };
         let order = order as i32;
 
-        let iterator_id = unsafe { db_scan(start_ptr, end_ptr, order) };
+        // There is lots of gotchas on turning options into regions for FFI, thus this design
+        // See: https://github.com/CosmWasm/cosmwasm/pull/509
+        // Note: start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
+        let iterator_id = match (start, end) {
+            (None, None) => unsafe { db_scan(0, 0, order) },
+            (Some(s), None) => {
+                let start = build_region(s);
+                let start_ptr = &*start as *const Region as u32;
+                unsafe { db_scan(start_ptr, 0, order) }
+            }
+            (None, Some(e)) => {
+                let end = build_region(e);
+                let end_ptr = &*end as *const Region as u32;
+                unsafe { db_scan(0, end_ptr, order) }
+            }
+            (Some(s), Some(e)) => {
+                let start = build_region(s);
+                let start_ptr = &*start as *const Region as u32;
+                let end = build_region(e);
+                let end_ptr = &*end as *const Region as u32;
+                unsafe { db_scan(start_ptr, end_ptr, order) }
+            }
+        };
         let iter = ExternalIterator { iterator_id };
         Box::new(iter)
     }
