@@ -50,6 +50,7 @@ fn get_sum(deps: &mut Instance<MockStorage, MockApi, MockQuerier>) -> i32 {
     res.sum
 }
 
+#[ignore]
 #[test]
 fn init_and_query() {
     let (mut deps, _) = create_contract();

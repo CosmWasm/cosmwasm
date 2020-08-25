@@ -20,7 +20,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::ffi::FfiError;
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
-use crate::memory::{read_region, write_region};
+use crate::memory::{read_region, write_region, get_region};
 use crate::serde::to_vec;
 use crate::traits::{Api, Querier, Storage};
 
@@ -170,8 +170,16 @@ pub fn do_scan<S: Storage + 'static, Q: Querier>(
     end_ptr: u32,
     order: i32,
 ) -> VmResult<u32> {
+    println!("do_scan called");
+    println!("start_ptr: {:?}", start_ptr);
+    let mut s = get_region(ctx, start_ptr)?;
+    println!("start: {:?}", s);
+    println!("end_ptr: {:?}", end_ptr);
+
     let start = maybe_read_region(ctx, start_ptr, MAX_LENGTH_DB_KEY)?;
+    println!("got_start called");
     let end = maybe_read_region(ctx, end_ptr, MAX_LENGTH_DB_KEY)?;
+    println!("got_end called");
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;

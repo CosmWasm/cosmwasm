@@ -183,12 +183,13 @@ fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResu
 
 /// This returns the list of ids for all active swaps
 pub fn all_swap_ids<S: ReadonlyStorage>(storage: &S) -> StdResult<Vec<String>> {
-    storage
-        .range(Some(b"atomic_swap"), Some(b"atomic_swaq"), Order::Ascending)
-        // .range(None, Some(b"atomic_swaq"), Order::Ascending)
-        // .range(Some(b"atomic_swap"), None, Order::Ascending)
-        .map(|(k, _)| String::from_utf8(k).map_err(|_| StdError::invalid_utf8("Parsing swap id")))
-        .collect()
+    // storage
+    //     .range(Some(b"atomic_swap"), Some(b"atomic_swaq"), Order::Ascending)
+    //     .map(|(k, _)| String::from_utf8(k).map_err(|_| StdError::invalid_utf8("Parsing swap id")))
+    //     .collect()
+    let _ = storage
+        .range(Some(b"short"), Some(b"very very long"), Order::Ascending);
+    Ok(vec![])
 }
 
 #[cfg(test)]

@@ -71,12 +71,16 @@ impl ReadonlyStorage for ExternalStorage {
     ) -> Box<dyn Iterator<Item = KV>> {
         // start and end (Regions) must remain in scope as long as the start_ptr / end_ptr do
         // thus they are not inside a block
-        let start = start.map(|s| build_region(s));
+        let start = start.map(|s| Box::new(Region{offset: 50, length: 500, capacity: 500}));
         let start_ptr = match start {
             Some(reg) => &*reg as *const Region as u32,
             None => 0,
         };
-        let end = end.map(|e| build_region(e));
+        // let start = Box::new(Region{offset: 100, length: 200, capacity: 300});
+        // let start_ptr = &*start as *const Region as u32;
+
+        // let end = end.map(|e| build_region(e));
+        let end = end.map(|s| Box::new(Region{offset: 4, length: 5, capacity: 6}));
         let end_ptr = match end {
             Some(reg) => &*reg as *const Region as u32,
             None => 0,

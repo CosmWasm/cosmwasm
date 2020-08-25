@@ -19,7 +19,7 @@ use crate::errors::{
 /// but defined here to allow Wasmer specific implementation.
 #[repr(C)]
 #[derive(Default, Clone, Copy, Debug)]
-struct Region {
+pub(crate) struct Region {
     pub offset: u32,
     /// The number of bytes available in this region
     pub capacity: u32,
@@ -136,7 +136,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
 }
 
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
-fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
+pub(crate) fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
     let memory = ctx.memory(0);
     let wptr = WasmPtr::<Region>::new(ptr);
     match wptr.deref(memory) {
