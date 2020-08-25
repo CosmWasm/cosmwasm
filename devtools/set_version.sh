@@ -36,7 +36,7 @@ FILES_MODIFIED=()
 
 for package_dir in packages/*/; do
   CARGO_TOML="$package_dir/Cargo.toml"
-  sed -i '' -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
+  sed -i -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
   FILES_MODIFIED+=("$CARGO_TOML")
 done
 
@@ -47,7 +47,7 @@ for contract_dir in contracts/*/; do
   CARGO_TOML="$contract_dir/Cargo.toml"
   CARGO_LOCK="$contract_dir/Cargo.lock"
 
-  sed -i '' -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
+  sed -i -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
   (cd "$contract_dir" && cargo build)
 
   FILES_MODIFIED+=("$CARGO_TOML" "$CARGO_LOCK")
