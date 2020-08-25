@@ -117,10 +117,26 @@ fn push_and_reduce() {
 
 #[test]
 fn query_list() {
-    let (mut deps, _env) = create_contract();
+    let (mut deps, env) = create_contract();
 
-    //let _query_binary: StdResult<QueryResponse> = query(&mut deps, QueryMsg::List {});
+    for _ in 0..0x25 {
+        let _: HandleResponse =
+            handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 40 }).unwrap();
+    }
+    for _ in 0..0x16 {
+        let _: HandleResponse = handle(&mut deps, env.clone(), HandleMsg::Dequeue {}).unwrap();
+    }
+    // we add 0x25 times and then pop 0x16, leaving [0x16, 0x17...0x24]
+    // since we count up to 0x20 in early, we get early and late both with data
+
     let query_msg = QueryMsg::List {};
     let ids: ListResponse = from_binary(&query(&mut deps, query_msg).unwrap()).unwrap();
-    assert_eq!(0, ids.swaps.len());
+    assert_eq!(0, ids.empty.len());
+    assert_eq!(11, ids.early.len());
+    assert_eq!(4, ids.late.len());
+    assert_eq!(
+        vec![0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20],
+        ids.early
+    );
+    assert_eq!(vec![0x21, 0x22, 0x23, 0x24], ids.late);
 }

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse, Order,
-    Querier, QueryResponse, ReadonlyStorage, StdError, StdResult, Storage,
+    Querier, QueryResponse, StdResult, Storage,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -55,8 +55,12 @@ pub struct ReducerResponse {
 
 #[derive(Serialize, Deserialize, Clone, PartialEq, JsonSchema, Debug)]
 pub struct ListResponse {
-    /// List all open swap ids
-    pub swaps: Vec<String>,
+    /// List an empty range, both bounded
+    pub empty: Vec<u32>,
+    /// List all ids before 0x20
+    pub early: Vec<u32>,
+    /// List all ids after 0x20
+    pub late: Vec<u32>,
 }
 
 // init is a no-op, just empty data
@@ -175,18 +179,25 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     Ok(ReducerResponse { counters: out })
 }
 
+// this does a range query with both bounds set. Not really useful but to debug an issue
+// between vm and wasm: https://github.com/CosmWasm/cosmwasm/issues/508
 fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<ListResponse> {
-    Ok(ListResponse {
-        swaps: all_swap_ids(&deps.storage)?,
-    })
-}
-
-/// This returns the list of ids for all active swaps
-pub fn all_swap_ids<S: ReadonlyStorage>(storage: &S) -> StdResult<Vec<String>> {
-    storage
-        .range(Some(b"atomic_swap"), Some(b"atomic_swaq"), Order::Ascending)
-        .map(|(k, _)| String::from_utf8(k).map_err(|_| StdError::invalid_utf8("Parsing swap id")))
-        .collect()
+    let empty: Vec<u32> = deps
+        .storage
+        .range(Some(b"large"), Some(b"larger"), Order::Ascending)
+        .map(|(k, _)| k[0] as u32)
+        .collect();
+    let early: Vec<u32> = deps
+        .storage
+        .range(None, Some(b"\x20a"), Order::Ascending)
+        .map(|(k, _)| k[0] as u32)
+        .collect();
+    let late: Vec<u32> = deps
+        .storage
+        .range(Some(b"\x20a"), None, Order::Ascending)
+        .map(|(k, _)| k[0] as u32)
+        .collect();
+    Ok(ListResponse { empty, early, late })
 }
 
 #[cfg(test)]
@@ -267,11 +278,25 @@ mod tests {
 
     #[test]
     fn query_list() {
-        let (mut deps, _env) = create_contract();
+        let (mut deps, env) = create_contract();
+        for _ in 0..0x25 {
+            handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 40 }).unwrap();
+        }
+        for _ in 0..0x16 {
+            handle(&mut deps, env.clone(), HandleMsg::Dequeue {}).unwrap();
+        }
+        // we add 0x25 times and then pop 0x16, leaving [0x16, 0x17...0x24]
+        // since we count up to 0x20 in early, we get early and late both with data
 
-        //let _query_binary: StdResult<QueryResponse> = query(&mut deps, QueryMsg::List {});
         let query_msg = QueryMsg::List {};
         let ids: ListResponse = from_binary(&query(&mut deps, query_msg).unwrap()).unwrap();
-        assert_eq!(0, ids.swaps.len());
+        assert_eq!(0, ids.empty.len());
+        assert_eq!(11, ids.early.len());
+        assert_eq!(4, ids.late.len());
+        assert_eq!(
+            vec![0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20],
+            ids.early
+        );
+        assert_eq!(vec![0x21, 0x22, 0x23, 0x24], ids.late);
     }
 }
