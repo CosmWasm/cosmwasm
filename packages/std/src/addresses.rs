@@ -86,3 +86,86 @@ impl fmt::Display for CanonicalAddr {
         self.0.fmt(f)
     }
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    // Test HumanAddr as_str() for each HumanAddr::from input type
+    #[test]
+    fn human_addr_as_str() {
+        // literal string
+        let human_addr_from_literal_string = HumanAddr::from("literal-string");
+        assert_eq!("literal-string", human_addr_from_literal_string.as_str());
+
+        // String
+        let addr = String::from("Hello, world!");
+        let human_addr_from_string = HumanAddr::from(addr);
+        assert_eq!("Hello, world!", human_addr_from_string.as_str());
+
+        // &HumanAddr
+        let human_addr_from_borrow = HumanAddr::from(&human_addr_from_string);
+        assert_eq!(
+            human_addr_from_borrow.as_str(),
+            human_addr_from_string.as_str()
+        );
+
+        // &&HumanAddr
+        let human_addr_from_borrow_2 = HumanAddr::from(&&human_addr_from_string);
+        assert_eq!(
+            human_addr_from_borrow_2.as_str(),
+            human_addr_from_string.as_str()
+        );
+    }
+
+    #[test]
+    fn human_addr_format() {
+        let human_addr = HumanAddr::from("Hello, world!");
+        assert_eq!("Hello, world!", format!("{}", human_addr));
+    }
+
+    #[test]
+    fn human_addr_len() {
+        let addr = "Hello, world!";
+        let human_addr = HumanAddr::from(addr);
+        assert_eq!(addr.len(), human_addr.len());
+    }
+
+    #[test]
+    fn human_addr_is_empty() {
+        let human_addr = HumanAddr::from("Hello, world!");
+        assert_eq!(false, human_addr.is_empty());
+        let empty_human_addr = HumanAddr::from("");
+        assert_eq!(true, empty_human_addr.is_empty());
+    }
+
+    // Test CanonicalAddr as_slice() for each CanonicalAddr::from input type
+    #[test]
+    fn canonical_addr_from_slice() {
+        // slice
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr_slice = CanonicalAddr::from(bytes);
+        assert_eq!(canonical_addr_slice.as_slice(), &[0u8, 187, 61, 11, 250, 0]);
+
+        // Vector
+        let bytes: Vec<u8> = vec![0u8, 187, 61, 11, 250, 0];
+        let canonical_addr_vec = CanonicalAddr::from(bytes);
+        assert_eq!(canonical_addr_vec.as_slice(), &[0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn canonical_addr_len() {
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr = CanonicalAddr::from(bytes);
+        assert_eq!(canonical_addr.len(), bytes.len());
+    }
+
+    #[test]
+    fn canonical_addr_is_empty() {
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr = CanonicalAddr::from(bytes);
+        assert_eq!(false, canonical_addr.is_empty());
+        let empty_canonical_addr = CanonicalAddr::from(vec![]);
+        assert_eq!(true, empty_canonical_addr.is_empty());
+    }
+}
