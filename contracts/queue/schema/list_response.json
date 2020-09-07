@@ -9,7 +9,7 @@
   ],
   "properties": {
     "early": {
-      "description": "List all ids before 0x20",
+      "description": "List all IDs lower than 0x20",
       "type": "array",
       "items": {
         "type": "integer",
@@ -27,7 +27,7 @@
       }
     },
     "late": {
-      "description": "List all ids after 0x20",
+      "description": "List all IDs starting from 0x20",
       "type": "array",
       "items": {
         "type": "integer",

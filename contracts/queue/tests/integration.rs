@@ -123,20 +123,15 @@ fn query_list() {
         let _: HandleResponse =
             handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 40 }).unwrap();
     }
-    for _ in 0..0x16 {
+    for _ in 0..0x19 {
         let _: HandleResponse = handle(&mut deps, env.clone(), HandleMsg::Dequeue {}).unwrap();
     }
-    // we add 0x25 times and then pop 0x16, leaving [0x16, 0x17...0x24]
+    // we add 0x25 items and then remove the first 0x19, leaving [0x19, 0x1a, 0x1b, ..., 0x24]
     // since we count up to 0x20 in early, we get early and late both with data
 
     let query_msg = QueryMsg::List {};
     let ids: ListResponse = from_binary(&query(&mut deps, query_msg).unwrap()).unwrap();
-    assert_eq!(0, ids.empty.len());
-    assert_eq!(11, ids.early.len());
-    assert_eq!(4, ids.late.len());
-    assert_eq!(
-        vec![0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20],
-        ids.early
-    );
-    assert_eq!(vec![0x21, 0x22, 0x23, 0x24], ids.late);
+    assert_eq!(ids.empty, Vec::<u32>::new());
+    assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
+    assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
 }
