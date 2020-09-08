@@ -542,7 +542,7 @@ jobs:
       - image: rust:1.45.2
     environment:
       # Make sure to choose version with clippy present: https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
-      NIGHTLY_TOOLCHAIN: nightly-2020-05-26
+      NIGHTLY_TOOLCHAIN: nightly-2020-09-08
     steps:
       - checkout
       - run:
