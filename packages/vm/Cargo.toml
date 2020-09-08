@@ -33,11 +33,11 @@ staking = ["cosmwasm-std/staking"]
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.10.1" }
 serde_json = "1.0"
-wasm-common = { path = "../../../wasmer-reborn/lib/wasm-common" }
-wasmer = { path = "../../../wasmer-reborn/lib/api" }
-wasmer-runtime-core = { path = "../../../wasmer-reborn/lib/deprecated/runtime-core" }
-wasmer-compiler-cranelift = { path = "../../../wasmer-reborn/lib/compiler-cranelift", optional = true }
-wasmer-compiler-singlepass = { path = "../../../wasmer-reborn/lib/compiler-singlepass", optional = true }
+wasmer = { path = "../../../wasmer/lib/api" }
+wasmer-compiler-cranelift = { path = "../../../wasmer/lib/compiler-cranelift", optional = true }
+wasmer-compiler-singlepass = { path = "../../../wasmer/lib/compiler-singlepass", optional = true }
+wasmer-runtime-core = { path = "../../../wasmer/lib/deprecated/runtime-core" }
+wasmer-types = { path = "../../../wasmer/lib/wasmer-types" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.6.3" }

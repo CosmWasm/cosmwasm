@@ -175,11 +175,11 @@ dependencies = [
  "snafu",
  "tempfile",
  "wabt",
- "wasm-common",
  "wasmer",
  "wasmer-compiler-cranelift",
  "wasmer-compiler-singlepass",
  "wasmer-runtime-core",
+ "wasmer-types",
 ]
 
 [[package]]
@@ -1141,28 +1141,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
-name = "wasm-common"
-version = "1.0.0-alpha.1"
-dependencies = [
- "cranelift-entity",
- "serde",
-]
-
-[[package]]
 name = "wasmer"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "cfg-if",
  "indexmap",
  "more-asserts",
  "target-lexicon",
  "thiserror",
- "wasm-common",
  "wasmer-compiler",
  "wasmer-compiler-cranelift",
  "wasmer-engine",
  "wasmer-engine-jit",
  "wasmer-engine-native",
+ "wasmer-types",
  "wasmer-vm",
  "wat",
  "winapi",
@@ -1170,7 +1162,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-cache"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "blake3",
  "hex",
@@ -1181,7 +1173,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "enumset",
  "raw-cpuid",
@@ -1190,14 +1182,14 @@ dependencies = [
  "smallvec",
  "target-lexicon",
  "thiserror",
- "wasm-common",
+ "wasmer-types",
  "wasmer-vm",
  "wasmparser",
 ]
 
 [[package]]
 name = "wasmer-compiler-cranelift"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "cranelift-codegen",
  "cranelift-frontend",
@@ -1206,14 +1198,14 @@ dependencies = [
  "rayon",
  "serde",
  "tracing",
- "wasm-common",
  "wasmer-compiler",
+ "wasmer-types",
  "wasmer-vm",
 ]
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -1223,14 +1215,14 @@ dependencies = [
  "rayon",
  "serde",
  "smallvec",
- "wasm-common",
  "wasmer-compiler",
+ "wasmer-types",
  "wasmer-vm",
 ]
 
 [[package]]
 name = "wasmer-engine"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "backtrace",
  "bincode",
@@ -1241,30 +1233,30 @@ dependencies = [
  "serde_bytes",
  "target-lexicon",
  "thiserror",
- "wasm-common",
  "wasmer-compiler",
+ "wasmer-types",
  "wasmer-vm",
 ]
 
 [[package]]
 name = "wasmer-engine-jit"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "bincode",
  "cfg-if",
  "region",
  "serde",
  "serde_bytes",
- "wasm-common",
  "wasmer-compiler",
  "wasmer-engine",
+ "wasmer-types",
  "wasmer-vm",
  "winapi",
 ]
 
 [[package]]
 name = "wasmer-engine-native"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "bincode",
  "cfg-if",
@@ -1273,21 +1265,21 @@ dependencies = [
  "serde",
  "tempfile",
  "tracing",
- "wasm-common",
  "wasmer-compiler",
  "wasmer-engine",
  "wasmer-object",
+ "wasmer-types",
  "wasmer-vm",
 ]
 
 [[package]]
 name = "wasmer-object"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "object",
  "thiserror",
- "wasm-common",
  "wasmer-compiler",
+ "wasmer-types",
 ]
 
 [[package]]
@@ -1296,18 +1288,26 @@ version = "0.18.0"
 dependencies = [
  "blake3",
  "lazy_static",
- "wasm-common",
  "wasmer",
  "wasmer-cache",
  "wasmer-compiler",
  "wasmer-engine",
  "wasmer-engine-jit",
+ "wasmer-types",
  "wasmer-vm",
 ]
 
 [[package]]
+name = "wasmer-types"
+version = "1.0.0-alpha01.0"
+dependencies = [
+ "cranelift-entity",
+ "serde",
+]
+
+[[package]]
 name = "wasmer-vm"
-version = "1.0.0-alpha.1"
+version = "1.0.0-alpha01.0"
 dependencies = [
  "backtrace",
  "cc",
@@ -1319,7 +1319,7 @@ dependencies = [
  "region",
  "serde",
  "thiserror",
- "wasm-common",
+ "wasmer-types",
  "winapi",
 ]
 

@@ -1,9 +1,9 @@
-use wasm_common::MemoryIndex;
 use wasmer_runtime_core::{
     memory::ptr::{Array, WasmPtr},
     types::ValueType,
     vm::Ctx,
 };
+use wasmer_types::MemoryIndex;
 
 use crate::conversion::to_u32;
 use crate::errors::{
