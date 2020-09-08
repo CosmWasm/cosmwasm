@@ -78,20 +78,26 @@ impl ReadonlyStorage for ExternalStorage {
             (None, None) => unsafe { db_scan(0, 0, order) },
             (Some(s), None) => {
                 let start = build_region(s);
-                let start_ptr = start.as_ref() as *const Region;
-                unsafe { db_scan(start_ptr as u32, 0, order) }
+                let start_ref = start.as_ref();
+                unsafe { db_scan(start_ref as *const Region as u32, 0, order) }
             }
             (None, Some(e)) => {
                 let end = build_region(e);
-                let end_ptr = end.as_ref() as *const Region;
-                unsafe { db_scan(0, end_ptr as u32, order) }
+                let end_ref = end.as_ref();
+                unsafe { db_scan(0, end_ref as *const Region as u32, order) }
             }
             (Some(s), Some(e)) => {
                 let start = build_region(s);
-                let start_ptr = start.as_ref() as *const Region;
+                let start_ref = start.as_ref();
                 let end = build_region(e);
-                let end_ptr = end.as_ref() as *const Region;
-                unsafe { db_scan(start_ptr as u32, end_ptr as u32, order) }
+                let end_ref = end.as_ref();
+                unsafe {
+                    db_scan(
+                        start_ref as *const Region as u32,
+                        end_ref as *const Region as u32,
+                        order,
+                    )
+                }
             }
         };
         let iter = ExternalIterator { iterator_id };
