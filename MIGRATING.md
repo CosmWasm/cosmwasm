@@ -4,6 +4,43 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.11 -> 0.10
+
+- Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`
+  to `InitResponse::attributes`, `MigrateResponse::attributes` and
+  `HandleResponse::attributes`. Replace calls to `log` with `Arrtibute::new`:
+
+  ```rust
+  // before
+  Ok(HandleResponse {
+    log: vec![log("action", "change_owner"), log("owner", owner)],
+    ..HandleResponse::default()
+  })
+
+  // after
+  Ok(HandleResponse {
+    attributes: vec![
+        Attribute::new("action", "change_owner"),
+        Attribute::new("owner", owner),
+    ],
+    ..HandleResponse::default()
+  })
+  ```
+
+- Rename `Context::add_log` to `Context::add_attribute`:
+
+  ```rust
+  // before
+  let mut ctx = Context::new();
+  ctx.add_log("action", "release");
+  ctx.add_log("destination", &to_addr);
+
+  // after
+  let mut ctx = Context::new();
+  ctx.add_attribute("action", "release");
+  ctx.add_attribute("destination", &to_addr);
+  ```
+
 ## 0.9 -> 0.10
 
 Integration tests:

@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    log, to_binary, Api, Binary, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    Querier, StdError, StdResult, Storage,
+    to_binary, Api, Attribute, Binary, CosmosMsg, Env, Extern, HandleResponse, HumanAddr,
+    InitResponse, Querier, StdError, StdResult, Storage,
 };
 
 use crate::msg::{
@@ -47,7 +47,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     }
     let res = HandleResponse {
         messages: msgs,
-        log: vec![log("action", "reflect")],
+        attributes: vec![Attribute::new("action", "reflect")],
         data: None,
     };
     Ok(res)
@@ -67,7 +67,10 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
         Ok(state)
     })?;
     Ok(HandleResponse {
-        log: vec![log("action", "change_owner"), log("owner", owner)],
+        attributes: vec![
+            Attribute::new("action", "change_owner"),
+            Attribute::new("owner", owner),
+        ],
         ..HandleResponse::default()
     })
 }

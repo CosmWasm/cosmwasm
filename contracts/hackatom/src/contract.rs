@@ -103,9 +103,9 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         })?,
     );
 
-    // This adds some unrelated log for testing purposes
+    // This adds some unrelated event attribute for testing purposes
     let mut ctx = Context::new();
-    ctx.add_log("Let the", "hacking begin");
+    ctx.add_attribute("Let the", "hacking begin");
     ctx.try_into()
 }
 
@@ -156,8 +156,8 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
         let mut ctx = Context::new();
-        ctx.add_log("action", "release");
-        ctx.add_log("destination", &to_addr);
+        ctx.add_attribute("action", "release");
+        ctx.add_attribute("destination", &to_addr);
         ctx.add_message(BankMsg::Send {
             from_address: env.contract.address,
             to_address: to_addr,
@@ -360,7 +360,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, log, ReadonlyStorage, StdError};
+    use cosmwasm_std::{coins, Attribute, ReadonlyStorage, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -382,9 +382,9 @@ mod tests {
         let env = mock_env(creator.as_str(), &[]);
         let res = init(&mut deps, env, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
-        assert_eq!(res.log.len(), 1);
-        assert_eq!(res.log[0].key, "Let the");
-        assert_eq!(res.log[0].value, "hacking begin");
+        assert_eq!(res.attributes.len(), 1);
+        assert_eq!(res.attributes[0].key, "Let the");
+        assert_eq!(res.attributes[0].value, "hacking begin");
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
@@ -497,8 +497,11 @@ mod tests {
             .into(),
         );
         assert_eq!(
-            handle_res.log,
-            vec![log("action", "release"), log("destination", "benefits"),],
+            handle_res.attributes,
+            vec![
+                Attribute::new("action", "release"),
+                Attribute::new("destination", "benefits"),
+            ],
         );
         assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
     }

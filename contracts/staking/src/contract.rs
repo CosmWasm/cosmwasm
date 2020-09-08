@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    coin, log, to_binary, Api, BankMsg, Binary, Decimal, Env, Extern, HandleResponse, HumanAddr,
-    InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
+    coin, to_binary, Api, Attribute, BankMsg, Binary, Decimal, Env, Extern, HandleResponse,
+    HumanAddr, InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 
 use crate::msg::{
@@ -86,11 +86,11 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
 
     let res = HandleResponse {
         messages: vec![],
-        log: vec![
-            log("action", "transfer"),
-            log("from", env.message.sender),
-            log("to", recipient),
-            log("amount", send),
+        attributes: vec![
+            Attribute::new("action", "transfer"),
+            Attribute::new("from", env.message.sender),
+            Attribute::new("to", recipient),
+            Attribute::new("amount", send),
         ],
         data: None,
     };
@@ -174,11 +174,11 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
             amount: payment.clone(),
         }
         .into()],
-        log: vec![
-            log("action", "bond"),
-            log("from", env.message.sender),
-            log("bonded", payment.amount),
-            log("minted", to_mint),
+        attributes: vec![
+            Attribute::new("action", "bond"),
+            Attribute::new("from", env.message.sender),
+            Attribute::new("bonded", payment.amount),
+            Attribute::new("minted", to_mint),
         ],
         data: None,
     };
@@ -243,11 +243,11 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
             amount: coin(unbond.u128(), &invest.bond_denom),
         }
         .into()],
-        log: vec![
-            log("action", "unbond"),
-            log("to", env.message.sender),
-            log("unbonded", unbond),
-            log("burnt", amount),
+        attributes: vec![
+            Attribute::new("action", "unbond"),
+            Attribute::new("to", env.message.sender),
+            Attribute::new("unbonded", unbond),
+            Attribute::new("burnt", amount),
         ],
         data: None,
     };
@@ -293,10 +293,10 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
             amount: vec![balance],
         }
         .into()],
-        log: vec![
-            log("action", "claim"),
-            log("from", env.message.sender),
-            log("amount", to_send),
+        attributes: vec![
+            Attribute::new("action", "claim"),
+            Attribute::new("from", env.message.sender),
+            Attribute::new("amount", to_send),
         ],
         data: None,
     };
@@ -329,7 +329,7 @@ pub fn reinvest<S: Storage, A: Api, Q: Querier>(
             }
             .into(),
         ],
-        log: vec![],
+        attributes: vec![],
         data: None,
     };
     Ok(res)
@@ -372,7 +372,10 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
             amount: balance.clone(),
         }
         .into()],
-        log: vec![log("action", "reinvest"), log("bonded", balance.amount)],
+        attributes: vec![
+            Attribute::new("action", "reinvest"),
+            Attribute::new("bonded", balance.amount),
+        ],
         data: None,
     };
     Ok(res)

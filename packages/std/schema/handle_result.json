@@ -26,6 +26,22 @@
     }
   ],
   "definitions": {
+    "Attribute": {
+      "description": "An key value pair that is used in the context of event attributes in logs",
+      "type": "object",
+      "required": [
+        "key",
+        "value"
+      ],
+      "properties": {
+        "key": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
     "BankMsg": {
       "anyOf": [
         {
@@ -134,10 +150,17 @@
     "HandleResponse_for_Empty": {
       "type": "object",
       "required": [
-        "log",
+        "attributes",
         "messages"
       ],
       "properties": {
+        "attributes": {
+          "description": "The attributes that will be emitted as part of a \"wasm\" event",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          }
+        },
         "data": {
           "anyOf": [
             {
@@ -147,12 +170,6 @@
               "type": "null"
             }
           ]
-        },
-        "log": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/LogAttribute"
-          }
         },
         "messages": {
           "type": "array",
@@ -164,21 +181,6 @@
     },
     "HumanAddr": {
       "type": "string"
-    },
-    "LogAttribute": {
-      "type": "object",
-      "required": [
-        "key",
-        "value"
-      ],
-      "properties": {
-        "key": {
-          "type": "string"
-        },
-        "value": {
-          "type": "string"
-        }
-      }
     },
     "StakingMsg": {
       "anyOf": [
