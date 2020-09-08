@@ -84,8 +84,13 @@ pub fn build_region(data: &[u8]) -> Box<Region> {
 
 fn build_region_from_components(offset: u32, capacity: u32, length: u32) -> Box<Region> {
     Box::new(Region {
-        offset: offset,
-        capacity: capacity,
-        length: length,
+        offset,
+        capacity,
+        length,
     })
+}
+
+/// Returns the address of the Region as an offset in linear memory
+pub fn get_region_address(region: &Box<Region>) -> u32 {
+    region.as_ref() as *const Region as u32
 }
