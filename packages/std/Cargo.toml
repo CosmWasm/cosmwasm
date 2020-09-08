@@ -36,3 +36,5 @@ snafu = { version = "0.6.6" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
+# The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
+chrono = "0.4"

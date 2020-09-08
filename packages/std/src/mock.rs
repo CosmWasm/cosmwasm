@@ -118,6 +118,7 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
         block: BlockInfo {
             height: 12_345,
             time: 1_571_797_419,
+            time_nanos: 879305533,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         message: MessageInfo {
