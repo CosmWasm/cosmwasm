@@ -23,7 +23,7 @@ To rebuild the test contracts, go to the repo root and do
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.0 ./contracts/hackatom \
+  cosmwasm/rust-optimizer:0.9.1 ./contracts/hackatom \
   && cp contracts/hackatom/contract.wasm packages/vm/testdata/contract_0.11.wasm
 ```
 

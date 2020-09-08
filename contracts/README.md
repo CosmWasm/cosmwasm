@@ -17,25 +17,25 @@ To rebuild all contracts as part of a release use the following commands:
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.0 ./contracts/burner
+  cosmwasm/rust-optimizer:0.9.1 ./contracts/burner
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.0 ./contracts/hackatom
+  cosmwasm/rust-optimizer:0.9.1 ./contracts/hackatom
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_queue",target=/code/contracts/queue/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.0 ./contracts/queue
+  cosmwasm/rust-optimizer:0.9.1 ./contracts/queue
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_reflect",target=/code/contracts/reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.0 ./contracts/reflect
+  cosmwasm/rust-optimizer:0.9.1 ./contracts/reflect
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_staking",target=/code/contracts/staking/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.0 ./contracts/staking
+  cosmwasm/rust-optimizer:0.9.1 ./contracts/staking
 ```

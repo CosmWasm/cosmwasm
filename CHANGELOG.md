@@ -2,6 +2,10 @@
 
 ## 0.11.0 (unreleased)
 
+**all**
+
+- Drop support for Rust versions lower than 1.45.2.
+
 **cosmwasm-std**
 
 - Add `time_nanos` to `BlockInfo` allowing access to high precision block times.
