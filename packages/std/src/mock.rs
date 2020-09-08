@@ -533,14 +533,14 @@ mod test {
             validator: val1.clone(),
             amount: coin(100, "ustake"),
             can_redelegate: coin(100, "ustake"),
-            accumulated_rewards: coin(5, "ustake"),
+            accumulated_rewards: coins(5, "ustake"),
         };
         let del2a = FullDelegation {
             delegator: user_a.clone(),
             validator: val2.clone(),
             amount: coin(500, "ustake"),
             can_redelegate: coin(500, "ustake"),
-            accumulated_rewards: coin(20, "ustake"),
+            accumulated_rewards: coins(20, "ustake"),
         };
 
         // note we cannot have multiple delegations on one validator, they are collapsed into one
@@ -549,7 +549,7 @@ mod test {
             validator: val1.clone(),
             amount: coin(500, "ustake"),
             can_redelegate: coin(0, "ustake"),
-            accumulated_rewards: coin(0, "ustake"),
+            accumulated_rewards: coins(0, "ustake"),
         };
 
         // and another one on val2
@@ -558,7 +558,7 @@ mod test {
             validator: val2.clone(),
             amount: coin(8888, "ustake"),
             can_redelegate: coin(4567, "ustake"),
-            accumulated_rewards: coin(900, "ustake"),
+            accumulated_rewards: coins(900, "ustake"),
         };
 
         let staking = StakingQuerier::new(

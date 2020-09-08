@@ -156,7 +156,7 @@ pub struct FullDelegation {
     /// but there are many places between the two
     pub can_redelegate: Coin,
     /// How much we can currently withdraw
-    pub accumulated_rewards: Coin,
+    pub accumulated_rewards: Vec<Coin>,
 }
 
 /// ValidatorsResponse is data format returned from StakingRequest::Validators query

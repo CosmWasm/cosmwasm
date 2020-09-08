@@ -5,6 +5,7 @@
 **cosmwasm-std**
 
 - Add `time_nanos` to `BlockInfo` allowing access to high precision block times.
+- Change `FullDelegation::accumulated_rewards` from `Coin` to `Vec<Coin>`.
 
 ## 0.10.1 (2020-08-25)
 
