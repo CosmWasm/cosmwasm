@@ -1,11 +1,18 @@
 # CHANGELOG
 
+## 0.11.0 (unreleased)
+
+**cosmwasm-std**
+
+- Add `time_nanos` to `BlockInfo` allowing access to high precision block times.
+
 ## 0.10.1 (2020-08-25)
 
 **cosmwasm-std**
 
 - Fix bug where `ExternalStorage.range()` would cause VM error if either lower
-  or upper bound was set ([#508](https://github.com/CosmWasm/cosmwasm/issues/508))
+  or upper bound was set
+  ([#508](https://github.com/CosmWasm/cosmwasm/issues/508))
 
 ## 0.10.0 (2020-07-30)
 
