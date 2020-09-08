@@ -9,7 +9,7 @@ use wasmer_runtime_core::{
     vm::Ctx,
 };
 
-use crate::errors::VmResult;
+use crate::errors::{VmError, VmResult};
 // use crate::middleware::DeterministicMiddleware;
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
@@ -26,8 +26,7 @@ const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
 const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
-    let module = compile_with(code, Backend::Auto)?;
-    Ok(module)
+    compile_with(code, Backend::Auto).map_err(|err| VmError::compile_err(err.to_string()))
 }
 
 pub fn compiler() -> Box<dyn Compiler> {

@@ -199,40 +199,27 @@ impl From<wasmer_runtime_core::error::CompileError> for VmError {
     }
 }
 
-impl From<wasmer_runtime_core::error::ResolveError> for VmError {
-    fn from(original: wasmer_runtime_core::error::ResolveError) -> Self {
-        VmError::resolve_err(format!("Wasmer resolve error: {:?}", original))
+impl From<wasmer_runtime_core::error::ExportError> for VmError {
+    fn from(original: wasmer_runtime_core::error::ExportError) -> Self {
+        VmError::resolve_err(format!("Wasmer export error: {:?}", original))
     }
 }
 
 impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
     fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
-        use wasmer_runtime_core::error::{InvokeError, RuntimeError};
-
-        fn runtime_error(err: RuntimeError) -> VmError {
-            VmError::runtime_err(format!("Wasmer runtime error: {:?}", err))
-        }
-
-        match original {
-            // TODO: fix the issue described below:
-            // `InvokeError::FailedWithNoError` happens when running out of gas in singlepass v0.17
-            // but it's supposed to indicate bugs in Wasmer...
-            // https://github.com/wasmerio/wasmer/issues/1452
-            // https://github.com/CosmWasm/cosmwasm/issues/375
-            RuntimeError::InvokeError(InvokeError::FailedWithNoError) => VmError::GasDepletion,
-            // This variant contains the error we return from imports.
-            RuntimeError::User(err) => match err.downcast::<VmError>() {
-                Ok(err) => *err,
-                Err(err) => runtime_error(RuntimeError::User(err)),
-            },
-            _ => runtime_error(original),
-        }
+        VmError::runtime_err(format!("Wasmer runtime error: {:?}", original))
     }
 }
 
 impl From<InsufficientGasLeft> for VmError {
     fn from(_original: InsufficientGasLeft) -> Self {
         VmError::GasDepletion
+    }
+}
+
+impl From<std::convert::Infallible> for VmError {
+    fn from(_original: std::convert::Infallible) -> Self {
+        unreachable!();
     }
 }
 
