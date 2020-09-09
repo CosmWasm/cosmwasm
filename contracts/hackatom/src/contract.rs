@@ -360,7 +360,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{coins, Attribute, ReadonlyStorage, StdError};
+    use cosmwasm_std::{attr, coins, ReadonlyStorage, StdError};
 
     #[test]
     fn proper_initialization() {
@@ -498,10 +498,7 @@ mod tests {
         );
         assert_eq!(
             handle_res.attributes,
-            vec![
-                Attribute::new("action", "release"),
-                Attribute::new("destination", "benefits"),
-            ],
+            vec![attr("action", "release"), attr("destination", "benefits")],
         );
         assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
     }

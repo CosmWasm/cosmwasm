@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coins, from_binary, to_vec, AllBalanceResponse, Attribute, BankMsg, Empty, HandleResponse,
+    attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, Empty, HandleResponse,
     HandleResult, HumanAddr, InitResponse, InitResult, MigrateResponse, StdError,
 };
 use cosmwasm_vm::{
@@ -223,10 +223,7 @@ fn handle_release_works() {
     );
     assert_eq!(
         handle_res.attributes,
-        vec![
-            Attribute::new("action", "release"),
-            Attribute::new("destination", "benefits"),
-        ],
+        vec![attr("action", "release"), attr("destination", "benefits")],
     );
     assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
 }

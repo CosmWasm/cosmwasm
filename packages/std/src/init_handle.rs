@@ -112,13 +112,11 @@ pub struct Attribute {
     pub value: String,
 }
 
-impl Attribute {
-    /// Creates a new Attribute.
-    pub fn new<K: ToString, V: ToString>(key: K, value: V) -> Self {
-        Self {
-            key: key.to_string(),
-            value: value.to_string(),
-        }
+/// Creates a new Attribute.
+pub fn attr<K: ToString, V: ToString>(key: K, value: V) -> Attribute {
+    Attribute {
+        key: key.to_string(),
+        value: value.to_string(),
     }
 }
 
@@ -277,7 +275,7 @@ where
     }
 
     pub fn add_attribute<K: ToString, V: ToString>(&mut self, key: K, value: V) {
-        self.attributes.push(Attribute::new(key, value));
+        self.attributes.push(attr(key, value));
     }
 
     pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
@@ -297,18 +295,18 @@ mod test {
     use std::convert::TryInto;
 
     #[test]
-    fn attribute_new_works_for_different_types() {
+    fn attr_works_for_different_types() {
         let expeceted = Attribute {
             key: "foo".to_string(),
             value: "42".to_string(),
         };
 
-        assert_eq!(Attribute::new("foo", "42"), expeceted);
-        assert_eq!(Attribute::new("foo".to_string(), "42"), expeceted);
-        assert_eq!(Attribute::new("foo", "42".to_string()), expeceted);
-        assert_eq!(Attribute::new("foo", HumanAddr::from("42")), expeceted);
-        assert_eq!(Attribute::new("foo", Uint128(42)), expeceted);
-        assert_eq!(Attribute::new("foo", 42), expeceted);
+        assert_eq!(attr("foo", "42"), expeceted);
+        assert_eq!(attr("foo".to_string(), "42"), expeceted);
+        assert_eq!(attr("foo", "42".to_string()), expeceted);
+        assert_eq!(attr("foo", HumanAddr::from("42")), expeceted);
+        assert_eq!(attr("foo", Uint128(42)), expeceted);
+        assert_eq!(attr("foo", 42), expeceted);
     }
 
     #[test]
@@ -390,10 +388,7 @@ mod test {
             to_address: HumanAddr::from("foo"),
             amount: coins(128, "uint"),
         })];
-        let expected_attributes = vec![
-            Attribute::new("sender", "john"),
-            Attribute::new("action", "test"),
-        ];
+        let expected_attributes = vec![attr("sender", "john"), attr("action", "test")];
         let expected_data = Some(Binary::from(b"banana"));
 
         // try InitResponse before setting data

@@ -14,7 +14,7 @@
   to `InitResponse::attributes`, `MigrateResponse::attributes` and
   `HandleResponse::attributes`.
 - Rename `LogAttribute` to `Attribute`.
-- Remove `log` in favour of `Attribute::new`.
+- Rename `log` to `attr`.
 - Rename `Context::add_log` to `Context::add_attribute`.
 
 ## 0.10.1 (2020-08-25)

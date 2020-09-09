@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    Api, Attribute, BankMsg, Binary, Env, Extern, HandleResponse, InitResponse, MigrateResponse,
-    Order, Querier, StdError, StdResult, Storage,
+    attr, Api, BankMsg, Binary, Env, Extern, HandleResponse, InitResponse, MigrateResponse, Order,
+    Querier, StdError, StdResult, Storage,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
@@ -53,10 +53,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
 
     Ok(MigrateResponse {
         messages: vec![send.into()],
-        attributes: vec![
-            Attribute::new("action", "burn"),
-            Attribute::new("payout", msg.payout),
-        ],
+        attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
         data: Some(data_msg.into()),
     })
 }

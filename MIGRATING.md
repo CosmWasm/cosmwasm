@@ -8,7 +8,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
 - Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`
   to `InitResponse::attributes`, `MigrateResponse::attributes` and
-  `HandleResponse::attributes`. Replace calls to `log` with `Arrtibute::new`:
+  `HandleResponse::attributes`. Replace calls to `log` with `attr`:
 
   ```rust
   // before
@@ -19,10 +19,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
   // after
   Ok(HandleResponse {
-    attributes: vec![
-        Attribute::new("action", "change_owner"),
-        Attribute::new("owner", owner),
-    ],
+    attributes: vec![attr("action", "change_owner"), attr("owner", owner)],
     ..HandleResponse::default()
   })
   ```
