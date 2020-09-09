@@ -71,7 +71,7 @@ pub trait Storage: ReadonlyStorage {
     fn remove(&mut self, key: &[u8]);
 }
 
-/// Api are callbacks to system functions implemeted outside of the wasm modules.
+/// Api are callbacks to system functions implemented outside of the wasm modules.
 /// Currently it just supports address conversion but we could add eg. crypto functions here.
 ///
 /// This is a trait to allow mocks in the test code. Its members have a read-only
