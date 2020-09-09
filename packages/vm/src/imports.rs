@@ -141,6 +141,8 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     }
 }
 
+/// Prints a debug message to console.
+/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn print_debug_message(ctx: &mut Ctx, message_ptr: u32) -> VmResult<()> {
     let message_data = read_region(ctx, message_ptr, MAX_LENGTH_DEBUG)?;
     let msg = String::from_utf8_lossy(&message_data);

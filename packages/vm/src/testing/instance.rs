@@ -80,6 +80,7 @@ pub struct MockInstanceOptions<'a> {
     // instance
     pub supported_features: HashSet<String>,
     pub gas_limit: u64,
+    pub print_debug: bool,
 }
 
 impl Default for MockInstanceOptions<'_> {
@@ -94,6 +95,7 @@ impl Default for MockInstanceOptions<'_> {
             // instance
             supported_features: features_from_csv("staking"),
             gas_limit: 500_000,
+            print_debug: true,
         }
     }
 }
@@ -126,7 +128,7 @@ pub fn mock_instance_with_options(
         querier: MockQuerier::new(&balances),
         api,
     };
-    Instance::from_code(wasm, deps, options.gas_limit).unwrap()
+    Instance::from_code(wasm, deps, options.gas_limit, options.print_debug).unwrap()
 }
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.

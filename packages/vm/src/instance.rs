@@ -63,18 +63,22 @@ where
 {
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
-    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
+    pub fn from_code(
+        code: &[u8],
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+        print_debug: bool,
+    ) -> VmResult<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, deps, gas_limit)
+        Instance::from_module(&module, deps, gas_limit, print_debug)
     }
 
     pub(crate) fn from_module(
         module: &Module,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
+        print_debug: bool,
     ) -> VmResult<Self> {
-        let print_debug = true;
-
         let mut import_obj =
             imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
 
@@ -307,7 +311,7 @@ mod test {
     #[test]
     fn required_features_works() {
         let deps = mock_dependencies(20, &[]);
-        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
+        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
@@ -328,7 +332,7 @@ mod test {
         .unwrap();
 
         let deps = mock_dependencies(20, &[]);
-        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT).unwrap();
+        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));
