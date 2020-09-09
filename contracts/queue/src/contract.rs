@@ -57,9 +57,9 @@ pub struct ReducerResponse {
 pub struct ListResponse {
     /// List an empty range, both bounded
     pub empty: Vec<u32>,
-    /// List all ids before 0x20
+    /// List all IDs lower than 0x20
     pub early: Vec<u32>,
-    /// List all ids after 0x20
+    /// List all IDs starting from 0x20
     pub late: Vec<u32>,
 }
 
@@ -179,8 +179,8 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
     Ok(ReducerResponse { counters: out })
 }
 
-// this does a range query with both bounds set. Not really useful but to debug an issue
-// between vm and wasm: https://github.com/CosmWasm/cosmwasm/issues/508
+/// Does a range query with both bounds set. Not really useful but to debug an issue
+/// between VM and Wasm: https://github.com/CosmWasm/cosmwasm/issues/508
 fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<ListResponse> {
     let empty: Vec<u32> = deps
         .storage
@@ -189,12 +189,12 @@ fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResu
         .collect();
     let early: Vec<u32> = deps
         .storage
-        .range(None, Some(b"\x20a"), Order::Ascending)
+        .range(None, Some(b"\x20"), Order::Ascending)
         .map(|(k, _)| k[0] as u32)
         .collect();
     let late: Vec<u32> = deps
         .storage
-        .range(Some(b"\x20a"), None, Order::Ascending)
+        .range(Some(b"\x20"), None, Order::Ascending)
         .map(|(k, _)| k[0] as u32)
         .collect();
     Ok(ListResponse { empty, early, late })
@@ -282,21 +282,16 @@ mod tests {
         for _ in 0..0x25 {
             handle(&mut deps, env.clone(), HandleMsg::Enqueue { value: 40 }).unwrap();
         }
-        for _ in 0..0x16 {
+        for _ in 0..0x19 {
             handle(&mut deps, env.clone(), HandleMsg::Dequeue {}).unwrap();
         }
-        // we add 0x25 times and then pop 0x16, leaving [0x16, 0x17...0x24]
+        // we add 0x25 items and then remove the first 0x19, leaving [0x19, 0x1a, 0x1b, ..., 0x24]
         // since we count up to 0x20 in early, we get early and late both with data
 
         let query_msg = QueryMsg::List {};
         let ids: ListResponse = from_binary(&query(&mut deps, query_msg).unwrap()).unwrap();
-        assert_eq!(0, ids.empty.len());
-        assert_eq!(11, ids.early.len());
-        assert_eq!(4, ids.late.len());
-        assert_eq!(
-            vec![0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20],
-            ids.early
-        );
-        assert_eq!(vec![0x21, 0x22, 0x23, 0x24], ids.late);
+        assert_eq!(ids.empty, Vec::<u32>::new());
+        assert_eq!(ids.early, vec![0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f]);
+        assert_eq!(ids.late, vec![0x20, 0x21, 0x22, 0x23, 0x24]);
     }
 }
