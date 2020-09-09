@@ -73,13 +73,9 @@ impl ReadonlyStorage for ExternalStorage {
         // See: https://github.com/CosmWasm/cosmwasm/pull/509
         let start_region = start.map(build_region);
         let end_region = end.map(build_region);
-        let iterator_id = unsafe {
-            db_scan(
-                start_region.as_ref().map(get_region_address).unwrap_or(0),
-                end_region.as_ref().map(get_region_address).unwrap_or(0),
-                order as i32,
-            )
-        };
+        let start_region = start_region.as_ref().map(get_region_address).unwrap_or(0);
+        let end_region = end_region.as_ref().map(get_region_address).unwrap_or(0);
+        let iterator_id = unsafe { db_scan(start_region, end_region, order as i32) };
         let iter = ExternalIterator { iterator_id };
         Box::new(iter)
     }
