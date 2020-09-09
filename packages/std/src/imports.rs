@@ -5,7 +5,7 @@ use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::memory::{alloc, build_region, consume_region, get_region_address, Region};
+use crate::memory::{alloc, build_region, consume_region, get_optional_region_address, Region};
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 
@@ -73,9 +73,9 @@ impl ReadonlyStorage for ExternalStorage {
         // See: https://github.com/CosmWasm/cosmwasm/pull/509
         let start_region = start.map(build_region);
         let end_region = end.map(build_region);
-        let start_region = start_region.as_ref().map(get_region_address).unwrap_or(0);
-        let end_region = end_region.as_ref().map(get_region_address).unwrap_or(0);
-        let iterator_id = unsafe { db_scan(start_region, end_region, order as i32) };
+        let start_region_addr = get_optional_region_address(&start_region.as_ref());
+        let end_region_addr = get_optional_region_address(&end_region.as_ref());
+        let iterator_id = unsafe { db_scan(start_region_addr, end_region_addr, order as i32) };
         let iter = ExternalIterator { iterator_id };
         Box::new(iter)
     }
