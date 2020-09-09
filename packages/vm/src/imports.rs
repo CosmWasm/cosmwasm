@@ -26,6 +26,8 @@ use crate::traits::{Api, Querier, Storage};
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
+/// A mibi (mega binary)
+const MI: usize = 1024 * 1024;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory)
 const MAX_LENGTH_DB_KEY: usize = 64 * KI;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory)
@@ -35,6 +37,8 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
+/// Max length for a debug message
+const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(ctx: &mut Ctx, key_ptr: u32) -> VmResult<u32> {
@@ -135,6 +139,13 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
         Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(ctx, msg.as_bytes())?),
         Err(err) => Err(VmError::from(err)),
     }
+}
+
+pub fn print_debug_message(ctx: &mut Ctx, message_ptr: u32) -> VmResult<()> {
+    let message_data = read_region(ctx, message_ptr, MAX_LENGTH_DEBUG)?;
+    let msg = String::from_utf8_lossy(&message_data);
+    println!("{}", msg);
+    Ok(())
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -256,6 +267,7 @@ mod test {
                 "query_chain" => Func::new(|_a: u32| -> u32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
                 "humanize_address" => Func::new(|_a: i32, _b: i32| -> u32 { 0 }),
+                "debug" => Func::new(|_a: u32| {}),
             },
         };
         let mut instance = Box::from(module.instantiate(&import_obj).unwrap());

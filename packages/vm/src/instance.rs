@@ -21,6 +21,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
+    print_debug_message,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
@@ -72,6 +73,8 @@ where
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> VmResult<Self> {
+        let print_debug = true;
+
         let mut import_obj =
             imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
 
@@ -111,6 +114,16 @@ where
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
                     do_humanize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
+                }),
+                // Allows the contract to emit debug logs that the host can either process or ignore.
+                // This is never written to chain.
+                // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+                // Ownership of both input and output pointer is not transferred to the host.
+                "debug" => Func::new(move |ctx: &mut Ctx, message_ptr: u32|-> VmResult<()> {
+                    if print_debug {
+                        print_debug_message(ctx, message_ptr)?;
+                    }
+                    Ok(())
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
