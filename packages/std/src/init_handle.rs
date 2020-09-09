@@ -105,15 +105,16 @@ impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg
     }
 }
 
+/// An key value pair that is used in the context of event attributes in logs
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct LogAttribute {
+pub struct Attribute {
     pub key: String,
     pub value: String,
 }
 
-/// A shorthand to produce a log attribute
-pub fn log<K: ToString, V: ToString>(key: K, value: V) -> LogAttribute {
-    LogAttribute {
+/// Creates a new Attribute.
+pub fn attr<K: ToString, V: ToString>(key: K, value: V) -> Attribute {
+    Attribute {
         key: key.to_string(),
         value: value.to_string(),
     }
@@ -125,7 +126,8 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     pub messages: Vec<CosmosMsg<T>>,
-    pub log: Vec<LogAttribute>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
 }
 
 pub type InitResult<U = Empty> = StdResult<InitResponse<U>>;
@@ -137,7 +139,7 @@ where
     fn default() -> Self {
         InitResponse {
             messages: vec![],
-            log: vec![],
+            attributes: vec![],
         }
     }
 }
@@ -156,7 +158,7 @@ where
         } else {
             Ok(InitResponse {
                 messages: ctx.messages,
-                log: ctx.log,
+                attributes: ctx.attributes,
             })
         }
     }
@@ -168,7 +170,8 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     pub messages: Vec<CosmosMsg<T>>,
-    pub log: Vec<LogAttribute>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
     pub data: Option<Binary>,
 }
 
@@ -181,7 +184,7 @@ where
     fn default() -> Self {
         HandleResponse {
             messages: vec![],
-            log: vec![],
+            attributes: vec![],
             data: None,
         }
     }
@@ -194,7 +197,7 @@ where
     fn from(ctx: Context<T>) -> Self {
         HandleResponse {
             messages: ctx.messages,
-            log: ctx.log,
+            attributes: ctx.attributes,
             data: ctx.data,
         }
     }
@@ -206,7 +209,8 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     pub messages: Vec<CosmosMsg<T>>,
-    pub log: Vec<LogAttribute>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
     pub data: Option<Binary>,
 }
 
@@ -219,7 +223,7 @@ where
     fn default() -> Self {
         MigrateResponse {
             messages: vec![],
-            log: vec![],
+            attributes: vec![],
             data: None,
         }
     }
@@ -232,7 +236,7 @@ where
     fn from(ctx: Context<T>) -> Self {
         MigrateResponse {
             messages: ctx.messages,
-            log: ctx.log,
+            attributes: ctx.attributes,
             data: ctx.data,
         }
     }
@@ -244,7 +248,8 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     messages: Vec<CosmosMsg<T>>,
-    log: Vec<LogAttribute>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    attributes: Vec<Attribute>,
     data: Option<Binary>,
 }
 
@@ -255,7 +260,7 @@ where
     fn default() -> Self {
         Context {
             messages: vec![],
-            log: vec![],
+            attributes: vec![],
             data: None,
         }
     }
@@ -269,8 +274,8 @@ where
         Context::default()
     }
 
-    pub fn add_log<K: ToString, V: ToString>(&mut self, key: K, value: V) {
-        self.log.push(log(key, value));
+    pub fn add_attribute<K: ToString, V: ToString>(&mut self, key: K, value: V) {
+        self.attributes.push(attr(key, value));
     }
 
     pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
@@ -290,18 +295,18 @@ mod test {
     use std::convert::TryInto;
 
     #[test]
-    fn log_works_for_different_types() {
-        let expeceted = LogAttribute {
+    fn attr_works_for_different_types() {
+        let expeceted = Attribute {
             key: "foo".to_string(),
             value: "42".to_string(),
         };
 
-        assert_eq!(log("foo", "42"), expeceted);
-        assert_eq!(log("foo".to_string(), "42"), expeceted);
-        assert_eq!(log("foo", "42".to_string()), expeceted);
-        assert_eq!(log("foo", HumanAddr::from("42")), expeceted);
-        assert_eq!(log("foo", Uint128(42)), expeceted);
-        assert_eq!(log("foo", 42), expeceted);
+        assert_eq!(attr("foo", "42"), expeceted);
+        assert_eq!(attr("foo".to_string(), "42"), expeceted);
+        assert_eq!(attr("foo", "42".to_string()), expeceted);
+        assert_eq!(attr("foo", HumanAddr::from("42")), expeceted);
+        assert_eq!(attr("foo", Uint128(42)), expeceted);
+        assert_eq!(attr("foo", 42), expeceted);
     }
 
     #[test]
@@ -322,7 +327,7 @@ mod test {
                 amount: coins(1015, "earth"),
             }
             .into()],
-            log: vec![LogAttribute {
+            attributes: vec![Attribute {
                 key: "action".to_string(),
                 value: "release".to_string(),
             }],
@@ -369,8 +374,8 @@ mod test {
         let mut ctx = Context::new();
 
         // build it up with the builder commands
-        ctx.add_log("sender", &HumanAddr::from("john"));
-        ctx.add_log("action", "test");
+        ctx.add_attribute("sender", &HumanAddr::from("john"));
+        ctx.add_attribute("action", "test");
         ctx.add_message(BankMsg::Send {
             from_address: HumanAddr::from("goo"),
             to_address: HumanAddr::from("foo"),
@@ -378,18 +383,18 @@ mod test {
         });
 
         // and this is what is should return
-        let expected_log = vec![log("sender", "john"), log("action", "test")];
         let expected_msgs = vec![CosmosMsg::Bank(BankMsg::Send {
             from_address: HumanAddr::from("goo"),
             to_address: HumanAddr::from("foo"),
             amount: coins(128, "uint"),
         })];
+        let expected_attributes = vec![attr("sender", "john"), attr("action", "test")];
         let expected_data = Some(Binary::from(b"banana"));
 
         // try InitResponse before setting data
         let init: InitResponse = ctx.clone().try_into().unwrap();
         assert_eq!(&init.messages, &expected_msgs);
-        assert_eq!(&init.log, &expected_log);
+        assert_eq!(&init.attributes, &expected_attributes);
 
         ctx.set_data(b"banana");
         // should fail with data set
@@ -404,13 +409,13 @@ mod test {
         // try Handle with everything set
         let handle: HandleResponse = ctx.clone().try_into().unwrap();
         assert_eq!(&handle.messages, &expected_msgs);
-        assert_eq!(&handle.log, &expected_log);
+        assert_eq!(&handle.attributes, &expected_attributes);
         assert_eq!(&handle.data, &expected_data);
 
         // try Migrate with everything set
         let migrate: MigrateResponse = ctx.clone().try_into().unwrap();
         assert_eq!(&migrate.messages, &expected_msgs);
-        assert_eq!(&migrate.log, &expected_log);
+        assert_eq!(&migrate.attributes, &expected_attributes);
         assert_eq!(&migrate.data, &expected_data);
     }
 }

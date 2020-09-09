@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coins, from_binary, log, to_vec, AllBalanceResponse, BankMsg, Empty, HandleResponse,
+    attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, Empty, HandleResponse,
     HandleResult, HumanAddr, InitResponse, InitResult, MigrateResponse, StdError,
 };
 use cosmwasm_vm::{
@@ -68,9 +68,9 @@ fn proper_initialization() {
     let env = mock_env("creator", &coins(1000, "earth"));
     let res: InitResponse = init(&mut deps, env, msg).unwrap();
     assert_eq!(res.messages.len(), 0);
-    assert_eq!(res.log.len(), 1);
-    assert_eq!(res.log[0].key, "Let the");
-    assert_eq!(res.log[0].value, "hacking begin");
+    assert_eq!(res.attributes.len(), 1);
+    assert_eq!(res.attributes[0].key, "Let the");
+    assert_eq!(res.attributes[0].value, "hacking begin");
 
     // it worked, let's check the state
     let state: State = deps
@@ -222,8 +222,8 @@ fn handle_release_works() {
         .into(),
     );
     assert_eq!(
-        handle_res.log,
-        vec![log("action", "release"), log("destination", "benefits"),],
+        handle_res.attributes,
+        vec![attr("action", "release"), attr("destination", "benefits")],
     );
     assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
 }

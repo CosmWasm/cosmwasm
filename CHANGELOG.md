@@ -10,6 +10,12 @@
 
 - Add `time_nanos` to `BlockInfo` allowing access to high precision block times.
 - Change `FullDelegation::accumulated_rewards` from `Coin` to `Vec<Coin>`.
+- Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`
+  to `InitResponse::attributes`, `MigrateResponse::attributes` and
+  `HandleResponse::attributes`.
+- Rename `LogAttribute` to `Attribute`.
+- Rename `log` to `attr`.
+- Rename `Context::add_log` to `Context::add_attribute`.
 
 ## 0.10.1 (2020-08-25)
 
