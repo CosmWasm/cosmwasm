@@ -179,6 +179,10 @@ impl Api for ExternalApi {
         let address = unsafe { consume_string_region_written_by_vm(human) };
         Ok(address.into())
     }
+
+    fn debug(&self, message: &str) {
+        // no-op
+    }
 }
 
 /// Takes a pointer to a Region and reads the data into a String.

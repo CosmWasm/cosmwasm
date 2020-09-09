@@ -16,6 +16,7 @@
 - Rename `LogAttribute` to `Attribute`.
 - Rename `log` to `attr`.
 - Rename `Context::add_log` to `Context::add_attribute`.
+- Add `Api::debug` for emitting debug messages during development.
 
 ## 0.10.1 (2020-08-25)
 
