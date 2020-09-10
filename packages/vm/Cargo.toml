@@ -14,11 +14,11 @@ maintenance = { status = "actively-developed" }
 [features]
 default = ["default-singlepass", "staking"]
 # multiple backends may be activated here (available through eg. backends::cranelift::*)
-cranelift = ["wasmer-clif-backend"]
-singlepass = ["wasmer-singlepass-backend"]
+cranelift = ["wasmer-compiler-cranelift"]
+singlepass = ["wasmer-compiler-singlepass"]
 # default selects which *one* is re-exported in backends/mod.rs (available through eg backends::*)
-default-cranelift = ["wasmer-clif-backend"]
-default-singlepass = ["wasmer-singlepass-backend"]
+default-cranelift = ["wasmer-compiler-cranelift"]
+default-singlepass = ["wasmer-compiler-singlepass"]
 # enable this for better error reporting
 backtraces = ["snafu/backtraces"]
 # iterator allows us to iterate over all DB items in a given range
@@ -33,10 +33,9 @@ staking = ["cosmwasm-std/staking"]
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.10.1" }
 serde_json = "1.0"
-wasmer-runtime-core = "=0.17.0"
-wasmer-middleware-common = "=0.17.0"
-wasmer-clif-backend = { version = "=0.17.0", optional = true }
-wasmer-singlepass-backend = { version = "=0.17.0", optional = true }
+wasmer = { path = "../../../wasmer-reborn/lib/api" }
+wasmer-compiler-cranelift = { path = "../../../wasmer-reborn/lib/compiler-cranelift", optional = true }
+wasmer-compiler-singlepass = { path = "../../../wasmer-reborn/lib/compiler-singlepass", optional = true }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 snafu = { version = "0.6.3" }
