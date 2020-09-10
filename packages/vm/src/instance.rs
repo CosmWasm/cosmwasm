@@ -21,6 +21,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
+    print_debug_message,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
@@ -62,15 +63,21 @@ where
 {
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
-    pub fn from_code(code: &[u8], deps: Extern<S, A, Q>, gas_limit: u64) -> VmResult<Self> {
+    pub fn from_code(
+        code: &[u8],
+        deps: Extern<S, A, Q>,
+        gas_limit: u64,
+        print_debug: bool,
+    ) -> VmResult<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, deps, gas_limit)
+        Instance::from_module(&module, deps, gas_limit, print_debug)
     }
 
     pub(crate) fn from_module(
         module: &Module,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
+        print_debug: bool,
     ) -> VmResult<Self> {
         let mut import_obj =
             imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
@@ -111,6 +118,16 @@ where
                 // Ownership of both input and output pointer is not transferred to the host.
                 "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
                     do_humanize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
+                }),
+                // Allows the contract to emit debug logs that the host can either process or ignore.
+                // This is never written to chain.
+                // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+                // Ownership of both input and output pointer is not transferred to the host.
+                "debug" => Func::new(move |ctx: &mut Ctx, message_ptr: u32|-> VmResult<()> {
+                    if print_debug {
+                        print_debug_message(ctx, message_ptr)?;
+                    }
+                    Ok(())
                 }),
                 "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
                     do_query_chain::<S, Q>(ctx, request_ptr)
@@ -294,7 +311,7 @@ mod test {
     #[test]
     fn required_features_works() {
         let deps = mock_dependencies(20, &[]);
-        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT).unwrap();
+        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
@@ -315,7 +332,7 @@ mod test {
         .unwrap();
 
         let deps = mock_dependencies(20, &[]);
-        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT).unwrap();
+        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));
@@ -545,7 +562,7 @@ mod test {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 134);
-        assert_eq!(report2.used_internally, 66310);
+        assert_eq!(report2.used_internally, 66495);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -758,7 +775,7 @@ mod singlepass_test {
 
         let init_used = orig_gas - instance.get_gas_left();
         println!("init used: {}", init_used);
-        assert_eq!(init_used, 66444);
+        assert_eq!(init_used, 66629);
     }
 
     #[test]

@@ -16,6 +16,12 @@
 - Rename `LogAttribute` to `Attribute`.
 - Rename `log` to `attr`.
 - Rename `Context::add_log` to `Context::add_attribute`.
+- Add `Api::debug` for emitting debug messages during development.
+
+**cosmwasm-vm**
+
+- `CosmCache::new`, `Instance::from_code` and `Instance::from_module` now take
+  an additional argument to enable/disable printing debug logs from contracts.
 
 ## 0.10.1 (2020-08-25)
 

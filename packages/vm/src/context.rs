@@ -409,6 +409,7 @@ mod test {
                 "query_chain" => Func::new(|_a: u32| -> u32 { 0 }),
                 "canonicalize_address" => Func::new(|_a: u32, _b: u32| -> u32 { 0 }),
                 "humanize_address" => Func::new(|_a: u32, _b: u32| -> u32 { 0 }),
+                "debug" => Func::new(|_a: u32| {}),
             },
         };
         let mut instance = Box::from(module.instantiate(&import_obj).unwrap());

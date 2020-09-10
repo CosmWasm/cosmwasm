@@ -28,8 +28,9 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(source: u32, destination: u32) -> u32;
-    fn humanize_address(source: u32, destination: u32) -> u32;
+    fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn debug(source_ptr: u32);
 
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
@@ -178,6 +179,13 @@ impl Api for ExternalApi {
 
         let address = unsafe { consume_string_region_written_by_vm(human) };
         Ok(address.into())
+    }
+
+    fn debug(&self, message: &str) {
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let region = build_region(message.as_bytes());
+        let region_ptr = region.as_ref() as *const Region as u32;
+        unsafe { debug(region_ptr) };
     }
 }
 

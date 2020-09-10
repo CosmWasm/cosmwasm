@@ -46,7 +46,7 @@ fn initialization_with_missing_validator() {
     let mut ext = mock_dependencies(20, &[]);
     ext.querier
         .update_staking("ustake", &[sample_validator("john")], &[]);
-    let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
+    let mut deps = Instance::from_code(WASM, ext, 500_000, false).unwrap();
 
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
@@ -82,7 +82,7 @@ fn proper_initialization() {
         ],
         &[],
     );
-    let mut deps = Instance::from_code(WASM, ext, 500_000).unwrap();
+    let mut deps = Instance::from_code(WASM, ext, 500_000, false).unwrap();
     assert_eq!(deps.required_features.len(), 1);
     assert!(deps.required_features.contains("staking"));
 

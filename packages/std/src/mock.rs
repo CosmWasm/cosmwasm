@@ -108,6 +108,10 @@ impl Api for MockApi {
         let human = String::from_utf8(trimmed).map_err(StdError::invalid_utf8)?;
         Ok(HumanAddr(human))
     }
+
+    fn debug(&self, message: &str) {
+        println!("{}", message);
+    }
 }
 
 /// Just set sender and sent funds for the message. The rest uses defaults.

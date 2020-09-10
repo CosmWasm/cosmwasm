@@ -183,7 +183,7 @@ fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
     let custom = mock_dependencies_with_custom_querier(20, &[]);
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
-    let mut deps = Instance::from_code(WASM, custom, 500_000).unwrap();
+    let mut deps = Instance::from_code(WASM, custom, 500_000, false).unwrap();
 
     // we don't even initialize, just trigger a query
     let res = query(

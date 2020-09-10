@@ -94,6 +94,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     env: Env,
     msg: InitMsg,
 ) -> StdResult<InitResponse> {
+    deps.api.debug("here we go 🚀");
+
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
