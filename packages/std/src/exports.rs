@@ -65,7 +65,7 @@ pub fn do_init<M, C, E>(
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
-    E: Into<String>,
+    E: ToString,
 {
     let res = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
@@ -89,7 +89,7 @@ pub fn do_handle<M, C, E>(
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
-    E: Into<String>,
+    E: ToString,
 {
     let res = _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
@@ -125,7 +125,7 @@ pub fn do_migrate<M, C, E>(
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
-    E: Into<String>,
+    E: ToString,
 {
     let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
@@ -144,14 +144,14 @@ fn _do_init<M, C, E>(
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
-    E: Into<String>,
+    E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-    let env: Env = from_slice(&env)?;
-    let msg: M = from_slice(&msg)?;
+    let env: Env = from_slice(&env).map_err(|e| e.to_string())?;
+    let msg: M = from_slice(&msg).map_err(|e| e.to_string())?;
     let mut deps = make_dependencies();
-    init_fn(&mut deps, env, msg).map_err(|e| e.into())
+    init_fn(&mut deps, env, msg).map_err(|e| e.to_string())
 }
 
 fn _do_handle<M, C, E>(
@@ -166,15 +166,15 @@ fn _do_handle<M, C, E>(
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
-    E: Into<String>,
+    E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = from_slice(&env)?;
-    let msg: M = from_slice(&msg)?;
+    let env: Env = from_slice(&env).map_err(|e| e.to_string())?;
+    let msg: M = from_slice(&msg).map_err(|e| e.to_string())?;
     let mut deps = make_dependencies();
-    handle_fn(&mut deps, env, msg).map_err(|e| e.into())
+    handle_fn(&mut deps, env, msg).map_err(|e| e.to_string())
 }
 
 fn _do_query<M: DeserializeOwned + JsonSchema>(
@@ -200,14 +200,14 @@ fn _do_migrate<M, C, E>(
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
-    E: Into<String>,
+    E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-    let env: Env = from_slice(&env)?;
-    let msg: M = from_slice(&msg)?;
+    let env: Env = from_slice(&env).map_err(|e| e.to_string())?;
+    let msg: M = from_slice(&msg).map_err(|e| e.to_string())?;
     let mut deps = make_dependencies();
-    migrate_fn(&mut deps, env, msg).map_err(|e| e.into())
+    migrate_fn(&mut deps, env, msg).map_err(|e| e.to_string())
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM

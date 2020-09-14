@@ -216,12 +216,6 @@ impl PartialEq for StdError {
     }
 }
 
-impl From<StdError> for String {
-    fn from(original: StdError) -> String {
-        original.to_string()
-    }
-}
-
 /// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
@@ -493,19 +487,5 @@ mod test {
             }
             .build(),
         );
-    }
-
-    #[test]
-    fn std_error_into_string_works() {
-        let error = StdError::parse_err("Book", "Missing field: title");
-        let msg: String = error.into();
-        assert_eq!(msg, "Error parsing into type Book: Missing field: title");
-    }
-
-    #[test]
-    fn string_from_std_error_works() {
-        let error = StdError::parse_err("Book", "Missing field: title");
-        let msg = String::from(error);
-        assert_eq!(msg, "Error parsing into type Book: Missing field: title");
     }
 }
