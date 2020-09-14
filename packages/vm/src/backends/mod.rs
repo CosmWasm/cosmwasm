@@ -1,20 +1,8 @@
 pub mod cranelift;
 pub mod singlepass;
 
-pub use wasmer_runtime_core::backend::Compiler;
-use wasmer_runtime_core::vm::Ctx;
-
-pub fn compiler_for_backend(backend: &str) -> Option<Box<dyn Compiler>> {
-    match backend {
-        #[cfg(any(feature = "cranelift", feature = "default-cranelift"))]
-        "cranelift" => Some(cranelift::compiler()),
-
-        #[cfg(any(feature = "singlepass", feature = "default-singlepass"))]
-        "singlepass" => Some(singlepass::compiler()),
-
-        _ => None,
-    }
-}
+use crate::context::Env;
+use crate::traits::{Querier, Storage};
 
 #[derive(Debug)]
 pub struct InsufficientGasLeft;
@@ -22,13 +10,16 @@ pub struct InsufficientGasLeft;
 /// Decreases gas left by the given amount.
 /// If the amount exceeds the available gas, the remaining gas is set to 0 and
 /// an InsufficientGasLeft error is returned.
-pub fn decrease_gas_left(ctx: &mut Ctx, amount: u64) -> Result<(), InsufficientGasLeft> {
-    let remaining = get_gas_left(ctx);
+pub fn decrease_gas_left<S: Storage, Q: Querier>(
+    env: &mut Env<S, Q>,
+    amount: u64,
+) -> Result<(), InsufficientGasLeft> {
+    let remaining = get_gas_left(env);
     if amount > remaining {
-        set_gas_left(ctx, 0);
+        set_gas_left(env, 0);
         Err(InsufficientGasLeft)
     } else {
-        set_gas_left(ctx, remaining - amount);
+        set_gas_left(env, remaining - amount);
         Ok(())
     }
 }
@@ -44,12 +35,12 @@ pub use singlepass::{backend, compile, get_gas_left, set_gas_left};
 mod test {
     use super::*;
     use wabt::wat2wasm;
-    use wasmer_runtime_core::{imports, Instance as WasmerInstance};
+    use wasmer::{imports, Instance as WasmerInstance};
 
     fn instantiate(code: &[u8]) -> WasmerInstance {
         let module = compile(code).unwrap();
         let import_obj = imports! { "env" => {}, };
-        module.instantiate(&import_obj).unwrap()
+        WasmerInstance::new(&module, &import_obj).unwrap()
     }
 
     #[test]

@@ -1,16 +1,17 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
+use std::sync::{Arc, RwLock};
 
-pub use wasmer_runtime_core::typed_func::Func;
-use wasmer_runtime_core::{
-    imports, module::Module, typed_func::WasmTypeList, vm::Ctx, Instance as WasmerInstance,
+use wasmer::{
+    imports, Function, FunctionType, Instance as WasmerInstance, Module, Store, Type, Val,
 };
+use wasmer_engine_jit::JIT;
 
 use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
-    get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
-    set_wasmer_instance, with_querier_from_context, with_storage_from_context,
+    move_into_context, move_out_of_context, set_storage_readonly, set_wasmer_instance,
+    with_querier_from_context, with_storage_from_context, ContextData, Env,
 };
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -21,10 +22,25 @@ use crate::imports::{
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
-use crate::memory::{get_memory_info, read_region, write_region};
+use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
 
 const WASM_PAGE_SIZE: u64 = 64 * 1024;
+
+/// Like std::try but using Into instead of From
+macro_rules! try_into {
+    ($expr:expr) => {
+        match $expr {
+            std::result::Result::Ok(val) => val,
+            std::result::Result::Err(err) => {
+                return std::result::Result::Err(err.into());
+            }
+        }
+    };
+    ($expr:expr,) => {
+        $crate::try_into!($expr)
+    };
+}
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -44,6 +60,7 @@ pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
     inner: Box<WasmerInstance>,
+    env: Env<S, Q>,
     pub api: A,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
@@ -77,53 +94,88 @@ where
     ) -> VmResult<Self> {
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
+
+        let engine = JIT::headless().engine();
+        let store = Store::new(&engine);
+
+        let env = Env {
+            memory: wasmer::Memory::new(&store, wasmer::MemoryType::new(0, Some(5000), false))
+                .expect("could not create memory"),
+            context_data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
+        };
+        let _env2 = env.clone();
+        let _env3 = env.clone();
+
+        let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
+        let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
+        let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
+        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
+        let i32i32i32_to_i32 =
+            FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
+
         let import_obj = imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
                 // Returns 0 if key does not exist and pointer to result region otherwise.
                 // Ownership of the key pointer is not transferred to the host.
                 // Ownership of the value pointer is transferred to the contract.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<u32> {
-                    do_read::<S, Q>(ctx, key_ptr)
+                "db_read" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
+                    let key_ptr = args[0].unwrap_i32() as u32;
+                    let ptr = try_into!(do_read::<S, Q>(&mut env, key_ptr));
+                    Ok(vec![ptr.into()])
                 }),
                 // Writes the given value into the database entry at the given key.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<()> {
-                    do_write::<S, Q>(ctx, key_ptr, value_ptr)
+                "db_write" => Function::new_with_env(&store, &i32i32_to_void, env.clone(), |mut env, args| {
+                    let key_ptr = args[0].unwrap_i32() as u32;
+                    let value_ptr = args[1].unwrap_i32() as u32;
+                    try_into!(do_write::<S, Q>(&mut env, key_ptr, value_ptr));
+                    Ok(vec![])
                 }),
                 // Removes the value at the given key. Different than writing &[] as future
                 // scans will not find this key.
                 // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
                 // Ownership of both key pointer is not transferred to the host.
-                "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<()> {
-                    do_remove::<S, Q>(ctx, key_ptr)
+                "db_remove" => Function::new_with_env(&store, &i32_to_void, env.clone(), |mut env, args| {
+                    let key_ptr = args[0].unwrap_i32() as u32;
+                    try_into!(do_remove::<S, Q>(&mut env, key_ptr));
+                    Ok(vec![])
                 }),
                 // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
                 // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
-                    do_canonicalize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
+                "canonicalize_address" => Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+                    let source_ptr = args[0].unwrap_i32() as u32;
+                    let destination_ptr = args[1].unwrap_i32() as u32;
+                    let ptr = try_into!(do_canonicalize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr));
+                    Ok(vec![ptr.into()])
                 }),
                 // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
                 // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
                 // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
-                    do_humanize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
+                "humanize_address" => Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+                    let source_ptr = args[0].unwrap_i32() as u32;
+                    let destination_ptr = args[1].unwrap_i32() as u32;
+                    let ptr = try_into!(do_humanize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr));
+                    Ok(vec![ptr.into()])
                 }),
                 // Allows the contract to emit debug logs that the host can either process or ignore.
                 // This is never written to chain.
                 // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
                 // Ownership of both input and output pointer is not transferred to the host.
-                "debug" => Func::new(move |ctx: &mut Ctx, message_ptr: u32|-> VmResult<()> {
+                "debug" => Function::new_with_env(&store, &i32_to_void, env.clone(), move |mut env, args| {
+                    let message_ptr = args[0].unwrap_i32() as u32;
                     if print_debug {
-                        print_debug_message(ctx, message_ptr)?;
+                        try_into!(print_debug_message(&mut env, message_ptr));
                     }
-                    Ok(())
+                    Ok(vec![])
                 }),
-                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
-                    do_query_chain::<S, Q>(ctx, request_ptr)
+                "query_chain" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
+                    let request_ptr = args[0].unwrap_i32() as u32;
+                    let response_ptr = try_into!(do_query_chain::<S, Q>(&mut env, request_ptr));
+                    Ok(vec![response_ptr.into()])
                 }),
                 // Creates an iterator that will go from start to end.
                 // If start_ptr == 0, the start is unbounded.
@@ -131,14 +183,18 @@ where
                 // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns an iterator ID.
-                "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> VmResult<u32> {
+                "db_scan" => Function::new_with_env(&store, &i32i32i32_to_i32, env.clone(), |mut env, args| {
+                    let start_ptr = args[0].unwrap_i32() as u32;
+                    let end_ptr = args[1].unwrap_i32() as u32;
+                    let order = args[2].unwrap_i32();
                     #[cfg(feature = "iterator")]
                     {
-                        do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
+                        let response_ptr = try_into!(do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order));
+                        Ok(vec![response_ptr.into()])
                     }
                     #[cfg(not(feature = "iterator"))]
                     {
-                        Err(VmError::generic_err("Import db_scan not implemented due to missing iterator feature"))
+                        Err(wasmer_engine::RuntimeError::new("Import db_scan not implemented due to missing iterator feature"))
                     }
                 }),
                 // Get next element of iterator with ID `iterator_id`.
@@ -146,42 +202,46 @@ where
                 // Ownership of the result region is transferred to the contract.
                 // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
                 // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
-                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32| -> VmResult<u32> {
+                "db_next" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
                     #[cfg(feature = "iterator")]
                     {
-                        do_next::<S, Q>(ctx, iterator_id)
+                        let iterator_id = args[0].unwrap_i32() as u32;
+                        let response_ptr = try_into!(do_next::<S, Q>(&mut env, iterator_id));
+                        Ok(vec![response_ptr.into()])
                     }
                     #[cfg(not(feature = "iterator"))]
                     {
-                        Err(VmError::generic_err("Import db_next not implemented due to missing iterator feature"))
+                        Err(wasmer_engine::RuntimeError::new("Import db_next not implemented due to missing iterator feature"))
                     }
                 }),
             },
         };
 
-        let wasmer_instance = Box::from(module.instantiate(&import_obj).map_err(|original| {
-            VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
-        })?);
-        Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
+        let wasmer_instance = Box::from(WasmerInstance::new(&module, &import_obj).map_err(
+            |original| {
+                VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
+            },
+        )?);
+        Ok(Instance::from_wasmer(wasmer_instance, env, deps, gas_limit))
     }
 
-    pub(crate) fn from_wasmer(
-        mut wasmer_instance: Box<WasmerInstance>,
+    fn from_wasmer(
+        wasmer_instance: Box<WasmerInstance>,
+        mut env: Env<S, Q>,
         deps: Extern<S, A, Q>,
         gas_limit: u64,
     ) -> Self {
-        set_gas_left(&mut wasmer_instance.context_mut(), gas_limit);
-        get_gas_state_mut::<S, Q>(&mut wasmer_instance.context_mut()).set_gas_limit(gas_limit);
+        set_gas_left(&mut env, gas_limit);
+        env.with_gas_state_mut(|gas_state| {
+            gas_state.set_gas_limit(gas_limit);
+        });
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
-        set_wasmer_instance::<S, Q>(&mut wasmer_instance.context_mut(), Some(instance_ptr));
-        move_into_context(
-            &mut wasmer_instance.context_mut(),
-            deps.storage,
-            deps.querier,
-        );
+        set_wasmer_instance::<S, Q>(&mut env, Some(instance_ptr));
+        move_into_context(&mut env, deps.storage, deps.querier);
         Instance {
             inner: wasmer_instance,
+            env,
             api: deps.api,
             required_features,
             type_storage: PhantomData::<S> {},
@@ -192,7 +252,7 @@ where
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
     pub fn recycle(mut self) -> Option<Extern<S, A, Q>> {
-        if let (Some(storage), Some(querier)) = move_out_of_context(&mut self.inner.context_mut()) {
+        if let (Some(storage), Some(querier)) = move_out_of_context(&mut self.env) {
             Some(Extern {
                 storage,
                 api: self.api,
@@ -208,7 +268,7 @@ where
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
     pub fn get_memory_size(&self) -> u64 {
-        (get_memory_info(&self.inner.context()).size as u64) * WASM_PAGE_SIZE
+        self.env.memory.data_size()
     }
 
     /// Returns the currently remaining gas.
@@ -220,8 +280,8 @@ where
     /// This is a snapshot and multiple reports can be created during the lifetime of
     /// an instance.
     pub fn create_gas_report(&self) -> GasReport {
-        let state = get_gas_state::<S, Q>(&self.inner.context()).clone();
-        let gas_left = get_gas_left(&self.inner.context());
+        let state = self.env.with_gas_state(|gas_state| gas_state.clone());
+        let gas_left = get_gas_left(&self.env);
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,
@@ -234,22 +294,22 @@ where
     /// for multiple calls in integration tests, this should be set to the desired value
     /// right before every call.
     pub fn set_storage_readonly(&mut self, new_value: bool) {
-        set_storage_readonly::<S, Q>(&mut self.inner.context_mut(), new_value);
+        set_storage_readonly::<S, Q>(&mut self.env, new_value);
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(&mut self.inner.context_mut(), func)
+        with_storage_from_context::<S, Q, F, T>(self.env.clone(), func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(&mut self.inner.context_mut(), func)
+        with_querier_from_context::<S, Q, F, T>(self.env.clone(), func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
-        let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(to_u32(size)?)?;
+        let ret = self.call_function("allocate", &[to_u32(size)?.into()])?;
+        let ptr = ret.as_ref()[0].unwrap_i32() as u32;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
         }
@@ -260,29 +320,25 @@ where
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
-        let dealloc: Func<u32, ()> = self.func("deallocate")?;
-        dealloc.call(ptr)?;
+        self.call_function("deallocate", &[ptr.into()])?;
         Ok(())
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(&self.inner.context(), region_ptr, max_length)
+        read_region(&self.env.memory, region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(&self.inner.context(), region_ptr, data)?;
+        write_region(&self.env.memory, region_ptr, data)?;
         Ok(())
     }
 
-    pub(crate) fn func<Args, Rets>(&self, name: &str) -> VmResult<Func<Args, Rets>>
-    where
-        Args: WasmTypeList + Clone,
-        Rets: WasmTypeList + Clone,
-    {
-        let function = self.inner.exports.get(name)?;
-        Ok(function)
+    pub(crate) fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
+        let function = self.inner.exports.get_function(name)?;
+        let result = function.call(args)?;
+        Ok(result)
     }
 }
 
@@ -345,41 +401,19 @@ mod test {
     }
 
     #[test]
-    fn func_works() {
+    fn call_func_works() {
         let instance = mock_instance(&CONTRACT, &[]);
 
-        // can get func
-        let allocate: Func<u32, u32> = instance.func("allocate").expect("error getting func");
-
-        // can call a few times
-        let _ptr1 = allocate.call(0).expect("error calling allocate func");
-        let _ptr2 = allocate.call(1).expect("error calling allocate func");
-        let _ptr3 = allocate.call(33).expect("error calling allocate func");
-    }
-
-    #[test]
-    fn func_errors_for_non_existent_function() {
-        let instance = mock_instance(&CONTRACT, &[]);
-        let missing_function = "bar_foo345";
-        match instance.func::<(), ()>(missing_function).err().unwrap() {
-            VmError::ResolveErr { msg, .. } => assert_eq!(
-                msg,
-                "Wasmer resolve error: ExportNotFound { name: \"bar_foo345\" }"
-            ),
-            e => panic!("unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    fn func_errors_for_wrong_signature() {
-        let instance = mock_instance(&CONTRACT, &[]);
-        match instance.func::<(), ()>("allocate").err().unwrap() {
-            VmError::ResolveErr { msg, .. } => assert_eq!(
-                msg,
-                "Wasmer resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
-            ),
-            e => panic!("unexpected error: {:?}", e),
-        }
+        // can call function few times
+        let _ptr1 = instance
+            .call_function("allocate", &[0u32.into()])
+            .expect("error calling allocate");
+        let _ptr2 = instance
+            .call_function("allocate", &[1u32.into()])
+            .expect("error calling allocate");
+        let _ptr3 = instance
+            .call_function("allocate", &[33u32.into()])
+            .expect("error calling allocate");
     }
 
     #[test]

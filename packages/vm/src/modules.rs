@@ -8,7 +8,8 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer_runtime_core::{cache::Artifact, load_cache_with, module::Module};
+use wasmer::{Module, Store};
+use wasmer_engine_jit::JIT;
 
 use crate::backends::backend;
 use crate::checksum::Checksum;
@@ -70,8 +71,9 @@ impl FileSystemCache {
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
-        let serialized_cache = Artifact::deserialize(&mmap[..])?;
-        let module = unsafe { load_cache_with(serialized_cache) }?;
+        let engine = JIT::headless().engine();
+        let store = Store::new(&engine);
+        let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
         Ok(module)
     }
 
@@ -80,8 +82,7 @@ impl FileSystemCache {
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
 
-        let serialized_cache = module.cache()?;
-        let buffer = serialized_cache.serialize()?;
+        let buffer = module.serialize()?;
 
         let filename = checksum.to_hex();
         let mut file = File::create(modules_dir.join(filename))
@@ -99,11 +100,10 @@ mod tests {
     use crate::backends::compile;
     use std::env;
     use wabt::wat2wasm;
+    use wasmer::{imports, Instance as WasmerInstance};
 
     #[test]
     fn test_file_system_cache_run() {
-        use wasmer_runtime_core::{imports, typed_func::Func};
-
         let wasm = wat2wasm(
             r#"(module
             (type $t0 (func (param i32) (result i32)))
@@ -129,12 +129,12 @@ mod tests {
 
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};
-        let instance = cached_module.instantiate(&import_object).unwrap();
-        let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
+        let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+        let add_one = instance.exports.get_function("add_one").unwrap();
 
-        let value = add_one.call(42).unwrap();
+        let result = add_one.call(&[42.into()]).unwrap();
 
         // verify it works
-        assert_eq!(value, 43);
+        assert_eq!(result[0].unwrap_i32(), 43);
     }
 }

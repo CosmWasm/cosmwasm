@@ -1,9 +1,8 @@
 #![cfg(any(feature = "cranelift", feature = "default-cranelift"))]
 
-use wasmer_clif_backend::CraneliftCompiler;
-use wasmer_runtime_core::{
-    backend::Compiler, backend::CompilerConfig, compile_with_config, module::Module, vm::Ctx,
-};
+use wasmer::Module;
+use wasmer_compiler_cranelift::Cranelift;
+use wasmer_engine_jit::JIT;
 
 use crate::errors::VmResult;
 
@@ -14,12 +13,11 @@ pub fn compile(code: &[u8]) -> VmResult<Module> {
         enable_verification: false, // As discussed in https://github.com/CosmWasm/cosmwasm/issues/155
         ..Default::default()
     };
-    let module = compile_with_config(code, compiler().as_ref(), config)?;
+    let compiler = Cranelift::default();
+    let engine = JIT::new(&mut compiler).engine();
+    let store = Store::new(&engine);
+    let module = Module::new(&store, code)?;
     Ok(module)
-}
-
-pub fn compiler() -> Box<dyn Compiler> {
-    Box::new(CraneliftCompiler::new())
 }
 
 pub fn backend() -> &'static str {
@@ -27,9 +25,9 @@ pub fn backend() -> &'static str {
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left(_ctx: &mut Ctx, _amount: u64) {}
+pub fn set_gas_left<S: Storage, Q: Querier>(_env: &mut Env<S, Q>, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
-pub fn get_gas_left(_ctx: &Ctx) -> u64 {
+pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
     FAKE_GAS_AVAILABLE
 }

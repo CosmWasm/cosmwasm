@@ -1,15 +1,13 @@
 #![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
 
 // use wasmer_middleware_common::metering;
-use wasmer_compiler_singlepass::{Singlepass, SinglepassCompiler};
-use wasmer_runtime_core::{
-    backend::{Backend, Compiler},
-    compile_with,
-    module::Module,
-    vm::Ctx,
-};
+use wasmer::{Module, Store};
+use wasmer_compiler_singlepass::Singlepass;
+use wasmer_engine_jit::JIT;
 
-use crate::errors::{VmError, VmResult};
+use crate::context::Env;
+use crate::errors::VmResult;
+use crate::traits::{Querier, Storage};
 // use crate::middleware::DeterministicMiddleware;
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
@@ -26,12 +24,11 @@ const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
 const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
 pub fn compile(code: &[u8]) -> VmResult<Module> {
-    compile_with(code, Backend::Auto).map_err(|err| VmError::compile_err(err.to_string()))
-}
-
-pub fn compiler() -> Box<dyn Compiler> {
-    let config = Singlepass::default();
-    Box::new(SinglepassCompiler::new(&config))
+    let compiler = Singlepass::default();
+    let engine = JIT::new(&compiler).engine();
+    let store = Store::new(&engine);
+    let module = Module::new(&store, code)?;
+    Ok(module)
 }
 
 pub fn backend() -> &'static str {
@@ -39,10 +36,10 @@ pub fn backend() -> &'static str {
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left(_ctx: &mut Ctx, _amount: u64) {}
+pub fn set_gas_left<S: Storage, Q: Querier>(_env: &mut Env<S, Q>, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
-pub fn get_gas_left(_ctx: &Ctx) -> u64 {
+pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
     FAKE_GAS_AVAILABLE
 }
 
@@ -70,7 +67,7 @@ pub fn get_gas_left(_ctx: &Ctx) -> u64 {
 mod test {
     use super::*;
     use wabt::wat2wasm;
-    use wasmer_runtime_core::{imports, Instance as WasmerInstance};
+    use wasmer::{imports, Instance as WasmerInstance};
 
     fn instantiate(code: &[u8]) -> WasmerInstance {
         let module = compile(code).unwrap();

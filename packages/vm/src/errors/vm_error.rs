@@ -187,27 +187,33 @@ impl From<FfiError> for VmError {
     }
 }
 
-impl From<wasmer_runtime_core::cache::Error> for VmError {
-    fn from(original: wasmer_runtime_core::cache::Error) -> Self {
-        VmError::cache_err(format!("Wasmer cache error: {:?}", original))
+impl From<wasmer::ExportError> for VmError {
+    fn from(original: wasmer::ExportError) -> Self {
+        VmError::resolve_err(format!("Could not get export: {:?}", original))
     }
 }
 
-impl From<wasmer_runtime_core::error::CompileError> for VmError {
-    fn from(original: wasmer_runtime_core::error::CompileError) -> Self {
-        VmError::compile_err(format!("Wasmer compile error: {:?}", original))
+impl From<wasmer_engine::SerializeError> for VmError {
+    fn from(original: wasmer_engine::SerializeError) -> Self {
+        VmError::cache_err(format!("Could not serialize module: {:?}", original))
     }
 }
 
-impl From<wasmer_runtime_core::error::ExportError> for VmError {
-    fn from(original: wasmer_runtime_core::error::ExportError) -> Self {
-        VmError::resolve_err(format!("Wasmer export error: {:?}", original))
+impl From<wasmer_engine::DeserializeError> for VmError {
+    fn from(original: wasmer_engine::DeserializeError) -> Self {
+        VmError::cache_err(format!("Could not deserialize module: {:?}", original))
     }
 }
 
-impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
-    fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
+impl From<wasmer_engine::RuntimeError> for VmError {
+    fn from(original: wasmer_engine::RuntimeError) -> Self {
         VmError::runtime_err(format!("Wasmer runtime error: {:?}", original))
+    }
+}
+
+impl From<wasmer_compiler::CompileError> for VmError {
+    fn from(original: wasmer_compiler::CompileError) -> Self {
+        VmError::compile_err(format!("Could not compile: {:?}", original))
     }
 }
 
@@ -220,6 +226,13 @@ impl From<InsufficientGasLeft> for VmError {
 impl From<std::convert::Infallible> for VmError {
     fn from(_original: std::convert::Infallible) -> Self {
         unreachable!();
+    }
+}
+
+impl Into<wasmer_engine::RuntimeError> for VmError {
+    fn into(self) -> wasmer_engine::RuntimeError {
+        let msg: String = self.to_string();
+        wasmer_engine::RuntimeError::new(msg)
     }
 }
 

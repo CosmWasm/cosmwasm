@@ -2,9 +2,10 @@ use serde::de::DeserializeOwned;
 use std::fmt;
 
 use cosmwasm_std::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
+use wasmer::Val;
 
 use crate::errors::{VmError, VmResult};
-use crate::instance::{Func, Instance};
+use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
 use crate::traits::{Api, Querier, Storage};
 use schemars::JsonSchema;
@@ -131,25 +132,14 @@ fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     args: &[&[u8]],
     result_max_length: usize,
 ) -> VmResult<Vec<u8>> {
-    let mut arg_region_ptrs = Vec::<u32>::with_capacity(args.len());
+    let mut arg_region_ptrs = Vec::<Val>::with_capacity(args.len());
     for arg in args {
         let region_ptr = instance.allocate(arg.len())?;
         instance.write_memory(region_ptr, arg)?;
-        arg_region_ptrs.push(region_ptr);
+        arg_region_ptrs.push(region_ptr.into());
     }
-
-    let res_region_ptr = match args.len() {
-        1 => {
-            let func: Func<u32, u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0])?
-        }
-        2 => {
-            let func: Func<(u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1])?
-        }
-        _ => panic!("call_raw called with unsupported number of arguments"),
-    };
-
+    let result = instance.call_function(name, &arg_region_ptrs)?;
+    let res_region_ptr = result[0].unwrap_i32() as u32;
     let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;

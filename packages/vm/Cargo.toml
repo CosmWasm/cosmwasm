@@ -34,9 +34,11 @@ staking = ["cosmwasm-std/staking"]
 cosmwasm-std = { path = "../std", version = "0.10.1" }
 serde_json = "1.0"
 wasmer = { path = "../../../wasmer/lib/api" }
+wasmer-compiler = { path = "../../../wasmer/lib/compiler" }
 wasmer-compiler-cranelift = { path = "../../../wasmer/lib/compiler-cranelift", optional = true }
 wasmer-compiler-singlepass = { path = "../../../wasmer/lib/compiler-singlepass", optional = true }
-wasmer-runtime-core = { path = "../../../wasmer/lib/deprecated/runtime-core" }
+wasmer-engine = { path = "../../../wasmer/lib/engine" }
+wasmer-engine-jit = { path = "../../../wasmer/lib/engine-jit" }
 wasmer-types = { path = "../../../wasmer/lib/wasmer-types" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }

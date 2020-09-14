@@ -1,9 +1,4 @@
-use wasmer_runtime_core::{
-    memory::ptr::{Array, WasmPtr},
-    types::ValueType,
-    vm::Ctx,
-};
-use wasmer_types::MemoryIndex;
+use wasmer::{Array, ValueType, WasmPtr};
 
 use crate::conversion::to_u32;
 use crate::errors::{
@@ -30,45 +25,11 @@ struct Region {
 
 unsafe impl ValueType for Region {}
 
-/// A Wasm memory descriptor
-#[derive(Debug, Clone)]
-pub struct MemoryDescriptor {
-    /// The minimum number of allowed pages
-    pub minimum: u32,
-    /// The maximum number of allowed pages
-    pub maximum: Option<u32>,
-    /// This memory can be shared between Wasm threads
-    pub shared: bool,
-}
-
-#[derive(Debug, Clone)]
-pub struct MemoryInfo {
-    pub descriptor: MemoryDescriptor,
-    /// Current memory size in pages
-    pub size: u32,
-}
-
-/// Get information about the default memory `memory(0)`
-pub fn get_memory_info(ctx: &Ctx) -> MemoryInfo {
-    let memory_type = (*ctx.module_info)
-        .memories
-        .get(MemoryIndex::from_u32(0))
-        .unwrap();
-    MemoryInfo {
-        descriptor: MemoryDescriptor {
-            minimum: memory_type.minimum.0,
-            maximum: memory_type.maximum.map(|pages| pages.0),
-            shared: memory_type.shared,
-        },
-        size: 0,
-    }
-}
-
 /// Expects a (fixed size) Region struct at ptr, which is read. This links to the
 /// memory region, which is copied in the second step.
 /// Errors if the length of the region exceeds `max_length`.
-pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-    let region = get_region(ctx, ptr)?;
+pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
+    let region = get_region(memory, ptr)?;
 
     if region.length > to_u32(max_length)? {
         return Err(
@@ -76,8 +37,7 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
         );
     }
 
-    let memory = ctx.memory(0);
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(&memory, 0, region.length) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
@@ -99,27 +59,29 @@ pub fn read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Vec<u8>> 
 /// maybe_read_region is like read_region, but gracefully handles null pointer (0) by returning None
 /// meant to be used where the argument is optional (like scan)
 #[cfg(feature = "iterator")]
-pub fn maybe_read_region(ctx: &Ctx, ptr: u32, max_length: usize) -> VmResult<Option<Vec<u8>>> {
+pub fn maybe_read_region(
+    memory: &wasmer::Memory,
+    ptr: u32,
+    max_length: usize,
+) -> VmResult<Option<Vec<u8>>> {
     if ptr == 0 {
         Ok(None)
     } else {
-        read_region(ctx, ptr, max_length).map(Some)
+        read_region(memory, ptr, max_length).map(Some)
     }
 }
 
 /// A prepared and sufficiently large memory Region is expected at ptr that points to pre-allocated memory.
 ///
 /// Returns number of bytes written on success.
-pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
-    let mut region = get_region(ctx, ptr)?;
+pub fn write_region(memory: &wasmer::Memory, ptr: u32, data: &[u8]) -> VmResult<()> {
+    let mut region = get_region(memory, ptr)?;
 
     let region_capacity = region.capacity as usize;
     if data.len() > region_capacity {
         return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
-
-    let memory = ctx.memory(0);
-    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(&memory, 0, region.capacity) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
@@ -127,7 +89,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
                 cells[i].set(data[i])
             }
             region.length = data.len() as u32;
-            set_region(ctx, ptr, region)?;
+            set_region(&memory, ptr, region)?;
             Ok(())
         },
         None => Err(CommunicationError::deref_err(region.offset, format!(
@@ -139,8 +101,7 @@ pub fn write_region(ctx: &Ctx, ptr: u32, data: &[u8]) -> VmResult<()> {
 }
 
 /// Reads in a Region at ptr in wasm memory and returns a copy of it
-fn get_region(ctx: &Ctx, ptr: u32) -> CommunicationResult<Region> {
-    let memory = ctx.memory(0);
+fn get_region(memory: &wasmer::Memory, ptr: u32) -> CommunicationResult<Region> {
     let wptr = WasmPtr::<Region>::new(ptr);
     match wptr.deref(memory) {
         Some(cell) => {
@@ -177,8 +138,7 @@ fn validate_region(region: &Region) -> RegionValidationResult<()> {
 }
 
 /// Overrides a Region at ptr in wasm memory with data
-fn set_region(ctx: &Ctx, ptr: u32, data: Region) -> CommunicationResult<()> {
-    let memory = ctx.memory(0);
+fn set_region(memory: &wasmer::Memory, ptr: u32, data: Region) -> CommunicationResult<()> {
     let wptr = WasmPtr::<Region>::new(ptr);
 
     match wptr.deref(memory) {
