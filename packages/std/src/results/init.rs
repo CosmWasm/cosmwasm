@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::errors::StdResult;
+use crate::errors::StdError;
 use crate::types::Empty;
 
 use super::attribute::Attribute;
@@ -18,8 +18,6 @@ where
     pub attributes: Vec<Attribute>,
 }
 
-pub type InitResult<U = Empty> = StdResult<InitResponse<U>>;
-
 impl<T> Default for InitResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -32,12 +30,14 @@ where
     }
 }
 
+pub type InitResult<U = Empty> = Result<InitResponse<U>, StdError>;
+pub type StringifiedInitResult<U = Empty> = Result<InitResponse<U>, String>;
+
 #[cfg(test)]
 mod test {
     use super::super::BankMsg;
     use super::*;
     use crate::addresses::HumanAddr;
-    use crate::errors::StdError;
     use crate::{coins, from_slice, to_vec};
 
     #[test]
