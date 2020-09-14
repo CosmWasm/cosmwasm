@@ -11,12 +11,11 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::errors::StdResult;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::{Env, HandleResult, InitResult, MigrateResult, QueryResponse, QueryResult};
+use crate::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -58,7 +57,7 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: InitResult<U> = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -77,21 +76,17 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: HandleResult<U> =
-        _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
 
 /// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
 pub fn do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
-        T,
-    ) -> StdResult<QueryResponse>,
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi, ExternalQuerier>, T) -> QueryResult,
     msg_ptr: u32,
 ) -> u32 {
-    let res: QueryResult = _do_query(query_fn, msg_ptr as *mut Region);
+    let res = _do_query(query_fn, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -110,8 +105,7 @@ where
     T: DeserializeOwned + JsonSchema,
     U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    let res: MigrateResult<U> =
-        _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -160,12 +154,9 @@ where
 }
 
 fn _do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
-        T,
-    ) -> StdResult<QueryResponse>,
+    query_fn: &dyn Fn(&Extern<ExternalStorage, ExternalApi, ExternalQuerier>, T) -> QueryResult,
     msg_ptr: *mut Region,
-) -> StdResult<QueryResponse> {
+) -> QueryResult {
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let msg: T = from_slice(&msg)?;
