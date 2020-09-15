@@ -38,6 +38,26 @@ major releases of `cosmwasm`. Note that you can also view the
   ctx.add_attribute("destination", &to_addr);
   ```
 
+- Add result type to `Bucket::update` and `Singleton::update`:
+
+  ```rust
+  // before
+  bucket.update(b"maria", |mayd: Option<Data>| {
+    let mut d = mayd.ok_or(StdError::not_found("Data"))?;
+    old_age = d.age;
+    d.age += 1;
+    Ok(d)
+  })
+
+  // after
+  bucket.update(b"maria", |mayd: Option<Data>| -> StdResult<_> {
+    let mut d = mayd.ok_or(StdError::not_found("Data"))?;
+    old_age = d.age;
+    d.age += 1;
+    Ok(d)
+  })
+  ```
+
 ## 0.9 -> 0.10
 
 Integration tests:

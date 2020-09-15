@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
@@ -95,15 +95,14 @@ where
         Box::new(mapped)
     }
 
-    /// update will load the data, perform the specified action, and store the result
+    /// Loads the data, perform the specified action, and store the result
     /// in the database. This is shorthand for some common sequences, which may be useful.
-    /// Note that this only updates *pre-existing* values. If you want to modify possibly
-    /// non-existent values, please use `may_update`
     ///
-    /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update<A>(&mut self, key: &[u8], action: A) -> StdResult<T>
+    /// If the data exists, `action(Some(value))` is called. Otherwise `action(None)` is called.
+    pub fn update<A, E>(&mut self, key: &[u8], action: A) -> Result<T, E>
     where
-        A: FnOnce(Option<T>) -> StdResult<T>,
+        A: FnOnce(Option<T>) -> Result<T, E>,
+        E: From<StdError>,
     {
         let input = self.may_load(key)?;
         let output = action(input)?;
@@ -322,7 +321,7 @@ mod test {
         // show we can capture data from the closure
         let mut old_age = 0i32;
         bucket
-            .update(b"maria", |mayd: Option<Data>| {
+            .update(b"maria", |mayd: Option<Data>| -> StdResult<_> {
                 let mut d = mayd.ok_or(StdError::not_found("Data"))?;
                 old_age = d.age;
                 d.age += 1;
@@ -353,6 +352,52 @@ mod test {
         // load it properly
         let loaded = bucket.load(b"maria").unwrap();
         assert_eq!(loaded, init);
+    }
+
+    #[test]
+    fn update_supports_custom_error_types() {
+        #[derive(Debug)]
+        enum MyError {
+            Std,
+            NotFound,
+        }
+
+        impl From<StdError> for MyError {
+            fn from(_original: StdError) -> MyError {
+                MyError::Std
+            }
+        }
+
+        let mut store = MockStorage::new();
+        let mut bucket = bucket::<_, Data>(b"data", &mut store);
+
+        // initial data
+        let init = Data {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        bucket.save(b"maria", &init).unwrap();
+
+        // it's my birthday
+        let res = bucket.update(b"bob", |data| {
+            if let Some(mut data) = data {
+                if data.age < 0 {
+                    // Uses Into to convert StdError to MyError
+                    return Err(StdError::generic_err("Current age is negative").into());
+                }
+                if data.age > 10 {
+                    to_vec(&data)?; // Uses From to convert StdError to MyError
+                }
+                data.age += 1;
+                Ok(data)
+            } else {
+                return Err(MyError::NotFound);
+            }
+        });
+        match res.unwrap_err() {
+            MyError::NotFound { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]

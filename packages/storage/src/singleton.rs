@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 
 use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
@@ -78,9 +78,10 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update<A>(&mut self, action: A) -> StdResult<T>
+    pub fn update<A, E>(&mut self, action: A) -> Result<T, E>
     where
-        A: FnOnce(T) -> StdResult<T>,
+        A: FnOnce(T) -> Result<T, E>,
+        E: From<StdError>,
     {
         let input = self.load()?;
         let output = action(input)?;
@@ -209,7 +210,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(|mut c| {
+        let output = writer.update(|mut c| -> StdResult<_> {
             c.max_tokens *= 2;
             Ok(c)
         });
@@ -233,7 +234,7 @@ mod test {
 
         let mut old_max_tokens = 0i32;
         writer
-            .update(|mut c| {
+            .update(|mut c| -> StdResult<_> {
                 old_max_tokens = c.max_tokens;
                 c.max_tokens *= 2;
                 Ok(c)
@@ -243,7 +244,7 @@ mod test {
     }
 
     #[test]
-    fn update_failure() {
+    fn update_does_not_change_data_on_error() {
         let mut store = MockStorage::new();
         let mut writer = singleton::<_, Config>(&mut store, b"config");
 
@@ -254,9 +255,52 @@ mod test {
         writer.save(&cfg).unwrap();
 
         let output = writer.update(&|_c| Err(StdError::unauthorized()));
-        match output {
-            Err(StdError::Unauthorized { .. }) => {}
-            _ => panic!("Unexpected output: {:?}", output),
+        match output.unwrap_err() {
+            StdError::Unauthorized { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+        assert_eq!(writer.load().unwrap(), cfg);
+    }
+
+    #[test]
+    fn update_supports_custom_errors() {
+        #[derive(Debug)]
+        enum MyError {
+            Std,
+            Foo,
+        }
+
+        impl From<StdError> for MyError {
+            fn from(_original: StdError) -> MyError {
+                MyError::Std
+            }
+        }
+
+        let mut store = MockStorage::new();
+        let mut writer = singleton::<_, Config>(&mut store, b"config");
+
+        let cfg = Config {
+            owner: "admin".to_string(),
+            max_tokens: 1234,
+        };
+        writer.save(&cfg).unwrap();
+
+        let res = writer.update(|mut c| {
+            if c.max_tokens > 5000 {
+                return Err(MyError::Foo);
+            }
+            if c.max_tokens > 20 {
+                return Err(StdError::generic_err("broken stuff").into()); // Uses Into to convert StdError to MyError
+            }
+            if c.max_tokens > 10 {
+                to_vec(&c)?; // Uses From to convert StdError to MyError
+            }
+            c.max_tokens += 20;
+            Ok(c)
+        });
+        match res.unwrap_err() {
+            MyError::Std { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
         assert_eq!(writer.load().unwrap(), cfg);
     }
