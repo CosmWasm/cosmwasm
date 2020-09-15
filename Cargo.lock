@@ -1095,7 +1095,7 @@ checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 
 [[package]]
 name = "wasmer"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "cfg-if",
  "indexmap",
@@ -1115,7 +1115,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "enumset",
  "raw-cpuid",
@@ -1131,7 +1131,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler-cranelift"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "cranelift-codegen",
  "cranelift-frontend",
@@ -1147,7 +1147,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-compiler-singlepass"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -1164,7 +1164,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-engine"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "backtrace",
  "bincode",
@@ -1182,7 +1182,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-engine-jit"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "bincode",
  "cfg-if",
@@ -1198,7 +1198,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-engine-native"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "bincode",
  "cfg-if",
@@ -1212,11 +1212,12 @@ dependencies = [
  "wasmer-object",
  "wasmer-types",
  "wasmer-vm",
+ "which",
 ]
 
 [[package]]
 name = "wasmer-object"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "object",
  "thiserror",
@@ -1226,7 +1227,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-types"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "cranelift-entity",
  "serde",
@@ -1234,7 +1235,7 @@ dependencies = [
 
 [[package]]
 name = "wasmer-vm"
-version = "1.0.0-alpha01.0"
+version = "1.0.0-alpha3"
 dependencies = [
  "backtrace",
  "cc",
@@ -1272,6 +1273,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ce85d72b74242c340e9e3492cfb602652d7bb324c3172dd441b5577e39a2e18c"
 dependencies = [
  "wast",
+]
+
+[[package]]
+name = "which"
+version = "4.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "87c14ef7e1b8b8ecfc75d5eca37949410046e66f15d185c01d70824f1f8111ef"
+dependencies = [
+ "libc",
+ "thiserror",
 ]
 
 [[package]]
