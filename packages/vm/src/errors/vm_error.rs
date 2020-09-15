@@ -229,9 +229,9 @@ impl From<std::convert::Infallible> for VmError {
     }
 }
 
-impl Into<wasmer_engine::RuntimeError> for VmError {
-    fn into(self) -> wasmer_engine::RuntimeError {
-        let msg: String = self.to_string();
+impl From<VmError> for wasmer_engine::RuntimeError {
+    fn from(original: VmError) -> wasmer_engine::RuntimeError {
+        let msg: String = original.to_string();
         wasmer_engine::RuntimeError::new(msg)
     }
 }

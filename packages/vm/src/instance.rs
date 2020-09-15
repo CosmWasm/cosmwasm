@@ -27,21 +27,6 @@ use crate::traits::{Api, Extern, Querier, Storage};
 
 const WASM_PAGE_SIZE: u64 = 64 * 1024;
 
-/// Like std::try but using Into instead of From
-macro_rules! try_into {
-    ($expr:expr) => {
-        match $expr {
-            std::result::Result::Ok(val) => val,
-            std::result::Result::Err(err) => {
-                return std::result::Result::Err(err.into());
-            }
-        }
-    };
-    ($expr:expr,) => {
-        $crate::try_into!($expr)
-    };
-}
-
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
     /// The original limit the instance was created with
@@ -121,7 +106,7 @@ where
                 // Ownership of the value pointer is transferred to the contract.
                 "db_read" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
                     let key_ptr = args[0].unwrap_i32() as u32;
-                    let ptr = try_into!(do_read::<S, Q>(&mut env, key_ptr));
+                    let ptr = do_read::<S, Q>(&mut env, key_ptr)?;
                     Ok(vec![ptr.into()])
                 }),
                 // Writes the given value into the database entry at the given key.
@@ -129,7 +114,7 @@ where
                 "db_write" => Function::new_with_env(&store, &i32i32_to_void, env.clone(), |mut env, args| {
                     let key_ptr = args[0].unwrap_i32() as u32;
                     let value_ptr = args[1].unwrap_i32() as u32;
-                    try_into!(do_write::<S, Q>(&mut env, key_ptr, value_ptr));
+                    do_write::<S, Q>(&mut env, key_ptr, value_ptr)?;
                     Ok(vec![])
                 }),
                 // Removes the value at the given key. Different than writing &[] as future
@@ -138,7 +123,7 @@ where
                 // Ownership of both key pointer is not transferred to the host.
                 "db_remove" => Function::new_with_env(&store, &i32_to_void, env.clone(), |mut env, args| {
                     let key_ptr = args[0].unwrap_i32() as u32;
-                    try_into!(do_remove::<S, Q>(&mut env, key_ptr));
+                    do_remove::<S, Q>(&mut env, key_ptr)?;
                     Ok(vec![])
                 }),
                 // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
@@ -148,7 +133,7 @@ where
                 "canonicalize_address" => Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
                     let source_ptr = args[0].unwrap_i32() as u32;
                     let destination_ptr = args[1].unwrap_i32() as u32;
-                    let ptr = try_into!(do_canonicalize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr));
+                    let ptr = do_canonicalize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
                     Ok(vec![ptr.into()])
                 }),
                 // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
@@ -158,7 +143,7 @@ where
                 "humanize_address" => Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
                     let source_ptr = args[0].unwrap_i32() as u32;
                     let destination_ptr = args[1].unwrap_i32() as u32;
-                    let ptr = try_into!(do_humanize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr));
+                    let ptr = do_humanize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
                     Ok(vec![ptr.into()])
                 }),
                 // Allows the contract to emit debug logs that the host can either process or ignore.
@@ -168,13 +153,13 @@ where
                 "debug" => Function::new_with_env(&store, &i32_to_void, env.clone(), move |mut env, args| {
                     let message_ptr = args[0].unwrap_i32() as u32;
                     if print_debug {
-                        try_into!(print_debug_message(&mut env, message_ptr));
+                        print_debug_message(&mut env, message_ptr)?;
                     }
                     Ok(vec![])
                 }),
                 "query_chain" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
                     let request_ptr = args[0].unwrap_i32() as u32;
-                    let response_ptr = try_into!(do_query_chain::<S, Q>(&mut env, request_ptr));
+                    let response_ptr = do_query_chain::<S, Q>(&mut env, request_ptr)?;
                     Ok(vec![response_ptr.into()])
                 }),
                 // Creates an iterator that will go from start to end.
@@ -189,7 +174,7 @@ where
                     let order = args[2].unwrap_i32();
                     #[cfg(feature = "iterator")]
                     {
-                        let response_ptr = try_into!(do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order));
+                        let response_ptr = do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order)?;
                         Ok(vec![response_ptr.into()])
                     }
                     #[cfg(not(feature = "iterator"))]
@@ -206,7 +191,7 @@ where
                     #[cfg(feature = "iterator")]
                     {
                         let iterator_id = args[0].unwrap_i32() as u32;
-                        let response_ptr = try_into!(do_next::<S, Q>(&mut env, iterator_id));
+                        let response_ptr = do_next::<S, Q>(&mut env, iterator_id)?;
                         Ok(vec![response_ptr.into()])
                     }
                     #[cfg(not(feature = "iterator"))]
