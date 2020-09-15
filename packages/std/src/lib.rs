@@ -5,11 +5,11 @@ mod coins;
 mod encoding;
 mod entry_points;
 mod errors;
-mod init_handle;
 #[cfg(feature = "iterator")]
 mod iterator;
 mod math;
 mod query;
+mod results;
 mod serde;
 mod storage;
 mod traits;
@@ -19,10 +19,6 @@ pub use crate::addresses::{CanonicalAddr, HumanAddr};
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::encoding::Binary;
 pub use crate::errors::{StdError, StdResult, SystemError, SystemResult};
-pub use crate::init_handle::{
-    attr, Attribute, BankMsg, Context, CosmosMsg, HandleResponse, HandleResult, InitResponse,
-    InitResult, MigrateResponse, MigrateResult, StakingMsg, WasmMsg,
-};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::math::{Decimal, Uint128};
@@ -30,6 +26,10 @@ pub use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     Delegation, FullDelegation, QueryRequest, QueryResponse, QueryResult, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
+};
+pub use crate::results::{
+    attr, Attribute, BankMsg, Context, CosmosMsg, HandleResponse, HandleResult, InitResponse,
+    InitResult, MigrateResponse, MigrateResult, StakingMsg, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
