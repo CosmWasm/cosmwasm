@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, HandleResponse, HandleResult, HumanAddr,
-    InitResponse, StakingMsg, StdError,
+    coin, coins, from_binary, BankMsg, Binary, Coin, HandleResponse, HumanAddr, InitResponse,
+    StakingMsg, StringifiedHandleResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -128,11 +128,9 @@ fn reflect_requires_owner() {
     };
 
     let env = mock_env("someone", &[]);
-    let res: HandleResult<CustomMsg> = handle(&mut deps, env, msg);
-    match res {
-        Err(StdError::Unauthorized { .. }) => {}
-        _ => panic!("Must return unauthorized error"),
-    }
+    let res: StringifiedHandleResult<CustomMsg> = handle(&mut deps, env, msg);
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
 
 #[test]
@@ -171,11 +169,9 @@ fn transfer_requires_owner() {
         owner: new_owner.clone(),
     };
 
-    let res: HandleResult = handle(&mut deps, env, msg);
-    match res {
-        Err(StdError::Unauthorized { .. }) => {}
-        _ => panic!("Must return unauthorized error"),
-    }
+    let res: StringifiedHandleResult = handle(&mut deps, env, msg);
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
 
 #[test]
