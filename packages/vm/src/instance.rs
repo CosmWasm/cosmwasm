@@ -562,7 +562,7 @@ mod test {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 134);
-        assert_eq!(report2.used_internally, 66553);
+        assert_eq!(report2.used_internally, 66539);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -774,8 +774,7 @@ mod singlepass_test {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        println!("init used: {}", init_used);
-        assert_eq!(init_used, 66687);
+        assert_eq!(init_used, 66673);
     }
 
     #[test]
@@ -798,8 +797,7 @@ mod singlepass_test {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        println!("handle used: {}", handle_used);
-        assert_eq!(handle_used, 196629);
+        assert_eq!(handle_used, 196442);
     }
 
     #[test]
@@ -833,6 +831,6 @@ mod singlepass_test {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 32069);
+        assert_eq!(query_used, 32132);
     }
 }
