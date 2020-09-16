@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
 use cosmwasm_std::{
-    ContractResult, Env, HandleResponse, InitResponse, MigrateResponse, QueryResult,
+    ContractResult, Env, HandleResponse, InitResponse, MigrateResponse, QueryResponse,
 };
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
@@ -74,7 +74,7 @@ where
 // query mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<S, A, Q, M>(instance: &mut Instance<S, A, Q>, msg: M) -> QueryResult
+pub fn query<S, A, Q, M>(instance: &mut Instance<S, A, Q>, msg: M) -> ContractResult<QueryResponse>
 where
     S: Storage + 'static,
     A: Api + 'static,

@@ -7,6 +7,7 @@ mod cosmos_msg;
 mod handle;
 mod init;
 mod migrate;
+mod query;
 
 pub use attribute::{attr, Attribute};
 pub use context::Context;
@@ -15,3 +16,4 @@ pub use cosmos_msg::{BankMsg, CosmosMsg, StakingMsg, WasmMsg};
 pub use handle::{HandleResponse, HandleResult};
 pub use init::{InitResponse, InitResult};
 pub use migrate::{MigrateResponse, MigrateResult};
+pub use query::{QueryResponse, QueryResult};

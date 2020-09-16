@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{
     attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, ContractResult, Empty,
-    HandleResponse, HumanAddr, InitResponse, MigrateResponse, StdError,
+    HandleResponse, HumanAddr, InitResponse, MigrateResponse,
 };
 use cosmwasm_vm::{
     call_handle, from_slice,
@@ -107,10 +107,8 @@ fn init_and_query() {
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});
-    match qres.unwrap_err() {
-        StdError::ParseErr { .. } => {}
-        _ => panic!("Expected parse error"),
-    }
+    let msg = qres.unwrap_err();
+    assert!(msg.contains("Error parsing"));
 }
 
 #[test]
