@@ -2,7 +2,7 @@ use serde::de::DeserializeOwned;
 use std::fmt;
 
 use cosmwasm_std::{
-    Env, QueryResult, StringifiedHandleResult, StringifiedInitResult, StringifiedMigrateResult,
+    ContractResult, Env, HandleResponse, InitResponse, MigrateResponse, QueryResult,
 };
 
 use crate::errors::{VmError, VmResult};
@@ -20,7 +20,7 @@ pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<StringifiedInitResult<U>>
+) -> VmResult<ContractResult<InitResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -29,7 +29,7 @@ where
 {
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let result: StringifiedInitResult<U> = from_slice(&data)?;
+    let result: ContractResult<InitResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
 
@@ -37,7 +37,7 @@ pub fn call_handle<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<StringifiedHandleResult<U>>
+) -> VmResult<ContractResult<HandleResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -46,7 +46,7 @@ where
 {
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
-    let result: StringifiedHandleResult<U> = from_slice(&data)?;
+    let result: ContractResult<HandleResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
 
@@ -54,7 +54,7 @@ pub fn call_migrate<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<StringifiedMigrateResult<U>>
+) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -63,7 +63,7 @@ where
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
-    let result: StringifiedMigrateResult<U> = from_slice(&data)?;
+    let result: ContractResult<MigrateResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
 

@@ -31,7 +31,6 @@ where
 }
 
 pub type InitResult<U = Empty> = Result<InitResponse<U>, StdError>;
-pub type StringifiedInitResult<U = Empty> = Result<InitResponse<U>, String>;
 
 #[cfg(test)]
 mod test {

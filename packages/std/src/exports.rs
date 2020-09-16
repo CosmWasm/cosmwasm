@@ -14,10 +14,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
 use crate::query::QueryResult;
-use crate::results::{
-    HandleResponse, InitResponse, MigrateResponse, StringifiedHandleResult, StringifiedInitResult,
-    StringifiedMigrateResult,
-};
+use crate::results::{ContractResult, HandleResponse, InitResponse, MigrateResponse};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::Env;
@@ -46,6 +43,21 @@ extern "C" fn allocate(size: usize) -> u32 {
 extern "C" fn deallocate(pointer: u32) {
     // auto-drop Region on function end
     let _ = unsafe { consume_region(pointer as *mut Region) };
+}
+
+// TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
+macro_rules! r#try_into_contract_result {
+    ($expr:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                return ContractResult::Error(err.to_string());
+            }
+        }
+    };
+    ($expr:expr,) => {
+        $crate::try_into_contract_result!($expr)
+    };
 }
 
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
@@ -140,7 +152,7 @@ fn _do_init<M, C, E>(
     ) -> Result<InitResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> StringifiedInitResult<C>
+) -> ContractResult<InitResponse<C>>
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -148,10 +160,10 @@ where
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-    let env: Env = from_slice(&env).map_err(|e| e.to_string())?;
-    let msg: M = from_slice(&msg).map_err(|e| e.to_string())?;
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
-    init_fn(&mut deps, env, msg).map_err(|e| e.to_string())
+    init_fn(&mut deps, env, msg).into()
 }
 
 fn _do_handle<M, C, E>(
@@ -162,7 +174,7 @@ fn _do_handle<M, C, E>(
     ) -> Result<HandleResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> StringifiedHandleResult<C>
+) -> ContractResult<HandleResponse<C>>
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -171,10 +183,10 @@ where
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = from_slice(&env).map_err(|e| e.to_string())?;
-    let msg: M = from_slice(&msg).map_err(|e| e.to_string())?;
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
-    handle_fn(&mut deps, env, msg).map_err(|e| e.to_string())
+    handle_fn(&mut deps, env, msg).into()
 }
 
 fn _do_query<M: DeserializeOwned + JsonSchema>(
@@ -196,7 +208,7 @@ fn _do_migrate<M, C, E>(
     ) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> StringifiedMigrateResult<C>
+) -> ContractResult<MigrateResponse<C>>
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -204,10 +216,10 @@ where
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-    let env: Env = from_slice(&env).map_err(|e| e.to_string())?;
-    let msg: M = from_slice(&msg).map_err(|e| e.to_string())?;
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
-    migrate_fn(&mut deps, env, msg).map_err(|e| e.to_string())
+    migrate_fn(&mut deps, env, msg).into()
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM

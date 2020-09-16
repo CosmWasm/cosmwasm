@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
 use cosmwasm_std::{
-    Env, QueryResult, StringifiedHandleResult, StringifiedInitResult, StringifiedMigrateResult,
+    ContractResult, Env, HandleResponse, InitResponse, MigrateResponse, QueryResult,
 };
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
@@ -21,7 +21,7 @@ pub fn init<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: M,
-) -> StringifiedInitResult<U>
+) -> ContractResult<InitResponse<U>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -40,7 +40,7 @@ pub fn handle<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: M,
-) -> StringifiedHandleResult<U>
+) -> ContractResult<HandleResponse<U>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -59,7 +59,7 @@ pub fn migrate<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
     msg: M,
-) -> StringifiedMigrateResult<U>
+) -> ContractResult<MigrateResponse<U>>
 where
     S: Storage + 'static,
     A: Api + 'static,

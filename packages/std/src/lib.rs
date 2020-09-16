@@ -28,9 +28,8 @@ pub use crate::query::{
     ValidatorsResponse, WasmQuery,
 };
 pub use crate::results::{
-    attr, Attribute, BankMsg, Context, CosmosMsg, HandleResponse, HandleResult, InitResponse,
-    InitResult, MigrateResponse, MigrateResult, StakingMsg, StringifiedHandleResult,
-    StringifiedInitResult, StringifiedMigrateResult, WasmMsg,
+    attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
+    InitResponse, InitResult, MigrateResponse, MigrateResult, StakingMsg, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;

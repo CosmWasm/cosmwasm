@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, HandleResponse, HumanAddr, InitResponse,
-    StakingMsg, StringifiedHandleResult,
+    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HandleResponse, HumanAddr,
+    InitResponse, StakingMsg,
 };
 use cosmwasm_vm::{
     testing::{
@@ -128,7 +128,7 @@ fn reflect_requires_owner() {
     };
 
     let env = mock_env("someone", &[]);
-    let res: StringifiedHandleResult<CustomMsg> = handle(&mut deps, env, msg);
+    let res: ContractResult<HandleResponse<CustomMsg>> = handle(&mut deps, env, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -169,7 +169,7 @@ fn transfer_requires_owner() {
         owner: new_owner.clone(),
     };
 
-    let res: StringifiedHandleResult = handle(&mut deps, env, msg);
+    let res: ContractResult<HandleResponse> = handle(&mut deps, env, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }

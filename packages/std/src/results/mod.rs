@@ -2,6 +2,7 @@
 
 mod attribute;
 mod context;
+mod contract_result;
 mod cosmos_msg;
 mod handle;
 mod init;
@@ -9,7 +10,8 @@ mod migrate;
 
 pub use attribute::{attr, Attribute};
 pub use context::Context;
+pub use contract_result::ContractResult;
 pub use cosmos_msg::{BankMsg, CosmosMsg, StakingMsg, WasmMsg};
-pub use handle::{HandleResponse, HandleResult, StringifiedHandleResult};
-pub use init::{InitResponse, InitResult, StringifiedInitResult};
-pub use migrate::{MigrateResponse, MigrateResult, StringifiedMigrateResult};
+pub use handle::{HandleResponse, HandleResult};
+pub use init::{InitResponse, InitResult};
+pub use migrate::{MigrateResponse, MigrateResult};

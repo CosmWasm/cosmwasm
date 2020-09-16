@@ -17,7 +17,9 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coins, BankMsg, HumanAddr, MigrateResponse, Order, StringifiedInitResult};
+use cosmwasm_std::{
+    coins, BankMsg, ContractResult, HumanAddr, InitResponse, MigrateResponse, Order,
+};
 use cosmwasm_vm::testing::{init, migrate, mock_env, mock_instance, MOCK_CONTRACT_ADDR};
 use cosmwasm_vm::StorageIterator;
 
@@ -36,7 +38,7 @@ fn init_fails() {
     let msg = InitMsg {};
     let env = mock_env("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
-    let res: StringifiedInitResult = init(&mut deps, env, msg);
+    let res: ContractResult<InitResponse> = init(&mut deps, env, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,

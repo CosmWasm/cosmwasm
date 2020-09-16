@@ -34,4 +34,3 @@ where
 }
 
 pub type MigrateResult<U = Empty> = Result<MigrateResponse<U>, StdError>;
-pub type StringifiedMigrateResult<U = Empty> = Result<MigrateResponse<U>, String>;

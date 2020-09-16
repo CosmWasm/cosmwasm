@@ -34,4 +34,3 @@ where
 }
 
 pub type HandleResult<U = Empty> = Result<HandleResponse<U>, StdError>;
-pub type StringifiedHandleResult<U = Empty> = Result<HandleResponse<U>, String>;
