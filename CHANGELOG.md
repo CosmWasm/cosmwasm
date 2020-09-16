@@ -17,6 +17,9 @@
 - Rename `log` to `attr`.
 - Rename `Context::add_log` to `Context::add_attribute`.
 - Add `Api::debug` for emitting debug messages during development.
+- Fix error type for response parsing errors in `ExternalQuerier::raw_query`.
+  This was `Ok(Err(ParseError))` instead of `Err(SystemError::InvalidResponse)`,
+  implying an error created in the target contract.
 
 **cosmwasm-vm**
 
