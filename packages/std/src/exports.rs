@@ -109,26 +109,6 @@ where
     release_buffer(v) as u32
 }
 
-/// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
-///
-/// - `M`: message type for request
-/// - `E`: error type for responses
-pub fn do_query<M, E>(
-    query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
-        M,
-    ) -> Result<QueryResponse, E>,
-    msg_ptr: u32,
-) -> u32
-where
-    M: DeserializeOwned + JsonSchema,
-    E: ToString,
-{
-    let res = _do_query(query_fn, msg_ptr as *mut Region);
-    let v = to_vec(&res).unwrap();
-    release_buffer(v) as u32
-}
-
 /// do_migrate should be wrapped in an external "C" export, containing a contract-specific function as arg
 ///
 /// - `M`: message type for request
@@ -149,6 +129,26 @@ where
     E: ToString,
 {
     let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let v = to_vec(&res).unwrap();
+    release_buffer(v) as u32
+}
+
+/// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
+///
+/// - `M`: message type for request
+/// - `E`: error type for responses
+pub fn do_query<M, E>(
+    query_fn: &dyn Fn(
+        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        M,
+    ) -> Result<QueryResponse, E>,
+    msg_ptr: u32,
+) -> u32
+where
+    M: DeserializeOwned + JsonSchema,
+    E: ToString,
+{
+    let res = _do_query(query_fn, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -198,24 +198,6 @@ where
     handle_fn(&mut deps, env, msg).into()
 }
 
-fn _do_query<M, E>(
-    query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
-        M,
-    ) -> Result<QueryResponse, E>,
-    msg_ptr: *mut Region,
-) -> ContractResult<QueryResponse>
-where
-    M: DeserializeOwned + JsonSchema,
-    E: ToString,
-{
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-
-    let msg: M = try_into_contract_result!(from_slice(&msg));
-    let deps = make_dependencies();
-    query_fn(&deps, msg).into()
-}
-
 fn _do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
@@ -236,6 +218,24 @@ where
     let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
     migrate_fn(&mut deps, env, msg).into()
+}
+
+fn _do_query<M, E>(
+    query_fn: &dyn Fn(
+        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        M,
+    ) -> Result<QueryResponse, E>,
+    msg_ptr: *mut Region,
+) -> ContractResult<QueryResponse>
+where
+    M: DeserializeOwned + JsonSchema,
+    E: ToString,
+{
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+
+    let msg: M = try_into_contract_result!(from_slice(&msg));
+    let deps = make_dependencies();
+    query_fn(&deps, msg).into()
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
