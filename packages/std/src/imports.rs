@@ -2,7 +2,7 @@ use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult};
+use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, get_optional_region_address, Region};
@@ -212,8 +212,13 @@ impl Querier for ExternalQuerier {
         let request_ptr = &*req as *const Region as u32;
 
         let response_ptr = unsafe { query_chain(request_ptr) };
-
         let response = unsafe { consume_region(response_ptr as *mut Region) };
-        from_slice(&response).unwrap_or_else(|err| Ok(Err(err)))
+
+        from_slice(&response).unwrap_or_else(|parsing_err| {
+            Err(SystemError::InvalidResponse {
+                error: parsing_err.to_string(),
+                response: response.into(),
+            })
+        })
     }
 }
