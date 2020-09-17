@@ -410,6 +410,7 @@ dependencies = [
  "schemars",
  "serde",
  "sha2",
+ "snafu",
 ]
 
 [[package]]

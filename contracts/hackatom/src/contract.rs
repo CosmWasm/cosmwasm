@@ -9,6 +9,8 @@ use cosmwasm_std::{
     QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
 
+use crate::errors::{HackError, Unauthorized};
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
     pub verifier: HumanAddr,
@@ -93,7 +95,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: InitMsg,
-) -> StdResult<InitResponse> {
+) -> Result<InitResponse, HackError> {
     deps.api.debug("here we go 🚀");
 
     deps.storage.set(
@@ -108,14 +110,14 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     // This adds some unrelated event attribute for testing purposes
     let mut ctx = Context::new();
     ctx.add_attribute("Let the", "hacking begin");
-    ctx.try_into()
+    Ok(ctx.try_into()?)
 }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
     msg: MigrateMsg,
-) -> StdResult<MigrateResponse> {
+) -> Result<MigrateResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -131,7 +133,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, HackError> {
     match msg {
         HandleMsg::Release {} => do_release(deps, env),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
@@ -146,7 +148,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 fn do_release<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -168,11 +170,11 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         ctx.set_data(&[0xF0, 0x0B, 0xAA]);
         Ok(ctx.into())
     } else {
-        Err(StdError::unauthorized())
+        Err(Unauthorized {}.build())
     }
 }
 
-fn do_cpu_loop() -> StdResult<HandleResponse> {
+fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     let mut counter = 0u64;
     loop {
         counter += 1;
@@ -184,7 +186,7 @@ fn do_cpu_loop() -> StdResult<HandleResponse> {
 
 fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -193,7 +195,7 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn do_memory_loop() -> StdResult<HandleResponse> {
+fn do_memory_loop() -> Result<HandleResponse, HackError> {
     let mut data = vec![1usize];
     loop {
         // add one element
@@ -201,7 +203,7 @@ fn do_memory_loop() -> StdResult<HandleResponse> {
     }
 }
 
-fn do_allocate_large_memory() -> StdResult<HandleResponse> {
+fn do_allocate_large_memory() -> Result<HandleResponse, HackError> {
     // We create memory pages explicitely since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
@@ -212,20 +214,20 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
         let pages = 1_600; // 100 MiB
         let ptr = wasm32::memory_grow(0, pages);
         if ptr == usize::max_value() {
-            return Err(StdError::generic_err("Error in memory.grow instruction"));
+            return Err(StdError::generic_err("Error in memory.grow instruction").into());
         }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(StdError::generic_err("Unsupported architecture"))
+    Err(StdError::generic_err("Unsupported architecture").into())
 }
 
-fn do_panic() -> StdResult<HandleResponse> {
+fn do_panic() -> Result<HandleResponse, HackError> {
     panic!("This page intentionally faulted");
 }
 
-fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
+fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackError> {
     // Canonicalize
 
     let empty = HumanAddr::from("");
@@ -235,7 +237,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -246,7 +249,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -259,7 +263,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -270,7 +275,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -281,7 +287,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -362,7 +369,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{attr, coins, ReadonlyStorage, StdError};
+    use cosmwasm_std::{attr, coins, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {
@@ -531,7 +538,7 @@ mod tests {
         let handle_env = mock_env(beneficiary.as_str(), &[]);
         let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
         match handle_res.unwrap_err() {
-            StdError::Unauthorized { .. } => {}
+            HackError::Unauthorized { .. } => {}
             _ => panic!("Expect unauthorized error"),
         }
 
