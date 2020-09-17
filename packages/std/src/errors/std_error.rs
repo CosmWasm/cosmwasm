@@ -14,7 +14,6 @@ use snafu::Snafu;
 ///
 /// Checklist for adding a new error:
 /// - Add enum case
-/// - Add to PartialEq implementation
 /// - Add creator function in std_error_helpers.rs
 #[derive(Debug, Snafu)]
 #[non_exhaustive]
@@ -115,89 +114,6 @@ impl StdError {
 
     pub fn unauthorized() -> Self {
         Unauthorized {}.build()
-    }
-}
-
-impl PartialEq for StdError {
-    /// Two errors are considered equal if and only if their payloads (i.e. all fields other than backtrace) are equal.
-    ///
-    /// The origin of the error (expressed by its backtrace) is ignored, which allows equality checks on errors and
-    /// results in tests. This is a property that might not always be desired depending on the use case and something
-    /// you should be aware of.
-    ///
-    /// Note: We destruct the unused backtrace as _ to avoid the use of `..` which silently ignores newly added fields.
-    #[allow(clippy::unneeded_field_pattern)]
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (
-                StdError::GenericErr { msg, backtrace: _ },
-                StdError::GenericErr {
-                    msg: msg2,
-                    backtrace: _,
-                },
-            ) => msg == msg2,
-            (
-                StdError::InvalidBase64 { msg, backtrace: _ },
-                StdError::InvalidBase64 {
-                    msg: msg2,
-                    backtrace: _,
-                },
-            ) => msg == msg2,
-            (
-                StdError::InvalidUtf8 { msg, backtrace: _ },
-                StdError::InvalidUtf8 {
-                    msg: msg2,
-                    backtrace: _,
-                },
-            ) => msg == msg2,
-            (
-                StdError::NotFound { kind, backtrace: _ },
-                StdError::NotFound {
-                    kind: kind2,
-                    backtrace: _,
-                },
-            ) => kind == kind2,
-            (
-                StdError::ParseErr {
-                    target,
-                    msg,
-                    backtrace: _,
-                },
-                StdError::ParseErr {
-                    target: target2,
-                    msg: msg2,
-                    backtrace: _,
-                },
-            ) => target == target2 && msg == msg2,
-            (
-                StdError::SerializeErr {
-                    source,
-                    msg,
-                    backtrace: _,
-                },
-                StdError::SerializeErr {
-                    source: source2,
-                    msg: msg2,
-                    backtrace: _,
-                },
-            ) => source == source2 && msg == msg2,
-            (StdError::Unauthorized { backtrace: _ }, StdError::Unauthorized { backtrace: _ }) => {
-                true
-            }
-            (
-                StdError::Underflow {
-                    minuend,
-                    subtrahend,
-                    backtrace: _,
-                },
-                StdError::Underflow {
-                    minuend: minued2,
-                    subtrahend: subtrahend2,
-                    backtrace: _,
-                },
-            ) => minuend == minued2 && subtrahend == subtrahend2,
-            _ => false,
-        }
     }
 }
 
@@ -355,31 +271,5 @@ mod test {
             StdError::Unauthorized { .. } => {}
             _ => panic!("expect different error"),
         }
-    }
-
-    #[test]
-    fn eq_works() {
-        let error1 = StdError::InvalidBase64 {
-            msg: "invalid length".to_string(),
-            backtrace: None,
-        };
-        let error2 = StdError::InvalidBase64 {
-            msg: "invalid length".to_string(),
-            backtrace: None,
-        };
-        assert_eq!(error1, error2);
-    }
-
-    #[test]
-    fn ne_works() {
-        let error1 = StdError::InvalidBase64 {
-            msg: "invalid length".to_string(),
-            backtrace: None,
-        };
-        let error2 = StdError::InvalidBase64 {
-            msg: "other bla".to_string(),
-            backtrace: None,
-        };
-        assert_ne!(error1, error2);
     }
 }
