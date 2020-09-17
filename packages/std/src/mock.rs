@@ -253,7 +253,7 @@ impl BankQuerier {
     }
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
-        match request {
+        let contract_result: StdResult<Binary> = match request {
             BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
                 let amount = self
@@ -267,16 +267,18 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                Ok(to_binary(&bank_res))
+                to_binary(&bank_res)
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                Ok(to_binary(&bank_res))
+                to_binary(&bank_res)
             }
-        }
+        };
+        // system result is always ok in the mock implementation
+        Ok(contract_result)
     }
 }
 
@@ -297,18 +299,18 @@ impl StakingQuerier {
     }
 
     pub fn query(&self, request: &StakingQuery) -> QuerierResult {
-        match request {
+        let contract_result: StdResult<Binary> = match request {
             StakingQuery::BondedDenom {} => {
                 let res = BondedDenomResponse {
                     denom: self.denom.clone(),
                 };
-                Ok(to_binary(&res))
+                to_binary(&res)
             }
             StakingQuery::Validators {} => {
                 let res = ValidatorsResponse {
                     validators: self.validators.clone(),
                 };
-                Ok(to_binary(&res))
+                to_binary(&res)
             }
             StakingQuery::AllDelegations { delegator } => {
                 let delegations: Vec<_> = self
@@ -319,7 +321,7 @@ impl StakingQuerier {
                     .map(|d| d.into())
                     .collect();
                 let res = AllDelegationsResponse { delegations };
-                Ok(to_binary(&res))
+                to_binary(&res)
             }
             StakingQuery::Delegation {
                 delegator,
@@ -332,9 +334,11 @@ impl StakingQuerier {
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
-                Ok(to_binary(&res))
+                to_binary(&res)
             }
-        }
+        };
+        // system result is always ok in the mock implementation
+        Ok(contract_result)
     }
 }
 
