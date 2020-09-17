@@ -1,7 +1,7 @@
 use crate::msg::{CustomQuery, CustomResponse};
 
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{to_binary, Binary, Coin, Extern, HumanAddr, StdResult};
+use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, Extern, HumanAddr};
 
 /// A drop-in replacement for cosmwasm_std::testing::mock_dependencies
 /// this uses our CustomQuerier.
@@ -20,12 +20,12 @@ pub fn mock_dependencies_with_custom_querier(
     }
 }
 
-pub fn custom_query_execute(query: &CustomQuery) -> StdResult<Binary> {
+pub fn custom_query_execute(query: &CustomQuery) -> ContractResult<Binary> {
     let msg = match query {
         CustomQuery::Ping {} => "pong".to_string(),
         CustomQuery::Capital { text } => text.to_uppercase(),
     };
-    to_binary(&CustomResponse { msg })
+    to_binary(&CustomResponse { msg }).into()
 }
 
 #[cfg(test)]
