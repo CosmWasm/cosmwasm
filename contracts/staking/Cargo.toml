@@ -39,7 +39,6 @@ cosmwasm-std = { path = "../../packages/std", features = ["staking"] }
 cosmwasm-storage = { path = "../../packages/storage" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-snafu = { version = "0.6.3" }
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["staking"] }
