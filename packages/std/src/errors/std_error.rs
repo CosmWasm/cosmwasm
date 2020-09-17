@@ -1,5 +1,3 @@
-use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
 use snafu::Snafu;
 
 /// Structured error type for init, handle and query.
@@ -17,37 +15,30 @@ use snafu::Snafu;
 /// Checklist for adding a new error:
 /// - Add enum case
 /// - Add to PartialEq implementation
-/// - Add serialize/deserialize test
 /// - Add creator function in std_error_helpers.rs
-/// - Regenerate schemas
-#[derive(Debug, Serialize, Deserialize, Snafu, JsonSchema)]
-#[serde(rename_all = "snake_case")]
+#[derive(Debug, Snafu)]
 #[non_exhaustive]
 pub enum StdError {
     /// Whenever there is no specific error type available
     #[snafu(display("Generic error: {}", msg))]
     GenericErr {
         msg: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Invalid Base64 string: {}", msg))]
     InvalidBase64 {
         msg: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
     InvalidUtf8 {
         msg: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("{} not found", kind))]
     NotFound {
         kind: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Error parsing into type {}: {}", target, msg))]
@@ -55,7 +46,6 @@ pub enum StdError {
         /// the target type that was attempted
         target: String,
         msg: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Error serializing type {}: {}", source, msg))]
@@ -64,19 +54,14 @@ pub enum StdError {
         #[snafu(source(false))]
         source: String,
         msg: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Unauthorized"))]
-    Unauthorized {
-        #[serde(skip)]
-        backtrace: Option<snafu::Backtrace>,
-    },
+    Unauthorized { backtrace: Option<snafu::Backtrace> },
     #[snafu(display("Cannot subtract {} from {}", subtrahend, minuend))]
     Underflow {
         minuend: String,
         subtrahend: String,
-        #[serde(skip)]
         backtrace: Option<snafu::Backtrace>,
     },
 }
@@ -226,7 +211,6 @@ pub type StdResult<T> = core::result::Result<T, StdError>;
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::serde::{from_slice, to_vec};
 
     // constructors
 
@@ -374,48 +358,6 @@ mod test {
     }
 
     #[test]
-    fn can_serialize() {
-        let error = InvalidBase64 {
-            msg: "invalid length".to_string(),
-        }
-        .build();
-        assert_eq!(
-            to_vec(&error).unwrap(),
-            br#"{"invalid_base64":{"msg":"invalid length"}}"#.to_vec()
-        );
-    }
-
-    #[test]
-    fn can_deserialize() {
-        let error: StdError =
-            from_slice(br#"{"invalid_base64":{"msg":"invalid length"}}"#).unwrap();
-        match error {
-            StdError::InvalidBase64 { msg, backtrace } => {
-                assert_eq!(msg, "invalid length");
-                assert!(backtrace.is_none());
-            }
-            _ => panic!("invalid type"),
-        };
-    }
-
-    /// The deseralizer in from_slice can perform zero-copy deserializations (https://serde.rs/lifetimes.html).
-    /// So it is possible to have `&'static str` fields as long as all source data is always static.
-    /// This is an unrealistic assumption for our use case. This test case ensures we can deseralize
-    /// errors from limited liefetime sources.
-    #[test]
-    fn can_deserialize_from_non_static_source() {
-        let source = (br#"{"not_found":{"kind":"bugs"}}"#).to_vec();
-        let error: StdError = from_slice(&source).unwrap();
-        match error {
-            StdError::NotFound { kind, backtrace } => {
-                assert_eq!(kind, "bugs");
-                assert!(backtrace.is_none());
-            }
-            _ => panic!("invalid type"),
-        };
-    }
-
-    #[test]
     fn eq_works() {
         let error1 = StdError::InvalidBase64 {
             msg: "invalid length".to_string(),
@@ -439,53 +381,5 @@ mod test {
             backtrace: None,
         };
         assert_ne!(error1, error2);
-    }
-
-    fn assert_conversion(original: StdError) {
-        let seralized = to_vec(&original).unwrap();
-        let restored: StdError = from_slice(&seralized).unwrap();
-        assert_eq!(restored, original);
-    }
-
-    #[test]
-    fn generic_err_conversion() {
-        assert_conversion(GenericErr { msg: "something" }.build());
-    }
-
-    #[test]
-    fn invalid_base64_conversion() {
-        assert_conversion(
-            InvalidBase64 {
-                msg: "invalid length".to_string(),
-            }
-            .build(),
-        );
-    }
-
-    #[test]
-    fn unauthorized_conversion() {
-        assert_conversion(Unauthorized {}.build());
-    }
-
-    #[test]
-    fn not_found_conversion() {
-        assert_conversion(NotFound { kind: "State" }.build());
-    }
-
-    #[test]
-    fn parse_err_conversion() {
-        let err = from_slice::<String>(b"123").unwrap_err();
-        assert_conversion(err);
-    }
-
-    #[test]
-    fn serialize_err_conversion() {
-        assert_conversion(
-            SerializeErr {
-                source: "Person",
-                msg: "buffer is full",
-            }
-            .build(),
-        );
     }
 }
