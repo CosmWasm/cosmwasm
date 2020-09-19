@@ -3,6 +3,12 @@ use serde::{Deserialize, Serialize};
 
 use crate::math::Uint128;
 
+pub trait GenericCoin {
+    fn key(&self) -> String;
+    fn value(&self) -> Uint128;
+    fn add_value(&mut self, add_value: Uint128);
+}
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Coin {
     pub denom: String,
@@ -15,6 +21,20 @@ impl Coin {
             amount: Uint128(amount),
             denom: denom.to_string(),
         }
+    }
+}
+
+impl GenericCoin for Coin {
+    fn key(&self) -> String {
+        self.denom.clone()
+    }
+
+    fn value(&self) -> Uint128 {
+        self.amount
+    }
+
+    fn add_value(&mut self, add_value: Uint128) {
+        self.amount += add_value;
     }
 }
 

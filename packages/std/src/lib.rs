@@ -16,7 +16,7 @@ mod traits;
 mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
-pub use crate::coins::{coin, coins, has_coins, Coin};
+pub use crate::coins::{coin, coins, has_coins, Coin, GenericCoin};
 pub use crate::encoding::Binary;
 pub use crate::errors::{StdError, StdResult, SystemError, SystemResult};
 #[cfg(feature = "iterator")]
