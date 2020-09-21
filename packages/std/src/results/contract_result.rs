@@ -42,14 +42,20 @@ pub enum ContractResult<S> {
 // Implementations here mimic the Result API and should be implemented via a conversion to Result
 // to ensure API consistency
 impl<S> ContractResult<S> {
+    /// Converts a `ContractResult<S>` to a `Result<S, String>` as a convenient way
+    /// to access the full Result API.
+    pub fn into_result(self) -> Result<S, String> {
+        Result::<S, String>::from(self)
+    }
+
     pub fn unwrap(self) -> S {
-        Result::<S, String>::from(self).unwrap()
+        self.into_result().unwrap()
     }
 }
 
 impl<S: fmt::Debug> ContractResult<S> {
     pub fn unwrap_err(self) -> String {
-        Result::<S, String>::from(self).unwrap_err()
+        self.into_result().unwrap_err()
     }
 }
 
