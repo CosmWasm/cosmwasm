@@ -6,6 +6,61 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.11 -> 0.10
 
+- Contracts now support any custom error type `E: ToString + From<StdError>`.
+  Previously this has been `StdError`, which you can still use. However, you can
+  now create a much more structured error experience for your unit tests that
+  handels exactly the error cases of your contract. In order to get a convenient
+  implementation for `ToString` and `From<StdError>`, we use the crate
+  [thiserror](https://crates.io/crates/thiserror), which needs to be added to
+  the contracts dependencies in `Cargo.toml`. To create the custom error, create
+  an error module `src/errors.rs` as follows:
+
+  ```rust
+  use cosmwasm_std::{CanonicalAddr, StdError};
+  use thiserror::Error;
+
+  // thiserror implements Display and ToString if you
+  // set the `#[error("…")]` attribute for all cases
+  #[derive(Error, Debug)]
+  pub enum MyCustomError {
+      #[error("{}", original)]
+      Std {
+          // let thiserror implement From<StdError> for you
+          #[from]
+          original: StdError,
+      },
+      // this is whatever we want
+      #[error("Permission denied: the sender is not the current owner")]
+      NotCurrentOwner {
+          expected: CanonicalAddr,
+          actual: CanonicalAddr,
+      },
+      #[error("Messages empty. Must reflect at least one message")]
+      MessagesEmpty,
+  }
+  ```
+
+  Then add `mod errors;` to `src/lib.rs` and `use crate::errors::MyCustomError;`
+  to `src/contract.rs`. Now adapt the return types as follows:
+
+  - `fn init`: `Result<InitResponse, MyCustomError>`,
+  - `fn migrate` (if you have it): `Result<MigrateResponse, MyCustomError>`,
+  - `fn handle`: `Result<HandleResponse, MyCustomError>`,
+  - `fn query`: `Result<Binary, MyCustomError>`.
+
+  If one of your funtions does not use the custom error, you can continue to use
+  `StdError` as before. I.e. you can have `handle` returning
+  `Result<HandleResponse, MyCustomError>` and `query` returning
+  `StdResult<Binary>`.
+
+  Once you got familiar with the concept, you can create different error types
+  for each of the contract's functions.
+
+  You can also try a different error library than
+  [thiserror](https://crates.io/crates/thiserror). The
+  [hackatom development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/hackatom)
+  shows how this would look like using [snafu](https://crates.io/crates/snafu).
+
 - Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`
   to `InitResponse::attributes`, `MigrateResponse::attributes` and
   `HandleResponse::attributes`. Replace calls to `log` with `attr`:
