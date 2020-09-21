@@ -136,7 +136,7 @@ pub trait Querier {
                 "Querier system error: {}",
                 system_err
             ))),
-            Ok(ContractResult::Error(contract_err)) => Err(StdError::generic_err(format!(
+            Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
                 "Querier contract error: {}",
                 contract_err
             ))),

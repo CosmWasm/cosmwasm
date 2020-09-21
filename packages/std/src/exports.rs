@@ -52,7 +52,7 @@ macro_rules! r#try_into_contract_result {
         match $expr {
             Ok(val) => val,
             Err(err) => {
-                return ContractResult::Error(err.to_string());
+                return ContractResult::Err(err.to_string());
             }
         }
     };

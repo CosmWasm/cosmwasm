@@ -26,7 +26,7 @@ use std::fmt;
 /// ```
 /// # use cosmwasm_std::{to_vec, ContractResult, HandleResponse};
 /// let error_msg = String::from("Something went wrong");
-/// let result: ContractResult<HandleResponse> = ContractResult::Error(error_msg);
+/// let result: ContractResult<HandleResponse> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#.to_vec());
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -35,7 +35,8 @@ pub enum ContractResult<S> {
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.
     /// This could potientially have more structure, but String is the easiest.
-    Error(String),
+    #[serde(rename = "error")]
+    Err(String),
 }
 
 // Implementations here mimic the Result API and should be implemented via a conversion to Result
@@ -56,7 +57,7 @@ impl<S, E: ToString> From<Result<S, E>> for ContractResult<S> {
     fn from(original: Result<S, E>) -> ContractResult<S> {
         match original {
             Ok(value) => ContractResult::Ok(value),
-            Err(err) => ContractResult::Error(err.to_string()),
+            Err(err) => ContractResult::Err(err.to_string()),
         }
     }
 }
@@ -65,7 +66,7 @@ impl<S> From<ContractResult<S>> for Result<S, String> {
     fn from(original: ContractResult<S>) -> Result<S, String> {
         match original {
             ContractResult::Ok(value) => Ok(value),
-            ContractResult::Error(err) => Err(err),
+            ContractResult::Err(err) => Err(err),
         }
     }
 }
@@ -89,7 +90,7 @@ mod test {
             br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec()
         );
 
-        let result: ContractResult<HandleResponse> = ContractResult::Error("broken".to_string());
+        let result: ContractResult<HandleResponse> = ContractResult::Err("broken".to_string());
         assert_eq!(&to_vec(&result).unwrap(), b"{\"error\":\"broken\"}");
     }
 
@@ -106,7 +107,7 @@ mod test {
         assert_eq!(result, ContractResult::Ok(HandleResponse::default()));
 
         let result: ContractResult<HandleResponse> = from_slice(br#"{"error":"broken"}"#).unwrap();
-        assert_eq!(result, ContractResult::Error("broken".to_string()));
+        assert_eq!(result, ContractResult::Err("broken".to_string()));
 
         // ignores whitespace
         let result: ContractResult<u64> = from_slice(b" {\n\t  \"ok\": 5898\n}  ").unwrap();
@@ -141,7 +142,7 @@ mod test {
         let converted: ContractResult<HandleResponse> = original.into();
         assert_eq!(
             converted,
-            ContractResult::Error("Generic error: broken".to_string())
+            ContractResult::Err("Generic error: broken".to_string())
         );
     }
 
@@ -151,7 +152,7 @@ mod test {
         let converted: Result<HandleResponse, String> = original.into();
         assert_eq!(converted, Ok(HandleResponse::default()));
 
-        let original = ContractResult::Error("went wrong".to_string());
+        let original = ContractResult::Err("went wrong".to_string());
         let converted: Result<HandleResponse, String> = original.into();
         assert_eq!(converted, Err("went wrong".to_string()));
     }
