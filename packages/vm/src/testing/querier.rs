@@ -92,7 +92,7 @@ impl MockQuerier {
             Err(err) => {
                 let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
                 return (
-                    Ok(Err(SystemError::InvalidRequest {
+                    Ok(SystemResult::Err(SystemError::InvalidRequest {
                         error: format!("Serializing query request: {}", err),
                         request: b"N/A".into(),
                     })),

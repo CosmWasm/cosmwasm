@@ -18,7 +18,7 @@ mod types;
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::encoding::Binary;
-pub use crate::errors::{StdError, StdResult, SystemError, SystemResult};
+pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::math::{Decimal, Uint128};
@@ -30,7 +30,7 @@ pub use crate::query::{
 pub use crate::results::{
     attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
     InitResponse, InitResult, MigrateResponse, MigrateResult, QueryResponse, QueryResult,
-    StakingMsg, WasmMsg,
+    StakingMsg, SystemResult, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;

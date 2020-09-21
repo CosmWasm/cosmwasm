@@ -4,13 +4,13 @@ use std::collections::HashMap;
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult, SystemError, SystemResult};
+use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator, ValidatorsResponse,
     WasmQuery,
 };
-use crate::results::ContractResult;
+use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
@@ -162,7 +162,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
             wasm: NoWasmQuerier {},
             // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
             custom_handler: Box::from(|_: &_| -> MockQuerierCustomHandlerResult {
-                Err(SystemError::UnsupportedRequest {
+                SystemResult::Err(SystemError::UnsupportedRequest {
                     kind: "custom".to_string(),
                 })
             }),
@@ -202,7 +202,7 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
-                return Err(SystemError::InvalidRequest {
+                return SystemResult::Err(SystemError::InvalidRequest {
                     error: format!("Parsing query request: {}", e),
                     request: bin_request.into(),
                 })
@@ -235,7 +235,7 @@ impl NoWasmQuerier {
             WasmQuery::Raw { contract_addr, .. } => contract_addr,
         }
         .clone();
-        Err(SystemError::NoSuchContract { addr })
+        SystemResult::Err(SystemError::NoSuchContract { addr })
     }
 }
 
@@ -279,7 +279,7 @@ impl BankQuerier {
             }
         };
         // system result is always ok in the mock implementation
-        Ok(contract_result)
+        SystemResult::Ok(contract_result)
     }
 }
 
@@ -339,7 +339,7 @@ impl StakingQuerier {
             }
         };
         // system result is always ok in the mock implementation
-        Ok(contract_result)
+        SystemResult::Ok(contract_result)
     }
 }
 

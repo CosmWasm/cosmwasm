@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{
     coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HandleResponse, HumanAddr,
-    InitResponse, StakingMsg,
+    InitResponse, StakingMsg, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -48,7 +48,7 @@ pub fn mock_dependencies_with_custom_querier(
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<CustomQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
-            .with_custom_handler(|query| Ok(custom_query_execute(query)));
+            .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Extern {
         storage: MockStorage::default(),

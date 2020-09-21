@@ -222,7 +222,7 @@ mod test {
     use super::*;
     use cosmwasm_std::{
         coins, from_binary, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
-        SystemError, WasmQuery,
+        SystemError, SystemResult, WasmQuery,
     };
     use std::ptr::NonNull;
     use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
@@ -825,11 +825,11 @@ mod test {
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
-            Ok(_) => panic!("This must not succeed"),
-            Err(SystemError::InvalidRequest { request: err, .. }) => {
+            SystemResult::Ok(_) => panic!("This must not succeed"),
+            SystemResult::Err(SystemError::InvalidRequest { request: err, .. }) => {
                 assert_eq!(err.as_slice(), request)
             }
-            Err(error) => panic!("Unexpeted error: {:?}", error),
+            SystemResult::Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
 
@@ -853,11 +853,11 @@ mod test {
         let query_result: cosmwasm_std::QuerierResult =
             cosmwasm_std::from_slice(&response).unwrap();
         match query_result {
-            Ok(_) => panic!("This must not succeed"),
-            Err(SystemError::NoSuchContract { addr }) => {
+            SystemResult::Ok(_) => panic!("This must not succeed"),
+            SystemResult::Err(SystemError::NoSuchContract { addr }) => {
                 assert_eq!(addr, HumanAddr::from("non-existent"))
             }
-            Err(error) => panic!("Unexpeted error: {:?}", error),
+            SystemResult::Err(error) => panic!("Unexpeted error: {:?}", error),
         }
     }
 

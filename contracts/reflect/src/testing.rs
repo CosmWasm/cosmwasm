@@ -1,7 +1,7 @@
 use crate::msg::{CustomQuery, CustomResponse};
 
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, Extern, HumanAddr};
+use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, Extern, HumanAddr, SystemResult};
 
 /// A drop-in replacement for cosmwasm_std::testing::mock_dependencies
 /// this uses our CustomQuerier.
@@ -12,7 +12,7 @@ pub fn mock_dependencies_with_custom_querier(
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<CustomQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
-            .with_custom_handler(|query| Ok(custom_query_execute(&query)));
+            .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(&query)));
     Extern {
         storage: MockStorage::default(),
         api: MockApi::new(canonical_length),

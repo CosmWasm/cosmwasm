@@ -6,6 +6,7 @@ use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::memory::{alloc, build_region, consume_region, get_optional_region_address, Region};
+use crate::results::SystemResult;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
 
@@ -215,7 +216,7 @@ impl Querier for ExternalQuerier {
         let response = unsafe { consume_region(response_ptr as *mut Region) };
 
         from_slice(&response).unwrap_or_else(|parsing_err| {
-            Err(SystemError::InvalidResponse {
+            SystemResult::Err(SystemError::InvalidResponse {
                 error: parsing_err.to_string(),
                 response: response.into(),
             })

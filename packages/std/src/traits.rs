@@ -3,7 +3,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult, SystemResult};
+use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
@@ -12,7 +12,7 @@ use crate::query::{
     AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
     StakingQuery, Validator, ValidatorsResponse,
 };
-use crate::results::ContractResult;
+use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_binary, to_vec};
 use crate::types::Empty;
 
@@ -132,16 +132,15 @@ pub trait Querier {
             }
         };
         match self.raw_query(&raw) {
-            Err(system_err) => Err(StdError::generic_err(format!(
+            SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
                 "Querier system error: {}",
                 system_err
             ))),
-            Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
-                "Querier contract error: {}",
-                contract_err
-            ))),
+            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
+                format!("Querier contract error: {}", contract_err),
+            )),
             // in theory we would process the response, but here it is the same type, so just pass through
-            Ok(ContractResult::Ok(value)) => from_binary(&value),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }
     }
 
