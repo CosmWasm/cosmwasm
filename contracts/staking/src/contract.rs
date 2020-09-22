@@ -3,7 +3,7 @@ use cosmwasm_std::{
     InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 
-use crate::errors::StakingError;
+use crate::errors::{StakingError, Unauthorized};
 use crate::msg::{
     BalanceResponse, ClaimsResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg,
     TokenInfoResponse,
@@ -342,7 +342,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
 ) -> Result<HandleResponse, StakingError> {
     // this is just meant as a call-back to ourself
     if env.message.sender != env.contract.address {
-        return Err(StakingError::Unauthorized {});
+        return Err(Unauthorized {}.build());
     }
 
     // find how many tokens we have to bond
@@ -706,9 +706,9 @@ mod tests {
         // try to bond and make sure we trigger delegation
         let res = handle(&mut deps, env, bond_msg);
         match res.unwrap_err() {
-            StakingError::Std(StdError::GenericErr { msg, .. }) => {
-                assert_eq!(msg, "No ustake tokens sent")
-            }
+            StakingError::Std {
+                original: StdError::GenericErr { msg, .. },
+            } => assert_eq!(msg, "No ustake tokens sent"),
             err => panic!("Unexpected error: {:?}", err),
         };
     }
@@ -756,7 +756,9 @@ mod tests {
         let env = mock_env(&creator, &[]);
         let res = handle(&mut deps, env, unbond_msg);
         match res.unwrap_err() {
-            StakingError::Std(StdError::Underflow { .. }) => {}
+            StakingError::Std {
+                original: StdError::Underflow { .. },
+            } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
 

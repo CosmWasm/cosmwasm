@@ -266,13 +266,13 @@ mod test {
     fn update_supports_custom_errors() {
         #[derive(Debug)]
         enum MyError {
-            Std,
+            Std(StdError),
             Foo,
         }
 
         impl From<StdError> for MyError {
-            fn from(_original: StdError) -> MyError {
-                MyError::Std
+            fn from(original: StdError) -> MyError {
+                MyError::Std(original)
             }
         }
 
@@ -299,7 +299,7 @@ mod test {
             Ok(c)
         });
         match res.unwrap_err() {
-            MyError::Std { .. } => {}
+            MyError::Std(StdError::GenericErr { .. }) => {}
             err => panic!("Unexpected error: {:?}", err),
         }
         assert_eq!(writer.load().unwrap(), cfg);

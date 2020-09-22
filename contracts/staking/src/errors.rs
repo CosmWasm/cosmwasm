@@ -1,12 +1,18 @@
 use cosmwasm_std::StdError;
-use thiserror::Error;
+use snafu::Snafu;
 
-#[derive(Error, Debug)]
+#[derive(Snafu, Debug)]
+#[snafu(visibility = "pub(crate)")]
 pub enum StakingError {
-    #[error("{0}")]
     /// this is needed so we can use `bucket.load(...)?` and have it auto-converted to the custom error
-    Std(#[from] StdError),
-    // this is whatever we want
-    #[error("Unauthorized")]
-    Unauthorized {},
+    #[snafu(display("StdError: {}", original))]
+    Std { original: StdError },
+    #[snafu(display("Unauthorized"))]
+    Unauthorized { backtrace: Option<snafu::Backtrace> },
+}
+
+impl From<StdError> for StakingError {
+    fn from(original: StdError) -> Self {
+        Std { original }.build()
+    }
 }

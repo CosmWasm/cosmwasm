@@ -23,12 +23,9 @@ major releases of `cosmwasm`. Note that you can also view the
   // set the `#[error("…")]` attribute for all cases
   #[derive(Error, Debug)]
   pub enum MyCustomError {
-      #[error("{}", original)]
-      Std {
-          // let thiserror implement From<StdError> for you
-          #[from]
-          original: StdError,
-      },
+      #[error("{0}")]
+      // let thiserror implement From<StdError> for you
+      Std(#[from] StdError),
       // this is whatever we want
       #[error("Permission denied: the sender is not the current owner")]
       NotCurrentOwner {
@@ -53,12 +50,49 @@ major releases of `cosmwasm`. Note that you can also view the
   `Result<HandleResponse, MyCustomError>` and `query` returning
   `StdResult<Binary>`.
 
+  You can have a top-hevel `init`/`migrate`/`handle`/`query` that returns a
+  custom error but some of its implementations only return errors from the
+  standard library (`StdResult<HandleResponse>` aka.
+  `Result<HandleResponse, StdError>`). Then use `Ok(std_result?)` to convert
+  between the result types. E.g.
+
+  ```rust
+  pub fn handle<S: Storage, A: Api, Q: Querier>(
+      deps: &mut Extern<S, A, Q>,
+      env: Env,
+      msg: HandleMsg,
+  ) -> Result<HandleResponse, StakingError> {
+      match msg {
+          // conversion to Result<HandleResponse, StakingError>
+          HandleMsg::Bond {} => Ok(bond(deps, env)?),
+          // this already returns Result<HandleResponse, StakingError>
+          HandleMsg::_BondAllTokens {} => _bond_all_tokens(deps, env),
+      }
+  }
+  ```
+
+  or
+
+  ```rust
+  pub fn init<S: Storage, A: Api, Q: Querier>(
+      deps: &mut Extern<S, A, Q>,
+      env: Env,
+      msg: InitMsg,
+  ) -> Result<InitResponse, HackError> {
+      // …
+
+      let mut ctx = Context::new();
+      ctx.add_attribute("Let the", "hacking begin");
+      Ok(ctx.try_into()?)
+  }
+  ```
+
   Once you got familiar with the concept, you can create different error types
   for each of the contract's functions.
 
   You can also try a different error library than
   [thiserror](https://crates.io/crates/thiserror). The
-  [hackatom development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/hackatom)
+  [staking development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
   shows how this would look like using [snafu](https://crates.io/crates/snafu).
 
 - Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`

@@ -296,9 +296,9 @@ mod tests {
         };
         let res = handle(&mut deps, env, msg);
         match res.unwrap_err() {
-            ReflectError::Std {
-                original: StdError::GenericErr { msg, .. },
-            } => assert!(msg.contains("human address too short")),
+            ReflectError::Std(StdError::GenericErr { msg, .. }) => {
+                assert!(msg.contains("human address too short"))
+            }
             err => panic!("Unexpected error: {:?}", err),
         }
     }
