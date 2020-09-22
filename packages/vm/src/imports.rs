@@ -829,7 +829,7 @@ mod test {
             SystemResult::Err(SystemError::InvalidRequest { request: err, .. }) => {
                 assert_eq!(err.as_slice(), request)
             }
-            SystemResult::Err(error) => panic!("Unexpeted error: {:?}", error),
+            SystemResult::Err(err) => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -857,7 +857,7 @@ mod test {
             SystemResult::Err(SystemError::NoSuchContract { addr }) => {
                 assert_eq!(addr, HumanAddr::from("non-existent"))
             }
-            SystemResult::Err(error) => panic!("Unexpeted error: {:?}", error),
+            SystemResult::Err(err) => panic!("Unexpected error: {:?}", err),
         }
     }
 
