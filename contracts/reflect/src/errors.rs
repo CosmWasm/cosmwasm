@@ -3,12 +3,9 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ReflectError {
-    #[error("{}", original)]
-    /// this is needed so we can use `bucket.load(...)?` and have it auto-converted to the custom error
-    Std {
-        #[from]
-        original: StdError,
-    },
+    #[error("{0}")]
+    // let thiserror implement From<StdError> for you
+    Std(#[from] StdError),
     // this is whatever we want
     #[error("Permission denied: the sender is not the current owner")]
     NotCurrentOwner {

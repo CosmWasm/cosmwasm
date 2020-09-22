@@ -23,12 +23,9 @@ major releases of `cosmwasm`. Note that you can also view the
   // set the `#[error("…")]` attribute for all cases
   #[derive(Error, Debug)]
   pub enum MyCustomError {
-      #[error("{}", original)]
-      Std {
-          // let thiserror implement From<StdError> for you
-          #[from]
-          original: StdError,
-      },
+      #[error("{0}")]
+      // let thiserror implement From<StdError> for you
+      Std(#[from] StdError),
       // this is whatever we want
       #[error("Permission denied: the sender is not the current owner")]
       NotCurrentOwner {
