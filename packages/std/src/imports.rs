@@ -3,12 +3,15 @@ use std::vec::Vec;
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
-#[cfg(feature = "iterator")]
-use crate::iterator::{Order, KV};
-use crate::memory::{alloc, build_region, consume_region, get_optional_region_address, Region};
+use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::{
+    iterator::{Order, KV},
+    memory::get_optional_region_address,
+};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 32;
