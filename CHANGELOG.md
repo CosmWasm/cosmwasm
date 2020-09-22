@@ -23,6 +23,9 @@
 - Fix error type for response parsing errors in `ExternalQuerier::raw_query`.
   This was `Ok(Err(ParseError))` instead of `Err(SystemError::InvalidResponse)`,
   implying an error created in the target contract.
+- Deprecate `StdError::Unauthorized` and `StdError::unauthorized` in favour of
+  custom errors. From now on `StdError` should only be created by the standard
+  library and should only contain cases the standard library needs.
 
 **cosmwasm-vm**
 

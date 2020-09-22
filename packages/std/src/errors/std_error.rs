@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use snafu::Snafu;
 
 /// Structured error type for init, handle and query.
@@ -56,6 +58,10 @@ pub enum StdError {
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Unauthorized"))]
+    #[deprecated(
+        since = "0.11.0",
+        note = "All StdError cases not required by the standard library will be removed in cosmwasm-std 0.12. Please migrate to custom errors instead of using StdError."
+    )]
     Unauthorized { backtrace: Option<snafu::Backtrace> },
     #[snafu(display("Cannot subtract {} from {}", subtrahend, minuend))]
     Underflow {
@@ -112,6 +118,10 @@ impl StdError {
         .build()
     }
 
+    #[deprecated(
+        since = "0.11.0",
+        note = "All StdError cases not required by the standard library will be removed in cosmwasm-std 0.12. Please migrate to custom errors instead of using StdError."
+    )]
     pub fn unauthorized() -> Self {
         Unauthorized {}.build()
     }

@@ -254,9 +254,9 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| Err(StdError::unauthorized()));
+        let output = writer.update(&|_c| Err(StdError::underflow(4, 7)));
         match output.unwrap_err() {
-            StdError::Unauthorized { .. } => {}
+            StdError::Underflow { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
         assert_eq!(writer.load().unwrap(), cfg);
