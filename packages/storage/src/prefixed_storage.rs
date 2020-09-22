@@ -7,26 +7,35 @@ use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
 
-// prefixed_read is a helper function for less verbose usage
-pub fn prefixed_read<'a, T: ReadonlyStorage>(
-    prefix: &[u8],
-    storage: &'a T,
-) -> ReadonlyPrefixedStorage<'a, T> {
-    ReadonlyPrefixedStorage::new(prefix, storage)
-}
-
-// prefixed_rw is a helper function for less verbose usage
-pub fn prefixed<'a, T: Storage>(prefix: &[u8], storage: &'a mut T) -> PrefixedStorage<'a, T> {
+/// An alias of PrefixedStorage::new for less verbose usage
+pub fn prefixed<'a, S>(prefix: &[u8], storage: &'a mut S) -> PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
     PrefixedStorage::new(prefix, storage)
 }
 
-pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
-    prefix: Vec<u8>,
-    storage: &'a T,
+/// An alias of ReadonlyPrefixedStorage::new for less verbose usage
+pub fn prefixed_read<'a, S>(prefix: &[u8], storage: &'a S) -> ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
+    ReadonlyPrefixedStorage::new(prefix, storage)
 }
 
-impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
-    pub fn new(namespace: &[u8], storage: &'a T) -> Self {
+pub struct ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
+    storage: &'a S,
+    prefix: Vec<u8>,
+}
+
+impl<'a, S: ReadonlyStorage> ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
+    pub fn new(namespace: &[u8], storage: &'a S) -> Self {
         ReadonlyPrefixedStorage {
             prefix: to_length_prefixed(namespace),
             storage,
@@ -35,7 +44,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
 
     // Nested namespaces as documented in
     // https://github.com/webmaster128/key-namespacing#nesting
-    pub fn multilevel(namespaces: &[&[u8]], storage: &'a T) -> Self {
+    pub fn multilevel(namespaces: &[&[u8]], storage: &'a S) -> Self {
         ReadonlyPrefixedStorage {
             prefix: to_length_prefixed_nested(namespaces),
             storage,
@@ -43,7 +52,10 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     }
 }
 
-impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> {
+impl<'a, S> ReadonlyStorage for ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
@@ -60,30 +72,39 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
     }
 }
 
-pub struct PrefixedStorage<'a, T: Storage> {
+pub struct PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
+    storage: &'a mut S,
     prefix: Vec<u8>,
-    storage: &'a mut T,
 }
 
-impl<'a, T: Storage> PrefixedStorage<'a, T> {
-    pub fn new(namespace: &[u8], storage: &'a mut T) -> Self {
+impl<'a, S> PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
+    pub fn new(namespace: &[u8], storage: &'a mut S) -> Self {
         PrefixedStorage {
-            prefix: to_length_prefixed(namespace),
             storage,
+            prefix: to_length_prefixed(namespace),
         }
     }
 
     // Nested namespaces as documented in
     // https://github.com/webmaster128/key-namespacing#nesting
-    pub fn multilevel(namespaces: &[&[u8]], storage: &'a mut T) -> Self {
+    pub fn multilevel(namespaces: &[&[u8]], storage: &'a mut S) -> Self {
         PrefixedStorage {
-            prefix: to_length_prefixed_nested(namespaces),
             storage,
+            prefix: to_length_prefixed_nested(namespaces),
         }
     }
 }
 
-impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
+impl<'a, S> ReadonlyStorage for PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
@@ -101,7 +122,10 @@ impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
     }
 }
 
-impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
+impl<'a, S> Storage for PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
     fn set(&mut self, key: &[u8], value: &[u8]) {
         set_with_prefix(self.storage, &self.prefix, key, value);
     }

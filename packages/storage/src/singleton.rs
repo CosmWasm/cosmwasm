@@ -6,20 +6,19 @@ use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
-// singleton is a helper function for less verbose usage
-pub fn singleton<'a, S: Storage, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
+/// An alias of Singleton::new for less verbose usage
+pub fn singleton<'a, S, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     Singleton::new(storage, key)
 }
 
-// singleton_read is a helper function for less verbose usage
-pub fn singleton_read<'a, S: ReadonlyStorage, T>(
-    storage: &'a S,
-    key: &[u8],
-) -> ReadonlySingleton<'a, S, T>
+/// An alias of ReadonlySingleton::new for less verbose usage
+pub fn singleton_read<'a, S, T>(storage: &'a S, key: &[u8]) -> ReadonlySingleton<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     ReadonlySingleton::new(storage, key)
@@ -29,18 +28,20 @@ where
 /// work on a single storage key. It performs the to_length_prefixed transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
-pub struct Singleton<'a, S: Storage, T>
+pub struct Singleton<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a mut S,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
+    data: PhantomData<T>,
 }
 
-impl<'a, S: Storage, T> Singleton<'a, S, T>
+impl<'a, S, T> Singleton<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(storage: &'a mut S, key: &[u8]) -> Self {
@@ -92,18 +93,20 @@ where
 
 /// ReadonlySingleton only requires a ReadonlyStorage and exposes only the
 /// methods of Singleton that don't modify state.
-pub struct ReadonlySingleton<'a, S: ReadonlyStorage, T>
+pub struct ReadonlySingleton<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a S,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
+    data: PhantomData<T>,
 }
 
-impl<'a, S: ReadonlyStorage, T> ReadonlySingleton<'a, S, T>
+impl<'a, S, T> ReadonlySingleton<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(storage: &'a S, key: &[u8]) -> Self {

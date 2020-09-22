@@ -13,49 +13,52 @@ use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_pre
 use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
-pub fn bucket<'a, S: Storage, T>(namespace: &[u8], storage: &'a mut S) -> Bucket<'a, S, T>
+/// An alias of Bucket::new for less verbose usage
+pub fn bucket<'a, S, T>(namespace: &[u8], storage: &'a mut S) -> Bucket<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     Bucket::new(namespace, storage)
 }
 
-pub fn bucket_read<'a, S: ReadonlyStorage, T>(
-    namespace: &[u8],
-    storage: &'a S,
-) -> ReadonlyBucket<'a, S, T>
+/// An alias of ReadonlyBucket::new for less verbose usage
+pub fn bucket_read<'a, S, T>(namespace: &[u8], storage: &'a S) -> ReadonlyBucket<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     ReadonlyBucket::new(namespace, storage)
 }
 
-pub struct Bucket<'a, S: Storage, T>
+pub struct Bucket<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a mut S,
-    // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
     prefix: Vec<u8>,
+    // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
+    data: PhantomData<T>,
 }
 
-impl<'a, S: Storage, T> Bucket<'a, S, T>
+impl<'a, S, T> Bucket<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(namespace: &[u8], storage: &'a mut S) -> Self {
         Bucket {
-            prefix: to_length_prefixed(namespace),
             storage,
+            prefix: to_length_prefixed(namespace),
             data: PhantomData,
         }
     }
 
     pub fn multilevel(namespaces: &[&[u8]], storage: &'a mut S) -> Self {
         Bucket {
-            prefix: to_length_prefixed_nested(namespaces),
             storage,
+            prefix: to_length_prefixed_nested(namespaces),
             data: PhantomData,
         }
     }
@@ -111,32 +114,34 @@ where
     }
 }
 
-pub struct ReadonlyBucket<'a, S: ReadonlyStorage, T>
+pub struct ReadonlyBucket<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a S,
-    // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
     prefix: Vec<u8>,
+    // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
+    data: PhantomData<T>,
 }
 
-impl<'a, S: ReadonlyStorage, T> ReadonlyBucket<'a, S, T>
+impl<'a, S, T> ReadonlyBucket<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(namespace: &[u8], storage: &'a S) -> Self {
         ReadonlyBucket {
-            prefix: to_length_prefixed(namespace),
             storage,
+            prefix: to_length_prefixed(namespace),
             data: PhantomData,
         }
     }
 
     pub fn multilevel(namespaces: &[&[u8]], storage: &'a S) -> Self {
         ReadonlyBucket {
-            prefix: to_length_prefixed_nested(namespaces),
             storage,
+            prefix: to_length_prefixed_nested(namespaces),
             data: PhantomData,
         }
     }

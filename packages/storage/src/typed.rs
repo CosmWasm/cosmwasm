@@ -9,31 +9,37 @@ use cosmwasm_std::{Order, KV};
 use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
-pub fn typed<S: Storage, T>(storage: &mut S) -> TypedStorage<S, T>
+/// An alias of TypedStorage::new for less verbose usage
+pub fn typed<S, T>(storage: &mut S) -> TypedStorage<S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     TypedStorage::new(storage)
 }
 
-pub fn typed_read<S: ReadonlyStorage, T>(storage: &S) -> ReadonlyTypedStorage<S, T>
+/// An alias of ReadonlyTypedStorage::new for less verbose usage
+pub fn typed_read<S, T>(storage: &S) -> ReadonlyTypedStorage<S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     ReadonlyTypedStorage::new(storage)
 }
 
-pub struct TypedStorage<'a, S: Storage, T>
+pub struct TypedStorage<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a mut S,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
+    data: PhantomData<T>,
 }
 
-impl<'a, S: Storage, T> TypedStorage<'a, S, T>
+impl<'a, S, T> TypedStorage<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(storage: &'a mut S) -> Self {
@@ -91,17 +97,19 @@ where
     }
 }
 
-pub struct ReadonlyTypedStorage<'a, S: ReadonlyStorage, T>
+pub struct ReadonlyTypedStorage<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a S,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
+    data: PhantomData<T>,
 }
 
-impl<'a, S: ReadonlyStorage, T> ReadonlyTypedStorage<'a, S, T>
+impl<'a, S, T> ReadonlyTypedStorage<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(storage: &'a S) -> Self {
