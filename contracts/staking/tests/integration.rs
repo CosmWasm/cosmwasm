@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, from_binary, Decimal, HumanAddr, InitResponse, StdError, StdResult, Uint128, Validator,
+    coin, from_binary, ContractResult, Decimal, HumanAddr, InitResponse, Uint128, Validator,
 };
 use cosmwasm_vm::testing::{init, mock_dependencies, mock_env, query};
 use cosmwasm_vm::Instance;
@@ -60,13 +60,12 @@ fn initialization_with_missing_validator() {
     let env = mock_env(&creator, &[]);
 
     // make sure we can init with this
-    let res: StdResult<InitResponse> = init(&mut deps, env, msg.clone());
-    match res.unwrap_err() {
-        StdError::GenericErr { msg, .. } => {
-            assert_eq!(msg, "my-validator is not in the current validator set")
-        }
-        _ => panic!("expected unregistered validator error"),
-    }
+    let res: ContractResult<InitResponse> = init(&mut deps, env, msg.clone());
+    let msg = res.unwrap_err();
+    assert_eq!(
+        msg,
+        "Generic error: my-validator is not in the current validator set"
+    );
 }
 
 #[test]

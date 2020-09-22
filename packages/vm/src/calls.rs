@@ -1,7 +1,9 @@
 use serde::de::DeserializeOwned;
 use std::fmt;
 
-use cosmwasm_std::{Env, HandleResult, InitResult, MigrateResult, QueryResult};
+use cosmwasm_std::{
+    ContractResult, Env, HandleResponse, InitResponse, MigrateResponse, QueryResponse,
+};
 
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Func, Instance};
@@ -18,7 +20,7 @@ pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<InitResult<U>>
+) -> VmResult<ContractResult<InitResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -27,7 +29,7 @@ where
 {
     let env = to_vec(env)?;
     let data = call_init_raw(instance, &env, msg)?;
-    let result: InitResult<U> = from_slice(&data)?;
+    let result: ContractResult<InitResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
 
@@ -35,7 +37,7 @@ pub fn call_handle<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<HandleResult<U>>
+) -> VmResult<ContractResult<HandleResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -44,7 +46,7 @@ where
 {
     let env = to_vec(env)?;
     let data = call_handle_raw(instance, &env, msg)?;
-    let result: HandleResult<U> = from_slice(&data)?;
+    let result: ContractResult<HandleResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
 
@@ -52,7 +54,7 @@ pub fn call_migrate<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<MigrateResult<U>>
+) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -61,19 +63,19 @@ where
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
-    let result: MigrateResult<U> = from_slice(&data)?;
+    let result: ContractResult<MigrateResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
 
 pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     msg: &[u8],
-) -> VmResult<QueryResult> {
+) -> VmResult<ContractResult<QueryResponse>> {
     let data = call_query_raw(instance, msg)?;
-    let result: QueryResult = from_slice(&data)?;
+    let result: ContractResult<QueryResponse> = from_slice(&data)?;
 
     // Ensure query response is valid JSON
-    if let Ok(binary_response) = &result {
+    if let ContractResult::Ok(binary_response) = &result {
         serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
             VmError::generic_err(format!("Query response must be valid JSON. {}", e))
         })?;

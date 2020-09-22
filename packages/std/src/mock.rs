@@ -4,12 +4,13 @@ use std::collections::HashMap;
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult, SystemError, SystemResult};
+use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator, ValidatorsResponse,
     WasmQuery,
 };
+use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
@@ -137,7 +138,7 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
 
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
 /// cosmwasm-vm. It might diverge from QuerierResult at some point.
-pub type MockQuerierCustomHandlerResult = SystemResult<StdResult<Binary>>;
+pub type MockQuerierCustomHandlerResult = SystemResult<ContractResult<Binary>>;
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
@@ -161,7 +162,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
             wasm: NoWasmQuerier {},
             // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
             custom_handler: Box::from(|_: &_| -> MockQuerierCustomHandlerResult {
-                Err(SystemError::UnsupportedRequest {
+                SystemResult::Err(SystemError::UnsupportedRequest {
                     kind: "custom".to_string(),
                 })
             }),
@@ -201,7 +202,7 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
-                return Err(SystemError::InvalidRequest {
+                return SystemResult::Err(SystemError::InvalidRequest {
                     error: format!("Parsing query request: {}", e),
                     request: bin_request.into(),
                 })
@@ -234,7 +235,7 @@ impl NoWasmQuerier {
             WasmQuery::Raw { contract_addr, .. } => contract_addr,
         }
         .clone();
-        Err(SystemError::NoSuchContract { addr })
+        SystemResult::Err(SystemError::NoSuchContract { addr })
     }
 }
 
@@ -253,7 +254,7 @@ impl BankQuerier {
     }
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
-        let contract_result: StdResult<Binary> = match request {
+        let contract_result: ContractResult<Binary> = match request {
             BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
                 let amount = self
@@ -267,18 +268,18 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                to_binary(&bank_res)
+                to_binary(&bank_res).into()
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                to_binary(&bank_res)
+                to_binary(&bank_res).into()
             }
         };
         // system result is always ok in the mock implementation
-        Ok(contract_result)
+        SystemResult::Ok(contract_result)
     }
 }
 
@@ -299,18 +300,18 @@ impl StakingQuerier {
     }
 
     pub fn query(&self, request: &StakingQuery) -> QuerierResult {
-        let contract_result: StdResult<Binary> = match request {
+        let contract_result: ContractResult<Binary> = match request {
             StakingQuery::BondedDenom {} => {
                 let res = BondedDenomResponse {
                     denom: self.denom.clone(),
                 };
-                to_binary(&res)
+                to_binary(&res).into()
             }
             StakingQuery::Validators {} => {
                 let res = ValidatorsResponse {
                     validators: self.validators.clone(),
                 };
-                to_binary(&res)
+                to_binary(&res).into()
             }
             StakingQuery::AllDelegations { delegator } => {
                 let delegations: Vec<_> = self
@@ -321,7 +322,7 @@ impl StakingQuerier {
                     .map(|d| d.into())
                     .collect();
                 let res = AllDelegationsResponse { delegations };
-                to_binary(&res)
+                to_binary(&res).into()
             }
             StakingQuery::Delegation {
                 delegator,
@@ -334,11 +335,11 @@ impl StakingQuerier {
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
-                to_binary(&res)
+                to_binary(&res).into()
             }
         };
         // system result is always ok in the mock implementation
-        Ok(contract_result)
+        SystemResult::Ok(contract_result)
     }
 }
 

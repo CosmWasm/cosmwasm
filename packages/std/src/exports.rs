@@ -1,6 +1,6 @@
 //! exports exposes the public wasm API
 //!
-//! cosmwasm_vm_version_3, allocate and deallocate turn into Wasm exports
+//! cosmwasm_vm_version_4, allocate and deallocate turn into Wasm exports
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
@@ -11,12 +11,14 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::errors::StdResult;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
+use crate::results::{
+    ContractResult, HandleResponse, InitResponse, MigrateResponse, QueryResponse,
+};
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
-use crate::{Env, HandleResult, InitResult, MigrateResult, QueryResponse, QueryResult};
+use crate::types::Env;
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -26,7 +28,7 @@ extern "C" fn requires_staking() -> () {}
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-extern "C" fn cosmwasm_vm_version_3() -> () {}
+extern "C" fn cosmwasm_vm_version_4() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
@@ -44,154 +46,196 @@ extern "C" fn deallocate(pointer: u32) {
     let _ = unsafe { consume_region(pointer as *mut Region) };
 }
 
+// TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
+macro_rules! r#try_into_contract_result {
+    ($expr:expr) => {
+        match $expr {
+            Ok(val) => val,
+            Err(err) => {
+                return ContractResult::Err(err.to_string());
+            }
+        }
+    };
+    ($expr:expr,) => {
+        $crate::try_into_contract_result!($expr)
+    };
+}
+
 /// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_init<T, U>(
+///
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+pub fn do_init<M, C, E>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
-        T,
-    ) -> InitResult<U>,
+        M,
+    ) -> Result<InitResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
-    T: DeserializeOwned + JsonSchema,
-    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    M: DeserializeOwned + JsonSchema,
+    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    E: ToString,
 {
-    let res: InitResult<U> = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
 
 /// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_handle<T, U>(
+///
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+pub fn do_handle<M, C, E>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
-        T,
-    ) -> HandleResult<U>,
+        M,
+    ) -> Result<HandleResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
-    T: DeserializeOwned + JsonSchema,
-    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    M: DeserializeOwned + JsonSchema,
+    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    E: ToString,
 {
-    let res: HandleResult<U> =
-        _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
-    let v = to_vec(&res).unwrap();
-    release_buffer(v) as u32
-}
-
-/// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
-        T,
-    ) -> StdResult<QueryResponse>,
-    msg_ptr: u32,
-) -> u32 {
-    let res: QueryResult = _do_query(query_fn, msg_ptr as *mut Region);
+    let res = _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
 
 /// do_migrate should be wrapped in an external "C" export, containing a contract-specific function as arg
-pub fn do_migrate<T, U>(
+///
+/// - `M`: message type for request
+/// - `C`: custom response message type (see CosmosMsg)
+/// - `E`: error type for responses
+pub fn do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
-        T,
-    ) -> MigrateResult<U>,
+        M,
+    ) -> Result<MigrateResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
-    T: DeserializeOwned + JsonSchema,
-    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    M: DeserializeOwned + JsonSchema,
+    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    E: ToString,
 {
-    let res: MigrateResult<U> =
-        _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
 
-fn _do_init<T, U>(
+/// do_query should be wrapped in an external "C" export, containing a contract-specific function as arg
+///
+/// - `M`: message type for request
+/// - `E`: error type for responses
+pub fn do_query<M, E>(
+    query_fn: &dyn Fn(
+        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        M,
+    ) -> Result<QueryResponse, E>,
+    msg_ptr: u32,
+) -> u32
+where
+    M: DeserializeOwned + JsonSchema,
+    E: ToString,
+{
+    let res = _do_query(query_fn, msg_ptr as *mut Region);
+    let v = to_vec(&res).unwrap();
+    release_buffer(v) as u32
+}
+
+fn _do_init<M, C, E>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
-        T,
-    ) -> InitResult<U>,
+        M,
+    ) -> Result<InitResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> InitResult<U>
+) -> ContractResult<InitResponse<C>>
 where
-    T: DeserializeOwned + JsonSchema,
-    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    M: DeserializeOwned + JsonSchema,
+    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-    let env: Env = from_slice(&env)?;
-    let msg: T = from_slice(&msg)?;
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
-    init_fn(&mut deps, env, msg)
+    init_fn(&mut deps, env, msg).into()
 }
 
-fn _do_handle<T, U>(
+fn _do_handle<M, C, E>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
-        T,
-    ) -> HandleResult<U>,
+        M,
+    ) -> Result<HandleResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> HandleResult<U>
+) -> ContractResult<HandleResponse<C>>
 where
-    T: DeserializeOwned + JsonSchema,
-    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    M: DeserializeOwned + JsonSchema,
+    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
-    let env: Env = from_slice(&env)?;
-    let msg: T = from_slice(&msg)?;
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
-    handle_fn(&mut deps, env, msg)
+    handle_fn(&mut deps, env, msg).into()
 }
 
-fn _do_query<T: DeserializeOwned + JsonSchema>(
-    query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
-        T,
-    ) -> StdResult<QueryResponse>,
-    msg_ptr: *mut Region,
-) -> StdResult<QueryResponse> {
-    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-
-    let msg: T = from_slice(&msg)?;
-    let deps = make_dependencies();
-    query_fn(&deps, msg)
-}
-
-fn _do_migrate<T, U>(
+fn _do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
-        T,
-    ) -> MigrateResult<U>,
+        M,
+    ) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> MigrateResult<U>
+) -> ContractResult<MigrateResponse<C>>
 where
-    T: DeserializeOwned + JsonSchema,
-    U: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    M: DeserializeOwned + JsonSchema,
+    C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
+    E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
-    let env: Env = from_slice(&env)?;
-    let msg: T = from_slice(&msg)?;
+    let env: Env = try_into_contract_result!(from_slice(&env));
+    let msg: M = try_into_contract_result!(from_slice(&msg));
     let mut deps = make_dependencies();
-    migrate_fn(&mut deps, env, msg)
+    migrate_fn(&mut deps, env, msg).into()
+}
+
+fn _do_query<M, E>(
+    query_fn: &dyn Fn(
+        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        M,
+    ) -> Result<QueryResponse, E>,
+    msg_ptr: *mut Region,
+) -> ContractResult<QueryResponse>
+where
+    M: DeserializeOwned + JsonSchema,
+    E: ToString,
+{
+    let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+
+    let msg: M = try_into_contract_result!(from_slice(&msg));
+    let deps = make_dependencies();
+    query_fn(&deps, msg).into()
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM

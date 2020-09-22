@@ -587,7 +587,7 @@ mod test {
         });
         match res.unwrap_err() {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
-            e => panic!("Unexpected error: {}", e),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -607,7 +607,7 @@ mod test {
                     "Wasmer resolve error: ExportNotFound { name: \"doesnt_exist\" }"
                 );
             }
-            e => panic!("Unexpected error: {}", e),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -719,7 +719,7 @@ mod test {
         });
         match result.unwrap_err() {
             VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, missing_id),
-            e => panic!("Unexpected error: {}", e),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 }

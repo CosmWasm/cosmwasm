@@ -1,8 +1,9 @@
 use cosmwasm_std::{
     attr, to_binary, Api, Binary, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    Querier, StdError, StdResult, Storage,
+    Querier, StdResult, Storage,
 };
 
+use crate::errors::ReflectError;
 use crate::msg::{
     CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
 };
@@ -26,7 +27,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> StdResult<HandleResponse<CustomMsg>> {
+) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, owner),
@@ -37,13 +38,19 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msgs: Vec<CosmosMsg<CustomMsg>>,
-) -> StdResult<HandleResponse<CustomMsg>> {
+) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     let state = config(&mut deps.storage).load()?;
-    if deps.api.canonical_address(&env.message.sender)? != state.owner {
-        return Err(StdError::unauthorized());
+
+    let sender = deps.api.canonical_address(&env.message.sender)?;
+    if sender != state.owner {
+        return Err(ReflectError::NotCurrentOwner {
+            expected: state.owner,
+            actual: sender,
+        });
     }
+
     if msgs.is_empty() {
-        return Err(StdError::generic_err("Must reflect at least one message"));
+        return Err(ReflectError::MessagesEmpty);
     }
     let res = HandleResponse {
         messages: msgs,
@@ -57,11 +64,15 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     owner: HumanAddr,
-) -> StdResult<HandleResponse<CustomMsg>> {
+) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     let api = deps.api;
     config(&mut deps.storage).update(|mut state| {
-        if api.canonical_address(&env.message.sender)? != state.owner {
-            return Err(StdError::unauthorized());
+        let sender = api.canonical_address(&env.message.sender)?;
+        if sender != state.owner {
+            return Err(ReflectError::NotCurrentOwner {
+                expected: state.owner,
+                actual: sender,
+            });
         }
         state.owner = api.canonical_address(&owner)?;
         Ok(state)
@@ -165,9 +176,9 @@ mod tests {
 
         let env = mock_env("random", &[]);
         let res = handle(&mut deps, env, msg);
-        match res {
-            Err(StdError::Unauthorized { .. }) => {}
-            _ => panic!("Must return unauthorized error"),
+        match res.unwrap_err() {
+            ReflectError::NotCurrentOwner { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -186,11 +197,9 @@ mod tests {
             msgs: payload.clone(),
         };
         let res = handle(&mut deps, env, msg);
-        match res {
-            Err(StdError::GenericErr { msg, .. }) => {
-                assert_eq!(msg, "Must reflect at least one message")
-            }
-            _ => panic!("Must return contract error"),
+        match res.unwrap_err() {
+            ReflectError::MessagesEmpty => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -228,7 +237,7 @@ mod tests {
     }
 
     #[test]
-    fn transfer() {
+    fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
@@ -249,7 +258,7 @@ mod tests {
     }
 
     #[test]
-    fn transfer_requires_owner() {
+    fn change_owner_requires_current_owner_as_sender() {
         let mut deps = mock_dependencies_with_custom_querier(20, &[]);
 
         let msg = InitMsg {};
@@ -263,9 +272,34 @@ mod tests {
         };
 
         let res = handle(&mut deps, env, msg);
-        match res {
-            Err(StdError::Unauthorized { .. }) => {}
-            _ => panic!("Must return unauthorized error"),
+        match res.unwrap_err() {
+            ReflectError::NotCurrentOwner { expected, actual } => {
+                assert_eq!(expected.as_slice(), b"creator\0\0\0\0\0\0\0\0\0\0\0\0\0");
+                assert_eq!(actual.as_slice(), b"random\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn change_owner_errors_for_invalid_new_address() {
+        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let creator = HumanAddr::from("creator");
+
+        let msg = InitMsg {};
+        let env = mock_env(&creator, &coins(2, "token"));
+        let _res = init(&mut deps, env, msg).unwrap();
+
+        let env = mock_env(&creator, &[]);
+        let msg = HandleMsg::ChangeOwner {
+            owner: HumanAddr::from("x"),
+        };
+        let res = handle(&mut deps, env, msg);
+        match res.unwrap_err() {
+            ReflectError::Std {
+                original: StdError::GenericErr { msg, .. },
+            } => assert!(msg.contains("human address too short")),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 

@@ -5,6 +5,9 @@
 **all**
 
 - Drop support for Rust versions lower than 1.45.2.
+- The serialization of the result from `init`/`migrate`/`handle`/`query` changed
+  in an incompatible way. See the new `ContractResult` and `SystemResult` types
+  and their documentation.
 
 **cosmwasm-std**
 
@@ -25,6 +28,7 @@
 
 - `CosmCache::new`, `Instance::from_code` and `Instance::from_module` now take
   an additional argument to enable/disable printing debug logs from contracts.
+- Bump required export `cosmwasm_vm_version_3` to `cosmwasm_vm_version_4`.
 
 ## 0.10.1 (2020-08-25)
 

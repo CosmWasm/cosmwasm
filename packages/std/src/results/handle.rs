@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 use crate::encoding::Binary;
-use crate::errors::StdResult;
+use crate::errors::StdError;
 use crate::types::Empty;
 
 use super::attribute::Attribute;
@@ -20,8 +20,6 @@ where
     pub data: Option<Binary>,
 }
 
-pub type HandleResult<U = Empty> = StdResult<HandleResponse<U>>;
-
 impl<T> Default for HandleResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -34,3 +32,5 @@ where
         }
     }
 }
+
+pub type HandleResult<U = Empty> = Result<HandleResponse<U>, StdError>;

@@ -814,7 +814,6 @@ dependencies = [
  "cosmwasm-vm",
  "schemars",
  "serde",
- "snafu",
 ]
 
 [[package]]

@@ -48,5 +48,3 @@ impl std::fmt::Display for SystemError {
         }
     }
 }
-
-pub type SystemResult<T> = Result<T, SystemError>;

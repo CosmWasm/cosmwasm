@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, HandleResponse, HandleResult, HumanAddr,
-    InitResponse, StakingMsg, StdError,
+    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HandleResponse, HumanAddr,
+    InitResponse, StakingMsg, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -48,7 +48,7 @@ pub fn mock_dependencies_with_custom_querier(
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<CustomQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
-            .with_custom_handler(|query| Ok(custom_query_execute(query)));
+            .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Extern {
         storage: MockStorage::default(),
@@ -128,11 +128,9 @@ fn reflect_requires_owner() {
     };
 
     let env = mock_env("someone", &[]);
-    let res: HandleResult<CustomMsg> = handle(&mut deps, env, msg);
-    match res {
-        Err(StdError::Unauthorized { .. }) => {}
-        _ => panic!("Must return unauthorized error"),
-    }
+    let res: ContractResult<HandleResponse<CustomMsg>> = handle(&mut deps, env, msg);
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
 
 #[test]
@@ -171,11 +169,9 @@ fn transfer_requires_owner() {
         owner: new_owner.clone(),
     };
 
-    let res: HandleResult = handle(&mut deps, env, msg);
-    match res {
-        Err(StdError::Unauthorized { .. }) => {}
-        _ => panic!("Must return unauthorized error"),
-    }
+    let res: ContractResult<HandleResponse> = handle(&mut deps, env, msg);
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
 
 #[test]

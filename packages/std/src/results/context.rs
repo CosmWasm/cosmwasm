@@ -160,7 +160,7 @@ mod test {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "cannot convert Context with data to InitResponse")
             }
-            e => panic!("Unexpected error: {}", e),
+            err => panic!("Unexpected error: {:?}", err),
         }
 
         // try Handle with everything set

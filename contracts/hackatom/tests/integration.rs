@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, Empty, HandleResponse,
-    HandleResult, HumanAddr, InitResponse, InitResult, MigrateResponse, StdError,
+    attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, ContractResult, Empty,
+    HandleResponse, HumanAddr, InitResponse, MigrateResponse,
 };
 use cosmwasm_vm::{
     call_handle, from_slice,
@@ -107,10 +107,8 @@ fn init_and_query() {
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
     let qres = query(&mut deps, HandleMsg::Release {});
-    match qres.unwrap_err() {
-        StdError::ParseErr { .. } => {}
-        _ => panic!("Expected parse error"),
-    }
+    let msg = qres.unwrap_err();
+    assert!(msg.contains("Error parsing"));
 }
 
 #[test]
@@ -174,11 +172,9 @@ fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
     let env = mock_env("creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res: InitResult = init(&mut deps, env, HandleMsg::Release {});
-    match res.unwrap_err() {
-        StdError::ParseErr { .. } => {}
-        _ => panic!("Expected parse error"),
-    }
+    let res: ContractResult<InitResponse> = init(&mut deps, env, HandleMsg::Release {});
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Error parsing"));
 }
 
 #[test]
@@ -256,11 +252,10 @@ fn handle_release_fails_for_wrong_sender() {
 
     // beneficiary cannot release it
     let handle_env = mock_env(beneficiary.as_str(), &[]);
-    let handle_res: HandleResult = handle(&mut deps, handle_env, HandleMsg::Release {});
-    match handle_res.unwrap_err() {
-        StdError::Unauthorized { .. } => {}
-        _ => panic!("Expect unauthorized error"),
-    }
+    let handle_res: ContractResult<HandleResponse> =
+        handle(&mut deps, handle_env, HandleMsg::Release {});
+    let msg = handle_res.unwrap_err();
+    assert!(msg.contains("Unauthorized"));
 
     // state should not change
     let data = deps

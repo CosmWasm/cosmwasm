@@ -5,12 +5,7 @@ use std::fmt;
 use crate::addresses::HumanAddr;
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::StdResult;
 use crate::math::Decimal;
-
-pub type QueryResponse = Binary;
-
-pub type QueryResult = StdResult<QueryResponse>;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
