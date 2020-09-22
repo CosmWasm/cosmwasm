@@ -58,7 +58,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
   You can also try a different error library than
   [thiserror](https://crates.io/crates/thiserror). The
-  [hackatom development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/hackatom)
+  [staking development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
   shows how this would look like using [snafu](https://crates.io/crates/snafu).
 
 - Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`

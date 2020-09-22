@@ -9,7 +9,7 @@ use cosmwasm_std::{
     QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
 
-use crate::errors::{HackError, Unauthorized};
+use crate::errors::HackError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -170,7 +170,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         ctx.set_data(&[0xF0, 0x0B, 0xAA]);
         Ok(ctx.into())
     } else {
-        Err(Unauthorized {}.build())
+        Err(HackError::Unauthorized {})
     }
 }
 
