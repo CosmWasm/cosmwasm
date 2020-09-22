@@ -550,14 +550,14 @@ mod test {
         assert_eq!(res.unwrap(), 5);
         assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
 
-        // rejects on error
+        // rolls back on error
         let res: StdResult<i32> = transactional(&mut base, |store| {
             // ensure we can read from the backing store
             assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
             assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
             // we write in the Error case
             store.set(b"bad", b"value");
-            Err(StdError::unauthorized())
+            Err(StdError::underflow(8, 65))
         });
         assert!(res.is_err());
         assert_eq!(base.get(b"bad"), None);

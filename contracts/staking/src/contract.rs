@@ -3,6 +3,7 @@ use cosmwasm_std::{
     InitResponse, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 
+use crate::errors::StakingError;
 use crate::msg::{
     BalanceResponse, ClaimsResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg,
     TokenInfoResponse,
@@ -56,13 +57,13 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
     msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, StakingError> {
     match msg {
-        HandleMsg::Transfer { recipient, amount } => transfer(deps, env, recipient, amount),
-        HandleMsg::Bond {} => bond(deps, env),
-        HandleMsg::Unbond { amount } => unbond(deps, env, amount),
-        HandleMsg::Claim {} => claim(deps, env),
-        HandleMsg::Reinvest {} => reinvest(deps, env),
+        HandleMsg::Transfer { recipient, amount } => Ok(transfer(deps, env, recipient, amount)?),
+        HandleMsg::Bond {} => Ok(bond(deps, env)?),
+        HandleMsg::Unbond { amount } => Ok(unbond(deps, env, amount)?),
+        HandleMsg::Claim {} => Ok(claim(deps, env)?),
+        HandleMsg::Reinvest {} => Ok(reinvest(deps, env)?),
         HandleMsg::_BondAllTokens {} => _bond_all_tokens(deps, env),
     }
 }
@@ -338,10 +339,10 @@ pub fn reinvest<S: Storage, A: Api, Q: Querier>(
 pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, StakingError> {
     // this is just meant as a call-back to ourself
     if env.message.sender != env.contract.address {
-        return Err(StdError::unauthorized());
+        return Err(StakingError::Unauthorized {});
     }
 
     // find how many tokens we have to bond
@@ -362,7 +363,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
         Ok(_) => {}
         // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
         Err(StdError::Underflow { .. }) => return Ok(HandleResponse::default()),
-        Err(e) => return Err(e),
+        Err(e) => return Err(e.into()),
     }
 
     // and bond them to the validator
@@ -705,8 +706,10 @@ mod tests {
         // try to bond and make sure we trigger delegation
         let res = handle(&mut deps, env, bond_msg);
         match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => assert_eq!(msg, "No ustake tokens sent"),
-            e => panic!("Expected wrong denom error, got: {:?}", e),
+            StakingError::Std(StdError::GenericErr { msg, .. }) => {
+                assert_eq!(msg, "No ustake tokens sent")
+            }
+            err => panic!("Unexpected error: {:?}", err),
         };
     }
 
@@ -753,8 +756,8 @@ mod tests {
         let env = mock_env(&creator, &[]);
         let res = handle(&mut deps, env, unbond_msg);
         match res.unwrap_err() {
-            StdError::Underflow { .. } => {}
-            e => panic!("unexpected error: {}", e),
+            StakingError::Std(StdError::Underflow { .. }) => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
 
         // bob unbonds 600 tokens at 10% tax...

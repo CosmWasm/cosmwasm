@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use snafu::Snafu;
 
 /// Structured error type for init, handle and query.
@@ -56,6 +58,10 @@ pub enum StdError {
         backtrace: Option<snafu::Backtrace>,
     },
     #[snafu(display("Unauthorized"))]
+    #[deprecated(
+        since = "0.11.0",
+        note = "All StdError cases not required by the standard library will be removed in cosmwasm-std 0.12. Please migrate to custom errors instead of using StdError."
+    )]
     Unauthorized { backtrace: Option<snafu::Backtrace> },
     #[snafu(display("Cannot subtract {} from {}", subtrahend, minuend))]
     Underflow {
@@ -112,6 +118,10 @@ impl StdError {
         .build()
     }
 
+    #[deprecated(
+        since = "0.11.0",
+        note = "All StdError cases not required by the standard library will be removed in cosmwasm-std 0.12. Please migrate to custom errors instead of using StdError."
+    )]
     pub fn unauthorized() -> Self {
         Unauthorized {}.build()
     }
@@ -271,5 +281,22 @@ mod test {
             StdError::Unauthorized { .. } => {}
             _ => panic!("expect different error"),
         }
+    }
+
+    #[test]
+    fn implements_debug() {
+        let error: StdError = StdError::underflow(3, 5);
+        let embedded = format!("Debug message: {:?}", error);
+        assert_eq!(
+            embedded,
+            r#"Debug message: Underflow { minuend: "3", subtrahend: "5", backtrace: None }"#
+        );
+    }
+
+    #[test]
+    fn implements_display() {
+        let error: StdError = StdError::underflow(3, 5);
+        let embedded = format!("Display message: {}", error);
+        assert_eq!(embedded, "Display message: Cannot subtract 5 from 3");
     }
 }
