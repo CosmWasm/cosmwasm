@@ -186,7 +186,7 @@ mod test {
     #[test]
     fn store_with_prefix() {
         let mut store = MockStorage::new();
-        let mut space = prefixed(b"data", &mut store);
+        let mut space = prefixed(&mut store, b"data");
         let mut bucket = typed::<_, Data>(&mut space);
 
         // save data

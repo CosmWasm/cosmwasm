@@ -33,6 +33,10 @@
 - Change order of arguments such that `storage` is always first followed by
   namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
   `ReadonlyBucket::multilevel`, `bucket` and `bucket_read`.
+- Change order of arguments such that `storage` is always first followed by
+  namespace in `PrefixedStorage::new`, `PrefixedStorage::multilevel`,
+  `ReadonlyPrefixedStorage::new`, `ReadonlyPrefixedStorage::multilevel`,
+  `prefixed` and `prefixed_read`.
 
 **cosmwasm-vm**
 

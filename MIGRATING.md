@@ -97,7 +97,10 @@ major releases of `cosmwasm`. Note that you can also view the
 
 - Change order of arguments such that `storage` is always first followed by
   namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
-  `ReadonlyBucket::multilevel`, `bucket` and `bucket_read`.
+  `ReadonlyBucket::multilevel`, `PrefixedStorage::new`,
+  `PrefixedStorage::multilevel`, `ReadonlyPrefixedStorage::new`,
+  `ReadonlyPrefixedStorage::multilevel`, `bucket`, `bucket_read`, `prefixed` and
+  `prefixed_read`.
 
   ```rust
   // before
