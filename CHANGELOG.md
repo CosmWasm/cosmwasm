@@ -28,6 +28,12 @@
   custom errors. From now on `StdError` should only be created by the standard
   library and should only contain cases the standard library needs.
 
+**cosmwasm-storage**
+
+- Change order of arguments such that `storage` is always first followed by
+  namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
+  `ReadonlyBucket::multilevel`, `bucket` and `bucket_read`.
+
 **cosmwasm-vm**
 
 - `CosmCache::new`, `Instance::from_code` and `Instance::from_module` now take
