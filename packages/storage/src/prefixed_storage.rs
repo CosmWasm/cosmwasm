@@ -7,26 +7,35 @@ use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 use crate::namespace_helpers::range_with_prefix;
 use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
 
-// prefixed_read is a helper function for less verbose usage
-pub fn prefixed_read<'a, T: ReadonlyStorage>(
-    prefix: &[u8],
-    storage: &'a T,
-) -> ReadonlyPrefixedStorage<'a, T> {
-    ReadonlyPrefixedStorage::new(prefix, storage)
+/// An alias of PrefixedStorage::new for less verbose usage
+pub fn prefixed<'a, S>(storage: &'a mut S, namespace: &[u8]) -> PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
+    PrefixedStorage::new(storage, namespace)
 }
 
-// prefixed_rw is a helper function for less verbose usage
-pub fn prefixed<'a, T: Storage>(prefix: &[u8], storage: &'a mut T) -> PrefixedStorage<'a, T> {
-    PrefixedStorage::new(prefix, storage)
+/// An alias of ReadonlyPrefixedStorage::new for less verbose usage
+pub fn prefixed_read<'a, S>(storage: &'a S, namespace: &[u8]) -> ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
+    ReadonlyPrefixedStorage::new(storage, namespace)
 }
 
-pub struct ReadonlyPrefixedStorage<'a, T: ReadonlyStorage> {
+pub struct ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
+    storage: &'a S,
     prefix: Vec<u8>,
-    storage: &'a T,
 }
 
-impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
-    pub fn new(namespace: &[u8], storage: &'a T) -> Self {
+impl<'a, S: ReadonlyStorage> ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
+    pub fn new(storage: &'a S, namespace: &[u8]) -> Self {
         ReadonlyPrefixedStorage {
             prefix: to_length_prefixed(namespace),
             storage,
@@ -35,7 +44,7 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
 
     // Nested namespaces as documented in
     // https://github.com/webmaster128/key-namespacing#nesting
-    pub fn multilevel(namespaces: &[&[u8]], storage: &'a T) -> Self {
+    pub fn multilevel(storage: &'a S, namespaces: &[&[u8]]) -> Self {
         ReadonlyPrefixedStorage {
             prefix: to_length_prefixed_nested(namespaces),
             storage,
@@ -43,7 +52,10 @@ impl<'a, T: ReadonlyStorage> ReadonlyPrefixedStorage<'a, T> {
     }
 }
 
-impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> {
+impl<'a, S> ReadonlyStorage for ReadonlyPrefixedStorage<'a, S>
+where
+    S: ReadonlyStorage,
+{
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
@@ -60,30 +72,39 @@ impl<'a, T: ReadonlyStorage> ReadonlyStorage for ReadonlyPrefixedStorage<'a, T> 
     }
 }
 
-pub struct PrefixedStorage<'a, T: Storage> {
+pub struct PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
+    storage: &'a mut S,
     prefix: Vec<u8>,
-    storage: &'a mut T,
 }
 
-impl<'a, T: Storage> PrefixedStorage<'a, T> {
-    pub fn new(namespace: &[u8], storage: &'a mut T) -> Self {
+impl<'a, S> PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
+    pub fn new(storage: &'a mut S, namespace: &[u8]) -> Self {
         PrefixedStorage {
-            prefix: to_length_prefixed(namespace),
             storage,
+            prefix: to_length_prefixed(namespace),
         }
     }
 
     // Nested namespaces as documented in
     // https://github.com/webmaster128/key-namespacing#nesting
-    pub fn multilevel(namespaces: &[&[u8]], storage: &'a mut T) -> Self {
+    pub fn multilevel(storage: &'a mut S, namespaces: &[&[u8]]) -> Self {
         PrefixedStorage {
-            prefix: to_length_prefixed_nested(namespaces),
             storage,
+            prefix: to_length_prefixed_nested(namespaces),
         }
     }
 }
 
-impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
+impl<'a, S> ReadonlyStorage for PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
@@ -101,7 +122,10 @@ impl<'a, T: Storage> ReadonlyStorage for PrefixedStorage<'a, T> {
     }
 }
 
-impl<'a, T: Storage> Storage for PrefixedStorage<'a, T> {
+impl<'a, S> Storage for PrefixedStorage<'a, S>
+where
+    S: Storage,
+{
     fn set(&mut self, key: &[u8], value: &[u8]) {
         set_with_prefix(self.storage, &self.prefix, key, value);
     }
@@ -121,16 +145,16 @@ mod test {
         let mut storage = MockStorage::new();
 
         // we use a block scope here to release the &mut before we use it in the next storage
-        let mut foo = PrefixedStorage::new(b"foo", &mut storage);
+        let mut foo = PrefixedStorage::new(&mut storage, b"foo");
         foo.set(b"bar", b"gotcha");
         assert_eq!(foo.get(b"bar"), Some(b"gotcha".to_vec()));
 
         // try readonly correctly
-        let rfoo = ReadonlyPrefixedStorage::new(b"foo", &storage);
+        let rfoo = ReadonlyPrefixedStorage::new(&storage, b"foo");
         assert_eq!(rfoo.get(b"bar"), Some(b"gotcha".to_vec()));
 
         // no collisions with other prefixes
-        let fo = ReadonlyPrefixedStorage::new(b"fo", &storage);
+        let fo = ReadonlyPrefixedStorage::new(&storage, b"fo");
         assert_eq!(fo.get(b"obar"), None);
 
         // Note: explicit scoping is not required, but you must not refer to `foo` anytime after you
@@ -143,20 +167,20 @@ mod test {
         let mut storage = MockStorage::new();
 
         // set with nested
-        let mut foo = PrefixedStorage::new(b"foo", &mut storage);
-        let mut bar = PrefixedStorage::new(b"bar", &mut foo);
+        let mut foo = PrefixedStorage::new(&mut storage, b"foo");
+        let mut bar = PrefixedStorage::new(&mut foo, b"bar");
         bar.set(b"baz", b"winner");
 
         // we can nest them the same encoding with one operation
-        let loader = ReadonlyPrefixedStorage::multilevel(&[b"foo", b"bar"], &storage);
+        let loader = ReadonlyPrefixedStorage::multilevel(&storage, &[b"foo", b"bar"]);
         assert_eq!(loader.get(b"baz"), Some(b"winner".to_vec()));
 
         // set with multilevel
-        let mut foobar = PrefixedStorage::multilevel(&[b"foo", b"bar"], &mut storage);
+        let mut foobar = PrefixedStorage::multilevel(&mut storage, &[b"foo", b"bar"]);
         foobar.set(b"second", b"time");
 
-        let a = ReadonlyPrefixedStorage::new(b"foo", &storage);
-        let b = ReadonlyPrefixedStorage::new(b"bar", &a);
+        let a = ReadonlyPrefixedStorage::new(&storage, b"foo");
+        let b = ReadonlyPrefixedStorage::new(&a, b"bar");
         assert_eq!(b.get(b"second"), Some(b"time".to_vec()));
     }
 }

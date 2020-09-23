@@ -18,20 +18,20 @@ pub const PREFIX_CLAIMS: &[u8] = b"claim";
 
 /// balances are state of the erc20 tokens
 pub fn balances<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
-    bucket(PREFIX_BALANCE, storage)
+    bucket(storage, PREFIX_BALANCE)
 }
 
 pub fn balances_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
-    bucket_read(PREFIX_BALANCE, storage)
+    bucket_read(storage, PREFIX_BALANCE)
 }
 
 /// claims are the claims to money being unbonded
 pub fn claims<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
-    bucket(PREFIX_CLAIMS, storage)
+    bucket(storage, PREFIX_CLAIMS)
 }
 
 pub fn claims_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
-    bucket_read(PREFIX_CLAIMS, storage)
+    bucket_read(storage, PREFIX_CLAIMS)
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract

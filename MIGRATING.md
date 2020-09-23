@@ -95,6 +95,21 @@ major releases of `cosmwasm`. Note that you can also view the
   [staking development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
   shows how this would look like using [snafu](https://crates.io/crates/snafu).
 
+- Change order of arguments such that `storage` is always first followed by
+  namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
+  `ReadonlyBucket::multilevel`, `PrefixedStorage::new`,
+  `PrefixedStorage::multilevel`, `ReadonlyPrefixedStorage::new`,
+  `ReadonlyPrefixedStorage::multilevel`, `bucket`, `bucket_read`, `prefixed` and
+  `prefixed_read`.
+
+  ```rust
+  // before
+  let mut bucket = bucket::<_, Data>(b"data", &mut store);
+
+  // after
+  let mut bucket = bucket::<_, Data>(&mut store, b"data");
+  ```
+
 - Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`
   to `InitResponse::attributes`, `MigrateResponse::attributes` and
   `HandleResponse::attributes`. Replace calls to `log` with `attr`:
