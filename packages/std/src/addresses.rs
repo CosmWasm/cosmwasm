@@ -119,9 +119,11 @@ mod test {
     }
 
     #[test]
-    fn human_addr_format() {
-        let human_addr = HumanAddr::from("Hello, world!");
-        assert_eq!("Hello, world!", format!("{}", human_addr));
+    fn human_addr_implements_display() {
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        let embedded = format!("Address: {}", human_addr);
+        assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
+        assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
     }
 
     #[test]
