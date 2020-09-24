@@ -27,6 +27,8 @@
 - Deprecate `StdError::Unauthorized` and `StdError::unauthorized` in favour of
   custom errors. From now on `StdError` should only be created by the standard
   library and should only contain cases the standard library needs.
+- Let `impl Display for CanonicalAddr` use upper case hex instead of base64.
+  This also affects `CanonicalAddr::to_string`.
 
 **cosmwasm-storage**
 
