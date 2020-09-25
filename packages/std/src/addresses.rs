@@ -83,7 +83,10 @@ impl CanonicalAddr {
 
 impl fmt::Display for CanonicalAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        for byte in self.0.as_slice() {
+            write!(f, "{:02X}", byte)?;
+        }
+        Ok(())
     }
 }
 
@@ -119,9 +122,11 @@ mod test {
     }
 
     #[test]
-    fn human_addr_format() {
-        let human_addr = HumanAddr::from("Hello, world!");
-        assert_eq!("Hello, world!", format!("{}", human_addr));
+    fn human_addr_implements_display() {
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        let embedded = format!("Address: {}", human_addr);
+        assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
+        assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
     }
 
     #[test]
@@ -167,5 +172,20 @@ mod test {
         assert_eq!(false, canonical_addr.is_empty());
         let empty_canonical_addr = CanonicalAddr::from(vec![]);
         assert_eq!(true, empty_canonical_addr.is_empty());
+    }
+
+    #[test]
+    fn canonical_addr_implements_display() {
+        let bytes: &[u8] = &[
+            0x12, // two hex digits
+            0x03, // small values must be padded to two digits
+            0xab, // ensure we get upper case
+            0x00, // always test extreme values
+            0xff,
+        ];
+        let address = CanonicalAddr::from(bytes);
+        let embedded = format!("Address: {}", address);
+        assert_eq!(embedded, "Address: 1203AB00FF");
+        assert_eq!(address.to_string(), "1203AB00FF");
     }
 }
