@@ -122,15 +122,9 @@ pub trait Querier {
         &self,
         request: &QueryRequest<C>,
     ) -> StdResult<U> {
-        let raw = match to_vec(request) {
-            Ok(raw) => raw,
-            Err(e) => {
-                return Err(StdError::generic_err(format!(
-                    "Serializing QueryRequest: {}",
-                    e
-                )))
-            }
-        };
+        let raw = to_vec(request).map_err(|serialize_err| {
+            StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+        })?;
         match self.raw_query(&raw) {
             SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
                 "Querier system error: {}",
