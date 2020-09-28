@@ -4,7 +4,9 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use cosmwasm_std::HandleResponse;
 
-use reflect::msg::{CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg};
+use reflect::msg::{
+    CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+};
 use reflect::state::State;
 
 fn main() {
@@ -19,5 +21,9 @@ fn main() {
     export_schema(&schema_for!(HandleResponse<CustomMsg>), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
+
+    // The possible return types for QueryMsg cases
     export_schema(&schema_for!(OwnerResponse), &out_dir);
+    export_schema(&schema_for!(CapitalizedResponse), &out_dir);
+    export_schema(&schema_for!(ChainResponse), &out_dir);
 }

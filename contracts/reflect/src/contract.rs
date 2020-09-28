@@ -1,11 +1,12 @@
 use cosmwasm_std::{
-    attr, to_binary, Api, Binary, CosmosMsg, Env, Extern, HandleResponse, HumanAddr, InitResponse,
-    Querier, StdResult, Storage,
+    attr, to_binary, to_vec, Api, Binary, ContractResult, CosmosMsg, Env, Extern, HandleResponse,
+    HumanAddr, InitResponse, Querier, QueryRequest, StdError, StdResult, Storage, SystemResult,
 };
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery, SpecialResponse,
+    CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+    SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, State};
 
@@ -90,6 +91,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
+        QueryMsg::Chain { request } => to_binary(&query_chain(deps, &request)?),
     }
 }
 
@@ -104,9 +106,30 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 fn query_capitalized<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     text: String,
-) -> StdResult<SpecialResponse> {
+) -> StdResult<CapitalizedResponse> {
     let req = SpecialQuery::Capitalized { text }.into();
-    deps.querier.custom_query(&req)
+    let response: SpecialResponse = deps.querier.custom_query(&req)?;
+    Ok(CapitalizedResponse { text: response.msg })
+}
+
+fn query_chain<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    request: &QueryRequest<SpecialQuery>,
+) -> StdResult<ChainResponse> {
+    let raw = to_vec(request).map_err(|serialize_err| {
+        StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+    })?;
+    match deps.querier.raw_query(&raw) {
+        SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
+            "Querier system error: {}",
+            system_err
+        ))),
+        SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(format!(
+            "Querier contract error: {}",
+            contract_err
+        ))),
+        SystemResult::Ok(ContractResult::Ok(value)) => Ok(ChainResponse { data: value }),
+    }
 }
 
 #[cfg(test)]
@@ -114,7 +137,10 @@ mod tests {
     use super::*;
     use crate::testing::mock_dependencies_with_custom_querier;
     use cosmwasm_std::testing::{mock_env, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{coin, coins, BankMsg, Binary, StakingMsg, StdError};
+    use cosmwasm_std::{
+        coin, coins, from_binary, AllBalanceResponse, BankMsg, BankQuery, Binary, StakingMsg,
+        StdError,
+    };
 
     #[test]
     fn proper_initialization() {
@@ -304,11 +330,40 @@ mod tests {
     }
 
     #[test]
-    fn dispatch_custom_query() {
+    fn capitalized_query_works() {
         let deps = mock_dependencies_with_custom_querier(20, &[]);
 
-        // we don't even initialize, just trigger a query
-        let value = query_capitalized(&deps, "demo one".to_string()).unwrap();
-        assert_eq!(value.msg, "DEMO ONE");
+        let msg = QueryMsg::Capitalized {
+            text: "demo one".to_string(),
+        };
+        let response = query(&deps, msg).unwrap();
+        let value: CapitalizedResponse = from_binary(&response).unwrap();
+        assert_eq!(value.text, "DEMO ONE");
+    }
+
+    #[test]
+    fn chain_query_works() {
+        let deps = mock_dependencies_with_custom_querier(20, &coins(123, "ucosm"));
+
+        // with bank query
+        let msg = QueryMsg::Chain {
+            request: BankQuery::AllBalances {
+                address: HumanAddr::from(MOCK_CONTRACT_ADDR),
+            }
+            .into(),
+        };
+        let response = query(&deps, msg).unwrap();
+        let outer: ChainResponse = from_binary(&response).unwrap();
+        let inner: AllBalanceResponse = from_binary(&outer.data).unwrap();
+        assert_eq!(inner.amount, coins(123, "ucosm"));
+
+        // with custom query
+        let msg = QueryMsg::Chain {
+            request: SpecialQuery::Ping {}.into(),
+        };
+        let response = query(&deps, msg).unwrap();
+        let outer: ChainResponse = from_binary(&response).unwrap();
+        let inner: SpecialResponse = from_binary(&outer.data).unwrap();
+        assert_eq!(inner.msg, "pong");
     }
 }

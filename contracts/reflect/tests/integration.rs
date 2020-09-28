@@ -30,7 +30,7 @@ use cosmwasm_vm::{
 };
 
 use reflect::msg::{
-    CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery, SpecialResponse,
+    CapitalizedResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery,
 };
 use reflect::testing::custom_query_execute;
 
@@ -189,6 +189,6 @@ fn dispatch_custom_query() {
         },
     )
     .unwrap();
-    let value: SpecialResponse = from_binary(&res).unwrap();
-    assert_eq!(value.msg, "DEMO ONE");
+    let value: CapitalizedResponse = from_binary(&res).unwrap();
+    assert_eq!(value.text, "DEMO ONE");
 }
