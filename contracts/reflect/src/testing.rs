@@ -23,7 +23,7 @@ pub fn mock_dependencies_with_custom_querier(
 pub fn custom_query_execute(query: &SpecialQuery) -> ContractResult<Binary> {
     let msg = match query {
         SpecialQuery::Ping {} => "pong".to_string(),
-        SpecialQuery::Capital { text } => text.to_uppercase(),
+        SpecialQuery::Capitalized { text } => text.to_uppercase(),
     };
     to_binary(&SpecialResponse { msg }).into()
 }
@@ -42,7 +42,7 @@ mod test {
 
     #[test]
     fn custom_query_execute_capitalize() {
-        let res = custom_query_execute(&SpecialQuery::Capital {
+        let res = custom_query_execute(&SpecialQuery::Capitalized {
             text: "fOObaR".to_string(),
         })
         .unwrap();
@@ -53,7 +53,7 @@ mod test {
     #[test]
     fn custom_querier() {
         let deps = mock_dependencies_with_custom_querier(20, &[]);
-        let req: QueryRequest<_> = SpecialQuery::Capital {
+        let req: QueryRequest<_> = SpecialQuery::Capitalized {
             text: "food".to_string(),
         }
         .into();

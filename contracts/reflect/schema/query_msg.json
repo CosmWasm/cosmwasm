@@ -14,7 +14,7 @@
       }
     },
     {
-      "description": "This will call out to SpecialQuery::Capitalize",
+      "description": "This will call out to SpecialQuery::Capitalized",
       "type": "object",
       "required": [
         "capitalized"

@@ -42,7 +42,7 @@ pub enum BankQuery {
 /// #[serde(rename_all = "snake_case")]
 /// pub enum MyCustomQuery {
 ///     Ping {},
-///     Capital { text: String },
+///     Capitalized { text: String },
 /// }
 ///
 /// impl CustomQuery for MyCustomQuery {}

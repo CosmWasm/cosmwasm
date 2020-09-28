@@ -89,7 +89,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
-        QueryMsg::Capitalized { text } => to_binary(&query_reflect(deps, text)?),
+        QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
     }
 }
 
@@ -101,11 +101,11 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
     Ok(resp)
 }
 
-fn query_reflect<S: Storage, A: Api, Q: Querier>(
+fn query_capitalized<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     text: String,
 ) -> StdResult<SpecialResponse> {
-    let req = SpecialQuery::Capital { text }.into();
+    let req = SpecialQuery::Capitalized { text }.into();
     deps.querier.custom_query(&req)
 }
 
@@ -308,7 +308,7 @@ mod tests {
         let deps = mock_dependencies_with_custom_querier(20, &[]);
 
         // we don't even initialize, just trigger a query
-        let value = query_reflect(&deps, "demo one".to_string()).unwrap();
+        let value = query_capitalized(&deps, "demo one".to_string()).unwrap();
         assert_eq!(value.msg, "DEMO ONE");
     }
 }

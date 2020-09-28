@@ -17,7 +17,7 @@ pub enum HandleMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Owner {},
-    /// This will call out to SpecialQuery::Capitalize
+    /// This will call out to SpecialQuery::Capitalized
     Capitalized {
         text: String,
     },
@@ -48,7 +48,7 @@ impl Into<CosmosMsg<CustomMsg>> for CustomMsg {
 /// An implementation of QueryRequest::Custom to show this works and can be extended in the contract
 pub enum SpecialQuery {
     Ping {},
-    Capital { text: String },
+    Capitalized { text: String },
 }
 
 impl CustomQuery for SpecialQuery {}
