@@ -29,6 +29,9 @@
   library and should only contain cases the standard library needs.
 - Let `impl Display for CanonicalAddr` use upper case hex instead of base64.
   This also affects `CanonicalAddr::to_string`.
+- Create trait `CustomQuery` for the generic argument in
+  `QueryRequest<C: CustomQuery>`. This allows us to provide
+  `impl<C: CustomQuery> From<C> for QueryRequest<C>` for any custom query.
 
 **cosmwasm-storage**
 

@@ -30,7 +30,7 @@ use cosmwasm_vm::{
 };
 
 use reflect::msg::{
-    CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+    CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery, SpecialResponse,
 };
 use reflect::testing::custom_query_execute;
 
@@ -40,13 +40,13 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 /// A drop-in replacement for cosmwasm_vm::testing::mock_dependencies
-/// that supports CustomQuery.
+/// that supports SpecialQuery.
 pub fn mock_dependencies_with_custom_querier(
     canonical_length: usize,
     contract_balance: &[Coin],
-) -> Extern<MockStorage, MockApi, MockQuerier<CustomQuery>> {
+) -> Extern<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
-    let custom_querier: MockQuerier<CustomQuery> =
+    let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
@@ -189,6 +189,6 @@ fn dispatch_custom_query() {
         },
     )
     .unwrap();
-    let value: CustomResponse = from_binary(&res).unwrap();
+    let value: SpecialResponse = from_binary(&res).unwrap();
     assert_eq!(value.msg, "DEMO ONE");
 }

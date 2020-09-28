@@ -7,8 +7,8 @@ use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
-    DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator, ValidatorsResponse,
-    WasmQuery,
+    CustomQuery, DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator,
+    ValidatorsResponse, WasmQuery,
 };
 use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
@@ -197,7 +197,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 }
 
-impl<C: DeserializeOwned> Querier for MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
@@ -212,7 +212,7 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     }
 }
 
-impl<C: DeserializeOwned> MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
     pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),

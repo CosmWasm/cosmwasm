@@ -5,7 +5,7 @@ use cosmwasm_std::{
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+    CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, State};
 
@@ -104,8 +104,8 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 fn query_reflect<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
     text: String,
-) -> StdResult<CustomResponse> {
-    let req = CustomQuery::Capital { text }.into();
+) -> StdResult<SpecialResponse> {
+    let req = SpecialQuery::Capital { text }.into();
     deps.querier.custom_query(&req)
 }
 
