@@ -89,7 +89,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<Binary> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
-        QueryMsg::ReflectCustom { text } => to_binary(&query_reflect(deps, text)?),
+        QueryMsg::Capitalized { text } => to_binary(&query_reflect(deps, text)?),
     }
 }
 

@@ -14,12 +14,13 @@
       }
     },
     {
+      "description": "This will call out to SpecialQuery::Capitalize",
       "type": "object",
       "required": [
-        "reflect_custom"
+        "capitalized"
       ],
       "properties": {
-        "reflect_custom": {
+        "capitalized": {
           "type": "object",
           "required": [
             "text"

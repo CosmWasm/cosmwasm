@@ -184,7 +184,7 @@ fn dispatch_custom_query() {
     // we don't even initialize, just trigger a query
     let res = query(
         &mut deps,
-        QueryMsg::ReflectCustom {
+        QueryMsg::Capitalized {
             text: "demo one".to_string(),
         },
     )
