@@ -88,7 +88,7 @@ dependencies = [
 
 [[package]]
 name = "burner"
-version = "0.1.0"
+version = "0.11.0-alpha2"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
