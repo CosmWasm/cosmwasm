@@ -43,7 +43,7 @@ snafu = { version = "0.6.3" }
 sha2 = "0.9.1"
 hex = "0.4"
 memmap = "0.7"
-parity-wasm = "0.41"
+parity-wasm = "0.42"
 
 [dev-dependencies]
 tempfile = "3.1.0"
