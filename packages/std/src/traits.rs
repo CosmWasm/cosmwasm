@@ -1,4 +1,4 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
@@ -6,7 +6,7 @@ use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
@@ -118,19 +118,13 @@ pub trait Querier {
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
     /// one level. Only use this if you don't need to check the SystemError
     /// eg. If you don't differentiate between contract missing and contract returned error
-    fn custom_query<T: Serialize, U: DeserializeOwned>(
+    fn custom_query<C: CustomQuery, U: DeserializeOwned>(
         &self,
-        request: &QueryRequest<T>,
+        request: &QueryRequest<C>,
     ) -> StdResult<U> {
-        let raw = match to_vec(request) {
-            Ok(raw) => raw,
-            Err(e) => {
-                return Err(StdError::generic_err(format!(
-                    "Serializing QueryRequest: {}",
-                    e
-                )))
-            }
-        };
+        let raw = to_vec(request).map_err(|serialize_err| {
+            StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+        })?;
         match self.raw_query(&raw) {
             SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
                 "Querier system error: {}",

@@ -14,12 +14,13 @@
       }
     },
     {
+      "description": "This will call out to SpecialQuery::Capitalized",
       "type": "object",
       "required": [
-        "reflect_custom"
+        "capitalized"
       ],
       "properties": {
-        "reflect_custom": {
+        "capitalized": {
           "type": "object",
           "required": [
             "text"
@@ -31,6 +32,300 @@
           }
         }
       }
+    },
+    {
+      "description": "Queries the blockchain and returns the result untouched",
+      "type": "object",
+      "required": [
+        "chain"
+      ],
+      "properties": {
+        "chain": {
+          "type": "object",
+          "required": [
+            "request"
+          ],
+          "properties": {
+            "request": {
+              "$ref": "#/definitions/QueryRequest_for_SpecialQuery"
+            }
+          }
+        }
+      }
     }
-  ]
+  ],
+  "definitions": {
+    "BankQuery": {
+      "anyOf": [
+        {
+          "description": "This calls into the native bank module for one denomination Return value is BalanceResponse",
+          "type": "object",
+          "required": [
+            "balance"
+          ],
+          "properties": {
+            "balance": {
+              "type": "object",
+              "required": [
+                "address",
+                "denom"
+              ],
+              "properties": {
+                "address": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "denom": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "This calls into the native bank module for all denominations. Note that this may be much more expensive than Balance and should be avoided if possible. Return value is AllBalanceResponse.",
+          "type": "object",
+          "required": [
+            "all_balances"
+          ],
+          "properties": {
+            "all_balances": {
+              "type": "object",
+              "required": [
+                "address"
+              ],
+              "properties": {
+                "address": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "QueryRequest_for_SpecialQuery": {
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "bank"
+          ],
+          "properties": {
+            "bank": {
+              "$ref": "#/definitions/BankQuery"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "custom"
+          ],
+          "properties": {
+            "custom": {
+              "$ref": "#/definitions/SpecialQuery"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "staking"
+          ],
+          "properties": {
+            "staking": {
+              "$ref": "#/definitions/StakingQuery"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "wasm"
+          ],
+          "properties": {
+            "wasm": {
+              "$ref": "#/definitions/WasmQuery"
+            }
+          }
+        }
+      ]
+    },
+    "SpecialQuery": {
+      "description": "An implementation of QueryRequest::Custom to show this works and can be extended in the contract",
+      "anyOf": [
+        {
+          "type": "object",
+          "required": [
+            "ping"
+          ],
+          "properties": {
+            "ping": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "capitalized"
+          ],
+          "properties": {
+            "capitalized": {
+              "type": "object",
+              "required": [
+                "text"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "StakingQuery": {
+      "anyOf": [
+        {
+          "description": "Returns the denomination that can be bonded (if there are multiple native tokens on the chain)",
+          "type": "object",
+          "required": [
+            "bonded_denom"
+          ],
+          "properties": {
+            "bonded_denom": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "description": "AllDelegations will return all delegations by the delegator",
+          "type": "object",
+          "required": [
+            "all_delegations"
+          ],
+          "properties": {
+            "all_delegations": {
+              "type": "object",
+              "required": [
+                "delegator"
+              ],
+              "properties": {
+                "delegator": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "Delegation will return more detailed info on a particular delegation, defined by delegator/validator pair",
+          "type": "object",
+          "required": [
+            "delegation"
+          ],
+          "properties": {
+            "delegation": {
+              "type": "object",
+              "required": [
+                "delegator",
+                "validator"
+              ],
+              "properties": {
+                "delegator": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "validator": {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "Returns all registered Validators on the system",
+          "type": "object",
+          "required": [
+            "validators"
+          ],
+          "properties": {
+            "validators": {
+              "type": "object"
+            }
+          }
+        }
+      ]
+    },
+    "WasmQuery": {
+      "anyOf": [
+        {
+          "description": "this queries the public API of another contract at a known address (with known ABI) return value is whatever the contract returns (caller should know)",
+          "type": "object",
+          "required": [
+            "smart"
+          ],
+          "properties": {
+            "smart": {
+              "type": "object",
+              "required": [
+                "contract_addr",
+                "msg"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "msg": {
+                  "description": "msg is the json-encoded QueryMsg struct",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key (or `Ok(Err(StdError:NotFound{}))` if missing)",
+          "type": "object",
+          "required": [
+            "raw"
+          ],
+          "properties": {
+            "raw": {
+              "type": "object",
+              "required": [
+                "contract_addr",
+                "key"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "key": {
+                  "description": "Key is the raw key used in the contracts Storage",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
 }
