@@ -144,7 +144,7 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(1000, "earth"));
@@ -160,7 +160,7 @@ mod tests {
 
     #[test]
     fn reflect() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(2, "token"));
@@ -183,7 +183,7 @@ mod tests {
 
     #[test]
     fn reflect_requires_owner() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(2, "token"));
@@ -210,7 +210,7 @@ mod tests {
 
     #[test]
     fn reflect_reject_empty_msgs() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(2, "token"));
@@ -231,7 +231,7 @@ mod tests {
 
     #[test]
     fn reflect_multiple_messages() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(2, "token"));
@@ -264,7 +264,7 @@ mod tests {
 
     #[test]
     fn change_owner_works() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(2, "token"));
@@ -285,13 +285,15 @@ mod tests {
 
     #[test]
     fn change_owner_requires_current_owner_as_sender() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let env = mock_env("creator", &coins(2, "token"));
+        let creator = HumanAddr::from("creator");
+        let env = mock_env(creator.clone(), &coins(2, "token"));
         let _res = init(&mut deps, env, msg).unwrap();
 
-        let env = mock_env("random", &[]);
+        let random = HumanAddr::from("random");
+        let env = mock_env(random.clone(), &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),
@@ -300,8 +302,8 @@ mod tests {
         let res = handle(&mut deps, env, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { expected, actual } => {
-                assert_eq!(expected.as_slice(), b"creator\0\0\0\0\0\0\0\0\0\0\0\0\0");
-                assert_eq!(actual.as_slice(), b"random\0\0\0\0\0\0\0\0\0\0\0\0\0\0");
+                assert_eq!(expected, deps.api.canonical_address(&creator).unwrap());
+                assert_eq!(actual, deps.api.canonical_address(&random).unwrap());
             }
             err => panic!("Unexpected error: {:?}", err),
         }
@@ -309,7 +311,7 @@ mod tests {
 
     #[test]
     fn change_owner_errors_for_invalid_new_address() {
-        let mut deps = mock_dependencies_with_custom_querier(20, &[]);
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
         let creator = HumanAddr::from("creator");
 
         let msg = InitMsg {};
@@ -331,7 +333,7 @@ mod tests {
 
     #[test]
     fn capitalized_query_works() {
-        let deps = mock_dependencies_with_custom_querier(20, &[]);
+        let deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = QueryMsg::Capitalized {
             text: "demo one".to_string(),
@@ -343,7 +345,7 @@ mod tests {
 
     #[test]
     fn chain_query_works() {
-        let deps = mock_dependencies_with_custom_querier(20, &coins(123, "ucosm"));
+        let deps = mock_dependencies_with_custom_querier(&coins(123, "ucosm"));
 
         // with bank query
         let msg = QueryMsg::Chain {

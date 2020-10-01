@@ -373,7 +373,7 @@ mod tests {
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -403,7 +403,7 @@ mod tests {
 
     #[test]
     fn init_and_query() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn migrate_verifier() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr::from("verifies");
         let beneficiary = HumanAddr::from("benefits");
@@ -458,7 +458,7 @@ mod tests {
     fn querier_callbacks_work() {
         let rich_addr = HumanAddr::from("foobar");
         let rich_balance = coins(10000, "gold");
-        let deps = mock_dependencies_with_balances(20, &[(&rich_addr, &rich_balance)]);
+        let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
         let bal = query_other_balance(&deps, rich_addr).unwrap();
@@ -471,7 +471,7 @@ mod tests {
 
     #[test]
     fn handle_release_works() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         // initialize the store
         let creator = HumanAddr::from("creator");
@@ -514,7 +514,7 @@ mod tests {
 
     #[test]
     fn handle_release_fails_for_wrong_sender() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         // initialize the store
         let creator = HumanAddr::from("creator");
@@ -558,7 +558,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "This page intentionally faulted")]
     fn handle_panic() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -580,7 +580,7 @@ mod tests {
 
     #[test]
     fn handle_user_errors_in_api_calls() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let init_msg = InitMsg {
             verifier: HumanAddr::from("verifies"),
@@ -599,7 +599,7 @@ mod tests {
         // the test framework doesn't handle contracts querying contracts yet,
         // let's just make sure the last step looks right
 
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies(&[]);
         let contract = HumanAddr::from("my-contract");
         let bin_contract: &[u8] = b"my-contract";
 

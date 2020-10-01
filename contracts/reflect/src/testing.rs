@@ -6,7 +6,6 @@ use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, Extern, HumanAddr, S
 /// A drop-in replacement for cosmwasm_std::testing::mock_dependencies
 /// this uses our CustomQuerier.
 pub fn mock_dependencies_with_custom_querier(
-    canonical_length: usize,
     contract_balance: &[Coin],
 ) -> Extern<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
@@ -15,7 +14,7 @@ pub fn mock_dependencies_with_custom_querier(
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(&query)));
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: custom_querier,
     }
 }
@@ -52,7 +51,7 @@ mod test {
 
     #[test]
     fn custom_querier() {
-        let deps = mock_dependencies_with_custom_querier(20, &[]);
+        let deps = mock_dependencies_with_custom_querier(&[]);
         let req: QueryRequest<_> = SpecialQuery::Capitalized {
             text: "food".to_string(),
         }
