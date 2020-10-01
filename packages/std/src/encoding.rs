@@ -25,12 +25,15 @@ impl Binary {
     pub fn to_base64(&self) -> String {
         base64::encode(&self.0)
     }
+
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
     }
+
     pub fn len(&self) -> usize {
         self.0.len()
     }
+
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
