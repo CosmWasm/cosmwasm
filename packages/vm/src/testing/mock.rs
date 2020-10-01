@@ -1,6 +1,5 @@
-use cosmwasm_std::{
-    Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-};
+use cosmwasm_std::testing::riffle_shuffle;
+use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -94,12 +93,13 @@ impl Api for MockApi {
         }
 
         let mut out = Vec::from(human.as_str());
-        let append = self.canonical_length - out.len();
-        if append > 0 {
-            out.extend(vec![0u8; append]);
+        // pad to canonical_length wil NULL bytes
+        out.resize(self.canonical_length, 0x00);
+        // shuffle to destroy the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        for _ in 0..18 {
+            out = riffle_shuffle(&out);
         }
-
-        (Ok(CanonicalAddr(Binary(out))), gas_info)
+        (Ok(out.into()), gas_info)
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
@@ -118,13 +118,13 @@ impl Api for MockApi {
             );
         }
 
-        // remove trailing 0's (TODO: fix this - but fine for first tests)
-        let trimmed: Vec<u8> = canonical
-            .as_slice()
-            .iter()
-            .cloned()
-            .filter(|&x| x != 0)
-            .collect();
+        let mut tmp: Vec<u8> = canonical.clone().into();
+        // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
+        for _ in 0..2 {
+            tmp = riffle_shuffle(&tmp);
+        }
+        // Remove NULL bytes (i.e. the padding)
+        let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
 
         let result = match String::from_utf8(trimmed) {
             Ok(human) => Ok(HumanAddr(human)),
@@ -159,7 +159,7 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
 mod test {
     use super::*;
     use crate::FfiError;
-    use cosmwasm_std::coins;
+    use cosmwasm_std::{coins, Binary};
 
     #[test]
     fn mock_env_arguments() {
