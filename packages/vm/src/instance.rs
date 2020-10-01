@@ -310,7 +310,7 @@ mod test {
 
     #[test]
     fn required_features_works() {
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies(&[]);
         let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
@@ -331,7 +331,7 @@ mod test {
         )
         .unwrap();
 
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies(&[]);
         let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));

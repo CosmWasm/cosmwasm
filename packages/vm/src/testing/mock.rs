@@ -12,14 +12,11 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(
-    canonical_length: usize,
-    contract_balance: &[Coin],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
     }
 }
@@ -27,12 +24,11 @@ pub fn mock_dependencies(
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
-    canonical_length: usize,
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: MockQuerier::new(balances),
     }
 }
@@ -42,30 +38,36 @@ pub fn mock_dependencies_with_balances(
 /// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    canonical_length: usize,
+    /// Length of canonical addresses created with this API. Contracts should not make any assumtions
+    /// what this value is.
+    pub canonical_length: usize,
     /// When set, all calls to the API fail with FfiError::Unknown containing this message
     backend_error: Option<&'static str>,
 }
 
 impl MockApi {
-    pub fn new(canonical_length: usize) -> Self {
-        MockApi {
-            canonical_length,
-            backend_error: None,
-        }
+    #[deprecated(
+        since = "0.11.0",
+        note = "The canonical length argument is unused. Use MockApi::default() instead."
+    )]
+    pub fn new(_canonical_length: usize) -> Self {
+        MockApi::default()
     }
 
-    pub fn new_failing(canonical_length: usize, backend_error: &'static str) -> Self {
+    pub fn new_failing(backend_error: &'static str) -> Self {
         MockApi {
-            canonical_length,
             backend_error: Some(backend_error),
+            ..MockApi::default()
         }
     }
 }
 
 impl Default for MockApi {
     fn default() -> Self {
-        Self::new(20)
+        MockApi {
+            canonical_length: 24,
+            backend_error: None,
+        }
     }
 }
 
@@ -174,21 +176,18 @@ mod test {
     }
 
     #[test]
-    fn flip_addresses() {
-        let api = MockApi::new(20);
-        let human = HumanAddr("shorty".to_string());
-        let canon = api.canonical_address(&human).0.unwrap();
-        assert_eq!(canon.len(), 20);
-        assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
-        assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
+    fn canonicalize_and_humanize_restores_original() {
+        let api = MockApi::default();
 
-        let (recovered, _gas_cost) = api.human_address(&canon);
-        assert_eq!(recovered.unwrap(), human);
+        let original = HumanAddr::from("shorty");
+        let canonical = api.canonical_address(&original).0.unwrap();
+        let (recovered, _gas_cost) = api.human_address(&canonical);
+        assert_eq!(recovered.unwrap(), original);
     }
 
     #[test]
     fn human_address_input_length() {
-        let api = MockApi::new(10);
+        let api = MockApi::default();
         let input = CanonicalAddr(Binary(vec![61; 11]));
         let (result, _gas_info) = api.human_address(&input);
         match result.unwrap_err() {
@@ -199,8 +198,8 @@ mod test {
 
     #[test]
     fn canonical_address_min_input_length() {
-        let api = MockApi::new(10);
-        let human = HumanAddr("1".to_string());
+        let api = MockApi::default();
+        let human = HumanAddr::from("1");
         match api.canonical_address(&human).0.unwrap_err() {
             FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
@@ -209,8 +208,8 @@ mod test {
 
     #[test]
     fn canonical_address_max_input_length() {
-        let api = MockApi::new(10);
-        let human = HumanAddr("longer-than-10".to_string());
+        let api = MockApi::default();
+        let human = HumanAddr::from("longer-than-the-address-length-supported-by-this-api");
         match api.canonical_address(&human).0.unwrap_err() {
             FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
