@@ -85,9 +85,9 @@ impl From<Vec<u8>> for Binary {
     }
 }
 
-impl Into<Vec<u8>> for Binary {
-    fn into(self) -> Vec<u8> {
-        self.0
+impl From<Binary> for Vec<u8> {
+    fn from(original: Binary) -> Vec<u8> {
+        original.0
     }
 }
 
@@ -278,10 +278,18 @@ mod test {
 
     #[test]
     fn into_vec_works() {
+        // Into<Vec<u8>> for Binary
         let original = Binary(vec![0u8, 187, 61, 11, 250, 0]);
         let original_ptr = original.0.as_ptr();
         let vec: Vec<u8> = original.into();
         assert_eq!(vec.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(vec.as_ptr(), original_ptr, "vector must not be copied");
+
+        // From<Binary> for Vec<u8>
+        let original = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        let original_ptr = original.0.as_ptr();
+        let vec = Vec::<u8>::from(original);
+        assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
         assert_eq!(vec.as_ptr(), original_ptr, "vector must not be copied");
     }
 
