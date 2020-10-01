@@ -17,7 +17,7 @@ use crate::{to_length_prefixed, to_length_prefixed_nested};
 /// Step 2 - allow multiple named secondary indexes, no multi-prefix on primary key
 /// Step 3 - allow multiple named secondary indexes, clean composite key support
 ///
-/// Current Status: 0
+/// Current Status: 1
 pub struct IndexedBucket<'a, S, T>
 where
     S: Storage,
@@ -176,5 +176,61 @@ where
         }
         self.replace(key, Some(&output), None)?;
         Ok(output)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    use cosmwasm_std::testing::MockStorage;
+    use serde::{Deserialize, Serialize};
+
+    #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
+    struct Data {
+        pub name: String,
+        pub age: i32,
+    }
+
+    fn by_name(data: &Data) -> Vec<u8> {
+        data.name.as_bytes().to_vec()
+    }
+
+    #[test]
+    fn store_and_load_by_index() {
+        let mut store = MockStorage::new();
+        let mut bucket = IndexedBucket::new(&mut store, b"data", by_name);
+
+        // save data
+        let data = Data {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        let pk: &[u8] = b"5627";
+        bucket.save(pk, &data).unwrap();
+
+        // load it properly
+        let loaded = bucket.load(pk).unwrap();
+        assert_eq!(data, loaded);
+
+        // load it by secondary index (we must know how to compute this)
+        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Maria").collect();
+        let marias = marias.unwrap();
+        assert_eq!(1, marias.len());
+        let (k, v) = &marias[0];
+        assert_eq!(pk, k.as_slice());
+        assert_eq!(&data, v);
+
+        // other index doesn't match (1 byte after)
+        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Marib").collect();
+        assert_eq!(0, marias.unwrap().len());
+
+        // other index doesn't match (1 byte before)
+        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Mari`").collect();
+        assert_eq!(0, marias.unwrap().len());
+
+        // other index doesn't match (longer)
+        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Maria5").collect();
+        assert_eq!(0, marias.unwrap().len());
     }
 }
