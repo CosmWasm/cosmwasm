@@ -50,12 +50,8 @@ where
     T: Serialize + DeserializeOwned,
 {
     pub fn set_pk(&mut self, key: &[u8], updated: &T) -> StdResult<()> {
-        Ok(set_with_prefix(
-            self.storage,
-            &self.prefix_pk,
-            key,
-            &to_vec(updated)?,
-        ))
+        set_with_prefix(self.storage, &self.prefix_pk, key, &to_vec(updated)?);
+        Ok(())
     }
 
     pub fn remove_pk(&mut self, key: &[u8]) {
