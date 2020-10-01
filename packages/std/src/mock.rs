@@ -88,9 +88,13 @@ impl Api for MockApi {
         }
 
         let mut out = Vec::from(human.as_str());
-        // pad to canonical_length wil NULL bytes
+
+        // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
-        // shuffle to destroy the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        // content-dependent rotate followed by shuffle to destroy
+        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        let rotate_by = digit_sum(&out) % self.canonical_length;
+        out.rotate_left(rotate_by);
         for _ in 0..18 {
             out = riffle_shuffle(&out);
         }
@@ -109,6 +113,9 @@ impl Api for MockApi {
         for _ in 0..2 {
             tmp = riffle_shuffle(&tmp);
         }
+        // Rotate back
+        let rotate_by = digit_sum(&tmp) % self.canonical_length;
+        tmp.rotate_right(rotate_by);
         // Remove NULL bytes (i.e. the padding)
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
@@ -366,6 +373,10 @@ pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
         out.push(left[i].clone());
     }
     out
+}
+
+pub fn digit_sum(input: &[u8]) -> usize {
+    input.iter().fold(0, |sum, val| sum + (*val as usize))
 }
 
 #[cfg(test)]
@@ -663,5 +674,21 @@ mod test {
             result = riffle_shuffle(&result);
         }
         assert_eq!(result, original);
+    }
+
+    #[test]
+    fn digit_sum_works() {
+        assert_eq!(digit_sum(&[]), 0);
+        assert_eq!(digit_sum(&[0]), 0);
+        assert_eq!(digit_sum(&[0, 0]), 0);
+        assert_eq!(digit_sum(&[0, 0, 0]), 0);
+
+        assert_eq!(digit_sum(&[1, 0, 0]), 1);
+        assert_eq!(digit_sum(&[0, 1, 0]), 1);
+        assert_eq!(digit_sum(&[0, 0, 1]), 1);
+
+        assert_eq!(digit_sum(&[1, 2, 3]), 6);
+
+        assert_eq!(digit_sum(&[255, 1]), 256);
     }
 }

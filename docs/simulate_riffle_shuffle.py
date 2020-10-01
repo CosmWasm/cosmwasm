@@ -7,6 +7,10 @@ def power(f, n):
         return lambda x: f(g(x))
     return functools.reduce(compose2, functions, lambda x: x)
 
+# Rotate input to the left by n positions
+def rotate_left(input, n):
+    return input[n:] + input[0:n]
+
 def riffle_shuffle(input):
     left = input[0:len(input)//2]
     right = input[len(input)//2:]
@@ -28,9 +32,26 @@ values = [
     "creator-----------------", # 7
 ]
 
-transform = power(riffle_shuffle, 18)
-transformed = [transform(v) for v in values]
+def digit_sum(input):
+    def value(char):
+        if char == "-":
+            return 0
+        else:
+            return ord(char)
+    return sum([value(c) for c in input])
+
+shuffle = power(riffle_shuffle, 18)
+rotated = [rotate_left(v, digit_sum(v) % 24) for v in values]
+rotated_shuffled = [shuffle(r) for r in rotated]
+shuffled = [shuffle(v) for v in values]
 
 print("Original:\n" + "\n".join(sorted(values)))
 print()
-print("Shuffled:\n" + "\n".join(sorted(transformed)))
+# digit_sums = [str(digit_sum(v) % 24) for v in values]
+# print("Digit sums:\n" + "\n".join(digit_sums))
+# print()
+print("Rotated:\n" + "\n".join(sorted(rotated)))
+print()
+print("Shuffled:\n" + "\n".join(sorted(shuffled)))
+print()
+print("Rotated+Shuffled:\n" + "\n".join(sorted(rotated_shuffled)))

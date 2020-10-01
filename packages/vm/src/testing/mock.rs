@@ -1,4 +1,4 @@
-use cosmwasm_std::testing::riffle_shuffle;
+use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
 use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 use super::querier::MockQuerier;
@@ -93,9 +93,12 @@ impl Api for MockApi {
         }
 
         let mut out = Vec::from(human.as_str());
-        // pad to canonical_length wil NULL bytes
+        // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
-        // shuffle to destroy the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        // content-dependent rotate followed by shuffle to destroy
+        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        let rotate_by = digit_sum(&out) % self.canonical_length;
+        out.rotate_left(rotate_by);
         for _ in 0..18 {
             out = riffle_shuffle(&out);
         }
@@ -123,6 +126,9 @@ impl Api for MockApi {
         for _ in 0..2 {
             tmp = riffle_shuffle(&tmp);
         }
+        // Rotate back
+        let rotate_by = digit_sum(&tmp) % self.canonical_length;
+        tmp.rotate_right(rotate_by);
         // Remove NULL bytes (i.e. the padding)
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
 
