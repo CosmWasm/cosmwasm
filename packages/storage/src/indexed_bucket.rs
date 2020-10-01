@@ -240,8 +240,6 @@ where
         self.core.may_load(key)
     }
 
-    // TODO: move all iterators into core, just pass-through
-
     /// iterates over the items in pk order
     pub fn range<'b>(
         &'b self,
@@ -254,6 +252,7 @@ where
 
     /// returns all pks that where stored under this secondary index, always Ascending
     /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
+    /// TODO: return error if index_name is not registered?
     pub fn pks_by_index<'b>(
         &'b self,
         index_name: &str,
@@ -289,12 +288,18 @@ mod test {
         data.name.as_bytes().to_vec()
     }
 
+    fn by_age(data: &Data) -> Vec<u8> {
+        data.age.to_be_bytes().into()
+    }
+
     #[test]
     fn store_and_load_by_index() {
         let mut store = MockStorage::new();
         // TODO: add second index
         let mut bucket = IndexedBucket::new(&mut store, b"data")
             .with_index("name", by_name)
+            .unwrap()
+            .with_index("age", by_age)
             .unwrap();
 
         // save data
@@ -327,6 +332,17 @@ mod test {
 
         // other index doesn't match (longer)
         let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria5").collect();
+        assert_eq!(0, marias.unwrap().len());
+
+        // match on proper age
+        let proper = 42u32.to_be_bytes();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &proper).collect();
+        let marias = marias.unwrap();
+        assert_eq!(1, marias.len());
+
+        // no match on wrong age
+        let too_old = 43u32.to_be_bytes();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &too_old).collect();
         assert_eq!(0, marias.unwrap().len());
     }
 }
