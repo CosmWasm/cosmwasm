@@ -54,7 +54,6 @@ impl Binary {
     ///
     /// assert_eq!(bytes, &[0, 187, 61, 11, 250, 0]);
     /// ```
-    #[inline]
     pub fn into_vec(self) -> Vec<u8> {
         self.into()
     }
