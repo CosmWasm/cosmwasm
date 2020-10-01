@@ -67,6 +67,12 @@ impl From<Vec<u8>> for CanonicalAddr {
     }
 }
 
+impl From<CanonicalAddr> for Vec<u8> {
+    fn from(source: CanonicalAddr) -> Vec<u8> {
+        source.0.into()
+    }
+}
+
 impl CanonicalAddr {
     pub fn as_slice(&self) -> &[u8] {
         &self.0.as_slice()
@@ -156,6 +162,40 @@ mod test {
         let bytes: Vec<u8> = vec![0u8, 187, 61, 11, 250, 0];
         let canonical_addr_vec = CanonicalAddr::from(bytes);
         assert_eq!(canonical_addr_vec.as_slice(), &[0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn canonical_addr_from_vec_works() {
+        // Into<CanonicalAddr> for Vec<u8>
+        let original = vec![0u8, 187, 61, 11, 250, 0];
+        let original_ptr = original.as_ptr();
+        let addr: CanonicalAddr = original.into();
+        assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+
+        // From<Vec<u8>> for CanonicalAddr
+        let original = vec![0u8, 187, 61, 11, 250, 0];
+        let original_ptr = original.as_ptr();
+        let addr = CanonicalAddr::from(original);
+        assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+    }
+
+    #[test]
+    fn canonical_addr_into_vec_works() {
+        // Into<Vec<u8>> for CanonicalAddr
+        let original = CanonicalAddr::from(vec![0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = (original.0).0.as_ptr();
+        let vec: Vec<u8> = original.into();
+        assert_eq!(vec.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
+
+        // From<CanonicalAddr> for Vec<u8>
+        let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
+        let original_ptr = (original.0).0.as_ptr();
+        let vec = Vec::<u8>::from(original);
+        assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
     }
 
     #[test]
