@@ -97,6 +97,44 @@ where
     fn prefix_idx(&self, index_name: &str) -> Vec<u8> {
         to_length_prefixed_nested(&[&self.namespace, index_name.as_bytes()])
     }
+
+    /// iterates over the items in pk order
+    pub fn range<'b>(
+        &'b self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
+        let mapped = range_with_prefix(self.storage, &self.prefix_pk, start, end, order)
+            .map(deserialize_kv::<T>);
+        Box::new(mapped)
+    }
+
+    /// returns all pks that where stored under this secondary index, always Ascending
+    /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
+    pub fn pks_by_index<'b>(
+        &'b self,
+        index_name: &str,
+        idx: &[u8],
+    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
+        let start = self.index_space(index_name, idx);
+        let mapped =
+            range_with_prefix(self.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
+        Box::new(mapped)
+    }
+
+    /// returns all items that match this secondary index, always by pk Ascending
+    pub fn items_by_index<'b>(
+        &'b self,
+        index_name: &str,
+        idx: &[u8],
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
+        let mapped = self.pks_by_index(index_name, idx).map(move |pk| {
+            let v = self.load(&pk)?;
+            Ok((pk, v))
+        });
+        Box::new(mapped)
+    }
 }
 
 impl<'a, S, T> IndexedBucket<'a, S, T>
@@ -172,6 +210,25 @@ where
         Ok(())
     }
 
+    /// Loads the data, perform the specified action, and store the result
+    /// in the database. This is shorthand for some common sequences, which may be useful.
+    ///
+    /// If the data exists, `action(Some(value))` is called. Otherwise `action(None)` is called.
+    pub fn update<A, E>(&mut self, key: &[u8], action: A) -> Result<T, E>
+    where
+        A: FnOnce(Option<T>) -> Result<T, E>,
+        E: From<StdError>,
+    {
+        let input = self.may_load(key)?;
+        let output = action(input)?;
+        // TODO: somehow optimize to avoid double-reading, but that requires may_load to return Cloneable
+        self.save(key, &output)?;
+        Ok(output)
+    }
+
+    // Everything else, that doesn't touch indexers, is just pass-through from self.core,
+    // thus can be used from while iterating over indexes
+
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
         self.core.load(key)
@@ -192,9 +249,7 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.core.storage, &self.core.prefix_pk, start, end, order)
-            .map(deserialize_kv::<T>);
-        Box::new(mapped)
+        self.core.range(start, end, order)
     }
 
     /// returns all pks that where stored under this secondary index, always Ascending
@@ -204,10 +259,7 @@ where
         index_name: &str,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
-        let start = self.core.index_space(index_name, idx);
-        let mapped = range_with_prefix(self.core.storage, &start, None, None, Order::Ascending)
-            .map(|(k, _)| k);
-        Box::new(mapped)
+        self.core.pks_by_index(index_name, idx)
     }
 
     /// returns all items that match this secondary index, always by pk Ascending
@@ -216,27 +268,7 @@ where
         index_name: &str,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = self.pks_by_index(index_name, idx).map(move |pk| {
-            let v = self.load(&pk)?;
-            Ok((pk, v))
-        });
-        Box::new(mapped)
-    }
-
-    /// Loads the data, perform the specified action, and store the result
-    /// in the database. This is shorthand for some common sequences, which may be useful.
-    ///
-    /// If the data exists, `action(Some(value))` is called. Otherwise `action(None)` is called.
-    pub fn update<A, E>(&mut self, key: &[u8], action: A) -> Result<T, E>
-    where
-        A: FnOnce(Option<T>) -> Result<T, E>,
-        E: From<StdError>,
-    {
-        let input = self.may_load(key)?;
-        let output = action(input)?;
-        // TODO: somehow optimize to avoid double-reading, but that requires may_load to return Cloneable
-        self.save(key, &output)?;
-        Ok(output)
+        self.core.items_by_index(index_name, idx)
     }
 }
 
