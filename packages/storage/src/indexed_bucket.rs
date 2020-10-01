@@ -11,6 +11,7 @@ use crate::namespace_helpers::{
 };
 use crate::type_helpers::{deserialize_kv, may_deserialize, must_deserialize};
 use crate::{to_length_prefixed, to_length_prefixed_nested};
+use serde::export::PhantomData;
 
 /// IndexedBucket works like a bucket but has a secondary index
 /// This is a WIP.
@@ -18,8 +19,20 @@ use crate::{to_length_prefixed, to_length_prefixed_nested};
 /// Step 2 - allow multiple named secondary indexes, no multi-prefix on primary key
 /// Step 3 - allow multiple named secondary indexes, clean composite key support
 ///
-/// Current Status: 1->2
+/// Current Status: 2
 pub struct IndexedBucket<'a, S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned,
+{
+    core: Core<'a, S, T>,
+    // TODO: use the fully prefixed indexes as keys instead of names? (optimization)
+    indexers: BTreeMap<String, fn(&T) -> Vec<u8>>,
+}
+
+/// we pull out Core from IndexedBucket, so we can get a mutable reference to storage
+/// while holding an immutable iterator over indexers
+struct Core<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
@@ -28,8 +41,62 @@ where
     namespace: Vec<u8>,
     // this can be computed from the namespace, but we cache it as it is used everywhere
     prefix_pk: Vec<u8>,
-    // TODO: use the fully prefixed indexes as keys instead of names? (optimization)
-    indexers: BTreeMap<String, fn(&T) -> Vec<u8>>,
+    _phantom: PhantomData<T>,
+}
+
+impl<'a, S, T> Core<'a, S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned,
+{
+    pub fn set_pk(&mut self, key: &[u8], updated: &T) -> StdResult<()> {
+        Ok(set_with_prefix(
+            self.storage,
+            &self.prefix_pk,
+            key,
+            &to_vec(updated)?,
+        ))
+    }
+
+    pub fn remove_pk(&mut self, key: &[u8]) {
+        remove_with_prefix(self.storage, &self.prefix_pk, key)
+    }
+
+    /// load will return an error if no data is set at the given key, or on parse error
+    pub fn load(&self, key: &[u8]) -> StdResult<T> {
+        let value = get_with_prefix(self.storage, &self.prefix_pk, key);
+        must_deserialize(&value)
+    }
+
+    /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
+    /// returns an error on issues parsing
+    pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
+        let value = get_with_prefix(self.storage, &self.prefix_pk, key);
+        may_deserialize(&value)
+    }
+
+    // index is stored (namespace, idx): key -> b"1"
+    // idx is prefixed and appended to namespace
+    pub fn add_to_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
+        set_with_prefix(self.storage, &self.index_space(index_name, idx), key, b"1");
+    }
+
+    // index is stored (namespace, idx): key -> b"1"
+    // idx is prefixed and appended to namespace
+    pub fn remove_from_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
+        remove_with_prefix(self.storage, &self.index_space(index_name, idx), key);
+    }
+
+    fn index_space(&self, index_name: &str, idx: &[u8]) -> Vec<u8> {
+        let mut index_space = self.prefix_idx(index_name);
+        let mut key_prefix = to_length_prefixed(idx);
+        index_space.append(&mut key_prefix);
+        index_space
+    }
+
+    fn prefix_idx(&self, index_name: &str) -> Vec<u8> {
+        to_length_prefixed_nested(&[&self.namespace, index_name.as_bytes()])
+    }
 }
 
 impl<'a, S, T> IndexedBucket<'a, S, T>
@@ -39,9 +106,12 @@ where
 {
     pub fn new(storage: &'a mut S, namespace: &[u8]) -> Self {
         IndexedBucket {
-            storage,
-            namespace: namespace.to_vec(),
-            prefix_pk: to_length_prefixed_nested(&[namespace, b"pk"]),
+            core: Core {
+                storage,
+                namespace: namespace.to_vec(),
+                prefix_pk: to_length_prefixed_nested(&[namespace, b"pk"]),
+                _phantom: Default::default(),
+            },
             indexers: BTreeMap::new(),
         }
     }
@@ -87,56 +157,33 @@ where
             // Note: this didn't work as we cannot mutably borrow self (remove_from_index) inside the iterator
             for (name, indexer) in self.indexers.iter() {
                 let old_idx = indexer(old);
-                self.remove_from_index(&name, &old_idx, key);
+                self.core.remove_from_index(&name, &old_idx, key);
             }
         }
         if let Some(updated) = data {
             for (name, indexer) in self.indexers.iter() {
                 let new_idx = indexer(updated);
-                self.add_to_index(&name, &new_idx, key);
+                self.core.add_to_index(&name, &new_idx, key);
             }
-            set_with_prefix(self.storage, &self.prefix_pk, key, &to_vec(updated)?);
+            self.core.set_pk(key, updated)?;
         } else {
-            remove_with_prefix(self.storage, &self.prefix_pk, key);
+            self.core.remove_pk(key);
         }
         Ok(())
     }
 
-    // index is stored (namespace, idx): key -> b"1"
-    // idx is prefixed and appended to namespace
-    pub fn add_to_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
-        set_with_prefix(self.storage, &self.index_space(index_name, idx), key, b"1");
-    }
-
-    // index is stored (namespace, idx): key -> b"1"
-    // idx is prefixed and appended to namespace
-    pub fn remove_from_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
-        remove_with_prefix(self.storage, &self.index_space(index_name, idx), key);
-    }
-
-    fn index_space(&self, index_name: &str, idx: &[u8]) -> Vec<u8> {
-        let mut index_space = self.prefix_idx(index_name);
-        let mut key_prefix = to_length_prefixed(idx);
-        index_space.append(&mut key_prefix);
-        index_space
-    }
-
-    fn prefix_idx(&self, index_name: &str) -> Vec<u8> {
-        to_length_prefixed_nested(&[&self.namespace, index_name.as_bytes()])
-    }
-
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = get_with_prefix(self.storage, &self.prefix_pk, key);
-        must_deserialize(&value)
+        self.core.load(key)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = get_with_prefix(self.storage, &self.prefix_pk, key);
-        may_deserialize(&value)
+        self.core.may_load(key)
     }
+
+    // TODO: move all iterators into core, just pass-through
 
     /// iterates over the items in pk order
     pub fn range<'b>(
@@ -145,7 +192,7 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix_pk, start, end, order)
+        let mapped = range_with_prefix(self.core.storage, &self.core.prefix_pk, start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
     }
@@ -157,9 +204,9 @@ where
         index_name: &str,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
-        let start = self.index_space(index_name, idx);
-        let mapped =
-            range_with_prefix(self.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
+        let start = self.core.index_space(index_name, idx);
+        let mapped = range_with_prefix(self.core.storage, &start, None, None, Order::Ascending)
+            .map(|(k, _)| k);
         Box::new(mapped)
     }
 
