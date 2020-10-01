@@ -85,6 +85,27 @@ impl CanonicalAddr {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    /// Converts a `CanonicalAddr` into a vector of bytes.
+    ///
+    /// This consumes the `CanonicalAddr`, so we do not need to copy its contents.
+    /// It is equivalent to both `Vec::<u8>::from(addr)` and `let v: Vec<u8> = addr.into()` and just a matter of taste which one you use.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cosmwasm_std::CanonicalAddr;
+    /// let address = CanonicalAddr::from(vec![0, 187, 61, 11, 250, 0]);
+    /// let bytes = address.into_vec();
+    ///
+    /// assert_eq!(bytes, &[0, 187, 61, 11, 250, 0]);
+    /// ```
+    #[inline]
+    pub fn into_vec(self) -> Vec<u8> {
+        self.into()
+    }
 }
 
 impl fmt::Display for CanonicalAddr {

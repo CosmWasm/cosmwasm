@@ -34,6 +34,7 @@
   `impl<C: CustomQuery> From<C> for QueryRequest<C>` for any custom query.
 - Implement `From<Binary> for Vec<u8>`.
 - Implement `From<CanonicalAddr> for Vec<u8>`.
+- Add `Binary::into_vec` and `CanonicalAddr::into_vec`.
 
 **cosmwasm-storage**
 
