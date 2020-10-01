@@ -4,6 +4,7 @@
 use cosmwasm_std::{to_vec, Order, StdError, StdResult, Storage, KV};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+use std::collections::BTreeMap;
 
 use crate::namespace_helpers::{
     get_with_prefix, range_with_prefix, remove_with_prefix, set_with_prefix,
@@ -17,16 +18,18 @@ use crate::{to_length_prefixed, to_length_prefixed_nested};
 /// Step 2 - allow multiple named secondary indexes, no multi-prefix on primary key
 /// Step 3 - allow multiple named secondary indexes, clean composite key support
 ///
-/// Current Status: 1
+/// Current Status: 1->2
 pub struct IndexedBucket<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a mut S,
+    namespace: Vec<u8>,
+    // this can be computed from the namespace, but we cache it as it is used everywhere
     prefix_pk: Vec<u8>,
-    prefix_idx: Vec<u8>,
-    indexer: fn(&T) -> Vec<u8>,
+    // TODO: use the fully prefixed indexes as keys instead of names? (optimization)
+    indexers: BTreeMap<String, fn(&T) -> Vec<u8>>,
 }
 
 impl<'a, S, T> IndexedBucket<'a, S, T>
@@ -34,12 +37,32 @@ where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a mut S, namespace: &[u8], indexer: fn(&T) -> Vec<u8>) -> Self {
+    pub fn new(storage: &'a mut S, namespace: &[u8]) -> Self {
         IndexedBucket {
             storage,
+            namespace: namespace.to_vec(),
             prefix_pk: to_length_prefixed_nested(&[namespace, b"pk"]),
-            prefix_idx: to_length_prefixed_nested(&[namespace, b"idx"]),
-            indexer,
+            indexers: BTreeMap::new(),
+        }
+    }
+
+    /// Usage:
+    /// let mut bucket = IndexedBucket::new(&mut storeage, b"foobar")
+    ///                     .with_index("name", |x| x.name.clone())?
+    ///                     .with_index("age", by_age)?;
+    pub fn with_index<U: Into<String>>(
+        mut self,
+        name: U,
+        indexer: fn(&T) -> Vec<u8>,
+    ) -> StdResult<Self> {
+        let name = name.into();
+        let old = self.indexers.insert(name.clone(), indexer);
+        match old {
+            Some(_) => Err(StdError::generic_err(format!(
+                "Attempt to write index {} 2 times",
+                name
+            ))),
+            None => Ok(self),
         }
     }
 
@@ -61,12 +84,17 @@ where
     /// and can be called directly if you want to optimize
     pub fn replace(&mut self, key: &[u8], data: Option<&T>, old_data: Option<&T>) -> StdResult<()> {
         if let Some(old) = old_data {
-            let old_idx = (self.indexer)(old);
-            self.remove_from_index(&old_idx, key);
+            // Note: this didn't work as we cannot mutably borrow self (remove_from_index) inside the iterator
+            for (name, indexer) in self.indexers.iter() {
+                let old_idx = indexer(old);
+                self.remove_from_index(&name, &old_idx, key);
+            }
         }
         if let Some(updated) = data {
-            let new_idx = (self.indexer)(updated);
-            self.add_to_index(&new_idx, key);
+            for (name, indexer) in self.indexers.iter() {
+                let new_idx = indexer(updated);
+                self.add_to_index(&name, &new_idx, key);
+            }
             set_with_prefix(self.storage, &self.prefix_pk, key, &to_vec(updated)?);
         } else {
             remove_with_prefix(self.storage, &self.prefix_pk, key);
@@ -76,22 +104,25 @@ where
 
     // index is stored (namespace, idx): key -> b"1"
     // idx is prefixed and appended to namespace
-    pub fn add_to_index(&mut self, idx: &[u8], key: &[u8]) {
-        set_with_prefix(self.storage, &self.index_space(idx), key, b"1");
+    pub fn add_to_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
+        set_with_prefix(self.storage, &self.index_space(index_name, idx), key, b"1");
     }
 
     // index is stored (namespace, idx): key -> b"1"
     // idx is prefixed and appended to namespace
-    pub fn remove_from_index(&mut self, idx: &[u8], key: &[u8]) {
-        remove_with_prefix(self.storage, &self.index_space(idx), key);
+    pub fn remove_from_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
+        remove_with_prefix(self.storage, &self.index_space(index_name, idx), key);
     }
 
-    // TODO: make this a bit cleaner
-    fn index_space(&self, idx: &[u8]) -> Vec<u8> {
-        let mut index_space = self.prefix_idx.clone();
+    fn index_space(&self, index_name: &str, idx: &[u8]) -> Vec<u8> {
+        let mut index_space = self.prefix_idx(index_name);
         let mut key_prefix = to_length_prefixed(idx);
         index_space.append(&mut key_prefix);
         index_space
+    }
+
+    fn prefix_idx(&self, index_name: &str) -> Vec<u8> {
+        to_length_prefixed_nested(&[&self.namespace, index_name.as_bytes()])
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
@@ -121,8 +152,12 @@ where
 
     /// returns all pks that where stored under this secondary index, always Ascending
     /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
-    pub fn pks_by_index<'b>(&'b self, idx: &[u8]) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
-        let start = self.index_space(idx);
+    pub fn pks_by_index<'b>(
+        &'b self,
+        index_name: &str,
+        idx: &[u8],
+    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
+        let start = self.index_space(index_name, idx);
         let mapped =
             range_with_prefix(self.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
         Box::new(mapped)
@@ -131,9 +166,10 @@ where
     /// returns all items that match this secondary index, always by pk Ascending
     pub fn items_by_index<'b>(
         &'b self,
+        index_name: &str,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = self.pks_by_index(idx).map(move |pk| {
+        let mapped = self.pks_by_index(index_name, idx).map(move |pk| {
             let v = self.load(&pk)?;
             Ok((pk, v))
         });
@@ -149,18 +185,10 @@ where
         A: FnOnce(Option<T>) -> Result<T, E>,
         E: From<StdError>,
     {
-        // we cannot copy index and it is consumed by the action, so we cannot use input inside replace
-        // thus, we manually take care of removing the old index on success
         let input = self.may_load(key)?;
-        let old_idx = input.as_ref().map(self.indexer);
-
         let output = action(input)?;
-
-        // manually remove the old index if needed
-        if let Some(idx) = old_idx {
-            self.remove_from_index(&idx, key);
-        }
-        self.replace(key, Some(&output), None)?;
+        // TODO: somehow optimize to avoid double-reading, but that requires may_load to return Cloneable
+        self.save(key, &output)?;
         Ok(output)
     }
 }
@@ -185,7 +213,10 @@ mod test {
     #[test]
     fn store_and_load_by_index() {
         let mut store = MockStorage::new();
-        let mut bucket = IndexedBucket::new(&mut store, b"data", by_name);
+        // TODO: add second index
+        let mut bucket = IndexedBucket::new(&mut store, b"data")
+            .with_index("name", by_name)
+            .unwrap();
 
         // save data
         let data = Data {
@@ -200,7 +231,7 @@ mod test {
         assert_eq!(data, loaded);
 
         // load it by secondary index (we must know how to compute this)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Maria").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria").collect();
         let marias = marias.unwrap();
         assert_eq!(1, marias.len());
         let (k, v) = &marias[0];
@@ -208,15 +239,15 @@ mod test {
         assert_eq!(&data, v);
 
         // other index doesn't match (1 byte after)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Marib").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Marib").collect();
         assert_eq!(0, marias.unwrap().len());
 
         // other index doesn't match (1 byte before)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Mari`").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Mari`").collect();
         assert_eq!(0, marias.unwrap().len());
 
         // other index doesn't match (longer)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index(b"Maria5").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria5").collect();
         assert_eq!(0, marias.unwrap().len());
     }
 }
