@@ -59,8 +59,8 @@ mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
     pub use crate::mock::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, BankQuerier, MockApi,
-        MockQuerier, MockQuerierCustomHandlerResult, MockStorage, StakingQuerier,
+        mock_dependencies, mock_dependencies_with_balances, mock_env, riffle_shuffle, BankQuerier,
+        MockApi, MockQuerier, MockQuerierCustomHandlerResult, MockStorage, StakingQuerier,
         MOCK_CONTRACT_ADDR,
     };
 }
