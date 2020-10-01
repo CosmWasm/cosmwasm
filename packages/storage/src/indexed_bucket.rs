@@ -77,10 +77,6 @@ where
     // index is stored (namespace, idx): key -> b"1"
     // idx is prefixed and appended to namespace
     pub fn add_to_index(&mut self, idx: &[u8], key: &[u8]) {
-        // TODO: make this a bit cleaner
-        let mut index_space = self.prefix_idx.clone();
-        let mut key_prefix = to_length_prefixed(idx);
-        index_space.append(&mut key_prefix);
         set_with_prefix(self.storage, &self.index_space(idx), key, b"1");
     }
 
@@ -127,18 +123,8 @@ where
     /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
     pub fn pks_by_index<'b>(&'b self, idx: &[u8]) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
         let start = self.index_space(idx);
-        // end is the next byte
-        let mut end = start.clone();
-        let l = end.len();
-        end[l - 1] += 1;
-        let mapped = range_with_prefix(
-            self.storage,
-            &self.prefix_idx,
-            Some(&start),
-            Some(&end),
-            Order::Ascending,
-        )
-        .map(|(k, _)| k);
+        let mapped =
+            range_with_prefix(self.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
         Box::new(mapped)
     }
 
