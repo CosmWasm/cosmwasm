@@ -1,9 +1,10 @@
 // this module requires iterator to be useful at all
 #![cfg(feature = "iterator")]
 
-use cosmwasm_std::{to_vec, Order, StdError, StdResult, Storage, KV};
+use cosmwasm_std::{to_vec, Binary, Order, StdError, StdResult, Storage, KV};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
+// use serde::{Deserialize, Serialize};
 
 use crate::namespace_helpers::{
     get_with_prefix, range_with_prefix, remove_with_prefix, set_with_prefix,
@@ -355,6 +356,76 @@ where
     fn remove(&self, core: &mut Core<S, T>, pk: &[u8], old_data: &T) -> StdResult<()> {
         let idx = self.index(old_data);
         remove_with_prefix(core.storage, &core.index_space(&self._name, &idx), pk);
+        Ok(())
+    }
+}
+
+pub struct UniqueIndex<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    idx_fn: fn(&T) -> Vec<u8>,
+    _name: String,
+    _phantom: PhantomData<S>,
+}
+
+#[derive(Serialize, Clone)]
+pub struct UniqueRef<T>
+where
+    T: Serialize + DeserializeOwned + Clone,
+{
+    pk: Binary,
+    value: T,
+}
+
+impl<S, T> UniqueIndex<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    pub fn new<U: Into<String>>(idx_fn: fn(&T) -> Vec<u8>, name: U) -> Self {
+        UniqueIndex {
+            idx_fn,
+            _name: name.into(),
+            _phantom: Default::default(),
+        }
+    }
+}
+
+impl<S, T> Index<S, T> for UniqueIndex<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    fn name(&self) -> String {
+        self._name.clone()
+    }
+
+    fn index(&self, data: &T) -> Vec<u8> {
+        (self.idx_fn)(data)
+    }
+
+    // we store (namespace, index_name, idx_value) -> { pk, value }
+    fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
+        let idx = self.index(data);
+        let reference = UniqueRef::<T> {
+            pk: pk.into(),
+            value: data.clone(),
+        };
+        set_with_prefix(
+            core.storage,
+            &core.prefix_idx(&self._name),
+            &idx,
+            &to_vec(&reference)?,
+        );
+        Ok(())
+    }
+
+    // we store (namespace, index_name, idx_value) -> { pk, value }
+    fn remove(&self, core: &mut Core<S, T>, _pk: &[u8], old_data: &T) -> StdResult<()> {
+        let idx = self.index(old_data);
+        remove_with_prefix(core.storage, &core.prefix_idx(&self._name), &idx);
         Ok(())
     }
 }
