@@ -4,7 +4,6 @@
 use cosmwasm_std::{to_vec, Order, StdError, StdResult, Storage, KV};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::collections::BTreeMap;
 
 use crate::namespace_helpers::{
     get_with_prefix, range_with_prefix, remove_with_prefix, set_with_prefix,
@@ -12,6 +11,11 @@ use crate::namespace_helpers::{
 use crate::type_helpers::{deserialize_kv, may_deserialize, must_deserialize};
 use crate::{to_length_prefixed, to_length_prefixed_nested};
 use serde::export::PhantomData;
+
+/// reserved name, no index may register
+const PREFIX_PK: &[u8] = b"_pk";
+/// MARKER is stored in the multi-index as value, but we only look at the key (which is pk)
+const MARKER: &[u8] = b"1";
 
 /// IndexedBucket works like a bucket but has a secondary index
 /// This is a WIP.
@@ -21,25 +25,34 @@ use serde::export::PhantomData;
 /// Step 4 - allow multiple named secondary indexes, clean composite key support
 ///
 /// Current Status: 2
-pub struct IndexedBucket<'a, 'b, S, T>
+pub struct IndexedBucket<'a, 'b, 'x, S, T>
 where
-    S: Storage,
-    T: Serialize + DeserializeOwned,
+    S: Storage + 'x,
+    T: Serialize + DeserializeOwned + Clone + 'x,
 {
     core: Core<'a, 'b, S, T>,
-    // TODO: use the fully prefixed indexes as keys instead of names? (optimization)
-    indexers: BTreeMap<String, fn(&T) -> Vec<u8>>,
+    indexes: Vec<Box<dyn Index<S, T> + 'x>>,
 }
 
-/// reserved name, no index may register
-const PREFIX_PK: &[u8] = b"_pk";
+pub trait Index<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    // TODO: do we make this any Vec<u8> ?
+    fn name(&self) -> String;
+    fn index(&self, data: &T) -> Vec<u8>;
+
+    fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()>;
+    fn remove(&self, core: &mut Core<S, T>, pk: &[u8], old_data: &T) -> StdResult<()>;
+}
 
 /// we pull out Core from IndexedBucket, so we can get a mutable reference to storage
 /// while holding an immutable iterator over indexers
-struct Core<'a, 'b, S, T>
+pub struct Core<'a, 'b, S, T>
 where
     S: Storage,
-    T: Serialize + DeserializeOwned,
+    T: Serialize + DeserializeOwned + Clone,
 {
     storage: &'a mut S,
     namespace: &'b [u8],
@@ -49,7 +62,7 @@ where
 impl<'a, 'b, S, T> Core<'a, 'b, S, T>
 where
     S: Storage,
-    T: Serialize + DeserializeOwned,
+    T: Serialize + DeserializeOwned + Clone,
 {
     pub fn set_pk(&mut self, key: &[u8], updated: &T) -> StdResult<()> {
         set_with_prefix(self.storage, &self.prefix_pk(), key, &to_vec(updated)?);
@@ -72,6 +85,16 @@ where
         let value = get_with_prefix(self.storage, &self.prefix_pk(), key);
         may_deserialize(&value)
     }
+
+    // THis can be pulled into a trait.
+    // 1. index: fn(&T) -> Vec<u8>
+    // 2. store: needs access to core for storage and namespace
+    //
+    // 2 variants:
+    //  * store (namespace, index_name, idx_value, key) -> b"1" - allows many and references pk
+    //  * store (namespace, index_name, idx_value) -> {key, value} - allows one and copies pk and data
+    //  // this would be the primary key - we abstract that too???
+    //  * store (namespace, index_name, pk) -> value - allows one with data
 
     // index is stored (namespace, idx): key -> b"1"
     // idx is prefixed and appended to namespace
@@ -139,10 +162,10 @@ where
     }
 }
 
-impl<'a, 'b, S, T> IndexedBucket<'a, 'b, S, T>
+impl<'a, 'b, 'x, S, T> IndexedBucket<'a, 'b, 'x, S, T>
 where
     S: Storage,
-    T: Serialize + DeserializeOwned,
+    T: Serialize + DeserializeOwned + Clone,
 {
     pub fn new(storage: &'a mut S, namespace: &'b [u8]) -> Self {
         IndexedBucket {
@@ -151,13 +174,13 @@ where
                 namespace,
                 _phantom: Default::default(),
             },
-            indexers: BTreeMap::new(),
+            indexes: vec![],
         }
     }
 
     /// Usage:
     /// let mut bucket = IndexedBucket::new(&mut storeage, b"foobar")
-    ///                     .with_index("name", |x| x.name.clone())?
+    ///                     .with_unique_index("name", |x| x.name.clone())?
     ///                     .with_index("age", by_age)?;
     pub fn with_index<U: Into<String>>(
         mut self,
@@ -170,15 +193,18 @@ where
                 "Index _pk is reserved for the primary key",
             ));
         }
-
-        let old = self.indexers.insert(name.clone(), indexer);
-        match old {
-            Some(_) => Err(StdError::generic_err(format!(
-                "Attempt to write index {} 2 times",
-                name
-            ))),
-            None => Ok(self),
+        for existing in self.indexes.iter() {
+            if existing.name() == name {
+                return Err(StdError::generic_err(format!(
+                    "Attempt to write index {} 2 times",
+                    name
+                )));
+            }
         }
+
+        let index = MultiIndex::new(indexer, name);
+        self.indexes.push(Box::new(index));
+        Ok(self)
     }
 
     /// save will serialize the model and store, returns an error on serialization issues.
@@ -200,15 +226,13 @@ where
     pub fn replace(&mut self, key: &[u8], data: Option<&T>, old_data: Option<&T>) -> StdResult<()> {
         if let Some(old) = old_data {
             // Note: this didn't work as we cannot mutably borrow self (remove_from_index) inside the iterator
-            for (name, indexer) in self.indexers.iter() {
-                let old_idx = indexer(old);
-                self.core.remove_from_index(&name, &old_idx, key);
+            for index in self.indexes.iter() {
+                index.remove(&mut self.core, key, old)?;
             }
         }
         if let Some(updated) = data {
-            for (name, indexer) in self.indexers.iter() {
-                let new_idx = indexer(updated);
-                self.core.add_to_index(&name, &new_idx, key);
+            for index in self.indexes.iter() {
+                index.insert(&mut self.core, key, updated)?;
             }
             self.core.set_pk(key, updated)?;
         } else {
@@ -228,7 +252,7 @@ where
     {
         let input = self.may_load(key)?;
         let output = action(input)?;
-        // TODO: somehow optimize to avoid double-reading, but that requires may_load to return Cloneable
+        // TODO: somehow optimize to avoid double-reading, but that requires may_load to return Clone
         self.save(key, &output)?;
         Ok(output)
     }
@@ -278,6 +302,63 @@ where
     }
 }
 
+//------- indexers ------//
+
+pub struct MultiIndex<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    idx_fn: fn(&T) -> Vec<u8>,
+    _name: String,
+    _phantom: PhantomData<S>,
+}
+
+impl<S, T> MultiIndex<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    pub fn new<U: Into<String>>(idx_fn: fn(&T) -> Vec<u8>, name: U) -> Self {
+        MultiIndex {
+            idx_fn,
+            _name: name.into(),
+            _phantom: Default::default(),
+        }
+    }
+}
+
+impl<S, T> Index<S, T> for MultiIndex<S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    fn name(&self) -> String {
+        self._name.clone()
+    }
+
+    fn index(&self, data: &T) -> Vec<u8> {
+        (self.idx_fn)(data)
+    }
+
+    fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
+        let idx = self.index(data);
+        set_with_prefix(
+            core.storage,
+            &core.index_space(&self._name, &idx),
+            pk,
+            MARKER,
+        );
+        Ok(())
+    }
+
+    fn remove(&self, core: &mut Core<S, T>, pk: &[u8], old_data: &T) -> StdResult<()> {
+        let idx = self.index(old_data);
+        remove_with_prefix(core.storage, &core.index_space(&self._name, &idx), pk);
+        Ok(())
+    }
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -302,7 +383,6 @@ mod test {
     #[test]
     fn store_and_load_by_index() {
         let mut store = MockStorage::new();
-        // TODO: add second index
         let mut bucket = IndexedBucket::new(&mut store, b"data")
             .with_index("name", by_name)
             .unwrap()
