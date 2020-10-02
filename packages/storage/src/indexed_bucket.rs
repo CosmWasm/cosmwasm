@@ -17,57 +17,59 @@ use serde::export::PhantomData;
 /// This is a WIP.
 /// Step 1 - allow exactly 1 secondary index, no multi-prefix on primary key
 /// Step 2 - allow multiple named secondary indexes, no multi-prefix on primary key
-/// Step 3 - allow multiple named secondary indexes, clean composite key support
+/// Step 3 - allow unique indexes - They store {pk: Vec<u8>, value: T} so we don't need to re-lookup
+/// Step 4 - allow multiple named secondary indexes, clean composite key support
 ///
 /// Current Status: 2
-pub struct IndexedBucket<'a, S, T>
+pub struct IndexedBucket<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    core: Core<'a, S, T>,
+    core: Core<'a, 'b, S, T>,
     // TODO: use the fully prefixed indexes as keys instead of names? (optimization)
     indexers: BTreeMap<String, fn(&T) -> Vec<u8>>,
 }
 
+/// reserved name, no index may register
+const PREFIX_PK: &[u8] = b"_pk";
+
 /// we pull out Core from IndexedBucket, so we can get a mutable reference to storage
 /// while holding an immutable iterator over indexers
-struct Core<'a, S, T>
+struct Core<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a mut S,
-    namespace: Vec<u8>,
-    // this can be computed from the namespace, but we cache it as it is used everywhere
-    prefix_pk: Vec<u8>,
+    namespace: &'b [u8],
     _phantom: PhantomData<T>,
 }
 
-impl<'a, S, T> Core<'a, S, T>
+impl<'a, 'b, S, T> Core<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
     pub fn set_pk(&mut self, key: &[u8], updated: &T) -> StdResult<()> {
-        set_with_prefix(self.storage, &self.prefix_pk, key, &to_vec(updated)?);
+        set_with_prefix(self.storage, &self.prefix_pk(), key, &to_vec(updated)?);
         Ok(())
     }
 
     pub fn remove_pk(&mut self, key: &[u8]) {
-        remove_with_prefix(self.storage, &self.prefix_pk, key)
+        remove_with_prefix(self.storage, &self.prefix_pk(), key)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = get_with_prefix(self.storage, &self.prefix_pk, key);
+        let value = get_with_prefix(self.storage, &self.prefix_pk(), key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = get_with_prefix(self.storage, &self.prefix_pk, key);
+        let value = get_with_prefix(self.storage, &self.prefix_pk(), key);
         may_deserialize(&value)
     }
 
@@ -91,28 +93,32 @@ where
     }
 
     fn prefix_idx(&self, index_name: &str) -> Vec<u8> {
-        to_length_prefixed_nested(&[&self.namespace, index_name.as_bytes()])
+        to_length_prefixed_nested(&[self.namespace, index_name.as_bytes()])
+    }
+
+    fn prefix_pk(&self) -> Vec<u8> {
+        to_length_prefixed_nested(&[self.namespace, PREFIX_PK])
     }
 
     /// iterates over the items in pk order
-    pub fn range<'b>(
-        &'b self,
+    pub fn range<'c>(
+        &'c self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix_pk, start, end, order)
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
+        let mapped = range_with_prefix(self.storage, &self.prefix_pk(), start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
     }
 
     /// returns all pks that where stored under this secondary index, always Ascending
     /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
-    pub fn pks_by_index<'b>(
-        &'b self,
+    pub fn pks_by_index<'c>(
+        &'c self,
         index_name: &str,
         idx: &[u8],
-    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
+    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
         let start = self.index_space(index_name, idx);
         let mapped =
             range_with_prefix(self.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
@@ -120,11 +126,11 @@ where
     }
 
     /// returns all items that match this secondary index, always by pk Ascending
-    pub fn items_by_index<'b>(
-        &'b self,
+    pub fn items_by_index<'c>(
+        &'c self,
         index_name: &str,
         idx: &[u8],
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
         let mapped = self.pks_by_index(index_name, idx).map(move |pk| {
             let v = self.load(&pk)?;
             Ok((pk, v))
@@ -133,17 +139,16 @@ where
     }
 }
 
-impl<'a, S, T> IndexedBucket<'a, S, T>
+impl<'a, 'b, S, T> IndexedBucket<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a mut S, namespace: &[u8]) -> Self {
+    pub fn new(storage: &'a mut S, namespace: &'b [u8]) -> Self {
         IndexedBucket {
             core: Core {
                 storage,
-                namespace: namespace.to_vec(),
-                prefix_pk: to_length_prefixed_nested(&[namespace, b"pk"]),
+                namespace,
                 _phantom: Default::default(),
             },
             indexers: BTreeMap::new(),
@@ -160,6 +165,12 @@ where
         indexer: fn(&T) -> Vec<u8>,
     ) -> StdResult<Self> {
         let name = name.into();
+        if name.as_bytes() == PREFIX_PK {
+            return Err(StdError::generic_err(
+                "Index _pk is reserved for the primary key",
+            ));
+        }
+
         let old = self.indexers.insert(name.clone(), indexer);
         match old {
             Some(_) => Err(StdError::generic_err(format!(
@@ -237,32 +248,32 @@ where
     }
 
     /// iterates over the items in pk order
-    pub fn range<'b>(
-        &'b self,
+    pub fn range<'c>(
+        &'c self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
         self.core.range(start, end, order)
     }
 
     /// returns all pks that where stored under this secondary index, always Ascending
     /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
     /// TODO: return error if index_name is not registered?
-    pub fn pks_by_index<'b>(
-        &'b self,
+    pub fn pks_by_index<'c>(
+        &'c self,
         index_name: &str,
         idx: &[u8],
-    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'b> {
+    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
         self.core.pks_by_index(index_name, idx)
     }
 
     /// returns all items that match this secondary index, always by pk Ascending
-    pub fn items_by_index<'b>(
-        &'b self,
+    pub fn items_by_index<'c>(
+        &'c self,
         index_name: &str,
         idx: &[u8],
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
         self.core.items_by_index(index_name, idx)
     }
 }
