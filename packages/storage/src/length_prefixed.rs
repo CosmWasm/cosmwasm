@@ -71,7 +71,6 @@ pub fn nested_namespaces_with_key(top_names: &[&[u8]], sub_names: &[&[u8]], key:
     out
 }
 
-
 /// Encodes the length of a given namespace as a 2 byte big endian encoded integer
 fn encode_length(namespace: &[u8]) -> [u8; 2] {
     if namespace.len() > 0xFFFF {

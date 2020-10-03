@@ -5,10 +5,9 @@ use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
-use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested, nested_namespaces_with_key};
+use crate::length_prefixed::nested_namespaces_with_key;
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
-use crate::namespace_helpers::get_with_prefix;
 #[cfg(feature = "iterator")]
 use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
@@ -25,7 +24,10 @@ where
 }
 
 /// An alias of ReadonlyBucket::new for less verbose usage
-pub fn bucket_read<'a, S, T>(storage: &'a S, namespace: &[u8]) -> ReadonlyBucket<'a, S, T>
+pub fn bucket_read<'a, 'b, S, T>(
+    storage: &'a S,
+    namespace: &'b [u8],
+) -> ReadonlyBucket<'a, 'b, S, T>
 where
     S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
@@ -44,7 +46,7 @@ where
     T: Serialize + DeserializeOwned,
 {
     pub(crate) storage: &'a mut S,
-    pub(crate) namespaces: Vec<&'b[u8]>,
+    pub(crate) namespaces: Vec<&'b [u8]>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
 }
@@ -62,10 +64,10 @@ where
         }
     }
 
-    pub fn multilevel(storage: &'a mut S, namespace: &[&'b[u8]]) -> Self {
+    pub fn multilevel(storage: &'a mut S, namespaces: &[&'b [u8]]) -> Self {
         Bucket {
             storage,
-            namespaces: namespace.to_vec(),
+            namespaces: namespaces.to_vec(),
             data: PhantomData,
         }
     }
@@ -111,8 +113,8 @@ where
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
         let namespace = self.build_prefixed_key(b"");
-        let mapped = range_with_prefix(self.storage, &namespace, start, end, order)
-            .map(deserialize_kv::<T>);
+        let mapped =
+            range_with_prefix(self.storage, &namespace, start, end, order).map(deserialize_kv::<T>);
         Box::new(mapped)
     }
 
@@ -132,60 +134,69 @@ where
     }
 }
 
-pub struct ReadonlyBucket<'a, S, T>
+pub struct ReadonlyBucket<'a, 'b, S, T>
 where
     S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a S,
-    prefix: Vec<u8>,
+    pub(crate) storage: &'a S,
+    pub(crate) namespaces: Vec<&'b [u8]>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
 }
 
-impl<'a, S, T> ReadonlyBucket<'a, S, T>
+impl<'a, 'b, S, T> ReadonlyBucket<'a, 'b, S, T>
 where
     S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a S, namespace: &[u8]) -> Self {
+    pub fn new(storage: &'a S, namespace: &'b [u8]) -> Self {
         ReadonlyBucket {
             storage,
-            prefix: to_length_prefixed(namespace),
+            namespaces: vec![namespace],
             data: PhantomData,
         }
     }
 
-    pub fn multilevel(storage: &'a S, namespaces: &[&[u8]]) -> Self {
+    pub fn multilevel(storage: &'a S, namespaces: &[&'b [u8]]) -> Self {
         ReadonlyBucket {
             storage,
-            prefix: to_length_prefixed_nested(namespaces),
+            namespaces: namespaces.to_vec(),
             data: PhantomData,
         }
+    }
+
+    /// This provides the raw storage key that we use to access a given "bucket key".
+    /// Calling this with `key = b""` will give us the pk prefix for range queries
+    pub fn build_prefixed_key(&self, key: &[u8]) -> Vec<u8> {
+        nested_namespaces_with_key(&self.namespaces, &[PREFIX_PK], key)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = get_with_prefix(self.storage, &self.prefix, key);
+        let key = self.build_prefixed_key(key);
+        let value = self.storage.get(&key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = get_with_prefix(self.storage, &self.prefix, key);
+        let key = self.build_prefixed_key(key);
+        let value = self.storage.get(&key);
         may_deserialize(&value)
     }
 
     #[cfg(feature = "iterator")]
-    pub fn range<'b>(
-        &'b self,
+    pub fn range<'c>(
+        &'c self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
-            .map(deserialize_kv::<T>);
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
+        let namespace = self.build_prefixed_key(b"");
+        let mapped =
+            range_with_prefix(self.storage, &namespace, start, end, order).map(deserialize_kv::<T>);
         Box::new(mapped)
     }
 }
