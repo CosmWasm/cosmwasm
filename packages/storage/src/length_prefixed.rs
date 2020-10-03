@@ -29,6 +29,23 @@ pub fn to_length_prefixed_nested(namespaces: &[&[u8]]) -> Vec<u8> {
     out
 }
 
+/// This is equivalent concat(to_length_prefixed_nested(namespaces), key)
+/// But more efficient when the intermediate namespaces often must be recalculated
+pub fn namespaces_with_key(namespaces: &[&[u8]], key: &[u8]) -> Vec<u8> {
+    let mut size = key.len();
+    for &namespace in namespaces {
+        size += namespace.len() + 2;
+    }
+
+    let mut out = Vec::with_capacity(size);
+    for &namespace in namespaces {
+        out.extend_from_slice(&encode_length(namespace));
+        out.extend_from_slice(namespace);
+    }
+    out.extend_from_slice(key);
+    out
+}
+
 /// Encodes the length of a given namespace as a 2 byte big endian encoded integer
 fn encode_length(namespace: &[u8]) -> [u8; 2] {
     if namespace.len() > 0xFFFF {

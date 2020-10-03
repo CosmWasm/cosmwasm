@@ -7,9 +7,8 @@ use serde::Serialize;
 use std::marker::PhantomData;
 
 use crate::indexes::{Index, MultiIndex, UniqueIndex};
-use crate::namespace_helpers::{
-    get_with_prefix, range_with_prefix, remove_with_prefix, set_with_prefix,
-};
+use crate::length_prefixed::namespaces_with_key;
+use crate::namespace_helpers::range_with_prefix;
 use crate::type_helpers::{deserialize_kv, may_deserialize, must_deserialize};
 use crate::{to_length_prefixed, to_length_prefixed_nested};
 
@@ -50,25 +49,29 @@ where
     S: Storage,
     T: Serialize + DeserializeOwned + Clone,
 {
-    pub fn set_pk(&mut self, key: &[u8], updated: &T) -> StdResult<()> {
-        set_with_prefix(self.storage, &self.prefix_pk(), key, &to_vec(updated)?);
+    pub fn set_pk(&mut self, pk: &[u8], updated: &T) -> StdResult<()> {
+        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
+        self.storage.set(&key, &to_vec(updated)?);
         Ok(())
     }
 
-    pub fn remove_pk(&mut self, key: &[u8]) {
-        remove_with_prefix(self.storage, &self.prefix_pk(), key)
+    pub fn remove_pk(&mut self, pk: &[u8]) {
+        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
+        self.storage.remove(&key);
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = get_with_prefix(self.storage, &self.prefix_pk(), key);
+    pub fn load(&self, pk: &[u8]) -> StdResult<T> {
+        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
+        let value = self.storage.get(&key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
-    pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = get_with_prefix(self.storage, &self.prefix_pk(), key);
+    pub fn may_load(&self, pk: &[u8]) -> StdResult<Option<T>> {
+        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
+        let value = self.storage.get(&key);
         may_deserialize(&value)
     }
 
@@ -83,10 +86,6 @@ where
         to_length_prefixed_nested(&[self.namespace, index_name.as_bytes()])
     }
 
-    pub fn prefix_pk(&self) -> Vec<u8> {
-        to_length_prefixed_nested(&[self.namespace, PREFIX_PK])
-    }
-
     /// iterates over the items in pk order
     pub fn range<'c>(
         &'c self,
@@ -94,8 +93,9 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let mapped = range_with_prefix(self.storage, &self.prefix_pk(), start, end, order)
-            .map(deserialize_kv::<T>);
+        let namespace = to_length_prefixed_nested(&[self.namespace, PREFIX_PK]);
+        let mapped =
+            range_with_prefix(self.storage, &namespace, start, end, order).map(deserialize_kv::<T>);
         Box::new(mapped)
     }
 }
