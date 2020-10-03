@@ -156,14 +156,8 @@ where
     /// let mut bucket = IndexedBucket::new(&mut storeage, b"foobar")
     ///                     .with_unique_index("name", |x| x.name.clone())?
     ///                     .with_index("age", by_age)?;
-    pub fn with_index<U: Into<String>>(
-        mut self,
-        name: U,
-        indexer: fn(&T) -> Vec<u8>,
-    ) -> StdResult<Self> {
-        let name = name.into();
-        self.can_add_index(&name)?;
-
+    pub fn with_index(mut self, name: &'x str, indexer: fn(&T) -> Vec<u8>) -> StdResult<Self> {
+        self.can_add_index(name)?;
         let index = MultiIndex::new(indexer, name);
         self.indexes.push(Box::new(index));
         Ok(self)
@@ -173,14 +167,12 @@ where
     /// let mut bucket = IndexedBucket::new(&mut storeage, b"foobar")
     ///                     .with_unique_index("name", |x| x.name.clone())?
     ///                     .with_index("age", by_age)?;
-    pub fn with_unique_index<U: Into<String>>(
+    pub fn with_unique_index(
         mut self,
-        name: U,
+        name: &'x str,
         indexer: fn(&T) -> Vec<u8>,
     ) -> StdResult<Self> {
-        let name = name.into();
-        self.can_add_index(&name)?;
-
+        self.can_add_index(name)?;
         let index = UniqueIndex::new(indexer, name);
         self.indexes.push(Box::new(index));
         Ok(self)
@@ -313,37 +305,37 @@ where
 
 //------- indexers ------//
 
-pub struct MultiIndex<S, T>
+pub struct MultiIndex<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned + Clone,
 {
     idx_fn: fn(&T) -> Vec<u8>,
-    _name: String,
+    _name: &'a str,
     _phantom: PhantomData<S>,
 }
 
-impl<S, T> MultiIndex<S, T>
+impl<'a, S, T> MultiIndex<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned + Clone,
 {
-    pub fn new<U: Into<String>>(idx_fn: fn(&T) -> Vec<u8>, name: U) -> Self {
+    pub fn new(idx_fn: fn(&T) -> Vec<u8>, name: &'a str) -> Self {
         MultiIndex {
             idx_fn,
-            _name: name.into(),
+            _name: name,
             _phantom: Default::default(),
         }
     }
 }
 
-impl<S, T> Index<S, T> for MultiIndex<S, T>
+impl<'a, S, T> Index<S, T> for MultiIndex<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned + Clone,
 {
     fn name(&self) -> String {
-        self._name.clone()
+        self._name.to_string()
     }
 
     fn index(&self, data: &T) -> Vec<u8> {
@@ -392,43 +384,43 @@ where
     }
 }
 
-pub struct UniqueIndex<S, T>
-where
-    S: Storage,
-    T: Serialize + DeserializeOwned + Clone,
-{
-    idx_fn: fn(&T) -> Vec<u8>,
-    _name: String,
-    _phantom: PhantomData<S>,
-}
-
 #[derive(Deserialize, Serialize, Clone)]
 pub struct UniqueRef<T: Clone> {
     pk: Binary,
     value: T,
 }
 
-impl<S, T> UniqueIndex<S, T>
+pub struct UniqueIndex<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned + Clone,
 {
-    pub fn new<U: Into<String>>(idx_fn: fn(&T) -> Vec<u8>, name: U) -> Self {
+    idx_fn: fn(&T) -> Vec<u8>,
+    _name: &'a str,
+    _phantom: PhantomData<S>,
+}
+
+impl<'a, S, T> UniqueIndex<'a, S, T>
+where
+    S: Storage,
+    T: Serialize + DeserializeOwned + Clone,
+{
+    pub fn new(idx_fn: fn(&T) -> Vec<u8>, name: &'a str) -> Self {
         UniqueIndex {
             idx_fn,
-            _name: name.into(),
+            _name: name,
             _phantom: Default::default(),
         }
     }
 }
 
-impl<S, T> Index<S, T> for UniqueIndex<S, T>
+impl<'a, S, T> Index<S, T> for UniqueIndex<'a, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned + Clone,
 {
     fn name(&self) -> String {
-        self._name.clone()
+        self._name.to_string()
     }
 
     fn index(&self, data: &T) -> Vec<u8> {
