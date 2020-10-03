@@ -9,8 +9,8 @@ use crate::msg::{
     TokenInfoResponse,
 };
 use crate::state::{
-    balances, balances_read, claims, claims_read, invest_info, invest_info_read, token_info,
-    token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply,
+    balances, claims, invest_info, invest_info_read, token_info, token_info_read, total_supply,
+    total_supply_read, InvestmentInfo, Supply,
 };
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
@@ -82,13 +82,17 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
     let rcpt_raw = deps.api.canonical_address(&recipient)?;
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
-    let mut accounts = balances(&mut deps.storage);
-    accounts.update(sender_raw.as_slice(), |balance: Option<Uint128>| {
-        balance.unwrap_or_default() - send
-    })?;
-    accounts.update(rcpt_raw.as_slice(), |balance: Option<Uint128>| {
-        Ok(balance.unwrap_or_default() + send)
-    })?;
+    let accounts = balances();
+    accounts.update(
+        &mut deps.storage,
+        sender_raw.as_slice(),
+        |balance: Option<Uint128>| balance.unwrap_or_default() - send,
+    )?;
+    accounts.update(
+        &mut deps.storage,
+        rcpt_raw.as_slice(),
+        |balance: Option<Uint128>| Ok(balance.unwrap_or_default() + send),
+    )?;
 
     let res = HandleResponse {
         messages: vec![],
@@ -169,7 +173,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     totals.save(&supply)?;
 
     // update the balance of the sender
-    balances(&mut deps.storage).update(sender_raw.as_slice(), |balance| {
+    balances().update(&mut deps.storage, sender_raw.as_slice(), |balance| {
         Ok(balance.unwrap_or_default() + to_mint)
     })?;
 
@@ -211,15 +215,17 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     let tax = amount * invest.exit_tax;
 
     // deduct all from the account
-    let mut accounts = balances(&mut deps.storage);
-    accounts.update(sender_raw.as_slice(), |balance| {
+    let accounts = balances();
+    accounts.update(&mut deps.storage, sender_raw.as_slice(), |balance| {
         balance.unwrap_or_default() - amount
     })?;
     if tax > Uint128(0) {
         // add tax to the owner
-        accounts.update(invest.owner.as_slice(), |balance: Option<Uint128>| {
-            Ok(balance.unwrap_or_default() + tax)
-        })?;
+        accounts.update(
+            &mut deps.storage,
+            invest.owner.as_slice(),
+            |balance: Option<Uint128>| Ok(balance.unwrap_or_default() + tax),
+        )?;
     }
 
     // re-calculate bonded to ensure we have real values
@@ -239,7 +245,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     totals.save(&supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
-    claims(&mut deps.storage).update(sender_raw.as_slice(), |claim| {
+    claims().update(&mut deps.storage, sender_raw.as_slice(), |claim| {
         Ok(claim.unwrap_or_default() + unbond)
     })?;
 
@@ -280,7 +286,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     // check how much to send - min(balance, claims[sender]), and reduce the claim
     let sender_raw = deps.api.canonical_address(&info.sender)?;
     let mut to_send = balance.amount;
-    claims(&mut deps.storage).update(sender_raw.as_slice(), |claim| {
+    claims().update(&mut deps.storage, sender_raw.as_slice(), |claim| {
         let claim = claim.ok_or_else(|| StdError::generic_err("no claim for this address"))?;
         to_send = to_send.min(claim);
         claim - to_send
@@ -412,8 +418,8 @@ pub fn query_balance<S: Storage, A: Api, Q: Querier>(
     address: HumanAddr,
 ) -> StdResult<BalanceResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
-    let balance = balances_read(&deps.storage)
-        .may_load(address_raw.as_slice())?
+    let balance = balances()
+        .may_load(&deps.storage, address_raw.as_slice())?
         .unwrap_or_default();
     Ok(BalanceResponse { balance })
 }
@@ -423,8 +429,8 @@ pub fn query_claims<S: Storage, A: Api, Q: Querier>(
     address: HumanAddr,
 ) -> StdResult<ClaimsResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
-    let claims = claims_read(&deps.storage)
-        .may_load(address_raw.as_slice())?
+    let claims = claims()
+        .may_load(&deps.storage, address_raw.as_slice())?
         .unwrap_or_default();
     Ok(ClaimsResponse { claims })
 }

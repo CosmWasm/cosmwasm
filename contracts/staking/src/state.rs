@@ -2,10 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, ReadonlyStorage, Storage, Uint128};
-use cosmwasm_storage::{
-    bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
-    Singleton,
-};
+use cosmwasm_storage::{bucket, singleton, singleton_read, Bucket, ReadonlySingleton, Singleton};
 
 use crate::msg::TokenInfoResponse;
 
@@ -17,21 +14,13 @@ pub const PREFIX_BALANCE: &[u8] = b"balance";
 pub const PREFIX_CLAIMS: &[u8] = b"claim";
 
 /// balances are state of the erc20 tokens
-pub fn balances<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
-    bucket(storage, PREFIX_BALANCE)
-}
-
-pub fn balances_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
-    bucket_read(storage, PREFIX_BALANCE)
+pub fn balances() -> Bucket<Uint128> {
+    bucket(PREFIX_BALANCE)
 }
 
 /// claims are the claims to money being unbonded
-pub fn claims<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
-    bucket(storage, PREFIX_CLAIMS)
-}
-
-pub fn claims_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
-    bucket_read(storage, PREFIX_CLAIMS)
+pub fn claims() -> Bucket<Uint128> {
+    bucket(PREFIX_CLAIMS)
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
