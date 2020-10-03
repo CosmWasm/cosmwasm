@@ -35,6 +35,11 @@ where
     indexes: Vec<Box<dyn Index<S, T> + 'x>>,
 }
 
+// 2 main variants:
+//  * store (namespace, index_name, idx_value, key) -> b"1" - allows many and references pk
+//  * store (namespace, index_name, idx_value) -> {key, value} - allows one and copies pk and data
+//  // this would be the primary key - we abstract that too???
+//  * store (namespace, index_name, pk) -> value - allows one with data
 pub trait Index<S, T>
 where
     S: Storage,
@@ -60,6 +65,8 @@ where
         core: &'c Core<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c>;
+
+    // TODO: range over secondary index values? (eg. all results with 30 < age < 40)
 }
 
 /// we pull out Core from IndexedBucket, so we can get a mutable reference to storage
@@ -101,28 +108,6 @@ where
         may_deserialize(&value)
     }
 
-    // THis can be pulled into a trait.
-    // 1. index: fn(&T) -> Vec<u8>
-    // 2. store: needs access to core for storage and namespace
-    //
-    // 2 variants:
-    //  * store (namespace, index_name, idx_value, key) -> b"1" - allows many and references pk
-    //  * store (namespace, index_name, idx_value) -> {key, value} - allows one and copies pk and data
-    //  // this would be the primary key - we abstract that too???
-    //  * store (namespace, index_name, pk) -> value - allows one with data
-
-    // index is stored (namespace, idx): key -> b"1"
-    // idx is prefixed and appended to namespace
-    pub fn add_to_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
-        set_with_prefix(self.storage, &self.index_space(index_name, idx), key, b"1");
-    }
-
-    // index is stored (namespace, idx): key -> b"1"
-    // idx is prefixed and appended to namespace
-    pub fn remove_from_index(&mut self, index_name: &str, idx: &[u8], key: &[u8]) {
-        remove_with_prefix(self.storage, &self.index_space(index_name, idx), key);
-    }
-
     fn index_space(&self, index_name: &str, idx: &[u8]) -> Vec<u8> {
         let mut index_space = self.prefix_idx(index_name);
         let mut key_prefix = to_length_prefixed(idx);
@@ -147,32 +132,6 @@ where
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
         let mapped = range_with_prefix(self.storage, &self.prefix_pk(), start, end, order)
             .map(deserialize_kv::<T>);
-        Box::new(mapped)
-    }
-
-    /// returns all pks that where stored under this secondary index, always Ascending
-    /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
-    pub fn pks_by_index<'c>(
-        &'c self,
-        index_name: &str,
-        idx: &[u8],
-    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
-        let start = self.index_space(index_name, idx);
-        let mapped =
-            range_with_prefix(self.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
-        Box::new(mapped)
-    }
-
-    /// returns all items that match this secondary index, always by pk Ascending
-    pub fn items_by_index<'c>(
-        &'c self,
-        index_name: &str,
-        idx: &[u8],
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let mapped = self.pks_by_index(index_name, idx).map(move |pk| {
-            let v = self.load(&pk)?;
-            Ok((pk, v))
-        });
         Box::new(mapped)
     }
 }
@@ -203,23 +162,53 @@ where
         indexer: fn(&T) -> Vec<u8>,
     ) -> StdResult<Self> {
         let name = name.into();
+        self.can_add_index(&name)?;
+
+        let index = MultiIndex::new(indexer, name);
+        self.indexes.push(Box::new(index));
+        Ok(self)
+    }
+
+    /// Usage:
+    /// let mut bucket = IndexedBucket::new(&mut storeage, b"foobar")
+    ///                     .with_unique_index("name", |x| x.name.clone())?
+    ///                     .with_index("age", by_age)?;
+    pub fn with_unique_index<U: Into<String>>(
+        mut self,
+        name: U,
+        indexer: fn(&T) -> Vec<u8>,
+    ) -> StdResult<Self> {
+        let name = name.into();
+        self.can_add_index(&name)?;
+
+        let index = UniqueIndex::new(indexer, name);
+        self.indexes.push(Box::new(index));
+        Ok(self)
+    }
+
+    fn can_add_index(&self, name: &str) -> StdResult<()> {
         if name.as_bytes() == PREFIX_PK {
             return Err(StdError::generic_err(
                 "Index _pk is reserved for the primary key",
             ));
         }
+        let dup = self.get_index(name);
+        match dup {
+            Some(_) => Err(StdError::generic_err(format!(
+                "Attempt to write index {} 2 times",
+                name
+            ))),
+            None => Ok(()),
+        }
+    }
+
+    fn get_index(&self, name: &str) -> Option<&Box<dyn Index<S, T> + 'x>> {
         for existing in self.indexes.iter() {
             if existing.name() == name {
-                return Err(StdError::generic_err(format!(
-                    "Attempt to write index {} 2 times",
-                    name
-                )));
+                return Some(existing);
             }
         }
-
-        let index = MultiIndex::new(indexer, name);
-        self.indexes.push(Box::new(index));
-        Ok(self)
+        None
     }
 
     /// save will serialize the model and store, returns an error on serialization issues.
@@ -298,13 +287,15 @@ where
 
     /// returns all pks that where stored under this secondary index, always Ascending
     /// this is mainly an internal function, but can be used direcly if you just want to list ids cheaply
-    /// TODO: return error if index_name is not registered?
     pub fn pks_by_index<'c>(
         &'c self,
         index_name: &str,
         idx: &[u8],
-    ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
-        self.core.pks_by_index(index_name, idx)
+    ) -> StdResult<Box<dyn Iterator<Item = Vec<u8>> + 'c>> {
+        let index = self
+            .get_index(index_name)
+            .ok_or_else(|| StdError::not_found(index_name))?;
+        Ok(index.pks_by_index(&self.core, idx))
     }
 
     /// returns all items that match this secondary index, always by pk Ascending
@@ -312,8 +303,11 @@ where
         &'c self,
         index_name: &str,
         idx: &[u8],
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        self.core.items_by_index(index_name, idx)
+    ) -> StdResult<Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c>> {
+        let index = self
+            .get_index(index_name)
+            .ok_or_else(|| StdError::not_found(index_name))?;
+        Ok(index.items_by_index(&self.core, idx))
     }
 }
 
@@ -529,7 +523,7 @@ mod test {
         let mut bucket = IndexedBucket::new(&mut store, b"data")
             .with_index("name", by_name)
             .unwrap()
-            .with_index("age", by_age)
+            .with_unique_index("age", by_age)
             .unwrap();
 
         // save data
@@ -545,7 +539,7 @@ mod test {
         assert_eq!(data, loaded);
 
         // load it by secondary index (we must know how to compute this)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria").unwrap().collect();
         let marias = marias.unwrap();
         assert_eq!(1, marias.len());
         let (k, v) = &marias[0];
@@ -553,26 +547,26 @@ mod test {
         assert_eq!(&data, v);
 
         // other index doesn't match (1 byte after)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Marib").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Marib").unwrap().collect();
         assert_eq!(0, marias.unwrap().len());
 
         // other index doesn't match (1 byte before)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Mari`").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Mari`").unwrap().collect();
         assert_eq!(0, marias.unwrap().len());
 
         // other index doesn't match (longer)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria5").collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria5").unwrap().collect();
         assert_eq!(0, marias.unwrap().len());
 
         // match on proper age
         let proper = 42u32.to_be_bytes();
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &proper).collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &proper).unwrap().collect();
         let marias = marias.unwrap();
         assert_eq!(1, marias.len());
 
         // no match on wrong age
         let too_old = 43u32.to_be_bytes();
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &too_old).collect();
+        let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &too_old).unwrap().collect();
         assert_eq!(0, marias.unwrap().len());
     }
 }
