@@ -277,6 +277,7 @@ mod test {
 
     use crate::indexes::{index_i32, index_string};
     use cosmwasm_std::testing::MockStorage;
+    use cosmwasm_std::MemoryStorage;
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug, Clone)]
@@ -407,5 +408,60 @@ mod test {
         assert_eq!(k.as_slice(), pk3);
         assert_eq!(&v.name, "Marta");
         assert_eq!(v.age, 42);
+    }
+
+    #[test]
+    fn remove_and_update_reflected_on_indexes() {
+        let mut store = MockStorage::new();
+        let mut bucket = build_bucket(&mut store);
+
+        let name_count = |bucket: &IndexedBucket<MemoryStorage, Data>, name: &str| -> usize {
+            bucket
+                .items_by_index("name", &index_string(name))
+                .unwrap()
+                .count()
+        };
+
+        // set up some data
+        let data1 = Data {
+            name: "John".to_string(),
+            age: 22,
+        };
+        let pk1: &[u8] = b"john";
+        bucket.save(pk1, &data1).unwrap();
+        let data2 = Data {
+            name: "John".to_string(),
+            age: 25,
+        };
+        let pk2: &[u8] = b"john2";
+        bucket.save(pk2, &data2).unwrap();
+        let data3 = Data {
+            name: "Fred".to_string(),
+            age: 33,
+        };
+        let pk3: &[u8] = b"fred";
+        bucket.save(pk3, &data3).unwrap();
+
+        // find 2 Johns, 1 Fred, and no Mary
+        assert_eq!(name_count(&bucket, "John"), 2);
+        assert_eq!(name_count(&bucket, "Fred"), 1);
+        assert_eq!(name_count(&bucket, "Mary"), 0);
+
+        // remove john 2
+        bucket.remove(pk2).unwrap();
+        // change fred to mary
+        bucket
+            .update(pk3, |d| -> StdResult<_> {
+                let mut x = d.unwrap();
+                assert_eq!(&x.name, "Fred");
+                x.name = "Mary".to_string();
+                Ok(x)
+            })
+            .unwrap();
+
+        // find 1 Johns, no Fred, and 1 Mary
+        assert_eq!(name_count(&bucket, "John"), 1);
+        assert_eq!(name_count(&bucket, "Fred"), 0);
+        assert_eq!(name_count(&bucket, "Mary"), 1);
     }
 }
