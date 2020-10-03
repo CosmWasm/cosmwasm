@@ -254,6 +254,21 @@ where
             .ok_or_else(|| StdError::not_found(index_name))?;
         Ok(index.items_by_index(&self.core, idx))
     }
+
+    // this will return None for 0 items, Some(x) for 1 item,
+    // and an error for > 1 item. Only meant to be called on unique
+    // indexes that can return 0 or 1 item
+    pub fn load_unique_index(&self, index_name: &str, idx: &[u8]) -> StdResult<Option<KV<T>>> {
+        let mut it = self.items_by_index(index_name, idx)?;
+        let first = it.next().transpose()?;
+        match first {
+            None => Ok(None),
+            Some(one) => match it.next() {
+                None => Ok(Some(one)),
+                Some(_) => Err(StdError::generic_err("Unique Index returned 2 matches")),
+            },
+        }
+    }
 }
 
 #[cfg(test)]
@@ -270,14 +285,18 @@ mod test {
         pub age: i32,
     }
 
-    #[test]
-    fn store_and_load_by_index() {
-        let mut store = MockStorage::new();
-        let mut bucket = IndexedBucket::<_, Data>::new(&mut store, b"data")
+    fn build_bucket<S: Storage>(store: &mut S) -> IndexedBucket<S, Data> {
+        IndexedBucket::<S, Data>::new(store, b"data")
             .with_index("name", |d| index_string(&d.name))
             .unwrap()
             .with_unique_index("age", |d| index_i32(d.age))
-            .unwrap();
+            .unwrap()
+    }
+
+    #[test]
+    fn store_and_load_by_index() {
+        let mut store = MockStorage::new();
+        let mut bucket = build_bucket(&mut store);
 
         // save data
         let data = Data {
@@ -292,7 +311,10 @@ mod test {
         assert_eq!(data, loaded);
 
         // load it by secondary index (we must know how to compute this)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria").unwrap().collect();
+        let marias: StdResult<Vec<_>> = bucket
+            .items_by_index("name", &index_string("Maria"))
+            .unwrap()
+            .collect();
         let marias = marias.unwrap();
         assert_eq!(1, marias.len());
         let (k, v) = &marias[0];
@@ -300,26 +322,90 @@ mod test {
         assert_eq!(&data, v);
 
         // other index doesn't match (1 byte after)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Marib").unwrap().collect();
+        let marias: StdResult<Vec<_>> = bucket
+            .items_by_index("name", &index_string("Marib"))
+            .unwrap()
+            .collect();
         assert_eq!(0, marias.unwrap().len());
 
         // other index doesn't match (1 byte before)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Mari`").unwrap().collect();
+        let marias: StdResult<Vec<_>> = bucket
+            .items_by_index("name", &index_string("Mari`"))
+            .unwrap()
+            .collect();
         assert_eq!(0, marias.unwrap().len());
 
         // other index doesn't match (longer)
-        let marias: StdResult<Vec<_>> = bucket.items_by_index("name", b"Maria5").unwrap().collect();
+        let marias: StdResult<Vec<_>> = bucket
+            .items_by_index("name", &index_string("Maria5"))
+            .unwrap()
+            .collect();
         assert_eq!(0, marias.unwrap().len());
 
         // match on proper age
-        let proper = 42u32.to_be_bytes();
+        let proper = index_i32(42);
         let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &proper).unwrap().collect();
         let marias = marias.unwrap();
         assert_eq!(1, marias.len());
 
         // no match on wrong age
-        let too_old = 43u32.to_be_bytes();
+        let too_old = index_i32(43);
         let marias: StdResult<Vec<_>> = bucket.items_by_index("age", &too_old).unwrap().collect();
         assert_eq!(0, marias.unwrap().len());
+    }
+
+    #[test]
+    fn unique_index_enforced() {
+        let mut store = MockStorage::new();
+        let mut bucket = build_bucket(&mut store);
+
+        // first data
+        let data1 = Data {
+            name: "Maria".to_string(),
+            age: 42,
+        };
+        let pk1: &[u8] = b"5627";
+        bucket.save(pk1, &data1).unwrap();
+
+        // same name (multi-index), different age => ok
+        let data2 = Data {
+            name: "Maria".to_string(),
+            age: 23,
+        };
+        let pk2: &[u8] = b"7326";
+        bucket.save(pk2, &data2).unwrap();
+
+        // different name, same age => error
+        let data3 = Data {
+            name: "Marta".to_string(),
+            age: 42,
+        };
+        let pk3: &[u8] = b"8263";
+        // enforce this returns some error
+        bucket.save(pk3, &data3).unwrap_err();
+
+        // query by unique key
+        // match on proper age
+        let age42 = index_i32(42);
+        let (k, v) = bucket.load_unique_index("age", &age42).unwrap().unwrap();
+        assert_eq!(k.as_slice(), pk1);
+        assert_eq!(&v.name, "Maria");
+        assert_eq!(v.age, 42);
+
+        // match on other age
+        let age23 = index_i32(23);
+        let (k, v) = bucket.load_unique_index("age", &age23).unwrap().unwrap();
+        assert_eq!(k.as_slice(), pk2);
+        assert_eq!(&v.name, "Maria");
+        assert_eq!(v.age, 23);
+
+        // if we delete the first one, we can add the blocked one
+        bucket.remove(pk1).unwrap();
+        bucket.save(pk3, &data3).unwrap();
+        // now 42 is the new owner
+        let (k, v) = bucket.load_unique_index("age", &age42).unwrap().unwrap();
+        assert_eq!(k.as_slice(), pk3);
+        assert_eq!(&v.name, "Marta");
+        assert_eq!(v.age, 42);
     }
 }

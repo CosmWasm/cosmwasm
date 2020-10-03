@@ -13,6 +13,7 @@ mod typed;
 pub use bucket::{bucket, bucket_read, Bucket, ReadonlyBucket};
 #[cfg(feature = "iterator")]
 pub use indexed_bucket::IndexedBucket;
+#[cfg(feature = "iterator")]
 pub use indexes::{index_i32, index_string, index_u64};
 pub use length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
 pub use prefixed_storage::{prefixed, prefixed_read, PrefixedStorage, ReadonlyPrefixedStorage};

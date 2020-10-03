@@ -1,7 +1,7 @@
 // this module requires iterator to be useful at all
 #![cfg(feature = "iterator")]
 
-use cosmwasm_std::{from_slice, to_vec, Binary, Order, StdResult, Storage, KV};
+use cosmwasm_std::{from_slice, to_vec, Binary, Order, StdError, StdResult, Storage, KV};
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
@@ -184,6 +184,14 @@ where
     fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
         let idx = self.index(data);
         let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], &idx);
+        // error if this is already set
+        if core.storage.get(&key).is_some() {
+            return Err(StdError::generic_err(format!(
+                "Violates unique constraint on index `{}`",
+                self._name
+            )));
+        }
+
         let reference = UniqueRef::<T> {
             pk: pk.into(),
             value: data.clone(),
