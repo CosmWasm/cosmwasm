@@ -147,10 +147,10 @@ where
         }
     }
 
-    fn get_index(&self, name: &str) -> Option<&Box<dyn Index<S, T> + 'x>> {
+    fn get_index(&self, name: &str) -> Option<&dyn Index<S, T>> {
         for existing in self.indexes.iter() {
             if existing.name() == name {
-                return Some(existing);
+                return Some(existing.as_ref());
             }
         }
         None
