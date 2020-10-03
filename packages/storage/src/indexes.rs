@@ -7,9 +7,8 @@ use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
 use crate::indexed_bucket::Core;
-use crate::namespace_helpers::{
-    get_with_prefix, range_with_prefix, remove_with_prefix, set_with_prefix,
-};
+use crate::length_prefixed::{namespaces_with_key, to_length_prefixed_nested};
+use crate::namespace_helpers::range_with_prefix;
 
 /// MARKER is stored in the multi-index as value, but we only look at the key (which is pk)
 const MARKER: &[u8] = b"1";
@@ -87,18 +86,15 @@ where
 
     fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
         let idx = self.index(data);
-        set_with_prefix(
-            core.storage,
-            &core.index_space(&self._name, &idx),
-            pk,
-            MARKER,
-        );
+        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes(), &idx], pk);
+        core.storage.set(&key, MARKER);
         Ok(())
     }
 
     fn remove(&self, core: &mut Core<S, T>, pk: &[u8], old_data: &T) -> StdResult<()> {
         let idx = self.index(old_data);
-        remove_with_prefix(core.storage, &core.index_space(&self._name, &idx), pk);
+        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes(), &idx], pk);
+        core.storage.remove(&key);
         Ok(())
     }
 
@@ -107,9 +103,9 @@ where
         core: &'c Core<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
-        let start = core.index_space(&self._name, idx);
-        let mapped =
-            range_with_prefix(core.storage, &start, None, None, Order::Ascending).map(|(k, _)| k);
+        let namespace = to_length_prefixed_nested(&[core.namespace, self._name.as_bytes(), idx]);
+        let mapped = range_with_prefix(core.storage, &namespace, None, None, Order::Ascending)
+            .map(|(k, _)| k);
         Box::new(mapped)
     }
 
@@ -173,23 +169,20 @@ where
     // we store (namespace, index_name, idx_value) -> { pk, value }
     fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
         let idx = self.index(data);
+        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], &idx);
         let reference = UniqueRef::<T> {
             pk: pk.into(),
             value: data.clone(),
         };
-        set_with_prefix(
-            core.storage,
-            &core.prefix_idx(&self._name),
-            &idx,
-            &to_vec(&reference)?,
-        );
+        core.storage.set(&key, &to_vec(&reference)?);
         Ok(())
     }
 
     // we store (namespace, index_name, idx_value) -> { pk, value }
     fn remove(&self, core: &mut Core<S, T>, _pk: &[u8], old_data: &T) -> StdResult<()> {
         let idx = self.index(old_data);
-        remove_with_prefix(core.storage, &core.prefix_idx(&self._name), &idx);
+        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], &idx);
+        core.storage.remove(&key);
         Ok(())
     }
 
@@ -199,16 +192,9 @@ where
         core: &'c Core<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
-        let data = get_with_prefix(core.storage, &core.prefix_idx(&self._name), &idx);
-        let res = match data {
-            Some(bin) => vec![bin],
-            None => vec![],
-        };
-        let mapped = res.into_iter().map(|bin| {
-            // TODO: update types so we can return error here
-            let parsed: UniqueRef<T> = from_slice(&bin).unwrap();
-            parsed.pk.into_vec()
-        });
+        // TODO: update types to return StdResult<Vec<u8>> ?
+        // should never really happen, but I dislike unwrap
+        let mapped = self.items_by_index(core, idx).map(|res| res.unwrap().0);
         Box::new(mapped)
     }
 
@@ -218,12 +204,12 @@ where
         core: &'c Core<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let data = get_with_prefix(core.storage, &core.prefix_idx(&self._name), &idx);
-        let res = match data {
+        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], idx);
+        let data = match core.storage.get(&key) {
             Some(bin) => vec![bin],
             None => vec![],
         };
-        let mapped = res.into_iter().map(|bin| {
+        let mapped = data.into_iter().map(|bin| {
             let parsed: UniqueRef<T> = from_slice(&bin)?;
             Ok((parsed.pk.into_vec(), parsed.value))
         });

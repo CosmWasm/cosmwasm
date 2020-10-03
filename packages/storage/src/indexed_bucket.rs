@@ -9,8 +9,8 @@ use std::marker::PhantomData;
 use crate::indexes::{Index, MultiIndex, UniqueIndex};
 use crate::length_prefixed::namespaces_with_key;
 use crate::namespace_helpers::range_with_prefix;
+use crate::to_length_prefixed_nested;
 use crate::type_helpers::{deserialize_kv, may_deserialize, must_deserialize};
-use crate::{to_length_prefixed, to_length_prefixed_nested};
 
 /// reserved name, no index may register
 const PREFIX_PK: &[u8] = b"_pk";
@@ -73,17 +73,6 @@ where
         let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
         let value = self.storage.get(&key);
         may_deserialize(&value)
-    }
-
-    pub fn index_space(&self, index_name: &str, idx: &[u8]) -> Vec<u8> {
-        let mut index_space = self.prefix_idx(index_name);
-        let mut key_prefix = to_length_prefixed(idx);
-        index_space.append(&mut key_prefix);
-        index_space
-    }
-
-    pub fn prefix_idx(&self, index_name: &str) -> Vec<u8> {
-        to_length_prefixed_nested(&[self.namespace, index_name.as_bytes()])
     }
 
     /// iterates over the items in pk order
