@@ -51,12 +51,19 @@
 **cosmwasm-storage**
 
 - Change order of arguments such that `storage` is always first followed by
-  namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
-  `ReadonlyBucket::multilevel`, `bucket` and `bucket_read`.
-- Change order of arguments such that `storage` is always first followed by
   namespace in `PrefixedStorage::new`, `PrefixedStorage::multilevel`,
   `ReadonlyPrefixedStorage::new`, `ReadonlyPrefixedStorage::multilevel`,
   `prefixed` and `prefixed_read`.
+- Remove `Storage` from the constructor of `Bucket::new` and rather pass
+  `&Storage` or `&mut Storage` as the first argument of every method.
+- Remove `ReadonlyBucket` as `Bucket` now handles read-only and read-write
+  in one struct.
+- Remove `Storage` from the constructor of `Singleton::new` and rather pass
+  `&Storage` or `&mut Storage` as the first argument of every method.
+- Remove `ReadonlySingleton` as `Singleton` now handles read-only and read-write
+  in one struct.
+- Modify `curval` and `nextval` to accept `Storage` and `key: &[u8]` directly
+  rather than require an intermediate `Sequence` object
 
 **cosmwasm-vm**
 

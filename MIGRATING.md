@@ -95,21 +95,6 @@ major releases of `cosmwasm`. Note that you can also view the
   [staking development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
   shows how this would look like using [snafu](https://crates.io/crates/snafu).
 
-- Change order of arguments such that `storage` is always first followed by
-  namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
-  `ReadonlyBucket::multilevel`, `PrefixedStorage::new`,
-  `PrefixedStorage::multilevel`, `ReadonlyPrefixedStorage::new`,
-  `ReadonlyPrefixedStorage::multilevel`, `bucket`, `bucket_read`, `prefixed` and
-  `prefixed_read`.
-
-  ```rust
-  // before
-  let mut bucket = bucket::<_, Data>(b"data", &mut store);
-
-  // after
-  let mut bucket = bucket::<_, Data>(&mut store, b"data");
-  ```
-
 - Rename `InitResponse::log`, `MigrateResponse::log` and `HandleResponse::log`
   to `InitResponse::attributes`, `MigrateResponse::attributes` and
   `HandleResponse::attributes`. Replace calls to `log` with `attr`:
@@ -146,7 +131,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
   ```rust
   // before
-  bucket.update(b"maria", |mayd: Option<Data>| {
+  bucket.update(&mut storage, b"maria", |mayd: Option<Data>| {
     let mut d = mayd.ok_or(StdError::not_found("Data"))?;
     old_age = d.age;
     d.age += 1;
@@ -154,7 +139,7 @@ major releases of `cosmwasm`. Note that you can also view the
   })
 
   // after
-  bucket.update(b"maria", |mayd: Option<Data>| -> StdResult<_> {
+  bucket.update(&mut storage, b"maria", |mayd: Option<Data>| -> StdResult<_> {
     let mut d = mayd.ok_or(StdError::not_found("Data"))?;
     old_age = d.age;
     d.age += 1;
@@ -254,6 +239,73 @@ major releases of `cosmwasm`. Note that you can also view the
 
   let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
   ```
+
+- Remove `Storage` from `Bucket` constructors and pass it in the calls.
+  You can also replace all usage of `ReadonlyBucket` with `Bucket`.
+  Same with `Singleton`. The following simplifications should be
+  made to `state.rs`:
+
+  ```rust
+  // before
+  pub fn balances<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
+    bucket(storage, PREFIX_BALANCE)
+  }
+
+  pub fn balances_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
+    bucket_read(storage, PREFIX_BALANCE)
+  }
+
+  pub fn token_info<S: Storage>(storage: &mut S) -> Singleton<S, TokenInfoResponse> {
+    singleton(storage, KEY_TOKEN_INFO)
+  }
+
+  pub fn token_info_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, TokenInfoResponse> {
+    singleton_read(storage, KEY_TOKEN_INFO)
+  }
+
+  // after
+  pub fn balances() -> Bucket<Uint128> {
+    bucket(PREFIX_BALANCE)
+  }
+
+  pub fn token_info() -> Singleton<TokenInfoResponse> {
+      singleton(KEY_TOKEN_INFO)
+  }
+  ```
+
+  The calling code in `contracts.rs` should be updated with the simpler
+  constructors and to pass in storage to the method calls. Note that you
+  never need `let mut bucket = ...` as all mutation occurs on the storage
+  argument, not the bucket itself:
+
+  ```rust
+  // before
+  let invest = invest_info_read(&deps.storage).load()?;
+
+  claims(&mut deps.storage).update(sender_raw.as_slice(), |claim| {
+    Ok(claim.unwrap_or_default() + unbond)
+  })?;
+
+  let mut totals = total_supply(&mut deps.storage);
+  let mut supply = totals.load()?;
+  supply.issued += issued;
+  totals.save(&supply)?;
+
+  // after
+  let invest = invest_info().load(&deps.storage)?;
+
+  claims().update(&mut deps.storage, sender_raw.as_slice(), |claim| {
+    Ok(claim.unwrap_or_default() + unbond)
+  })?;
+
+  let totals = total_supply();
+  let mut supply = totals.load(&deps.storage)?;
+  supply.issued += issued;
+  totals.save(&mut deps.storage, &supply)?;
+  ```
+
+  See [PR #559](https://github.com/CosmWasm/cosmwasm/pull/559/files)
+  for a complete example.
 
 ## 0.9 -> 0.10
 
