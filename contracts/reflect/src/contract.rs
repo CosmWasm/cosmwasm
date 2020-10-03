@@ -9,7 +9,7 @@ use crate::msg::{
     CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
     SpecialQuery, SpecialResponse,
 };
-use crate::state::{config, config_read, State};
+use crate::state::{config, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
@@ -21,7 +21,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         owner: deps.api.canonical_address(&info.sender)?,
     };
 
-    config(&mut deps.storage).save(&state)?;
+    config().save(&mut deps.storage, &state)?;
+
     Ok(InitResponse::default())
 }
 
@@ -43,7 +44,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
     info: MessageInfo,
     msgs: Vec<CosmosMsg<CustomMsg>>,
 ) -> Result<HandleResponse<CustomMsg>, ReflectError> {
-    let state = config(&mut deps.storage).load()?;
+    let state = config().load(&deps.storage)?;
 
     let sender = deps.api.canonical_address(&info.sender)?;
     if sender != state.owner {
@@ -71,7 +72,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
     owner: HumanAddr,
 ) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     let api = deps.api;
-    config(&mut deps.storage).update(|mut state| {
+    config().update(&mut deps.storage, |mut state| {
         let sender = api.canonical_address(&info.sender)?;
         if sender != state.owner {
             return Err(ReflectError::NotCurrentOwner {
@@ -101,7 +102,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<OwnerResponse> {
-    let state = config_read(&deps.storage).load()?;
+    let state = config().load(&deps.storage)?;
     let resp = OwnerResponse {
         owner: deps.api.human_address(&state.owner)?,
     };
