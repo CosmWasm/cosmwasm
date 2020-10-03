@@ -260,6 +260,7 @@ where
 mod test {
     use super::*;
 
+    use crate::indexes::{index_i32, index_string};
     use cosmwasm_std::testing::MockStorage;
     use serde::{Deserialize, Serialize};
 
@@ -269,21 +270,13 @@ mod test {
         pub age: i32,
     }
 
-    fn by_name(data: &Data) -> Vec<u8> {
-        data.name.as_bytes().to_vec()
-    }
-
-    fn by_age(data: &Data) -> Vec<u8> {
-        data.age.to_be_bytes().into()
-    }
-
     #[test]
     fn store_and_load_by_index() {
         let mut store = MockStorage::new();
-        let mut bucket = IndexedBucket::new(&mut store, b"data")
-            .with_index("name", by_name)
+        let mut bucket = IndexedBucket::<_, Data>::new(&mut store, b"data")
+            .with_index("name", |d| index_string(&d.name))
             .unwrap()
-            .with_unique_index("age", by_age)
+            .with_unique_index("age", |d| index_i32(d.age))
             .unwrap();
 
         // save data

@@ -13,6 +13,20 @@ use crate::namespace_helpers::range_with_prefix;
 /// MARKER is stored in the multi-index as value, but we only look at the key (which is pk)
 const MARKER: &[u8] = b"1";
 
+pub fn index_string(data: &str) -> Vec<u8> {
+    data.as_bytes().to_vec()
+}
+
+// Look at https://docs.rs/endiannezz/0.4.1/endiannezz/trait.Primitive.html
+// if you want to make this generic over all ints
+pub fn index_u64(data: u64) -> Vec<u8> {
+    data.to_be_bytes().into()
+}
+
+pub fn index_i32(data: i32) -> Vec<u8> {
+    data.to_be_bytes().into()
+}
+
 // 2 main variants:
 //  * store (namespace, index_name, idx_value, key) -> b"1" - allows many and references pk
 //  * store (namespace, index_name, idx_value) -> {key, value} - allows one and copies pk and data
