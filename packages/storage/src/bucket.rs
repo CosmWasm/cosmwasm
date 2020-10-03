@@ -5,16 +5,18 @@ use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
-use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested};
+use crate::length_prefixed::{to_length_prefixed, to_length_prefixed_nested, nested_namespaces_with_key};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
-use crate::namespace_helpers::{get_with_prefix, remove_with_prefix, set_with_prefix};
+use crate::namespace_helpers::get_with_prefix;
 #[cfg(feature = "iterator")]
 use crate::type_helpers::deserialize_kv;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
+pub(crate) const PREFIX_PK: &[u8] = b"_pk";
+
 /// An alias of Bucket::new for less verbose usage
-pub fn bucket<'a, S, T>(storage: &'a mut S, namespace: &[u8]) -> Bucket<'a, S, T>
+pub fn bucket<'a, 'b, S, T>(storage: &'a mut S, namespace: &'b [u8]) -> Bucket<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
@@ -31,69 +33,85 @@ where
     ReadonlyBucket::new(storage, namespace)
 }
 
-pub struct Bucket<'a, S, T>
+/// Bucket stores all data under a series of length-prefixed steps: (namespaces..., "_pk").
+/// After this is created (each step length-prefixed), we just append the bucket key at the end.
+///
+/// The reason for the "_pk" at the end is to allow easy extensibility with IndexedBuckets, which
+/// can also store indexes under the same namespace
+pub struct Bucket<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a mut S,
-    prefix: Vec<u8>,
+    pub(crate) storage: &'a mut S,
+    pub(crate) namespaces: Vec<&'b[u8]>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
 }
 
-impl<'a, S, T> Bucket<'a, S, T>
+impl<'a, 'b, S, T> Bucket<'a, 'b, S, T>
 where
     S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a mut S, namespace: &[u8]) -> Self {
+    pub fn new(storage: &'a mut S, namespace: &'b [u8]) -> Self {
         Bucket {
             storage,
-            prefix: to_length_prefixed(namespace),
+            namespaces: vec![namespace],
             data: PhantomData,
         }
     }
 
-    pub fn multilevel(storage: &'a mut S, namespaces: &[&[u8]]) -> Self {
+    pub fn multilevel(storage: &'a mut S, namespace: &[&'b[u8]]) -> Self {
         Bucket {
             storage,
-            prefix: to_length_prefixed_nested(namespaces),
+            namespaces: namespace.to_vec(),
             data: PhantomData,
         }
+    }
+
+    /// This provides the raw storage key that we use to access a given "bucket key".
+    /// Calling this with `key = b""` will give us the pk prefix for range queries
+    pub fn build_prefixed_key(&self, key: &[u8]) -> Vec<u8> {
+        nested_namespaces_with_key(&self.namespaces, &[PREFIX_PK], key)
     }
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, key: &[u8], data: &T) -> StdResult<()> {
-        set_with_prefix(self.storage, &self.prefix, key, &to_vec(data)?);
+        let key = self.build_prefixed_key(key);
+        self.storage.set(&key, &to_vec(data)?);
         Ok(())
     }
 
     pub fn remove(&mut self, key: &[u8]) {
-        remove_with_prefix(self.storage, &self.prefix, key)
+        let key = self.build_prefixed_key(key);
+        self.storage.remove(&key);
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = get_with_prefix(self.storage, &self.prefix, key);
+        let key = self.build_prefixed_key(key);
+        let value = self.storage.get(&key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = get_with_prefix(self.storage, &self.prefix, key);
+        let key = self.build_prefixed_key(key);
+        let value = self.storage.get(&key);
         may_deserialize(&value)
     }
 
     #[cfg(feature = "iterator")]
-    pub fn range<'b>(
-        &'b self,
+    pub fn range<'c>(
+        &'c self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
+        let namespace = self.build_prefixed_key(b"");
+        let mapped = range_with_prefix(self.storage, &namespace, start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
     }
