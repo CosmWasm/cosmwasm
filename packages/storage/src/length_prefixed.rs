@@ -31,6 +31,7 @@ pub fn to_length_prefixed_nested(namespaces: &[&[u8]]) -> Vec<u8> {
 
 /// This is equivalent concat(to_length_prefixed_nested(namespaces), key)
 /// But more efficient when the intermediate namespaces often must be recalculated
+#[allow(dead_code)]
 pub fn namespaces_with_key(namespaces: &[&[u8]], key: &[u8]) -> Vec<u8> {
     let mut size = key.len();
     for &namespace in namespaces {
