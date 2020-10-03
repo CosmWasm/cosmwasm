@@ -1,16 +1,12 @@
 // this module requires iterator to be useful at all
 #![cfg(feature = "iterator")]
 
-use cosmwasm_std::{to_vec, Order, StdError, StdResult, Storage, KV};
+use cosmwasm_std::{Order, StdError, StdResult, Storage, KV};
 use serde::de::DeserializeOwned;
 use serde::Serialize;
-use std::marker::PhantomData;
 
+use crate::bucket::Bucket;
 use crate::indexes::{Index, MultiIndex, UniqueIndex};
-use crate::length_prefixed::namespaces_with_key;
-use crate::namespace_helpers::range_with_prefix;
-use crate::to_length_prefixed_nested;
-use crate::type_helpers::{deserialize_kv, may_deserialize, must_deserialize};
 
 /// reserved name, no index may register
 const PREFIX_PK: &[u8] = b"_pk";
@@ -28,65 +24,8 @@ where
     S: Storage + 'x,
     T: Serialize + DeserializeOwned + Clone + 'x,
 {
-    core: Core<'a, 'b, S, T>,
+    bucket: Bucket<'a, 'b, S, T>,
     indexes: Vec<Box<dyn Index<S, T> + 'x>>,
-}
-
-/// we pull out Core from IndexedBucket, so we can get a mutable reference to storage
-/// while holding an immutable iterator over indexers
-pub(crate) struct Core<'a, 'b, S, T>
-where
-    S: Storage,
-    T: Serialize + DeserializeOwned + Clone,
-{
-    pub storage: &'a mut S,
-    pub namespace: &'b [u8],
-    _phantom: PhantomData<T>,
-}
-
-impl<'a, 'b, S, T> Core<'a, 'b, S, T>
-where
-    S: Storage,
-    T: Serialize + DeserializeOwned + Clone,
-{
-    pub fn set_pk(&mut self, pk: &[u8], updated: &T) -> StdResult<()> {
-        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
-        self.storage.set(&key, &to_vec(updated)?);
-        Ok(())
-    }
-
-    pub fn remove_pk(&mut self, pk: &[u8]) {
-        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
-        self.storage.remove(&key);
-    }
-
-    /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self, pk: &[u8]) -> StdResult<T> {
-        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
-        let value = self.storage.get(&key);
-        must_deserialize(&value)
-    }
-
-    /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
-    /// returns an error on issues parsing
-    pub fn may_load(&self, pk: &[u8]) -> StdResult<Option<T>> {
-        let key = namespaces_with_key(&[self.namespace, PREFIX_PK], pk);
-        let value = self.storage.get(&key);
-        may_deserialize(&value)
-    }
-
-    /// iterates over the items in pk order
-    pub fn range<'c>(
-        &'c self,
-        start: Option<&[u8]>,
-        end: Option<&[u8]>,
-        order: Order,
-    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let namespace = to_length_prefixed_nested(&[self.namespace, PREFIX_PK]);
-        let mapped =
-            range_with_prefix(self.storage, &namespace, start, end, order).map(deserialize_kv::<T>);
-        Box::new(mapped)
-    }
 }
 
 impl<'a, 'b, 'x, S, T> IndexedBucket<'a, 'b, 'x, S, T>
@@ -96,11 +35,7 @@ where
 {
     pub fn new(storage: &'a mut S, namespace: &'b [u8]) -> Self {
         IndexedBucket {
-            core: Core {
-                storage,
-                namespace,
-                _phantom: Default::default(),
-            },
+            bucket: Bucket::new(storage, namespace),
             indexes: vec![],
         }
     }
@@ -176,16 +111,16 @@ where
         if let Some(old) = old_data {
             // Note: this didn't work as we cannot mutably borrow self (remove_from_index) inside the iterator
             for index in self.indexes.iter() {
-                index.remove(&mut self.core, key, old)?;
+                index.remove(&mut self.bucket, key, old)?;
             }
         }
         if let Some(updated) = data {
             for index in self.indexes.iter() {
-                index.insert(&mut self.core, key, updated)?;
+                index.insert(&mut self.bucket, key, updated)?;
             }
-            self.core.set_pk(key, updated)?;
+            self.bucket.save(key, updated)?;
         } else {
-            self.core.remove_pk(key);
+            self.bucket.remove(key);
         }
         Ok(())
     }
@@ -211,13 +146,13 @@ where
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        self.core.load(key)
+        self.bucket.load(key)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        self.core.may_load(key)
+        self.bucket.may_load(key)
     }
 
     /// iterates over the items in pk order
@@ -227,7 +162,7 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        self.core.range(start, end, order)
+        self.bucket.range(start, end, order)
     }
 
     /// returns all pks that where stored under this secondary index, always Ascending
@@ -240,7 +175,7 @@ where
         let index = self
             .get_index(index_name)
             .ok_or_else(|| StdError::not_found(index_name))?;
-        Ok(index.pks_by_index(&self.core, idx))
+        Ok(index.pks_by_index(&self.bucket, idx))
     }
 
     /// returns all items that match this secondary index, always by pk Ascending
@@ -252,7 +187,7 @@ where
         let index = self
             .get_index(index_name)
             .ok_or_else(|| StdError::not_found(index_name))?;
-        Ok(index.items_by_index(&self.core, idx))
+        Ok(index.items_by_index(&self.bucket, idx))
     }
 
     // this will return None for 0 items, Some(x) for 1 item,

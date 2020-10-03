@@ -74,25 +74,31 @@ where
 
     /// This provides the raw storage key that we use to access a given "bucket key".
     /// Calling this with `key = b""` will give us the pk prefix for range queries
-    pub fn build_prefixed_key(&self, key: &[u8]) -> Vec<u8> {
+    pub fn build_primary_key(&self, key: &[u8]) -> Vec<u8> {
         nested_namespaces_with_key(&self.namespaces, &[PREFIX_PK], key)
+    }
+
+    /// This provides the raw storage key that we use to access a secondary index
+    /// Calling this with `key = b""` will give us the index prefix for range queries
+    pub fn build_secondary_key(&self, path: &[&[u8]], key: &[u8]) -> Vec<u8> {
+        nested_namespaces_with_key(&self.namespaces, path, key)
     }
 
     /// save will serialize the model and store, returns an error on serialization issues
     pub fn save(&mut self, key: &[u8], data: &T) -> StdResult<()> {
-        let key = self.build_prefixed_key(key);
+        let key = self.build_primary_key(key);
         self.storage.set(&key, &to_vec(data)?);
         Ok(())
     }
 
     pub fn remove(&mut self, key: &[u8]) {
-        let key = self.build_prefixed_key(key);
+        let key = self.build_primary_key(key);
         self.storage.remove(&key);
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let key = self.build_prefixed_key(key);
+        let key = self.build_primary_key(key);
         let value = self.storage.get(&key);
         must_deserialize(&value)
     }
@@ -100,7 +106,7 @@ where
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let key = self.build_prefixed_key(key);
+        let key = self.build_primary_key(key);
         let value = self.storage.get(&key);
         may_deserialize(&value)
     }
@@ -112,7 +118,7 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let namespace = self.build_prefixed_key(b"");
+        let namespace = self.build_primary_key(b"");
         let mapped =
             range_with_prefix(self.storage, &namespace, start, end, order).map(deserialize_kv::<T>);
         Box::new(mapped)

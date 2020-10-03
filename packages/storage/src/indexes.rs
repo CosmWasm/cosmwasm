@@ -6,9 +6,8 @@ use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
 
-use crate::indexed_bucket::Core;
-use crate::length_prefixed::{namespaces_with_key, to_length_prefixed_nested};
 use crate::namespace_helpers::range_with_prefix;
+use crate::Bucket;
 
 /// MARKER is stored in the multi-index as value, but we only look at the key (which is pk)
 const MARKER: &[u8] = b"1";
@@ -41,20 +40,20 @@ where
     fn name(&self) -> String;
     fn index(&self, data: &T) -> Vec<u8>;
 
-    fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()>;
-    fn remove(&self, core: &mut Core<S, T>, pk: &[u8], old_data: &T) -> StdResult<()>;
+    fn insert(&self, bucket: &mut Bucket<S, T>, pk: &[u8], data: &T) -> StdResult<()>;
+    fn remove(&self, bucket: &mut Bucket<S, T>, pk: &[u8], old_data: &T) -> StdResult<()>;
 
     // these should be implemented by all
     fn pks_by_index<'c>(
         &self,
-        core: &'c Core<S, T>,
+        bucket: &'c Bucket<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c>;
 
     /// returns all items that match this secondary index, always by pk Ascending
     fn items_by_index<'c>(
         &self,
-        core: &'c Core<S, T>,
+        bucket: &'c Bucket<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c>;
 
@@ -98,27 +97,27 @@ where
         (self.idx_fn)(data)
     }
 
-    fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
+    fn insert(&self, bucket: &mut Bucket<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
         let idx = self.index(data);
-        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes(), &idx], pk);
-        core.storage.set(&key, MARKER);
+        let key = bucket.build_secondary_key(&[self._name.as_bytes(), &idx], pk);
+        bucket.storage.set(&key, MARKER);
         Ok(())
     }
 
-    fn remove(&self, core: &mut Core<S, T>, pk: &[u8], old_data: &T) -> StdResult<()> {
+    fn remove(&self, bucket: &mut Bucket<S, T>, pk: &[u8], old_data: &T) -> StdResult<()> {
         let idx = self.index(old_data);
-        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes(), &idx], pk);
-        core.storage.remove(&key);
+        let key = bucket.build_secondary_key(&[self._name.as_bytes(), &idx], pk);
+        bucket.storage.remove(&key);
         Ok(())
     }
 
     fn pks_by_index<'c>(
         &self,
-        core: &'c Core<S, T>,
+        bucket: &'c Bucket<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
-        let namespace = to_length_prefixed_nested(&[core.namespace, self._name.as_bytes(), idx]);
-        let mapped = range_with_prefix(core.storage, &namespace, None, None, Order::Ascending)
+        let namespace = bucket.build_secondary_key(&[self._name.as_bytes(), &idx], b"");
+        let mapped = range_with_prefix(bucket.storage, &namespace, None, None, Order::Ascending)
             .map(|(k, _)| k);
         Box::new(mapped)
     }
@@ -126,11 +125,11 @@ where
     /// returns all items that match this secondary index, always by pk Ascending
     fn items_by_index<'c>(
         &self,
-        core: &'c Core<S, T>,
+        bucket: &'c Bucket<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let mapped = self.pks_by_index(core, idx).map(move |pk| {
-            let v = core.load(&pk)?;
+        let mapped = self.pks_by_index(bucket, idx).map(move |pk| {
+            let v = bucket.load(&pk)?;
             Ok((pk, v))
         });
         Box::new(mapped)
@@ -181,11 +180,11 @@ where
     }
 
     // we store (namespace, index_name, idx_value) -> { pk, value }
-    fn insert(&self, core: &mut Core<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
+    fn insert(&self, bucket: &mut Bucket<S, T>, pk: &[u8], data: &T) -> StdResult<()> {
         let idx = self.index(data);
-        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], &idx);
+        let key = bucket.build_secondary_key(&[self._name.as_bytes()], &idx);
         // error if this is already set
-        if core.storage.get(&key).is_some() {
+        if bucket.storage.get(&key).is_some() {
             return Err(StdError::generic_err(format!(
                 "Violates unique constraint on index `{}`",
                 self._name
@@ -196,38 +195,38 @@ where
             pk: pk.into(),
             value: data.clone(),
         };
-        core.storage.set(&key, &to_vec(&reference)?);
+        bucket.storage.set(&key, &to_vec(&reference)?);
         Ok(())
     }
 
     // we store (namespace, index_name, idx_value) -> { pk, value }
-    fn remove(&self, core: &mut Core<S, T>, _pk: &[u8], old_data: &T) -> StdResult<()> {
+    fn remove(&self, bucket: &mut Bucket<S, T>, _pk: &[u8], old_data: &T) -> StdResult<()> {
         let idx = self.index(old_data);
-        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], &idx);
-        core.storage.remove(&key);
+        let key = bucket.build_secondary_key(&[self._name.as_bytes()], &idx);
+        bucket.storage.remove(&key);
         Ok(())
     }
 
     // there is exactly 0 or 1 here...
     fn pks_by_index<'c>(
         &self,
-        core: &'c Core<S, T>,
+        bucket: &'c Bucket<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = Vec<u8>> + 'c> {
         // TODO: update types to return StdResult<Vec<u8>> ?
         // should never really happen, but I dislike unwrap
-        let mapped = self.items_by_index(core, idx).map(|res| res.unwrap().0);
+        let mapped = self.items_by_index(bucket, idx).map(|res| res.unwrap().0);
         Box::new(mapped)
     }
 
     /// returns all items that match this secondary index, always by pk Ascending
     fn items_by_index<'c>(
         &self,
-        core: &'c Core<S, T>,
+        bucket: &'c Bucket<S, T>,
         idx: &[u8],
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
-        let key = namespaces_with_key(&[core.namespace, self._name.as_bytes()], idx);
-        let data = match core.storage.get(&key) {
+        let key = bucket.build_secondary_key(&[self._name.as_bytes()], &idx);
+        let data = match bucket.storage.get(&key) {
             Some(bin) => vec![bin],
             None => vec![],
         };
