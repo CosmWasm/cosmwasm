@@ -7,71 +7,57 @@ use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 /// An alias of Singleton::new for less verbose usage
-pub fn singleton<'a, S, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
+pub fn singleton<T>(key: &[u8]) -> Singleton<T>
 where
-    S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    Singleton::new(storage, key)
-}
-
-/// An alias of ReadonlySingleton::new for less verbose usage
-pub fn singleton_read<'a, S, T>(storage: &'a S, key: &[u8]) -> ReadonlySingleton<'a, S, T>
-where
-    S: ReadonlyStorage,
-    T: Serialize + DeserializeOwned,
-{
-    ReadonlySingleton::new(storage, key)
+    Singleton::new(key)
 }
 
 /// Singleton effectively combines PrefixedStorage with TypedStorage to
 /// work on a single storage key. It performs the to_length_prefixed transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
-pub struct Singleton<'a, S, T>
+pub struct Singleton<T>
 where
-    S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a mut S,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
 }
 
-impl<'a, S, T> Singleton<'a, S, T>
+impl<T> Singleton<T>
 where
-    S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a mut S, key: &[u8]) -> Self {
+    pub fn new(key: &[u8]) -> Self {
         Singleton {
-            storage,
             key: to_length_prefixed(key),
             data: PhantomData,
         }
     }
 
     /// save will serialize the model and store, returns an error on serialization issues
-    pub fn save(&mut self, data: &T) -> StdResult<()> {
-        self.storage.set(&self.key, &to_vec(data)?);
+    pub fn save<S: Storage>(&self, store: &mut S, data: &T) -> StdResult<()> {
+        store.set(&self.key, &to_vec(data)?);
         Ok(())
     }
 
-    pub fn remove(&mut self) {
-        self.storage.remove(&self.key)
+    pub fn remove<S: Storage>(&self, store: &mut S) {
+        store.remove(&self.key)
     }
 
     /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self) -> StdResult<T> {
-        let value = self.storage.get(&self.key);
+    pub fn load<S: ReadonlyStorage>(&self, store: &S) -> StdResult<T> {
+        let value = store.get(&self.key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
-    pub fn may_load(&self) -> StdResult<Option<T>> {
-        let value = self.storage.get(&self.key);
+    pub fn may_load<S: ReadonlyStorage>(&self, store: &S) -> StdResult<Option<T>> {
+        let value = store.get(&self.key);
         may_deserialize(&value)
     }
 
@@ -79,55 +65,16 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update<A, E>(&mut self, action: A) -> Result<T, E>
+    pub fn update<A, E, S>(&self, store: &mut S, action: A) -> Result<T, E>
     where
         A: FnOnce(T) -> Result<T, E>,
         E: From<StdError>,
+        S: Storage,
     {
-        let input = self.load()?;
+        let input = self.load(store)?;
         let output = action(input)?;
-        self.save(&output)?;
+        self.save(store, &output)?;
         Ok(output)
-    }
-}
-
-/// ReadonlySingleton only requires a ReadonlyStorage and exposes only the
-/// methods of Singleton that don't modify state.
-pub struct ReadonlySingleton<'a, S, T>
-where
-    S: ReadonlyStorage,
-    T: Serialize + DeserializeOwned,
-{
-    storage: &'a S,
-    key: Vec<u8>,
-    // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<T>,
-}
-
-impl<'a, S, T> ReadonlySingleton<'a, S, T>
-where
-    S: ReadonlyStorage,
-    T: Serialize + DeserializeOwned,
-{
-    pub fn new(storage: &'a S, key: &[u8]) -> Self {
-        ReadonlySingleton {
-            storage,
-            key: to_length_prefixed(key),
-            data: PhantomData,
-        }
-    }
-
-    /// load will return an error if no data is set at the given key, or on parse error
-    pub fn load(&self) -> StdResult<T> {
-        let value = self.storage.get(&self.key);
-        must_deserialize(&value)
-    }
-
-    /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
-    /// returns an error on issues parsing
-    pub fn may_load(&self) -> StdResult<Option<T>> {
-        let value = self.storage.get(&self.key);
-        may_deserialize(&value)
     }
 }
 
@@ -148,72 +95,70 @@ mod test {
     #[test]
     fn save_and_load() {
         let mut store = MockStorage::new();
-        let mut single = Singleton::<_, Config>::new(&mut store, b"config");
+        let single = Singleton::<Config>::new(b"config");
 
-        assert!(single.load().is_err());
-        assert_eq!(single.may_load().unwrap(), None);
+        assert!(single.load(&store).is_err());
+        assert_eq!(single.may_load(&store).unwrap(), None);
 
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        single.save(&cfg).unwrap();
+        single.save(&mut store, &cfg).unwrap();
 
-        assert_eq!(cfg, single.load().unwrap());
+        assert_eq!(cfg, single.load(&store).unwrap());
     }
 
     #[test]
     fn remove_works() {
         let mut store = MockStorage::new();
-        let mut single = Singleton::<_, Config>::new(&mut store, b"config");
+        let single = Singleton::<Config>::new(b"config");
 
         // store data
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        single.save(&cfg).unwrap();
-        assert_eq!(cfg, single.load().unwrap());
+        single.save(&mut store, &cfg).unwrap();
+        assert_eq!(cfg, single.load(&store).unwrap());
 
         // remove it and loads None
-        single.remove();
-        assert_eq!(None, single.may_load().unwrap());
+        single.remove(&mut store);
+        assert_eq!(None, single.may_load(&store).unwrap());
 
         // safe to remove 2 times
-        single.remove();
-        assert_eq!(None, single.may_load().unwrap());
+        single.remove(&mut store);
+        assert_eq!(None, single.may_load(&store).unwrap());
     }
 
     #[test]
     fn isolated_reads() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let writer = singleton::<Config>(b"config");
+        let other_reader = singleton::<Config>(b"config2");
 
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        writer.save(&cfg).unwrap();
+        writer.save(&mut store, &cfg).unwrap();
 
-        let reader = singleton_read::<_, Config>(&store, b"config");
-        assert_eq!(cfg, reader.load().unwrap());
-
-        let other_reader = singleton_read::<_, Config>(&store, b"config2");
-        assert_eq!(other_reader.may_load().unwrap(), None);
+        assert_eq!(cfg, writer.load(&store).unwrap());
+        assert_eq!(None, other_reader.may_load(&store).unwrap());
     }
 
     #[test]
     fn update_success() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let writer = singleton::<Config>(b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        writer.save(&cfg).unwrap();
+        writer.save(&mut store, &cfg).unwrap();
 
-        let output = writer.update(|mut c| -> StdResult<_> {
+        let output = writer.update(&mut store, |mut c| -> StdResult<_> {
             c.max_tokens *= 2;
             Ok(c)
         });
@@ -222,22 +167,22 @@ mod test {
             max_tokens: 2468,
         };
         assert_eq!(output.unwrap(), expected);
-        assert_eq!(writer.load().unwrap(), expected);
+        assert_eq!(writer.load(&store).unwrap(), expected);
     }
 
     #[test]
     fn update_can_change_variable_from_outer_scope() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let writer = singleton::<Config>(b"config");
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        writer.save(&cfg).unwrap();
+        writer.save(&mut store, &cfg).unwrap();
 
         let mut old_max_tokens = 0i32;
         writer
-            .update(|mut c| -> StdResult<_> {
+            .update(&mut store, |mut c| -> StdResult<_> {
                 old_max_tokens = c.max_tokens;
                 c.max_tokens *= 2;
                 Ok(c)
@@ -249,20 +194,20 @@ mod test {
     #[test]
     fn update_does_not_change_data_on_error() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let writer = singleton::<Config>(b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        writer.save(&cfg).unwrap();
+        writer.save(&mut store, &cfg).unwrap();
 
-        let output = writer.update(&|_c| Err(StdError::underflow(4, 7)));
+        let output = writer.update(&mut store, &|_c| Err(StdError::underflow(4, 7)));
         match output.unwrap_err() {
             StdError::Underflow { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
-        assert_eq!(writer.load().unwrap(), cfg);
+        assert_eq!(writer.load(&store).unwrap(), cfg);
     }
 
     #[test]
@@ -280,15 +225,15 @@ mod test {
         }
 
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let writer = singleton::<Config>(b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
         };
-        writer.save(&cfg).unwrap();
+        writer.save(&mut store, &cfg).unwrap();
 
-        let res = writer.update(|mut c| {
+        let res = writer.update(&mut store, |mut c| {
             if c.max_tokens > 5000 {
                 return Err(MyError::Foo);
             }
@@ -305,6 +250,6 @@ mod test {
             MyError::Std(StdError::GenericErr { .. }) => {}
             err => panic!("Unexpected error: {:?}", err),
         }
-        assert_eq!(writer.load().unwrap(), cfg);
+        assert_eq!(writer.load(&store).unwrap(), cfg);
     }
 }
