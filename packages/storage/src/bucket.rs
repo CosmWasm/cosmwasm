@@ -5,7 +5,9 @@ use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
-use crate::length_prefixed::{nested_namespaces_with_key, namespaces_with_key};
+use crate::length_prefixed::{
+    decode_length, length_prefixed_with_key, namespaces_with_key, nested_namespaces_with_key,
+};
 #[cfg(feature = "iterator")]
 use crate::namespace_helpers::range_with_prefix;
 #[cfg(feature = "iterator")]
@@ -34,6 +36,51 @@ where
 {
     ReadonlyBucket::new(storage, namespace)
 }
+
+//--- TODO: sort this out better ----//
+
+pub trait PrimaryKey {
+    fn pk(&self) -> Vec<u8>;
+    fn parse(data: Vec<u8>) -> Self;
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pk2(Vec<u8>, Vec<u8>);
+
+impl PrimaryKey for Pk2 {
+    fn pk(&self) -> Vec<u8> {
+        length_prefixed_with_key(&self.0, &self.1)
+    }
+
+    fn parse(pk: Vec<u8>) -> Self {
+        // TODO: is there a way to do this without reallocating memory?
+        // I think I read something about that
+        let l = decode_length(&pk[..2]);
+        Pk2(pk[2..l + 2].to_vec(), pk[l + 2..].to_vec())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pk3(Vec<u8>, Vec<u8>, Vec<u8>);
+
+impl PrimaryKey for Pk3 {
+    fn pk(&self) -> Vec<u8> {
+        namespaces_with_key(&[&self.0, &self.1], &self.2)
+    }
+
+    fn parse(pk: Vec<u8>) -> Self {
+        // TODO: is there a way to do this without reallocating memory?
+        // I think I read something about that
+        let l = decode_length(&pk[..2]);
+        let l2 = decode_length(&pk[l + 2..l + 4]);
+        let first = pk[2..l + 2].to_vec();
+        let second = pk[l + 4..l + l2 + 4].to_vec();
+        let third = pk[l + l2 + 4..].to_vec();
+        Pk3(first, second, third)
+    }
+}
+
+//---- END TODO -------//
 
 /// Bucket stores all data under a series of length-prefixed steps: (namespace, "_pk").
 /// After this is created (each step length-prefixed), we just append the bucket key at the end.
@@ -220,6 +267,21 @@ mod test {
     struct Data {
         pub name: String,
         pub age: i32,
+    }
+
+    #[test]
+    fn composite_keys() {
+        let composite = Pk2(b"its".to_vec(), b"windy".to_vec());
+        let key = composite.pk();
+        assert_eq!(10, key.len());
+        let parsed = Pk2::parse(key);
+        assert_eq!(parsed, composite);
+
+        let composite = Pk3(b"winters".to_vec(), b"really".to_vec(), b"windy".to_vec());
+        let key = composite.pk();
+        assert_eq!(22, key.len());
+        let parsed = Pk3::parse(key);
+        assert_eq!(parsed, composite);
     }
 
     #[test]

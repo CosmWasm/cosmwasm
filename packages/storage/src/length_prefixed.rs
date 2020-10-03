@@ -29,6 +29,14 @@ pub fn to_length_prefixed_nested(namespaces: &[&[u8]]) -> Vec<u8> {
     out
 }
 
+pub fn length_prefixed_with_key(namespace: &[u8], key: &[u8]) -> Vec<u8> {
+    let mut out = Vec::with_capacity(namespace.len() + 2 + key.len());
+    out.extend_from_slice(&encode_length(namespace));
+    out.extend_from_slice(namespace);
+    out.extend_from_slice(key);
+    out
+}
+
 /// This is equivalent concat(to_length_prefixed_nested(namespaces), key)
 /// But more efficient when the intermediate namespaces often must be recalculated
 #[allow(dead_code)]
@@ -78,6 +86,12 @@ fn encode_length(namespace: &[u8]) -> [u8; 2] {
     }
     let length_bytes = (namespace.len() as u32).to_be_bytes();
     [length_bytes[2], length_bytes[3]]
+}
+
+// pub(crate) fn decode_length(prefix: [u8; 2]) -> usize {
+pub(crate) fn decode_length(prefix: &[u8]) -> usize {
+    // TODO: enforce exactly 2 bytes somehow, but usable with slices
+    (prefix[0] as usize) * 256 + (prefix[1] as usize)
 }
 
 #[cfg(test)]
