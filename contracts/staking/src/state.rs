@@ -1,8 +1,8 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, ReadonlyStorage, Storage, Uint128};
-use cosmwasm_storage::{bucket, singleton, singleton_read, Bucket, ReadonlySingleton, Singleton};
+use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, Uint128};
+use cosmwasm_storage::{bucket, singleton, Bucket, Singleton};
 
 use crate::msg::TokenInfoResponse;
 
@@ -51,26 +51,14 @@ pub struct Supply {
     pub claims: Uint128,
 }
 
-pub fn invest_info<S: Storage>(storage: &mut S) -> Singleton<S, InvestmentInfo> {
-    singleton(storage, KEY_INVESTMENT)
+pub fn invest_info() -> Singleton<InvestmentInfo> {
+    singleton(KEY_INVESTMENT)
 }
 
-pub fn invest_info_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, InvestmentInfo> {
-    singleton_read(storage, KEY_INVESTMENT)
+pub fn token_info() -> Singleton<TokenInfoResponse> {
+    singleton(KEY_TOKEN_INFO)
 }
 
-pub fn token_info<S: Storage>(storage: &mut S) -> Singleton<S, TokenInfoResponse> {
-    singleton(storage, KEY_TOKEN_INFO)
-}
-
-pub fn token_info_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, TokenInfoResponse> {
-    singleton_read(storage, KEY_TOKEN_INFO)
-}
-
-pub fn total_supply<S: Storage>(storage: &mut S) -> Singleton<S, Supply> {
-    singleton(storage, KEY_TOTAL_SUPPLY)
-}
-
-pub fn total_supply_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, Supply> {
-    singleton_read(storage, KEY_TOTAL_SUPPLY)
+pub fn total_supply() -> Singleton<Supply> {
+    singleton(KEY_TOTAL_SUPPLY)
 }

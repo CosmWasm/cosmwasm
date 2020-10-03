@@ -9,8 +9,7 @@ use crate::msg::{
     TokenInfoResponse,
 };
 use crate::state::{
-    balances, claims, invest_info, invest_info_read, token_info, token_info_read, total_supply,
-    total_supply_read, InvestmentInfo, Supply,
+    balances, claims, invest_info, token_info, total_supply, InvestmentInfo, Supply,
 };
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
@@ -35,7 +34,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         symbol: msg.symbol,
         decimals: msg.decimals,
     };
-    token_info(&mut deps.storage).save(&token)?;
+    token_info().save(&mut deps.storage, &token)?;
 
     let denom = deps.querier.query_bonded_denom()?;
     let invest = InvestmentInfo {
@@ -45,11 +44,11 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         validator: msg.validator,
         min_withdrawal: msg.min_withdrawal,
     };
-    invest_info(&mut deps.storage).save(&invest)?;
+    invest_info().save(&mut deps.storage, &invest)?;
 
     // set supply to 0
     let supply = Supply::default();
-    total_supply(&mut deps.storage).save(&supply)?;
+    total_supply().save(&mut deps.storage, &supply)?;
 
     Ok(InitResponse::default())
 }
@@ -147,7 +146,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     // ensure we have the proper denom
-    let invest = invest_info_read(&deps.storage).load()?;
+    let invest = invest_info().load(&deps.storage)?;
     // payment finds the proper coin (or throws an error)
     let payment = info
         .sent_funds
@@ -159,8 +158,8 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     let bonded = get_bonded(&deps.querier, &env.contract.address)?;
 
     // calculate to_mint and update total supply
-    let mut totals = total_supply(&mut deps.storage);
-    let mut supply = totals.load()?;
+    let totals = total_supply();
+    let mut supply = totals.load(&deps.storage)?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let to_mint = if supply.issued.is_zero() || bonded.is_zero() {
@@ -170,7 +169,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     };
     supply.bonded = bonded + payment.amount;
     supply.issued += to_mint;
-    totals.save(&supply)?;
+    totals.save(&mut deps.storage, &supply)?;
 
     // update the balance of the sender
     balances().update(&mut deps.storage, sender_raw.as_slice(), |balance| {
@@ -203,7 +202,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
 ) -> StdResult<HandleResponse> {
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
-    let invest = invest_info_read(&deps.storage).load()?;
+    let invest = invest_info().load(&deps.storage)?;
     // ensure it is big enough to care
     if amount < invest.min_withdrawal {
         return Err(StdError::generic_err(format!(
@@ -234,15 +233,15 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
 
     // calculate how many native tokens this is worth and update supply
     let remainder = (amount - tax)?;
-    let mut totals = total_supply(&mut deps.storage);
-    let mut supply = totals.load()?;
+    let totals = total_supply();
+    let mut supply = totals.load(&deps.storage)?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let unbond = remainder.multiply_ratio(bonded, supply.issued);
     supply.bonded = (bonded - unbond)?;
     supply.issued = (supply.issued - remainder)?;
     supply.claims += unbond;
-    totals.save(&supply)?;
+    totals.save(&mut deps.storage, &supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
     claims().update(&mut deps.storage, sender_raw.as_slice(), |claim| {
@@ -273,7 +272,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     info: MessageInfo,
 ) -> StdResult<HandleResponse> {
     // find how many tokens the contract has
-    let invest = invest_info_read(&deps.storage).load()?;
+    let invest = invest_info().load(&deps.storage)?;
     let mut balance = deps
         .querier
         .query_balance(&env.contract.address, &invest.bond_denom)?;
@@ -293,7 +292,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     })?;
 
     // update total supply (lower claim)
-    total_supply(&mut deps.storage).update(|mut supply| {
+    total_supply().update(&mut deps.storage, |mut supply| {
         supply.claims = (supply.claims - to_send)?;
         Ok(supply)
     })?;
@@ -326,7 +325,7 @@ pub fn reinvest<S: Storage, A: Api, Q: Querier>(
     _info: MessageInfo,
 ) -> StdResult<HandleResponse> {
     let contract_addr = env.contract.address;
-    let invest = invest_info_read(&deps.storage).load()?;
+    let invest = invest_info().load(&deps.storage)?;
     let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
@@ -361,14 +360,14 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
     }
 
     // find how many tokens we have to bond
-    let invest = invest_info_read(&deps.storage).load()?;
+    let invest = invest_info().load(&deps.storage)?;
     let mut balance = deps
         .querier
         .query_balance(&env.contract.address, &invest.bond_denom)?;
 
     // we deduct pending claims from our account balance before reinvesting.
     // if there is not enough funds, we just return a no-op
-    match total_supply(&mut deps.storage).update(|mut supply| {
+    match total_supply().update(&mut deps.storage, |mut supply| {
         balance.amount = (balance.amount - supply.claims)?;
         // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
         (balance.amount - invest.min_withdrawal)?;
@@ -410,7 +409,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 pub fn query_token_info<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
 ) -> StdResult<TokenInfoResponse> {
-    token_info_read(&deps.storage).load()
+    token_info().load(&deps.storage)
 }
 
 pub fn query_balance<S: Storage, A: Api, Q: Querier>(
@@ -438,8 +437,8 @@ pub fn query_claims<S: Storage, A: Api, Q: Querier>(
 pub fn query_investment<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
 ) -> StdResult<InvestmentResponse> {
-    let invest = invest_info_read(&deps.storage).load()?;
-    let supply = total_supply_read(&deps.storage).load()?;
+    let invest = invest_info().load(&deps.storage)?;
+    let supply = total_supply().load(&deps.storage)?;
 
     let res = InvestmentResponse {
         owner: deps.api.human_address(&invest.owner)?,
