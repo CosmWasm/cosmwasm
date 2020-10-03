@@ -179,6 +179,26 @@ where
         Box::new(mapped)
     }
 
+    // TODO: test this, just an idea now, need more work on Pks
+    // Also, how much do we trim from the keys? Leave just the last part of the PK, right?
+
+    /// This lets us grab all items under the beginning of a composite key.
+    /// If we store under `Pk2(owner, spender)`, then we pass `prefixes: &[owner]` here
+    /// To list all spenders under the owner
+    #[cfg(feature = "iterator")]
+    pub fn range_prefixed<'c>(
+        &'c self,
+        prefixes: &[&[u8]],
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'c> {
+        let namespace = nested_namespaces_with_key(&[&self.namespace, PREFIX_PK], prefixes, b"");
+        let mapped =
+            range_with_prefix(self.storage, &namespace, start, end, order).map(deserialize_kv::<T>);
+        Box::new(mapped)
+    }
+
     /// Loads the data, perform the specified action, and store the result
     /// in the database. This is shorthand for some common sequences, which may be useful.
     ///
