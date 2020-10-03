@@ -10,7 +10,6 @@ boilterplate.
 ## Contents
 
 - [PrefixedStorage](#prefixed-storage)
-- [TypedStorage](#typed-storage)
 - [Bucket](#bucket)
 - [Singleton](#singleton)
 
@@ -54,6 +53,8 @@ The takeaway is to create the `PrefixedStorage` objects when needed and not to
 hang around to them too long.
 
 ### Typed Storage
+
+**TODO** remove
 
 As we divide our storage space into different subspaces or "buckets", we will
 quickly notice that each "bucket" works on a unique type. This leads to a lot of
@@ -111,6 +112,13 @@ assert_eq!(output, expected);
 
 ### Bucket
 
+
+We want to extend the concept of prefixed storage spaces and add type safety,
+so you can ensure all the data in this namespace is of the same type, and add
+some helper methods to serialize and deserialize the data transparently.
+
+**TODO** pull in more info from aboe
+
 Since the above idiom (a subspace for a class of items) is so common and useful,
 and there is no easy way to return this from a function (bucket holds a
 reference to space, and cannot live longer than the local variable), the two are
@@ -137,6 +145,8 @@ fn do_stuff() -> StdResult<()> {
 ```
 
 ### Singleton
+
+**TODO** reword to focus on Bucket
 
 Singleton is another wrapper around the `TypedStorage` API. There are cases when
 we don't need a whole subspace to hold arbitrary key-value lookup for typed
