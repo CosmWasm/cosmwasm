@@ -41,7 +41,15 @@ where
 
 pub trait PrimaryKey {
     fn pk(&self) -> Vec<u8>;
-    fn parse(data: Vec<u8>) -> Self;
+    fn parse(data: &[u8]) -> Self;
+
+    fn from_kv<T>(kv: (Vec<u8>, T)) -> (Self, T)
+    where
+        Self: std::marker::Sized,
+    {
+        let (k, v) = kv;
+        (Self::parse(&k), v)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -52,9 +60,7 @@ impl PrimaryKey for Pk2 {
         length_prefixed_with_key(&self.0, &self.1)
     }
 
-    fn parse(pk: Vec<u8>) -> Self {
-        // TODO: is there a way to do this without reallocating memory?
-        // I think I read something about that
+    fn parse(pk: &[u8]) -> Self {
         let l = decode_length(&pk[..2]);
         Pk2(pk[2..l + 2].to_vec(), pk[l + 2..].to_vec())
     }
@@ -68,9 +74,7 @@ impl PrimaryKey for Pk3 {
         namespaces_with_key(&[&self.0, &self.1], &self.2)
     }
 
-    fn parse(pk: Vec<u8>) -> Self {
-        // TODO: is there a way to do this without reallocating memory?
-        // I think I read something about that
+    fn parse(pk: &[u8]) -> Self {
         let l = decode_length(&pk[..2]);
         let l2 = decode_length(&pk[l + 2..l + 4]);
         let first = pk[2..l + 2].to_vec();
@@ -274,14 +278,33 @@ mod test {
         let composite = Pk2(b"its".to_vec(), b"windy".to_vec());
         let key = composite.pk();
         assert_eq!(10, key.len());
-        let parsed = Pk2::parse(key);
+        let parsed = Pk2::parse(&key);
         assert_eq!(parsed, composite);
 
         let composite = Pk3(b"winters".to_vec(), b"really".to_vec(), b"windy".to_vec());
         let key = composite.pk();
         assert_eq!(22, key.len());
-        let parsed = Pk3::parse(key);
+        let parsed = Pk3::parse(&key);
         assert_eq!(parsed, composite);
+    }
+
+    #[test]
+    fn composite_keys_parsing() {
+        // Try from a KV (as if we got a range)
+        let john = Data {
+            name: "John".to_string(),
+            age: 123,
+        };
+        let composite = Pk3(b"lots".to_vec(), b"of".to_vec(), b"text".to_vec());
+
+        // demo usage as if we mapped over a range iterator
+        let mut it = vec![(composite.pk(), john.clone())]
+            .into_iter()
+            .map(Pk3::from_kv);
+        let (k1, v1) = it.next().unwrap();
+        assert_eq!(k1, composite);
+        assert_eq!(v1, john);
+        assert!(it.next().is_none());
     }
 
     #[test]
