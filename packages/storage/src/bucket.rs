@@ -37,78 +37,6 @@ where
     ReadonlyBucket::new(storage, namespace)
 }
 
-//--- TODO: sort this out better ----//
-
-pub trait PrimaryKey {
-    type Output;
-
-    fn pk(&self) -> Vec<u8>;
-    fn parse(data: &[u8]) -> Self::Output;
-
-    // convert a PK into an owned variant (Vec<u8> rather than &[u8])
-    // this can be done brute force, but please override for a cheaper version
-    // FIXME: better name for this function - to_owned() sounded good, but uses Cloned. Other ideas?
-    fn to_output(&self) -> Self::Output {
-        Self::parse(&self.pk())
-    }
-
-    fn from_kv<T>(kv: (Vec<u8>, T)) -> (Self::Output, T)
-    where
-        Self: std::marker::Sized,
-    {
-        let (k, v) = kv;
-        (Self::parse(&k), v)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Pk2<'a>(pub &'a [u8], pub &'a [u8]);
-
-impl<'a> PrimaryKey for Pk2<'a> {
-    type Output = (Vec<u8>, Vec<u8>);
-
-    fn pk(&self) -> Vec<u8> {
-        length_prefixed_with_key(self.0, self.1)
-    }
-
-    fn to_output(&self) -> Self::Output {
-        (self.0.to_vec(), self.1.to_vec())
-    }
-
-    fn parse(pk: &[u8]) -> Self::Output {
-        let l = decode_length(&pk[..2]);
-        let first = pk[2..l + 2].to_vec();
-        let second = pk[l + 2..].to_vec();
-        (first, second)
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct Pk3<'a>(&'a [u8], &'a [u8], &'a [u8]);
-
-impl<'a> PrimaryKey for Pk3<'a> {
-    type Output = (Vec<u8>, Vec<u8>, Vec<u8>);
-
-    fn pk(&self) -> Vec<u8> {
-        namespaces_with_key(&[self.0, self.1], self.2)
-    }
-
-    fn to_output(&self) -> Self::Output {
-        (self.0.to_vec(), self.1.to_vec(), self.2.to_vec())
-    }
-
-    fn parse(pk: &[u8]) -> Self::Output {
-        let l = decode_length(&pk[..2]);
-        let l2 = decode_length(&pk[l + 2..l + 4]);
-        let first = pk[2..l + 2].to_vec();
-        let second = pk[l + 4..l + l2 + 4].to_vec();
-        let third = pk[l + l2 + 4..].to_vec();
-        (first, second, third)
-    }
-}
-
-//---- END TODO -------//
-
 /// Bucket stores all data under a series of length-prefixed steps: (namespace, "_pk").
 /// After this is created (each step length-prefixed), we just append the bucket key at the end.
 ///
@@ -238,6 +166,74 @@ where
     }
 }
 
+pub trait PrimaryKey {
+    type Output;
+
+    fn pk(&self) -> Vec<u8>;
+    fn parse(data: &[u8]) -> Self::Output;
+
+    // convert a PK into an owned variant (Vec<u8> rather than &[u8])
+    // this can be done brute force, but please override for a cheaper version
+    // FIXME: better name for this function - to_owned() sounded good, but uses Cloned. Other ideas?
+    fn to_output(&self) -> Self::Output {
+        Self::parse(&self.pk())
+    }
+
+    fn from_kv<T>(kv: (Vec<u8>, T)) -> (Self::Output, T)
+    where
+        Self: std::marker::Sized,
+    {
+        let (k, v) = kv;
+        (Self::parse(&k), v)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pk2<'a>(pub &'a [u8], pub &'a [u8]);
+
+impl<'a> PrimaryKey for Pk2<'a> {
+    type Output = (Vec<u8>, Vec<u8>);
+
+    fn pk(&self) -> Vec<u8> {
+        length_prefixed_with_key(self.0, self.1)
+    }
+
+    fn to_output(&self) -> Self::Output {
+        (self.0.to_vec(), self.1.to_vec())
+    }
+
+    fn parse(pk: &[u8]) -> Self::Output {
+        let l = decode_length(&pk[..2]);
+        let first = pk[2..l + 2].to_vec();
+        let second = pk[l + 2..].to_vec();
+        (first, second)
+    }
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Pk3<'a>(&'a [u8], &'a [u8], &'a [u8]);
+
+impl<'a> PrimaryKey for Pk3<'a> {
+    type Output = (Vec<u8>, Vec<u8>, Vec<u8>);
+
+    fn pk(&self) -> Vec<u8> {
+        namespaces_with_key(&[self.0, self.1], self.2)
+    }
+
+    fn to_output(&self) -> Self::Output {
+        (self.0.to_vec(), self.1.to_vec(), self.2.to_vec())
+    }
+
+    fn parse(pk: &[u8]) -> Self::Output {
+        let l = decode_length(&pk[..2]);
+        let l2 = decode_length(&pk[l + 2..l + 4]);
+        let first = pk[2..l + 2].to_vec();
+        let second = pk[l + 4..l + l2 + 4].to_vec();
+        let third = pk[l + l2 + 4..].to_vec();
+        (first, second, third)
+    }
+}
+
 pub struct ReadonlyBucket<'a, 'b, S, T>
 where
     S: ReadonlyStorage,
@@ -314,40 +310,6 @@ mod test {
     struct Data {
         pub name: String,
         pub age: i32,
-    }
-
-    #[test]
-    fn composite_keys() {
-        let composite = Pk2(b"its", b"windy");
-        let key = composite.pk();
-        assert_eq!(10, key.len());
-        let parsed = Pk2::parse(&key);
-        assert_eq!(parsed, composite.to_output());
-
-        let composite = Pk3(b"winters", b"really", b"windy");
-        let key = composite.pk();
-        assert_eq!(22, key.len());
-        let parsed = Pk3::parse(&key);
-        assert_eq!(parsed, composite.to_output());
-    }
-
-    #[test]
-    fn composite_keys_parsing() {
-        // Try from a KV (as if we got a range)
-        let john = Data {
-            name: "John".to_string(),
-            age: 123,
-        };
-        let composite = Pk3(b"lots", b"of", b"text");
-
-        // demo usage as if we mapped over a range iterator
-        let mut it = vec![(composite.pk(), john.clone())]
-            .into_iter()
-            .map(Pk3::from_kv);
-        let (k1, v1) = it.next().unwrap();
-        assert_eq!(k1, composite.to_output());
-        assert_eq!(v1, john);
-        assert!(it.next().is_none());
     }
 
     #[test]
@@ -627,5 +589,83 @@ mod test {
         assert_eq!(data.len(), 2);
         assert_eq!(data[0], (b"jose".to_vec(), jose));
         assert_eq!(data[1], (b"maria".to_vec(), maria));
+    }
+
+    #[test]
+    fn composite_keys() {
+        let composite = Pk2(b"its", b"windy");
+        let key = composite.pk();
+        assert_eq!(10, key.len());
+        let parsed = Pk2::parse(&key);
+        assert_eq!(parsed, composite.to_output());
+
+        let composite = Pk3(b"winters", b"really", b"windy");
+        let key = composite.pk();
+        assert_eq!(22, key.len());
+        let parsed = Pk3::parse(&key);
+        assert_eq!(parsed, composite.to_output());
+    }
+
+    #[test]
+    fn composite_keys_parsing() {
+        // Try from a KV (as if we got a range)
+        let john = Data {
+            name: "John".to_string(),
+            age: 123,
+        };
+        let composite = Pk3(b"lots", b"of", b"text");
+
+        // demo usage as if we mapped over a range iterator
+        let mut it = vec![(composite.pk(), john.clone())]
+            .into_iter()
+            .map(Pk3::from_kv);
+        let (k1, v1) = it.next().unwrap();
+        assert_eq!(k1, composite.to_output());
+        assert_eq!(v1, john);
+        assert!(it.next().is_none());
+    }
+
+    #[test]
+    #[cfg(features = "iterator")]
+    fn bucket_with_composite_pk() {
+        let mut store = MockStorage::new();
+        let mut bucket = Bucket::<_, 64>::new(&mut store, b"allowance");
+
+        let owner1: &[u8] = b"john";
+        let owner2: &[u8] = b"juan";
+        let spender1: &[u8] = b"marco";
+        let spender2: &[u8] = b"maria";
+        let spender3: &[u8] = b"martian";
+
+        // store some data with composite key
+        bucket.save(&Pk2(owner1, spender1).pk(), &100).unwrap();
+        bucket.save(&Pk2(owner1, spender2).pk(), &250).unwrap();
+        bucket.save(&Pk2(owner2, spender1).pk(), &77).unwrap();
+        bucket.save(&Pk2(owner2, spender3).pk(), &444).unwrap();
+
+        // query by full key
+        assert_eq!(100, bucket.load(&Pk2(owner1, spender1).pk()).unwrap());
+        assert_eq!(444, bucket.load(&Pk2(owner2, spender3).pk()).unwrap());
+
+        // range over one owner. since it is prefixed, we only get the remaining part of the pk (spender)
+        let spenders: StdResult<Vec<_>> = bucket
+            .range_prefixed(&[owner1], None, None, Order::Ascending)
+            .collect();
+        let spenders = spenders.unwrap();
+        assert_eq!(2, spenders.len());
+        assert_eq!(spenders[0], (spender1.to_vec(), 100));
+        assert_eq!(spenders[1], (spender2.to_vec(), 250));
+
+        // range over all data. use Pk2::from_kv to parse out the composite key (owner, spender)
+        let spenders: StdResult<Vec<_>> = bucket
+            .range(None, None, Order::Ascending)
+            .map(Pk2::from_kv)
+            .collect();
+        let spenders = spenders.unwrap();
+        assert_eq!(4, spenders.len());
+        assert_eq!(spenders[0], (Pk2(owner1, spender1).to_output(), 100));
+        assert_eq!(spenders[1], (Pk2(owner1, spender2).to_output(), 250));
+        assert_eq!(spenders[2], (Pk2(owner2, spender1).to_output(), 77));
+        assert_eq!(spenders[3], (Pk2(owner2, spender3).to_output(), 444));
     }
 }

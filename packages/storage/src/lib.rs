@@ -10,7 +10,7 @@ mod transactions;
 mod type_helpers;
 mod typed;
 
-pub use bucket::{bucket, bucket_read, Bucket, ReadonlyBucket};
+pub use bucket::{bucket, bucket_read, Bucket, Pk2, Pk3, PrimaryKey, ReadonlyBucket};
 #[cfg(feature = "iterator")]
 pub use indexed_bucket::IndexedBucket;
 #[cfg(feature = "iterator")]
