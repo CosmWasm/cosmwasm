@@ -40,10 +40,19 @@ where
 //--- TODO: sort this out better ----//
 
 pub trait PrimaryKey {
-    fn pk(&self) -> Vec<u8>;
-    fn parse(data: &[u8]) -> Self;
+    type Output;
 
-    fn from_kv<T>(kv: (Vec<u8>, T)) -> (Self, T)
+    fn pk(&self) -> Vec<u8>;
+    fn parse(data: &[u8]) -> Self::Output;
+
+    // convert a PK into an owned variant (Vec<u8> rather than &[u8])
+    // this can be done brute force, but please override for a cheaper version
+    // FIXME: better name for this function - to_owned() sounded good, but uses Cloned. Other ideas?
+    fn to_output(&self) -> Self::Output {
+        Self::parse(&self.pk())
+    }
+
+    fn from_kv<T>(kv: (Vec<u8>, T)) -> (Self::Output, T)
     where
         Self: std::marker::Sized,
     {
@@ -53,34 +62,48 @@ pub trait PrimaryKey {
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Pk2(Vec<u8>, Vec<u8>);
+pub struct Pk2<'a>(pub &'a [u8], pub &'a [u8]);
 
-impl PrimaryKey for Pk2 {
+impl<'a> PrimaryKey for Pk2<'a> {
+    type Output = (Vec<u8>, Vec<u8>);
+
     fn pk(&self) -> Vec<u8> {
-        length_prefixed_with_key(&self.0, &self.1)
+        length_prefixed_with_key(self.0, self.1)
     }
 
-    fn parse(pk: &[u8]) -> Self {
+    fn to_output(&self) -> Self::Output {
+        (self.0.to_vec(), self.1.to_vec())
+    }
+
+    fn parse(pk: &[u8]) -> Self::Output {
         let l = decode_length(&pk[..2]);
-        Pk2(pk[2..l + 2].to_vec(), pk[l + 2..].to_vec())
+        let first = pk[2..l + 2].to_vec();
+        let second = pk[l + 2..].to_vec();
+        (first, second)
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Pk3(Vec<u8>, Vec<u8>, Vec<u8>);
+pub struct Pk3<'a>(&'a [u8], &'a [u8], &'a [u8]);
 
-impl PrimaryKey for Pk3 {
+impl<'a> PrimaryKey for Pk3<'a> {
+    type Output = (Vec<u8>, Vec<u8>, Vec<u8>);
+
     fn pk(&self) -> Vec<u8> {
-        namespaces_with_key(&[&self.0, &self.1], &self.2)
+        namespaces_with_key(&[self.0, self.1], self.2)
     }
 
-    fn parse(pk: &[u8]) -> Self {
+    fn to_output(&self) -> Self::Output {
+        (self.0.to_vec(), self.1.to_vec(), self.2.to_vec())
+    }
+
+    fn parse(pk: &[u8]) -> Self::Output {
         let l = decode_length(&pk[..2]);
         let l2 = decode_length(&pk[l + 2..l + 4]);
         let first = pk[2..l + 2].to_vec();
         let second = pk[l + 4..l + l2 + 4].to_vec();
         let third = pk[l + l2 + 4..].to_vec();
-        Pk3(first, second, third)
+        (first, second, third)
     }
 }
 
@@ -295,17 +318,17 @@ mod test {
 
     #[test]
     fn composite_keys() {
-        let composite = Pk2(b"its".to_vec(), b"windy".to_vec());
+        let composite = Pk2(b"its", b"windy");
         let key = composite.pk();
         assert_eq!(10, key.len());
         let parsed = Pk2::parse(&key);
-        assert_eq!(parsed, composite);
+        assert_eq!(parsed, composite.to_output());
 
-        let composite = Pk3(b"winters".to_vec(), b"really".to_vec(), b"windy".to_vec());
+        let composite = Pk3(b"winters", b"really", b"windy");
         let key = composite.pk();
         assert_eq!(22, key.len());
         let parsed = Pk3::parse(&key);
-        assert_eq!(parsed, composite);
+        assert_eq!(parsed, composite.to_output());
     }
 
     #[test]
@@ -315,14 +338,14 @@ mod test {
             name: "John".to_string(),
             age: 123,
         };
-        let composite = Pk3(b"lots".to_vec(), b"of".to_vec(), b"text".to_vec());
+        let composite = Pk3(b"lots", b"of", b"text");
 
         // demo usage as if we mapped over a range iterator
         let mut it = vec![(composite.pk(), john.clone())]
             .into_iter()
             .map(Pk3::from_kv);
         let (k1, v1) = it.next().unwrap();
-        assert_eq!(k1, composite);
+        assert_eq!(k1, composite.to_output());
         assert_eq!(v1, john);
         assert!(it.next().is_none());
     }
