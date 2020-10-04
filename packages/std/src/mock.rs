@@ -128,10 +128,12 @@ impl Api for MockApi {
     }
 }
 
-/// Just set sender and sent funds for the message. The rest uses defaults.
-/// The sender will be canonicalized internally to allow developers pasing in human readable senders.
+/// Returns a default enviroment with height, time, chain_id, and contract address
+/// You can submit as is to most contracts, or modify height/time if you want to
+/// test for expiration.
+///
 /// This is intended for use in test code only.
-pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
+pub fn mock_env() -> Env {
     Env {
         block: BlockInfo {
             height: 12_345,
@@ -139,13 +141,18 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
             time_nanos: 879305533,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        message: MessageInfo {
-            sender: sender.into(),
-            sent_funds: sent.to_vec(),
-        },
         contract: ContractInfo {
             address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         },
+    }
+}
+
+/// Just set sender and sent funds for the message. The essential for
+/// This is intended for use in test code only.
+pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
+    MessageInfo {
+        sender: sender.into(),
+        sent_funds: sent.to_vec(),
     }
 }
 
@@ -386,13 +393,13 @@ mod test {
     use crate::{coin, coins, from_binary, Decimal, HumanAddr};
 
     #[test]
-    fn mock_env_arguments() {
+    fn mock_info_arguments() {
         let name = HumanAddr("my name".to_string());
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env("my name", &coins(100, "atom"));
-        let b = mock_env(&name, &coins(100, "atom"));
-        let c = mock_env(name, &coins(100, "atom"));
+        let a = mock_info("my name", &coins(100, "atom"));
+        let b = mock_info(&name, &coins(100, "atom"));
+        let c = mock_info(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

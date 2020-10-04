@@ -7,7 +7,6 @@ use crate::coins::Coin;
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct Env {
     pub block: BlockInfo,
-    pub message: MessageInfo,
     pub contract: ContractInfo,
 }
 
@@ -35,10 +34,6 @@ pub struct BlockInfo {
     /// #         time_nanos: 879305533,
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     message: MessageInfo {
-    /// #         sender: HumanAddr::from("alice"),
-    /// #         sent_funds: vec![],
-    /// #     },
     /// #     contract: ContractInfo {
     /// #         address: HumanAddr::from("contract"),
     /// #     },
@@ -59,10 +54,6 @@ pub struct BlockInfo {
     /// #         time_nanos: 879305533,
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
-    /// #     message: MessageInfo {
-    /// #         sender: HumanAddr::from("alice"),
-    /// #         sent_funds: vec![],
-    /// #     },
     /// #     contract: ContractInfo {
     /// #         address: HumanAddr::from("contract"),
     /// #     },
@@ -73,6 +64,8 @@ pub struct BlockInfo {
     pub chain_id: String,
 }
 
+/// MessageInfo is sent with `init`, `handle`, and `migrate` calls, but not with queries.
+/// It contains the essential info for authorization - identity of the call, and payment
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
     /// The `sender` field from the `wasm/MsgStoreCode`, `wasm/MsgInstantiateContract`, `wasm/MsgMigrateContract`
