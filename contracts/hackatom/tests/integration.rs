@@ -366,7 +366,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            handle_info,
+            &handle_info,
             &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
@@ -387,7 +387,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            handle_info,
+            &handle_info,
             &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
@@ -412,7 +412,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            handle_info,
+            &handle_info,
             &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
         );
         let gas_used = gas_before - deps.get_gas_left();
