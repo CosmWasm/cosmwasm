@@ -363,7 +363,7 @@ fn query_recurse<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
     use cosmwasm_std::{attr, coins, ReadonlyStorage};
@@ -385,8 +385,8 @@ mod tests {
             verifier,
             beneficiary,
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(res.attributes[0].key, "Let the");
@@ -409,8 +409,8 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
@@ -429,12 +429,12 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'verifies'
-        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        let query_response = query(&deps, mock_env(), QueryMsg::Verifier {}).unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
@@ -442,8 +442,8 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = migrate(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = migrate(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
@@ -480,17 +480,16 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_env = mock_env(creator.as_str(), &init_amount);
-        let contract_addr = init_env.contract.address.clone();
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info(creator.as_str(), &init_amount);
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
-        deps.querier.update_balance(&contract_addr, init_amount);
+        deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary can release it
-        let handle_env = mock_env(verifier.as_str(), &[]);
-        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
+        let handle_info = mock_info(verifier.as_str(), &[]);
+        let handle_res = handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {}).unwrap();
         assert_eq!(handle_res.messages.len(), 1);
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
@@ -523,17 +522,16 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_env = mock_env(creator.as_str(), &init_amount);
-        let contract_addr = init_env.contract.address.clone();
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info(creator.as_str(), &init_amount);
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
-        deps.querier.update_balance(&contract_addr, init_amount);
+        deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary cannot release it
-        let handle_env = mock_env(beneficiary.as_str(), &[]);
-        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
+        let handle_info = mock_info(beneficiary.as_str(), &[]);
+        let handle_res = handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {});
         match handle_res.unwrap_err() {
             HackError::Unauthorized { .. } => {}
             _ => panic!("Expect unauthorized error"),
@@ -566,13 +564,13 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_env = mock_env(creator.as_str(), &coins(1000, "earth"));
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(beneficiary.as_str(), &[]);
+        let handle_info = mock_info(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
+        let _ = handle(&mut deps, mock_env(), handle_info, HandleMsg::Panic {});
     }
 
     #[test]
@@ -583,12 +581,18 @@ mod tests {
             verifier: HumanAddr::from("verifies"),
             beneficiary: HumanAddr::from("benefits"),
         };
-        let init_env = mock_env("creator", &coins(1000, "earth"));
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info("creator", &coins(1000, "earth"));
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env("anyone", &[]);
-        handle(&mut deps, handle_env, HandleMsg::UserErrorsInApiCalls {}).unwrap();
+        let handle_info = mock_info("anyone", &[]);
+        handle(
+            &mut deps,
+            mock_env(),
+            handle_info,
+            HandleMsg::UserErrorsInApiCalls {},
+        )
+        .unwrap();
     }
 
     #[test]

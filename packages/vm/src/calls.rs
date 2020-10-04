@@ -78,6 +78,7 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     env: &Env,
     msg: &[u8],
 ) -> VmResult<ContractResult<QueryResponse>> {
+    println!("call_query: {:?}", env);
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
     let result: ContractResult<QueryResponse> = from_slice(&data)?;
@@ -136,7 +137,7 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stat
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
     instance.set_storage_readonly(true);
-    call_raw(instance, "query", &[msg, env], MAX_LENGTH_QUERY)
+    call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
 }
 
 fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(

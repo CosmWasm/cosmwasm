@@ -223,6 +223,32 @@ major releases of `cosmwasm`. Note that you can also view the
   directly into the function calls unless you need to change height/time.
 - One more object to pass in for both unit and integration tests.
 
+```rust
+// before: unit test
+let env = mock_env(creator.as_str(), &[]);
+let res = init(&mut deps, env, msg).unwrap();
+
+let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+
+// after: unit test
+let info = mock_info(creator.as_str(), &[]);
+let res = init(&mut deps, mock_env(), info, msg).unwrap();
+
+let query_response = query(&deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+
+// before: integration test
+let env = mock_env("creator", &coins(1000, "earth"));
+let res: InitResponse = init(&mut deps, env, msg).unwrap();
+
+let query_response = query(&mut deps, QueryMsg::Verifier {}).unwrap();
+
+// after: integration test
+let info = mock_info("creator", &coins(1000, "earth"));
+let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+
+let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+```
+
 ## 0.9 -> 0.10
 
 Integration tests:
