@@ -345,7 +345,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            handle_info,
+            &handle_info,
             &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
