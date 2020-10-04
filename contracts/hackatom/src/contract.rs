@@ -5,8 +5,8 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier,
-    QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
+    Context, Env, Extern, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
+    Querier, QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -69,13 +69,8 @@ pub enum QueryMsg {
     /// Recurse will execute a query into itself up to depth-times and return
     /// Each step of the recursion may perform some extra work to test gas metering
     /// (`work` rounds of sha256 on contract).
-    /// Contract should be the set to be the address of the original contract,
-    /// we pass it in as query doesn't have access to env.
-    Recurse {
-        depth: u32,
-        work: u32,
-        contract: HumanAddr,
-    },
+    /// Now that we have Env, we can auto-calculate the address to recurse into
+    Recurse { depth: u32, work: u32 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -93,7 +88,8 @@ pub const CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    env: Env,
+    _env: Env,
+    info: MessageInfo,
     msg: InitMsg,
 ) -> Result<InitResponse, HackError> {
     deps.api.debug("here we go 🚀");
@@ -103,7 +99,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         &to_vec(&State {
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: deps.api.canonical_address(&env.message.sender)?,
+            funder: deps.api.canonical_address(&info.sender)?,
         })?,
     );
 
@@ -116,6 +112,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
+    _info: MessageInfo,
     msg: MigrateMsg,
 ) -> Result<MigrateResponse, HackError> {
     let data = deps
@@ -132,10 +129,11 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
 pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
+    info: MessageInfo,
     msg: HandleMsg,
 ) -> Result<HandleResponse, HackError> {
     match msg {
-        HandleMsg::Release {} => do_release(deps, env),
+        HandleMsg::Release {} => do_release(deps, env, info),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
         HandleMsg::MemoryLoop {} => do_memory_loop(),
@@ -148,6 +146,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 fn do_release<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
+    info: MessageInfo,
 ) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
@@ -155,7 +154,7 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if deps.api.canonical_address(&env.message.sender)? == state.verifier {
+    if deps.api.canonical_address(&info.sender)? == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
@@ -297,16 +296,15 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackEr
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
+    env: Env,
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
-        QueryMsg::Recurse {
-            depth,
-            work,
-            contract,
-        } => to_binary(&query_recurse(deps, depth, work, contract)?),
+        QueryMsg::Recurse { depth, work } => {
+            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
+        }
     }
 }
 
@@ -352,7 +350,6 @@ fn query_recurse<S: Storage, A: Api, Q: Querier>(
         let req = QueryMsg::Recurse {
             depth: depth - 1,
             work,
-            contract: contract.clone(),
         };
         let query = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract,
