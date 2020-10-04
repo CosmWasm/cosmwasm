@@ -162,6 +162,52 @@ major releases of `cosmwasm`. Note that you can also view the
   })
   ```
 
+- Remove `Bukcet::multilevel` constructor. The bucket now has exactly one namespace
+  and if we need `multilevel`, it was really to provide composite primary keys.
+  We now do that explicitly in a way that allows better compatibility
+  with `IndexedBucket`. The test `bucket_with_composite_pk` in `bucket.rs` is
+  a good (tested) example of the new API.
+
+  ```rust
+  // before (from cw20-base)
+  pub fn allowances<'a, S: Storage>(
+      storage: &'a mut S,
+      owner: &CanonicalAddr,
+  ) -> Bucket<'a, S, AllowanceResponse> {
+      Bucket::multilevel(&[PREFIX_ALLOWANCE, owner.as_slice()], storage)
+  }
+
+  allowances(&mut deps.storage, owner_raw).update(spender_raw.as_slice(), |allow| {
+      // code omitted...
+  })?;
+
+  let allowances: StdResult<Vec<AllowanceInfo>> = allowances_read(&deps.storage, &owner_raw)
+      .range(start.as_deref(), None, Order::Ascending)
+      .take(limit)
+      .map(|item| {
+         // code omitted...
+      })
+      .collect();
+
+  // after
+  pub fn allowances<S: Storage>(storage: &mut S) -> Bucket<S, AllowanceResponse> {
+      Bucket::new(PREFIX_ALLOWANCE, storage)
+  }
+
+  allowances(&mut deps.storage).update(&Pk2(owner_raw.as_slice(), spender_raw.as_slice()).pk(), |allow| {
+      // code omitted...
+  })?;
+
+  let allowances: StdResult<Vec<AllowanceInfo>> = allowances(&deps.storage)
+      .range_prefixed(owner_raw.as_slice(), start.as_deref(), None, Order::Ascending)
+      .take(limit)
+      .map(|item| {
+         // code omitted...
+      })
+      .collect();
+  ```
+
+
 ## 0.9 -> 0.10
 
 Integration tests:
