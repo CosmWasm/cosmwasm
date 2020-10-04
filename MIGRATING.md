@@ -222,6 +222,9 @@ major releases of `cosmwasm`. Note that you can also view the
 - Test code now has `mock_info` which takes the same args `mock_env` used to. You can just pass `mock_env()`
   directly into the function calls unless you need to change height/time.
 - One more object to pass in for both unit and integration tests.
+  To do this quickly, I just highlight all copies of `env` and replace them with `info` (using Ctrl+D in VSCode or
+  Alt+J in IntelliJ). Then I select all `deps, info` sections and replace that with `deps, mock_env(), info`.
+  This fixes up all `init` and `handle` calls, then just add an extra `mock_env()` to the query calls.
 
 ```rust
 // before: unit test
@@ -248,6 +251,7 @@ let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
 
 let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
 ```
+
 
 ## 0.9 -> 0.10
 
