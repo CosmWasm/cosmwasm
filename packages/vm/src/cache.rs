@@ -158,7 +158,9 @@ mod test {
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
     use crate::features::features_from_csv;
-    use crate::testing::{mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage};
+    use crate::testing::{
+        mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+    };
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;
     use std::io::Write;
@@ -324,11 +326,11 @@ mod test {
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // run contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
 
         // call and check
-        let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
     }
@@ -344,16 +346,16 @@ mod test {
         let mut instance = cache.get_instance(&id, deps, TESTING_GAS_LIMIT).unwrap();
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
 
         // run contract - just sanity check - results validate in contract unit tests
-        let env = mock_env("verifies", &coins(15, "earth"));
+        let info = mock_info("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_handle::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
@@ -371,35 +373,35 @@ mod test {
 
         // init instance 1
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env("owner1", &coins(1000, "earth"));
+        let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
-        let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let deps1 = instance.recycle().unwrap();
 
         // init instance 2
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env("owner2", &coins(500, "earth"));
+        let info = mock_info("owner2", &coins(500, "earth"));
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
-        let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let deps2 = instance.recycle().unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps2, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env("bob", &coins(15, "earth"));
+        let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_handle::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache.get_instance(&id, deps1, TESTING_GAS_LIMIT).unwrap();
-        let env = mock_env("sue", &coins(15, "earth"));
+        let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_handle::<_, _, _, Empty>(&mut instance, &env, msg).unwrap();
+        let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }
@@ -422,9 +424,9 @@ mod test {
         let original_gas = instance1.get_gas_left();
 
         // Consume some gas
-        let env = mock_env("owner1", &coins(1000, "earth"));
+        let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance1, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
@@ -453,9 +455,9 @@ mod test {
         assert_eq!(cache.stats.misses, 0);
 
         // Consume some gas. This fails
-        let env1 = mock_env("owner1", &coins(1000, "earth"));
+        let info1 = mock_info("owner1", &coins(1000, "earth"));
         let msg1 = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
-        match call_init::<_, _, _, Empty>(&mut instance1, &env1, msg1).unwrap_err() {
+        match call_init::<_, _, _, Empty>(&mut instance1, &mock_env(), &info1, msg1).unwrap_err() {
             VmError::GasDepletion { .. } => (), // all good, continue
             e => panic!("unexpected error, {:?}", e),
         }
@@ -468,9 +470,9 @@ mod test {
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
         // Now it works
-        let env2 = mock_env("owner2", &coins(500, "earth"));
+        let info2 = mock_info("owner2", &coins(500, "earth"));
         let msg2 = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance2, &env2, msg2)
+        call_init::<_, _, _, Empty>(&mut instance2, &mock_env(), &info2, msg2)
             .unwrap()
             .unwrap();
     }

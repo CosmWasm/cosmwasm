@@ -175,13 +175,13 @@ mod test {
     use cosmwasm_std::{coins, Binary};
 
     #[test]
-    fn mock_env_arguments() {
+    fn mock_info_arguments() {
         let name = HumanAddr("my name".to_string());
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env("my name", &coins(100, "atom"));
-        let b = mock_env(&name, &coins(100, "atom"));
-        let c = mock_env(name, &coins(100, "atom"));
+        let a = mock_info("my name", &coins(100, "atom"));
+        let b = mock_info(&name, &coins(100, "atom"));
+        let c = mock_info(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

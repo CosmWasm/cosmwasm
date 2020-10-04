@@ -287,7 +287,7 @@ mod test {
     use crate::context::is_storage_readonly;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_dependencies, mock_env, mock_instance, mock_instance_with_balances,
+        mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_with_balances,
         mock_instance_with_failing_api, mock_instance_with_gas_limit, MockQuerier, MockStorage,
     };
     use crate::traits::Storage;
@@ -437,7 +437,8 @@ mod test {
         let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
         let init_result = call_init::<_, _, _, serde_json::Value>(
             &mut instance,
-            &mock_env("someone", &[]),
+            &mock_env(),
+            &mock_info("someone", &[]),
             b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
         );
 
@@ -554,9 +555,9 @@ mod test {
         assert_eq!(report1.remaining, LIMIT);
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -757,7 +758,7 @@ mod singlepass_test {
     use cosmwasm_std::{coins, Empty};
 
     use crate::calls::{call_handle, call_init, call_query};
-    use crate::testing::{mock_env, mock_instance, mock_instance_with_gas_limit};
+    use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -767,9 +768,9 @@ mod singlepass_test {
         let orig_gas = instance.get_gas_left();
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -782,17 +783,17 @@ mod singlepass_test {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
         let gas_before_handle = instance.get_gas_left();
-        let env = mock_env("verifies", &coins(15, "earth"));
+        let info = mock_info("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_handle::<_, _, _, Empty>(&mut instance, &env, msg)
+        call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -805,9 +806,9 @@ mod singlepass_test {
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, 20_000);
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init::<_, _, _, Empty>(&mut instance, &env, msg);
+        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
         assert!(res.is_err());
     }
 
@@ -816,9 +817,9 @@ mod singlepass_test {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let _res = call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+        let _res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -826,11 +827,11 @@ mod singlepass_test {
         let gas_before_query = instance.get_gas_left();
         // we need to encode the key in base64
         let msg = r#"{"verifier":{}}"#.as_bytes();
-        let res = call_query(&mut instance, msg).unwrap();
+        let res = call_query(&mut instance, &mock_env(), msg).unwrap();
         let answer = res.unwrap();
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 34421);
+        assert_eq!(query_used, 51787);
     }
 }
