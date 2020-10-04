@@ -45,6 +45,14 @@
   namespace in `PrefixedStorage::new`, `PrefixedStorage::multilevel`,
   `ReadonlyPrefixedStorage::new`, `ReadonlyPrefixedStorage::multilevel`,
   `prefixed` and `prefixed_read`.
+- Remove `Bucket::multilevel` as it was a misnomer. Provide support for
+  composite `PrimaryKey`s in storage, using `Pk2` and `Pk3` for 2 or 3 items
+  keys. Add `Bucket::range_prefixed` to provide the first section(s) of the
+  composite key and iterate under that.
+- Bucket stores all data under `(namespace, "_pk", key)`, where the first two
+  are length-prefixed. This is a different layout from previous form
+  where it was `(namespace, key)` and this is intended to support co-existence
+  with `IndexedBucket`. (It only changes the raw storage layout, APIs don't change).
 
 **cosmwasm-vm**
 
