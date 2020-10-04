@@ -35,7 +35,7 @@
       }
     },
     {
-      "description": "Recurse will execute a query into itself up to depth-times and return Each step of the recursion may perform some extra work to test gas metering (`work` rounds of sha256 on contract). Contract should be the set to be the address of the original contract, we pass it in as query doesn't have access to env.",
+      "description": "Recurse will execute a query into itself up to depth-times and return Each step of the recursion may perform some extra work to test gas metering (`work` rounds of sha256 on contract). Now that we have Env, we can auto-calculate the address to recurse into",
       "type": "object",
       "required": [
         "recurse"
@@ -44,14 +44,10 @@
         "recurse": {
           "type": "object",
           "required": [
-            "contract",
             "depth",
             "work"
           ],
           "properties": {
-            "contract": {
-              "$ref": "#/definitions/HumanAddr"
-            },
             "depth": {
               "type": "integer",
               "format": "uint32",

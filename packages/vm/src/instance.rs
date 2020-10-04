@@ -529,9 +529,9 @@ mod test {
         assert_eq!(report1.remaining, FAKE_REMANING);
 
         // init contract
-        let env = mock_env("creator", &coins(1000, "earth"));
+        let info = mock_info("creator", &coins(1000, "earth"));
         let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance, &env, msg)
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
