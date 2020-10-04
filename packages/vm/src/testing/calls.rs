@@ -6,7 +6,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
 use cosmwasm_std::{
-    ContractResult, Env, HandleResponse, InitResponse, MigrateResponse, QueryResponse,
+    ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
 };
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
@@ -20,6 +20,7 @@ use crate::{Api, Querier, Storage};
 pub fn init<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
+    info: MessageInfo,
     msg: M,
 ) -> ContractResult<InitResponse<U>>
 where
@@ -30,7 +31,7 @@ where
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_init(instance, &env, &serialized_msg).expect("VM error")
+    call_init(instance, &env, &info, &serialized_msg).expect("VM error")
 }
 
 // handle mimicks the call signature of the smart contracts.
@@ -39,6 +40,7 @@ where
 pub fn handle<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
+    info: MessageInfo,
     msg: M,
 ) -> ContractResult<HandleResponse<U>>
 where
@@ -49,7 +51,7 @@ where
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_handle(instance, &env, &serialized_msg).expect("VM error")
+    call_handle(instance, &env, &info, &serialized_msg).expect("VM error")
 }
 
 // migrate mimicks the call signature of the smart contracts.
@@ -58,6 +60,7 @@ where
 pub fn migrate<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
+    info: MessageInfo,
     msg: M,
 ) -> ContractResult<MigrateResponse<U>>
 where
@@ -68,13 +71,17 @@ where
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_migrate(instance, &env, &serialized_msg).expect("VM error")
+    call_migrate(instance, &env, &info, &serialized_msg).expect("VM error")
 }
 
 // query mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<S, A, Q, M>(instance: &mut Instance<S, A, Q>, msg: M) -> ContractResult<QueryResponse>
+pub fn query<S, A, Q, M>(
+    instance: &mut Instance<S, A, Q>,
+    env: Env,
+    msg: M,
+) -> ContractResult<QueryResponse>
 where
     S: Storage + 'static,
     A: Api + 'static,
@@ -82,5 +89,5 @@ where
     M: Serialize + JsonSchema,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_query(instance, &serialized_msg).expect("VM error")
+    call_query(instance, &env, &serialized_msg).expect("VM error")
 }

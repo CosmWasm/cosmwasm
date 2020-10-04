@@ -56,8 +56,8 @@ macro_rules! create_entry_points {
             do_migrate(
                 &$contract::migrate::<ExternalStorage, ExternalApi, ExternalQuerier>,
                 env_ptr,
-                msg_ptr,
                 info_ptr,
+                msg_ptr,
             )
         }
     };
@@ -77,8 +77,8 @@ macro_rules! create_entry_points {
                 do_init(
                     &$contract::init::<ExternalStorage, ExternalApi, ExternalQuerier>,
                     env_ptr,
-                    msg_ptr,
                     info_ptr,
+                    msg_ptr,
                 )
             }
 
@@ -87,8 +87,8 @@ macro_rules! create_entry_points {
                 do_handle(
                     &$contract::handle::<ExternalStorage, ExternalApi, ExternalQuerier>,
                     env_ptr,
-                    msg_ptr,
                     info_ptr,
+                    msg_ptr,
                 )
             }
 
