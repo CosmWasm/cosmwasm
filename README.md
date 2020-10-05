@@ -107,10 +107,10 @@ The required exports provided by the cosmwasm smart contract are:
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
-extern "C" fn init(env_ptr: u32, msg_ptr: u32) -> u32;
-extern "C" fn handle(env_ptr: u32, msg_ptr: u32) -> u32;
-extern "C" fn query(msg_ptr: u32) -> u32;
-extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn init(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn handle(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 ```
 
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
@@ -187,11 +187,32 @@ custom `InitMsg` and `HandleMsg` structs for parsing your custom message types
 (as json):
 
 ```rust
-pub fn init<T: Storage>(store: &mut T, params: Params, msg: Vec<u8> ->
-  StdResult<Vec<CosmosMsg>> { }
+pub fn init<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    info: MessageInfo,
+    msg: InitMsg,
+) -> StdResult<InitResponse> {}
 
-pub fn handle<T: Storage>(store: &mut T, params: Params, msg: Vec<u8> ->
-  StdResult<Vec<CosmosMsg>> { }
+pub fn handle<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    info: MessageInfo,
+    msg: HandleMsg,
+) -> Result<HandleResponse, ContractError> { }
+
+pub fn query<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    env: Env,
+    msg: QueryMsg,
+) -> StdResult<Binary> { }
+
+pub fn migrate<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Extern<S, A, Q>,
+    env: Env,
+    info: MessageInfo,
+    msg: HandleMsg,
+) -> Result<HandleResponse, MigrateError> { }
 ```
 
 The low-level `c_read` and `c_write` imports are nicely wrapped for you by a
@@ -252,15 +273,17 @@ reproducible build step so others can prove the on-chain wasm code was generated
 from the published rust code.
 
 For that, we have a separate repo,
-[cosmwasm-opt](https://github.com/CosmWasm/cosmwasm-opt) that provides a
-[docker image](https://hub.docker.com/r/CosmWasm/cosmwasm-opt/tags) for
+[rust-optimizer](https://github.com/CosmWasm/rust-optimizer) that provides a
+[docker image](https://hub.docker.com/r/CosmWasm/rust-optimizer/tags) for
 building. For more info, look at
-[cosmwasm-opt README](https://github.com/CosmWasm/cosmwasm-opt/blob/master/README.md#usage),
+[rust-optimizer README](https://github.com/CosmWasm/rust-optimizer/blob/master/README.md#usage),
 but the quickstart guide is:
 
 ```sh
-export CODE=/path/to/your/wasm/script
-docker run --rm -u $(id -u):$(id -g) -v "${CODE}":/code confio/cosmwasm-opt:1.38
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="$(basename "$(pwd)")_cache",target=/code/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.10.3
 ```
 
 It will output a highly size-optimized build as `contract.wasm` in `$CODE`. With

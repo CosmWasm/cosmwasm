@@ -19,6 +19,7 @@ use crate::results::{
 use crate::serde::{from_slice, to_vec};
 use crate::traits::Extern;
 use crate::types::Env;
+use crate::MessageInfo;
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -70,9 +71,11 @@ pub fn do_init<M, C, E>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
+        MessageInfo,
         M,
     ) -> Result<InitResponse<C>, E>,
     env_ptr: u32,
+    info_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
@@ -80,7 +83,12 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_init(init_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_init(
+        init_fn,
+        env_ptr as *mut Region,
+        info_ptr as *mut Region,
+        msg_ptr as *mut Region,
+    );
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -94,9 +102,11 @@ pub fn do_handle<M, C, E>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
+        MessageInfo,
         M,
     ) -> Result<HandleResponse<C>, E>,
     env_ptr: u32,
+    info_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
@@ -104,7 +114,12 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_handle(handle_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_handle(
+        handle_fn,
+        env_ptr as *mut Region,
+        info_ptr as *mut Region,
+        msg_ptr as *mut Region,
+    );
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -118,9 +133,11 @@ pub fn do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
+        MessageInfo,
         M,
     ) -> Result<MigrateResponse<C>, E>,
     env_ptr: u32,
+    info_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
@@ -128,7 +145,12 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_migrate(
+        migrate_fn,
+        env_ptr as *mut Region,
+        info_ptr as *mut Region,
+        msg_ptr as *mut Region,
+    );
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -140,15 +162,17 @@ where
 pub fn do_query<M, E>(
     query_fn: &dyn Fn(
         &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        Env,
         M,
     ) -> Result<QueryResponse, E>,
+    env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
     M: DeserializeOwned + JsonSchema,
     E: ToString,
 {
-    let res = _do_query(query_fn, msg_ptr as *mut Region);
+    let res = _do_query(query_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -157,9 +181,11 @@ fn _do_init<M, C, E>(
     init_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
+        MessageInfo,
         M,
     ) -> Result<InitResponse<C>, E>,
     env_ptr: *mut Region,
+    info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<InitResponse<C>>
 where
@@ -168,20 +194,26 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+
     let env: Env = try_into_contract_result!(from_slice(&env));
+    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
     let msg: M = try_into_contract_result!(from_slice(&msg));
+
     let mut deps = make_dependencies();
-    init_fn(&mut deps, env, msg).into()
+    init_fn(&mut deps, env, info, msg).into()
 }
 
 fn _do_handle<M, C, E>(
     handle_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
+        MessageInfo,
         M,
     ) -> Result<HandleResponse<C>, E>,
     env_ptr: *mut Region,
+    info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<HandleResponse<C>>
 where
@@ -190,21 +222,26 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
+    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
     let msg: M = try_into_contract_result!(from_slice(&msg));
+
     let mut deps = make_dependencies();
-    handle_fn(&mut deps, env, msg).into()
+    handle_fn(&mut deps, env, info, msg).into()
 }
 
 fn _do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
         &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
+        MessageInfo,
         M,
     ) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
+    info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<MigrateResponse<C>>
 where
@@ -213,29 +250,38 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
+    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
+
     let env: Env = try_into_contract_result!(from_slice(&env));
+    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
     let msg: M = try_into_contract_result!(from_slice(&msg));
+
     let mut deps = make_dependencies();
-    migrate_fn(&mut deps, env, msg).into()
+    migrate_fn(&mut deps, env, info, msg).into()
 }
 
 fn _do_query<M, E>(
     query_fn: &dyn Fn(
         &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        Env,
         M,
     ) -> Result<QueryResponse, E>,
+    env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<QueryResponse>
 where
     M: DeserializeOwned + JsonSchema,
     E: ToString,
 {
+    let env: Vec<u8> = unsafe { consume_region(env_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
+    let env: Env = try_into_contract_result!(from_slice(&env));
     let msg: M = try_into_contract_result!(from_slice(&msg));
+
     let deps = make_dependencies();
-    query_fn(&deps, msg).into()
+    query_fn(&deps, env, msg).into()
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM

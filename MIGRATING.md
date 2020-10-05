@@ -4,7 +4,7 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.11 -> 0.10
+## 0.10 -> 0.11
 
 - Contracts now support any custom error type `E: ToString + From<StdError>`.
   Previously this has been `StdError`, which you can still use. However, you can
@@ -176,6 +176,83 @@ major releases of `cosmwasm`. Note that you can also view the
   let mut deps = mock_dependencies(&coins(123456, "gold"));
   let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
   let api = MockApi::default();
+  ```
+
+- Add `MessageInfo` as separate arg after `Env` for `init`, `handle`, `migrate`.
+  Add `Env` arg to `query`. Use `info.sender` instead of `env.message.sender`
+  and `info.sent_funds` rather than `env.message.sent_funds`. Just changing the
+  function signatures of the 3-4 export functions should be enough, then the
+  compiler will warn you anywhere you use `env.message`
+
+  ```rust
+  // before
+  pub fn init<S: Storage, A: Api, Q: Querier>(
+      deps: &mut Extern<S, A, Q>,
+      env: Env,
+      msg: InitMsg,
+  ) {
+      deps.storage.set(
+          CONFIG_KEY,
+          &to_vec(&State {
+              verifier: deps.api.canonical_address(&msg.verifier)?,
+              beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
+              funder: deps.api.canonical_address(&env.message.sender)?,
+          })?,
+      );
+  }
+
+  // after
+  pub fn init<S: Storage, A: Api, Q: Querier>(
+      deps: &mut Extern<S, A, Q>,
+      _env: Env,
+      info: MessageInfo,
+      msg: InitMsg,
+  ) {
+      deps.storage.set(
+          CONFIG_KEY,
+          &to_vec(&State {
+              verifier: deps.api.canonical_address(&msg.verifier)?,
+              beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
+              funder: deps.api.canonical_address(&info.sender)?,
+          })?,
+      );
+  }
+  ```
+
+- Test code now has `mock_info` which takes the same args `mock_env` used to.
+  You can just pass `mock_env()` directly into the function calls unless you
+  need to change height/time.
+- One more object to pass in for both unit and integration tests. To do this
+  quickly, I just highlight all copies of `env` and replace them with `info`
+  (using Ctrl+D in VSCode or Alt+J in IntelliJ). Then I select all `deps, info`
+  sections and replace that with `deps, mock_env(), info`. This fixes up all
+  `init` and `handle` calls, then just add an extra `mock_env()` to the query
+  calls.
+
+  ```rust
+  // before: unit test
+  let env = mock_env(creator.as_str(), &[]);
+  let res = init(&mut deps, env, msg).unwrap();
+
+  let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+
+  // after: unit test
+  let info = mock_info(creator.as_str(), &[]);
+  let res = init(&mut deps, mock_env(), info, msg).unwrap();
+
+  let query_response = query(&deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+
+  // before: integration test
+  let env = mock_env("creator", &coins(1000, "earth"));
+  let res: InitResponse = init(&mut deps, env, msg).unwrap();
+
+  let query_response = query(&mut deps, QueryMsg::Verifier {}).unwrap();
+
+  // after: integration test
+  let info = mock_info("creator", &coins(1000, "earth"));
+  let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+
+  let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
   ```
 
 ## 0.9 -> 0.10
