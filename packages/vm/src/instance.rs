@@ -310,7 +310,7 @@ mod test {
 
     #[test]
     fn required_features_works() {
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies(&[]);
         let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
@@ -331,7 +331,7 @@ mod test {
         )
         .unwrap();
 
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies(&[]);
         let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT, false).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
@@ -561,8 +561,8 @@ mod test {
             .unwrap();
 
         let report2 = instance.create_gas_report();
-        assert_eq!(report2.used_externally, 134);
-        assert_eq!(report2.used_internally, 66535);
+        assert_eq!(report2.used_externally, 146);
+        assert_eq!(report2.used_internally, 68137);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -774,7 +774,7 @@ mod singlepass_test {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 66669);
+        assert_eq!(init_used, 68283);
     }
 
     #[test]
@@ -797,7 +797,7 @@ mod singlepass_test {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 196442);
+        assert_eq!(handle_used, 198959);
     }
 
     #[test]
@@ -831,6 +831,6 @@ mod singlepass_test {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 32132);
+        assert_eq!(query_used, 34421);
     }
 }

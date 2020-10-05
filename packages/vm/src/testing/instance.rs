@@ -70,7 +70,6 @@ pub fn mock_instance_with_gas_limit(
 #[derive(Debug)]
 pub struct MockInstanceOptions<'a> {
     // dependencies
-    pub canonical_address_length: usize,
     pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
     /// This option is merged into balances and might override an existing value
     pub contract_balance: Option<&'a [Coin]>,
@@ -87,7 +86,6 @@ impl Default for MockInstanceOptions<'_> {
     fn default() -> Self {
         Self {
             // dependencies
-            canonical_address_length: 20,
             balances: Default::default(),
             contract_balance: Default::default(),
             backend_error: None,
@@ -118,9 +116,9 @@ pub fn mock_instance_with_options(
     }
 
     let api = if let Some(backend_error) = options.backend_error {
-        MockApi::new_failing(options.canonical_address_length, backend_error)
+        MockApi::new_failing(backend_error)
     } else {
-        MockApi::new(options.canonical_address_length)
+        MockApi::default()
     };
 
     let deps = Extern {

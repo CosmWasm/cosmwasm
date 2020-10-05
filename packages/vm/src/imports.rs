@@ -571,16 +571,17 @@ mod test {
     #[test]
     fn do_canonicalize_address_works() {
         let mut instance = make_instance();
+        let api = MockApi::default();
 
         let source_ptr = write_data(&mut instance, b"foo");
-        let dest_ptr = create_empty(&mut instance, 8);
+        let dest_ptr = create_empty(&mut instance, api.canonical_length as u32);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
         do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
-        assert_eq!(force_read(ctx, dest_ptr), b"foo\0\0\0\0\0");
+        let data = force_read(ctx, dest_ptr);
+        assert_eq!(data.len(), api.canonical_length);
     }
 
     #[test]
@@ -594,7 +595,7 @@ mod test {
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
-        let api = MockApi::new(8);
+        let api = MockApi::default();
 
         let res = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr1, dest_ptr).unwrap();
         assert_ne!(res, 0);
@@ -622,7 +623,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new_failing(8, "Temporarily unavailable");
+        let api = MockApi::new_failing("Temporarily unavailable");
         let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
@@ -644,7 +645,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
+        let api = MockApi::default();
         let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
@@ -670,14 +671,14 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
+        let api = MockApi::default();
         let result = do_canonicalize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
             } => {
                 assert_eq!(size, 7);
-                assert_eq!(required, 8);
+                assert_eq!(required, api.canonical_length);
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
@@ -686,17 +687,18 @@ mod test {
     #[test]
     fn do_humanize_address_works() {
         let mut instance = make_instance();
+        let api = MockApi::default();
 
-        let source_ptr = write_data(&mut instance, b"foo\0\0\0\0\0");
+        let source_data = vec![0x22; api.canonical_length];
+        let source_ptr = write_data(&mut instance, &source_data);
         let dest_ptr = create_empty(&mut instance, 50);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
         let error_ptr = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
         assert_eq!(error_ptr, 0);
-        assert_eq!(force_read(ctx, dest_ptr), b"foo");
+        assert_eq!(force_read(ctx, dest_ptr), source_data);
     }
 
     #[test]
@@ -709,7 +711,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
+        let api = MockApi::default();
         let res = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(ctx, res)).unwrap();
@@ -726,7 +728,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new_failing(8, "Temporarily unavailable");
+        let api = MockApi::new_failing("Temporarily unavailable");
         let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::FfiErr {
@@ -746,7 +748,7 @@ mod test {
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
+        let api = MockApi::default();
         let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
@@ -765,21 +767,22 @@ mod test {
     #[test]
     fn do_humanize_address_fails_for_destination_region_too_small() {
         let mut instance = make_instance();
+        let api = MockApi::default();
 
-        let source_ptr = write_data(&mut instance, b"foo\0\0\0\0\0");
+        let source_data = vec![0x22; api.canonical_length];
+        let source_ptr = write_data(&mut instance, &source_data);
         let dest_ptr = create_empty(&mut instance, 2);
 
         let ctx = instance.context_mut();
         leave_default_data(ctx);
 
-        let api = MockApi::new(8);
         let result = do_humanize_address::<MA, MS, MQ>(api, ctx, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
             } => {
                 assert_eq!(size, 2);
-                assert_eq!(required, 3);
+                assert_eq!(required, api.canonical_length);
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }

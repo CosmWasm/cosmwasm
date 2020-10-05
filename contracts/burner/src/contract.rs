@@ -75,7 +75,7 @@ mod tests {
 
     #[test]
     fn init_fails() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let msg = InitMsg {};
         let env = mock_env("creator", &coins(1000, "earth"));
@@ -91,7 +91,7 @@ mod tests {
 
     #[test]
     fn migrate_cleans_up_data() {
-        let mut deps = mock_dependencies(20, &coins(123456, "gold"));
+        let mut deps = mock_dependencies(&coins(123456, "gold"));
 
         // store some sample data
         deps.storage.set(b"foo", b"bar");

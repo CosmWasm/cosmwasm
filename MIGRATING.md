@@ -162,6 +162,22 @@ major releases of `cosmwasm`. Note that you can also view the
   })
   ```
 
+- Remove all `canonical_length` arguments from mock APIs in tests:
+
+  ```rust
+  // before
+  let mut deps = mock_dependencies(20, &[]);
+  let mut deps = mock_dependencies(20, &coins(123456, "gold"));
+  let deps = mock_dependencies_with_balances(20, &[(&rich_addr, &rich_balance)]);
+  let api = MockApi::new(20);
+
+  // after
+  let mut deps = mock_dependencies(&[]);
+  let mut deps = mock_dependencies(&coins(123456, "gold"));
+  let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
+  let api = MockApi::default();
+  ```
+
 ## 0.9 -> 0.10
 
 Integration tests:

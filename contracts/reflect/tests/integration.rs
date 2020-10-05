@@ -42,7 +42,6 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 /// A drop-in replacement for cosmwasm_vm::testing::mock_dependencies
 /// that supports SpecialQuery.
 pub fn mock_dependencies_with_custom_querier(
-    canonical_length: usize,
     contract_balance: &[Coin],
 ) -> Extern<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
@@ -52,7 +51,7 @@ pub fn mock_dependencies_with_custom_querier(
 
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: custom_querier,
     }
 }
@@ -177,7 +176,7 @@ fn transfer_requires_owner() {
 #[test]
 fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
-    let custom = mock_dependencies_with_custom_querier(20, &[]);
+    let custom = mock_dependencies_with_custom_querier(&[]);
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
     let mut deps = Instance::from_code(WASM, custom, 500_000, false).unwrap();
 
