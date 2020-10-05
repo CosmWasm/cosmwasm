@@ -78,7 +78,6 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     env: &Env,
     msg: &[u8],
 ) -> VmResult<ContractResult<QueryResponse>> {
-    println!("call_query: {:?}", env);
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
     let result: ContractResult<QueryResponse> = from_slice(&data)?;
