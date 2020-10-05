@@ -35,6 +35,13 @@
 - Implement `From<Binary> for Vec<u8>`.
 - Implement `From<CanonicalAddr> for Vec<u8>`.
 - Add `Binary::into_vec` and `CanonicalAddr::into_vec`.
+- The `canonical_length` argument was removed from `mock_dependencies`,
+  `mock_dependencies_with_balances`. In the now deprecated `MockApi::new`, the
+  argument is unused. Contracts should not need to set this value and usually
+  should not make assumptions about the value.
+- The canonical address encoding in `MockApi::canonical_address` and
+  `MockApi::human_address` was changed to an unpredicatable represenation of
+  non-standard length that aims to destroy most of the input structure.
 
 **cosmwasm-storage**
 
@@ -51,6 +58,13 @@
 - `CosmCache::new`, `Instance::from_code` and `Instance::from_module` now take
   an additional argument to enable/disable printing debug logs from contracts.
 - Bump required export `cosmwasm_vm_version_3` to `cosmwasm_vm_version_4`.
+- The `canonical_length` argument was removed from `mock_dependencies`,
+  `mock_dependencies_with_balances` and `MockApi::new_failing`. In the now
+  deprecated `MockApi::new`, the argument is unused. Contracts should not need
+  to set this value and usually should not make assumptions about the value.
+- The canonical address encoding in `MockApi::canonical_address` and
+  `MockApi::human_address` was changed to an unpredicatable represenation of
+  non-standard length that aims to destroy most of the input structure.
 
 ## 0.10.1 (2020-08-25)
 
