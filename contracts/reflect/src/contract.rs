@@ -297,7 +297,8 @@ mod tests {
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = init(&mut deps, mock_env(), info, msg).unwrap();
 
-        let info = mock_info("random", &[]);
+        let random = HumanAddr::from("random");
+        let info = mock_info(&random, &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),
