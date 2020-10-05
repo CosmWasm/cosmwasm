@@ -1,6 +1,6 @@
 [package]
 name = "burner"
-version = "0.11.0-alpha3"
+version = "0.11.0-alpha4"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 
