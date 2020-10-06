@@ -177,7 +177,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(ctx: &mut Ctx, request_ptr: u32) -
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_scan<S: Storage + 'static, Q: Querier>(
+pub fn do_scan<S: Storage, Q: Querier>(
     ctx: &mut Ctx,
     start_ptr: u32,
     end_ptr: u32,

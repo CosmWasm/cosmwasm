@@ -131,9 +131,7 @@ pub fn mock_instance_with_options(
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
 /// This could be especially useful when run with some kind of leak detector.
-pub fn test_io<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
-    instance: &mut Instance<S, A, Q>,
-) {
+pub fn test_io<S: Storage, A: Api + 'static, Q: Querier>(instance: &mut Instance<S, A, Q>) {
     let sizes: Vec<usize> = vec![0, 1, 3, 10, 200, 2000, 5 * 1024];
     let bytes: Vec<u8> = vec![0x00, 0xA5, 0xFF];
 

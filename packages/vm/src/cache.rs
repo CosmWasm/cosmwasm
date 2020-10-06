@@ -21,7 +21,7 @@ struct Stats {
     misses: u32,
 }
 
-pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
+pub struct CosmCache<S: Storage, A: Api, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     print_debug: bool,
@@ -35,9 +35,9 @@ pub struct CosmCache<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
 
 impl<S, A, Q> CosmCache<S, A, Q>
 where
-    S: Storage + 'static,
-    A: Api + 'static,
-    Q: Querier + 'static,
+    S: Storage,
+    A: Api + 'static, // 'static is needed by `impl<…> Instance`
+    Q: Querier,
 {
     /// new stores the data for cache under base_dir
     ///

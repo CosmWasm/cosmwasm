@@ -23,9 +23,9 @@ pub fn call_init<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<InitResponse<U>>>
 where
-    S: Storage + 'static,
+    S: Storage,
     A: Api + 'static,
-    Q: Querier + 'static,
+    Q: Querier,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -42,9 +42,9 @@ pub fn call_handle<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<HandleResponse<U>>>
 where
-    S: Storage + 'static,
+    S: Storage,
     A: Api + 'static,
-    Q: Querier + 'static,
+    Q: Querier,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -61,9 +61,9 @@ pub fn call_migrate<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
-    S: Storage + 'static,
+    S: Storage,
     A: Api + 'static,
-    Q: Querier + 'static,
+    Q: Querier,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -73,7 +73,7 @@ where
     Ok(result)
 }
 
-pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_query<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
@@ -94,7 +94,7 @@ pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
 
 /// Calls Wasm export "init" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_init_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     info: &[u8],
@@ -106,7 +106,7 @@ pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stati
 
 /// Calls Wasm export "handle" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     info: &[u8],
@@ -118,7 +118,7 @@ pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'sta
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_migrate_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     info: &[u8],
@@ -130,7 +130,7 @@ pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'st
 
 /// Calls Wasm export "query" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+pub fn call_query_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
@@ -139,7 +139,7 @@ pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'stat
     call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
 }
 
-fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+fn call_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     name: &str,
     args: &[&[u8]],

@@ -43,7 +43,7 @@ pub struct GasReport {
     pub used_internally: u64,
 }
 
-pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static> {
+pub struct Instance<S: Storage, A: Api, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
@@ -57,9 +57,9 @@ pub struct Instance<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static
 
 impl<S, A, Q> Instance<S, A, Q>
 where
-    S: Storage + 'static,
-    A: Api + 'static,
-    Q: Querier + 'static,
+    S: Storage,
+    A: Api + 'static, // 'static is needed here to allow copying API instances into closures
+    Q: Querier,
 {
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.

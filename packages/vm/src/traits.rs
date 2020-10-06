@@ -59,10 +59,7 @@ impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
 }
 
 /// Access to the VM's backend storage, i.e. the chain
-pub trait Storage
-where
-    Self: 'static,
-{
+pub trait Storage {
     /// Returns Err on error.
     /// Returns Ok(None) when key does not exist.
     /// Returns Ok(Some(Vec<u8>)) when key exists.
