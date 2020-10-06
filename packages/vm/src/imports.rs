@@ -10,7 +10,7 @@ use wasmer_runtime_core::vm::Ctx;
 
 use crate::backends::get_gas_left;
 #[cfg(feature = "iterator")]
-use crate::context::{add_iterator, with_iterator_from_context};
+use crate::context::with_iterator_from_context;
 use crate::context::{
     is_storage_readonly, process_gas_info, with_func_from_context, with_querier_from_context,
     with_storage_from_context,
@@ -190,11 +190,10 @@ pub fn do_scan<S: Storage, Q: Querier>(
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
     let (result, gas_info) = with_storage_from_context::<S, Q, _, _>(ctx, |store| {
-        Ok(store.range(start.as_deref(), end.as_deref(), order))
+        Ok(store.scan(start.as_deref(), end.as_deref(), order))
     })?;
     process_gas_info::<S, Q>(ctx, gas_info)?;
-    let iterator = result?;
-    let iterator_id = add_iterator::<S, Q>(ctx, iterator);
+    let iterator_id = result?;
     Ok(iterator_id)
 }
 
