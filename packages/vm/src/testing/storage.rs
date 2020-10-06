@@ -75,7 +75,7 @@ impl MockStorage {
         let mut total = GasInfo::free();
         loop {
             let (value, info) = self.next(iterator_id);
-            total.cost += info.cost; // TODO: implement GasInfo+GasInfo
+            total += info;
             if let Some(v) = value.unwrap() {
                 out.push(v);
             } else {
