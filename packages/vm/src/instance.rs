@@ -83,7 +83,7 @@ where
         let engine = JIT::headless().engine();
         let store = Store::new(&engine);
 
-        let env = Env {
+        let mut env = Env {
             memory: wasmer::Memory::new(&store, wasmer::MemoryType::new(0, Some(5000), false))
                 .expect("could not create memory"),
             context_data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
@@ -207,15 +207,7 @@ where
                 VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
             },
         )?);
-        Ok(Instance::from_wasmer(wasmer_instance, env, deps, gas_limit))
-    }
 
-    fn from_wasmer(
-        wasmer_instance: Box<WasmerInstance>,
-        mut env: Env<S, Q>,
-        deps: Extern<S, A, Q>,
-        gas_limit: u64,
-    ) -> Self {
         set_gas_left(&mut env, gas_limit);
         env.with_gas_state_mut(|gas_state| {
             gas_state.set_gas_limit(gas_limit);
@@ -224,14 +216,15 @@ where
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         set_wasmer_instance::<S, Q>(&mut env, Some(instance_ptr));
         move_into_context(&mut env, deps.storage, deps.querier);
-        Instance {
+        let instance = Instance {
             inner: wasmer_instance,
             env,
             api: deps.api,
             required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
-        }
+        };
+        Ok(instance)
     }
 
     /// Decomposes this instance into its components.
