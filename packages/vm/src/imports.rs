@@ -9,8 +9,6 @@ use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 use wasmer_runtime_core::vm::Ctx;
 
 use crate::backends::get_gas_left;
-#[cfg(feature = "iterator")]
-use crate::context::with_iterator_from_context;
 use crate::context::{
     is_storage_readonly, process_gas_info, with_func_from_context, with_querier_from_context,
     with_storage_from_context,
@@ -875,15 +873,15 @@ mod test {
         assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -899,15 +897,15 @@ mod test {
         assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -925,11 +923,11 @@ mod test {
         let id = do_scan::<MS, MQ>(ctx, start, end, Order::Ascending.into()).unwrap();
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id))).unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -948,27 +946,27 @@ mod test {
 
         // first item, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id1))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id1))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id2))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id1, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id1))).unwrap();
         assert!(item.0.unwrap().is_none());
 
         // second item, second iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(ctx, id2, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(ctx, |store| Ok(store.next(id2))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
 
