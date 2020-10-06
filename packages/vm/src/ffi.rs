@@ -1,5 +1,6 @@
 use snafu::Snafu;
 use std::fmt::Debug;
+use std::ops::AddAssign;
 use std::string::FromUtf8Error;
 
 /// A result type for calling into the backend via FFI. Such a call causes
@@ -40,6 +41,15 @@ impl GasInfo {
             cost: 0,
             externally_used: 0,
         }
+    }
+}
+
+impl AddAssign for GasInfo {
+    fn add_assign(&mut self, other: Self) {
+        *self = GasInfo {
+            cost: self.cost + other.cost,
+            externally_used: self.externally_used + other.cost,
+        };
     }
 }
 
