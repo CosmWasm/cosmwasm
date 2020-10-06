@@ -2,6 +2,8 @@
 set -o errexit -o nounset -o pipefail
 command -v shellcheck > /dev/null && shellcheck "$0"
 
+gnused="$(command -v gsed || echo sed)"
+
 function print_usage() {
   echo "Usage: $0 NEW_VERSION"
   echo ""
@@ -29,14 +31,14 @@ if [[ -n "$CHANGES_IN_REPO" ]]; then
 fi
 
 NEW="$1"
-OLD=$(sed -n -e 's/^version[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' packages/std/Cargo.toml)
+OLD=$("$gnused" -n -e 's/^version[[:space:]]*=[[:space:]]*"\(.*\)"/\1/p' packages/std/Cargo.toml)
 echo "Updating old version $OLD to new version $NEW ..."
 
 FILES_MODIFIED=()
 
 for package_dir in packages/*/; do
   CARGO_TOML="$package_dir/Cargo.toml"
-  sed -i"" -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
+  "$gnused" -i -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
   FILES_MODIFIED+=("$CARGO_TOML")
 done
 
@@ -47,7 +49,7 @@ for contract_dir in contracts/*/; do
   CARGO_TOML="$contract_dir/Cargo.toml"
   CARGO_LOCK="$contract_dir/Cargo.lock"
 
-  sed -i"" -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
+  "$gnused" -i -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
   (cd "$contract_dir" && cargo build)
 
   FILES_MODIFIED+=("$CARGO_TOML" "$CARGO_LOCK")

@@ -1,17 +1,18 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult, SystemResult};
+use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, QueryRequest};
+use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
     StakingQuery, Validator, ValidatorsResponse,
 };
+use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_binary, to_vec};
 use crate::types::Empty;
 
@@ -94,7 +95,7 @@ pub trait Api: Copy + Clone + Send {
 }
 
 /// A short-hand alias for the two-level query result (1. accessing the contract, 2. executing query in the contract)
-pub type QuerierResult = SystemResult<StdResult<Binary>>;
+pub type QuerierResult = SystemResult<ContractResult<Binary>>;
 
 pub trait Querier {
     /// raw_query is all that must be implemented for the Querier.
@@ -117,27 +118,23 @@ pub trait Querier {
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
     /// one level. Only use this if you don't need to check the SystemError
     /// eg. If you don't differentiate between contract missing and contract returned error
-    fn custom_query<T: Serialize, U: DeserializeOwned>(
+    fn custom_query<C: CustomQuery, U: DeserializeOwned>(
         &self,
-        request: &QueryRequest<T>,
+        request: &QueryRequest<C>,
     ) -> StdResult<U> {
-        let raw = match to_vec(request) {
-            Ok(raw) => raw,
-            Err(e) => {
-                return Err(StdError::generic_err(format!(
-                    "Serializing QueryRequest: {}",
-                    e
-                )))
-            }
-        };
+        let raw = to_vec(request).map_err(|serialize_err| {
+            StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
+        })?;
         match self.raw_query(&raw) {
-            Err(sys) => Err(StdError::generic_err(format!(
+            SystemResult::Err(system_err) => Err(StdError::generic_err(format!(
                 "Querier system error: {}",
-                sys
+                system_err
             ))),
-            Ok(Err(err)) => Err(err),
+            SystemResult::Ok(ContractResult::Err(contract_err)) => Err(StdError::generic_err(
+                format!("Querier contract error: {}", contract_err),
+            )),
             // in theory we would process the response, but here it is the same type, so just pass through
-            Ok(Ok(res)) => from_binary(&res),
+            SystemResult::Ok(ContractResult::Ok(value)) => from_binary(&value),
         }
     }
 

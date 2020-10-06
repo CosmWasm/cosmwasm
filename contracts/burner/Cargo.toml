@@ -1,6 +1,6 @@
 [package]
 name = "burner"
-version = "0.1.0"
+version = "0.11.0-alpha4"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 
@@ -38,7 +38,6 @@ singlepass = ["cosmwasm-vm/default-singlepass"]
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
-snafu = { version = "0.6.3" }
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }

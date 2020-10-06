@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Binary, CosmosMsg, HumanAddr, QueryRequest};
+use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, HumanAddr, QueryRequest};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
@@ -17,14 +17,33 @@ pub enum HandleMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     Owner {},
-    // this will call out to CustomQuery::Capitalize
-    ReflectCustom { text: String },
+    /// This will call out to SpecialQuery::Capitalized
+    Capitalized {
+        text: String,
+    },
+    /// Queries the blockchain and returns the result untouched
+    Chain {
+        request: QueryRequest<SpecialQuery>,
+    },
 }
 
 // We define a custom struct for each query response
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OwnerResponse {
     pub owner: HumanAddr,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct CapitalizedResponse {
+    pub text: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct ChainResponse {
+    pub data: Binary,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -43,22 +62,17 @@ impl Into<CosmosMsg<CustomMsg>> for CustomMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-/// CustomQuery is an override of QueryRequest::Custom to show this works and can be extended in the contract
-pub enum CustomQuery {
+/// An implementation of QueryRequest::Custom to show this works and can be extended in the contract
+pub enum SpecialQuery {
     Ping {},
-    Capital { text: String },
+    Capitalized { text: String },
 }
 
-// TODO: do we want to standardize this somehow for all?
-impl Into<QueryRequest<CustomQuery>> for CustomQuery {
-    fn into(self) -> QueryRequest<CustomQuery> {
-        QueryRequest::Custom(self)
-    }
-}
+impl CustomQuery for SpecialQuery {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-// All return values of CustomQuery are CustomResponse
-pub struct CustomResponse {
+/// The response data for all `SpecialQuery`s
+pub struct SpecialResponse {
     pub msg: String,
 }

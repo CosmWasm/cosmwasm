@@ -1,6 +1,5 @@
-use cosmwasm_std::{
-    Binary, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-};
+use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
+use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -12,14 +11,11 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(
-    canonical_length: usize,
-    contract_balance: &[Coin],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
     }
 }
@@ -27,12 +23,11 @@ pub fn mock_dependencies(
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
-    canonical_length: usize,
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: MockQuerier::new(balances),
     }
 }
@@ -42,30 +37,36 @@ pub fn mock_dependencies_with_balances(
 /// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    canonical_length: usize,
+    /// Length of canonical addresses created with this API. Contracts should not make any assumtions
+    /// what this value is.
+    pub canonical_length: usize,
     /// When set, all calls to the API fail with FfiError::Unknown containing this message
     backend_error: Option<&'static str>,
 }
 
 impl MockApi {
-    pub fn new(canonical_length: usize) -> Self {
-        MockApi {
-            canonical_length,
-            backend_error: None,
-        }
+    #[deprecated(
+        since = "0.11.0",
+        note = "The canonical length argument is unused. Use MockApi::default() instead."
+    )]
+    pub fn new(_canonical_length: usize) -> Self {
+        MockApi::default()
     }
 
-    pub fn new_failing(canonical_length: usize, backend_error: &'static str) -> Self {
+    pub fn new_failing(backend_error: &'static str) -> Self {
         MockApi {
-            canonical_length,
             backend_error: Some(backend_error),
+            ..MockApi::default()
         }
     }
 }
 
 impl Default for MockApi {
     fn default() -> Self {
-        Self::new(20)
+        MockApi {
+            canonical_length: 24,
+            backend_error: None,
+        }
     }
 }
 
@@ -92,12 +93,16 @@ impl Api for MockApi {
         }
 
         let mut out = Vec::from(human.as_str());
-        let append = self.canonical_length - out.len();
-        if append > 0 {
-            out.extend(vec![0u8; append]);
+        // pad to canonical length with NULL bytes
+        out.resize(self.canonical_length, 0x00);
+        // content-dependent rotate followed by shuffle to destroy
+        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        let rotate_by = digit_sum(&out) % self.canonical_length;
+        out.rotate_left(rotate_by);
+        for _ in 0..18 {
+            out = riffle_shuffle(&out);
         }
-
-        (Ok(CanonicalAddr(Binary(out))), gas_info)
+        (Ok(out.into()), gas_info)
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
@@ -116,13 +121,16 @@ impl Api for MockApi {
             );
         }
 
-        // remove trailing 0's (TODO: fix this - but fine for first tests)
-        let trimmed: Vec<u8> = canonical
-            .as_slice()
-            .iter()
-            .cloned()
-            .filter(|&x| x != 0)
-            .collect();
+        let mut tmp: Vec<u8> = canonical.clone().into();
+        // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
+        for _ in 0..2 {
+            tmp = riffle_shuffle(&tmp);
+        }
+        // Rotate back
+        let rotate_by = digit_sum(&tmp) % self.canonical_length;
+        tmp.rotate_right(rotate_by);
+        // Remove NULL bytes (i.e. the padding)
+        let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
 
         let result = match String::from_utf8(trimmed) {
             Ok(human) => Ok(HumanAddr(human)),
@@ -132,10 +140,12 @@ impl Api for MockApi {
     }
 }
 
-/// Just set sender and sent funds for the message. The rest uses defaults.
-/// The sender will be canonicalized internally to allow developers pasing in human readable senders.
+/// Returns a default enviroment with height, time, chain_id, and contract address
+/// You can submit as is to most contracts, or modify height/time if you want to
+/// test for expiration.
+///
 /// This is intended for use in test code only.
-pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
+pub fn mock_env() -> Env {
     Env {
         block: BlockInfo {
             height: 12_345,
@@ -143,13 +153,18 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
             time_nanos: 879305533,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        message: MessageInfo {
-            sender: sender.into(),
-            sent_funds: sent.to_vec(),
-        },
         contract: ContractInfo {
             address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         },
+    }
+}
+
+/// Just set sender and sent funds for the message. The essential for
+/// This is intended for use in test code only.
+pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
+    MessageInfo {
+        sender: sender.into(),
+        sent_funds: sent.to_vec(),
     }
 }
 
@@ -157,16 +172,16 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
 mod test {
     use super::*;
     use crate::FfiError;
-    use cosmwasm_std::coins;
+    use cosmwasm_std::{coins, Binary};
 
     #[test]
-    fn mock_env_arguments() {
+    fn mock_info_arguments() {
         let name = HumanAddr("my name".to_string());
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env("my name", &coins(100, "atom"));
-        let b = mock_env(&name, &coins(100, "atom"));
-        let c = mock_env(name, &coins(100, "atom"));
+        let a = mock_info("my name", &coins(100, "atom"));
+        let b = mock_info(&name, &coins(100, "atom"));
+        let c = mock_info(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);
@@ -174,21 +189,18 @@ mod test {
     }
 
     #[test]
-    fn flip_addresses() {
-        let api = MockApi::new(20);
-        let human = HumanAddr("shorty".to_string());
-        let canon = api.canonical_address(&human).0.unwrap();
-        assert_eq!(canon.len(), 20);
-        assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
-        assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
+    fn canonicalize_and_humanize_restores_original() {
+        let api = MockApi::default();
 
-        let (recovered, _gas_cost) = api.human_address(&canon);
-        assert_eq!(recovered.unwrap(), human);
+        let original = HumanAddr::from("shorty");
+        let canonical = api.canonical_address(&original).0.unwrap();
+        let (recovered, _gas_cost) = api.human_address(&canonical);
+        assert_eq!(recovered.unwrap(), original);
     }
 
     #[test]
     fn human_address_input_length() {
-        let api = MockApi::new(10);
+        let api = MockApi::default();
         let input = CanonicalAddr(Binary(vec![61; 11]));
         let (result, _gas_info) = api.human_address(&input);
         match result.unwrap_err() {
@@ -199,8 +211,8 @@ mod test {
 
     #[test]
     fn canonical_address_min_input_length() {
-        let api = MockApi::new(10);
-        let human = HumanAddr("1".to_string());
+        let api = MockApi::default();
+        let human = HumanAddr::from("1");
         match api.canonical_address(&human).0.unwrap_err() {
             FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
@@ -209,8 +221,8 @@ mod test {
 
     #[test]
     fn canonical_address_max_input_length() {
-        let api = MockApi::new(10);
-        let human = HumanAddr("longer-than-10".to_string());
+        let api = MockApi::default();
+        let human = HumanAddr::from("longer-than-the-address-length-supported-by-this-api");
         match api.canonical_address(&human).0.unwrap_err() {
             FfiError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),

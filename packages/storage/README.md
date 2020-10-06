@@ -10,7 +10,7 @@ boilterplate.
 ## Contents
 
 - [PrefixedStorage](#prefixed-storage)
-- [TypedStoreage](#typed-storage)
+- [TypedStorage](#typed-storage)
 - [Bucket](#bucket)
 - [Singleton](#singleton)
 

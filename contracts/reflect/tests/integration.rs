@@ -18,19 +18,19 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, HandleResponse, HandleResult, HumanAddr,
-    InitResponse, StakingMsg, StdError,
+    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HandleResponse, HumanAddr,
+    InitResponse, StakingMsg, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_instance, query, MockApi, MockQuerier, MockStorage,
+        handle, init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
         MOCK_CONTRACT_ADDR,
     },
     Extern, Instance,
 };
 
 use reflect::msg::{
-    CustomMsg, CustomQuery, CustomResponse, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+    CapitalizedResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery,
 };
 use reflect::testing::custom_query_execute;
 
@@ -40,19 +40,18 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 /// A drop-in replacement for cosmwasm_vm::testing::mock_dependencies
-/// that supports CustomQuery.
+/// that supports SpecialQuery.
 pub fn mock_dependencies_with_custom_querier(
-    canonical_length: usize,
     contract_balance: &[Coin],
-) -> Extern<MockStorage, MockApi, MockQuerier<CustomQuery>> {
+) -> Extern<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
-    let custom_querier: MockQuerier<CustomQuery> =
+    let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
-            .with_custom_handler(|query| Ok(custom_query_execute(query)));
+            .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: custom_querier,
     }
 }
@@ -62,14 +61,14 @@ fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env("creator", &coins(1000, "earth"));
+    let info = mock_info("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
-    let res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
+    let res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
-    let res = query(&mut deps, QueryMsg::Owner {}).unwrap();
+    let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
     let value: OwnerResponse = from_binary(&res).unwrap();
     assert_eq!("creator", value.owner.as_str());
 }
@@ -79,8 +78,8 @@ fn reflect() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
     let payload = vec![
         BankMsg::Send {
@@ -101,8 +100,8 @@ fn reflect() {
     let msg = HandleMsg::ReflectMsg {
         msgs: payload.clone(),
     };
-    let env = mock_env("creator", &[]);
-    let res: HandleResponse<CustomMsg> = handle(&mut deps, env, msg).unwrap();
+    let info = mock_info("creator", &[]);
+    let res: HandleResponse<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
     assert_eq!(payload, res.messages);
@@ -113,8 +112,8 @@ fn reflect_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
@@ -127,12 +126,10 @@ fn reflect_requires_owner() {
         msgs: payload.clone(),
     };
 
-    let env = mock_env("someone", &[]);
-    let res: HandleResult<CustomMsg> = handle(&mut deps, env, msg);
-    match res {
-        Err(StdError::Unauthorized { .. }) => {}
-        _ => panic!("Must return unauthorized error"),
-    }
+    let info = mock_info("someone", &[]);
+    let res: ContractResult<HandleResponse<CustomMsg>> = handle(&mut deps, mock_env(), info, msg);
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
 
 #[test]
@@ -140,19 +137,19 @@ fn transfer() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
-    let env = mock_env("creator", &[]);
+    let info = mock_info("creator", &[]);
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner {
         owner: new_owner.clone(),
     };
-    let res: HandleResponse<CustomMsg> = handle(&mut deps, env, msg).unwrap();
+    let res: HandleResponse<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
-    let res = query(&mut deps, QueryMsg::Owner {}).unwrap();
+    let res = query(&mut deps, mock_env(), QueryMsg::Owner {}).unwrap();
     let value: OwnerResponse = from_binary(&res).unwrap();
     assert_eq!("friend", value.owner.as_str());
 }
@@ -162,37 +159,36 @@ fn transfer_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, env, msg).unwrap();
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
-    let env = mock_env("random", &[]);
+    let info = mock_info("random", &[]);
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner {
         owner: new_owner.clone(),
     };
 
-    let res: HandleResult = handle(&mut deps, env, msg);
-    match res {
-        Err(StdError::Unauthorized { .. }) => {}
-        _ => panic!("Must return unauthorized error"),
-    }
+    let res: ContractResult<HandleResponse> = handle(&mut deps, mock_env(), info, msg);
+    let msg = res.unwrap_err();
+    assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
 
 #[test]
 fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
-    let custom = mock_dependencies_with_custom_querier(20, &[]);
+    let custom = mock_dependencies_with_custom_querier(&[]);
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
     let mut deps = Instance::from_code(WASM, custom, 500_000, false).unwrap();
 
     // we don't even initialize, just trigger a query
     let res = query(
         &mut deps,
-        QueryMsg::ReflectCustom {
+        mock_env(),
+        QueryMsg::Capitalized {
             text: "demo one".to_string(),
         },
     )
     .unwrap();
-    let value: CustomResponse = from_binary(&res).unwrap();
-    assert_eq!(value.msg, "DEMO ONE");
+    let value: CapitalizedResponse = from_binary(&res).unwrap();
+    assert_eq!(value.text, "DEMO ONE");
 }

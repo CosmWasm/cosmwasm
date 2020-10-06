@@ -17,8 +17,10 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coins, BankMsg, HumanAddr, InitResult, MigrateResponse, Order, StdError};
-use cosmwasm_vm::testing::{init, migrate, mock_env, mock_instance, MOCK_CONTRACT_ADDR};
+use cosmwasm_std::{
+    coins, BankMsg, ContractResult, HumanAddr, InitResponse, MigrateResponse, Order,
+};
+use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance, MOCK_CONTRACT_ADDR};
 use cosmwasm_vm::StorageIterator;
 
 use burner::msg::{InitMsg, MigrateMsg};
@@ -34,15 +36,14 @@ fn init_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let env = mock_env("creator", &coins(1000, "earth"));
+    let info = mock_info("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
-    let res: InitResult = init(&mut deps, env, msg);
-    match res.unwrap_err() {
-        StdError::GenericErr { msg, .. } => {
-            assert_eq!(msg, "You can only use this contract for migrations")
-        }
-        _ => panic!("expected migrate error message"),
-    }
+    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), info, msg);
+    let msg = res.unwrap_err();
+    assert_eq!(
+        msg,
+        "Generic error: You can only use this contract for migrations"
+    );
 }
 
 #[test]
@@ -71,8 +72,8 @@ fn migrate_cleans_up_data() {
     let msg = MigrateMsg {
         payout: payout.clone(),
     };
-    let env = mock_env("creator", &[]);
-    let res: MigrateResponse = migrate(&mut deps, env, msg).unwrap();
+    let info = mock_info("creator", &[]);
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");

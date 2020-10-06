@@ -1,25 +1,24 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, StdResult, Storage};
+use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
 
 use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
-// singleton is a helper function for less verbose usage
-pub fn singleton<'a, S: Storage, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
+/// An alias of Singleton::new for less verbose usage
+pub fn singleton<'a, S, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     Singleton::new(storage, key)
 }
 
-// singleton_read is a helper function for less verbose usage
-pub fn singleton_read<'a, S: ReadonlyStorage, T>(
-    storage: &'a S,
-    key: &[u8],
-) -> ReadonlySingleton<'a, S, T>
+/// An alias of ReadonlySingleton::new for less verbose usage
+pub fn singleton_read<'a, S, T>(storage: &'a S, key: &[u8]) -> ReadonlySingleton<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     ReadonlySingleton::new(storage, key)
@@ -29,18 +28,20 @@ where
 /// work on a single storage key. It performs the to_length_prefixed transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
-pub struct Singleton<'a, S: Storage, T>
+pub struct Singleton<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a mut S,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
+    data: PhantomData<T>,
 }
 
-impl<'a, S: Storage, T> Singleton<'a, S, T>
+impl<'a, S, T> Singleton<'a, S, T>
 where
+    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(storage: &'a mut S, key: &[u8]) -> Self {
@@ -78,9 +79,10 @@ where
     /// in the database. This is shorthand for some common sequences, which may be useful
     ///
     /// This is the least stable of the APIs, and definitely needs some usage
-    pub fn update<A>(&mut self, action: A) -> StdResult<T>
+    pub fn update<A, E>(&mut self, action: A) -> Result<T, E>
     where
-        A: FnOnce(T) -> StdResult<T>,
+        A: FnOnce(T) -> Result<T, E>,
+        E: From<StdError>,
     {
         let input = self.load()?;
         let output = action(input)?;
@@ -91,18 +93,20 @@ where
 
 /// ReadonlySingleton only requires a ReadonlyStorage and exposes only the
 /// methods of Singleton that don't modify state.
-pub struct ReadonlySingleton<'a, S: ReadonlyStorage, T>
+pub struct ReadonlySingleton<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     storage: &'a S,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
-    data: PhantomData<&'a T>,
+    data: PhantomData<T>,
 }
 
-impl<'a, S: ReadonlyStorage, T> ReadonlySingleton<'a, S, T>
+impl<'a, S, T> ReadonlySingleton<'a, S, T>
 where
+    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     pub fn new(storage: &'a S, key: &[u8]) -> Self {
@@ -209,7 +213,7 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(|mut c| {
+        let output = writer.update(|mut c| -> StdResult<_> {
             c.max_tokens *= 2;
             Ok(c)
         });
@@ -233,7 +237,7 @@ mod test {
 
         let mut old_max_tokens = 0i32;
         writer
-            .update(|mut c| {
+            .update(|mut c| -> StdResult<_> {
                 old_max_tokens = c.max_tokens;
                 c.max_tokens *= 2;
                 Ok(c)
@@ -243,7 +247,7 @@ mod test {
     }
 
     #[test]
-    fn update_failure() {
+    fn update_does_not_change_data_on_error() {
         let mut store = MockStorage::new();
         let mut writer = singleton::<_, Config>(&mut store, b"config");
 
@@ -253,10 +257,53 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| Err(StdError::unauthorized()));
-        match output {
-            Err(StdError::Unauthorized { .. }) => {}
-            _ => panic!("Unexpected output: {:?}", output),
+        let output = writer.update(&|_c| Err(StdError::underflow(4, 7)));
+        match output.unwrap_err() {
+            StdError::Underflow { .. } => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+        assert_eq!(writer.load().unwrap(), cfg);
+    }
+
+    #[test]
+    fn update_supports_custom_errors() {
+        #[derive(Debug)]
+        enum MyError {
+            Std(StdError),
+            Foo,
+        }
+
+        impl From<StdError> for MyError {
+            fn from(original: StdError) -> MyError {
+                MyError::Std(original)
+            }
+        }
+
+        let mut store = MockStorage::new();
+        let mut writer = singleton::<_, Config>(&mut store, b"config");
+
+        let cfg = Config {
+            owner: "admin".to_string(),
+            max_tokens: 1234,
+        };
+        writer.save(&cfg).unwrap();
+
+        let res = writer.update(|mut c| {
+            if c.max_tokens > 5000 {
+                return Err(MyError::Foo);
+            }
+            if c.max_tokens > 20 {
+                return Err(StdError::generic_err("broken stuff").into()); // Uses Into to convert StdError to MyError
+            }
+            if c.max_tokens > 10 {
+                to_vec(&c)?; // Uses From to convert StdError to MyError
+            }
+            c.max_tokens += 20;
+            Ok(c)
+        });
+        match res.unwrap_err() {
+            MyError::Std(StdError::GenericErr { .. }) => {}
+            err => panic!("Unexpected error: {:?}", err),
         }
         assert_eq!(writer.load().unwrap(), cfg);
     }

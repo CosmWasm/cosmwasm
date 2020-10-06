@@ -67,6 +67,12 @@ impl From<Vec<u8>> for CanonicalAddr {
     }
 }
 
+impl From<CanonicalAddr> for Vec<u8> {
+    fn from(source: CanonicalAddr) -> Vec<u8> {
+        source.0.into()
+    }
+}
+
 impl CanonicalAddr {
     pub fn as_slice(&self) -> &[u8] {
         &self.0.as_slice()
@@ -79,11 +85,34 @@ impl CanonicalAddr {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    /// Converts a `CanonicalAddr` into a vector of bytes.
+    ///
+    /// This consumes the `CanonicalAddr`, so we do not need to copy its contents.
+    /// It is equivalent to both `Vec::<u8>::from(addr)` and `let v: Vec<u8> = addr.into()` and just a matter of taste which one you use.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// # use cosmwasm_std::CanonicalAddr;
+    /// let address = CanonicalAddr::from(vec![0, 187, 61, 11, 250, 0]);
+    /// let bytes = address.into_vec();
+    ///
+    /// assert_eq!(bytes, &[0, 187, 61, 11, 250, 0]);
+    /// ```
+    pub fn into_vec(self) -> Vec<u8> {
+        self.into()
+    }
 }
 
 impl fmt::Display for CanonicalAddr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.0.fmt(f)
+        for byte in self.0.as_slice() {
+            write!(f, "{:02X}", byte)?;
+        }
+        Ok(())
     }
 }
 
@@ -119,9 +148,11 @@ mod test {
     }
 
     #[test]
-    fn human_addr_format() {
-        let human_addr = HumanAddr::from("Hello, world!");
-        assert_eq!("Hello, world!", format!("{}", human_addr));
+    fn human_addr_implements_display() {
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        let embedded = format!("Address: {}", human_addr);
+        assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
+        assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
     }
 
     #[test]
@@ -154,6 +185,40 @@ mod test {
     }
 
     #[test]
+    fn canonical_addr_from_vec_works() {
+        // Into<CanonicalAddr> for Vec<u8>
+        let original = vec![0u8, 187, 61, 11, 250, 0];
+        let original_ptr = original.as_ptr();
+        let addr: CanonicalAddr = original.into();
+        assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+
+        // From<Vec<u8>> for CanonicalAddr
+        let original = vec![0u8, 187, 61, 11, 250, 0];
+        let original_ptr = original.as_ptr();
+        let addr = CanonicalAddr::from(original);
+        assert_eq!(addr.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!((addr.0).0.as_ptr(), original_ptr, "must not be copied");
+    }
+
+    #[test]
+    fn canonical_addr_into_vec_works() {
+        // Into<Vec<u8>> for CanonicalAddr
+        let original = CanonicalAddr::from(vec![0u8, 187, 61, 11, 250, 0]);
+        let original_ptr = (original.0).0.as_ptr();
+        let vec: Vec<u8> = original.into();
+        assert_eq!(vec.as_slice(), [0u8, 187, 61, 11, 250, 0]);
+        assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
+
+        // From<CanonicalAddr> for Vec<u8>
+        let original = CanonicalAddr::from(vec![7u8, 35, 49, 101, 0, 255]);
+        let original_ptr = (original.0).0.as_ptr();
+        let vec = Vec::<u8>::from(original);
+        assert_eq!(vec.as_slice(), [7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(vec.as_ptr(), original_ptr, "must not be copied");
+    }
+
+    #[test]
     fn canonical_addr_len() {
         let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
         let canonical_addr = CanonicalAddr::from(bytes);
@@ -167,5 +232,20 @@ mod test {
         assert_eq!(false, canonical_addr.is_empty());
         let empty_canonical_addr = CanonicalAddr::from(vec![]);
         assert_eq!(true, empty_canonical_addr.is_empty());
+    }
+
+    #[test]
+    fn canonical_addr_implements_display() {
+        let bytes: &[u8] = &[
+            0x12, // two hex digits
+            0x03, // small values must be padded to two digits
+            0xab, // ensure we get upper case
+            0x00, // always test extreme values
+            0xff,
+        ];
+        let address = CanonicalAddr::from(bytes);
+        let embedded = format!("Address: {}", address);
+        assert_eq!(embedded, "Address: 1203AB00FF");
+        assert_eq!(address.to_string(), "1203AB00FF");
     }
 }

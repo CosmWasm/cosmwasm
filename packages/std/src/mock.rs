@@ -4,12 +4,13 @@ use std::collections::HashMap;
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult, SystemError, SystemResult};
+use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
-    DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator, ValidatorsResponse,
-    WasmQuery,
+    CustomQuery, DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator,
+    ValidatorsResponse, WasmQuery,
 };
+use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Extern, Querier, QuerierResult};
@@ -19,14 +20,11 @@ pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(
-    canonical_length: usize,
-    contract_balance: &[Coin],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
     }
 }
@@ -34,12 +32,11 @@ pub fn mock_dependencies(
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
-    canonical_length: usize,
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Extern<MockStorage, MockApi, MockQuerier> {
     Extern {
         storage: MockStorage::default(),
-        api: MockApi::new(canonical_length),
+        api: MockApi::default(),
         querier: MockQuerier::new(balances),
     }
 }
@@ -53,18 +50,26 @@ pub type MockStorage = MemoryStorage;
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
 #[derive(Copy, Clone)]
 pub struct MockApi {
-    canonical_length: usize,
+    /// Length of canonical addresses created with this API. Contracts should not make any assumtions
+    /// what this value is.
+    pub canonical_length: usize,
 }
 
 impl MockApi {
-    pub fn new(canonical_length: usize) -> Self {
-        MockApi { canonical_length }
+    #[deprecated(
+        since = "0.11.0",
+        note = "The canonical length argument is unused. Use MockApi::default() instead."
+    )]
+    pub fn new(_canonical_length: usize) -> Self {
+        MockApi::default()
     }
 }
 
 impl Default for MockApi {
     fn default() -> Self {
-        Self::new(20)
+        MockApi {
+            canonical_length: 24,
+        }
     }
 }
 
@@ -83,11 +88,17 @@ impl Api for MockApi {
         }
 
         let mut out = Vec::from(human.as_str());
-        let append = self.canonical_length - out.len();
-        if append > 0 {
-            out.extend(vec![0u8; append]);
+
+        // pad to canonical length with NULL bytes
+        out.resize(self.canonical_length, 0x00);
+        // content-dependent rotate followed by shuffle to destroy
+        // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
+        let rotate_by = digit_sum(&out) % self.canonical_length;
+        out.rotate_left(rotate_by);
+        for _ in 0..18 {
+            out = riffle_shuffle(&out);
         }
-        Ok(CanonicalAddr(Binary(out)))
+        Ok(out.into())
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
@@ -97,16 +108,19 @@ impl Api for MockApi {
             ));
         }
 
-        // remove trailing 0's (TODO: fix this - but fine for first tests)
-        let trimmed: Vec<u8> = canonical
-            .as_slice()
-            .iter()
-            .cloned()
-            .filter(|&x| x != 0)
-            .collect();
+        let mut tmp: Vec<u8> = canonical.clone().into();
+        // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
+        for _ in 0..2 {
+            tmp = riffle_shuffle(&tmp);
+        }
+        // Rotate back
+        let rotate_by = digit_sum(&tmp) % self.canonical_length;
+        tmp.rotate_right(rotate_by);
+        // Remove NULL bytes (i.e. the padding)
+        let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed).map_err(StdError::invalid_utf8)?;
-        Ok(HumanAddr(human))
+        Ok(human.into())
     }
 
     fn debug(&self, message: &str) {
@@ -114,10 +128,12 @@ impl Api for MockApi {
     }
 }
 
-/// Just set sender and sent funds for the message. The rest uses defaults.
-/// The sender will be canonicalized internally to allow developers pasing in human readable senders.
+/// Returns a default enviroment with height, time, chain_id, and contract address
+/// You can submit as is to most contracts, or modify height/time if you want to
+/// test for expiration.
+///
 /// This is intended for use in test code only.
-pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
+pub fn mock_env() -> Env {
     Env {
         block: BlockInfo {
             height: 12_345,
@@ -125,19 +141,24 @@ pub fn mock_env<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> Env {
             time_nanos: 879305533,
             chain_id: "cosmos-testnet-14002".to_string(),
         },
-        message: MessageInfo {
-            sender: sender.into(),
-            sent_funds: sent.to_vec(),
-        },
         contract: ContractInfo {
             address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         },
     }
 }
 
+/// Just set sender and sent funds for the message. The essential for
+/// This is intended for use in test code only.
+pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
+    MessageInfo {
+        sender: sender.into(),
+        sent_funds: sent.to_vec(),
+    }
+}
+
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
 /// cosmwasm-vm. It might diverge from QuerierResult at some point.
-pub type MockQuerierCustomHandlerResult = SystemResult<StdResult<Binary>>;
+pub type MockQuerierCustomHandlerResult = SystemResult<ContractResult<Binary>>;
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
@@ -161,7 +182,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
             wasm: NoWasmQuerier {},
             // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
             custom_handler: Box::from(|_: &_| -> MockQuerierCustomHandlerResult {
-                Err(SystemError::UnsupportedRequest {
+                SystemResult::Err(SystemError::UnsupportedRequest {
                     kind: "custom".to_string(),
                 })
             }),
@@ -196,12 +217,12 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 }
 
-impl<C: DeserializeOwned> Querier for MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,
             Err(e) => {
-                return Err(SystemError::InvalidRequest {
+                return SystemResult::Err(SystemError::InvalidRequest {
                     error: format!("Parsing query request: {}", e),
                     request: bin_request.into(),
                 })
@@ -211,7 +232,7 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
     }
 }
 
-impl<C: DeserializeOwned> MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
     pub fn handle_query(&self, request: &QueryRequest<C>) -> QuerierResult {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
@@ -234,7 +255,7 @@ impl NoWasmQuerier {
             WasmQuery::Raw { contract_addr, .. } => contract_addr,
         }
         .clone();
-        Err(SystemError::NoSuchContract { addr })
+        SystemResult::Err(SystemError::NoSuchContract { addr })
     }
 }
 
@@ -253,7 +274,7 @@ impl BankQuerier {
     }
 
     pub fn query(&self, request: &BankQuery) -> QuerierResult {
-        match request {
+        let contract_result: ContractResult<Binary> = match request {
             BankQuery::Balance { address, denom } => {
                 // proper error on not found, serialize result on found
                 let amount = self
@@ -267,16 +288,18 @@ impl BankQuerier {
                         denom: denom.to_string(),
                     },
                 };
-                Ok(to_binary(&bank_res))
+                to_binary(&bank_res).into()
             }
             BankQuery::AllBalances { address } => {
                 // proper error on not found, serialize result on found
                 let bank_res = AllBalanceResponse {
                     amount: self.balances.get(address).cloned().unwrap_or_default(),
                 };
-                Ok(to_binary(&bank_res))
+                to_binary(&bank_res).into()
             }
-        }
+        };
+        // system result is always ok in the mock implementation
+        SystemResult::Ok(contract_result)
     }
 }
 
@@ -297,18 +320,18 @@ impl StakingQuerier {
     }
 
     pub fn query(&self, request: &StakingQuery) -> QuerierResult {
-        match request {
+        let contract_result: ContractResult<Binary> = match request {
             StakingQuery::BondedDenom {} => {
                 let res = BondedDenomResponse {
                     denom: self.denom.clone(),
                 };
-                Ok(to_binary(&res))
+                to_binary(&res).into()
             }
             StakingQuery::Validators {} => {
                 let res = ValidatorsResponse {
                     validators: self.validators.clone(),
                 };
-                Ok(to_binary(&res))
+                to_binary(&res).into()
             }
             StakingQuery::AllDelegations { delegator } => {
                 let delegations: Vec<_> = self
@@ -319,7 +342,7 @@ impl StakingQuerier {
                     .map(|d| d.into())
                     .collect();
                 let res = AllDelegationsResponse { delegations };
-                Ok(to_binary(&res))
+                to_binary(&res).into()
             }
             StakingQuery::Delegation {
                 delegator,
@@ -332,10 +355,35 @@ impl StakingQuerier {
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
-                Ok(to_binary(&res))
+                to_binary(&res).into()
             }
-        }
+        };
+        // system result is always ok in the mock implementation
+        SystemResult::Ok(contract_result)
     }
+}
+
+/// Performs a perfect shuffle (in shuffle)
+///
+/// https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles
+/// https://en.wikipedia.org/wiki/In_shuffle
+pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
+    assert!(
+        input.len() % 2 == 0,
+        "Method only defined for even number of elements"
+    );
+    let mid = input.len() / 2;
+    let (left, right) = input.split_at(mid);
+    let mut out = Vec::<T>::with_capacity(input.len());
+    for i in 0..mid {
+        out.push(right[i].clone());
+        out.push(left[i].clone());
+    }
+    out
+}
+
+pub fn digit_sum(input: &[u8]) -> usize {
+    input.iter().fold(0, |sum, val| sum + (*val as usize))
 }
 
 #[cfg(test)]
@@ -345,13 +393,13 @@ mod test {
     use crate::{coin, coins, from_binary, Decimal, HumanAddr};
 
     #[test]
-    fn mock_env_arguments() {
+    fn mock_info_arguments() {
         let name = HumanAddr("my name".to_string());
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_env("my name", &coins(100, "atom"));
-        let b = mock_env(&name, &coins(100, "atom"));
-        let c = mock_env(name, &coins(100, "atom"));
+        let a = mock_info("my name", &coins(100, "atom"));
+        let b = mock_info(&name, &coins(100, "atom"));
+        let c = mock_info(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);
@@ -359,22 +407,19 @@ mod test {
     }
 
     #[test]
-    fn flip_addresses() {
-        let api = MockApi::new(20);
-        let human = HumanAddr("shorty".to_string());
-        let canon = api.canonical_address(&human).unwrap();
-        assert_eq!(canon.len(), 20);
-        assert_eq!(&canon.as_slice()[0..6], human.as_str().as_bytes());
-        assert_eq!(&canon.as_slice()[6..], &[0u8; 14]);
+    fn canonicalize_and_humanize_restores_original() {
+        let api = MockApi::default();
 
-        let recovered = api.human_address(&canon).unwrap();
-        assert_eq!(human, recovered);
+        let original = HumanAddr::from("shorty");
+        let canonical = api.canonical_address(&original).unwrap();
+        let recovered = api.human_address(&canonical).unwrap();
+        assert_eq!(recovered, original);
     }
 
     #[test]
     #[should_panic(expected = "length not correct")]
     fn human_address_input_length() {
-        let api = MockApi::new(10);
+        let api = MockApi::default();
         let input = CanonicalAddr(Binary(vec![61; 11]));
         api.human_address(&input).unwrap();
     }
@@ -382,7 +427,7 @@ mod test {
     #[test]
     #[should_panic(expected = "address too short")]
     fn canonical_address_min_input_length() {
-        let api = MockApi::new(10);
+        let api = MockApi::default();
         let human = HumanAddr("1".to_string());
         let _ = api.canonical_address(&human).unwrap();
     }
@@ -390,8 +435,8 @@ mod test {
     #[test]
     #[should_panic(expected = "address too long")]
     fn canonical_address_max_input_length() {
-        let api = MockApi::new(10);
-        let human = HumanAddr("longer-than-10".to_string());
+        let api = MockApi::default();
+        let human = HumanAddr::from("some-extremely-long-address-not-supported-by-this-api");
         let _ = api.canonical_address(&human).unwrap();
     }
 
@@ -604,5 +649,53 @@ mod test {
         assert_eq!(dels, None);
         let dels = get_delegator(&staking, user_c.clone(), val2.clone());
         assert_eq!(dels, Some(del2c.clone()));
+    }
+
+    #[test]
+    fn riffle_shuffle_works() {
+        // Example from https://en.wikipedia.org/wiki/In_shuffle
+        let start = [0xA, 0x2, 0x3, 0x4, 0x5, 0x6];
+        let round1 = riffle_shuffle(&start);
+        assert_eq!(round1, [0x4, 0xA, 0x5, 0x2, 0x6, 0x3]);
+        let round2 = riffle_shuffle(&round1);
+        assert_eq!(round2, [0x2, 0x4, 0x6, 0xA, 0x3, 0x5]);
+        let round3 = riffle_shuffle(&round2);
+        assert_eq!(round3, start);
+
+        // For 14 elements, the original order is restored after 4 executions
+        // See https://en.wikipedia.org/wiki/In_shuffle#Mathematics and https://oeis.org/A002326
+        let original = [12, 33, 76, 576, 0, 44, 1, 14, 78, 99, 871212, -7, 2, -1];
+        let mut result = Vec::from(original);
+        for _ in 0..4 {
+            result = riffle_shuffle(&result);
+        }
+        assert_eq!(result, original);
+
+        // For 24 elements, the original order is restored after 20 executions
+        let original = [
+            7, 4, 2, 4656, 23, 45, 23, 1, 12, 76, 576, 0, 12, 1, 14, 78, 99, 12, 1212, 444, 31,
+            111, 424, 34,
+        ];
+        let mut result = Vec::from(original);
+        for _ in 0..20 {
+            result = riffle_shuffle(&result);
+        }
+        assert_eq!(result, original);
+    }
+
+    #[test]
+    fn digit_sum_works() {
+        assert_eq!(digit_sum(&[]), 0);
+        assert_eq!(digit_sum(&[0]), 0);
+        assert_eq!(digit_sum(&[0, 0]), 0);
+        assert_eq!(digit_sum(&[0, 0, 0]), 0);
+
+        assert_eq!(digit_sum(&[1, 0, 0]), 1);
+        assert_eq!(digit_sum(&[0, 1, 0]), 1);
+        assert_eq!(digit_sum(&[0, 0, 1]), 1);
+
+        assert_eq!(digit_sum(&[1, 2, 3]), 6);
+
+        assert_eq!(digit_sum(&[255, 1]), 256);
     }
 }

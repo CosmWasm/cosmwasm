@@ -5,6 +5,14 @@
 **all**
 
 - Drop support for Rust versions lower than 1.45.2.
+- The serialization of the result from `init`/`migrate`/`handle`/`query` changed
+  in an incompatible way. See the new `ContractResult` and `SystemResult` types
+  and their documentation.
+- Pass `Env` into `query` as well. As this doesn't have `MessageInfo`, we
+  removed `MessageInfo` from `Env` and pass that as a separate argument to
+  `init`, `handle`, and `query`. See the example
+  [type definitions in the README](README.md#implementing-the-smart-contract) to
+  see how to update your contract exports (just add one extra arg each).
 
 **cosmwasm-std**
 
@@ -17,11 +25,51 @@
 - Rename `log` to `attr`.
 - Rename `Context::add_log` to `Context::add_attribute`.
 - Add `Api::debug` for emitting debug messages during development.
+- Fix error type for response parsing errors in `ExternalQuerier::raw_query`.
+  This was `Ok(Err(StdError::ParseErr))` instead of
+  `Err(SystemError::InvalidResponse)`, implying an error created in the target
+  contract.
+- Deprecate `StdError::Unauthorized` and `StdError::unauthorized` in favour of
+  custom errors. From now on `StdError` should only be created by the standard
+  library and should only contain cases the standard library needs.
+- Let `impl Display for CanonicalAddr` use upper case hex instead of base64.
+  This also affects `CanonicalAddr::to_string`.
+- Create trait `CustomQuery` for the generic argument in
+  `QueryRequest<C: CustomQuery>`. This allows us to provide
+  `impl<C: CustomQuery> From<C> for QueryRequest<C>` for any custom query.
+- Implement `From<Binary> for Vec<u8>`.
+- Implement `From<CanonicalAddr> for Vec<u8>`.
+- Add `Binary::into_vec` and `CanonicalAddr::into_vec`.
+- The `canonical_length` argument was removed from `mock_dependencies`,
+  `mock_dependencies_with_balances`. In the now deprecated `MockApi::new`, the
+  argument is unused. Contracts should not need to set this value and usually
+  should not make assumptions about the value.
+- The canonical address encoding in `MockApi::canonical_address` and
+  `MockApi::human_address` was changed to an unpredicatable represenation of
+  non-standard length that aims to destroy most of the input structure.
+
+**cosmwasm-storage**
+
+- Change order of arguments such that `storage` is always first followed by
+  namespace in `Bucket::new`, `Bucket::multilevel`, `ReadonlyBucket::new`,
+  `ReadonlyBucket::multilevel`, `bucket` and `bucket_read`.
+- Change order of arguments such that `storage` is always first followed by
+  namespace in `PrefixedStorage::new`, `PrefixedStorage::multilevel`,
+  `ReadonlyPrefixedStorage::new`, `ReadonlyPrefixedStorage::multilevel`,
+  `prefixed` and `prefixed_read`.
 
 **cosmwasm-vm**
 
 - `CosmCache::new`, `Instance::from_code` and `Instance::from_module` now take
   an additional argument to enable/disable printing debug logs from contracts.
+- Bump required export `cosmwasm_vm_version_3` to `cosmwasm_vm_version_4`.
+- The `canonical_length` argument was removed from `mock_dependencies`,
+  `mock_dependencies_with_balances` and `MockApi::new_failing`. In the now
+  deprecated `MockApi::new`, the argument is unused. Contracts should not need
+  to set this value and usually should not make assumptions about the value.
+- The canonical address encoding in `MockApi::canonical_address` and
+  `MockApi::human_address` was changed to an unpredicatable represenation of
+  non-standard length that aims to destroy most of the input structure.
 
 ## 0.10.1 (2020-08-25)
 

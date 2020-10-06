@@ -1,4 +1,4 @@
-use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr, StdResult, SystemResult};
+use cosmwasm_std::{Binary, CanonicalAddr, ContractResult, HumanAddr, SystemResult};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
@@ -59,10 +59,7 @@ impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
 }
 
 /// Access to the VM's backend storage, i.e. the chain
-pub trait Storage
-where
-    Self: 'static,
-{
+pub trait Storage {
     /// Returns Err on error.
     /// Returns Ok(None) when key does not exist.
     /// Returns Ok(Some(Vec<u8>)) when key exists.
@@ -121,5 +118,5 @@ pub trait Querier {
         &self,
         request: &[u8],
         gas_limit: u64,
-    ) -> FfiResult<SystemResult<StdResult<Binary>>>;
+    ) -> FfiResult<SystemResult<ContractResult<Binary>>>;
 }

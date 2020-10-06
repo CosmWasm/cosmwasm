@@ -1,9 +1,9 @@
-use serde::{de::DeserializeOwned, Serialize};
+use serde::de::DeserializeOwned;
 
 use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
-    to_binary, to_vec, Binary, Coin, Empty, HumanAddr, Querier as _, QueryRequest, StdResult,
-    SystemError, SystemResult,
+    to_binary, to_vec, Binary, Coin, ContractResult, CustomQuery, Empty, HumanAddr, Querier as _,
+    QueryRequest, SystemError, SystemResult,
 };
 
 use crate::{FfiError, FfiResult, GasInfo, Querier};
@@ -16,11 +16,11 @@ const GAS_COST_QUERY_RESPONSE_MULTIPLIER: u64 = 100;
 
 /// MockQuerier holds an immutable table of bank balances
 /// TODO: also allow querying contracts
-pub struct MockQuerier<C: DeserializeOwned = Empty> {
+pub struct MockQuerier<C: CustomQuery + DeserializeOwned = Empty> {
     querier: StdMockQuerier<C>,
 }
 
-impl<C: DeserializeOwned> MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
         MockQuerier {
             querier: StdMockQuerier::new(balances),
@@ -55,12 +55,12 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 }
 
-impl<C: DeserializeOwned> Querier for MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
     fn query_raw(
         &self,
         bin_request: &[u8],
         gas_limit: u64,
-    ) -> FfiResult<SystemResult<StdResult<Binary>>> {
+    ) -> FfiResult<SystemResult<ContractResult<Binary>>> {
         let response = self.querier.raw_query(bin_request);
         let gas_info = GasInfo::with_externally_used(
             GAS_COST_QUERY_FLAT
@@ -81,18 +81,18 @@ impl<C: DeserializeOwned> Querier for MockQuerier<C> {
 }
 
 impl MockQuerier {
-    pub fn query<T: Serialize>(
+    pub fn query<C: CustomQuery>(
         &self,
-        request: &QueryRequest<T>,
+        request: &QueryRequest<C>,
         gas_limit: u64,
-    ) -> FfiResult<SystemResult<StdResult<Binary>>> {
+    ) -> FfiResult<SystemResult<ContractResult<Binary>>> {
         // encode the request, then call raw_query
         let request_binary = match to_vec(request) {
             Ok(raw) => raw,
             Err(err) => {
                 let gas_info = GasInfo::with_externally_used(err.to_string().len() as u64);
                 return (
-                    Ok(Err(SystemError::InvalidRequest {
+                    Ok(SystemResult::Err(SystemError::InvalidRequest {
                         error: format!("Serializing query request: {}", err),
                         request: b"N/A".into(),
                     })),

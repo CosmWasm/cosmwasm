@@ -5,9 +5,11 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Env, Extern, HandleResponse, HumanAddr, InitResponse, MigrateResponse, Querier,
-    QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
+    Context, Env, Extern, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
+    Querier, QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
+
+use crate::errors::HackError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -67,13 +69,8 @@ pub enum QueryMsg {
     /// Recurse will execute a query into itself up to depth-times and return
     /// Each step of the recursion may perform some extra work to test gas metering
     /// (`work` rounds of sha256 on contract).
-    /// Contract should be the set to be the address of the original contract,
-    /// we pass it in as query doesn't have access to env.
-    Recurse {
-        depth: u32,
-        work: u32,
-        contract: HumanAddr,
-    },
+    /// Now that we have Env, we can auto-calculate the address to recurse into
+    Recurse { depth: u32, work: u32 },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -91,9 +88,10 @@ pub const CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-    env: Env,
+    _env: Env,
+    info: MessageInfo,
     msg: InitMsg,
-) -> StdResult<InitResponse> {
+) -> Result<InitResponse, HackError> {
     deps.api.debug("here we go 🚀");
 
     deps.storage.set(
@@ -101,21 +99,22 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
         &to_vec(&State {
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: deps.api.canonical_address(&env.message.sender)?,
+            funder: deps.api.canonical_address(&info.sender)?,
         })?,
     );
 
     // This adds some unrelated event attribute for testing purposes
     let mut ctx = Context::new();
     ctx.add_attribute("Let the", "hacking begin");
-    ctx.try_into()
+    Ok(ctx.try_into()?)
 }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     _env: Env,
+    _info: MessageInfo,
     msg: MigrateMsg,
-) -> StdResult<MigrateResponse> {
+) -> Result<MigrateResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -130,10 +129,11 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
 pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
+    info: MessageInfo,
     msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, HackError> {
     match msg {
-        HandleMsg::Release {} => do_release(deps, env),
+        HandleMsg::Release {} => do_release(deps, env, info),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
         HandleMsg::MemoryLoop {} => do_memory_loop(),
@@ -146,14 +146,15 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 fn do_release<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
     env: Env,
-) -> StdResult<HandleResponse> {
+    info: MessageInfo,
+) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if deps.api.canonical_address(&env.message.sender)? == state.verifier {
+    if deps.api.canonical_address(&info.sender)? == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
@@ -168,11 +169,11 @@ fn do_release<S: Storage, A: Api, Q: Querier>(
         ctx.set_data(&[0xF0, 0x0B, 0xAA]);
         Ok(ctx.into())
     } else {
-        Err(StdError::unauthorized())
+        Err(HackError::Unauthorized {})
     }
 }
 
-fn do_cpu_loop() -> StdResult<HandleResponse> {
+fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     let mut counter = 0u64;
     loop {
         counter += 1;
@@ -184,7 +185,7 @@ fn do_cpu_loop() -> StdResult<HandleResponse> {
 
 fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     deps: &mut Extern<S, A, Q>,
-) -> StdResult<HandleResponse> {
+) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -193,7 +194,7 @@ fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn do_memory_loop() -> StdResult<HandleResponse> {
+fn do_memory_loop() -> Result<HandleResponse, HackError> {
     let mut data = vec![1usize];
     loop {
         // add one element
@@ -201,7 +202,7 @@ fn do_memory_loop() -> StdResult<HandleResponse> {
     }
 }
 
-fn do_allocate_large_memory() -> StdResult<HandleResponse> {
+fn do_allocate_large_memory() -> Result<HandleResponse, HackError> {
     // We create memory pages explicitely since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
@@ -212,20 +213,20 @@ fn do_allocate_large_memory() -> StdResult<HandleResponse> {
         let pages = 1_600; // 100 MiB
         let ptr = wasm32::memory_grow(0, pages);
         if ptr == usize::max_value() {
-            return Err(StdError::generic_err("Error in memory.grow instruction"));
+            return Err(StdError::generic_err("Error in memory.grow instruction").into());
         }
         Ok(HandleResponse::default())
     }
 
     #[cfg(not(target_arch = "wasm32"))]
-    Err(StdError::generic_err("Unsupported architecture"))
+    Err(StdError::generic_err("Unsupported architecture").into())
 }
 
-fn do_panic() -> StdResult<HandleResponse> {
+fn do_panic() -> Result<HandleResponse, HackError> {
     panic!("This page intentionally faulted");
 }
 
-fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
+fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackError> {
     // Canonicalize
 
     let empty = HumanAddr::from("");
@@ -235,7 +236,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -246,7 +248,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -259,7 +262,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -270,7 +274,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -281,7 +286,8 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
             return Err(StdError::generic_err(format!(
                 "Unexpected error in do_user_errors_in_api_calls: {:?}",
                 err
-            )))
+            ))
+            .into())
         }
     }
 
@@ -290,16 +296,15 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> StdResult<HandleResponse> {
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
     deps: &Extern<S, A, Q>,
+    env: Env,
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
-        QueryMsg::Recurse {
-            depth,
-            work,
-            contract,
-        } => to_binary(&query_recurse(deps, depth, work, contract)?),
+        QueryMsg::Recurse { depth, work } => {
+            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
+        }
     }
 }
 
@@ -345,7 +350,6 @@ fn query_recurse<S: Storage, A: Api, Q: Querier>(
         let req = QueryMsg::Recurse {
             depth: depth - 1,
             work,
-            contract: contract.clone(),
         };
         let query = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: contract,
@@ -359,14 +363,14 @@ fn query_recurse<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{attr, coins, ReadonlyStorage, StdError};
+    use cosmwasm_std::{attr, coins, ReadonlyStorage};
 
     #[test]
     fn proper_initialization() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -381,8 +385,8 @@ mod tests {
             verifier,
             beneficiary,
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(res.attributes[0].key, "Let the");
@@ -396,7 +400,7 @@ mod tests {
 
     #[test]
     fn init_and_query() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
@@ -405,8 +409,8 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
@@ -416,7 +420,7 @@ mod tests {
 
     #[test]
     fn migrate_verifier() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr::from("verifies");
         let beneficiary = HumanAddr::from("benefits");
@@ -425,12 +429,12 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = init(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'verifies'
-        let query_response = query(&deps, QueryMsg::Verifier {}).unwrap();
+        let query_response = query(&deps, mock_env(), QueryMsg::Verifier {}).unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
@@ -438,8 +442,8 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let env = mock_env(creator.as_str(), &[]);
-        let res = migrate(&mut deps, env, msg).unwrap();
+        let info = mock_info(creator.as_str(), &[]);
+        let res = migrate(&mut deps, mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
@@ -451,7 +455,7 @@ mod tests {
     fn querier_callbacks_work() {
         let rich_addr = HumanAddr::from("foobar");
         let rich_balance = coins(10000, "gold");
-        let deps = mock_dependencies_with_balances(20, &[(&rich_addr, &rich_balance)]);
+        let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
         let bal = query_other_balance(&deps, rich_addr).unwrap();
@@ -464,7 +468,7 @@ mod tests {
 
     #[test]
     fn handle_release_works() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         // initialize the store
         let creator = HumanAddr::from("creator");
@@ -476,17 +480,16 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_env = mock_env(creator.as_str(), &init_amount);
-        let contract_addr = init_env.contract.address.clone();
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info(creator.as_str(), &init_amount);
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
-        deps.querier.update_balance(&contract_addr, init_amount);
+        deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary can release it
-        let handle_env = mock_env(verifier.as_str(), &[]);
-        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {}).unwrap();
+        let handle_info = mock_info(verifier.as_str(), &[]);
+        let handle_res = handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {}).unwrap();
         assert_eq!(handle_res.messages.len(), 1);
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
@@ -507,7 +510,7 @@ mod tests {
 
     #[test]
     fn handle_release_fails_for_wrong_sender() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         // initialize the store
         let creator = HumanAddr::from("creator");
@@ -519,19 +522,18 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_env = mock_env(creator.as_str(), &init_amount);
-        let contract_addr = init_env.contract.address.clone();
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info(creator.as_str(), &init_amount);
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
-        deps.querier.update_balance(&contract_addr, init_amount);
+        deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary cannot release it
-        let handle_env = mock_env(beneficiary.as_str(), &[]);
-        let handle_res = handle(&mut deps, handle_env, HandleMsg::Release {});
+        let handle_info = mock_info(beneficiary.as_str(), &[]);
+        let handle_res = handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {});
         match handle_res.unwrap_err() {
-            StdError::Unauthorized { .. } => {}
+            HackError::Unauthorized { .. } => {}
             _ => panic!("Expect unauthorized error"),
         }
 
@@ -551,7 +553,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "This page intentionally faulted")]
     fn handle_panic() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         // initialize the store
         let verifier = HumanAddr(String::from("verifies"));
@@ -562,29 +564,35 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_env = mock_env(creator.as_str(), &coins(1000, "earth"));
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env(beneficiary.as_str(), &[]);
+        let handle_info = mock_info(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = handle(&mut deps, handle_env, HandleMsg::Panic {});
+        let _ = handle(&mut deps, mock_env(), handle_info, HandleMsg::Panic {});
     }
 
     #[test]
     fn handle_user_errors_in_api_calls() {
-        let mut deps = mock_dependencies(20, &[]);
+        let mut deps = mock_dependencies(&[]);
 
         let init_msg = InitMsg {
             verifier: HumanAddr::from("verifies"),
             beneficiary: HumanAddr::from("benefits"),
         };
-        let init_env = mock_env("creator", &coins(1000, "earth"));
-        let init_res = init(&mut deps, init_env, init_msg).unwrap();
+        let init_info = mock_info("creator", &coins(1000, "earth"));
+        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_env = mock_env("anyone", &[]);
-        handle(&mut deps, handle_env, HandleMsg::UserErrorsInApiCalls {}).unwrap();
+        let handle_info = mock_info("anyone", &[]);
+        handle(
+            &mut deps,
+            mock_env(),
+            handle_info,
+            HandleMsg::UserErrorsInApiCalls {},
+        )
+        .unwrap();
     }
 
     #[test]
@@ -592,7 +600,7 @@ mod tests {
         // the test framework doesn't handle contracts querying contracts yet,
         // let's just make sure the last step looks right
 
-        let deps = mock_dependencies(20, &[]);
+        let deps = mock_dependencies(&[]);
         let contract = HumanAddr::from("my-contract");
         let bin_contract: &[u8] = b"my-contract";
 

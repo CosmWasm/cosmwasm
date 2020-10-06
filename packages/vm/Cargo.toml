@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.10.1"
+version = "0.11.0-alpha4"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -31,7 +31,7 @@ staking = ["cosmwasm-std/staking"]
 
 [dependencies]
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "0.10.1" }
+cosmwasm-std = { path = "../std", version = "0.11.0-alpha4" }
 serde_json = "1.0"
 wasmer = { path = "../../../wasmer/lib/api" }
 wasmer-compiler = { path = "../../../wasmer/lib/compiler" }
@@ -46,7 +46,7 @@ snafu = { version = "0.6.3" }
 sha2 = "0.9.1"
 hex = "0.4"
 memmap = "0.7"
-parity-wasm = "0.41"
+parity-wasm = "0.42"
 
 [dev-dependencies]
 tempfile = "3.1.0"

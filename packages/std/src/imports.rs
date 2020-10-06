@@ -2,12 +2,16 @@ use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::encoding::Binary;
-use crate::errors::{StdError, StdResult};
-#[cfg(feature = "iterator")]
-use crate::iterator::{Order, KV};
-use crate::memory::{alloc, build_region, consume_region, get_optional_region_address, Region};
+use crate::errors::{StdError, StdResult, SystemError};
+use crate::memory::{alloc, build_region, consume_region, Region};
+use crate::results::SystemResult;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
+#[cfg(feature = "iterator")]
+use crate::{
+    iterator::{Order, KV},
+    memory::get_optional_region_address,
+};
 
 /// An upper bound for typical canonical address lengths (e.g. 20 in Cosmos SDK/Ethereum or 32 in Nano/Substrate)
 const CANONICAL_ADDRESS_BUFFER_LENGTH: usize = 32;
@@ -212,8 +216,13 @@ impl Querier for ExternalQuerier {
         let request_ptr = &*req as *const Region as u32;
 
         let response_ptr = unsafe { query_chain(request_ptr) };
-
         let response = unsafe { consume_region(response_ptr as *mut Region) };
-        from_slice(&response).unwrap_or_else(|err| Ok(Err(err)))
+
+        from_slice(&response).unwrap_or_else(|parsing_err| {
+            SystemResult::Err(SystemError::InvalidResponse {
+                error: parsing_err.to_string(),
+                response: response.into(),
+            })
+        })
     }
 }
