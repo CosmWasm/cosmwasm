@@ -158,30 +158,25 @@ where
             },
         });
 
-        let wasmer_instance = Box::from(module.instantiate(&import_obj).map_err(|original| {
-            VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
-        })?);
-        Ok(Instance::from_wasmer(wasmer_instance, deps, gas_limit))
-    }
+        let mut wasmer_instance =
+            Box::from(module.instantiate(&import_obj).map_err(|original| {
+                VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
+            })?);
 
-    pub(crate) fn from_wasmer(
-        mut wasmer_instance: Box<WasmerInstance>,
-        deps: Extern<S, A, Q>,
-        gas_limit: u64,
-    ) -> Self {
         set_gas_left(wasmer_instance.context_mut(), gas_limit);
         get_gas_state_mut::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
         move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
-        Instance {
+        let instance = Instance {
             inner: wasmer_instance,
             api: deps.api,
             required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
-        }
+        };
+        Ok(instance)
     }
 
     /// Decomposes this instance into its components.
