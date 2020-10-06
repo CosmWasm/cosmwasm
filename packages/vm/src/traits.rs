@@ -68,18 +68,26 @@ pub trait Storage {
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
     fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>>;
 
-    #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
+    /// Returns an interator ID that is unique within the Storage instance.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
     /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
-    fn range<'a>(
-        &'a self,
-        start: Option<&[u8]>,
-        end: Option<&[u8]>,
-        order: Order,
-    ) -> FfiResult<Box<dyn StorageIterator + 'a>>;
+    ///
+    /// This call must not change data in the storage, but creating and storing a new iterator can be a mutating operation on
+    /// the Storage implementation.
+    #[cfg(feature = "iterator")]
+    fn scan(&mut self, start: Option<&[u8]>, end: Option<&[u8]>, order: Order) -> FfiResult<u32>;
+
+    /// Returns the next element of the iterator with the given ID.
+    ///
+    /// If the ID is not found, a FfiError::IteratorDoesNotExist is returned.
+    ///
+    /// This call must not change data in the storage, but incrementing an iterator can be a mutating operation on
+    /// the Storage implementation.
+    #[cfg(feature = "iterator")]
+    fn next(&mut self, iterator_id: u32) -> FfiResult<Option<KV>>;
 
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()>;
 
