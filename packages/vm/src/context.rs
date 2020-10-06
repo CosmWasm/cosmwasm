@@ -346,24 +346,6 @@ where
     }
 }
 
-#[cfg(feature = "iterator")]
-pub(crate) fn with_iterator_from_context<'a, 'b, S: 'b, Q: 'b, F, T>(
-    ctx: &'a mut Ctx,
-    iterator_id: u32,
-    func: F,
-) -> VmResult<T>
-where
-    S: Storage,
-    Q: Querier,
-    F: FnOnce(&'b mut (dyn StorageIterator + 'b)) -> VmResult<T>,
-{
-    let b = get_context_data_mut::<S, Q>(ctx);
-    match b.iterators.get_mut(&iterator_id) {
-        Some(iterator) => func(iterator),
-        None => Err(VmError::iterator_does_not_exist(iterator_id)),
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
@@ -689,37 +671,5 @@ mod test {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn with_iterator_from_context_works() {
-        let mut instance = make_instance();
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let id = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
-        with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
-            assert!(iter.next().0.unwrap().is_none());
-            Ok(())
-        })
-        .expect("must not error");
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn with_iterator_from_context_errors_for_non_existent_iterator_id() {
-        let mut instance = make_instance();
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let missing_id = 42u32;
-        let result = with_iterator_from_context::<MS, MQ, _, ()>(ctx, missing_id, |_iter| {
-            panic!("this should not be called");
-        });
-        match result.unwrap_err() {
-            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, missing_id),
-            err => panic!("Unexpected error: {:?}", err),
-        }
     }
 }
