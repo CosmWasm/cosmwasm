@@ -200,7 +200,7 @@ pub fn do_scan<S: Storage, Q: Querier>(
 #[cfg(feature = "iterator")]
 pub fn do_next<S: Storage, Q: Querier>(ctx: &mut Ctx, iterator_id: u32) -> VmResult<u32> {
     let (result, gas_info) =
-        with_iterator_from_context::<S, Q, _, _>(ctx, iterator_id, |iter| Ok(iter.next()))?;
+        with_storage_from_context::<S, Q, _, _>(ctx, |store| Ok(store.next(iterator_id)))?;
     process_gas_info::<S, Q>(ctx, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
@@ -1030,7 +1030,9 @@ mod test {
         let non_existent_id = 42u32;
         let result = do_next::<MS, MQ>(ctx, non_existent_id);
         match result.unwrap_err() {
-            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, non_existent_id),
+            VmError::FfiErr {
+                source: FfiError::IteratorDoesNotExist { id, .. },
+            } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
