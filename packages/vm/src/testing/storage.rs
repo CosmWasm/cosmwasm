@@ -10,8 +10,6 @@ use std::ops::{Bound, RangeBounds};
 use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
-use crate::traits::StorageIterator;
-#[cfg(feature = "iterator")]
 use crate::FfiError;
 use crate::{FfiResult, GasInfo, Storage};
 
@@ -20,35 +18,6 @@ const GAS_COST_LAST_ITERATION: u64 = 37;
 
 #[cfg(feature = "iterator")]
 const GAS_COST_RANGE: u64 = 11;
-
-/// A storage iterator for testing only. This type uses a Rust iterator
-/// as a data source, which does not provide a gas value for the last iteration.
-#[cfg(feature = "iterator")]
-pub struct MockIterator<'a> {
-    source: Box<dyn Iterator<Item = (KV, u64)> + 'a>,
-}
-
-#[cfg(feature = "iterator")]
-impl MockIterator<'_> {
-    pub fn empty() -> Self {
-        MockIterator {
-            source: Box::new(std::iter::empty()),
-        }
-    }
-}
-
-#[cfg(feature = "iterator")]
-impl StorageIterator for MockIterator<'_> {
-    fn next(&mut self) -> FfiResult<Option<KV>> {
-        match self.source.next() {
-            Some((kv, gas_used)) => (Ok(Some(kv)), GasInfo::with_externally_used(gas_used)),
-            None => (
-                Ok(None),
-                GasInfo::with_externally_used(GAS_COST_LAST_ITERATION),
-            ),
-        }
-    }
-}
 
 #[cfg(feature = "iterator")]
 #[derive(Default, Debug)]
