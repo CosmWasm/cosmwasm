@@ -52,6 +52,30 @@
           }
         }
       }
+    },
+    {
+      "description": "Queries another contract and returns the data",
+      "type": "object",
+      "required": [
+        "raw"
+      ],
+      "properties": {
+        "raw": {
+          "type": "object",
+          "required": [
+            "contract",
+            "key"
+          ],
+          "properties": {
+            "contract": {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            "key": {
+              "$ref": "#/definitions/Binary"
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
@@ -297,7 +321,7 @@
           }
         },
         {
-          "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key (or `Ok(Err(StdError:NotFound{}))` if missing)",
+          "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key, which may be an empty vector if not present",
           "type": "object",
           "required": [
             "raw"
