@@ -1,4 +1,4 @@
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
@@ -6,17 +6,17 @@ use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::query::{AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest};
+use crate::query::{
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
+};
 #[cfg(feature = "staking")]
 use crate::query::{
     AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
     StakingQuery, Validator, ValidatorsResponse,
 };
 use crate::results::{ContractResult, SystemResult};
-use crate::serde::{from_binary, to_vec};
+use crate::serde::{from_binary, to_binary, to_vec};
 use crate::types::Empty;
-use crate::{to_binary, WasmQuery};
-use serde::Serialize;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.

@@ -3,15 +3,16 @@
   "title": "RawResponse",
   "type": "object",
   "required": [
-    "data",
-    "missing"
+    "data"
   ],
   "properties": {
     "data": {
-      "$ref": "#/definitions/Binary"
-    },
-    "missing": {
-      "type": "boolean"
+      "description": "The returned value of the raw query. Empty data can be the result of a non-existent key or an empty value. We cannot differentiate those two cases in cross contract queries.",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Binary"
+        }
+      ]
     }
   },
   "definitions": {
