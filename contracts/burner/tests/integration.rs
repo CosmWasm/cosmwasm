@@ -21,7 +21,6 @@ use cosmwasm_std::{
     coins, BankMsg, ContractResult, HumanAddr, InitResponse, MigrateResponse, Order,
 };
 use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance, MOCK_CONTRACT_ADDR};
-use cosmwasm_vm::StorageIterator;
 
 use burner::msg::{InitMsg, MigrateMsg};
 use cosmwasm_vm::Storage;
@@ -55,13 +54,8 @@ fn migrate_cleans_up_data() {
         storage.set(b"foo", b"bar").0.unwrap();
         storage.set(b"key2", b"data2").0.unwrap();
         storage.set(b"key3", b"cool stuff").0.unwrap();
-        let cnt = storage
-            .range(None, None, Order::Ascending)
-            .0
-            .unwrap()
-            .elements()
-            .unwrap()
-            .len();
+        let iter_id = storage.scan(None, None, Order::Ascending).0.unwrap();
+        let cnt = storage.all(iter_id).0.unwrap().len();
         assert_eq!(3, cnt);
         Ok(())
     })
@@ -89,13 +83,8 @@ fn migrate_cleans_up_data() {
 
     // check there is no data in storage
     deps.with_storage(|storage| {
-        let cnt = storage
-            .range(None, None, Order::Ascending)
-            .0
-            .unwrap()
-            .elements()
-            .unwrap()
-            .len();
+        let iter_id = storage.scan(None, None, Order::Ascending).0.unwrap();
+        let cnt = storage.all(iter_id).0.unwrap().len();
         assert_eq!(0, cnt);
         Ok(())
     })
