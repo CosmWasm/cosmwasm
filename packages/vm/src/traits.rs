@@ -77,6 +77,8 @@ pub trait Storage {
     ///
     /// This call must not change data in the storage, but creating and storing a new iterator can be a mutating operation on
     /// the Storage implementation.
+    /// The implementation must ensure that iterator IDs are assigned in a deterministic manner as this is
+    /// environment data that is injected into the contract.
     #[cfg(feature = "iterator")]
     fn scan(&mut self, start: Option<&[u8]>, end: Option<&[u8]>, order: Order) -> FfiResult<u32>;
 
