@@ -54,9 +54,9 @@ pub struct ChainResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct RawResponse {
-    // this is set to true if there was no data (None)
-    pub missing: bool,
-    // this is set to returned value if there is Some, or to vec![] on None
+    /// The returned value of the raw query. Empty data can be the
+    /// result of a non-existent key or an empty value. We cannot
+    /// differentiate those two cases in cross contract queries.
     pub data: Binary,
 }
 

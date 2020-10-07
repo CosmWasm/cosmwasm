@@ -143,14 +143,9 @@ fn query_raw<S: Storage, A: Api, Q: Querier>(
     contract: HumanAddr,
     key: Binary,
 ) -> StdResult<RawResponse> {
-    let res: Option<Vec<u8>> = deps.querier.query_wasm_raw(contract, key)?;
-    let (missing, data) = match res {
-        Some(content) => (false, content),
-        None => (true, vec![]),
-    };
+    let response: Option<Vec<u8>> = deps.querier.query_wasm_raw(contract, key)?;
     Ok(RawResponse {
-        missing,
-        data: data.into(),
+        data: response.unwrap_or_default().into(),
     })
 }
 
