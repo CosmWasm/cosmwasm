@@ -2,8 +2,6 @@ use cosmwasm_std::{Binary, CanonicalAddr, ContractResult, HumanAddr, SystemResul
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
-#[cfg(feature = "iterator")]
-use crate::ffi::FfiError;
 use crate::ffi::FfiResult;
 
 /// Holds all external dependencies of the contract.
@@ -26,35 +24,6 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
             api: self.api,
             querier: transform(self.querier),
         }
-    }
-}
-
-#[cfg(feature = "iterator")]
-pub trait StorageIterator {
-    fn next(&mut self) -> FfiResult<Option<KV>>;
-
-    /// Collects all elements, ignoring gas costs
-    fn elements(mut self) -> Result<Vec<KV>, FfiError>
-    where
-        Self: Sized,
-    {
-        let mut out: Vec<KV> = Vec::new();
-        loop {
-            let (result, _gas_info) = self.next();
-            match result {
-                Ok(Some(kv)) => out.push(kv),
-                Ok(None) => break,
-                Err(err) => return Err(err),
-            }
-        }
-        Ok(out)
-    }
-}
-
-#[cfg(feature = "iterator")]
-impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
-    fn next(&mut self) -> FfiResult<Option<KV>> {
-        (**self).next()
     }
 }
 

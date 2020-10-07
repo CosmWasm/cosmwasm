@@ -33,6 +33,3 @@ pub use crate::instance::{GasReport, Instance};
 pub use crate::modules::FileSystemCache;
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::traits::{Api, Extern, Querier, Storage};
-
-#[cfg(feature = "iterator")]
-pub use crate::traits::StorageIterator;
