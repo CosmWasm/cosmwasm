@@ -74,12 +74,17 @@ impl MockStorage {
         let mut out: Vec<KV> = Vec::new();
         let mut total = GasInfo::free();
         loop {
-            let (value, info) = self.next(iterator_id);
+            let (result, info) = self.next(iterator_id);
             total += info;
-            if let Some(v) = value.unwrap() {
-                out.push(v);
-            } else {
-                break;
+            match result {
+                Err(err) => return (Err(err), total),
+                Ok(ok) => {
+                    if let Some(v) = ok {
+                        out.push(v);
+                    } else {
+                        break;
+                    }
+                }
             }
         }
         (Ok(out), total)
