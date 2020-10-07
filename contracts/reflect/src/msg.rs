@@ -25,6 +25,11 @@ pub enum QueryMsg {
     Chain {
         request: QueryRequest<SpecialQuery>,
     },
+    /// Queries another contract and returns the data
+    Raw {
+        contract: HumanAddr,
+        key: Binary,
+    },
 }
 
 // We define a custom struct for each query response
@@ -43,6 +48,15 @@ pub struct CapitalizedResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub struct ChainResponse {
+    pub data: Binary,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub struct RawResponse {
+    // this is set to true if there was no data (None)
+    pub missing: bool,
+    // this is set to returned value if there is Some, or to vec![] on None
     pub data: Binary,
 }
 
