@@ -53,6 +53,12 @@ impl Deref for HumanAddr {
     }
 }
 
+impl PartialEq<str> for HumanAddr {
+    fn eq(&self, other: &str) -> bool {
+        self.0 == other
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
@@ -134,6 +140,12 @@ mod test {
         let embedded = format!("Address: {}", human_addr);
         assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
         assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn human_addr_implements_partial_eq() {
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        assert_eq!(&human_addr, "cos934gh9034hg04g0h134");
     }
 
     #[test]
