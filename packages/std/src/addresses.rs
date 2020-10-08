@@ -13,14 +13,6 @@ impl HumanAddr {
     pub fn as_str(&self) -> &str {
         &self.0
     }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
 }
 
 impl fmt::Display for HumanAddr {
@@ -93,34 +85,6 @@ impl Deref for CanonicalAddr {
 impl CanonicalAddr {
     pub fn as_slice(&self) -> &[u8] {
         &self.0.as_slice()
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// Converts a `CanonicalAddr` into a vector of bytes.
-    ///
-    /// This consumes the `CanonicalAddr`, so we do not need to copy its contents.
-    /// It is equivalent to both `Vec::<u8>::from(addr)` and `let v: Vec<u8> = addr.into()` and just a matter of taste which one you use.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
-    ///
-    /// ```
-    /// # use cosmwasm_std::CanonicalAddr;
-    /// let address = CanonicalAddr::from(vec![0, 187, 61, 11, 250, 0]);
-    /// let bytes = address.into_vec();
-    ///
-    /// assert_eq!(bytes, &[0, 187, 61, 11, 250, 0]);
-    /// ```
-    pub fn into_vec(self) -> Vec<u8> {
-        self.into()
     }
 }
 
