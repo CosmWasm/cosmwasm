@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 use crate::encoding::Binary;
+use std::ops::Deref;
 
 // Added Eq and Hash to allow this to be a key in a HashMap (MockQuerier)
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, Hash)]
@@ -52,6 +53,14 @@ impl From<String> for HumanAddr {
     }
 }
 
+impl Deref for HumanAddr {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_str()
+    }
+}
+
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
@@ -70,6 +79,14 @@ impl From<Vec<u8>> for CanonicalAddr {
 impl From<CanonicalAddr> for Vec<u8> {
     fn from(source: CanonicalAddr) -> Vec<u8> {
         source.0.into()
+    }
+}
+
+impl Deref for CanonicalAddr {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
     }
 }
 

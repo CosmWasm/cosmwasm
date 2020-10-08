@@ -4,6 +4,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
+use std::ops::Deref;
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -68,6 +69,14 @@ impl fmt::Display for Binary {
 impl From<&[u8]> for Binary {
     fn from(binary: &[u8]) -> Self {
         Self(binary.to_vec())
+    }
+}
+
+impl Deref for Binary {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
     }
 }
 
