@@ -90,6 +90,18 @@ mod test {
     }
 
     #[test]
+    fn from_slice_or_binary() {
+        let msg = SomeMsg::Refund {};
+        let serialized: Binary = to_binary(&msg).unwrap();
+
+        let parse_binary: SomeMsg = from_binary(&serialized).unwrap();
+        assert_eq!(parse_binary, msg);
+
+        let parse_slice: SomeMsg = from_slice(&serialized).unwrap();
+        assert_eq!(parse_slice, msg);
+    }
+
+    #[test]
     fn to_vec_works_for_special_chars() {
         let msg = SomeMsg::Cowsay {
             text: "foo\"bar\\\"bla".to_string(),

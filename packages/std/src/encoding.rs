@@ -184,7 +184,7 @@ mod test {
         let encoded = Binary(binary.clone()).to_base64();
         assert_eq!(8, encoded.len());
         let decoded = Binary::from_base64(&encoded).unwrap();
-        assert_eq!(binary.as_slice(), decoded.as_slice());
+        assert_eq!(binary.deref(), decoded.deref());
     }
 
     #[test]
