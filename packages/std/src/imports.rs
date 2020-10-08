@@ -168,7 +168,7 @@ impl Api for ExternalApi {
     }
 
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
-        let send = build_region(canonical.as_slice());
+        let send = build_region(&canonical);
         let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 

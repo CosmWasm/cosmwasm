@@ -32,13 +32,13 @@ impl std::fmt::Display for SystemError {
                 f,
                 "Cannot parse request: {} in: {}",
                 error,
-                String::from_utf8_lossy(request.as_slice())
+                String::from_utf8_lossy(&request)
             ),
             SystemError::InvalidResponse { error, response } => write!(
                 f,
                 "Cannot parse response: {} in: {}",
                 error,
-                String::from_utf8_lossy(response.as_slice())
+                String::from_utf8_lossy(&response)
             ),
             SystemError::NoSuchContract { addr } => write!(f, "No such contract: {}", addr),
             SystemError::Unknown {} => write!(f, "Unknown system error"),
