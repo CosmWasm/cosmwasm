@@ -86,6 +86,11 @@ impl From<CanonicalAddr> for Vec<u8> {
     }
 }
 
+/// Just like Vec<u8>, CanonicalAddr is a smart pointer to [u8].
+/// This implements `*canonical_address` for us and allows us to
+/// do `&*canonical_address`, returning a `&[u8]` from a `&CanonicalAddr`.
+/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
+/// this allows us to use `&canonical_address` whenever a `&[u8]` is required.
 impl Deref for CanonicalAddr {
     type Target = [u8];
 
@@ -259,5 +264,20 @@ mod test {
         let embedded = format!("Address: {}", address);
         assert_eq!(embedded, "Address: 1203AB00FF");
         assert_eq!(address.to_string(), "1203AB00FF");
+    }
+
+    #[test]
+    fn canonical_addr_implements_deref() {
+        // Dereference to [u8]
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr = CanonicalAddr::from(bytes);
+        assert_eq!(*canonical_addr, [0u8, 187, 61, 11, 250, 0]);
+
+        // This checks deref coercions from &CanonicalAddr to &[u8] works
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr = CanonicalAddr::from(bytes);
+        assert_eq!(canonical_addr.len(), 6);
+        let canonical_addr_slice: &[u8] = &canonical_addr;
+        assert_eq!(canonical_addr_slice, &[0u8, 187, 61, 11, 250, 0]);
     }
 }
