@@ -44,6 +44,11 @@ impl From<&[u8]> for Binary {
     }
 }
 
+/// Just like Vec<u8>, Binary is a smart pointer to [u8].
+/// This implements `*binary` for us and allows us to
+/// do `&*binary`, returning a `&[u8]` from a `&Binary`.
+/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
+/// this allows us to use `&binary` whenever a `&[u8]` is required.
 impl Deref for Binary {
     type Target = [u8];
 
@@ -324,5 +329,18 @@ mod test {
         let serialized = to_vec(&invalid_str).unwrap();
         let res = from_slice::<Binary>(&serialized);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn binary_implements_deref() {
+        // Dereference to [u8]
+        let binary = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(*binary, [7u8, 35, 49, 101, 0, 255]);
+
+        // This checks deref coercions from &Binary to &[u8] works
+        let binary = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(binary.len(), 6);
+        let binary_slice: &[u8] = &binary;
+        assert_eq!(binary_slice, &[7u8, 35, 49, 101, 0, 255]);
     }
 }
