@@ -1,9 +1,9 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::ops::Deref;
 
 use crate::encoding::Binary;
-use std::ops::Deref;
 
 // Added Eq and Hash to allow this to be a key in a HashMap (MockQuerier)
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, Hash)]
