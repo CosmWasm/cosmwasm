@@ -45,6 +45,12 @@ impl From<String> for HumanAddr {
     }
 }
 
+/// Just like String, HumanAddr is a smart pointer to str.
+/// This implements `*human_address` for us, which is not very valuable directly
+/// because str has no known size and cannot be stored in variables. But it allows us to
+/// do `&*human_address`, returning a `&str` from a `&HumanAddr`.
+/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
+/// this allows us to use `&human_address` whenever a `&str` is required.
 impl Deref for HumanAddr {
     type Target = str;
 
@@ -140,6 +146,19 @@ mod test {
         let embedded = format!("Address: {}", human_addr);
         assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
         assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn human_addr_implements_deref() {
+        // We cannot test *human_addr directly since the resulting type str has no known size
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        assert_eq!(&*human_addr, "cos934gh9034hg04g0h134");
+
+        // This checks deref coercions from &HumanAddr to &str works
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        assert_eq!(human_addr.len(), 22);
+        let human_addr_str: &str = &human_addr;
+        assert_eq!(human_addr_str, "cos934gh9034hg04g0h134");
     }
 
     #[test]
