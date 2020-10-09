@@ -156,6 +156,11 @@ pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
     }
 }
 
+// Returns mock env info as a tuple
+pub fn mock_env_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> (Env, MessageInfo) {
+    (mock_env(), mock_info(sender, sent))
+}
+
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
 /// cosmwasm-vm. It might diverge from QuerierResult at some point.
 pub type MockQuerierCustomHandlerResult = SystemResult<ContractResult<Binary>>;
@@ -404,6 +409,23 @@ mod test {
         // and the results are the same
         assert_eq!(a, b);
         assert_eq!(a, c);
+    }
+
+    #[test]
+    fn mock_env_info_arguments() {
+        let name = HumanAddr("my name".to_string());
+
+        // make sure we can generate with &str, &HumanAddr, and HumanAddr
+        let (env1, info1) = mock_env_info("my name", &coins(100, "atom"));
+        let (env2, info2) = mock_env_info(&name, &coins(100, "atom"));
+        let (env3, info3)= mock_env_info(name, &coins(100, "atom"));
+
+        // and the results are the same
+        assert_eq!(env1, env2);
+        assert_eq!(env1, env3);
+
+        assert_eq!(info1, info2);
+        assert_eq!(info1, info3);
     }
 
     #[test]
