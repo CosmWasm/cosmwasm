@@ -5,8 +5,7 @@ use std::ops::Deref;
 
 use crate::encoding::Binary;
 
-// Added Eq and Hash to allow this to be a key in a HashMap (MockQuerier)
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, Hash)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);
 
 impl HumanAddr {
@@ -117,6 +116,10 @@ impl fmt::Display for CanonicalAddr {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::collections::hash_map::DefaultHasher;
+    use std::collections::HashSet;
+    use std::hash::{Hash, Hasher};
+    use std::iter::FromIterator;
 
     // Test HumanAddr as_str() for each HumanAddr::from input type
     #[test]
@@ -170,6 +173,45 @@ mod test {
     fn human_addr_implements_partial_eq() {
         let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
         assert_eq!(&human_addr, "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn human_addr_implements_hash() {
+        let alice1 = HumanAddr::from("alice");
+        let mut hasher = DefaultHasher::new();
+        alice1.hash(&mut hasher);
+        let alice1_hash = hasher.finish();
+
+        let alice2 = HumanAddr::from("alice");
+        let mut hasher = DefaultHasher::new();
+        alice2.hash(&mut hasher);
+        let alice2_hash = hasher.finish();
+
+        let bob = HumanAddr::from("bob");
+        let mut hasher = DefaultHasher::new();
+        bob.hash(&mut hasher);
+        let bob_hash = hasher.finish();
+
+        assert_eq!(alice1_hash, alice2_hash);
+        assert_ne!(alice1_hash, bob_hash);
+    }
+
+    /// This requires Hash and Eq to be implemented
+    #[test]
+    fn human_addr_can_be_used_in_hash_set() {
+        let alice1 = HumanAddr::from("alice");
+        let alice2 = HumanAddr::from("alice");
+        let bob = HumanAddr::from("bob");
+
+        let mut set = HashSet::new();
+        set.insert(alice1.clone());
+        set.insert(alice2.clone());
+        set.insert(bob.clone());
+        assert_eq!(set.len(), 2);
+
+        let set1 = HashSet::<HumanAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
+        let set2 = HashSet::from_iter(vec![alice1.clone(), alice2.clone(), bob.clone()]);
+        assert_eq!(set1, set2);
     }
 
     #[test]
