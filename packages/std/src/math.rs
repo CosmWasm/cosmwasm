@@ -6,6 +6,7 @@ use std::ops;
 use std::str::FromStr;
 
 use crate::errors::{StdError, StdResult};
+use std::iter::Sum;
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
@@ -331,6 +332,18 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
             Ok(u) => Ok(Uint128(u)),
             Err(e) => Err(E::custom(format!("invalid Uint128 '{}' - {}", v, e))),
         }
+    }
+}
+
+impl Sum for Uint128 {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Uint128::zero(), ops::Add::add)
+    }
+}
+
+impl<'a> Sum<&'a Uint128> for Uint128 {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.fold(Uint128::zero(), |a, b| a + *b)
     }
 }
 
@@ -756,5 +769,17 @@ mod test {
         let left = Decimal::one() + Decimal::percent(50); // 1.5
         let right = Uint128(0);
         assert_eq!(left * right, Uint128(0));
+    }
+
+    #[test]
+    fn sum_works() {
+        let nums = vec![Uint128(17), Uint128(123), Uint128(540), Uint128(82)];
+        let expected = Uint128(762);
+
+        let sum_as_ref = nums.iter().sum();
+        assert_eq!(expected, sum_as_ref);
+
+        let sum_as_owned = nums.into_iter().sum();
+        assert_eq!(expected, sum_as_owned);
     }
 }
