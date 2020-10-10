@@ -64,7 +64,7 @@ impl PartialEq<str> for HumanAddr {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
 impl From<&[u8]> for CanonicalAddr {
@@ -321,5 +321,44 @@ mod test {
         assert_eq!(canonical_addr.len(), 6);
         let canonical_addr_slice: &[u8] = &canonical_addr;
         assert_eq!(canonical_addr_slice, &[0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn canonical_addr_implements_hash() {
+        let alice1 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let mut hasher = DefaultHasher::new();
+        alice1.hash(&mut hasher);
+        let alice1_hash = hasher.finish();
+
+        let alice2 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let mut hasher = DefaultHasher::new();
+        alice2.hash(&mut hasher);
+        let alice2_hash = hasher.finish();
+
+        let bob = CanonicalAddr(Binary::from([16, 21, 33, 0, 255, 9]));
+        let mut hasher = DefaultHasher::new();
+        bob.hash(&mut hasher);
+        let bob_hash = hasher.finish();
+
+        assert_eq!(alice1_hash, alice2_hash);
+        assert_ne!(alice1_hash, bob_hash);
+    }
+
+    /// This requires Hash and Eq to be implemented
+    #[test]
+    fn canonical_addr_can_be_used_in_hash_set() {
+        let alice1 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let alice2 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let bob = CanonicalAddr(Binary::from([16, 21, 33, 0, 255, 9]));
+
+        let mut set = HashSet::new();
+        set.insert(alice1.clone());
+        set.insert(alice2.clone());
+        set.insert(bob.clone());
+        assert_eq!(set.len(), 2);
+
+        let set1 = HashSet::<CanonicalAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
+        let set2 = HashSet::from_iter(vec![alice1.clone(), alice2.clone(), bob.clone()]);
+        assert_eq!(set1, set2);
     }
 }

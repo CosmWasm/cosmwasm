@@ -6,6 +6,8 @@
 
 - Implement `Hash` and `Eq` for `Binary` to allow using `Binary` in `HashSet`
   and `HashMap`.
+- Implement `Hash` and `Eq` for `CanonicalAddr` to allow using `CanonicalAddr`
+  in `HashSet` and `HashMap`.
 
 ## 0.11.0 (2020-10-08)
 
