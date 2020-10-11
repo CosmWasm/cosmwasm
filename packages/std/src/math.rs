@@ -230,11 +230,19 @@ impl fmt::Display for Uint128 {
     }
 }
 
-impl ops::Add for Uint128 {
+impl ops::Add<Uint128> for Uint128 {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
-        Uint128(self.u128() + other.u128())
+    fn add(self, rhs: Self) -> Self {
+        Uint128(self.u128() + rhs.u128())
+    }
+}
+
+impl<'a> ops::Add<&'a Uint128> for Uint128 {
+    type Output = Self;
+
+    fn add(self, rhs: &'a Uint128) -> Self {
+        Uint128(self.u128() + rhs.u128())
     }
 }
 
@@ -675,8 +683,11 @@ mod test {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
-        // test + and - for valid values
+        // test + with owned and reference right hand side
         assert_eq!(a + b, Uint128(35801));
+        assert_eq!(a + &b, Uint128(35801));
+
+        // test -
         assert_eq!((b - a).unwrap(), Uint128(11111));
 
         // test +=
