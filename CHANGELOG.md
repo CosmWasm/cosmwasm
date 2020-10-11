@@ -8,6 +8,9 @@
   and `HashMap`.
 - Implement `Hash` and `Eq` for `CanonicalAddr` to allow using `CanonicalAddr`
   in `HashSet` and `HashMap`.
+- Implement `Add`, `AddAssign` and `Sub` with references on the right hand side
+  for `Uint128`.
+- Implement `Sum<Uint128>` and `Sum<&'a Uint128>` for `Uint128`.
 
 ## 0.11.0 (2020-10-08)
 

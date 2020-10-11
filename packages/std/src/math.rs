@@ -2,6 +2,7 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Write};
+use std::iter::Sum;
 use std::ops;
 use std::str::FromStr;
 
@@ -229,30 +230,50 @@ impl fmt::Display for Uint128 {
     }
 }
 
-impl ops::Add for Uint128 {
+impl ops::Add<Uint128> for Uint128 {
     type Output = Self;
 
-    fn add(self, other: Self) -> Self {
-        Uint128(self.u128() + other.u128())
+    fn add(self, rhs: Self) -> Self {
+        Uint128(self.u128() + rhs.u128())
     }
 }
 
-impl ops::AddAssign for Uint128 {
-    fn add_assign(&mut self, other: Self) {
-        self.0 += other.u128();
+impl<'a> ops::Add<&'a Uint128> for Uint128 {
+    type Output = Self;
+
+    fn add(self, rhs: &'a Uint128) -> Self {
+        Uint128(self.u128() + rhs.u128())
     }
 }
 
-impl ops::Sub for Uint128 {
+impl ops::AddAssign<Uint128> for Uint128 {
+    fn add_assign(&mut self, rhs: Uint128) {
+        self.0 += rhs.u128();
+    }
+}
+
+impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
+    fn add_assign(&mut self, rhs: &'a Uint128) {
+        self.0 += rhs.u128();
+    }
+}
+
+impl ops::Sub<Uint128> for Uint128 {
     type Output = StdResult<Self>;
 
-    fn sub(self, other: Self) -> StdResult<Self> {
-        let (min, sub) = (self.u128(), other.u128());
-        if sub > min {
-            Err(StdError::underflow(min, sub))
-        } else {
-            Ok(Uint128(min - sub))
-        }
+    fn sub(self, other: Uint128) -> StdResult<Self> {
+        self.sub(&other)
+    }
+}
+
+impl<'a> ops::Sub<&'a Uint128> for Uint128 {
+    type Output = StdResult<Self>;
+
+    fn sub(self, rhs: &'a Uint128) -> StdResult<Self> {
+        let (min, sub) = (self.u128(), rhs.u128());
+        min.checked_sub(sub)
+            .map(Uint128)
+            .ok_or_else(|| StdError::underflow(min, sub))
     }
 }
 
@@ -331,6 +352,18 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
             Ok(u) => Ok(Uint128(u)),
             Err(e) => Err(E::custom(format!("invalid Uint128 '{}' - {}", v, e))),
         }
+    }
+}
+
+impl Sum<Uint128> for Uint128 {
+    fn sum<I: Iterator<Item = Uint128>>(iter: I) -> Self {
+        iter.fold(Uint128::zero(), ops::Add::add)
+    }
+}
+
+impl<'a> Sum<&'a Uint128> for Uint128 {
+    fn sum<I: Iterator<Item = &'a Uint128>>(iter: I) -> Self {
+        iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
 
@@ -662,25 +695,31 @@ mod test {
         let a = Uint128(12345);
         let b = Uint128(23456);
 
-        // test + and - for valid values
+        // test + with owned and reference right hand side
         assert_eq!(a + b, Uint128(35801));
-        assert_eq!((b - a).unwrap(), Uint128(11111));
+        assert_eq!(a + &b, Uint128(35801));
 
-        // test +=
+        // test - with owned and reference right hand side
+        assert_eq!((b - a).unwrap(), Uint128(11111));
+        assert_eq!((b - &a).unwrap(), Uint128(11111));
+
+        // test += with owned and reference right hand side
         let mut c = Uint128(300000);
         c += b;
         assert_eq!(c, Uint128(323456));
+        let mut d = Uint128(300000);
+        d += &b;
+        assert_eq!(d, Uint128(323456));
 
         // error result on underflow (- would produce negative result)
-        let underflow = a - b;
-        match underflow {
-            Ok(_) => panic!("should error"),
-            Err(StdError::Underflow {
+        let underflow_result = a - b;
+        match underflow_result.unwrap_err() {
+            StdError::Underflow {
                 minuend,
                 subtrahend,
                 ..
-            }) => assert_eq!((minuend, subtrahend), (a.to_string(), b.to_string())),
-            _ => panic!("expected underflow error"),
+            } => assert_eq!((minuend, subtrahend), (a.to_string(), b.to_string())),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -756,5 +795,17 @@ mod test {
         let left = Decimal::one() + Decimal::percent(50); // 1.5
         let right = Uint128(0);
         assert_eq!(left * right, Uint128(0));
+    }
+
+    #[test]
+    fn sum_works() {
+        let nums = vec![Uint128(17), Uint128(123), Uint128(540), Uint128(82)];
+        let expected = Uint128(762);
+
+        let sum_as_ref = nums.iter().sum();
+        assert_eq!(expected, sum_as_ref);
+
+        let sum_as_owned = nums.into_iter().sum();
+        assert_eq!(expected, sum_as_owned);
     }
 }
