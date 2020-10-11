@@ -10,7 +10,7 @@ use std::ops::Deref;
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
-#[derive(Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
 impl Binary {
@@ -145,6 +145,10 @@ mod test {
     use super::*;
     use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};
+    use std::collections::hash_map::DefaultHasher;
+    use std::collections::HashSet;
+    use std::hash::{Hash, Hasher};
+    use std::iter::FromIterator;
 
     #[test]
     fn encode_decode() {
@@ -342,5 +346,44 @@ mod test {
         assert_eq!(binary.len(), 6);
         let binary_slice: &[u8] = &binary;
         assert_eq!(binary_slice, &[7u8, 35, 49, 101, 0, 255]);
+    }
+
+    #[test]
+    fn binary_implements_hash() {
+        let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let mut hasher = DefaultHasher::new();
+        a1.hash(&mut hasher);
+        let a1_hash = hasher.finish();
+
+        let a2 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let mut hasher = DefaultHasher::new();
+        a2.hash(&mut hasher);
+        let a2_hash = hasher.finish();
+
+        let b = Binary::from([16, 21, 33, 0, 255, 9]);
+        let mut hasher = DefaultHasher::new();
+        b.hash(&mut hasher);
+        let b_hash = hasher.finish();
+
+        assert_eq!(a1_hash, a2_hash);
+        assert_ne!(a1_hash, b_hash);
+    }
+
+    /// This requires Hash and Eq to be implemented
+    #[test]
+    fn binary_can_be_used_in_hash_set() {
+        let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let a2 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let b = Binary::from([16, 21, 33, 0, 255, 9]);
+
+        let mut set = HashSet::new();
+        set.insert(a1.clone());
+        set.insert(a2.clone());
+        set.insert(b.clone());
+        assert_eq!(set.len(), 2);
+
+        let set1 = HashSet::<Binary>::from_iter(vec![b.clone(), a1.clone()]);
+        let set2 = HashSet::from_iter(vec![a1.clone(), a2.clone(), b.clone()]);
+        assert_eq!(set1, set2);
     }
 }
