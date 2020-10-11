@@ -263,11 +263,9 @@ impl ops::Sub for Uint128 {
 
     fn sub(self, other: Self) -> StdResult<Self> {
         let (min, sub) = (self.u128(), other.u128());
-        if sub > min {
-            Err(StdError::underflow(min, sub))
-        } else {
-            Ok(Uint128(min - sub))
-        }
+        min.checked_sub(sub)
+            .map(Uint128)
+            .ok_or_else(|| StdError::underflow(min, sub))
     }
 }
 
