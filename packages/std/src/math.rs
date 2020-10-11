@@ -355,14 +355,14 @@ impl<'de> de::Visitor<'de> for Uint128Visitor {
     }
 }
 
-impl Sum for Uint128 {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+impl Sum<Uint128> for Uint128 {
+    fn sum<I: Iterator<Item = Uint128>>(iter: I) -> Self {
         iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
 
 impl<'a> Sum<&'a Uint128> for Uint128 {
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+    fn sum<I: Iterator<Item = &'a Uint128>>(iter: I) -> Self {
         iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
