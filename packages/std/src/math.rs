@@ -363,7 +363,7 @@ impl Sum for Uint128 {
 
 impl<'a> Sum<&'a Uint128> for Uint128 {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Uint128::zero(), |a, b| a + *b)
+        iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
 
