@@ -712,15 +712,14 @@ mod test {
         assert_eq!(d, Uint128(323456));
 
         // error result on underflow (- would produce negative result)
-        let underflow = a - b;
-        match underflow {
-            Ok(_) => panic!("should error"),
-            Err(StdError::Underflow {
+        let underflow_result = a - b;
+        match underflow_result.unwrap_err() {
+            StdError::Underflow {
                 minuend,
                 subtrahend,
                 ..
-            }) => assert_eq!((minuend, subtrahend), (a.to_string(), b.to_string())),
-            _ => panic!("expected underflow error"),
+            } => assert_eq!((minuend, subtrahend), (a.to_string(), b.to_string())),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
