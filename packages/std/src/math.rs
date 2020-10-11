@@ -258,11 +258,19 @@ impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::Sub for Uint128 {
+impl ops::Sub<Uint128> for Uint128 {
     type Output = StdResult<Self>;
 
-    fn sub(self, other: Self) -> StdResult<Self> {
-        let (min, sub) = (self.u128(), other.u128());
+    fn sub(self, other: Uint128) -> StdResult<Self> {
+        self.sub(&other)
+    }
+}
+
+impl<'a> ops::Sub<&'a Uint128> for Uint128 {
+    type Output = StdResult<Self>;
+
+    fn sub(self, rhs: &'a Uint128) -> StdResult<Self> {
+        let (min, sub) = (self.u128(), rhs.u128());
         min.checked_sub(sub)
             .map(Uint128)
             .ok_or_else(|| StdError::underflow(min, sub))
@@ -691,8 +699,9 @@ mod test {
         assert_eq!(a + b, Uint128(35801));
         assert_eq!(a + &b, Uint128(35801));
 
-        // test -
+        // test - with owned and reference right hand side
         assert_eq!((b - a).unwrap(), Uint128(11111));
+        assert_eq!((b - &a).unwrap(), Uint128(11111));
 
         // test += with owned and reference right hand side
         let mut c = Uint128(300000);
