@@ -246,9 +246,15 @@ impl<'a> ops::Add<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::AddAssign for Uint128 {
-    fn add_assign(&mut self, other: Self) {
-        self.0 += other.u128();
+impl ops::AddAssign<Uint128> for Uint128 {
+    fn add_assign(&mut self, rhs: Uint128) {
+        self.0 += rhs.u128();
+    }
+}
+
+impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
+    fn add_assign(&mut self, rhs: &'a Uint128) {
+        self.0 += rhs.u128();
     }
 }
 
@@ -690,10 +696,13 @@ mod test {
         // test -
         assert_eq!((b - a).unwrap(), Uint128(11111));
 
-        // test +=
+        // test += with owned and reference right hand side
         let mut c = Uint128(300000);
         c += b;
         assert_eq!(c, Uint128(323456));
+        let mut d = Uint128(300000);
+        d += &b;
+        assert_eq!(d, Uint128(323456));
 
         // error result on underflow (- would produce negative result)
         let underflow = a - b;
