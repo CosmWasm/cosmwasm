@@ -2,11 +2,11 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
 use std::fmt::{self, Write};
+use std::iter::Sum;
 use std::ops;
 use std::str::FromStr;
 
 use crate::errors::{StdError, StdResult};
-use std::iter::Sum;
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
