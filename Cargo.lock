@@ -157,7 +157,7 @@ dependencies = [
  "schemars",
  "serde",
  "serde-json-wasm",
- "snafu",
+ "thiserror",
 ]
 
 [[package]]
