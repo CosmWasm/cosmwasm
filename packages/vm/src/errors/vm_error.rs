@@ -1,95 +1,70 @@
-use snafu::Snafu;
 use std::fmt::{Debug, Display};
+use thiserror::Error;
 
 use super::communication_error::CommunicationError;
 use crate::backends::InsufficientGasLeft;
 use crate::ffi::FfiError;
 
-#[derive(Debug, Snafu)]
+#[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum VmError {
-    #[snafu(display("Cache error: {}", msg))]
-    CacheErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
+    #[error("Cache error: {msg}")]
+    CacheErr { msg: String },
+    #[error("Error in guest/host communication: {source}")]
+    CommunicationErr {
+        #[from]
+        source: CommunicationError,
     },
-    #[snafu(display("Error in guest/host communication: {}", source))]
-    CommunicationErr { source: CommunicationError },
-    #[snafu(display("Error compiling Wasm: {}", msg))]
-    CompileErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input))]
+    #[error("Error compiling Wasm: {msg}")]
+    CompileErr { msg: String },
+    #[error("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input)]
     ConversionErr {
         from_type: String,
         to_type: String,
         input: String,
-        backtrace: snafu::Backtrace,
     },
     /// Whenever there is no specific error type available
-    #[snafu(display("Generic error: {}", msg))]
-    GenericErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Error instantiating a Wasm module: {}", msg))]
-    InstantiationErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Hash doesn't match stored data"))]
-    IntegrityErr { backtrace: snafu::Backtrace },
-    #[snafu(display("Error parsing into type {}: {}", target, msg))]
+    #[error("Generic error: {msg}")]
+    GenericErr { msg: String },
+    #[error("Error instantiating a Wasm module: {msg}")]
+    InstantiationErr { msg: String },
+    #[error("Hash doesn't match stored data")]
+    IntegrityErr {},
+    #[error("Error parsing into type {target_type}: {msg}")]
     ParseErr {
         /// the target type that was attempted
-        target: String,
+        target_type: String,
         msg: String,
-        backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Error serializing type {}: {}", source, msg))]
+    #[error("Error serializing type {source_type}: {msg}")]
     SerializeErr {
         /// the source type that was attempted
-        #[snafu(source(false))]
-        source: String,
+        source_type: String,
         msg: String,
-        backtrace: snafu::Backtrace,
     },
-    #[snafu(display("Error resolving Wasm function: {}", msg))]
-    ResolveErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Error executing Wasm: {}", msg))]
-    RuntimeErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Error during static Wasm validation: {}", msg))]
-    StaticValidationErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Uninitialized Context Data: {}", kind))]
-    UninitializedContextData {
-        kind: String,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Calling external function through FFI: {}", source))]
+    #[error("Error resolving Wasm function: {}", msg)]
+    ResolveErr { msg: String },
+    #[error("Error executing Wasm: {}", msg)]
+    RuntimeErr { msg: String },
+    #[error("Error during static Wasm validation: {}", msg)]
+    StaticValidationErr { msg: String },
+    #[error("Uninitialized Context Data: {}", kind)]
+    UninitializedContextData { kind: String },
+    #[error("Calling external function through FFI: {}", source)]
     FfiErr { source: FfiError },
-    #[snafu(display("Ran out of gas during contract execution"))]
+    #[error("Ran out of gas during contract execution")]
     GasDepletion,
-    #[snafu(display("Must not call a writing storage function in this context."))]
-    WriteAccessDenied { backtrace: snafu::Backtrace },
+    #[error("Must not call a writing storage function in this context.")]
+    WriteAccessDenied {},
 }
 
 impl VmError {
     pub(crate) fn cache_err<S: Into<String>>(msg: S) -> Self {
-        CacheErr { msg: msg.into() }.build()
+        VmError::CacheErr { msg: msg.into() }
     }
 
     pub(crate) fn compile_err<S: Into<String>>(msg: S) -> Self {
-        CompileErr { msg: msg.into() }.build()
+        VmError::CompileErr { msg: msg.into() }
     }
 
     pub(crate) fn conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
@@ -97,68 +72,57 @@ impl VmError {
         to_type: T,
         input: U,
     ) -> Self {
-        ConversionErr {
+        VmError::ConversionErr {
             from_type: from_type.into(),
             to_type: to_type.into(),
             input: input.into(),
         }
-        .build()
     }
 
     pub(crate) fn generic_err<S: Into<String>>(msg: S) -> Self {
-        GenericErr { msg: msg.into() }.build()
+        VmError::GenericErr { msg: msg.into() }
     }
 
     pub(crate) fn instantiation_err<S: Into<String>>(msg: S) -> Self {
-        InstantiationErr { msg: msg.into() }.build()
+        VmError::InstantiationErr { msg: msg.into() }
     }
 
     pub(crate) fn integrity_err() -> Self {
-        IntegrityErr {}.build()
+        VmError::IntegrityErr {}
     }
 
     pub(crate) fn parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> Self {
-        ParseErr {
-            target: target.into(),
+        VmError::ParseErr {
+            target_type: target.into(),
             msg: msg.to_string(),
         }
-        .build()
     }
 
     pub(crate) fn serialize_err<S: Into<String>, M: Display>(source: S, msg: M) -> Self {
-        SerializeErr {
-            source: source.into(),
+        VmError::SerializeErr {
+            source_type: source.into(),
             msg: msg.to_string(),
         }
-        .build()
     }
 
     pub(crate) fn resolve_err<S: Into<String>>(msg: S) -> Self {
-        ResolveErr { msg: msg.into() }.build()
+        VmError::ResolveErr { msg: msg.into() }
     }
 
     pub(crate) fn runtime_err<S: Into<String>>(msg: S) -> Self {
-        RuntimeErr { msg: msg.into() }.build()
+        VmError::RuntimeErr { msg: msg.into() }
     }
 
     pub(crate) fn static_validation_err<S: Into<String>>(msg: S) -> Self {
-        StaticValidationErr { msg: msg.into() }.build()
+        VmError::StaticValidationErr { msg: msg.into() }
     }
 
     pub(crate) fn uninitialized_context_data<S: Into<String>>(kind: S) -> Self {
-        UninitializedContextData { kind: kind.into() }.build()
+        VmError::UninitializedContextData { kind: kind.into() }
     }
 
     pub(crate) fn write_access_denied() -> Self {
-        WriteAccessDenied {}.build()
-    }
-}
-
-impl From<CommunicationError> for VmError {
-    fn from(communication_error: CommunicationError) -> Self {
-        VmError::CommunicationErr {
-            source: communication_error,
-        }
+        VmError::WriteAccessDenied {}
     }
 }
 
@@ -296,8 +260,10 @@ mod test {
     fn parse_err_works() {
         let error = VmError::parse_err("Book", "Missing field: title");
         match error {
-            VmError::ParseErr { target, msg, .. } => {
-                assert_eq!(target, "Book");
+            VmError::ParseErr {
+                target_type, msg, ..
+            } => {
+                assert_eq!(target_type, "Book");
                 assert_eq!(msg, "Missing field: title");
             }
             e => panic!("Unexpected error: {:?}", e),
@@ -308,8 +274,10 @@ mod test {
     fn serialize_err_works() {
         let error = VmError::serialize_err("Book", "Content too long");
         match error {
-            VmError::SerializeErr { source, msg, .. } => {
-                assert_eq!(source, "Book");
+            VmError::SerializeErr {
+                source_type, msg, ..
+            } => {
+                assert_eq!(source_type, "Book");
                 assert_eq!(msg, "Content too long");
             }
             e => panic!("Unexpected error: {:?}", e),
