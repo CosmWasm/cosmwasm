@@ -1,5 +1,18 @@
 # CHANGELOG
 
+## 0.12.0 (unreleased)
+
+**cosmwasm-vm**
+
+- Remove `Storage::range` and `StorageIterator`. The storage implementation is
+  now responsible for maintaining iterators internally and make them accessible
+  via the new `Storage::scan` and `Storage::next` methods.
+- Add `FfiError::IteratorDoesNotExist`. Looking at this, `FfiError` should
+  probably be renamed to something that includes before, on and behind the FFI
+  boundary to Go.
+- `MockStorage` now implementes the new `Storage` trait and has an additional
+  `MockStorage::all` for getting all elements of an iterator in tests.
+
 ## 0.11.1 (unreleased)
 
 **cosmwasm-std**
