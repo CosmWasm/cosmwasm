@@ -586,7 +586,7 @@ mod test {
 
         leave_default_data(&mut env);
 
-        let api = MockApi::new(8);
+        let api = MockApi::default();
         do_canonicalize_address::<MA, MS, MQ>(api, &mut env, source_ptr, dest_ptr).unwrap();
         let data = force_read(&env, dest_ptr);
         assert_eq!(data.len(), api.canonical_length);
