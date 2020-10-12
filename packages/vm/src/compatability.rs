@@ -36,17 +36,18 @@ const REQUIRED_EXPORTS: &[&str] = &[
 
 const MEMORY_LIMIT: u32 = 512; // in pages
 
+fn deserialize(wasm_code: &[u8]) -> VmResult<Module> {
+    deserialize_buffer(&wasm_code).map_err(|err| {
+        VmError::static_validation_err(format!(
+            "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
+            err
+        ))
+    })
+}
+
 /// Checks if the data is valid wasm and compatibility with the CosmWasm API (imports and exports)
 pub fn check_wasm(wasm_code: &[u8], supported_features: &HashSet<String>) -> VmResult<()> {
-    let module = match deserialize_buffer(&wasm_code) {
-        Ok(deserialized) => deserialized,
-        Err(err) => {
-            return Err(VmError::static_validation_err(format!(
-                "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
-                err
-            )));
-        }
-    };
+    let module = deserialize(wasm_code)?;
     check_wasm_memories(&module)?;
     check_wasm_exports(&module)?;
     check_wasm_imports(&module)?;
@@ -155,6 +156,7 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
 mod test {
     use super::*;
     use crate::errors::VmError;
+    use parity_wasm::elements::Internal;
     use std::iter::FromIterator;
     use wabt::wat2wasm;
 
@@ -165,6 +167,51 @@ mod test {
 
     fn default_features() -> HashSet<String> {
         HashSet::from_iter(["staking".to_string()].iter().cloned())
+    }
+
+    #[test]
+    fn test_deserialize_works() {
+        let module = deserialize(CONTRACT).unwrap();
+        assert_eq!(module.version(), 1);
+
+        let exported_functions =
+            module
+                .export_section()
+                .unwrap()
+                .entries()
+                .iter()
+                .filter(|entry| {
+                    if let Internal::Function(_) = entry.internal() {
+                        true
+                    } else {
+                        false
+                    }
+                });
+        assert_eq!(exported_functions.count(), 7); // 6 required export plus "migrate"
+
+        let exported_memories = module
+            .export_section()
+            .unwrap()
+            .entries()
+            .iter()
+            .filter(|entry| {
+                if let Internal::Memory(_) = entry.internal() {
+                    true
+                } else {
+                    false
+                }
+            });
+        assert_eq!(exported_memories.count(), 1);
+    }
+
+    #[test]
+    fn test_deserialize_corrupted_data() {
+        match deserialize(CORRUPTED).unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]
@@ -193,26 +240,15 @@ mod test {
     }
 
     #[test]
-    fn test_check_wasm_corrupted_data() {
-        match check_wasm(CORRUPTED, &default_features()) {
-            Err(VmError::StaticValidationErr { msg, .. }) => {
-                assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
-            }
-            Err(e) => panic!("Unexpected error {:?}", e),
-            Ok(_) => panic!("This must not succeeed"),
-        }
-    }
-
-    #[test]
     fn test_check_wasm_memories_ok() {
         let wasm = wat2wasm("(module (memory 1))").unwrap();
-        check_wasm_memories(&deserialize_buffer(&wasm).unwrap()).unwrap()
+        check_wasm_memories(&deserialize(&wasm).unwrap()).unwrap()
     }
 
     #[test]
     fn test_check_wasm_memories_no_memory() {
         let wasm = wat2wasm("(module)").unwrap();
-        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+        match check_wasm_memories(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have a memory section"));
             }
@@ -236,7 +272,7 @@ mod test {
         ))
         .unwrap();
 
-        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+        match check_wasm_memories(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
@@ -257,7 +293,7 @@ mod test {
         ))
         .unwrap();
 
-        match check_wasm_memories(&deserialize_buffer(&wasm).unwrap()) {
+        match check_wasm_memories(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract must contain exactly one memory"));
             }
@@ -269,10 +305,10 @@ mod test {
     #[test]
     fn test_check_wasm_memories_initial_size() {
         let wasm_ok = wat2wasm("(module (memory 512))").unwrap();
-        check_wasm_memories(&deserialize_buffer(&wasm_ok).unwrap()).unwrap();
+        check_wasm_memories(&deserialize(&wasm_ok).unwrap()).unwrap();
 
         let wasm_too_big = wat2wasm("(module (memory 513))").unwrap();
-        match check_wasm_memories(&deserialize_buffer(&wasm_too_big).unwrap()) {
+        match check_wasm_memories(&deserialize(&wasm_too_big).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's minimum must not exceed 512 pages"));
             }
@@ -284,7 +320,7 @@ mod test {
     #[test]
     fn test_check_wasm_memories_maximum_size() {
         let wasm_max = wat2wasm("(module (memory 1 5))").unwrap();
-        match check_wasm_memories(&deserialize_buffer(&wasm_max).unwrap()) {
+        match check_wasm_memories(&deserialize(&wasm_max).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's maximum must be unset"));
             }
@@ -306,7 +342,7 @@ mod test {
         "#;
         let wasm_missing_exports = wat2wasm(WAT_MISSING_EXPORTS).unwrap();
 
-        let module = deserialize_buffer(&wasm_missing_exports).unwrap();
+        let module = deserialize(&wasm_missing_exports).unwrap();
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
@@ -320,7 +356,7 @@ mod test {
 
     #[test]
     fn test_check_wasm_exports_of_old_contract() {
-        let module = deserialize_buffer(CONTRACT_0_7).unwrap();
+        let module = deserialize(CONTRACT_0_7).unwrap();
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
@@ -344,12 +380,12 @@ mod test {
         )"#,
         )
         .unwrap();
-        check_wasm_imports(&deserialize_buffer(&wasm).unwrap()).unwrap();
+        check_wasm_imports(&deserialize(&wasm).unwrap()).unwrap();
     }
 
     #[test]
     fn test_check_wasm_imports_of_old_contract() {
-        let module = deserialize_buffer(CONTRACT_0_7).unwrap();
+        let module = deserialize(CONTRACT_0_7).unwrap();
         match check_wasm_imports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(
@@ -364,7 +400,7 @@ mod test {
     #[test]
     fn test_check_wasm_imports_wrong_type() {
         let wasm = wat2wasm(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
-        match check_wasm_imports(&deserialize_buffer(&wasm).unwrap()) {
+        match check_wasm_imports(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(
                     msg.starts_with("Wasm contract requires non-function import: \"env.db_read\"")
@@ -390,7 +426,7 @@ mod test {
         )"#,
         )
         .unwrap();
-        let module = deserialize_buffer(&wasm).unwrap();
+        let module = deserialize(&wasm).unwrap();
         let supported = HashSet::from_iter(
             [
                 "water".to_string(),
@@ -419,7 +455,7 @@ mod test {
         )"#,
         )
         .unwrap();
-        let module = deserialize_buffer(&wasm).unwrap();
+        let module = deserialize(&wasm).unwrap();
 
         // Support set 1
         let supported = HashSet::from_iter(
