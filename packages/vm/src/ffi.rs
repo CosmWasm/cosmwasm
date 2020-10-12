@@ -1,5 +1,6 @@
 use snafu::Snafu;
 use std::fmt::Debug;
+use std::ops::AddAssign;
 use std::string::FromUtf8Error;
 
 /// A result type for calling into the backend via FFI. Such a call causes
@@ -43,6 +44,15 @@ impl GasInfo {
     }
 }
 
+impl AddAssign for GasInfo {
+    fn add_assign(&mut self, other: Self) {
+        *self = GasInfo {
+            cost: self.cost + other.cost,
+            externally_used: self.externally_used + other.cost,
+        };
+    }
+}
+
 #[derive(Debug, Snafu)]
 pub enum FfiError {
     #[snafu(display("Panic in FFI call"))]
@@ -51,6 +61,11 @@ pub enum FfiError {
     BadArgument { backtrace: snafu::Backtrace },
     #[snafu(display("VM received invalid UTF-8 data from backend"))]
     InvalidUtf8 { backtrace: snafu::Backtrace },
+    #[snafu(display("Iterator with ID {} does not exist", id))]
+    IteratorDoesNotExist {
+        id: u32,
+        backtrace: snafu::Backtrace,
+    },
     #[snafu(display("Ran out of gas during FFI call"))]
     OutOfGas {},
     #[snafu(display("Unknown error during FFI call: {:?}", msg))]
@@ -73,6 +88,10 @@ impl FfiError {
 
     pub fn bad_argument() -> Self {
         BadArgument {}.build()
+    }
+
+    pub fn iterator_does_not_exist(iterator_id: u32) -> Self {
+        IteratorDoesNotExist { id: iterator_id }.build()
     }
 
     pub fn out_of_gas() -> Self {
@@ -146,6 +165,15 @@ mod test {
         let error = FfiError::bad_argument();
         match error {
             FfiError::BadArgument { .. } => {}
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn iterator_does_not_exist_works() {
+        let error = FfiError::iterator_does_not_exist(15);
+        match error {
+            FfiError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
             e => panic!("Unexpected error: {:?}", e),
         }
     }

@@ -62,7 +62,7 @@ pub enum WasmQuery {
         msg: Binary,
     },
     /// this queries the raw kv-store of the contract.
-    /// returns the raw, unparsed data stored at that key (or `Ok(Err(StdError:NotFound{}))` if missing)
+    /// returns the raw, unparsed data stored at that key, which may be an empty vector if not present
     Raw {
         contract_addr: HumanAddr,
         /// Key is the raw key used in the contracts Storage

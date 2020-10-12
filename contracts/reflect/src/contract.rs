@@ -7,7 +7,7 @@ use cosmwasm_std::{
 use crate::errors::ReflectError;
 use crate::msg::{
     CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
-    SpecialQuery, SpecialResponse,
+    RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, State};
 
@@ -97,6 +97,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
         QueryMsg::Chain { request } => to_binary(&query_chain(deps, &request)?),
+        QueryMsg::Raw { contract, key } => to_binary(&query_raw(deps, contract, key)?),
     }
 }
 
@@ -135,6 +136,17 @@ fn query_chain<S: Storage, A: Api, Q: Querier>(
         ))),
         SystemResult::Ok(ContractResult::Ok(value)) => Ok(ChainResponse { data: value }),
     }
+}
+
+fn query_raw<S: Storage, A: Api, Q: Querier>(
+    deps: &Extern<S, A, Q>,
+    contract: HumanAddr,
+    key: Binary,
+) -> StdResult<RawResponse> {
+    let response: Option<Vec<u8>> = deps.querier.query_wasm_raw(contract, key)?;
+    Ok(RawResponse {
+        data: response.unwrap_or_default().into(),
+    })
 }
 
 #[cfg(test)]

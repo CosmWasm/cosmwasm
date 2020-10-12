@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-std"
-version = "0.11.0-alpha4"
+version = "0.11.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"

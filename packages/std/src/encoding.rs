@@ -4,12 +4,13 @@ use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
+use std::ops::Deref;
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
-#[derive(Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
 impl Binary {
@@ -29,34 +30,6 @@ impl Binary {
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
     }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// Converts a `Binary` into a vector of bytes.
-    ///
-    /// This consumes the `Binary`, so we do not need to copy its contents.
-    /// It is equivalent to both `Vec::<u8>::from(binary)` and `let v: Vec<u8> = binary.into()` and just a matter of taste which one you use.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
-    ///
-    /// ```
-    /// # use cosmwasm_std::Binary;
-    /// let binary = Binary::from_base64("ALs9C/oA").unwrap();
-    /// let bytes = binary.into_vec();
-    ///
-    /// assert_eq!(bytes, &[0, 187, 61, 11, 250, 0]);
-    /// ```
-    pub fn into_vec(self) -> Vec<u8> {
-        self.into()
-    }
 }
 
 impl fmt::Display for Binary {
@@ -68,6 +41,19 @@ impl fmt::Display for Binary {
 impl From<&[u8]> for Binary {
     fn from(binary: &[u8]) -> Self {
         Self(binary.to_vec())
+    }
+}
+
+/// Just like Vec<u8>, Binary is a smart pointer to [u8].
+/// This implements `*binary` for us and allows us to
+/// do `&*binary`, returning a `&[u8]` from a `&Binary`.
+/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
+/// this allows us to use `&binary` whenever a `&[u8]` is required.
+impl Deref for Binary {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
     }
 }
 
@@ -159,6 +145,10 @@ mod test {
     use super::*;
     use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};
+    use std::collections::hash_map::DefaultHasher;
+    use std::collections::HashSet;
+    use std::hash::{Hash, Hasher};
+    use std::iter::FromIterator;
 
     #[test]
     fn encode_decode() {
@@ -175,7 +165,7 @@ mod test {
         let encoded = Binary(binary.clone()).to_base64();
         assert_eq!(8, encoded.len());
         let decoded = Binary::from_base64(&encoded).unwrap();
-        assert_eq!(binary.as_slice(), decoded.as_slice());
+        assert_eq!(binary.deref(), decoded.deref());
     }
 
     #[test]
@@ -343,5 +333,57 @@ mod test {
         let serialized = to_vec(&invalid_str).unwrap();
         let res = from_slice::<Binary>(&serialized);
         assert!(res.is_err());
+    }
+
+    #[test]
+    fn binary_implements_deref() {
+        // Dereference to [u8]
+        let binary = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(*binary, [7u8, 35, 49, 101, 0, 255]);
+
+        // This checks deref coercions from &Binary to &[u8] works
+        let binary = Binary(vec![7u8, 35, 49, 101, 0, 255]);
+        assert_eq!(binary.len(), 6);
+        let binary_slice: &[u8] = &binary;
+        assert_eq!(binary_slice, &[7u8, 35, 49, 101, 0, 255]);
+    }
+
+    #[test]
+    fn binary_implements_hash() {
+        let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let mut hasher = DefaultHasher::new();
+        a1.hash(&mut hasher);
+        let a1_hash = hasher.finish();
+
+        let a2 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let mut hasher = DefaultHasher::new();
+        a2.hash(&mut hasher);
+        let a2_hash = hasher.finish();
+
+        let b = Binary::from([16, 21, 33, 0, 255, 9]);
+        let mut hasher = DefaultHasher::new();
+        b.hash(&mut hasher);
+        let b_hash = hasher.finish();
+
+        assert_eq!(a1_hash, a2_hash);
+        assert_ne!(a1_hash, b_hash);
+    }
+
+    /// This requires Hash and Eq to be implemented
+    #[test]
+    fn binary_can_be_used_in_hash_set() {
+        let a1 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let a2 = Binary::from([0, 187, 61, 11, 250, 0]);
+        let b = Binary::from([16, 21, 33, 0, 255, 9]);
+
+        let mut set = HashSet::new();
+        set.insert(a1.clone());
+        set.insert(a2.clone());
+        set.insert(b.clone());
+        assert_eq!(set.len(), 2);
+
+        let set1 = HashSet::<Binary>::from_iter(vec![b.clone(), a1.clone()]);
+        let set2 = HashSet::from_iter(vec![a1.clone(), a2.clone(), b.clone()]);
+        assert_eq!(set1, set2);
     }
 }

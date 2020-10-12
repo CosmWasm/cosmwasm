@@ -1,6 +1,31 @@
 # CHANGELOG
 
-## 0.11.0 (unreleased)
+## 0.12.0 (unreleased)
+
+**cosmwasm-vm**
+
+- Remove `Storage::range` and `StorageIterator`. The storage implementation is
+  now responsible for maintaining iterators internally and make them accessible
+  via the new `Storage::scan` and `Storage::next` methods.
+- Add `FfiError::IteratorDoesNotExist`. Looking at this, `FfiError` should
+  probably be renamed to something that includes before, on and behind the FFI
+  boundary to Go.
+- `MockStorage` now implementes the new `Storage` trait and has an additional
+  `MockStorage::all` for getting all elements of an iterator in tests.
+
+## 0.11.1 (unreleased)
+
+**cosmwasm-std**
+
+- Implement `Hash` and `Eq` for `Binary` to allow using `Binary` in `HashSet`
+  and `HashMap`.
+- Implement `Hash` and `Eq` for `CanonicalAddr` to allow using `CanonicalAddr`
+  in `HashSet` and `HashMap`.
+- Implement `Add`, `AddAssign` and `Sub` with references on the right hand side
+  for `Uint128`.
+- Implement `Sum<Uint128>` and `Sum<&'a Uint128>` for `Uint128`.
+
+## 0.11.0 (2020-10-08)
 
 **all**
 

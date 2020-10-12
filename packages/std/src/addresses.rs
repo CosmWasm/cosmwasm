@@ -1,24 +1,16 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use std::ops::Deref;
 
 use crate::encoding::Binary;
 
-// Added Eq and Hash to allow this to be a key in a HashMap (MockQuerier)
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, JsonSchema, Hash)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);
 
 impl HumanAddr {
     pub fn as_str(&self) -> &str {
         &self.0
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
     }
 }
 
@@ -52,7 +44,27 @@ impl From<String> for HumanAddr {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+/// Just like String, HumanAddr is a smart pointer to str.
+/// This implements `*human_address` for us, which is not very valuable directly
+/// because str has no known size and cannot be stored in variables. But it allows us to
+/// do `&*human_address`, returning a `&str` from a `&HumanAddr`.
+/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
+/// this allows us to use `&human_address` whenever a `&str` is required.
+impl Deref for HumanAddr {
+    type Target = str;
+
+    fn deref(&self) -> &Self::Target {
+        self.as_str()
+    }
+}
+
+impl PartialEq<str> for HumanAddr {
+    fn eq(&self, other: &str) -> bool {
+        self.0 == other
+    }
+}
+
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
 impl From<&[u8]> for CanonicalAddr {
@@ -73,37 +85,22 @@ impl From<CanonicalAddr> for Vec<u8> {
     }
 }
 
+/// Just like Vec<u8>, CanonicalAddr is a smart pointer to [u8].
+/// This implements `*canonical_address` for us and allows us to
+/// do `&*canonical_address`, returning a `&[u8]` from a `&CanonicalAddr`.
+/// With [deref coercions](https://doc.rust-lang.org/1.22.1/book/first-edition/deref-coercions.html#deref-coercions),
+/// this allows us to use `&canonical_address` whenever a `&[u8]` is required.
+impl Deref for CanonicalAddr {
+    type Target = [u8];
+
+    fn deref(&self) -> &Self::Target {
+        self.as_slice()
+    }
+}
+
 impl CanonicalAddr {
     pub fn as_slice(&self) -> &[u8] {
         &self.0.as_slice()
-    }
-
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// Converts a `CanonicalAddr` into a vector of bytes.
-    ///
-    /// This consumes the `CanonicalAddr`, so we do not need to copy its contents.
-    /// It is equivalent to both `Vec::<u8>::from(addr)` and `let v: Vec<u8> = addr.into()` and just a matter of taste which one you use.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
-    ///
-    /// ```
-    /// # use cosmwasm_std::CanonicalAddr;
-    /// let address = CanonicalAddr::from(vec![0, 187, 61, 11, 250, 0]);
-    /// let bytes = address.into_vec();
-    ///
-    /// assert_eq!(bytes, &[0, 187, 61, 11, 250, 0]);
-    /// ```
-    pub fn into_vec(self) -> Vec<u8> {
-        self.into()
     }
 }
 
@@ -119,6 +116,10 @@ impl fmt::Display for CanonicalAddr {
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::collections::hash_map::DefaultHasher;
+    use std::collections::HashSet;
+    use std::hash::{Hash, Hasher};
+    use std::iter::FromIterator;
 
     // Test HumanAddr as_str() for each HumanAddr::from input type
     #[test]
@@ -153,6 +154,64 @@ mod test {
         let embedded = format!("Address: {}", human_addr);
         assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
         assert_eq!(human_addr.to_string(), "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn human_addr_implements_deref() {
+        // We cannot test *human_addr directly since the resulting type str has no known size
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        assert_eq!(&*human_addr, "cos934gh9034hg04g0h134");
+
+        // This checks deref coercions from &HumanAddr to &str works
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        assert_eq!(human_addr.len(), 22);
+        let human_addr_str: &str = &human_addr;
+        assert_eq!(human_addr_str, "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn human_addr_implements_partial_eq() {
+        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
+        assert_eq!(&human_addr, "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn human_addr_implements_hash() {
+        let alice1 = HumanAddr::from("alice");
+        let mut hasher = DefaultHasher::new();
+        alice1.hash(&mut hasher);
+        let alice1_hash = hasher.finish();
+
+        let alice2 = HumanAddr::from("alice");
+        let mut hasher = DefaultHasher::new();
+        alice2.hash(&mut hasher);
+        let alice2_hash = hasher.finish();
+
+        let bob = HumanAddr::from("bob");
+        let mut hasher = DefaultHasher::new();
+        bob.hash(&mut hasher);
+        let bob_hash = hasher.finish();
+
+        assert_eq!(alice1_hash, alice2_hash);
+        assert_ne!(alice1_hash, bob_hash);
+    }
+
+    /// This requires Hash and Eq to be implemented
+    #[test]
+    fn human_addr_can_be_used_in_hash_set() {
+        let alice1 = HumanAddr::from("alice");
+        let alice2 = HumanAddr::from("alice");
+        let bob = HumanAddr::from("bob");
+
+        let mut set = HashSet::new();
+        set.insert(alice1.clone());
+        set.insert(alice2.clone());
+        set.insert(bob.clone());
+        assert_eq!(set.len(), 2);
+
+        let set1 = HashSet::<HumanAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
+        let set2 = HashSet::from_iter(vec![alice1.clone(), alice2.clone(), bob.clone()]);
+        assert_eq!(set1, set2);
     }
 
     #[test]
@@ -247,5 +306,59 @@ mod test {
         let embedded = format!("Address: {}", address);
         assert_eq!(embedded, "Address: 1203AB00FF");
         assert_eq!(address.to_string(), "1203AB00FF");
+    }
+
+    #[test]
+    fn canonical_addr_implements_deref() {
+        // Dereference to [u8]
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr = CanonicalAddr::from(bytes);
+        assert_eq!(*canonical_addr, [0u8, 187, 61, 11, 250, 0]);
+
+        // This checks deref coercions from &CanonicalAddr to &[u8] works
+        let bytes: &[u8] = &[0u8, 187, 61, 11, 250, 0];
+        let canonical_addr = CanonicalAddr::from(bytes);
+        assert_eq!(canonical_addr.len(), 6);
+        let canonical_addr_slice: &[u8] = &canonical_addr;
+        assert_eq!(canonical_addr_slice, &[0u8, 187, 61, 11, 250, 0]);
+    }
+
+    #[test]
+    fn canonical_addr_implements_hash() {
+        let alice1 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let mut hasher = DefaultHasher::new();
+        alice1.hash(&mut hasher);
+        let alice1_hash = hasher.finish();
+
+        let alice2 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let mut hasher = DefaultHasher::new();
+        alice2.hash(&mut hasher);
+        let alice2_hash = hasher.finish();
+
+        let bob = CanonicalAddr(Binary::from([16, 21, 33, 0, 255, 9]));
+        let mut hasher = DefaultHasher::new();
+        bob.hash(&mut hasher);
+        let bob_hash = hasher.finish();
+
+        assert_eq!(alice1_hash, alice2_hash);
+        assert_ne!(alice1_hash, bob_hash);
+    }
+
+    /// This requires Hash and Eq to be implemented
+    #[test]
+    fn canonical_addr_can_be_used_in_hash_set() {
+        let alice1 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let alice2 = CanonicalAddr(Binary::from([0, 187, 61, 11, 250, 0]));
+        let bob = CanonicalAddr(Binary::from([16, 21, 33, 0, 255, 9]));
+
+        let mut set = HashSet::new();
+        set.insert(alice1.clone());
+        set.insert(alice2.clone());
+        set.insert(bob.clone());
+        assert_eq!(set.len(), 2);
+
+        let set1 = HashSet::<CanonicalAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
+        let set2 = HashSet::from_iter(vec![alice1.clone(), alice2.clone(), bob.clone()]);
+        assert_eq!(set1, set2);
     }
 }

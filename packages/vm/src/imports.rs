@@ -8,8 +8,6 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
 use crate::backends::get_gas_left;
-#[cfg(feature = "iterator")]
-use crate::context::{add_iterator, with_iterator_from_context};
 use crate::context::{
     is_storage_readonly, process_gas_info, with_func_from_context, with_querier_from_context,
     with_storage_from_context, Env,
@@ -200,18 +198,17 @@ pub fn do_scan<S: Storage, Q: Querier>(
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
     let (result, gas_info) = with_storage_from_context::<S, Q, _, _>(env.clone(), |store| {
-        Ok(store.range(start.as_deref(), end.as_deref(), order))
+        Ok(store.scan(start.as_deref(), end.as_deref(), order))
     })?;
-    process_gas_info(env, gas_info)?;
-    let iterator = result?;
-    let iterator_id = add_iterator(env, iterator);
+    process_gas_info::<S, Q>(env, gas_info)?;
+    let iterator_id = result?;
     Ok(iterator_id)
 }
 
 #[cfg(feature = "iterator")]
 pub fn do_next<S: Storage, Q: Querier>(env: &mut Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
     let (result, gas_info) =
-        with_iterator_from_context::<S, Q, _, _>(env.clone(), iterator_id, |iter| Ok(iter.next()))?;
+        with_storage_from_context::<S, Q, _, _>(env.clone(), |store| Ok(store.next(iterator_id)))?;
     process_gas_info::<S, Q>(env, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
@@ -886,15 +883,15 @@ mod test {
         assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -910,15 +907,15 @@ mod test {
         assert_eq!(1, id);
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -936,11 +933,11 @@ mod test {
         let id = do_scan::<MS, MQ>(env, start, end, Order::Ascending.into()).unwrap();
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id))).unwrap();
         assert!(item.0.unwrap().is_none());
     }
 
@@ -959,27 +956,27 @@ mod test {
 
         // first item, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id1, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id1))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id1, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id1))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id2, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id2))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id1, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id1))).unwrap();
         assert!(item.0.unwrap().is_none());
 
         // second item, second iterator
         let item =
-            with_iterator_from_context::<MS, MQ, _, _>(env, id2, |iter| Ok(iter.next())).unwrap();
+            with_storage_from_context::<MS, MQ, _, _>(env, |store| Ok(store.next(id2))).unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
 
@@ -1041,7 +1038,9 @@ mod test {
         let non_existent_id = 42u32;
         let result = do_next::<MS, MQ>(env, non_existent_id);
         match result.unwrap_err() {
-            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, non_existent_id),
+            VmError::FfiErr {
+                source: FfiError::IteratorDoesNotExist { id, .. },
+            } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
