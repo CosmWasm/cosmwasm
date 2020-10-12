@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
-use crate::compatability::check_wasm;
+use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;

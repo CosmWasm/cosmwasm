@@ -2,6 +2,12 @@
 
 ## 0.12.0 (unreleased)
 
+**cosmwasm-std**
+
+- Remove the previously deprecated `StdError::Unauthorized`. Contract specific
+  errors should be implemented using custom error types now (see
+  [migration guide](./MIGRATING.md) 0.10 -> 0.11).
+
 **cosmwasm-vm**
 
 - Remove `Storage::range` and `StorageIterator`. The storage implementation is
@@ -13,7 +19,7 @@
 - `MockStorage` now implementes the new `Storage` trait and has an additional
   `MockStorage::all` for getting all elements of an iterator in tests.
 
-## 0.11.1 (unreleased)
+## 0.11.1 (2020-10-12)
 
 **cosmwasm-std**
 

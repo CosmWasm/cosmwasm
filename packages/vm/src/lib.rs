@@ -2,7 +2,7 @@ mod backends;
 mod cache;
 mod calls;
 mod checksum;
-mod compatability;
+mod compatibility;
 mod context;
 mod conversion;
 mod errors;
