@@ -397,17 +397,16 @@ mod test {
         let (mut env, mut instance) = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(&mut instance.context_mut(), gas_limit);
+        set_gas_left(&mut env, gas_limit);
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
-        let context = instance.context_mut();
 
         // Consume all the Gas that we allocated
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 70).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 4).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 70).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(&mut context, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(&mut env, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -419,22 +418,20 @@ mod test {
         let (mut env, mut instance) = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(&mut instance.context_mut(), gas_limit);
+        set_gas_left(&mut env, gas_limit);
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
-        let context = instance.context_mut();
 
         // Some gas was consumed externally
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 50).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 50).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(&mut instance.context_mut(), 20).unwrap();
+        decrease_gas_left(&mut env, 20).unwrap();
 
-        let context = instance.context_mut();
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut context, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&mut env, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(&mut context, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(&mut env, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -469,29 +466,28 @@ mod test {
     #[test]
     fn with_func_from_context_works() {
         let (mut env, mut instance) = make_instance();
-        leave_default_data(&mut instance.context_mut());
+        leave_default_data(&mut env);
 
-        let ptr =
-            with_func_from_context::<MS, MQ, u32, u32, _, _>(&mut env, "allocate", |alloc_func| {
-                let ptr = alloc_func.call(10)?;
-                Ok(ptr)
-            })
-            .unwrap();
+        let ptr = with_func_from_context::<MS, MQ, _, _>(&mut env, "allocate", |alloc_func| {
+            let result = alloc_func.call(&[10u32.into()])?;
+            let ptr = result[0].unwrap_i32() as u32;
+            Ok(ptr)
+        })
+        .unwrap();
         assert!(ptr > 0);
     }
 
     #[test]
     fn with_func_from_context_fails_for_missing_instance() {
         let (mut env, mut instance) = make_instance();
-        leave_default_data(&mut instance.context_mut());
+        leave_default_data(&mut env);
 
         // Clear context's wasmer_instance
-        set_wasmer_instance::<MS, MQ>(&mut instance.context_mut(), None);
+        set_wasmer_instance::<MS, MQ>(&mut env, None);
 
-        let res =
-            with_func_from_context::<MS, MQ, u32, u32, _, ()>(&mut env, "allocate", |_func| {
-                panic!("unexpected callback call");
-            });
+        let res = with_func_from_context::<MS, MQ, _, ()>(&mut env, "allocate", |_func| {
+            panic!("unexpected callback call");
+        });
         match res.unwrap_err() {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
             err => panic!("Unexpected error: {:?}", err),
@@ -501,9 +497,9 @@ mod test {
     #[test]
     fn with_func_from_context_fails_for_missing_function() {
         let (mut env, mut instance) = make_instance();
-        leave_default_data(&mut instance.context_mut());
+        leave_default_data(&mut env);
 
-        let res = with_func_from_context::<MS, MQ, u32, u32>(&mut env, "doesnt_exist", |_func| {
+        let res = with_func_from_context::<MS, MQ, _, ()>(&mut env, "doesnt_exist", |_func| {
             panic!("unexpected callback call");
         });
         match res.unwrap_err() {
@@ -531,7 +527,7 @@ mod test {
         let set_key: &[u8] = b"more";
         let set_value: &[u8] = b"data";
 
-        with_storage_from_context::<MS, MQ, _, _>(&mut &mut ctx, |store| {
+        with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
             store
                 .set(set_key, set_value)
                 .0
