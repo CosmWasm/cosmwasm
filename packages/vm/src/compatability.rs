@@ -156,6 +156,7 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
 mod test {
     use super::*;
     use crate::errors::VmError;
+    use parity_wasm::elements::Internal;
     use std::iter::FromIterator;
     use wabt::wat2wasm;
 
@@ -170,8 +171,37 @@ mod test {
 
     #[test]
     fn test_deserialize_works() {
-        let _module = deserialize(CONTRACT).unwrap();
-        // TODO: check properties of deserialized module
+        let module = deserialize(CONTRACT).unwrap();
+        assert_eq!(module.version(), 1);
+
+        let exported_functions =
+            module
+                .export_section()
+                .unwrap()
+                .entries()
+                .iter()
+                .filter(|entry| {
+                    if let Internal::Function(_) = entry.internal() {
+                        true
+                    } else {
+                        false
+                    }
+                });
+        assert_eq!(exported_functions.count(), 7); // 6 required export plus "migrate"
+
+        let exported_memories = module
+            .export_section()
+            .unwrap()
+            .entries()
+            .iter()
+            .filter(|entry| {
+                if let Internal::Memory(_) = entry.internal() {
+                    true
+                } else {
+                    false
+                }
+            });
+        assert_eq!(exported_memories.count(), 1);
     }
 
     #[test]
