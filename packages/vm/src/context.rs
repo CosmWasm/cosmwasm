@@ -99,25 +99,6 @@ fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
 }
 
 /// Get a mutable reference to the context's data. Ownership remains in the Context.
-// NOTE: This is actually not really implemented safely at the moment. I did this as a
-// nicer and less-terrible version of the previous solution to the following issue:
-//
-//                                                   +--->> Go pointer
-//                                                   |
-// Ctx ->> ContextData +-> iterators: Box<dyn Iterator + 'a> --+
-//                     |                                       |
-//                     +-> storage: impl Storage <<------------+
-//                     |
-//                     +-> querier: impl Querier
-//
-// ->  : Ownership
-// ->> : Mutable borrow
-//
-// As you can see, there's a cyclical reference here... changing this function to return the same lifetime as it
-// returns (and adjusting a few other functions to only have one lifetime instead of two) triggers an error
-// elsewhere where we try to add iterators to the context. That's not legal according to Rust's rules, and it
-// complains that we're trying to borrow ctx mutably twice. This needs a better solution because this function
-// probably triggers unsoundness.
 fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
 ) -> &'b mut ContextData<S, Q> {
