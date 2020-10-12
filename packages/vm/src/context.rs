@@ -1,9 +1,5 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::{Borrow, BorrowMut};
-#[cfg(feature = "iterator")]
-use std::collections::HashMap;
-#[cfg(feature = "iterator")]
-use std::convert::TryInto;
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
