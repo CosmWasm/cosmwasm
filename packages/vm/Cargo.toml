@@ -19,8 +19,8 @@ singlepass = ["wasmer-singlepass-backend"]
 # default selects which *one* is re-exported in backends/mod.rs (available through eg backends::*)
 default-cranelift = ["wasmer-clif-backend"]
 default-singlepass = ["wasmer-singlepass-backend"]
-# enable this for better error reporting
-backtraces = ["snafu/backtraces"]
+# The backtraces fature is unused for now, i.e. it does nothing.
+backtraces = []
 # iterator allows us to iterate over all DB items in a given range
 # this must be enabled to support cosmwasm contracts compiled with the 'iterator' feature
 # optional as some merkle stores (like tries) don't support this
@@ -39,7 +39,6 @@ wasmer-clif-backend = { version = "=0.17.0", optional = true }
 wasmer-singlepass-backend = { version = "=0.17.0", optional = true }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
-snafu = { version = "0.6.3" }
 sha2 = "0.9.1"
 thiserror = "1.0"
 hex = "0.4"
