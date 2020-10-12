@@ -276,11 +276,11 @@ where
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.env.clone(), func)
+        with_storage_from_context::<S, Q, F, T>(&mut self.env, func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(self.env.clone(), func)
+        with_querier_from_context::<S, Q, F, T>(&mut self.env, func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer

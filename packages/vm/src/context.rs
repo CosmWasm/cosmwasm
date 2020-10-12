@@ -244,7 +244,7 @@ pub fn set_storage_readonly<S: Storage, Q: Querier>(env: &mut Env<S, Q>, new_val
 
 // TODO: move into Env
 pub(crate) fn with_func_from_context<S, Q, Callback, CallbackData>(
-    mut env: Env<S, Q>,
+    env: &mut Env<S, Q>,
     name: &str,
     callback: Callback,
 ) -> VmResult<CallbackData>
@@ -265,7 +265,7 @@ where
 }
 
 // TODO: move into Env
-pub(crate) fn with_storage_from_context<S, Q, F, T>(mut env: Env<S, Q>, func: F) -> VmResult<T>
+pub(crate) fn with_storage_from_context<S, Q, F, T>(env: &mut Env<S, Q>, func: F) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
@@ -278,7 +278,7 @@ where
 }
 
 // TODO: move into Env
-pub(crate) fn with_querier_from_context<S, Q, F, T>(mut env: Env<S, Q>, func: F) -> VmResult<T>
+pub(crate) fn with_querier_from_context<S, Q, F, T>(env: &mut Env<S, Q>, func: F) -> VmResult<T>
 where
     S: Storage,
     Q: Querier,
@@ -503,10 +503,9 @@ mod test {
         let (mut env, mut instance) = make_instance();
         leave_default_data(&mut instance.context_mut());
 
-        let res =
-            with_func_from_context::<MS, MQ, u32, u32, _, ()>(&mut env, "doesnt_exist", |_func| {
-                panic!("unexpected callback call");
-            });
+        let res = with_func_from_context::<MS, MQ, u32, u32>(&mut env, "doesnt_exist", |_func| {
+            panic!("unexpected callback call");
+        });
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
                 assert_eq!(
@@ -588,7 +587,7 @@ mod test {
         let (mut env, mut instance) = make_instance();
         leave_default_data(&mut env);
 
-        with_querier_from_context::<MS, MQ, _, ()>(env.clone(), |_querier| {
+        with_querier_from_context::<MS, MQ, _, ()>(&mut env, |_querier| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
