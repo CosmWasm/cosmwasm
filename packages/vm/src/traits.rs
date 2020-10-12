@@ -2,8 +2,6 @@ use cosmwasm_std::{Binary, CanonicalAddr, ContractResult, HumanAddr, SystemResul
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
-#[cfg(feature = "iterator")]
-use crate::ffi::FfiError;
 use crate::ffi::FfiResult;
 
 /// Holds all external dependencies of the contract.
@@ -29,35 +27,6 @@ impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
     }
 }
 
-#[cfg(feature = "iterator")]
-pub trait StorageIterator {
-    fn next(&mut self) -> FfiResult<Option<KV>>;
-
-    /// Collects all elements, ignoring gas costs
-    fn elements(mut self) -> Result<Vec<KV>, FfiError>
-    where
-        Self: Sized,
-    {
-        let mut out: Vec<KV> = Vec::new();
-        loop {
-            let (result, _gas_info) = self.next();
-            match result {
-                Ok(Some(kv)) => out.push(kv),
-                Ok(None) => break,
-                Err(err) => return Err(err),
-            }
-        }
-        Ok(out)
-    }
-}
-
-#[cfg(feature = "iterator")]
-impl<I: StorageIterator + ?Sized> StorageIterator for Box<I> {
-    fn next(&mut self) -> FfiResult<Option<KV>> {
-        (**self).next()
-    }
-}
-
 /// Access to the VM's backend storage, i.e. the chain
 pub trait Storage {
     /// Returns Err on error.
@@ -68,18 +37,28 @@ pub trait Storage {
     /// is not great yet and might not be possible in all backends. But we're trying to get there.
     fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>>;
 
-    #[cfg(feature = "iterator")]
     /// Allows iteration over a set of key/value pairs, either forwards or backwards.
+    /// Returns an interator ID that is unique within the Storage instance.
     ///
     /// The bound `start` is inclusive and `end` is exclusive.
     ///
     /// If `start` is lexicographically greater than or equal to `end`, an empty range is described, mo matter of the order.
-    fn range<'a>(
-        &'a self,
-        start: Option<&[u8]>,
-        end: Option<&[u8]>,
-        order: Order,
-    ) -> FfiResult<Box<dyn StorageIterator + 'a>>;
+    ///
+    /// This call must not change data in the storage, but creating and storing a new iterator can be a mutating operation on
+    /// the Storage implementation.
+    /// The implementation must ensure that iterator IDs are assigned in a deterministic manner as this is
+    /// environment data that is injected into the contract.
+    #[cfg(feature = "iterator")]
+    fn scan(&mut self, start: Option<&[u8]>, end: Option<&[u8]>, order: Order) -> FfiResult<u32>;
+
+    /// Returns the next element of the iterator with the given ID.
+    ///
+    /// If the ID is not found, a FfiError::IteratorDoesNotExist is returned.
+    ///
+    /// This call must not change data in the storage, but incrementing an iterator can be a mutating operation on
+    /// the Storage implementation.
+    #[cfg(feature = "iterator")]
+    fn next(&mut self, iterator_id: u32) -> FfiResult<Option<KV>>;
 
     fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()>;
 

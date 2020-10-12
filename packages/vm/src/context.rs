@@ -1,11 +1,6 @@
 //! Internal details to be used by instance.rs only
-#[cfg(feature = "iterator")]
-use std::collections::HashMap;
-#[cfg(feature = "iterator")]
-use std::convert::TryInto;
+
 use std::ffi::c_void;
-#[cfg(not(feature = "iterator"))]
-use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use wasmer_runtime_core::{
@@ -17,8 +12,6 @@ use wasmer_runtime_core::{
 use crate::backends::decrease_gas_left;
 use crate::errors::{VmError, VmResult};
 use crate::ffi::GasInfo;
-#[cfg(feature = "iterator")]
-use crate::traits::StorageIterator;
 use crate::traits::{Querier, Storage};
 
 /** context data **/
@@ -70,17 +63,13 @@ impl GasState {
     }
 }
 
-struct ContextData<'a, S: Storage, Q: Querier> {
+struct ContextData<S: Storage, Q: Querier> {
     gas_state: GasState,
     storage: Option<S>,
     storage_readonly: bool,
     querier: Option<Q>,
     /// A non-owning link to the wasmer instance
     wasmer_instance: Option<NonNull<WasmerInstance>>,
-    #[cfg(feature = "iterator")]
-    iterators: HashMap<u32, Box<dyn StorageIterator + 'a>>,
-    #[cfg(not(feature = "iterator"))]
-    iterators: PhantomData<&'a mut ()>,
 }
 
 pub fn setup_context<S: Storage, Q: Querier>(gas_limit: u64) -> (*mut c_void, fn(*mut c_void)) {
@@ -97,10 +86,6 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut
         storage_readonly: true,
         querier: None,
         wasmer_instance: None,
-        #[cfg(feature = "iterator")]
-        iterators: HashMap::new(),
-        #[cfg(not(feature = "iterator"))]
-        iterators: PhantomData::default(),
     };
     let heap_data = Box::new(data); // move from stack to heap
     Box::into_raw(heap_data) as *mut c_void // give up ownership
@@ -109,35 +94,14 @@ fn create_unmanaged_context_data<S: Storage, Q: Querier>(gas_limit: u64) -> *mut
 fn destroy_unmanaged_context_data<S: Storage, Q: Querier>(ptr: *mut c_void) {
     if !ptr.is_null() {
         // obtain ownership and drop instance of ContextData when box gets out of scope
-        let mut dying = unsafe { Box::from_raw(ptr as *mut ContextData<S, Q>) };
-        // Ensure all iterators are dropped before the storage
-        destroy_iterators(&mut dying);
+        let _dying = unsafe { Box::from_raw(ptr as *mut ContextData<S, Q>) };
     }
 }
 
 /// Get a mutable reference to the context's data. Ownership remains in the Context.
-// NOTE: This is actually not really implemented safely at the moment. I did this as a
-// nicer and less-terrible version of the previous solution to the following issue:
-//
-//                                                   +--->> Go pointer
-//                                                   |
-// Ctx ->> ContextData +-> iterators: Box<dyn Iterator + 'a> --+
-//                     |                                       |
-//                     +-> storage: impl Storage <<------------+
-//                     |
-//                     +-> querier: impl Querier
-//
-// ->  : Ownership
-// ->> : Mutable borrow
-//
-// As you can see, there's a cyclical reference here... changing this function to return the same lifetime as it
-// returns (and adjusting a few other functions to only have one lifetime instead of two) triggers an error
-// elsewhere where we try to add iterators to the context. That's not legal according to Rust's rules, and it
-// complains that we're trying to borrow ctx mutably twice. This needs a better solution because this function
-// probably triggers unsoundness.
 fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     ctx: &'a mut Ctx,
-) -> &'b mut ContextData<'b, S, Q> {
+) -> &'b mut ContextData<S, Q> {
     unsafe {
         let ptr = ctx.data as *mut ContextData<S, Q>;
         ptr.as_mut()
@@ -145,7 +109,7 @@ fn get_context_data_mut<'a, 'b, S: Storage, Q: Querier>(
     }
 }
 
-fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<'b, S, Q> {
+fn get_context_data<'a, 'b, S: Storage, Q: Querier>(ctx: &'a Ctx) -> &'b ContextData<S, Q> {
     unsafe {
         let ptr = ctx.data as *mut ContextData<S, Q>;
         ptr.as_ref()
@@ -164,25 +128,12 @@ pub fn set_wasmer_instance<S: Storage, Q: Querier>(
     }
 }
 
-#[cfg(feature = "iterator")]
-fn destroy_iterators<S: Storage, Q: Querier>(context: &mut ContextData<S, Q>) {
-    context.iterators.clear();
-}
-
-#[cfg(not(feature = "iterator"))]
-fn destroy_iterators<S: Storage, Q: Querier>(_context: &mut ContextData<S, Q>) {}
-
 /// Returns the original storage and querier as owned instances, and closes any remaining
 /// iterators. This is meant to be called when recycling the instance.
 pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
     source: &mut Ctx,
 ) -> (Option<S>, Option<Q>) {
-    let mut b = get_context_data_mut::<S, Q>(source);
-    // Destroy all existing iterators which are (in contrast to the storage)
-    // not reused between different instances.
-    // This is also important because the iterators are pointers to Go memory which should not be stored long term
-    // Paragraphs 5-7: https://golang.org/cmd/cgo/#hdr-Passing_pointers
-    destroy_iterators(&mut b);
+    let b = get_context_data_mut::<S, Q>(source);
     (b.storage.take(), b.querier.take())
 }
 
@@ -270,28 +221,6 @@ pub fn set_storage_readonly<S: Storage, Q: Querier>(ctx: &mut Ctx, new_value: bo
     context_data.storage_readonly = new_value;
 }
 
-/// Add the iterator to the context's data. A new ID is assigned and returned.
-/// IDs are guaranteed to be in the range [0, 2**31-1], i.e. fit in the non-negative part if type i32.
-#[cfg(feature = "iterator")]
-#[must_use = "without the returned iterator ID, the iterator cannot be accessed"]
-pub fn add_iterator<'a, S: Storage, Q: Querier>(
-    ctx: &mut Ctx,
-    iter: Box<dyn StorageIterator + 'a>,
-) -> u32 {
-    let b = get_context_data_mut::<S, Q>(ctx);
-    let last_id: u32 = b
-        .iterators
-        .len()
-        .try_into()
-        .expect("Found more iterator IDs than supported");
-    let new_id = last_id + 1;
-    if new_id > (i32::MAX as u32) {
-        panic!("Iterator ID exceeded i32::MAX. This must not happen.");
-    }
-    b.iterators.insert(new_id, iter);
-    new_id
-}
-
 pub(crate) fn with_func_from_context<S, Q, Args, Rets, Callback, CallbackData>(
     ctx: &mut Ctx,
     name: &str,
@@ -346,31 +275,11 @@ where
     }
 }
 
-#[cfg(feature = "iterator")]
-pub(crate) fn with_iterator_from_context<'a, 'b, S: 'b, Q: 'b, F, T>(
-    ctx: &'a mut Ctx,
-    iterator_id: u32,
-    func: F,
-) -> VmResult<T>
-where
-    S: Storage,
-    Q: Querier,
-    F: FnOnce(&'b mut (dyn StorageIterator + 'b)) -> VmResult<T>,
-{
-    let b = get_context_data_mut::<S, Q>(ctx);
-    match b.iterators.get_mut(&iterator_id) {
-        Some(iterator) => func(iterator),
-        None => Err(VmError::iterator_does_not_exist(iterator_id)),
-    }
-}
-
 #[cfg(test)]
 mod test {
     use super::*;
     use crate::backends::{compile, decrease_gas_left, set_gas_left};
     use crate::errors::VmError;
-    #[cfg(feature = "iterator")]
-    use crate::testing::MockIterator;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::traits::Storage;
     use cosmwasm_std::{
@@ -537,29 +446,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "iterator")]
-    fn add_iterator_works() {
-        let mut instance = make_instance();
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        assert_eq!(get_context_data_mut::<MS, MQ>(ctx).iterators.len(), 0);
-        let id1 = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
-        let id2 = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
-        let id3 = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
-        assert_eq!(get_context_data_mut::<MS, MQ>(ctx).iterators.len(), 3);
-        assert!(get_context_data_mut::<MS, MQ>(ctx)
-            .iterators
-            .contains_key(&id1));
-        assert!(get_context_data_mut::<MS, MQ>(ctx)
-            .iterators
-            .contains_key(&id2));
-        assert!(get_context_data_mut::<MS, MQ>(ctx)
-            .iterators
-            .contains_key(&id3));
-    }
-
-    #[test]
     fn with_func_from_context_works() {
         let mut instance = make_instance();
         leave_default_data(instance.context_mut());
@@ -689,37 +575,5 @@ mod test {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn with_iterator_from_context_works() {
-        let mut instance = make_instance();
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let id = add_iterator::<MS, MQ>(ctx, Box::new(MockIterator::empty()));
-        with_iterator_from_context::<MS, MQ, _, ()>(ctx, id, |iter| {
-            assert!(iter.next().0.unwrap().is_none());
-            Ok(())
-        })
-        .expect("must not error");
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn with_iterator_from_context_errors_for_non_existent_iterator_id() {
-        let mut instance = make_instance();
-        let ctx = instance.context_mut();
-        leave_default_data(ctx);
-
-        let missing_id = 42u32;
-        let result = with_iterator_from_context::<MS, MQ, _, ()>(ctx, missing_id, |_iter| {
-            panic!("this should not be called");
-        });
-        match result.unwrap_err() {
-            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, missing_id),
-            err => panic!("Unexpected error: {:?}", err),
-        }
     }
 }

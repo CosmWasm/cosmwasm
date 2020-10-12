@@ -43,11 +43,6 @@ pub enum VmError {
     },
     #[snafu(display("Hash doesn't match stored data"))]
     IntegrityErr { backtrace: snafu::Backtrace },
-    #[snafu(display("Iterator with ID {} does not exist", id))]
-    IteratorDoesNotExist {
-        id: u32,
-        backtrace: snafu::Backtrace,
-    },
     #[snafu(display("Error parsing into type {}: {}", target, msg))]
     ParseErr {
         /// the target type that was attempted
@@ -126,11 +121,6 @@ impl VmError {
 
     pub(crate) fn integrity_err() -> Self {
         IntegrityErr {}.build()
-    }
-
-    #[cfg(feature = "iterator")]
-    pub(crate) fn iterator_does_not_exist(iterator_id: u32) -> Self {
-        IteratorDoesNotExist { id: iterator_id }.build()
     }
 
     pub(crate) fn parse_err<T: Into<String>, M: Display>(target: T, msg: M) -> Self {
@@ -304,16 +294,6 @@ mod test {
         let error = VmError::integrity_err();
         match error {
             VmError::IntegrityErr { .. } => {}
-            e => panic!("Unexpected error: {:?}", e),
-        }
-    }
-
-    #[test]
-    #[cfg(feature = "iterator")]
-    fn iterator_does_not_exist_works() {
-        let error = VmError::iterator_does_not_exist(15);
-        match error {
-            VmError::IteratorDoesNotExist { id, .. } => assert_eq!(id, 15),
             e => panic!("Unexpected error: {:?}", e),
         }
     }

@@ -16,6 +16,4 @@ pub use mock::{
     MOCK_CONTRACT_ADDR,
 };
 pub use querier::MockQuerier;
-#[cfg(feature = "iterator")]
-pub use storage::MockIterator;
 pub use storage::MockStorage;
