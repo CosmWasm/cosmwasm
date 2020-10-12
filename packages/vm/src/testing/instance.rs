@@ -4,7 +4,7 @@
 use cosmwasm_std::{Coin, HumanAddr};
 use std::collections::HashSet;
 
-use crate::compatability::check_wasm;
+use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::Instance;
 use crate::{Api, Extern, Querier, Storage};
