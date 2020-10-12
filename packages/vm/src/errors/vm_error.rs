@@ -14,10 +14,7 @@ pub enum VmError {
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Error in guest/host communication: {}", source))]
-    CommunicationErr {
-        #[snafu(backtrace)]
-        source: CommunicationError,
-    },
+    CommunicationErr { source: CommunicationError },
     #[snafu(display("Error compiling Wasm: {}", msg))]
     CompileErr {
         msg: String,
