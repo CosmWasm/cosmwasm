@@ -588,6 +588,8 @@ mod test {
         );
     }
 
+    /*
+    TODO: Move to env testing
     #[test]
     fn set_storage_readonly_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
@@ -615,6 +617,7 @@ mod test {
             true
         );
     }
+    */
 
     #[test]
     fn with_storage_works() {
