@@ -183,6 +183,7 @@ dependencies = [
  "sha2",
  "snafu",
  "tempfile",
+ "thiserror",
  "wabt",
  "wasmer-clif-backend",
  "wasmer-middleware-common",

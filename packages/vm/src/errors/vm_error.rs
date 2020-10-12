@@ -79,10 +79,7 @@ pub enum VmError {
         backtrace: snafu::Backtrace,
     },
     #[snafu(display("Calling external function through FFI: {}", source))]
-    FfiErr {
-        #[snafu(backtrace)]
-        source: FfiError,
-    },
+    FfiErr { source: FfiError },
     #[snafu(display("Ran out of gas during contract execution"))]
     GasDepletion,
     #[snafu(display("Must not call a writing storage function in this context."))]
