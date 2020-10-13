@@ -373,7 +373,7 @@ mod test {
 
     #[test]
     fn leave_and_take_context_data() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
 
         // empty data on start
         let (inits, initq) = move_out_of_context::<MS, MQ>(&mut env);
@@ -399,7 +399,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn gas_tracking_works_correctly() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
 
         let gas_limit = 100;
         set_gas_left(&mut env, gas_limit);
@@ -420,7 +420,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
 
         let gas_limit = 100;
         set_gas_left(&mut env, gas_limit);
@@ -444,7 +444,7 @@ mod test {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         assert_eq!(is_storage_readonly::<MS, MQ>(&env), true);
@@ -452,7 +452,7 @@ mod test {
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         // change
@@ -470,7 +470,7 @@ mod test {
 
     #[test]
     fn with_func_from_context_works() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         let ptr = with_func_from_context::<MS, MQ, _, _>(&mut env, "allocate", |alloc_func| {
@@ -484,7 +484,7 @@ mod test {
 
     #[test]
     fn with_func_from_context_fails_for_missing_instance() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         // Clear context's wasmer_instance
@@ -501,7 +501,7 @@ mod test {
 
     #[test]
     fn with_func_from_context_fails_for_missing_function() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         let res = with_func_from_context::<MS, MQ, _, ()>(&mut env, "doesnt_exist", |_func| {
@@ -520,7 +520,7 @@ mod test {
 
     #[test]
     fn with_storage_from_context_set_get() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         let val = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
@@ -552,7 +552,7 @@ mod test {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         with_storage_from_context::<MS, MQ, _, ()>(&mut env, |_store| {
@@ -563,7 +563,7 @@ mod test {
 
     #[test]
     fn with_querier_from_context_works() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         let res = with_querier_from_context::<MS, MQ, _, _>(&mut env, |querier| {
@@ -585,7 +585,7 @@ mod test {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         with_querier_from_context::<MS, MQ, _, ()>(&mut env, |_querier| {
