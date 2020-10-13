@@ -9,7 +9,7 @@ use wasmer::{
 use wasmer_engine_jit::JIT;
 
 use crate::backends::{compile, get_gas_left, set_gas_left};
-use crate::context::{move_into_context, move_out_of_context, set_storage_readonly, Env};
+use crate::context::{move_into_context, move_out_of_context, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
@@ -290,7 +290,7 @@ where
     /// for multiple calls in integration tests, this should be set to the desired value
     /// right before every call.
     pub fn set_storage_readonly(&mut self, new_value: bool) {
-        set_storage_readonly::<S, Q>(&mut self.env, new_value);
+        self.env.set_storage_readonly(new_value);
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
@@ -341,7 +341,6 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::context::is_storage_readonly;
     use crate::errors::VmError;
     use crate::testing::{
         mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_with_balances,
@@ -360,10 +359,6 @@ mod test {
     const DEFAULT_GAS_LIMIT: u64 = 500_000;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-
-    // shorthands for function generics below
-    type MS = MockStorage;
-    type MQ = MockQuerier;
 
     #[test]
     fn required_features_works() {
@@ -610,16 +605,16 @@ mod test {
     fn set_storage_readonly_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), true);
+        assert_eq!(instance.env.is_storage_readonly(), true);
 
         instance.set_storage_readonly(false);
-        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), false);
+        assert_eq!(instance.env.is_storage_readonly(), false);
 
         instance.set_storage_readonly(false);
-        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), false);
+        assert_eq!(instance.env.is_storage_readonly(), false);
 
         instance.set_storage_readonly(true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), true);
+        assert_eq!(instance.env.is_storage_readonly(), true);
     }
 
     #[test]

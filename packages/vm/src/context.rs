@@ -171,6 +171,17 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         });
     }
 
+    /// Returns true iff the storage is set to readonly mode
+    pub fn is_storage_readonly(&self) -> bool {
+        self.with_context_data(|context_data| context_data.storage_readonly)
+    }
+
+    pub fn set_storage_readonly(&mut self, new_value: bool) {
+        self.with_context_data_mut(|context_data| {
+            context_data.storage_readonly = new_value;
+        })
+    }
+
     pub fn memory(&self) -> Memory {
         self.with_context_data(|context| {
             let ptr = context
@@ -290,17 +301,6 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
     _used_gas: u64,
 ) -> VmResult<()> {
     Ok(())
-}
-
-/// Returns true iff the storage is set to readonly mode
-pub fn is_storage_readonly<S: Storage, Q: Querier>(env: &Env<S, Q>) -> bool {
-    env.with_context_data(|context_data| context_data.storage_readonly)
-}
-
-pub fn set_storage_readonly<S: Storage, Q: Querier>(env: &mut Env<S, Q>, new_value: bool) {
-    env.with_context_data_mut(|context_data| {
-        context_data.storage_readonly = new_value;
-    })
 }
 
 #[cfg(test)]
@@ -446,7 +446,7 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        assert_eq!(is_storage_readonly::<MS, MQ>(&env), true);
+        assert_eq!(env.is_storage_readonly(), true);
     }
 
     #[test]
@@ -455,16 +455,16 @@ mod test {
         leave_default_data(&mut env);
 
         // change
-        set_storage_readonly::<MS, MQ>(&mut env, false);
-        assert_eq!(is_storage_readonly::<MS, MQ>(&env), false);
+        env.set_storage_readonly(false);
+        assert_eq!(env.is_storage_readonly(), false);
 
         // still false
-        set_storage_readonly::<MS, MQ>(&mut env, false);
-        assert_eq!(is_storage_readonly::<MS, MQ>(&env), false);
+        env.set_storage_readonly(false);
+        assert_eq!(env.is_storage_readonly(), false);
 
         // change back
-        set_storage_readonly::<MS, MQ>(&mut env, true);
-        assert_eq!(is_storage_readonly::<MS, MQ>(&env), true);
+        env.set_storage_readonly(true);
+        assert_eq!(env.is_storage_readonly(), true);
     }
 
     #[test]

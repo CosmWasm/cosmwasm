@@ -8,7 +8,7 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
 use crate::backends::get_gas_left;
-use crate::context::{is_storage_readonly, process_gas_info, Env};
+use crate::context::{process_gas_info, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::ffi::FfiError;
@@ -55,7 +55,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
-    if is_storage_readonly::<S, Q>(env) {
+    if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
@@ -71,7 +71,7 @@ pub fn do_write<S: Storage, Q: Querier>(
 }
 
 pub fn do_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<()> {
-    if is_storage_readonly::<S, Q>(env) {
+    if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
 
@@ -231,7 +231,7 @@ mod test {
     use wasmer::{imports, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{move_into_context, set_storage_readonly};
+    use crate::context::move_into_context;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::Storage;
     use crate::FfiError;
@@ -278,7 +278,7 @@ mod test {
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
-        set_storage_readonly::<MS, MQ>(&mut env, false);
+        env.set_storage_readonly(false);
 
         (env, instance)
     }
@@ -479,7 +479,7 @@ mod test {
         let value_ptr = write_data(&mut instance, b"new value");
 
         leave_default_data(&mut env);
-        set_storage_readonly::<MS, MQ>(&mut env, true);
+        env.set_storage_readonly(true);
 
         let result = do_write::<MS, MQ>(&mut env, key_ptr, value_ptr);
         match result.unwrap_err() {
@@ -557,7 +557,7 @@ mod test {
         let key_ptr = write_data(&mut instance, b"a storage key");
 
         leave_default_data(&mut env);
-        set_storage_readonly::<MS, MQ>(&mut env, true);
+        env.set_storage_readonly(true);
 
         let result = do_remove::<MS, MQ>(&mut env, key_ptr);
         match result.unwrap_err() {
