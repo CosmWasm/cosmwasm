@@ -84,8 +84,6 @@ where
         let store = Store::new(&engine);
 
         let mut env = Env {
-            memory: wasmer::Memory::new(&store, wasmer::MemoryType::new(0, Some(5000), false))
-                .expect("could not create memory"),
             context_data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         };
         let _env2 = env.clone();
@@ -246,7 +244,7 @@ where
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
     pub fn get_memory_size(&self) -> u64 {
-        self.env.memory.data_size()
+        self.env.memory().data_size()
     }
 
     /// Returns the currently remaining gas.
@@ -304,12 +302,12 @@ where
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(&self.env.memory, region_ptr, max_length)
+        read_region(&self.env.memory(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(&self.env.memory, region_ptr, data)?;
+        write_region(&self.env.memory(), region_ptr, data)?;
         Ok(())
     }
 

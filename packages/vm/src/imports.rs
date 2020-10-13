@@ -39,7 +39,7 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 pub fn do_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
-    let key = read_region(&env.memory, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
         with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.get(&key)))?;
@@ -63,8 +63,8 @@ pub fn do_write<S: Storage, Q: Querier>(
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&env.memory, key_ptr, MAX_LENGTH_DB_KEY)?;
-    let value = read_region(&env.memory, value_ptr, MAX_LENGTH_DB_VALUE)?;
+    let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
+    let value = read_region(&env.memory(), value_ptr, MAX_LENGTH_DB_VALUE)?;
 
     let (result, gas_info) =
         with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.set(&key, &value)))?;
@@ -79,7 +79,7 @@ pub fn do_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> V
         return Err(VmError::write_access_denied());
     }
 
-    let key = read_region(&env.memory, key_ptr, MAX_LENGTH_DB_KEY)?;
+    let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
         with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.remove(&key)))?;
@@ -95,7 +95,7 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let source_data = read_region(&env.memory, source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    let source_data = read_region(&env.memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
         return Ok(write_to_contract::<S, Q>(env, b"Input is empty")?);
     }
@@ -110,7 +110,7 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     process_gas_info::<S, Q>(env, gas_info)?;
     match result {
         Ok(canonical) => {
-            write_region(&env.memory, destination_ptr, canonical.as_slice())?;
+            write_region(&env.memory(), destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
         Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(env, msg.as_bytes())?),
@@ -125,7 +125,7 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     destination_ptr: u32,
 ) -> VmResult<u32> {
     let canonical = Binary(read_region(
-        &env.memory,
+        &env.memory(),
         source_ptr,
         MAX_LENGTH_CANONICAL_ADDRESS,
     )?);
@@ -134,7 +134,7 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     process_gas_info::<S, Q>(env, gas_info)?;
     match result {
         Ok(human) => {
-            write_region(&env.memory, destination_ptr, human.as_str().as_bytes())?;
+            write_region(&env.memory(), destination_ptr, human.as_str().as_bytes())?;
             Ok(0)
         }
         Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(env, msg.as_bytes())?),
@@ -148,7 +148,7 @@ pub fn print_debug_message<S: Storage, Q: Querier>(
     env: &Env<S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
-    let message_data = read_region(&env.memory, message_ptr, MAX_LENGTH_DEBUG)?;
+    let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
     let msg = String::from_utf8_lossy(&message_data);
     println!("{}", msg);
     Ok(())
@@ -165,7 +165,7 @@ fn write_to_contract<S: Storage, Q: Querier>(env: &mut Env<S, Q>, input: &[u8]) 
         }
         Ok(ptr)
     })?;
-    write_region(&env.memory, target_ptr, input)?;
+    write_region(&env.memory(), target_ptr, input)?;
     Ok(target_ptr)
 }
 
@@ -173,7 +173,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
     env: &mut Env<S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
-    let request = read_region(&env.memory, request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
+    let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
     let gas_remaining = get_gas_left(env);
     let (result, gas_info) = with_querier_from_context::<S, Q, _, _>(env, |querier| {
@@ -191,8 +191,8 @@ pub fn do_scan<S: Storage, Q: Querier>(
     end_ptr: u32,
     order: i32,
 ) -> VmResult<u32> {
-    let start = maybe_read_region(&env.memory, start_ptr, MAX_LENGTH_DB_KEY)?;
-    let end = maybe_read_region(&env.memory, end_ptr, MAX_LENGTH_DB_KEY)?;
+    let start = maybe_read_region(&env.memory(), start_ptr, MAX_LENGTH_DB_KEY)?;
+    let end = maybe_read_region(&env.memory(), end_ptr, MAX_LENGTH_DB_KEY)?;
     let order: Order = order
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
@@ -233,8 +233,7 @@ mod test {
     };
     use std::ptr::NonNull;
     use std::sync::{Arc, RwLock};
-    use wasmer::{imports, Instance as WasmerInstance, Store};
-    use wasmer_engine_jit::JIT;
+    use wasmer::{imports, Instance as WasmerInstance};
 
     use crate::backends::compile;
     use crate::context::{
@@ -265,12 +264,7 @@ mod test {
     const GAS_LIMIT: u64 = 5_000_000;
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let engine = JIT::headless().engine();
-        let store = Store::new(&engine);
-
         let mut env = Env {
-            memory: wasmer::Memory::new(&store, wasmer::MemoryType::new(0, Some(5000), false))
-                .expect("could not create memory"),
             context_data: Arc::new(RwLock::new(ContextData::new(GAS_LIMIT))),
         };
 
@@ -289,7 +283,7 @@ mod test {
                 // "debug" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
             },
         };
-        let mut instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
+        let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
         set_wasmer_instance::<MS, MQ>(&mut env, Some(instance_ptr));
@@ -335,7 +329,7 @@ mod test {
 
     /// A Region reader that is just good enough for the tests in this file
     fn force_read(&env: &Env<MS, MQ>, region_ptr: u32) -> Vec<u8> {
-        read_region(&env.memory, region_ptr, 5000).unwrap()
+        read_region(&env.memory(), region_ptr, 5000).unwrap()
     }
 
     #[test]

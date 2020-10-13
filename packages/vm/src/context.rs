@@ -3,7 +3,7 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{Function, Instance as WasmerInstance};
+use wasmer::{Function, Instance as WasmerInstance, Memory};
 
 use crate::backends::decrease_gas_left;
 use crate::errors::{VmError, VmResult};
@@ -61,14 +61,12 @@ impl GasState {
 
 // #[derive(Clone)]
 pub struct Env<S: Storage, Q: Querier> {
-    pub memory: wasmer::Memory,
     pub context_data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
 impl<S: Storage, Q: Querier> Clone for Env<S, Q> {
     fn clone(&self) -> Self {
         Env {
-            memory: self.memory.clone(),
             context_data: self.context_data.clone(),
         }
     }
@@ -111,6 +109,23 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         Callback: FnOnce(&GasState) -> CallbackReturn,
     {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
+    }
+
+    pub fn memory(&self) -> Memory {
+        self.with_context_data(|context| {
+            let ptr = context
+                .wasmer_instance
+                .expect("Wasmer instance is not set. This is a bug.");
+            let instance = unsafe { ptr.as_ref() };
+            let mut memories: Vec<Memory> = instance
+                .exports
+                .iter()
+                .memories()
+                .map(|pair| pair.1.clone())
+                .collect();
+            let memory = memories.pop().unwrap();
+            memory
+        })
     }
 }
 
@@ -297,8 +312,7 @@ mod test {
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
     use std::sync::{Arc, RwLock};
-    use wasmer::{imports, Store};
-    use wasmer_engine_jit::JIT;
+    use wasmer::imports;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -318,12 +332,7 @@ mod test {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let engine = JIT::headless().engine();
-        let store = Store::new(&engine);
-
         let mut env = Env {
-            memory: wasmer::Memory::new(&store, wasmer::MemoryType::new(0, Some(5000), false))
-                .expect("could not create memory"),
             context_data: Arc::new(RwLock::new(ContextData::new(GAS_LIMIT))),
         };
 
@@ -342,7 +351,7 @@ mod test {
                 // "debug" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
             },
         };
-        let mut instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
+        let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
         set_wasmer_instance::<MS, MQ>(&mut env, Some(instance_ptr));
