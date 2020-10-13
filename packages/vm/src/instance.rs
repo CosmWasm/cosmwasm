@@ -165,11 +165,11 @@ where
                 // Ownership of both start and end pointer is not transferred to the host.
                 // Returns an iterator ID.
                 "db_scan" => Function::new_with_env(&store, &i32i32i32_to_i32, env.clone(), |mut env, args| {
-                    let start_ptr = args[0].unwrap_i32() as u32;
-                    let end_ptr = args[1].unwrap_i32() as u32;
-                    let order = args[2].unwrap_i32();
                     #[cfg(feature = "iterator")]
                     {
+                        let start_ptr = args[0].unwrap_i32() as u32;
+                        let end_ptr = args[1].unwrap_i32() as u32;
+                        let order = args[2].unwrap_i32();
                         let response_ptr = do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order)?;
                         Ok(vec![response_ptr.into()])
                     }
