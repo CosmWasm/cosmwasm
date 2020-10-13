@@ -66,43 +66,59 @@ pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::context::{set_wasmer_instance, ContextData};
+    use crate::testing::{MockQuerier, MockStorage};
+    use std::ptr::NonNull;
+    use std::sync::{Arc, RwLock};
     use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};
 
-    fn instantiate(code: &[u8]) -> WasmerInstance {
+    type MS = MockStorage;
+    type MQ = MockQuerier;
+    const GAS_LIMIT: u64 = 5_000_000;
+
+    fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
+        let mut env = Env {
+            context_data: Arc::new(RwLock::new(ContextData::new(GAS_LIMIT))),
+        };
         let module = compile(code).unwrap();
         let import_obj = imports! { "env" => {}, };
-        module.instantiate(&import_obj).unwrap()
+        let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
+
+        let instance_ptr = NonNull::from(instance.as_ref());
+        set_wasmer_instance::<MS, MQ>(&mut env, Some(instance_ptr));
+
+        (env, instance)
     }
 
     #[test]
     fn get_gas_left_defaults_to_constant() {
         let wasm = wat2wasm("(module)").unwrap();
-        let instance = instantiate(&wasm);
-        let gas_left = get_gas_left(&instance.context());
+        let (env, _) = instantiate(&wasm);
+        let gas_left = get_gas_left(&env);
         assert_eq!(gas_left, MAX_GAS_LIMIT);
     }
 
     #[test]
     fn set_gas_left_works() {
         let wasm = wat2wasm("(module)").unwrap();
-        let mut instance = instantiate(&wasm);
+        let (mut env, _) = instantiate(&wasm);
 
         let limit = 3456789;
-        set_gas_left(&mut instance.context_mut(), limit);
-        assert_eq!(get_gas_left(&instance.context()), limit);
+        set_gas_left(&mut env, limit);
+        assert_eq!(get_gas_left(&env), limit);
 
         let limit = 1;
-        set_gas_left(&mut instance.context_mut(), limit);
-        assert_eq!(get_gas_left(&instance.context()), limit);
+        set_gas_left(&mut env, limit);
+        assert_eq!(get_gas_left(&env), limit);
 
         let limit = 0;
-        set_gas_left(&mut instance.context_mut(), limit);
-        assert_eq!(get_gas_left(&instance.context()), limit);
+        set_gas_left(&mut env, limit);
+        assert_eq!(get_gas_left(&env), limit);
 
         let limit = MAX_GAS_LIMIT;
-        set_gas_left(&mut instance.context_mut(), limit);
-        assert_eq!(get_gas_left(&instance.context()), limit);
+        set_gas_left(&mut env, limit);
+        assert_eq!(get_gas_left(&env), limit);
     }
 
     #[test]
@@ -111,9 +127,9 @@ mod test {
     )]
     fn set_gas_left_panic_for_values_too_large() {
         let wasm = wat2wasm("(module)").unwrap();
-        let mut instance = instantiate(&wasm);
+        let (mut env, _) = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;
-        set_gas_left(&mut instance.context_mut(), limit);
+        set_gas_left(&mut env, limit);
     }
 }
