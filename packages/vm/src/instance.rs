@@ -584,36 +584,21 @@ mod test {
         );
     }
 
-    /*
-    TODO: Move to env testing
     #[test]
     fn set_storage_readonly_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
-            true
-        );
+        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), true);
 
         instance.set_storage_readonly(false);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
-            false
-        );
+        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), false);
 
         instance.set_storage_readonly(false);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
-            false
-        );
+        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), false);
 
         instance.set_storage_readonly(true);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(&instance.inner.context()),
-            true
-        );
+        assert_eq!(is_storage_readonly::<MS, MQ>(&instance.env), true);
     }
-    */
 
     #[test]
     fn with_storage_works() {
