@@ -8,10 +8,7 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
 use crate::backends::get_gas_left;
-use crate::context::{
-    is_storage_readonly, process_gas_info, with_func_from_context, with_querier_from_context,
-    with_storage_from_context, Env,
-};
+use crate::context::{is_storage_readonly, process_gas_info, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::ffi::FfiError;
@@ -41,8 +38,7 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 pub fn do_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
-    let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.get(&key)))?;
+    let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
     process_gas_info::<S, Q>(env, gas_info)?;
     let value = result?;
 
@@ -67,7 +63,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     let value = read_region(&env.memory(), value_ptr, MAX_LENGTH_DB_VALUE)?;
 
     let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.set(&key, &value)))?;
+        env.with_storage_from_context::<_, _>(|store| Ok(store.set(&key, &value)))?;
     process_gas_info::<S, Q>(env, gas_info)?;
     result?;
 
@@ -82,7 +78,7 @@ pub fn do_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> V
     let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.remove(&key)))?;
+        env.with_storage_from_context::<_, _>(|store| Ok(store.remove(&key)))?;
     process_gas_info(env, gas_info)?;
     result?;
 
@@ -156,7 +152,7 @@ pub fn print_debug_message<S: Storage, Q: Querier>(
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
 fn write_to_contract<S: Storage, Q: Querier>(env: &mut Env<S, Q>, input: &[u8]) -> VmResult<u32> {
-    let target_ptr = with_func_from_context::<S, Q, _, u32>(env, "allocate", |allocate| {
+    let target_ptr = env.with_func_from_context::<_, u32>("allocate", |allocate| {
         let out_size = to_u32(input.len())?;
         let result = allocate.call(&[out_size.into()])?;
         let ptr = result[0].unwrap_i32() as u32;
@@ -176,7 +172,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
     let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
     let gas_remaining = get_gas_left(env);
-    let (result, gas_info) = with_querier_from_context::<S, Q, _, _>(env, |querier| {
+    let (result, gas_info) = env.with_querier_from_context::<_, _>(|querier| {
         Ok(querier.query_raw(&request, gas_remaining))
     })?;
     process_gas_info::<S, Q>(env, gas_info)?;
@@ -197,7 +193,7 @@ pub fn do_scan<S: Storage, Q: Querier>(
         .try_into()
         .map_err(|_| CommunicationError::invalid_order(order))?;
 
-    let (result, gas_info) = with_storage_from_context::<S, Q, _, _>(env, |store| {
+    let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| {
         Ok(store.scan(start.as_deref(), end.as_deref(), order))
     })?;
     process_gas_info::<S, Q>(env, gas_info)?;
@@ -208,7 +204,7 @@ pub fn do_scan<S: Storage, Q: Querier>(
 #[cfg(feature = "iterator")]
 pub fn do_next<S: Storage, Q: Querier>(env: &mut Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
     let (result, gas_info) =
-        with_storage_from_context::<S, Q, _, _>(env, |store| Ok(store.next(iterator_id)))?;
+        env.with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
     process_gas_info::<S, Q>(env, gas_info)?;
 
     // Empty key will later be treated as _no more element_.
@@ -375,13 +371,14 @@ mod test {
 
         do_write::<MS, MQ>(&mut env, key_ptr, value_ptr).unwrap();
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
-            Ok(store
-                .get(b"new storage key")
-                .0
-                .expect("error getting value"))
-        })
-        .unwrap();
+        let val = env
+            .with_storage_from_context::<_, _>(|store| {
+                Ok(store
+                    .get(b"new storage key")
+                    .0
+                    .expect("error getting value"))
+            })
+            .unwrap();
         assert_eq!(val, Some(b"new value".to_vec()));
     }
 
@@ -396,10 +393,11 @@ mod test {
 
         do_write::<MS, MQ>(&mut env, key_ptr, value_ptr).unwrap();
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
-            Ok(store.get(KEY1).0.expect("error getting value"))
-        })
-        .unwrap();
+        let val = env
+            .with_storage_from_context::<_, _>(|store| {
+                Ok(store.get(KEY1).0.expect("error getting value"))
+            })
+            .unwrap();
         assert_eq!(val, Some(VALUE2.to_vec()));
     }
 
@@ -414,13 +412,14 @@ mod test {
 
         do_write::<MS, MQ>(&mut env, key_ptr, value_ptr).unwrap();
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
-            Ok(store
-                .get(b"new storage key")
-                .0
-                .expect("error getting value"))
-        })
-        .unwrap();
+        let val = env
+            .with_storage_from_context::<_, _>(|store| {
+                Ok(store
+                    .get(b"new storage key")
+                    .0
+                    .expect("error getting value"))
+            })
+            .unwrap();
         assert_eq!(val, Some(b"".to_vec()));
     }
 
@@ -500,10 +499,11 @@ mod test {
 
         do_remove::<MS, MQ>(&mut env, key_ptr).unwrap();
 
-        let value = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
-            Ok(store.get(existing_key).0.expect("error getting value"))
-        })
-        .unwrap();
+        let value = env
+            .with_storage_from_context::<_, _>(|store| {
+                Ok(store.get(existing_key).0.expect("error getting value"))
+            })
+            .unwrap();
         assert_eq!(value, None);
     }
 
@@ -519,10 +519,11 @@ mod test {
         // Note: right now we cannot differnetiate between an existent and a non-existent key
         do_remove::<MS, MQ>(&mut env, key_ptr).unwrap();
 
-        let value = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
-            Ok(store.get(non_existent_key).0.expect("error getting value"))
-        })
-        .unwrap();
+        let value = env
+            .with_storage_from_context::<_, _>(|store| {
+                Ok(store.get(non_existent_key).0.expect("error getting value"))
+            })
+            .unwrap();
         assert_eq!(value, None);
     }
 

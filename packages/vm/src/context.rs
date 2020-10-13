@@ -119,6 +119,51 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
+    pub fn with_func_from_context<Callback, CallbackData>(
+        &mut self,
+        name: &str,
+        callback: Callback,
+    ) -> VmResult<CallbackData>
+    where
+        S: Storage,
+        Q: Querier,
+        Callback: FnOnce(&Function) -> VmResult<CallbackData>,
+    {
+        self.with_context_data_mut(|context_data| match context_data.wasmer_instance {
+            Some(instance_ptr) => {
+                let func = unsafe { instance_ptr.as_ref() }
+                    .exports
+                    .get_function(name)?;
+                callback(func)
+            }
+            None => Err(VmError::uninitialized_context_data("wasmer_instance")),
+        })
+    }
+
+    pub fn with_storage_from_context<F, T>(&mut self, func: F) -> VmResult<T>
+    where
+        S: Storage,
+        Q: Querier,
+        F: FnOnce(&mut S) -> VmResult<T>,
+    {
+        self.with_context_data_mut(|context_data| match context_data.storage.as_mut() {
+            Some(data) => func(data),
+            None => Err(VmError::uninitialized_context_data("storage")),
+        })
+    }
+
+    pub fn with_querier_from_context<F, T>(&mut self, func: F) -> VmResult<T>
+    where
+        S: Storage,
+        Q: Querier,
+        F: FnOnce(&mut Q) -> VmResult<T>,
+    {
+        self.with_context_data_mut(|context_data| match context_data.querier.as_mut() {
+            Some(querier) => func(querier),
+            None => Err(VmError::uninitialized_context_data("querier")),
+        })
+    }
+
     pub fn memory(&self) -> Memory {
         self.with_context_data(|context| {
             let ptr = context
@@ -258,54 +303,6 @@ pub fn is_storage_readonly<S: Storage, Q: Querier>(env: &Env<S, Q>) -> bool {
 pub fn set_storage_readonly<S: Storage, Q: Querier>(env: &mut Env<S, Q>, new_value: bool) {
     env.with_context_data_mut(|context_data| {
         context_data.storage_readonly = new_value;
-    })
-}
-
-// TODO: move into Env
-pub(crate) fn with_func_from_context<S, Q, Callback, CallbackData>(
-    env: &mut Env<S, Q>,
-    name: &str,
-    callback: Callback,
-) -> VmResult<CallbackData>
-where
-    S: Storage,
-    Q: Querier,
-    Callback: FnOnce(&Function) -> VmResult<CallbackData>,
-{
-    env.with_context_data_mut(|context_data| match context_data.wasmer_instance {
-        Some(instance_ptr) => {
-            let func = unsafe { instance_ptr.as_ref() }
-                .exports
-                .get_function(name)?;
-            callback(func)
-        }
-        None => Err(VmError::uninitialized_context_data("wasmer_instance")),
-    })
-}
-
-// TODO: move into Env
-pub(crate) fn with_storage_from_context<S, Q, F, T>(env: &mut Env<S, Q>, func: F) -> VmResult<T>
-where
-    S: Storage,
-    Q: Querier,
-    F: FnOnce(&mut S) -> VmResult<T>,
-{
-    env.with_context_data_mut(|context_data| match context_data.storage.as_mut() {
-        Some(data) => func(data),
-        None => Err(VmError::uninitialized_context_data("storage")),
-    })
-}
-
-// TODO: move into Env
-pub(crate) fn with_querier_from_context<S, Q, F, T>(env: &mut Env<S, Q>, func: F) -> VmResult<T>
-where
-    S: Storage,
-    Q: Querier,
-    F: FnOnce(&mut Q) -> VmResult<T>,
-{
-    env.with_context_data_mut(|context_data| match context_data.querier.as_mut() {
-        Some(querier) => func(querier),
-        None => Err(VmError::uninitialized_context_data("querier")),
     })
 }
 
@@ -478,12 +475,13 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        let ptr = with_func_from_context::<MS, MQ, _, _>(&mut env, "allocate", |alloc_func| {
-            let result = alloc_func.call(&[10u32.into()])?;
-            let ptr = result[0].unwrap_i32() as u32;
-            Ok(ptr)
-        })
-        .unwrap();
+        let ptr = env
+            .with_func_from_context::<_, _>("allocate", |alloc_func| {
+                let result = alloc_func.call(&[10u32.into()])?;
+                let ptr = result[0].unwrap_i32() as u32;
+                Ok(ptr)
+            })
+            .unwrap();
         assert!(ptr > 0);
     }
 
@@ -495,7 +493,7 @@ mod test {
         // Clear context's wasmer_instance
         set_wasmer_instance::<MS, MQ>(&mut env, None);
 
-        let res = with_func_from_context::<MS, MQ, _, ()>(&mut env, "allocate", |_func| {
+        let res = env.with_func_from_context::<_, ()>("allocate", |_func| {
             panic!("unexpected callback call");
         });
         match res.unwrap_err() {
@@ -509,7 +507,7 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        let res = with_func_from_context::<MS, MQ, _, ()>(&mut env, "doesnt_exist", |_func| {
+        let res = env.with_func_from_context::<_, ()>("doesnt_exist", |_func| {
             panic!("unexpected callback call");
         });
         match res.unwrap_err() {
@@ -528,16 +526,17 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        let val = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
-            Ok(store.get(INIT_KEY).0.expect("error getting value"))
-        })
-        .unwrap();
+        let val = env
+            .with_storage_from_context::<_, _>(|store| {
+                Ok(store.get(INIT_KEY).0.expect("error getting value"))
+            })
+            .unwrap();
         assert_eq!(val, Some(INIT_VALUE.to_vec()));
 
         let set_key: &[u8] = b"more";
         let set_value: &[u8] = b"data";
 
-        with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
+        env.with_storage_from_context::<_, _>(|store| {
             store
                 .set(set_key, set_value)
                 .0
@@ -546,7 +545,7 @@ mod test {
         })
         .unwrap();
 
-        with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| {
+        env.with_storage_from_context::<_, _>(|store| {
             assert_eq!(store.get(INIT_KEY).0.unwrap(), Some(INIT_VALUE.to_vec()));
             assert_eq!(store.get(set_key).0.unwrap(), Some(set_value.to_vec()));
             Ok(())
@@ -560,7 +559,7 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        with_storage_from_context::<MS, MQ, _, ()>(&mut env, |_store| {
+        env.with_storage_from_context::<_, ()>(|_store| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
@@ -571,17 +570,18 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        let res = with_querier_from_context::<MS, MQ, _, _>(&mut env, |querier| {
-            let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
-                address: HumanAddr::from(INIT_ADDR),
-            });
-            let (result, _gas_info) =
-                querier.query_raw(&to_vec(&req).unwrap(), DEFAULT_QUERY_GAS_LIMIT);
-            Ok(result.unwrap())
-        })
-        .unwrap()
-        .unwrap()
-        .unwrap();
+        let res = env
+            .with_querier_from_context::<_, _>(|querier| {
+                let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
+                    address: HumanAddr::from(INIT_ADDR),
+                });
+                let (result, _gas_info) =
+                    querier.query_raw(&to_vec(&req).unwrap(), DEFAULT_QUERY_GAS_LIMIT);
+                Ok(result.unwrap())
+            })
+            .unwrap()
+            .unwrap()
+            .unwrap();
         let balance: AllBalanceResponse = from_binary(&res).unwrap();
 
         assert_eq!(balance.amount, coins(INIT_AMOUNT, INIT_DENOM));
@@ -593,7 +593,7 @@ mod test {
         let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
-        with_querier_from_context::<MS, MQ, _, ()>(&mut env, |_querier| {
+        env.with_querier_from_context::<_, ()>(|_querier| {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();

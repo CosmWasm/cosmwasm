@@ -10,8 +10,7 @@ use wasmer_engine_jit::JIT;
 
 use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
-    move_into_context, move_out_of_context, set_storage_readonly, set_wasmer_instance,
-    with_querier_from_context, with_storage_from_context, Env,
+    move_into_context, move_out_of_context, set_storage_readonly, set_wasmer_instance, Env,
 };
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -297,11 +296,11 @@ where
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(&mut self.env, func)
+        self.env.with_storage_from_context::<F, T>(func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(&mut self.env, func)
+        self.env.with_querier_from_context::<F, T>(func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
