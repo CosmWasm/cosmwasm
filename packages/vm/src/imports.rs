@@ -231,7 +231,7 @@ mod test {
     use wasmer::{imports, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{move_into_context, set_storage_readonly, set_wasmer_instance};
+    use crate::context::{move_into_context, set_storage_readonly};
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::Storage;
     use crate::FfiError;
@@ -277,7 +277,7 @@ mod test {
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
-        set_wasmer_instance::<MS, MQ>(&mut env, Some(instance_ptr));
+        env.set_wasmer_instance(Some(instance_ptr));
         set_storage_readonly::<MS, MQ>(&mut env, false);
 
         (env, instance)

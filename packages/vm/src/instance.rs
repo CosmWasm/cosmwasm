@@ -9,9 +9,7 @@ use wasmer::{
 use wasmer_engine_jit::JIT;
 
 use crate::backends::{compile, get_gas_left, set_gas_left};
-use crate::context::{
-    move_into_context, move_out_of_context, set_storage_readonly, set_wasmer_instance, Env,
-};
+use crate::context::{move_into_context, move_out_of_context, set_storage_readonly, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
@@ -234,7 +232,7 @@ where
         });
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
-        set_wasmer_instance::<S, Q>(&mut env, Some(instance_ptr));
+        env.set_wasmer_instance(Some(instance_ptr));
         move_into_context(&mut env, deps.storage, deps.querier);
         let instance = Instance {
             inner: wasmer_instance,

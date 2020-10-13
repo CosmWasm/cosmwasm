@@ -164,6 +164,13 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         })
     }
 
+    /// Creates a back reference from a contact to its partent instance
+    pub fn set_wasmer_instance(&mut self, wasmer_instance: Option<NonNull<WasmerInstance>>) {
+        self.with_context_data_mut(|context_data| {
+            context_data.wasmer_instance = wasmer_instance;
+        });
+    }
+
     pub fn memory(&self) -> Memory {
         self.with_context_data(|context| {
             let ptr = context
@@ -201,16 +208,6 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
             wasmer_instance: None,
         }
     }
-}
-
-/// Creates a back reference from a contact to its partent instance
-pub fn set_wasmer_instance<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
-    wasmer_instance: Option<NonNull<WasmerInstance>>,
-) {
-    env.with_context_data_mut(|context_data| {
-        context_data.wasmer_instance = wasmer_instance;
-    });
 }
 
 /// Returns the original storage and querier as owned instances, and closes any remaining
@@ -356,7 +353,7 @@ mod test {
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
-        set_wasmer_instance::<MS, MQ>(&mut env, Some(instance_ptr));
+        env.set_wasmer_instance(Some(instance_ptr));
 
         (env, instance)
     }
@@ -491,7 +488,7 @@ mod test {
         leave_default_data(&mut env);
 
         // Clear context's wasmer_instance
-        set_wasmer_instance::<MS, MQ>(&mut env, None);
+        env.set_wasmer_instance(None);
 
         let res = env.with_func_from_context::<_, ()>("allocate", |_func| {
             panic!("unexpected callback call");

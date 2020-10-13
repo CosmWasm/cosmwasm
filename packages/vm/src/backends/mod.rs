@@ -34,7 +34,6 @@ pub use singlepass::{backend, compile, get_gas_left, set_gas_left};
 #[cfg(feature = "default-singlepass")]
 mod test {
     use super::*;
-    use crate::context::set_wasmer_instance;
     use crate::testing::{MockQuerier, MockStorage};
     use std::ptr::NonNull;
     use wabt::wat2wasm;
@@ -51,7 +50,7 @@ mod test {
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 
         let instance_ptr = NonNull::from(instance.as_ref());
-        set_wasmer_instance::<MS, MQ>(&mut env, Some(instance_ptr));
+        env.set_wasmer_instance(Some(instance_ptr));
 
         (env, instance)
     }
