@@ -1,7 +1,7 @@
-use snafu::Snafu;
 use std::fmt::Debug;
 use std::ops::AddAssign;
 use std::string::FromUtf8Error;
+use thiserror::Error;
 
 /// A result type for calling into the backend via FFI. Such a call causes
 /// non-negligible computational cost and must always have gas information
@@ -53,74 +53,63 @@ impl AddAssign for GasInfo {
     }
 }
 
-#[derive(Debug, Snafu)]
+#[derive(Error, Debug)]
 pub enum FfiError {
-    #[snafu(display("Panic in FFI call"))]
-    ForeignPanic { backtrace: snafu::Backtrace },
-    #[snafu(display("bad argument passed to FFI"))]
-    BadArgument { backtrace: snafu::Backtrace },
-    #[snafu(display("VM received invalid UTF-8 data from backend"))]
-    InvalidUtf8 { backtrace: snafu::Backtrace },
-    #[snafu(display("Iterator with ID {} does not exist", id))]
-    IteratorDoesNotExist {
-        id: u32,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Ran out of gas during FFI call"))]
+    #[error("Panic in FFI call")]
+    ForeignPanic {},
+    #[error("bad argument passed to FFI")]
+    BadArgument {},
+    #[error("VM received invalid UTF-8 data from backend")]
+    InvalidUtf8 {},
+    #[error("Iterator with ID {id} does not exist")]
+    IteratorDoesNotExist { id: u32 },
+    #[error("Ran out of gas during FFI call")]
     OutOfGas {},
-    #[snafu(display("Unknown error during FFI call: {:?}", msg))]
-    Unknown {
-        msg: Option<String>,
-        backtrace: snafu::Backtrace,
-    },
+    #[error("Unknown error during FFI call: {msg:?}")]
+    Unknown { msg: Option<String> },
     // This is the only error case of FfiError that is reported back to the contract.
-    #[snafu(display("User error during FFI call: {}", msg))]
-    UserErr {
-        msg: String,
-        backtrace: snafu::Backtrace,
-    },
+    #[error("User error during FFI call: {msg}")]
+    UserErr { msg: String },
 }
 
 impl FfiError {
     pub fn foreign_panic() -> Self {
-        ForeignPanic {}.build()
+        FfiError::ForeignPanic {}
     }
 
     pub fn bad_argument() -> Self {
-        BadArgument {}.build()
+        FfiError::BadArgument {}
     }
 
     pub fn iterator_does_not_exist(iterator_id: u32) -> Self {
-        IteratorDoesNotExist { id: iterator_id }.build()
+        FfiError::IteratorDoesNotExist { id: iterator_id }
     }
 
     pub fn out_of_gas() -> Self {
-        OutOfGas {}.build()
+        FfiError::OutOfGas {}
     }
 
     pub fn unknown<S: ToString>(msg: S) -> Self {
-        Unknown {
+        FfiError::Unknown {
             msg: Some(msg.to_string()),
         }
-        .build()
     }
 
     /// Use `::unknown(msg: S)` if possible
     pub fn unknown_without_message() -> Self {
-        Unknown { msg: None }.build()
+        FfiError::Unknown { msg: None }
     }
 
     pub fn user_err<S: ToString>(msg: S) -> Self {
-        UserErr {
+        FfiError::UserErr {
             msg: msg.to_string(),
         }
-        .build()
     }
 }
 
 impl From<FromUtf8Error> for FfiError {
     fn from(_original: FromUtf8Error) -> Self {
-        InvalidUtf8 {}.build()
+        FfiError::InvalidUtf8 {}
     }
 }
 
