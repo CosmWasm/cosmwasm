@@ -86,8 +86,6 @@ where
         let mut env = Env {
             context_data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         };
-        let _env2 = env.clone();
-        let _env3 = env.clone();
 
         let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
