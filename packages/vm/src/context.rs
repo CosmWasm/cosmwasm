@@ -125,8 +125,6 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         callback: Callback,
     ) -> VmResult<CallbackData>
     where
-        S: Storage,
-        Q: Querier,
         Callback: FnOnce(&Function) -> VmResult<CallbackData>,
     {
         self.with_context_data_mut(|context_data| match context_data.wasmer_instance {
@@ -142,8 +140,6 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
 
     pub fn with_storage_from_context<F, T>(&mut self, func: F) -> VmResult<T>
     where
-        S: Storage,
-        Q: Querier,
         F: FnOnce(&mut S) -> VmResult<T>,
     {
         self.with_context_data_mut(|context_data| match context_data.storage.as_mut() {
@@ -154,8 +150,6 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
 
     pub fn with_querier_from_context<F, T>(&mut self, func: F) -> VmResult<T>
     where
-        S: Storage,
-        Q: Querier,
         F: FnOnce(&mut Q) -> VmResult<T>,
     {
         self.with_context_data_mut(|context_data| match context_data.querier.as_mut() {
