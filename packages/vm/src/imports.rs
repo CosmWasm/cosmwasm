@@ -328,7 +328,7 @@ mod test {
     }
 
     /// A Region reader that is just good enough for the tests in this file
-    fn force_read(&env: &Env<MS, MQ>, region_ptr: u32) -> Vec<u8> {
+    fn force_read(env: &Env<MS, MQ>, region_ptr: u32) -> Vec<u8> {
         read_region(&env.memory(), region_ptr, 5000).unwrap()
     }
 
