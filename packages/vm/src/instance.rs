@@ -4,7 +4,8 @@ use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
 use wasmer::{
-    imports, Function, FunctionType, Instance as WasmerInstance, Module, Store, Type, Val,
+    Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Store, Type,
+    Val,
 };
 use wasmer_engine_jit::JIT;
 
@@ -91,112 +92,139 @@ where
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
         let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
         let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
+        #[cfg(feature = "iterator")]
         let i32i32i32_to_i32 =
             FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
 
-        let import_obj = imports! {
-            "env" => {
-                // Reads the database entry at the given key into the the value.
-                // Returns 0 if key does not exist and pointer to result region otherwise.
-                // Ownership of the key pointer is not transferred to the host.
-                // Ownership of the value pointer is transferred to the contract.
-                "db_read" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
-                    let key_ptr = args[0].unwrap_i32() as u32;
-                    let ptr = do_read::<S, Q>(&mut env, key_ptr)?;
-                    Ok(vec![ptr.into()])
-                }),
-                // Writes the given value into the database entry at the given key.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "db_write" => Function::new_with_env(&store, &i32i32_to_void, env.clone(), |mut env, args| {
-                    let key_ptr = args[0].unwrap_i32() as u32;
-                    let value_ptr = args[1].unwrap_i32() as u32;
-                    do_write::<S, Q>(&mut env, key_ptr, value_ptr)?;
-                    Ok(vec![])
-                }),
-                // Removes the value at the given key. Different than writing &[] as future
-                // scans will not find this key.
-                // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
-                // Ownership of both key pointer is not transferred to the host.
-                "db_remove" => Function::new_with_env(&store, &i32_to_void, env.clone(), |mut env, args| {
-                    let key_ptr = args[0].unwrap_i32() as u32;
-                    do_remove::<S, Q>(&mut env, key_ptr)?;
-                    Ok(vec![])
-                }),
-                // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
-                // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "canonicalize_address" => Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
-                    let source_ptr = args[0].unwrap_i32() as u32;
-                    let destination_ptr = args[1].unwrap_i32() as u32;
-                    let ptr = do_canonicalize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
-                    Ok(vec![ptr.into()])
-                }),
-                // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
-                // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
-                    let source_ptr = args[0].unwrap_i32() as u32;
-                    let destination_ptr = args[1].unwrap_i32() as u32;
-                    let ptr = do_humanize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
-                    Ok(vec![ptr.into()])
-                }),
-                // Allows the contract to emit debug logs that the host can either process or ignore.
-                // This is never written to chain.
-                // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "debug" => Function::new_with_env(&store, &i32_to_void, env.clone(), move |mut env, args| {
-                    let message_ptr = args[0].unwrap_i32() as u32;
-                    if print_debug {
-                        print_debug_message(&mut env, message_ptr)?;
-                    }
-                    Ok(vec![])
-                }),
-                "query_chain" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
-                    let request_ptr = args[0].unwrap_i32() as u32;
-                    let response_ptr = do_query_chain::<S, Q>(&mut env, request_ptr)?;
-                    Ok(vec![response_ptr.into()])
-                }),
-                // Creates an iterator that will go from start to end.
-                // If start_ptr == 0, the start is unbounded.
-                // If end_ptr == 0, the end is unbounded.
-                // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
-                // Ownership of both start and end pointer is not transferred to the host.
-                // Returns an iterator ID.
-                "db_scan" => Function::new_with_env(&store, &i32i32i32_to_i32, env.clone(), |mut env, args| {
-                    #[cfg(feature = "iterator")]
-                    {
-                        let start_ptr = args[0].unwrap_i32() as u32;
-                        let end_ptr = args[1].unwrap_i32() as u32;
-                        let order = args[2].unwrap_i32();
-                        let response_ptr = do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order)?;
-                        Ok(vec![response_ptr.into()])
-                    }
-                    #[cfg(not(feature = "iterator"))]
-                    {
-                        Err(wasmer_engine::RuntimeError::new("Import db_scan not implemented due to missing iterator feature"))
-                    }
-                }),
-                // Get next element of iterator with ID `iterator_id`.
-                // Creates a region containing both key and value and returns its address.
-                // Ownership of the result region is transferred to the contract.
-                // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
-                // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
-                "db_next" => Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
-                    #[cfg(feature = "iterator")]
-                    {
-                        let iterator_id = args[0].unwrap_i32() as u32;
-                        let response_ptr = do_next::<S, Q>(&mut env, iterator_id)?;
-                        Ok(vec![response_ptr.into()])
-                    }
-                    #[cfg(not(feature = "iterator"))]
-                    {
-                        Err(wasmer_engine::RuntimeError::new("Import db_next not implemented due to missing iterator feature"))
-                    }
-                }),
-            },
-        };
+        let mut import_obj = ImportObject::new();
+        let mut env_imports = Exports::new();
+
+        // Reads the database entry at the given key into the the value.
+        // Returns 0 if key does not exist and pointer to result region otherwise.
+        // Ownership of the key pointer is not transferred to the host.
+        // Ownership of the value pointer is transferred to the contract.
+        env_imports.insert(
+            "db_read",
+            Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
+                let key_ptr = args[0].unwrap_i32() as u32;
+                let ptr = do_read::<S, Q>(&mut env, key_ptr)?;
+                Ok(vec![ptr.into()])
+            }),
+        );
+
+        // Writes the given value into the database entry at the given key.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "db_write",
+            Function::new_with_env(&store, &i32i32_to_void, env.clone(), |mut env, args| {
+                let key_ptr = args[0].unwrap_i32() as u32;
+                let value_ptr = args[1].unwrap_i32() as u32;
+                do_write::<S, Q>(&mut env, key_ptr, value_ptr)?;
+                Ok(vec![])
+            }),
+        );
+
+        // Removes the value at the given key. Different than writing &[] as future
+        // scans will not find this key.
+        // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
+        // Ownership of both key pointer is not transferred to the host.
+        env_imports.insert(
+            "db_remove",
+            Function::new_with_env(&store, &i32_to_void, env.clone(), |mut env, args| {
+                let key_ptr = args[0].unwrap_i32() as u32;
+                do_remove::<S, Q>(&mut env, key_ptr)?;
+                Ok(vec![])
+            }),
+        );
+
+        // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
+        // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
+        // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "canonicalize_address",
+            Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+                let source_ptr = args[0].unwrap_i32() as u32;
+                let destination_ptr = args[1].unwrap_i32() as u32;
+                let ptr =
+                    do_canonicalize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
+                Ok(vec![ptr.into()])
+            }),
+        );
+
+        // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
+        // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
+        // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "humanize_address",
+            Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+                let source_ptr = args[0].unwrap_i32() as u32;
+                let destination_ptr = args[1].unwrap_i32() as u32;
+                let ptr =
+                    do_humanize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
+                Ok(vec![ptr.into()])
+            }),
+        );
+
+        // Allows the contract to emit debug logs that the host can either process or ignore.
+        // This is never written to chain.
+        // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "debug",
+            Function::new_with_env(&store, &i32_to_void, env.clone(), move |mut env, args| {
+                let message_ptr = args[0].unwrap_i32() as u32;
+                if print_debug {
+                    print_debug_message(&mut env, message_ptr)?;
+                }
+                Ok(vec![])
+            }),
+        );
+
+        env_imports.insert(
+            "query_chain",
+            Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
+                let request_ptr = args[0].unwrap_i32() as u32;
+                let response_ptr = do_query_chain::<S, Q>(&mut env, request_ptr)?;
+                Ok(vec![response_ptr.into()])
+            }),
+        );
+
+        // Creates an iterator that will go from start to end.
+        // If start_ptr == 0, the start is unbounded.
+        // If end_ptr == 0, the end is unbounded.
+        // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
+        // Ownership of both start and end pointer is not transferred to the host.
+        // Returns an iterator ID.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_scan",
+            Function::new_with_env(&store, &i32i32i32_to_i32, env.clone(), |mut env, args| {
+                let start_ptr = args[0].unwrap_i32() as u32;
+                let end_ptr = args[1].unwrap_i32() as u32;
+                let order = args[2].unwrap_i32();
+                let response_ptr = do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order)?;
+                Ok(vec![response_ptr.into()])
+            }),
+        );
+
+        // Get next element of iterator with ID `iterator_id`.
+        // Creates a region containing both key and value and returns its address.
+        // Ownership of the result region is transferred to the contract.
+        // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
+        // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_next",
+            Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
+                let iterator_id = args[0].unwrap_i32() as u32;
+                let response_ptr = do_next::<S, Q>(&mut env, iterator_id)?;
+                Ok(vec![response_ptr.into()])
+            }),
+        );
+
+        import_obj.register("env", env_imports);
 
         let wasmer_instance = Box::from(WasmerInstance::new(&module, &import_obj).map_err(
             |original| {
