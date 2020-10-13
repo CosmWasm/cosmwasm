@@ -232,13 +232,10 @@ mod test {
         SystemError, SystemResult, WasmQuery,
     };
     use std::ptr::NonNull;
-    use std::sync::{Arc, RwLock};
     use wasmer::{imports, Instance as WasmerInstance};
 
     use crate::backends::compile;
-    use crate::context::{
-        move_into_context, set_storage_readonly, set_wasmer_instance, ContextData,
-    };
+    use crate::context::{move_into_context, set_storage_readonly, set_wasmer_instance};
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::Storage;
     use crate::FfiError;
@@ -264,9 +261,7 @@ mod test {
     const GAS_LIMIT: u64 = 5_000_000;
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let mut env = Env {
-            context_data: Arc::new(RwLock::new(ContextData::new(GAS_LIMIT))),
-        };
+        let mut env = Env::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports

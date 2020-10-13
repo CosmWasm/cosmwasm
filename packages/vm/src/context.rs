@@ -59,20 +59,28 @@ impl GasState {
     }
 }
 
-// #[derive(Clone)]
+/// A ContextEnv is an env that provides access to the
+/// ContextData. The env is clonable but a clone accesses
+/// the same underlying data.
 pub struct Env<S: Storage, Q: Querier> {
-    pub context_data: Arc<RwLock<ContextData<S, Q>>>,
+    data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
 impl<S: Storage, Q: Querier> Clone for Env<S, Q> {
     fn clone(&self) -> Self {
         Env {
-            context_data: self.context_data.clone(),
+            data: self.data.clone(),
         }
     }
 }
 
 impl<S: Storage, Q: Querier> Env<S, Q> {
+    pub fn new(gas_limit: u64) -> Self {
+        Env {
+            data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
+        }
+    }
+
     pub fn with_context_data_mut<Callback, CallbackReturn>(
         &mut self,
         callback: Callback,
@@ -80,7 +88,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
     where
         Callback: FnOnce(&mut ContextData<S, Q>) -> CallbackReturn,
     {
-        let mut guard = self.context_data.as_ref().write().unwrap();
+        let mut guard = self.data.as_ref().write().unwrap();
         let context_data = guard.borrow_mut();
         callback(context_data)
     }
@@ -89,7 +97,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
     where
         Callback: FnOnce(&ContextData<S, Q>) -> CallbackReturn,
     {
-        let guard = self.context_data.as_ref().read().unwrap();
+        let guard = self.data.as_ref().read().unwrap();
         let context_data = guard.borrow();
         callback(context_data)
     }
@@ -311,7 +319,6 @@ mod test {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
-    use std::sync::{Arc, RwLock};
     use wasmer::imports;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -332,9 +339,7 @@ mod test {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let mut env = Env {
-            context_data: Arc::new(RwLock::new(ContextData::new(GAS_LIMIT))),
-        };
+        let mut env = Env::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT).unwrap();
         // we need stubs for all required imports

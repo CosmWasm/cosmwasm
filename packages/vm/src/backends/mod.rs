@@ -34,10 +34,9 @@ pub use singlepass::{backend, compile, get_gas_left, set_gas_left};
 #[cfg(feature = "default-singlepass")]
 mod test {
     use super::*;
-    use crate::context::{set_wasmer_instance, ContextData};
+    use crate::context::set_wasmer_instance;
     use crate::testing::{MockQuerier, MockStorage};
     use std::ptr::NonNull;
-    use std::sync::{Arc, RwLock};
     use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};
 
@@ -46,9 +45,7 @@ mod test {
     const GAS_LIMIT: u64 = 5_000_000;
 
     fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let mut env = Env {
-            context_data: Arc::new(RwLock::new(ContextData::new(GAS_LIMIT))),
-        };
+        let mut env = Env::new(GAS_LIMIT);
         let module = compile(code).unwrap();
         let import_obj = imports! { "env" => {}, };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());

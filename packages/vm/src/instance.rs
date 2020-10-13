@@ -1,7 +1,6 @@
 use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
-use std::sync::{Arc, RwLock};
 
 use wasmer::{
     Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Store, Type,
@@ -12,7 +11,7 @@ use wasmer_engine_jit::JIT;
 use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
     move_into_context, move_out_of_context, set_storage_readonly, set_wasmer_instance,
-    with_querier_from_context, with_storage_from_context, ContextData, Env,
+    with_querier_from_context, with_storage_from_context, Env,
 };
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -84,9 +83,7 @@ where
         let engine = JIT::headless().engine();
         let store = Store::new(&engine);
 
-        let mut env = Env {
-            context_data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
-        };
+        let mut env = Env::new(gas_limit);
 
         let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
