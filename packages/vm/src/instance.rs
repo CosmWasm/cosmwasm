@@ -344,7 +344,7 @@ mod test {
     use crate::errors::VmError;
     use crate::testing::{
         mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_with_balances,
-        mock_instance_with_failing_api, mock_instance_with_gas_limit, MockQuerier, MockStorage,
+        mock_instance_with_failing_api, mock_instance_with_gas_limit,
     };
     use crate::traits::Storage;
     use crate::{call_init, FfiError};
