@@ -22,8 +22,6 @@ use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
 
-const WASM_PAGE_SIZE: u64 = 64 * 1024;
-
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
     /// The original limit the instance was created with
@@ -322,6 +320,7 @@ mod test {
     };
     use wabt::wat2wasm;
 
+    const WASM_PAGE_SIZE: u64 = 64 * 1024;
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_GAS_LIMIT: u64 = 500_000;
