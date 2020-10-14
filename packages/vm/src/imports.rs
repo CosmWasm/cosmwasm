@@ -34,8 +34,58 @@ const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
+// The block of native_* prefixed functions is tailored for Wasmer's
+// Function::new_native_with_env interface. Those require an env in the first
+// argument and cannot capiture other variables such as the Api.
+
+pub fn native_db_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
+    let ptr = do_read::<S, Q>(env, key_ptr)?;
+    Ok(ptr)
+}
+
+pub fn native_db_write<S: Storage, Q: Querier>(
+    env: &mut Env<S, Q>,
+    key_ptr: u32,
+    value_ptr: u32,
+) -> VmResult<()> {
+    do_write(env, key_ptr, value_ptr)
+}
+
+pub fn native_db_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<()> {
+    do_remove(env, key_ptr)
+}
+
+pub fn native_query_chain<S: Storage, Q: Querier>(
+    env: &mut Env<S, Q>,
+    request_ptr: u32,
+) -> VmResult<u32> {
+    do_query_chain(env, request_ptr)
+}
+
+#[cfg(feature = "iterator")]
+pub fn native_db_scan<S: Storage, Q: Querier>(
+    env: &mut Env<S, Q>,
+    start_ptr: u32,
+    end_ptr: u32,
+    order: i32,
+) -> VmResult<u32> {
+    do_scan(env, start_ptr, end_ptr, order)
+}
+
+#[cfg(feature = "iterator")]
+pub fn native_db_next<S: Storage, Q: Querier>(
+    env: &mut Env<S, Q>,
+    iterator_id: u32,
+) -> VmResult<u32> {
+    do_next(env, iterator_id)
+}
+
+//
+// Import implementations
+//
+
 /// Reads a storage entry from the VM's storage into Wasm memory
-pub fn do_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
+fn do_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
@@ -50,7 +100,7 @@ pub fn do_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmR
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-pub fn do_write<S: Storage, Q: Querier>(
+fn do_write<S: Storage, Q: Querier>(
     env: &mut Env<S, Q>,
     key_ptr: u32,
     value_ptr: u32,
@@ -70,7 +120,7 @@ pub fn do_write<S: Storage, Q: Querier>(
     Ok(())
 }
 
-pub fn do_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<()> {
+fn do_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<()> {
     if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
@@ -165,10 +215,7 @@ fn write_to_contract<S: Storage, Q: Querier>(env: &mut Env<S, Q>, input: &[u8]) 
     Ok(target_ptr)
 }
 
-pub fn do_query_chain<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
-    request_ptr: u32,
-) -> VmResult<u32> {
+fn do_query_chain<S: Storage, Q: Querier>(env: &mut Env<S, Q>, request_ptr: u32) -> VmResult<u32> {
     let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
     let gas_remaining = get_gas_left(env);
@@ -181,7 +228,7 @@ pub fn do_query_chain<S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_scan<S: Storage, Q: Querier>(
+fn do_scan<S: Storage, Q: Querier>(
     env: &mut Env<S, Q>,
     start_ptr: u32,
     end_ptr: u32,
@@ -202,7 +249,7 @@ pub fn do_scan<S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_next<S: Storage, Q: Querier>(env: &mut Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
+fn do_next<S: Storage, Q: Querier>(env: &mut Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
     let (result, gas_info) =
         env.with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
     process_gas_info::<S, Q>(env, gas_info)?;

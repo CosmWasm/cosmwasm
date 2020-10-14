@@ -14,11 +14,11 @@ use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
-    print_debug_message,
+    do_canonicalize_address, do_humanize_address, native_db_read, native_db_remove,
+    native_db_write, native_query_chain, print_debug_message,
 };
 #[cfg(feature = "iterator")]
-use crate::imports::{do_next, do_scan};
+use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
 
@@ -82,13 +82,8 @@ where
 
         let mut env = Env::new(gas_limit);
 
-        let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
-        let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
         let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
-        #[cfg(feature = "iterator")]
-        let i32i32i32_to_i32 =
-            FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
 
         let mut import_obj = ImportObject::new();
         let mut env_imports = Exports::new();
@@ -99,23 +94,14 @@ where
         // Ownership of the value pointer is transferred to the contract.
         env_imports.insert(
             "db_read",
-            Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
-                let key_ptr = args[0].unwrap_i32() as u32;
-                let ptr = do_read::<S, Q>(&mut env, key_ptr)?;
-                Ok(vec![ptr.into()])
-            }),
+            Function::new_native_with_env(&store, env.clone(), native_db_read),
         );
 
         // Writes the given value into the database entry at the given key.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "db_write",
-            Function::new_with_env(&store, &i32i32_to_void, env.clone(), |mut env, args| {
-                let key_ptr = args[0].unwrap_i32() as u32;
-                let value_ptr = args[1].unwrap_i32() as u32;
-                do_write::<S, Q>(&mut env, key_ptr, value_ptr)?;
-                Ok(vec![])
-            }),
+            Function::new_native_with_env(&store, env.clone(), native_db_write),
         );
 
         // Removes the value at the given key. Different than writing &[] as future
@@ -124,11 +110,7 @@ where
         // Ownership of both key pointer is not transferred to the host.
         env_imports.insert(
             "db_remove",
-            Function::new_with_env(&store, &i32_to_void, env.clone(), |mut env, args| {
-                let key_ptr = args[0].unwrap_i32() as u32;
-                do_remove::<S, Q>(&mut env, key_ptr)?;
-                Ok(vec![])
-            }),
+            Function::new_native_with_env(&store, env.clone(), native_db_remove),
         );
 
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
@@ -178,11 +160,7 @@ where
 
         env_imports.insert(
             "query_chain",
-            Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
-                let request_ptr = args[0].unwrap_i32() as u32;
-                let response_ptr = do_query_chain::<S, Q>(&mut env, request_ptr)?;
-                Ok(vec![response_ptr.into()])
-            }),
+            Function::new_native_with_env(&store, env.clone(), native_query_chain),
         );
 
         // Creates an iterator that will go from start to end.
@@ -194,13 +172,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_scan",
-            Function::new_with_env(&store, &i32i32i32_to_i32, env.clone(), |mut env, args| {
-                let start_ptr = args[0].unwrap_i32() as u32;
-                let end_ptr = args[1].unwrap_i32() as u32;
-                let order = args[2].unwrap_i32();
-                let response_ptr = do_scan::<S, Q>(&mut env, start_ptr, end_ptr, order)?;
-                Ok(vec![response_ptr.into()])
-            }),
+            Function::new_native_with_env(&store, env.clone(), native_db_scan),
         );
 
         // Get next element of iterator with ID `iterator_id`.
@@ -211,11 +183,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next",
-            Function::new_with_env(&store, &i32_to_i32, env.clone(), |mut env, args| {
-                let iterator_id = args[0].unwrap_i32() as u32;
-                let response_ptr = do_next::<S, Q>(&mut env, iterator_id)?;
-                Ok(vec![response_ptr.into()])
-            }),
+            Function::new_native_with_env(&store, env.clone(), native_db_next),
         );
 
         import_obj.register("env", env_imports);
