@@ -25,14 +25,15 @@ iterator = []
 staking = []
 # backtraces provides much better context at runtime errors (in non-wasm code)
 # at the cost of a bit of code size and performance.
-backtraces = ["snafu/backtraces"]
+# This feature requires Rust nightly because it depends on the unstable backtrace feature.
+backtraces = []
 
 [dependencies]
 base64 = "0.11.0"
 serde-json-wasm = { version = "0.2.1" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
-snafu = { version = "0.6.6" }
+thiserror = "1.0"
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }

@@ -1,45 +1,37 @@
-use snafu::Snafu;
 use std::fmt::Debug;
+use thiserror::Error;
 
 /// An error validating a Region
-#[derive(Debug, Snafu)]
+#[derive(Error, Debug)]
 #[non_exhaustive]
 pub enum RegionValidationError {
-    #[snafu(display(
+    #[error(
         "Region length exceeds capacity. Length {}, capacity {}",
         length,
         capacity
-    ))]
-    LengthExceedsCapacity {
-        length: u32,
-        capacity: u32,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display(
+    )]
+    LengthExceedsCapacity { length: u32, capacity: u32 },
+    #[error(
         "Region exceeds address space. Offset {}, capacity {}",
         offset,
         capacity
-    ))]
-    OutOfRange {
-        offset: u32,
-        capacity: u32,
-        backtrace: snafu::Backtrace,
-    },
-    #[snafu(display("Got a zero Wasm address in the offset"))]
-    ZeroOffset { backtrace: snafu::Backtrace },
+    )]
+    OutOfRange { offset: u32, capacity: u32 },
+    #[error("Got a zero Wasm address in the offset")]
+    ZeroOffset {},
 }
 
 impl RegionValidationError {
     pub(crate) fn length_exceeds_capacity(length: u32, capacity: u32) -> Self {
-        LengthExceedsCapacity { length, capacity }.build()
+        RegionValidationError::LengthExceedsCapacity { length, capacity }
     }
 
     pub(crate) fn out_of_range(offset: u32, capacity: u32) -> Self {
-        OutOfRange { offset, capacity }.build()
+        RegionValidationError::OutOfRange { offset, capacity }
     }
 
     pub(crate) fn zero_offset() -> Self {
-        ZeroOffset {}.build()
+        RegionValidationError::ZeroOffset {}
     }
 }
 

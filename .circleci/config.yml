@@ -83,15 +83,15 @@ jobs:
       - run:
           name: Build library for native target (all features)
           working_directory: ~/project/packages/std
-          command: cargo build --locked --all-features
+          command: cargo build --locked --features iterator,staking
       - run:
           name: Build library for wasm target (all features)
           working_directory: ~/project/packages/std
-          command: cargo wasm --locked --all-features
+          command: cargo wasm --locked --features iterator,staking
       - run:
           name: Run unit tests (all features)
           working_directory: ~/project/packages/std
-          command: cargo test --locked --all-features
+          command: cargo test --locked --features iterator,staking
       - run:
           name: Build and run schema generator
           working_directory: ~/project/packages/std

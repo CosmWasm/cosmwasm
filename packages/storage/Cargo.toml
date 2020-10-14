@@ -21,6 +21,3 @@ iterator = ["cosmwasm-std/iterator"]
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.11.1" }
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
-
-[dev-dependencies]
-snafu = { version = "0.6.3" }

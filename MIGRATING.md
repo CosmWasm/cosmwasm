@@ -4,6 +4,25 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.11 -> 0.12
+
+- In your contract's `.cargo/config` remove `--features backtraces`, which is
+  now available in Rust nightly only:
+
+  ```diff
+  @@ -1,6 +1,6 @@
+   [alias]
+   wasm = "build --release --target wasm32-unknown-unknown"
+   wasm-debug = "build --target wasm32-unknown-unknown"
+  -unit-test = "test --lib --features backtraces"
+  +unit-test = "test --lib"
+   integration-test = "test --test integration"
+   schema = "run --example schema"
+  ```
+
+  In order to use backtraces for debugging, run
+  `RUST_BACKTRACE=1 cargo +nightly unit-test --features backtraces`.
+
 ## 0.10 -> 0.11
 
 - Contracts now support any custom error type `E: ToString + From<StdError>`.

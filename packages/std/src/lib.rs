@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "backtraces", feature(backtrace))]
+
 // Exposed on all platforms
 
 mod addresses;
