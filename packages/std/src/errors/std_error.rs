@@ -127,6 +127,18 @@ impl StdError {
     }
 }
 
+impl From<std::str::Utf8Error> for StdError {
+    fn from(source: std::str::Utf8Error) -> Self {
+        Self::invalid_utf8(source)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for StdError {
+    fn from(source: std::string::FromUtf8Error) -> Self {
+        Self::invalid_utf8(source)
+    }
+}
+
 /// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
@@ -137,6 +149,7 @@ pub type StdResult<T> = core::result::Result<T, StdError>;
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::str;
 
     // constructors
 
@@ -298,5 +311,31 @@ mod test {
         let error: StdError = StdError::underflow(3, 5);
         let embedded = format!("Display message: {}", error);
         assert_eq!(embedded, "Display message: Cannot subtract 5 from 3");
+    }
+
+    #[test]
+    fn from_std_str_utf8error_works() {
+        let error: StdError = str::from_utf8(b"Hello \xF0\x90\x80World")
+            .unwrap_err()
+            .into();
+        match error {
+            StdError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn from_std_string_fromutf8error_works() {
+        let error: StdError = String::from_utf8(b"Hello \xF0\x90\x80World".to_vec())
+            .unwrap_err()
+            .into();
+        match error {
+            StdError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 }

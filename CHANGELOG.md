@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.11.2 (unreleased)
+
+**cosmwasm-std**
+
+- Implement `From<std::str::Utf8Error>` and `From<std::string::FromUtf8Error>`
+  for `StdError`.
+
 ## 0.11.1 (2020-10-12)
 
 **cosmwasm-std**
