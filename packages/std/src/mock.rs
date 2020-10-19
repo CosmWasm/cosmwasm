@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::coins::Coin;
+use crate::deps::Deps;
 use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
@@ -13,16 +14,16 @@ use crate::query::{
 use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
-use crate::traits::{Api, Extern, Querier, QuerierResult};
+use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_dependencies(contract_balance: &[Coin]) -> Deps<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
-    Extern {
+    Deps {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
@@ -33,8 +34,8 @@ pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockA
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
-    Extern {
+) -> Deps<MockStorage, MockApi, MockQuerier> {
+    Deps {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(balances),

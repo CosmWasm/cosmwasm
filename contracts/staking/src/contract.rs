@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, coin, to_binary, Api, BankMsg, Binary, Decimal, Env, Extern, HandleResponse, HumanAddr,
+    attr, coin, to_binary, Api, BankMsg, Binary, Decimal, Deps, Env, HandleResponse, HumanAddr,
     InitResponse, MessageInfo, Querier, StakingMsg, StdError, StdResult, Storage, Uint128, WasmMsg,
 };
 
@@ -16,7 +16,7 @@ use crate::state::{
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
@@ -55,7 +55,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -73,7 +73,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn transfer<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     info: MessageInfo,
     recipient: HumanAddr,
@@ -136,7 +136,7 @@ fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
 }
 
 pub fn bond<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
 ) -> StdResult<HandleResponse> {
@@ -192,7 +192,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn unbond<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
     amount: Uint128,
@@ -262,7 +262,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn claim<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
 ) -> StdResult<HandleResponse> {
@@ -315,7 +315,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
 /// then issue a callback to itself via _bond_all_tokens
 /// to reinvest the new earnings (and anything else that accumulated)
 pub fn reinvest<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     _info: MessageInfo,
 ) -> StdResult<HandleResponse> {
@@ -345,7 +345,7 @@ pub fn reinvest<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
 ) -> Result<HandleResponse, StakingError> {
@@ -389,7 +389,7 @@ pub fn _bond_all_tokens<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     _env: Env,
     msg: QueryMsg,
 ) -> StdResult<Binary> {
@@ -402,13 +402,13 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query_token_info<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
 ) -> StdResult<TokenInfoResponse> {
     token_info_read(&deps.storage).load()
 }
 
 pub fn query_balance<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     address: HumanAddr,
 ) -> StdResult<BalanceResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
@@ -419,7 +419,7 @@ pub fn query_balance<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query_claims<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     address: HumanAddr,
 ) -> StdResult<ClaimsResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
@@ -430,7 +430,7 @@ pub fn query_claims<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query_investment<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
 ) -> StdResult<InvestmentResponse> {
     let invest = invest_info_read(&deps.storage).load()?;
     let supply = total_supply_read(&deps.storage).load()?;
@@ -506,14 +506,14 @@ mod tests {
     }
 
     fn get_balance<S: Storage, A: Api, Q: Querier, U: Into<HumanAddr>>(
-        deps: &Extern<S, A, Q>,
+        deps: &Deps<S, A, Q>,
         addr: U,
     ) -> Uint128 {
         query_balance(&deps, addr.into()).unwrap().balance
     }
 
     fn get_claims<S: Storage, A: Api, Q: Querier, U: Into<HumanAddr>>(
-        deps: &Extern<S, A, Q>,
+        deps: &Deps<S, A, Q>,
         addr: U,
     ) -> Uint128 {
         query_claims(&deps, addr.into()).unwrap().claims

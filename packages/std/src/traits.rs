@@ -18,29 +18,6 @@ use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::types::Empty;
 
-/// Holds all external dependencies of the contract.
-/// Designed to allow easy dependency injection at runtime.
-/// This cannot be copied or cloned since it would behave differently
-/// for mock storages and a bridge storage in the VM.
-pub struct Extern<S: Storage, A: Api, Q: Querier> {
-    pub storage: S,
-    pub api: A,
-    pub querier: Q,
-}
-
-impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
-    /// change_querier is a helper mainly for test code when swapping out the Querier
-    /// from the auto-generated one from mock_dependencies. This changes the type of
-    /// Extern so replaces requires some boilerplate.
-    pub fn change_querier<T: Querier, F: Fn(Q) -> T>(self, transform: F) -> Extern<S, A, T> {
-        Extern {
-            storage: self.storage,
-            api: self.api,
-            querier: transform(self.querier),
-        }
-    }
-}
-
 /// ReadonlyStorage is access to the contracts persistent data store
 pub trait ReadonlyStorage {
     /// Returns None when key does not exist.

@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Env, Extern, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
+    Context, Deps, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
     Querier, QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
 };
 
@@ -87,7 +87,7 @@ pub struct RecurseResponse {
 pub const CONFIG_KEY: &[u8] = b"config";
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
@@ -110,7 +110,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -127,7 +127,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -144,7 +144,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 }
 
 fn do_release<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
 ) -> Result<HandleResponse, HackError> {
@@ -184,7 +184,7 @@ fn do_cpu_loop() -> Result<HandleResponse, HackError> {
 }
 
 fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
 ) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
@@ -295,7 +295,7 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackEr
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     env: Env,
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
@@ -309,7 +309,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_verifier<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
 ) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
@@ -321,7 +321,7 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_other_balance<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     address: HumanAddr,
 ) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
@@ -329,7 +329,7 @@ fn query_other_balance<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_recurse<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     depth: u32,
     work: u32,
     contract: HumanAddr,

@@ -6,13 +6,13 @@
 /// The second module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, Extern, Env, StdResult, Binary, MessageInfo,
+/// #     Storage, Api, Querier, Deps, Env, StdResult, Binary, MessageInfo,
 /// #     InitResult, HandleResult, QueryResult,
 /// # };
 /// #
 /// # type InitMsg = ();
 /// pub fn init<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Extern<S, A, Q>,
+///     deps: &mut Deps<S, A, Q>,
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: InitMsg,
@@ -22,7 +22,7 @@
 ///
 /// # type HandleMsg = ();
 /// pub fn handle<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Extern<S, A, Q>,
+///     deps: &mut Deps<S, A, Q>,
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: HandleMsg,
@@ -32,7 +32,7 @@
 ///
 /// # type QueryMsg = ();
 /// pub fn query<S: Storage, A: Api, Q: Querier>(
-///     deps: &Extern<S, A, Q>,
+///     deps: &Deps<S, A, Q>,
 ///     env: Env,
 ///     msg: QueryMsg,
 /// ) -> QueryResult {
@@ -116,11 +116,11 @@ macro_rules! create_entry_points {
 /// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, Extern, Env, StdResult, Binary, MigrateResult, MessageInfo,
+/// #     Storage, Api, Querier, Deps, Env, StdResult, Binary, MigrateResult, MessageInfo,
 /// # };
 /// # type MigrateMsg = ();
 /// pub fn migrate<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Extern<S, A, Q>,
+///     deps: &mut Deps<S, A, Q>,
 ///     _env: Env,
 ///     _info: MessageInfo,
 ///     msg: MigrateMsg,

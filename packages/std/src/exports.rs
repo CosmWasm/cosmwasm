@@ -11,13 +11,13 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
+use crate::deps::Deps;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
 use crate::results::{
     ContractResult, HandleResponse, InitResponse, MigrateResponse, QueryResponse,
 };
 use crate::serde::{from_slice, to_vec};
-use crate::traits::Extern;
 use crate::types::Env;
 use crate::MessageInfo;
 
@@ -69,7 +69,7 @@ macro_rules! r#try_into_contract_result {
 /// - `E`: error type for responses
 pub fn do_init<M, C, E>(
     init_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &mut Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         MessageInfo,
         M,
@@ -100,7 +100,7 @@ where
 /// - `E`: error type for responses
 pub fn do_handle<M, C, E>(
     handle_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &mut Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         MessageInfo,
         M,
@@ -131,7 +131,7 @@ where
 /// - `E`: error type for responses
 pub fn do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &mut Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         MessageInfo,
         M,
@@ -161,7 +161,7 @@ where
 /// - `E`: error type for responses
 pub fn do_query<M, E>(
     query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         M,
     ) -> Result<QueryResponse, E>,
@@ -179,7 +179,7 @@ where
 
 fn _do_init<M, C, E>(
     init_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &mut Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         MessageInfo,
         M,
@@ -207,7 +207,7 @@ where
 
 fn _do_handle<M, C, E>(
     handle_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &mut Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         MessageInfo,
         M,
@@ -235,7 +235,7 @@ where
 
 fn _do_migrate<M, C, E>(
     migrate_fn: &dyn Fn(
-        &mut Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &mut Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         MessageInfo,
         M,
@@ -263,7 +263,7 @@ where
 
 fn _do_query<M, E>(
     query_fn: &dyn Fn(
-        &Extern<ExternalStorage, ExternalApi, ExternalQuerier>,
+        &Deps<ExternalStorage, ExternalApi, ExternalQuerier>,
         Env,
         M,
     ) -> Result<QueryResponse, E>,
@@ -285,8 +285,8 @@ where
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
-fn make_dependencies() -> Extern<ExternalStorage, ExternalApi, ExternalQuerier> {
-    Extern {
+fn make_dependencies() -> Deps<ExternalStorage, ExternalApi, ExternalQuerier> {
+    Deps {
         storage: ExternalStorage::new(),
         api: ExternalApi::new(),
         querier: ExternalQuerier::new(),

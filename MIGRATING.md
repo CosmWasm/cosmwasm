@@ -23,6 +23,26 @@ major releases of `cosmwasm`. Note that you can also view the
   In order to use backtraces for debugging, run
   `RUST_BACKTRACE=1 cargo +nightly unit-test --features backtraces`.
 
+- Rename the type `Extern` to `Deps` in `init`/`handle`/`migrate`/`query`, e.g.
+
+  ```rust
+  // before
+  pub fn migrate<S: Storage, A: Api, Q: Querier>(
+      deps: &mut Extern<S, A, Q>,
+      _env: Env,
+      _info: MessageInfo,
+      msg: MigrateMsg,
+  ) -> Result<MigrateResponse, HackError> {
+
+  // after
+  pub fn migrate<S: Storage, A: Api, Q: Querier>(
+    deps: &mut Deps<S, A, Q>,
+    _env: Env,
+    _info: MessageInfo,
+    msg: MigrateMsg,
+  ) -> Result<MigrateResponse, HackError> {
+  ```
+
 ## 0.10 -> 0.11
 
 - Contracts now support any custom error type `E: ToString + From<StdError>`.
