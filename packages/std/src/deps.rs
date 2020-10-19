@@ -40,12 +40,12 @@ impl<S: Storage, A: Api, Q: Querier> Deps<S, A, Q> {
     }
 }
 
-impl<'a> DepsMut<'a> {
-    pub fn as_ref(&'_ self) -> DepsRef<'_> {
-        DepsRef {
-            storage: &self.storage,
-            api: self.api,
-            querier: self.querier,
-        }
-    }
-}
+// impl<'a> DepsMut<'a> {
+//     pub fn as_ref(&'_ self) -> DepsRef<'_> {
+//         DepsRef {
+//             storage: &self.storage,
+//             api: self.api,
+//             querier: self.querier,
+//         }
+//     }
+// }
