@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, Api, Binary, Env, Extern, HandleResponse, InitResponse,
+    from_slice, to_binary, to_vec, Api, Binary, Deps, Env, HandleResponse, InitResponse,
     MessageInfo, Order, Querier, QueryResponse, StdResult, Storage,
 };
 
@@ -65,7 +65,7 @@ pub struct ListResponse {
 
 // init is a no-op, just empty data
 pub fn init<S: Storage, A: Api, Q: Querier>(
-    _deps: &mut Extern<S, A, Q>,
+    _deps: &mut Deps<S, A, Q>,
     _env: Env,
     _info: MessageInfo,
     _msg: InitMsg,
@@ -74,7 +74,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     _info: MessageInfo,
     msg: HandleMsg,
@@ -88,7 +88,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 const FIRST_KEY: u8 = 0;
 
 fn enqueue<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     value: i32,
 ) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
@@ -106,9 +106,7 @@ fn enqueue<S: Storage, A: Api, Q: Querier>(
     Ok(HandleResponse::default())
 }
 
-fn dequeue<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
-) -> StdResult<HandleResponse> {
+fn dequeue<S: Storage, A: Api, Q: Querier>(deps: &mut Deps<S, A, Q>) -> StdResult<HandleResponse> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
 
@@ -124,7 +122,7 @@ fn dequeue<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     _env: Env,
     msg: QueryMsg,
 ) -> StdResult<QueryResponse> {
@@ -136,12 +134,12 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<CountResponse> {
+fn query_count<S: Storage, A: Api, Q: Querier>(deps: &Deps<S, A, Q>) -> StdResult<CountResponse> {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
     Ok(CountResponse { count })
 }
 
-fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<SumResponse> {
+fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Deps<S, A, Q>) -> StdResult<SumResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)
@@ -152,7 +150,7 @@ fn query_sum<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResul
 }
 
 fn query_reducer<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
 ) -> StdResult<ReducerResponse> {
     let mut out: Vec<(i32, i32)> = vec![];
     // val: StdResult<Item>
@@ -182,7 +180,7 @@ fn query_reducer<S: Storage, A: Api, Q: Querier>(
 
 /// Does a range query with both bounds set. Not really useful but to debug an issue
 /// between VM and Wasm: https://github.com/CosmWasm/cosmwasm/issues/508
-fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<ListResponse> {
+fn query_list<S: Storage, A: Api, Q: Querier>(deps: &Deps<S, A, Q>) -> StdResult<ListResponse> {
     let empty: Vec<u32> = deps
         .storage
         .range(Some(b"large"), Some(b"larger"), Order::Ascending)
@@ -209,7 +207,7 @@ mod tests {
     };
     use cosmwasm_std::{coins, from_binary};
 
-    fn create_contract() -> (Extern<MockStorage, MockApi, MockQuerier>, MessageInfo) {
+    fn create_contract() -> (Deps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies(&coins(1000, "earth"));
         let info = mock_info("creator", &coins(1000, "earth"));
         let res = init(&mut deps, mock_env(), info.clone(), InitMsg {}).unwrap();
@@ -217,11 +215,11 @@ mod tests {
         (deps, info)
     }
 
-    fn get_count(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> u32 {
+    fn get_count(deps: &Deps<MockStorage, MockApi, MockQuerier>) -> u32 {
         query_count(deps).unwrap().count
     }
 
-    fn get_sum(deps: &Extern<MockStorage, MockApi, MockQuerier>) -> i32 {
+    fn get_sum(deps: &Deps<MockStorage, MockApi, MockQuerier>) -> i32 {
         query_sum(deps).unwrap().sum
     }
 

@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, to_binary, to_vec, Api, Binary, ContractResult, CosmosMsg, Env, Extern, HandleResponse,
+    attr, to_binary, to_vec, Api, Binary, ContractResult, CosmosMsg, Deps, Env, HandleResponse,
     HumanAddr, InitResponse, MessageInfo, Querier, QueryRequest, StdError, StdResult, Storage,
     SystemResult,
 };
@@ -12,7 +12,7 @@ use crate::msg::{
 use crate::state::{config, config_read, State};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     info: MessageInfo,
     _msg: InitMsg,
@@ -26,7 +26,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -38,7 +38,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     info: MessageInfo,
     msgs: Vec<CosmosMsg<CustomMsg>>,
@@ -65,7 +65,7 @@ pub fn try_reflect<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     _env: Env,
     info: MessageInfo,
     owner: HumanAddr,
@@ -89,7 +89,7 @@ pub fn try_change_owner<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     _env: Env,
     msg: QueryMsg,
 ) -> StdResult<Binary> {
@@ -101,7 +101,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdResult<OwnerResponse> {
+fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Deps<S, A, Q>) -> StdResult<OwnerResponse> {
     let state = config_read(&deps.storage).load()?;
     let resp = OwnerResponse {
         owner: deps.api.human_address(&state.owner)?,
@@ -110,7 +110,7 @@ fn query_owner<S: Storage, A: Api, Q: Querier>(deps: &Extern<S, A, Q>) -> StdRes
 }
 
 fn query_capitalized<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     text: String,
 ) -> StdResult<CapitalizedResponse> {
     let req = SpecialQuery::Capitalized { text }.into();
@@ -119,7 +119,7 @@ fn query_capitalized<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_chain<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     request: &QueryRequest<SpecialQuery>,
 ) -> StdResult<ChainResponse> {
     let raw = to_vec(request).map_err(|serialize_err| {
@@ -139,7 +139,7 @@ fn query_chain<S: Storage, A: Api, Q: Querier>(
 }
 
 fn query_raw<S: Storage, A: Api, Q: Querier>(
-    deps: &Extern<S, A, Q>,
+    deps: &Deps<S, A, Q>,
     contract: HumanAddr,
     key: Binary,
 ) -> StdResult<RawResponse> {

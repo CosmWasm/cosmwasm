@@ -12,6 +12,7 @@
 - Rename `StdError::ParseErr::source` to `StdError::ParseErr::source_type` and
   `StdError::SerializeErr::target` to `StdError::SerializeErr::target_type` to
   work around speacial treatment of the field name `source` in thiserror.
+- Rename `Extern` to `Deps` to unify naming.
 
 **cosmwasm-vm**
 

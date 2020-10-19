@@ -1,12 +1,12 @@
 use cosmwasm_std::{
-    attr, Api, BankMsg, Binary, Env, Extern, HandleResponse, InitResponse, MessageInfo,
+    attr, Api, BankMsg, Binary, Deps, Env, HandleResponse, InitResponse, MessageInfo,
     MigrateResponse, Order, Querier, StdError, StdResult, Storage,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 
 pub fn init<S: Storage, A: Api, Q: Querier>(
-    _deps: &mut Extern<S, A, Q>,
+    _deps: &mut Deps<S, A, Q>,
     _env: Env,
     _info: MessageInfo,
     _msg: InitMsg,
@@ -17,7 +17,7 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
-    _deps: &mut Extern<S, A, Q>,
+    _deps: &mut Deps<S, A, Q>,
     _env: Env,
     _info: MessageInfo,
     _msg: HandleMsg,
@@ -28,7 +28,7 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Extern<S, A, Q>,
+    deps: &mut Deps<S, A, Q>,
     env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -62,7 +62,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
 }
 
 pub fn query<S: Storage, A: Api, Q: Querier>(
-    _deps: &Extern<S, A, Q>,
+    _deps: &Deps<S, A, Q>,
     _env: Env,
     _msg: QueryMsg,
 ) -> StdResult<Binary> {
