@@ -119,7 +119,7 @@ impl Api for MockApi {
         // Remove NULL bytes (i.e. the padding)
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed).map_err(StdError::invalid_utf8)?;
+        let human = String::from_utf8(trimmed)?;
         Ok(human.into())
     }
 
