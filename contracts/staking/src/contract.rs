@@ -83,10 +83,10 @@ pub fn transfer<S: Storage, A: Api, Q: Querier>(
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     let mut accounts = balances(&mut deps.storage);
-    accounts.update(sender_raw.as_slice(), |balance: Option<Uint128>| {
+    accounts.update(&sender_raw, |balance: Option<Uint128>| {
         balance.unwrap_or_default() - send
     })?;
-    accounts.update(rcpt_raw.as_slice(), |balance: Option<Uint128>| {
+    accounts.update(&rcpt_raw, |balance: Option<Uint128>| -> StdResult<_> {
         Ok(balance.unwrap_or_default() + send)
     })?;
 
@@ -169,7 +169,7 @@ pub fn bond<S: Storage, A: Api, Q: Querier>(
     totals.save(&supply)?;
 
     // update the balance of the sender
-    balances(&mut deps.storage).update(sender_raw.as_slice(), |balance| {
+    balances(&mut deps.storage).update(&sender_raw, |balance| -> StdResult<_> {
         Ok(balance.unwrap_or_default() + to_mint)
     })?;
 
@@ -212,12 +212,12 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
 
     // deduct all from the account
     let mut accounts = balances(&mut deps.storage);
-    accounts.update(sender_raw.as_slice(), |balance| {
+    accounts.update(&sender_raw, |balance| -> StdResult<_> {
         balance.unwrap_or_default() - amount
     })?;
     if tax > Uint128(0) {
         // add tax to the owner
-        accounts.update(invest.owner.as_slice(), |balance: Option<Uint128>| {
+        accounts.update(&invest.owner, |balance: Option<Uint128>| -> StdResult<_> {
             Ok(balance.unwrap_or_default() + tax)
         })?;
     }
@@ -239,7 +239,7 @@ pub fn unbond<S: Storage, A: Api, Q: Querier>(
     totals.save(&supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
-    claims(&mut deps.storage).update(sender_raw.as_slice(), |claim| {
+    claims(&mut deps.storage).update(&sender_raw, |claim| -> StdResult<_> {
         Ok(claim.unwrap_or_default() + unbond)
     })?;
 
@@ -287,7 +287,7 @@ pub fn claim<S: Storage, A: Api, Q: Querier>(
     })?;
 
     // update total supply (lower claim)
-    total_supply(&mut deps.storage).update(|mut supply| {
+    total_supply(&mut deps.storage).update(|mut supply| -> StdResult<_> {
         supply.claims = (supply.claims - to_send)?;
         Ok(supply)
     })?;
