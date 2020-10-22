@@ -1,10 +1,10 @@
 use std::fmt;
+use std::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
-use std::ops::Deref;
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
