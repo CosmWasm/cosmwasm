@@ -6,6 +6,8 @@
 
 - Implement `From<std::str::Utf8Error>` and `From<std::string::FromUtf8Error>`
   for `StdError`.
+- Generalize denom argument from `&str` to `S: Into<String>` in `coin`, `coins`
+  and `Coin::new`.
 
 ## 0.11.1 (2020-10-12)
 
