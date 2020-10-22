@@ -9,6 +9,7 @@
 - Generalize denom argument from `&str` to `S: Into<String>` in `coin`, `coins`
   and `Coin::new`.
 - Implement `PartialEq` between `Binary` and `Vec<u8>`/`&[u8]`.
+- Add missing `PartialEq` implementations between `HumanAddr` and `str`/`&str`.
 
 ## 0.11.1 (2020-10-12)
 
