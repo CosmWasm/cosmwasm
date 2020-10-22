@@ -100,6 +100,38 @@ impl From<Binary> for Vec<u8> {
     }
 }
 
+/// Implement `encoding::Binary == std::vec::Vec<u8>`
+impl PartialEq<Vec<u8>> for Binary {
+    fn eq(&self, rhs: &Vec<u8>) -> bool {
+        // Use Vec<u8> == Vec<u8>
+        self.0 == *rhs
+    }
+}
+
+/// Implement `std::vec::Vec<u8> == encoding::Binary`
+impl PartialEq<Binary> for Vec<u8> {
+    fn eq(&self, rhs: &Binary) -> bool {
+        // Use Vec<u8> == Vec<u8>
+        *self == rhs.0
+    }
+}
+
+/// Implement `Binary == &[u8]`
+impl PartialEq<&[u8]> for Binary {
+    fn eq(&self, rhs: &&[u8]) -> bool {
+        // Use &[u8] == &[u8]
+        self.as_slice() == *rhs
+    }
+}
+
+/// Implement `&[u8] == Binary`
+impl PartialEq<Binary> for &[u8] {
+    fn eq(&self, rhs: &Binary) -> bool {
+        // Use &[u8] == &[u8]
+        *self == rhs.as_slice()
+    }
+}
+
 /// Serializes as a base64 string
 impl Serialize for Binary {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -385,5 +417,25 @@ mod test {
         let set1 = HashSet::<Binary>::from_iter(vec![b.clone(), a1.clone()]);
         let set2 = HashSet::from_iter(vec![a1.clone(), a2.clone(), b.clone()]);
         assert_eq!(set1, set2);
+    }
+
+    #[test]
+    fn binary_implements_partial_eq_with_vector() {
+        let a = Binary(vec![5u8; 3]);
+        let b = vec![5u8; 3];
+        let c = vec![9u8; 3];
+        assert_eq!(a, b);
+        assert_eq!(b, a);
+        assert_ne!(a, c);
+        assert_ne!(c, a);
+    }
+
+    #[test]
+    fn binary_implements_partial_eq_with_slice() {
+        let a = Binary(vec![0xAA, 0xBB]);
+        assert_eq!(a, b"\xAA\xBB" as &[u8]);
+        assert_eq!(b"\xAA\xBB" as &[u8], a);
+        assert_ne!(a, b"\x11\x22" as &[u8]);
+        assert_ne!(b"\x11\x22" as &[u8], a);
     }
 }

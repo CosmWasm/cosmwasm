@@ -6,6 +6,7 @@
 
 - Implement `From<std::str::Utf8Error>` and `From<std::string::FromUtf8Error>`
   for `StdError`.
+- Implement `PartialEq` between `Binary` and `Vec<u8>`/`&[u8]`.
 
 ## 0.11.1 (2020-10-12)
 
