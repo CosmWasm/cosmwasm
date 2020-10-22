@@ -1,4 +1,5 @@
 use std::fmt;
+use std::mem;
 use std::ops::Deref;
 
 use schemars::JsonSchema;
@@ -32,7 +33,7 @@ impl Binary {
     }
 
     /// Copies content into fixed-sized array.
-    /// The result type `A: Sized + Default + AsMut<[u8]>` is a workaround for
+    /// The result type `A: Sized + AsMut<[u8]>` is a workaround for
     /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
     /// `A` is typically a fixed-sized array like `[u8; 8]`.
     ///
@@ -57,16 +58,18 @@ impl Binary {
     /// ```
     pub fn to_array<A>(&self) -> StdResult<A>
     where
-        A: Sized + Default + AsMut<[u8]>,
+        A: Sized + AsMut<[u8]>,
     {
-        let out_size = std::mem::size_of::<A>();
+        let out_size = mem::size_of::<A>();
         if self.len() != out_size {
             return Err(StdError::invalid_data_size(out_size, self.len()));
         }
 
-        let mut a = Default::default();
-        <A as AsMut<[u8]>>::as_mut(&mut a).copy_from_slice(&self.0);
-        Ok(a)
+        // We cannot use Default::default() because it is only implemented for
+        // short arrays [T; 0] … [T; 32].
+        let mut out: A = unsafe { mem::zeroed() };
+        <A as AsMut<[u8]>>::as_mut(&mut out).copy_from_slice(&self.0);
+        Ok(out)
     }
 }
 
@@ -217,6 +220,19 @@ mod test {
         let binary = Binary::from(&[]);
         let array: [u8; 0] = binary.to_array().unwrap();
         assert_eq!(array, [] as [u8; 0]);
+
+        // long array > 32 bytes
+        let binary =
+            Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
+        let array: [u8; 39] = binary.to_array().unwrap();
+        assert_eq!(
+            array,
+            [
+                0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
+                0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
+                0x86, 0x60, 0x96, 0xf0, 0x73, 0xc8, 0xc3, 0xb0, 0x31, 0x6a, 0xbe,
+            ]
+        );
 
         // invalid size
         let binary = Binary::from(&[1, 2, 3]);
