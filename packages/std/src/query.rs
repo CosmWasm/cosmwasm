@@ -2,8 +2,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use crate::addresses::HumanAddr;
+use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::encoding::Binary;
 use crate::math::Decimal;
 use crate::types::Empty;
 

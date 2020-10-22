@@ -1,7 +1,7 @@
 use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
-use crate::encoding::Binary;
+use crate::binary::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;

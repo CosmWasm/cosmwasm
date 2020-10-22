@@ -2,8 +2,8 @@ use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
