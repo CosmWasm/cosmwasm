@@ -31,6 +31,12 @@ pub enum StdError {
         msg: String,
         backtrace: Option<snafu::Backtrace>,
     },
+    #[snafu(display("Invalid data size: expected={} actual={}", expected, actual))]
+    InvalidDataSize {
+        expected: u64,
+        actual: u64,
+        backtrace: Option<snafu::Backtrace>,
+    },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[snafu(display("Cannot decode UTF8 bytes into string: {}", msg))]
     InvalidUtf8 {
@@ -79,6 +85,15 @@ impl StdError {
     pub fn invalid_base64<S: ToString>(msg: S) -> Self {
         InvalidBase64 {
             msg: msg.to_string(),
+        }
+        .build()
+    }
+
+    pub fn invalid_data_size(expected: usize, actual: usize) -> Self {
+        InvalidDataSize {
+            // Cast is safe because usize is 32 or 64 bit large in all environments we support
+            expected: expected as u64,
+            actual: actual as u64,
         }
         .build()
     }
@@ -194,6 +209,20 @@ mod test {
         match error {
             StdError::InvalidBase64 { msg, .. } => {
                 assert_eq!(msg, "Encoded text cannot have a 6-bit remainder.");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_data_size_works() {
+        let error = StdError::invalid_data_size(31, 14);
+        match error {
+            StdError::InvalidDataSize {
+                expected, actual, ..
+            } => {
+                assert_eq!(expected, 31);
+                assert_eq!(actual, 14);
             }
             _ => panic!("expect different error"),
         }

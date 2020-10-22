@@ -8,6 +8,9 @@
   for `StdError`.
 - Generalize denom argument from `&str` to `S: Into<String>` in `coin`, `coins`
   and `Coin::new`.
+- Add `Binary::to_array`, which allows you to copy binary content into a
+  fixed-length array. This is espeically useful for creating integers from
+  binary data.
 
 ## 0.11.1 (2020-10-12)
 
