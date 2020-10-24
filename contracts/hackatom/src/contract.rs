@@ -6,7 +6,7 @@ use std::convert::TryInto;
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
     Context, DepsMut, DepsRef, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
-    MigrateResponse, Querier, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -86,8 +86,8 @@ pub struct RecurseResponse {
 
 pub const CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<Q: Querier>(
-    deps: DepsMut<Q>,
+pub fn init(
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
@@ -109,8 +109,8 @@ pub fn init<Q: Querier>(
     Ok(ctx.try_into()?)
 }
 
-pub fn migrate<Q: Querier>(
-    deps: DepsMut<Q>,
+pub fn migrate(
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -126,8 +126,8 @@ pub fn migrate<Q: Querier>(
     Ok(MigrateResponse::default())
 }
 
-pub fn handle<Q: Querier>(
-    deps: DepsMut<Q>,
+pub fn handle(
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -143,11 +143,7 @@ pub fn handle<Q: Querier>(
     }
 }
 
-fn do_release<Q: Querier>(
-    deps: DepsMut<Q>,
-    env: Env,
-    info: MessageInfo,
-) -> Result<HandleResponse, HackError> {
+fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -183,7 +179,7 @@ fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_storage_loop<Q: Querier>(deps: DepsMut<Q>) -> Result<HandleResponse, HackError> {
+fn do_storage_loop(deps: DepsMut) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -292,7 +288,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<HandleResponse, HackErro
     Ok(HandleResponse::default())
 }
 
-pub fn query<Q: Querier>(deps: DepsRef<Q>, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+pub fn query(deps: DepsRef, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
@@ -302,7 +298,7 @@ pub fn query<Q: Querier>(deps: DepsRef<Q>, env: Env, msg: QueryMsg) -> StdResult
     }
 }
 
-fn query_verifier<Q: Querier>(deps: DepsRef<Q>) -> StdResult<VerifierResponse> {
+fn query_verifier(deps: DepsRef) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -312,16 +308,13 @@ fn query_verifier<Q: Querier>(deps: DepsRef<Q>) -> StdResult<VerifierResponse> {
     Ok(VerifierResponse { verifier: addr })
 }
 
-fn query_other_balance<Q: Querier>(
-    deps: DepsRef<Q>,
-    address: HumanAddr,
-) -> StdResult<AllBalanceResponse> {
+fn query_other_balance(deps: DepsRef, address: HumanAddr) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse<Q: Querier>(
-    deps: DepsRef<Q>,
+fn query_recurse(
+    deps: DepsRef,
     depth: u32,
     work: u32,
     contract: HumanAddr,
