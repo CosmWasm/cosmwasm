@@ -1,12 +1,12 @@
 use cosmwasm_std::{
-    attr, Api, BankMsg, Binary, Deps, Env, HandleResponse, InitResponse, MessageInfo,
-    MigrateResponse, Order, Querier, StdError, StdResult, Storage,
+    attr, BankMsg, Binary, DepsMut, DepsRef, Env, HandleResponse, InitResponse, MessageInfo,
+    MigrateResponse, Order, StdError, StdResult,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 
-pub fn init<S: Storage, A: Api, Q: Querier>(
-    _deps: &mut Deps<S, A, Q>,
+pub fn init(
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: InitMsg,
@@ -16,8 +16,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     ))
 }
 
-pub fn handle<S: Storage, A: Api, Q: Querier>(
-    _deps: &mut Deps<S, A, Q>,
+pub fn handle(
+    _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     _msg: HandleMsg,
@@ -27,8 +27,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     ))
 }
 
-pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
+pub fn migrate(
+    deps: DepsMut,
     env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -61,11 +61,7 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     })
 }
 
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    _deps: &Deps<S, A, Q>,
-    _env: Env,
-    _msg: QueryMsg,
-) -> StdResult<Binary> {
+pub fn query(_deps: DepsRef, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
     ))
@@ -75,7 +71,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage, StdError};
+    use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage, StdError, Storage};
 
     #[test]
     fn init_fails() {
@@ -84,7 +80,7 @@ mod tests {
         let msg = InitMsg {};
         let info = mock_info("creator", &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
-        let res = init(&mut deps, mock_env(), info, msg);
+        let res = init(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "You can only use this contract for migrations")
@@ -110,7 +106,7 @@ mod tests {
             payout: payout.clone(),
         };
         let info = mock_info("creator", &[]);
-        let res = migrate(&mut deps, mock_env(), info, msg).unwrap();
+        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
         // check payout
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
