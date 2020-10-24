@@ -133,6 +133,11 @@ where
     fn remove(&mut self, key: &[u8]) {
         remove_with_prefix(self.storage, &self.prefix, key);
     }
+
+    // this is needed so a &dyn Storage trait object can access the readonly methods
+    fn as_ref(&self) -> &dyn ReadonlyStorage {
+        self
+    }
 }
 
 #[cfg(test)]

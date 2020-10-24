@@ -102,6 +102,11 @@ impl Storage for ExternalStorage {
         let key_ptr = &*key as *const Region as u32;
         unsafe { db_remove(key_ptr) };
     }
+
+    // this is needed so a &dyn Storage trait object can access the readonly methods
+    fn as_ref(&self) -> &dyn ReadonlyStorage {
+        self
+    }
 }
 
 #[cfg(feature = "iterator")]
