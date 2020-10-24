@@ -36,12 +36,19 @@ major releases of `cosmwasm`. Note that you can also view the
   
   On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add `use cosmwasm_std::{DepsMut, DepsRef}`.
   
-  *In test code:*
+  *In test code only:*
   
   * `&mut deps` => `deps.as_mut()`
   * `&deps` => `deps.as_ref()`
   
   You may have to add `use cosmwasm_std::{Storage}` if the compile complains about the trait
+  
+  *If you use cosmwasm-storage, in `state.rs`:*
+  
+  * `<S: Storage>` => ``
+  * `<S, ` => `<`
+  * `&mut S` => `&mut dyn Storage`
+  * `&S` => `&dyn ReadonlyStorage`
    
 ## 0.10 -> 0.11
 
