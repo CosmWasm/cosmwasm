@@ -92,7 +92,7 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
+        let mapped = range_with_prefix(self.storage.as_ref(), &self.prefix, start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
     }
