@@ -49,6 +49,9 @@ pub trait Storage: ReadonlyStorage {
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
     fn remove(&mut self, key: &[u8]);
+
+    // this is needed so a &dyn Storage trait object can access the readonly methods
+    fn as_ref(&self) -> &dyn ReadonlyStorage;
 }
 
 /// Api are callbacks to system functions implemented outside of the wasm modules.

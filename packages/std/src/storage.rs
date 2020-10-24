@@ -79,6 +79,11 @@ impl Storage for MemoryStorage {
     fn remove(&mut self, key: &[u8]) {
         self.data.remove(key);
     }
+
+    // this is needed so a &dyn Storage trait object can access the readonly methods
+    fn as_ref(&self) -> &dyn ReadonlyStorage {
+        self
+    }
 }
 
 #[cfg(test)]

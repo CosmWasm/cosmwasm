@@ -103,6 +103,11 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
     }
+
+    // this is needed so a &dyn Storage trait object can access the readonly methods
+    fn as_ref(&self) -> &dyn ReadonlyStorage {
+        self
+    }
 }
 
 pub struct RepLog {
