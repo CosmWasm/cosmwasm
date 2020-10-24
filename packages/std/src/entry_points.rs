@@ -6,13 +6,13 @@
 /// The second module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, Deps, Env, StdResult, Binary, MessageInfo,
+/// #     Storage, Api, Querier, DepsMut, DepsRef, Env, StdResult, Binary, MessageInfo,
 /// #     InitResult, HandleResult, QueryResult,
 /// # };
 /// #
 /// # type InitMsg = ();
-/// pub fn init<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Deps<S, A, Q>,
+/// pub fn init(
+///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: InitMsg,
@@ -21,8 +21,8 @@
 /// }
 ///
 /// # type HandleMsg = ();
-/// pub fn handle<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Deps<S, A, Q>,
+/// pub fn handle(
+///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: HandleMsg,
@@ -31,8 +31,8 @@
 /// }
 ///
 /// # type QueryMsg = ();
-/// pub fn query<S: Storage, A: Api, Q: Querier>(
-///     deps: &Deps<S, A, Q>,
+/// pub fn query(
+///     deps: DepsRef,
 ///     env: Env,
 ///     msg: QueryMsg,
 /// ) -> QueryResult {
@@ -53,12 +53,7 @@ macro_rules! create_entry_points {
     (@migration; $contract:ident, true) => {
         #[no_mangle]
         extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-            do_migrate(
-                &$contract::migrate::<ExternalStorage, ExternalApi, ExternalQuerier>,
-                env_ptr,
-                info_ptr,
-                msg_ptr,
-            )
+            do_migrate(&$contract::migrate, env_ptr, info_ptr, msg_ptr)
         }
     };
 
@@ -67,38 +62,21 @@ macro_rules! create_entry_points {
     (@inner; $contract:ident, migration = $migration:tt) => {
         mod wasm {
             use super::$contract;
-            use cosmwasm_std::{
-                do_handle, do_init, do_migrate, do_query, ExternalApi, ExternalQuerier,
-                ExternalStorage,
-            };
+            use cosmwasm_std::{do_handle, do_init, do_migrate, do_query};
 
             #[no_mangle]
             extern "C" fn init(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-                do_init(
-                    &$contract::init::<ExternalStorage, ExternalApi, ExternalQuerier>,
-                    env_ptr,
-                    info_ptr,
-                    msg_ptr,
-                )
+                do_init(&$contract::init, env_ptr, info_ptr, msg_ptr)
             }
 
             #[no_mangle]
             extern "C" fn handle(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-                do_handle(
-                    &$contract::handle::<ExternalStorage, ExternalApi, ExternalQuerier>,
-                    env_ptr,
-                    info_ptr,
-                    msg_ptr,
-                )
+                do_handle(&$contract::handle, env_ptr, info_ptr, msg_ptr)
             }
 
             #[no_mangle]
             extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32 {
-                do_query(
-                    &$contract::query::<ExternalStorage, ExternalApi, ExternalQuerier>,
-                    env_ptr,
-                    msg_ptr,
-                )
+                do_query(&$contract::query, env_ptr, msg_ptr)
             }
 
             $crate::create_entry_points!(@migration; $contract, $migration);
@@ -116,11 +94,11 @@ macro_rules! create_entry_points {
 /// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, Deps, Env, StdResult, Binary, MigrateResult, MessageInfo,
+/// #     Storage, Api, Querier, DepsMut, Env, StdResult, Binary, MigrateResult, MessageInfo,
 /// # };
 /// # type MigrateMsg = ();
-/// pub fn migrate<S: Storage, A: Api, Q: Querier>(
-///     deps: &mut Deps<S, A, Q>,
+/// pub fn migrate(
+///     deps: DepsMut,
 ///     _env: Env,
 ///     _info: MessageInfo,
 ///     msg: MigrateMsg,
