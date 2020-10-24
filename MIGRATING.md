@@ -34,8 +34,7 @@ major releases of `cosmwasm`. Note that you can also view the
   * `&mut Extern<S, A, Q>` => `DepsMut`
   * `&Extern<S, A, Q>` => `DepsRef`
   
-  On the top, replace `use cosmwasm_std::{Extern}` with `use cosmwasm_std::{DepsMut, DepsRef}`.
-  Remove `{Api, Querier, Storage}` from `use cosmwasm_std::{..}`
+  On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add `use cosmwasm_std::{DepsMut, DepsRef}`.
   
   *In test code:*
   
