@@ -7,18 +7,19 @@ use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
 
 /// An alias of Singleton::new for less verbose usage
-pub fn singleton<'a, S, T>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, T>
+pub fn singleton<'a, T>(storage: &'a mut dyn Storage, key: &[u8]) -> Singleton<'a, T>
 where
-    S: Storage,
     T: Serialize + DeserializeOwned,
 {
     Singleton::new(storage, key)
 }
 
 /// An alias of ReadonlySingleton::new for less verbose usage
-pub fn singleton_read<'a, S, T>(storage: &'a S, key: &[u8]) -> ReadonlySingleton<'a, S, T>
+pub fn singleton_read<'a, T>(
+    storage: &'a dyn ReadonlyStorage,
+    key: &[u8],
+) -> ReadonlySingleton<'a, T>
 where
-    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
     ReadonlySingleton::new(storage, key)
@@ -28,23 +29,21 @@ where
 /// work on a single storage key. It performs the to_length_prefixed transformation
 /// on the given name to ensure no collisions, and then provides the standard
 /// TypedStorage accessors, without requiring a key (which is defined in the constructor)
-pub struct Singleton<'a, S, T>
+pub struct Singleton<'a, T>
 where
-    S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a mut S,
+    storage: &'a mut dyn Storage,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
 }
 
-impl<'a, S, T> Singleton<'a, S, T>
+impl<'a, T> Singleton<'a, T>
 where
-    S: Storage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a mut S, key: &[u8]) -> Self {
+    pub fn new(storage: &'a mut dyn Storage, key: &[u8]) -> Self {
         Singleton {
             storage,
             key: to_length_prefixed(key),
@@ -93,23 +92,21 @@ where
 
 /// ReadonlySingleton only requires a ReadonlyStorage and exposes only the
 /// methods of Singleton that don't modify state.
-pub struct ReadonlySingleton<'a, S, T>
+pub struct ReadonlySingleton<'a, T>
 where
-    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a S,
+    storage: &'a dyn ReadonlyStorage,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
 }
 
-impl<'a, S, T> ReadonlySingleton<'a, S, T>
+impl<'a, T> ReadonlySingleton<'a, T>
 where
-    S: ReadonlyStorage,
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a S, key: &[u8]) -> Self {
+    pub fn new(storage: &'a dyn ReadonlyStorage, key: &[u8]) -> Self {
         ReadonlySingleton {
             storage,
             key: to_length_prefixed(key),
@@ -148,7 +145,7 @@ mod test {
     #[test]
     fn save_and_load() {
         let mut store = MockStorage::new();
-        let mut single = Singleton::<_, Config>::new(&mut store, b"config");
+        let mut single = Singleton::<Config>::new(&mut store, b"config");
 
         assert!(single.load().is_err());
         assert_eq!(single.may_load().unwrap(), None);
@@ -165,7 +162,7 @@ mod test {
     #[test]
     fn remove_works() {
         let mut store = MockStorage::new();
-        let mut single = Singleton::<_, Config>::new(&mut store, b"config");
+        let mut single = Singleton::<Config>::new(&mut store, b"config");
 
         // store data
         let cfg = Config {
@@ -187,7 +184,7 @@ mod test {
     #[test]
     fn isolated_reads() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let mut writer = singleton::<Config>(&mut store, b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
@@ -195,17 +192,17 @@ mod test {
         };
         writer.save(&cfg).unwrap();
 
-        let reader = singleton_read::<_, Config>(&store, b"config");
+        let reader = singleton_read::<Config>(&store, b"config");
         assert_eq!(cfg, reader.load().unwrap());
 
-        let other_reader = singleton_read::<_, Config>(&store, b"config2");
+        let other_reader = singleton_read::<Config>(&store, b"config2");
         assert_eq!(other_reader.may_load().unwrap(), None);
     }
 
     #[test]
     fn update_success() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let mut writer = singleton::<Config>(&mut store, b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
@@ -228,7 +225,7 @@ mod test {
     #[test]
     fn update_can_change_variable_from_outer_scope() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let mut writer = singleton::<Config>(&mut store, b"config");
         let cfg = Config {
             owner: "admin".to_string(),
             max_tokens: 1234,
@@ -249,7 +246,7 @@ mod test {
     #[test]
     fn update_does_not_change_data_on_error() {
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let mut writer = singleton::<Config>(&mut store, b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
@@ -280,7 +277,7 @@ mod test {
         }
 
         let mut store = MockStorage::new();
-        let mut writer = singleton::<_, Config>(&mut store, b"config");
+        let mut writer = singleton::<Config>(&mut store, b"config");
 
         let cfg = Config {
             owner: "admin".to_string(),
