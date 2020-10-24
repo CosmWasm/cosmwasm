@@ -17,20 +17,20 @@ pub const PREFIX_BALANCE: &[u8] = b"balance";
 pub const PREFIX_CLAIMS: &[u8] = b"claim";
 
 /// balances are state of the erc20 tokens
-pub fn balances<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
+pub fn balances(storage: &mut dyn Storage) -> Bucket<Uint128> {
     bucket(storage, PREFIX_BALANCE)
 }
 
-pub fn balances_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
+pub fn balances_read(storage: &dyn ReadonlyStorage) -> ReadonlyBucket<Uint128> {
     bucket_read(storage, PREFIX_BALANCE)
 }
 
 /// claims are the claims to money being unbonded
-pub fn claims<S: Storage>(storage: &mut S) -> Bucket<S, Uint128> {
+pub fn claims(storage: &mut dyn Storage) -> Bucket<Uint128> {
     bucket(storage, PREFIX_CLAIMS)
 }
 
-pub fn claims_read<S: ReadonlyStorage>(storage: &S) -> ReadonlyBucket<S, Uint128> {
+pub fn claims_read(storage: &dyn ReadonlyStorage) -> ReadonlyBucket<Uint128> {
     bucket_read(storage, PREFIX_CLAIMS)
 }
 
@@ -62,26 +62,26 @@ pub struct Supply {
     pub claims: Uint128,
 }
 
-pub fn invest_info<S: Storage>(storage: &mut S) -> Singleton<S, InvestmentInfo> {
+pub fn invest_info(storage: &mut dyn Storage) -> Singleton<InvestmentInfo> {
     singleton(storage, KEY_INVESTMENT)
 }
 
-pub fn invest_info_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, InvestmentInfo> {
+pub fn invest_info_read(storage: &dyn ReadonlyStorage) -> ReadonlySingleton<InvestmentInfo> {
     singleton_read(storage, KEY_INVESTMENT)
 }
 
-pub fn token_info<S: Storage>(storage: &mut S) -> Singleton<S, TokenInfoResponse> {
+pub fn token_info(storage: &mut dyn Storage) -> Singleton<TokenInfoResponse> {
     singleton(storage, KEY_TOKEN_INFO)
 }
 
-pub fn token_info_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, TokenInfoResponse> {
+pub fn token_info_read(storage: &dyn ReadonlyStorage) -> ReadonlySingleton<TokenInfoResponse> {
     singleton_read(storage, KEY_TOKEN_INFO)
 }
 
-pub fn total_supply<S: Storage>(storage: &mut S) -> Singleton<S, Supply> {
+pub fn total_supply(storage: &mut dyn Storage) -> Singleton<Supply> {
     singleton(storage, KEY_TOTAL_SUPPLY)
 }
 
-pub fn total_supply_read<S: ReadonlyStorage>(storage: &S) -> ReadonlySingleton<S, Supply> {
+pub fn total_supply_read(storage: &dyn ReadonlyStorage) -> ReadonlySingleton<Supply> {
     singleton_read(storage, KEY_TOTAL_SUPPLY)
 }
