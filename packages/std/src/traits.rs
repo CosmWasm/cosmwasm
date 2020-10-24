@@ -83,10 +83,24 @@ pub trait Querier {
     /// types. People using the querier probably want one of the simpler auto-generated
     /// helper methods
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
+}
+
+#[derive(Copy, Clone)]
+pub struct QuerierWrapper<'a> {
+    pub(crate) querier: &'a dyn Querier,
+}
+
+impl<'a> QuerierWrapper<'a> {
+    /// This allows us to pass through binary queries from one level to another without
+    /// knowing the custom format, or we can decode it, with the knowledge of the allowed
+    /// types. You probably want one of the simpler auto-generated helper methods
+    pub fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        self.querier.raw_query(bin_request)
+    }
 
     /// query is a shorthand for custom_query when we are not using a custom type,
     /// this allows us to avoid specifying "Empty" in all the type definitions.
-    fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Empty>) -> StdResult<T> {
+    pub fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Empty>) -> StdResult<T> {
         self.custom_query(request)
     }
 
@@ -97,7 +111,7 @@ pub trait Querier {
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
     /// one level. Only use this if you don't need to check the SystemError
     /// eg. If you don't differentiate between contract missing and contract returned error
-    fn custom_query<C: CustomQuery, U: DeserializeOwned>(
+    pub fn custom_query<C: CustomQuery, U: DeserializeOwned>(
         &self,
         request: &QueryRequest<C>,
     ) -> StdResult<U> {
@@ -116,7 +130,7 @@ pub trait Querier {
         }
     }
 
-    fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
+    pub fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
@@ -126,7 +140,7 @@ pub trait Querier {
         Ok(res.amount)
     }
 
-    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
+    pub fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -137,7 +151,7 @@ pub trait Querier {
 
     // this queries another wasm contract. You should know a priori the proper types for T and U
     // (response and request) based on the contract API
-    fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<HumanAddr>>(
+    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<HumanAddr>>(
         &self,
         contract: V,
         msg: &U,
@@ -157,7 +171,7 @@ pub trait Querier {
     //
     // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
     // It only returns error on some runtime issue, not on any data cases.
-    fn query_wasm_raw<T: Into<HumanAddr>, U: Into<Binary>>(
+    pub fn query_wasm_raw<T: Into<HumanAddr>, U: Into<Binary>>(
         &self,
         contract: T,
         key: U,
@@ -191,21 +205,21 @@ pub trait Querier {
     }
 
     #[cfg(feature = "staking")]
-    fn query_validators(&self) -> StdResult<Vec<Validator>> {
+    pub fn query_validators(&self) -> StdResult<Vec<Validator>> {
         let request = StakingQuery::Validators {}.into();
         let res: ValidatorsResponse = self.query(&request)?;
         Ok(res.validators)
     }
 
     #[cfg(feature = "staking")]
-    fn query_bonded_denom(&self) -> StdResult<String> {
+    pub fn query_bonded_denom(&self) -> StdResult<String> {
         let request = StakingQuery::BondedDenom {}.into();
         let res: BondedDenomResponse = self.query(&request)?;
         Ok(res.denom)
     }
 
     #[cfg(feature = "staking")]
-    fn query_all_delegations<U: Into<HumanAddr>>(
+    pub fn query_all_delegations<U: Into<HumanAddr>>(
         &self,
         delegator: U,
     ) -> StdResult<Vec<Delegation>> {
@@ -218,7 +232,7 @@ pub trait Querier {
     }
 
     #[cfg(feature = "staking")]
-    fn query_delegation<U: Into<HumanAddr>>(
+    pub fn query_delegation<U: Into<HumanAddr>>(
         &self,
         delegator: U,
         validator: U,
