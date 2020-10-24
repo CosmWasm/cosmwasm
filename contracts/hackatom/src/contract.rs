@@ -5,8 +5,8 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Env, DepsMut, DepsRef, HandleResponse, HumanAddr, InitResponse, MessageInfo,
-    MigrateResponse, Querier, QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
+    Context, DepsMut, DepsRef, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
+    MigrateResponse, Querier, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -86,8 +86,8 @@ pub struct RecurseResponse {
 
 pub const CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: DepsMut<S, A, Q>,
+pub fn init<Q: Querier>(
+    deps: DepsMut<Q>,
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
@@ -109,8 +109,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     Ok(ctx.try_into()?)
 }
 
-pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: DepsMut<S, A, Q>,
+pub fn migrate<Q: Querier>(
+    deps: DepsMut<Q>,
     _env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -126,8 +126,8 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     Ok(MigrateResponse::default())
 }
 
-pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: DepsMut<S, A, Q>,
+pub fn handle<Q: Querier>(
+    deps: DepsMut<Q>,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -143,8 +143,8 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn do_release<S: Storage, A: Api, Q: Querier>(
-    deps: DepsMut<S, A, Q>,
+fn do_release<Q: Querier>(
+    deps: DepsMut<Q>,
     env: Env,
     info: MessageInfo,
 ) -> Result<HandleResponse, HackError> {
@@ -183,9 +183,7 @@ fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
-    deps: DepsMut<S, A, Q>,
-) -> Result<HandleResponse, HackError> {
+fn do_storage_loop<Q: Querier>(deps: DepsMut<Q>) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -226,7 +224,7 @@ fn do_panic() -> Result<HandleResponse, HackError> {
     panic!("This page intentionally faulted");
 }
 
-fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackError> {
+fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<HandleResponse, HackError> {
     // Canonicalize
 
     let empty = HumanAddr::from("");
@@ -294,11 +292,7 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackEr
     Ok(HandleResponse::default())
 }
 
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: DepsRef<S, A, Q>,
-    env: Env,
-    msg: QueryMsg,
-) -> StdResult<QueryResponse> {
+pub fn query<Q: Querier>(deps: DepsRef<Q>, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
@@ -308,9 +302,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn query_verifier<S: Storage, A: Api, Q: Querier>(
-    deps: DepsRef<S, A, Q>,
-) -> StdResult<VerifierResponse> {
+fn query_verifier<Q: Querier>(deps: DepsRef<Q>) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -320,16 +312,16 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
     Ok(VerifierResponse { verifier: addr })
 }
 
-fn query_other_balance<S: Storage, A: Api, Q: Querier>(
-    deps: DepsRef<S, A, Q>,
+fn query_other_balance<Q: Querier>(
+    deps: DepsRef<Q>,
     address: HumanAddr,
 ) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse<S: Storage, A: Api, Q: Querier>(
-    deps: DepsRef<S, A, Q>,
+fn query_recurse<Q: Querier>(
+    deps: DepsRef<Q>,
     depth: u32,
     work: u32,
     contract: HumanAddr,
