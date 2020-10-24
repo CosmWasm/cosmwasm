@@ -28,9 +28,7 @@ impl<S: Storage, A: Api, Q: Querier> Deps<S, A, Q> {
         DepsRef {
             storage: &self.storage,
             api: &self.api,
-            querier: QuerierWrapper {
-                querier: &self.querier,
-            },
+            querier: QuerierWrapper::new(&self.querier),
         }
     }
 
@@ -38,9 +36,7 @@ impl<S: Storage, A: Api, Q: Querier> Deps<S, A, Q> {
         DepsMut {
             storage: &mut self.storage,
             api: &self.api,
-            querier: QuerierWrapper {
-                querier: &self.querier,
-            },
+            querier: QuerierWrapper::new(&self.querier),
         }
     }
 }

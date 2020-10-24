@@ -30,7 +30,7 @@ pub fn custom_query_execute(query: &SpecialQuery) -> ContractResult<Binary> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::{from_binary, Querier, QueryRequest};
+    use cosmwasm_std::{from_binary, QuerierWrapper, QueryRequest};
 
     #[test]
     fn custom_query_execute_ping() {
@@ -56,7 +56,8 @@ mod test {
             text: "food".to_string(),
         }
         .into();
-        let response: SpecialResponse = deps.querier.custom_query(&req).unwrap();
+        let wrapper = QuerierWrapper::new(&deps.querier);
+        let response: SpecialResponse = wrapper.custom_query(&req).unwrap();
         assert_eq!(response.msg, "FOOD");
     }
 }
