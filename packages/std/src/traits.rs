@@ -65,7 +65,7 @@ pub trait Storage: ReadonlyStorage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api: Copy + Clone + Send {
+pub trait Api {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
