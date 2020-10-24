@@ -23,26 +23,27 @@ major releases of `cosmwasm`. Note that you can also view the
   In order to use backtraces for debugging, run
   `RUST_BACKTRACE=1 cargo +nightly unit-test --features backtraces`.
 
-- Rename the type `Extern` to `Deps` in `init`/`handle`/`migrate`/`query`, e.g.
-
-  ```rust
-  // before
-  pub fn migrate<S: Storage, A: Api, Q: Querier>(
-      deps: &mut Extern<S, A, Q>,
-      _env: Env,
-      _info: MessageInfo,
-      msg: MigrateMsg,
-  ) -> Result<MigrateResponse, HackError> {
-
-  // after
-  pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    _env: Env,
-    _info: MessageInfo,
-    msg: MigrateMsg,
-  ) -> Result<MigrateResponse, HackError> {
-  ```
-
+- Rename the type `Extern` to `Deps`, and radically simplify the `init`/`handle`/`migrate`/`query` entrypoints. 
+  Rather than `&mut Extern<S, A, Q>`, use `DepsMut`. And instead of `&Extern<S, A, Q>`, use `DepsRef`. 
+  If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use dynamic trait pointers: `foo(api: &dyn Api)`. 
+  Here is the quick search-replace guide on how to fix `contract.rs`:
+  
+  *In production (non-test) code:*
+  
+  * `<S: Storage, A: Api, Q: Querier>` => ``
+  * `&mut Extern<S, A, Q>` => `DepsMut`
+  * `&Extern<S, A, Q>` => `DepsRef`
+  
+  On the top, replace `use cosmwasm_std::{Extern}` with `use cosmwasm_std::{DepsMut, DepsRef}`.
+  Remove `{Api, Querier, Storage}` from `use cosmwasm_std::{..}`
+  
+  *In test code:*
+  
+  * `&mut deps` => `deps.as_mut()`
+  * `&deps` => `deps.as_ref()`
+  
+  You may have to add `use cosmwasm_std::{Storage}` if the compile complains about the trait
+   
 ## 0.10 -> 0.11
 
 - Contracts now support any custom error type `E: ToString + From<StdError>`.
