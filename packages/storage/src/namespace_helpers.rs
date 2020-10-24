@@ -2,16 +2,16 @@
 use cosmwasm_std::{Order, KV};
 use cosmwasm_std::{ReadonlyStorage, Storage};
 
-pub(crate) fn get_with_prefix<S: ReadonlyStorage>(
-    storage: &S,
+pub(crate) fn get_with_prefix(
+    storage: &dyn ReadonlyStorage,
     namespace: &[u8],
     key: &[u8],
 ) -> Option<Vec<u8>> {
     storage.get(&concat(namespace, key))
 }
 
-pub(crate) fn set_with_prefix<S: Storage>(
-    storage: &mut S,
+pub(crate) fn set_with_prefix(
+    storage: &mut dyn Storage,
     namespace: &[u8],
     key: &[u8],
     value: &[u8],
@@ -19,7 +19,7 @@ pub(crate) fn set_with_prefix<S: Storage>(
     storage.set(&concat(namespace, key), value);
 }
 
-pub(crate) fn remove_with_prefix<S: Storage>(storage: &mut S, namespace: &[u8], key: &[u8]) {
+pub(crate) fn remove_with_prefix(storage: &mut dyn Storage, namespace: &[u8], key: &[u8]) {
     storage.remove(&concat(namespace, key));
 }
 
@@ -31,8 +31,8 @@ fn concat(namespace: &[u8], key: &[u8]) -> Vec<u8> {
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn range_with_prefix<'a, S: ReadonlyStorage>(
-    storage: &'a S,
+pub(crate) fn range_with_prefix<'a>(
+    storage: &'a dyn ReadonlyStorage,
     namespace: &[u8],
     start: Option<&[u8]>,
     end: Option<&[u8]>,
