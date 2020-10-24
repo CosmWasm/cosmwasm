@@ -3,19 +3,19 @@ use cosmwasm_std::{StdResult, Storage};
 use crate::Singleton;
 
 /// Sequence creates a custom Singleton to hold an empty sequence
-pub fn sequence<'a, S: Storage>(storage: &'a mut S, key: &[u8]) -> Singleton<'a, S, u64> {
+pub fn sequence<'a>(storage: &'a mut dyn Storage, key: &[u8]) -> Singleton<'a, u64> {
     Singleton::new(storage, key)
 }
 
 /// currval returns the last value returned by nextval. If the sequence has never been used,
 /// then it will return 0.
-pub fn currval<S: Storage>(seq: &Singleton<S, u64>) -> StdResult<u64> {
+pub fn currval(seq: &Singleton<u64>) -> StdResult<u64> {
     Ok(seq.may_load()?.unwrap_or_default())
 }
 
 /// nextval increments the counter by 1 and returns the new value.
 /// On the first time it is called (no sequence info in db) it will return 1.
-pub fn nextval<S: Storage>(seq: &mut Singleton<S, u64>) -> StdResult<u64> {
+pub fn nextval(seq: &mut Singleton<u64>) -> StdResult<u64> {
     let val = currval(&seq)? + 1;
     seq.save(&val)?;
     Ok(val)
