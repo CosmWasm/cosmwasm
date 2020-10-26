@@ -14,7 +14,7 @@ use crate::query::{
 use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
-use crate::traits::{Api, QuerierResult, QuerierTrait};
+use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
@@ -220,7 +220,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 }
 
-impl<C: CustomQuery + DeserializeOwned> QuerierTrait for MockQuerier<C> {
+impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let request: QueryRequest<C> = match from_slice(bin_request) {
             Ok(v) => v,

@@ -1,11 +1,11 @@
-use crate::traits::{Api, QuerierTrait, Storage};
-use crate::Querier;
+use crate::traits::{Api, Querier, Storage};
+use crate::QuerierWrapper;
 
 /// Holds all external dependencies of the contract.
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct OwnedDeps<S: Storage, A: Api, Q: QuerierTrait> {
+pub struct OwnedDeps<S: Storage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
     pub querier: Q,
@@ -14,22 +14,22 @@ pub struct OwnedDeps<S: Storage, A: Api, Q: QuerierTrait> {
 pub struct Deps<'a> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,
-    pub querier: Querier<'a>,
+    pub querier: QuerierWrapper<'a>,
 }
 
 #[derive(Copy, Clone)]
 pub struct DepsRef<'a> {
     pub storage: &'a dyn Storage,
     pub api: &'a dyn Api,
-    pub querier: Querier<'a>,
+    pub querier: QuerierWrapper<'a>,
 }
 
-impl<S: Storage, A: Api, Q: QuerierTrait> OwnedDeps<S, A, Q> {
+impl<S: Storage, A: Api, Q: Querier> OwnedDeps<S, A, Q> {
     pub fn as_ref(&'_ self) -> DepsRef<'_> {
         DepsRef {
             storage: &self.storage,
             api: &self.api,
-            querier: Querier::new(&self.querier),
+            querier: QuerierWrapper::new(&self.querier),
         }
     }
 
@@ -37,7 +37,7 @@ impl<S: Storage, A: Api, Q: QuerierTrait> OwnedDeps<S, A, Q> {
         Deps {
             storage: &mut self.storage,
             api: &self.api,
-            querier: Querier::new(&self.querier),
+            querier: QuerierWrapper::new(&self.querier),
         }
     }
 }

@@ -2,7 +2,7 @@ use serde::de::DeserializeOwned;
 
 use cosmwasm_std::testing::{MockQuerier as StdMockQuerier, MockQuerierCustomHandlerResult};
 use cosmwasm_std::{
-    to_binary, to_vec, Binary, Coin, ContractResult, CustomQuery, Empty, HumanAddr, QuerierTrait as _,
+    to_binary, to_vec, Binary, Coin, ContractResult, CustomQuery, Empty, HumanAddr, Querier as _,
     QueryRequest, SystemError, SystemResult,
 };
 
