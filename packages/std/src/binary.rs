@@ -30,6 +30,44 @@ impl Binary {
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
     }
+
+    /// Copies content into fixed-sized array.
+    /// The result type `A: Sized + Default + AsMut<[u8]>` is a workaround for
+    /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
+    /// `A` is typically a fixed-sized array like `[u8; 8]`.
+    ///
+    /// # Examples
+    ///
+    /// Copy to array of explicit length
+    ///
+    /// ```
+    /// # use cosmwasm_std::Binary;
+    /// let binary = Binary::from(&[0xfb, 0x1f, 0x37]);
+    /// let array: [u8; 3] = binary.to_array().unwrap();
+    /// assert_eq!(array, [0xfb, 0x1f, 0x37]);
+    /// ```
+    ///
+    /// Copy to integer
+    ///
+    /// ```
+    /// # use cosmwasm_std::Binary;
+    /// let binary = Binary::from(&[0x8b, 0x67, 0x64, 0x84, 0xb5, 0xfb, 0x1f, 0x37]);
+    /// let num = u64::from_be_bytes(binary.to_array().unwrap());
+    /// assert_eq!(num, 10045108015024774967);
+    /// ```
+    pub fn to_array<A>(&self) -> StdResult<A>
+    where
+        A: Sized + Default + AsMut<[u8]>,
+    {
+        let out_size = std::mem::size_of::<A>();
+        if self.len() != out_size {
+            return Err(StdError::invalid_data_size(out_size, self.len()));
+        }
+
+        let mut a = Default::default();
+        <A as AsMut<[u8]>>::as_mut(&mut a).copy_from_slice(&self.0);
+        Ok(a)
+    }
 }
 
 impl fmt::Display for Binary {
@@ -198,6 +236,32 @@ mod test {
         assert_eq!(8, encoded.len());
         let decoded = Binary::from_base64(&encoded).unwrap();
         assert_eq!(binary.deref(), decoded.deref());
+    }
+
+    #[test]
+    fn to_array_works() {
+        // simple
+        let binary = Binary::from(&[1, 2, 3]);
+        let array: [u8; 3] = binary.to_array().unwrap();
+        assert_eq!(array, [1, 2, 3]);
+
+        // empty
+        let binary = Binary::from(&[]);
+        let array: [u8; 0] = binary.to_array().unwrap();
+        assert_eq!(array, [] as [u8; 0]);
+
+        // invalid size
+        let binary = Binary::from(&[1, 2, 3]);
+        let error = binary.to_array::<[u8; 8]>().unwrap_err();
+        match error {
+            StdError::InvalidDataSize {
+                expected, actual, ..
+            } => {
+                assert_eq!(expected, 8);
+                assert_eq!(actual, 3);
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]

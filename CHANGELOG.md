@@ -10,6 +10,9 @@
   and `Coin::new`.
 - Implement `PartialEq` between `Binary` and `Vec<u8>`/`&[u8]`.
 - Add missing `PartialEq` implementations between `HumanAddr` and `str`/`&str`.
+- Add `Binary::to_array`, which allows you to copy binary content into a
+  fixed-length `u8` array. This is espeically useful for creating integers from
+  binary data.
 
 ## 0.11.1 (2020-10-12)
 
