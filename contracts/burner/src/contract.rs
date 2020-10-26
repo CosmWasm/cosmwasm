@@ -5,12 +5,7 @@ use cosmwasm_std::{
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 
-pub fn init(
-    _deps: Deps,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: InitMsg,
-) -> StdResult<InitResponse> {
+pub fn init(_deps: Deps, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<InitResponse> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
     ))

@@ -6,7 +6,7 @@
 /// The second module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, Deps, DepsRef, Env, StdResult, Binary, MessageInfo,
+/// #     Storage, Api, QuerierTrait, Deps, DepsRef, Env, StdResult, Binary, MessageInfo,
 /// #     InitResult, HandleResult, QueryResult,
 /// # };
 /// #
@@ -94,7 +94,7 @@ macro_rules! create_entry_points {
 /// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, Deps, Env, StdResult, Binary, MigrateResult, MessageInfo,
+/// #     Storage, Api, QuerierTrait, Deps, Env, StdResult, Binary, MigrateResult, MessageInfo,
 /// # };
 /// # type MigrateMsg = ();
 /// pub fn migrate(

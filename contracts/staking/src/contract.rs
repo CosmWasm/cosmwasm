@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, coin, to_binary, BankMsg, Binary, Decimal, Deps, DepsRef, Env, HandleResponse, HumanAddr,
-    InitResponse, MessageInfo, QuerierWrapper, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
+    InitResponse, MessageInfo, Querier, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -100,7 +100,7 @@ pub fn transfer(
 
 // get_bonded returns the total amount of delegations from contract
 // it ensures they are all the same denom
-fn get_bonded(querier: &QuerierWrapper, contract: &HumanAddr) -> StdResult<Uint128> {
+fn get_bonded(querier: &Querier, contract: &HumanAddr) -> StdResult<Uint128> {
     let bonds = querier.query_all_delegations(contract)?;
     if bonds.is_empty() {
         return Ok(Uint128(0));

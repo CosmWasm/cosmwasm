@@ -6,7 +6,7 @@ use crate::errors::{StdError, StdResult, SystemError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 use crate::serde::from_slice;
-use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
+use crate::traits::{Api, QuerierResult, QuerierTrait, ReadonlyStorage, Storage};
 #[cfg(feature = "iterator")]
 use crate::{
     iterator::{Order, KV},
@@ -217,7 +217,7 @@ impl ExternalQuerier {
     }
 }
 
-impl Querier for ExternalQuerier {
+impl QuerierTrait for ExternalQuerier {
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
         let req = build_region(bin_request);
         let request_ptr = &*req as *const Region as u32;
