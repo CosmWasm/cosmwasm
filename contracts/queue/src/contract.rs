@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, Binary, DepsMut, DepsRef, Env, HandleResponse, InitResponse,
+    from_slice, to_binary, to_vec, Binary, Deps, DepsRef, Env, HandleResponse, InitResponse,
     MessageInfo, Order, QueryResponse, StdResult,
 };
 
@@ -64,17 +64,12 @@ pub struct ListResponse {
 }
 
 // init is a no-op, just empty data
-pub fn init(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: InitMsg,
-) -> StdResult<InitResponse> {
+pub fn init(_deps: Deps, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<InitResponse> {
     Ok(InitResponse::default())
 }
 
 pub fn handle(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     _info: MessageInfo,
     msg: HandleMsg,
@@ -87,7 +82,7 @@ pub fn handle(
 
 const FIRST_KEY: u8 = 0;
 
-fn enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
+fn enqueue(deps: Deps, value: i32) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
     let last_item = deps.storage.range(None, None, Order::Descending).next();
 
@@ -103,7 +98,7 @@ fn enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
     Ok(HandleResponse::default())
 }
 
-fn dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
+fn dequeue(deps: Deps) -> StdResult<HandleResponse> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
 
@@ -196,9 +191,9 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coins, from_binary, Deps};
+    use cosmwasm_std::{coins, from_binary, OwnedDeps};
 
-    fn create_contract() -> (Deps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
+    fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies(&coins(1000, "earth"));
         let info = mock_info("creator", &coins(1000, "earth"));
         let res = init(deps.as_mut(), mock_env(), info.clone(), InitMsg {}).unwrap();

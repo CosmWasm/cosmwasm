@@ -1,7 +1,6 @@
 use cosmwasm_std::{
-    attr, coin, to_binary, BankMsg, Binary, Decimal, DepsMut, DepsRef, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, QuerierWrapper, StakingMsg, StdError, StdResult, Uint128,
-    WasmMsg,
+    attr, coin, to_binary, BankMsg, Binary, Decimal, Deps, DepsRef, Env, HandleResponse, HumanAddr,
+    InitResponse, MessageInfo, QuerierWrapper, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -16,7 +15,7 @@ use crate::state::{
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
-pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
+pub fn init(deps: Deps, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
     if !vals.iter().any(|v| v.address == msg.validator) {
@@ -51,7 +50,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdRes
 }
 
 pub fn handle(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -69,7 +68,7 @@ pub fn handle(
 }
 
 pub fn transfer(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     info: MessageInfo,
     recipient: HumanAddr,
@@ -131,7 +130,7 @@ fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
     }
 }
 
-pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn bond(deps: Deps, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     // ensure we have the proper denom
@@ -184,7 +183,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleRespo
 }
 
 pub fn unbond(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
     amount: Uint128,
@@ -253,7 +252,7 @@ pub fn unbond(
     Ok(res)
 }
 
-pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn claim(deps: Deps, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
     // find how many tokens the contract has
     let invest = invest_info_read(deps.storage.as_readonly()).load()?;
     let mut balance = deps
@@ -302,7 +301,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
 /// reinvest will withdraw all pending rewards,
 /// then issue a callback to itself via _bond_all_tokens
 /// to reinvest the new earnings (and anything else that accumulated)
-pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn reinvest(deps: Deps, env: Env, _info: MessageInfo) -> StdResult<HandleResponse> {
     let contract_addr = env.contract.address;
     let invest = invest_info_read(deps.storage.as_readonly()).load()?;
     let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
@@ -329,7 +328,7 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Handle
 }
 
 pub fn _bond_all_tokens(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
 ) -> Result<HandleResponse, StakingError> {

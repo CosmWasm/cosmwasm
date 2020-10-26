@@ -1,7 +1,6 @@
 use cosmwasm_std::{
-    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, DepsMut, DepsRef, Env,
-    HandleResponse, HumanAddr, InitResponse, MessageInfo, QueryRequest, StdError, StdResult,
-    SystemResult,
+    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsRef, Env, HandleResponse,
+    HumanAddr, InitResponse, MessageInfo, QueryRequest, StdError, StdResult, SystemResult,
 };
 
 use crate::errors::ReflectError;
@@ -12,7 +11,7 @@ use crate::msg::{
 use crate::state::{config, config_read, State};
 
 pub fn init(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     info: MessageInfo,
     _msg: InitMsg,
@@ -26,7 +25,7 @@ pub fn init(
 }
 
 pub fn handle(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -38,7 +37,7 @@ pub fn handle(
 }
 
 pub fn try_reflect(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     info: MessageInfo,
     msgs: Vec<CosmosMsg<CustomMsg>>,
@@ -65,7 +64,7 @@ pub fn try_reflect(
 }
 
 pub fn try_change_owner(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     info: MessageInfo,
     owner: HumanAddr,

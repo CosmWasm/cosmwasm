@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, DepsMut, DepsRef, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
+    Context, Deps, DepsRef, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
     MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
@@ -87,7 +87,7 @@ pub struct RecurseResponse {
 pub const CONFIG_KEY: &[u8] = b"config";
 
 pub fn init(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
@@ -110,7 +110,7 @@ pub fn init(
 }
 
 pub fn migrate(
-    deps: DepsMut,
+    deps: Deps,
     _env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -127,7 +127,7 @@ pub fn migrate(
 }
 
 pub fn handle(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -143,7 +143,7 @@ pub fn handle(
     }
 }
 
-fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, HackError> {
+fn do_release(deps: Deps, env: Env, info: MessageInfo) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -179,7 +179,7 @@ fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_storage_loop(deps: DepsMut) -> Result<HandleResponse, HackError> {
+fn do_storage_loop(deps: Deps) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage

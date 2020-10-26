@@ -1,12 +1,12 @@
 use cosmwasm_std::{
-    attr, BankMsg, Binary, DepsMut, DepsRef, Env, HandleResponse, InitResponse, MessageInfo,
+    attr, BankMsg, Binary, Deps, DepsRef, Env, HandleResponse, InitResponse, MessageInfo,
     MigrateResponse, Order, StdError, StdResult,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 
 pub fn init(
-    _deps: DepsMut,
+    _deps: Deps,
     _env: Env,
     _info: MessageInfo,
     _msg: InitMsg,
@@ -17,7 +17,7 @@ pub fn init(
 }
 
 pub fn handle(
-    _deps: DepsMut,
+    _deps: Deps,
     _env: Env,
     _info: MessageInfo,
     _msg: HandleMsg,
@@ -28,7 +28,7 @@ pub fn handle(
 }
 
 pub fn migrate(
-    deps: DepsMut,
+    deps: Deps,
     env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,

@@ -1,18 +1,18 @@
 use crate::msg::{SpecialQuery, SpecialResponse};
 
 use cosmwasm_std::testing::{MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR};
-use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, Deps, HumanAddr, SystemResult};
+use cosmwasm_std::{to_binary, Binary, Coin, ContractResult, HumanAddr, OwnedDeps, SystemResult};
 
 /// A drop-in replacement for cosmwasm_std::testing::mock_dependencies
 /// this uses our CustomQuerier.
 pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
-) -> Deps<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(&query)));
-    Deps {
+    OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: custom_querier,
