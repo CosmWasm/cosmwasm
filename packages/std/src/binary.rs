@@ -37,8 +37,8 @@ impl Binary {
     /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
     /// `A` is a fixed-sized array like `[u8; 8]`.
     ///
-    /// ByteArray is implemented for `[u8; 0]` to `[u8; 64]`, such that
-    /// we are limited by 64 bytes for now.
+    /// ByteArray is implemented for `[u8; 0]` to `[u8; 32]`, such that
+    /// we are limited by 32 bytes for now.
     ///
     /// # Examples
     ///
@@ -236,10 +236,7 @@ implement_fixes_size_arrays! {
      0  1  2  3  4  5  6  7  8  9
     10 11 12 13 14 15 16 17 18 19
     20 21 22 23 24 25 26 27 28 29
-    30 31 32 33 34 35 36 37 38 39
-    40 41 42 43 44 45 46 47 48 49
-    50 51 52 53 54 55 56 57 58 59
-    60 61 62 63 64
+    30 31 32
 }
 
 #[cfg(test)]
@@ -295,18 +292,30 @@ mod test {
             err => panic!("Unexpected error: {:?}", err),
         }
 
-        // long array > 32 bytes
-        let binary =
-            Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
-        let array: [u8; 39] = binary.to_array().unwrap();
+        // long array (32 bytes)
+        let binary = Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvA=").unwrap();
+        let array: [u8; 32] = binary.to_array().unwrap();
         assert_eq!(
             array,
             [
                 0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
                 0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
-                0x86, 0x60, 0x96, 0xf0, 0x73, 0xc8, 0xc3, 0xb0, 0x31, 0x6a, 0xbe,
+                0x86, 0x60, 0x96, 0xf0,
             ]
         );
+
+        // very long array > 32 bytes (does not yet compile but we can make it happen with Rust 1.47+)
+        // let binary =
+        //     Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
+        // let array: [u8; 39] = binary.to_array().unwrap();
+        // assert_eq!(
+        //     array,
+        //     [
+        //         0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
+        //         0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
+        //         0x86, 0x60, 0x96, 0xf0, 0x73, 0xc8, 0xc3, 0xb0, 0x31, 0x6a, 0xbe,
+        //     ]
+        // );
     }
 
     #[test]
