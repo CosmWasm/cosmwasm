@@ -13,6 +13,8 @@
   `StdError::SerializeErr::target` to `StdError::SerializeErr::target_type` to
   work around speacial treatment of the field name `source` in thiserror.
 - Rename `Extern` to `Deps` to unify naming.
+- Remove unused `Deps::change_querier`. If you need this or similar
+  functionality, create a new struct with the right querier.
 
 **cosmwasm-vm**
 
@@ -24,6 +26,8 @@
   boundary to Go.
 - `MockStorage` now implementes the new `Storage` trait and has an additional
   `MockStorage::all` for getting all elements of an iterator in tests.
+- Remove unused `Extern::change_querier`. If you need this or similar
+  functionality, create a new struct with the right querier.
 
 ## 0.11.1 (2020-10-12)
 

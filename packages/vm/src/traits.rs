@@ -14,19 +14,6 @@ pub struct Extern<S: Storage, A: Api, Q: Querier> {
     pub querier: Q,
 }
 
-impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
-    /// change_querier is a helper mainly for test code when swapping out the Querier
-    /// from the auto-generated one from mock_dependencies. This changes the type of
-    /// Extern so replaces requires some boilerplate.
-    pub fn change_querier<T: Querier, F: Fn(Q) -> T>(self, transform: F) -> Extern<S, A, T> {
-        Extern {
-            storage: self.storage,
-            api: self.api,
-            querier: transform(self.querier),
-        }
-    }
-}
-
 /// Access to the VM's backend storage, i.e. the chain
 pub trait Storage {
     /// Returns Err on error.
