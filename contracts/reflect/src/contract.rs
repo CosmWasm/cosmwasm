@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsRef, Env, HandleResponse,
+    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
     HumanAddr, InitResponse, MessageInfo, QueryRequest, StdError, StdResult, SystemResult,
 };
 
@@ -11,7 +11,7 @@ use crate::msg::{
 use crate::state::{config, config_read, State};
 
 pub fn init(
-    deps: Deps,
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     _msg: InitMsg,
@@ -25,7 +25,7 @@ pub fn init(
 }
 
 pub fn handle(
-    deps: Deps,
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -37,7 +37,7 @@ pub fn handle(
 }
 
 pub fn try_reflect(
-    deps: Deps,
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     msgs: Vec<CosmosMsg<CustomMsg>>,
@@ -64,7 +64,7 @@ pub fn try_reflect(
 }
 
 pub fn try_change_owner(
-    deps: Deps,
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     owner: HumanAddr,
@@ -87,7 +87,7 @@ pub fn try_change_owner(
     })
 }
 
-pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
@@ -96,7 +96,7 @@ pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-fn query_owner(deps: DepsRef) -> StdResult<OwnerResponse> {
+fn query_owner(deps: Deps) -> StdResult<OwnerResponse> {
     let state = config_read(deps.storage.as_readonly()).load()?;
     let resp = OwnerResponse {
         owner: deps.api.human_address(&state.owner)?,
@@ -104,13 +104,13 @@ fn query_owner(deps: DepsRef) -> StdResult<OwnerResponse> {
     Ok(resp)
 }
 
-fn query_capitalized(deps: DepsRef, text: String) -> StdResult<CapitalizedResponse> {
+fn query_capitalized(deps: Deps, text: String) -> StdResult<CapitalizedResponse> {
     let req = SpecialQuery::Capitalized { text }.into();
     let response: SpecialResponse = deps.querier.custom_query(&req)?;
     Ok(CapitalizedResponse { text: response.msg })
 }
 
-fn query_chain(deps: DepsRef, request: &QueryRequest<SpecialQuery>) -> StdResult<ChainResponse> {
+fn query_chain(deps: Deps, request: &QueryRequest<SpecialQuery>) -> StdResult<ChainResponse> {
     let raw = to_vec(request).map_err(|serialize_err| {
         StdError::generic_err(format!("Serializing QueryRequest: {}", serialize_err))
     })?;
@@ -127,7 +127,7 @@ fn query_chain(deps: DepsRef, request: &QueryRequest<SpecialQuery>) -> StdResult
     }
 }
 
-fn query_raw(deps: DepsRef, contract: HumanAddr, key: Binary) -> StdResult<RawResponse> {
+fn query_raw(deps: Deps, contract: HumanAddr, key: Binary) -> StdResult<RawResponse> {
     let response: Option<Vec<u8>> = deps.querier.query_wasm_raw(contract, key)?;
     Ok(RawResponse {
         data: response.unwrap_or_default().into(),

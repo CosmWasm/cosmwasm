@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, coin, to_binary, BankMsg, Binary, Decimal, Deps, DepsRef, Env, HandleResponse, HumanAddr,
+    attr, coin, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Env, HandleResponse, HumanAddr,
     InitResponse, MessageInfo, QuerierWrapper, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
 };
 
@@ -15,7 +15,7 @@ use crate::state::{
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
-pub fn init(deps: Deps, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
+pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
     if !vals.iter().any(|v| v.address == msg.validator) {
@@ -50,7 +50,7 @@ pub fn init(deps: Deps, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult
 }
 
 pub fn handle(
-    deps: Deps,
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -68,7 +68,7 @@ pub fn handle(
 }
 
 pub fn transfer(
-    deps: Deps,
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     recipient: HumanAddr,
@@ -130,7 +130,7 @@ fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
     }
 }
 
-pub fn bond(deps: Deps, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     // ensure we have the proper denom
@@ -183,7 +183,7 @@ pub fn bond(deps: Deps, env: Env, info: MessageInfo) -> StdResult<HandleResponse
 }
 
 pub fn unbond(
-    deps: Deps,
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     amount: Uint128,
@@ -252,7 +252,7 @@ pub fn unbond(
     Ok(res)
 }
 
-pub fn claim(deps: Deps, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
     // find how many tokens the contract has
     let invest = invest_info_read(deps.storage.as_readonly()).load()?;
     let mut balance = deps
@@ -301,7 +301,7 @@ pub fn claim(deps: Deps, env: Env, info: MessageInfo) -> StdResult<HandleRespons
 /// reinvest will withdraw all pending rewards,
 /// then issue a callback to itself via _bond_all_tokens
 /// to reinvest the new earnings (and anything else that accumulated)
-pub fn reinvest(deps: Deps, env: Env, _info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<HandleResponse> {
     let contract_addr = env.contract.address;
     let invest = invest_info_read(deps.storage.as_readonly()).load()?;
     let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
@@ -328,7 +328,7 @@ pub fn reinvest(deps: Deps, env: Env, _info: MessageInfo) -> StdResult<HandleRes
 }
 
 pub fn _bond_all_tokens(
-    deps: Deps,
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
 ) -> Result<HandleResponse, StakingError> {
@@ -371,7 +371,7 @@ pub fn _bond_all_tokens(
     Ok(res)
 }
 
-pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     match msg {
         QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
         QueryMsg::Investment {} => to_binary(&query_investment(deps)?),
@@ -380,11 +380,11 @@ pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
     }
 }
 
-pub fn query_token_info(deps: DepsRef) -> StdResult<TokenInfoResponse> {
+pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
     token_info_read(deps.storage.as_readonly()).load()
 }
 
-pub fn query_balance(deps: DepsRef, address: HumanAddr) -> StdResult<BalanceResponse> {
+pub fn query_balance(deps: Deps, address: HumanAddr) -> StdResult<BalanceResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
     let balance = balances_read(deps.storage.as_readonly())
         .may_load(address_raw.as_slice())?
@@ -392,7 +392,7 @@ pub fn query_balance(deps: DepsRef, address: HumanAddr) -> StdResult<BalanceResp
     Ok(BalanceResponse { balance })
 }
 
-pub fn query_claims(deps: DepsRef, address: HumanAddr) -> StdResult<ClaimsResponse> {
+pub fn query_claims(deps: Deps, address: HumanAddr) -> StdResult<ClaimsResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
     let claims = claims_read(deps.storage.as_readonly())
         .may_load(address_raw.as_slice())?
@@ -400,7 +400,7 @@ pub fn query_claims(deps: DepsRef, address: HumanAddr) -> StdResult<ClaimsRespon
     Ok(ClaimsResponse { claims })
 }
 
-pub fn query_investment(deps: DepsRef) -> StdResult<InvestmentResponse> {
+pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
     let invest = invest_info_read(deps.storage.as_readonly()).load()?;
     let supply = total_supply_read(deps.storage.as_readonly()).load()?;
 
@@ -474,11 +474,11 @@ mod tests {
         }
     }
 
-    fn get_balance<U: Into<HumanAddr>>(deps: DepsRef, addr: U) -> Uint128 {
+    fn get_balance<U: Into<HumanAddr>>(deps: Deps, addr: U) -> Uint128 {
         query_balance(deps, addr.into()).unwrap().balance
     }
 
-    fn get_claims<U: Into<HumanAddr>>(deps: DepsRef, addr: U) -> Uint128 {
+    fn get_claims<U: Into<HumanAddr>>(deps: Deps, addr: U) -> Uint128 {
         query_claims(deps, addr.into()).unwrap().claims
     }
 

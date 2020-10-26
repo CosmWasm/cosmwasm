@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, Binary, Deps, DepsRef, Env, HandleResponse, InitResponse,
+    from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse,
     MessageInfo, Order, QueryResponse, StdResult,
 };
 
@@ -64,12 +64,17 @@ pub struct ListResponse {
 }
 
 // init is a no-op, just empty data
-pub fn init(_deps: Deps, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<InitResponse> {
+pub fn init(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    _msg: InitMsg,
+) -> StdResult<InitResponse> {
     Ok(InitResponse::default())
 }
 
 pub fn handle(
-    deps: Deps,
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     msg: HandleMsg,
@@ -82,7 +87,7 @@ pub fn handle(
 
 const FIRST_KEY: u8 = 0;
 
-fn enqueue(deps: Deps, value: i32) -> StdResult<HandleResponse> {
+fn enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
     // find the last element in the queue and extract key
     let last_item = deps.storage.range(None, None, Order::Descending).next();
 
@@ -98,7 +103,7 @@ fn enqueue(deps: Deps, value: i32) -> StdResult<HandleResponse> {
     Ok(HandleResponse::default())
 }
 
-fn dequeue(deps: Deps) -> StdResult<HandleResponse> {
+fn dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
 
@@ -113,7 +118,7 @@ fn dequeue(deps: Deps) -> StdResult<HandleResponse> {
     }
 }
 
-pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Count {} => to_binary(&query_count(deps)?),
         QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
@@ -122,12 +127,12 @@ pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse
     }
 }
 
-fn query_count(deps: DepsRef) -> StdResult<CountResponse> {
+fn query_count(deps: Deps) -> StdResult<CountResponse> {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
     Ok(CountResponse { count })
 }
 
-fn query_sum(deps: DepsRef) -> StdResult<SumResponse> {
+fn query_sum(deps: Deps) -> StdResult<SumResponse> {
     let values: StdResult<Vec<Item>> = deps
         .storage
         .range(None, None, Order::Ascending)
@@ -137,7 +142,7 @@ fn query_sum(deps: DepsRef) -> StdResult<SumResponse> {
     Ok(SumResponse { sum })
 }
 
-fn query_reducer(deps: DepsRef) -> StdResult<ReducerResponse> {
+fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
     let mut out: Vec<(i32, i32)> = vec![];
     // val: StdResult<Item>
     for val in deps
@@ -166,7 +171,7 @@ fn query_reducer(deps: DepsRef) -> StdResult<ReducerResponse> {
 
 /// Does a range query with both bounds set. Not really useful but to debug an issue
 /// between VM and Wasm: https://github.com/CosmWasm/cosmwasm/issues/508
-fn query_list(deps: DepsRef) -> StdResult<ListResponse> {
+fn query_list(deps: Deps) -> StdResult<ListResponse> {
     let empty: Vec<u32> = deps
         .storage
         .range(Some(b"large"), Some(b"larger"), Order::Ascending)
@@ -201,11 +206,11 @@ mod tests {
         (deps, info)
     }
 
-    fn get_count(deps: DepsRef) -> u32 {
+    fn get_count(deps: Deps) -> u32 {
         query_count(deps).unwrap().count
     }
 
-    fn get_sum(deps: DepsRef) -> i32 {
+    fn get_sum(deps: Deps) -> i32 {
         query_sum(deps).unwrap().sum
     }
 

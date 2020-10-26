@@ -19,7 +19,7 @@ use crate::results::{
 };
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
-use crate::{Deps, DepsRef, MessageInfo};
+use crate::{Deps, DepsMut, MessageInfo};
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -68,7 +68,7 @@ macro_rules! r#try_into_contract_result {
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_init<M, C, E>(
-    init_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -94,7 +94,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_handle<M, C, E>(
-    handle_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -120,7 +120,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -145,7 +145,7 @@ where
 /// - `M`: message type for request
 /// - `E`: error type for responses
 pub fn do_query<M, E>(
-    query_fn: &dyn Fn(DepsRef, Env, M) -> Result<QueryResponse, E>,
+    query_fn: &dyn Fn(Deps, Env, M) -> Result<QueryResponse, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -159,7 +159,7 @@ where
 }
 
 fn _do_init<M, C, E>(
-    init_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -182,7 +182,7 @@ where
 }
 
 fn _do_handle<M, C, E>(
-    handle_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -205,7 +205,7 @@ where
 }
 
 fn _do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -228,7 +228,7 @@ where
 }
 
 fn _do_query<M, E>(
-    query_fn: &dyn Fn(DepsRef, Env, M) -> Result<QueryResponse, E>,
+    query_fn: &dyn Fn(Deps, Env, M) -> Result<QueryResponse, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<QueryResponse>

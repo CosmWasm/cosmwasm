@@ -20,7 +20,7 @@ mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
 pub use crate::coins::{coin, coins, has_coins, Coin};
-pub use crate::deps::{Deps, DepsRef, OwnedDeps};
+pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::encoding::Binary;
 pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]

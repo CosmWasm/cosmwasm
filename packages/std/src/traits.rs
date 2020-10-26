@@ -91,20 +91,18 @@ pub trait Querier {
 }
 
 #[derive(Copy, Clone)]
-pub struct QuerierWrapper<'a> {
-    querier: &'a dyn Querier,
-}
+pub struct QuerierWrapper<'a>(&'a dyn Querier);
 
 impl<'a> QuerierWrapper<'a> {
     pub fn new(querier: &'a dyn Querier) -> Self {
-        QuerierWrapper { querier }
+        QuerierWrapper(querier)
     }
 
     /// This allows us to pass through binary queries from one level to another without
     /// knowing the custom format, or we can decode it, with the knowledge of the allowed
     /// types. You probably want one of the simpler auto-generated helper methods
     pub fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
-        self.querier.raw_query(bin_request)
+        self.0.raw_query(bin_request)
     }
 
     /// query is a shorthand for custom_query when we are not using a custom type,
