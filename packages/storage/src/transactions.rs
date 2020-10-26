@@ -104,8 +104,10 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
         self.rep_log.append(op);
     }
 
-    // this is needed so a &dyn Storage trait object can access the readonly methods
-    fn as_ref(&self) -> &dyn ReadonlyStorage {
+    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
+    /// which unfortunately Rust does not allow us to do directly
+    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
+    fn as_readonly(&self) -> &dyn ReadonlyStorage {
         self
     }
 }
