@@ -351,7 +351,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait ReadonlyStorage to get access to read
-    use cosmwasm_std::{attr, coins, ReadonlyStorage};
+    use cosmwasm_std::{attr, coins, Storage};
 
     #[test]
     fn proper_initialization() {

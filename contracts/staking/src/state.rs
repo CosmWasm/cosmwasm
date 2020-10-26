@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, ReadonlyStorage, Storage, Uint128};
+use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, Storage, Uint128};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -21,7 +21,7 @@ pub fn balances(storage: &mut dyn Storage) -> Bucket<Uint128> {
     bucket(storage, PREFIX_BALANCE)
 }
 
-pub fn balances_read(storage: &dyn ReadonlyStorage) -> ReadonlyBucket<Uint128> {
+pub fn balances_read(storage: &dyn Storage) -> ReadonlyBucket<Uint128> {
     bucket_read(storage, PREFIX_BALANCE)
 }
 
@@ -30,7 +30,7 @@ pub fn claims(storage: &mut dyn Storage) -> Bucket<Uint128> {
     bucket(storage, PREFIX_CLAIMS)
 }
 
-pub fn claims_read(storage: &dyn ReadonlyStorage) -> ReadonlyBucket<Uint128> {
+pub fn claims_read(storage: &dyn Storage) -> ReadonlyBucket<Uint128> {
     bucket_read(storage, PREFIX_CLAIMS)
 }
 
@@ -66,7 +66,7 @@ pub fn invest_info(storage: &mut dyn Storage) -> Singleton<InvestmentInfo> {
     singleton(storage, KEY_INVESTMENT)
 }
 
-pub fn invest_info_read(storage: &dyn ReadonlyStorage) -> ReadonlySingleton<InvestmentInfo> {
+pub fn invest_info_read(storage: &dyn Storage) -> ReadonlySingleton<InvestmentInfo> {
     singleton_read(storage, KEY_INVESTMENT)
 }
 
@@ -74,7 +74,7 @@ pub fn token_info(storage: &mut dyn Storage) -> Singleton<TokenInfoResponse> {
     singleton(storage, KEY_TOKEN_INFO)
 }
 
-pub fn token_info_read(storage: &dyn ReadonlyStorage) -> ReadonlySingleton<TokenInfoResponse> {
+pub fn token_info_read(storage: &dyn Storage) -> ReadonlySingleton<TokenInfoResponse> {
     singleton_read(storage, KEY_TOKEN_INFO)
 }
 
@@ -82,6 +82,6 @@ pub fn total_supply(storage: &mut dyn Storage) -> Singleton<Supply> {
     singleton(storage, KEY_TOTAL_SUPPLY)
 }
 
-pub fn total_supply_read(storage: &dyn ReadonlyStorage) -> ReadonlySingleton<Supply> {
+pub fn total_supply_read(storage: &dyn Storage) -> ReadonlySingleton<Supply> {
     singleton_read(storage, KEY_TOTAL_SUPPLY)
 }

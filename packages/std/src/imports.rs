@@ -6,7 +6,7 @@ use crate::errors::{StdError, StdResult, SystemError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 use crate::serde::from_slice;
-use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
+use crate::traits::{Api, Querier, QuerierResult, Storage};
 #[cfg(feature = "iterator")]
 use crate::{
     iterator::{Order, KV},
@@ -51,7 +51,7 @@ impl ExternalStorage {
     }
 }
 
-impl ReadonlyStorage for ExternalStorage {
+impl Storage for ExternalStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         let key = build_region(key);
         let key_ptr = &*key as *const Region as u32;
@@ -65,6 +65,22 @@ impl ReadonlyStorage for ExternalStorage {
         let value_ptr = read as *mut Region;
         let data = unsafe { consume_region(value_ptr) };
         Some(data)
+    }
+
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as u32;
+        let mut value = build_region(value);
+        let value_ptr = &mut *value as *mut Region as u32;
+        unsafe { db_write(key_ptr, value_ptr) };
+    }
+
+    fn remove(&mut self, key: &[u8]) {
+        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
+        let key = build_region(key);
+        let key_ptr = &*key as *const Region as u32;
+        unsafe { db_remove(key_ptr) };
     }
 
     #[cfg(feature = "iterator")]
@@ -83,31 +99,6 @@ impl ReadonlyStorage for ExternalStorage {
         let iterator_id = unsafe { db_scan(start_region_addr, end_region_addr, order as i32) };
         let iter = ExternalIterator { iterator_id };
         Box::new(iter)
-    }
-}
-
-impl Storage for ExternalStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
-        let key = build_region(key);
-        let key_ptr = &*key as *const Region as u32;
-        let mut value = build_region(value);
-        let value_ptr = &mut *value as *mut Region as u32;
-        unsafe { db_write(key_ptr, value_ptr) };
-    }
-
-    fn remove(&mut self, key: &[u8]) {
-        // keep the boxes in scope, so we free it at the end (don't cast to pointers same line as build_region)
-        let key = build_region(key);
-        let key_ptr = &*key as *const Region as u32;
-        unsafe { db_remove(key_ptr) };
-    }
-
-    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
-    /// which unfortunately Rust does not allow us to do directly
-    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
-    fn as_readonly(&self) -> &dyn ReadonlyStorage {
-        self
     }
 }
 
