@@ -18,8 +18,9 @@ use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::types::Empty;
 
-/// ReadonlyStorage is access to the contracts persistent data store
-pub trait ReadonlyStorage {
+/// Storage provides read and write access to a persistent storage.
+/// If you only want to provide read access, provide `&Storage`
+pub trait Storage {
     /// Returns None when key does not exist.
     /// Returns Some(Vec<u8>) when key exists.
     ///
@@ -39,21 +40,13 @@ pub trait ReadonlyStorage {
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = KV> + 'a>;
-}
 
-// Storage extends ReadonlyStorage to give mutable access
-pub trait Storage: ReadonlyStorage {
     fn set(&mut self, key: &[u8], value: &[u8]);
     /// Removes a database entry at `key`.
     ///
     /// The current interface does not allow to differentiate between a key that existed
     /// before and one that didn't exist. See https://github.com/CosmWasm/cosmwasm/issues/290
     fn remove(&mut self, key: &[u8]);
-
-    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
-    /// which unfortunately Rust does not allow us to do directly
-    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
-    fn as_readonly(&self) -> &dyn ReadonlyStorage;
 }
 
 /// Api are callbacks to system functions implemented outside of the wasm modules.
