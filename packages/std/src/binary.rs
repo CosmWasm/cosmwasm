@@ -1,4 +1,5 @@
 use std::fmt;
+use std::mem;
 use std::ops::Deref;
 
 use schemars::JsonSchema;
@@ -32,13 +33,12 @@ impl Binary {
     }
 
     /// Copies content into fixed-sized array.
-    /// The result type `A: Sized + Default + AsMut<[u8]>` is a workaround for
+    /// The result type `A: ByteArray` is a workaround for
     /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
-    /// `A` is typically a fixed-sized array like `[u8; 8]`.
+    /// `A` is a fixed-sized array like `[u8; 8]`.
     ///
-    /// As of Rust 1.47.0, `Default` is only implemented for `[T; 0]` to `[T; 32]`
-    /// (https://doc.rust-lang.org/std/default/trait.Default.html#implementors), such that
-    /// we are limited by 32 bytes for now.
+    /// ByteArray is implemented for `[u8; 0]` to `[u8; 64]`, such that
+    /// we are limited by 64 bytes for now.
     ///
     /// # Examples
     ///
@@ -61,16 +61,18 @@ impl Binary {
     /// ```
     pub fn to_array<A>(&self) -> StdResult<A>
     where
-        A: Sized + Default + AsMut<[u8]>,
+        A: ByteArray,
     {
         let out_size = std::mem::size_of::<A>();
         if self.len() != out_size {
             return Err(StdError::invalid_data_size(out_size, self.len()));
         }
 
-        let mut a = Default::default();
-        <A as AsMut<[u8]>>::as_mut(&mut a).copy_from_slice(&self.0);
-        Ok(a)
+        // We cannot use Default::default() because it is only implemented for
+        // short arrays [T; 0] … [T; 32].
+        let mut out: A = unsafe { mem::zeroed() };
+        <A as AsMut<[u8]>>::as_mut(&mut out).copy_from_slice(&self.0);
+        Ok(out)
     }
 }
 
@@ -214,6 +216,32 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     }
 }
 
+/// A marker trait for `[u8; $N]`, which is needed as long as
+/// https://rust-lang.github.io/rfcs/2000-const-generics.html is not stable.
+///
+/// Implementing this for other types (like Vec<u8>) results in undefined behaviour.
+pub unsafe trait ByteArray: Sized + AsMut<[u8]> {}
+
+// Macro needed until https://rust-lang.github.io/rfcs/2000-const-generics.html is stable.
+// See https://users.rust-lang.org/t/how-to-implement-trait-for-fixed-size-array-of-any-size/31494
+macro_rules! implement_fixes_size_arrays {
+    ($($N:literal)+) => {
+        $(
+            unsafe impl ByteArray for [u8; $N] {}
+        )+
+    }
+}
+
+implement_fixes_size_arrays! {
+     0  1  2  3  4  5  6  7  8  9
+    10 11 12 13 14 15 16 17 18 19
+    20 21 22 23 24 25 26 27 28 29
+    30 31 32 33 34 35 36 37 38 39
+    40 41 42 43 44 45 46 47 48 49
+    50 51 52 53 54 55 56 57 58 59
+    60 61 62 63 64
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -267,22 +295,18 @@ mod test {
             err => panic!("Unexpected error: {:?}", err),
         }
 
-        // max length (32 bytes)
-        let binary = Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvA=").unwrap();
-        let array: [u8; 32] = binary.to_array().unwrap();
+        // long array > 32 bytes
+        let binary =
+            Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
+        let array: [u8; 39] = binary.to_array().unwrap();
         assert_eq!(
             array,
             [
                 0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
                 0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
-                0x86, 0x60, 0x96, 0xf0,
+                0x86, 0x60, 0x96, 0xf0, 0x73, 0xc8, 0xc3, 0xb0, 0x31, 0x6a, 0xbe,
             ]
         );
-
-        // long array > 32 bytes (does not compile yet since Default is not implemented for `[u8; 39]`)
-        // let binary =
-        //     Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
-        // let array: [u8; 39] = binary.to_array().unwrap();
     }
 
     #[test]
