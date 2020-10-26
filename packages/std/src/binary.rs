@@ -1,10 +1,11 @@
 use std::fmt;
+use std::mem;
+use std::ops::Deref;
 
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 
 use crate::errors::{StdError, StdResult};
-use std::ops::Deref;
 
 /// Binary is a wrapper around Vec<u8> to add base64 de/serialization
 /// with serde. It also adds some helper methods to help encode inline.
@@ -29,6 +30,49 @@ impl Binary {
 
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_slice()
+    }
+
+    /// Copies content into fixed-sized array.
+    /// The result type `A: ByteArray` is a workaround for
+    /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
+    /// `A` is a fixed-sized array like `[u8; 8]`.
+    ///
+    /// ByteArray is implemented for `[u8; 0]` to `[u8; 32]`, such that
+    /// we are limited by 32 bytes for now.
+    ///
+    /// # Examples
+    ///
+    /// Copy to array of explicit length
+    ///
+    /// ```
+    /// # use cosmwasm_std::Binary;
+    /// let binary = Binary::from(&[0xfb, 0x1f, 0x37]);
+    /// let array: [u8; 3] = binary.to_array().unwrap();
+    /// assert_eq!(array, [0xfb, 0x1f, 0x37]);
+    /// ```
+    ///
+    /// Copy to integer
+    ///
+    /// ```
+    /// # use cosmwasm_std::Binary;
+    /// let binary = Binary::from(&[0x8b, 0x67, 0x64, 0x84, 0xb5, 0xfb, 0x1f, 0x37]);
+    /// let num = u64::from_be_bytes(binary.to_array().unwrap());
+    /// assert_eq!(num, 10045108015024774967);
+    /// ```
+    pub fn to_array<A>(&self) -> StdResult<A>
+    where
+        A: ByteArray,
+    {
+        let out_size = std::mem::size_of::<A>();
+        if self.len() != out_size {
+            return Err(StdError::invalid_data_size(out_size, self.len()));
+        }
+
+        // We cannot use Default::default() because it is only implemented for
+        // short arrays [T; 0] … [T; 32].
+        let mut out: A = unsafe { mem::zeroed() };
+        <A as AsMut<[u8]>>::as_mut(&mut out).copy_from_slice(&self.0);
+        Ok(out)
     }
 }
 
@@ -172,6 +216,29 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     }
 }
 
+/// A marker trait for `[u8; $N]`, which is needed as long as
+/// https://rust-lang.github.io/rfcs/2000-const-generics.html is not stable.
+///
+/// Implementing this for other types (like Vec<u8>) results in undefined behaviour.
+pub unsafe trait ByteArray: Sized + AsMut<[u8]> {}
+
+// Macro needed until https://rust-lang.github.io/rfcs/2000-const-generics.html is stable.
+// See https://users.rust-lang.org/t/how-to-implement-trait-for-fixed-size-array-of-any-size/31494
+macro_rules! implement_fixes_size_arrays {
+    ($($N:literal)+) => {
+        $(
+            unsafe impl ByteArray for [u8; $N] {}
+        )+
+    }
+}
+
+implement_fixes_size_arrays! {
+     0  1  2  3  4  5  6  7  8  9
+    10 11 12 13 14 15 16 17 18 19
+    20 21 22 23 24 25 26 27 28 29
+    30 31 32
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -198,6 +265,57 @@ mod test {
         assert_eq!(8, encoded.len());
         let decoded = Binary::from_base64(&encoded).unwrap();
         assert_eq!(binary.deref(), decoded.deref());
+    }
+
+    #[test]
+    fn to_array_works() {
+        // simple
+        let binary = Binary::from(&[1, 2, 3]);
+        let array: [u8; 3] = binary.to_array().unwrap();
+        assert_eq!(array, [1, 2, 3]);
+
+        // empty
+        let binary = Binary::from(&[]);
+        let array: [u8; 0] = binary.to_array().unwrap();
+        assert_eq!(array, [] as [u8; 0]);
+
+        // invalid size
+        let binary = Binary::from(&[1, 2, 3]);
+        let error = binary.to_array::<[u8; 8]>().unwrap_err();
+        match error {
+            StdError::InvalidDataSize {
+                expected, actual, ..
+            } => {
+                assert_eq!(expected, 8);
+                assert_eq!(actual, 3);
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+
+        // long array (32 bytes)
+        let binary = Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvA=").unwrap();
+        let array: [u8; 32] = binary.to_array().unwrap();
+        assert_eq!(
+            array,
+            [
+                0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
+                0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
+                0x86, 0x60, 0x96, 0xf0,
+            ]
+        );
+
+        // very long array > 32 bytes (does not yet compile but we can make it happen with Rust 1.47+)
+        // let binary =
+        //     Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
+        // let array: [u8; 39] = binary.to_array().unwrap();
+        // assert_eq!(
+        //     array,
+        //     [
+        //         0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
+        //         0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
+        //         0x86, 0x60, 0x96, 0xf0, 0x73, 0xc8, 0xc3, 0xb0, 0x31, 0x6a, 0xbe,
+        //     ]
+        // );
     }
 
     #[test]

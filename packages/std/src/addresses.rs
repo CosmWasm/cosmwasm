@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Deref;
 
-use crate::encoding::Binary;
+use crate::binary::Binary;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);

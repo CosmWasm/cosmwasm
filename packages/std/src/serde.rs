@@ -5,7 +5,7 @@
 use serde::{de::DeserializeOwned, Serialize};
 use std::any::type_name;
 
-use crate::encoding::Binary;
+use crate::binary::Binary;
 use crate::errors::{StdError, StdResult};
 
 pub fn from_slice<T: DeserializeOwned>(value: &[u8]) -> StdResult<T> {

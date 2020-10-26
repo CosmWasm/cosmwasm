@@ -1,8 +1,8 @@
 // Exposed on all platforms
 
 mod addresses;
+mod binary;
 mod coins;
-mod encoding;
 mod entry_points;
 mod errors;
 #[cfg(feature = "iterator")]
@@ -16,8 +16,8 @@ mod traits;
 mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
+pub use crate::binary::{Binary, ByteArray};
 pub use crate::coins::{coin, coins, has_coins, Coin};
-pub use crate::encoding::Binary;
 pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
