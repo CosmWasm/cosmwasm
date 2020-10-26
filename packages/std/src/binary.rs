@@ -36,6 +36,10 @@ impl Binary {
     /// the missing [const-generics](https://rust-lang.github.io/rfcs/2000-const-generics.html).
     /// `A` is typically a fixed-sized array like `[u8; 8]`.
     ///
+    /// As of Rust 1.47.0, `Default` is only implemented for `[T; 0]` to `[T; 32]`
+    /// (https://doc.rust-lang.org/std/default/trait.Default.html#implementors), such that
+    /// we are limited by 32 bytes for now.
+    ///
     /// # Examples
     ///
     /// Copy to array of explicit length
@@ -262,6 +266,23 @@ mod test {
             }
             err => panic!("Unexpected error: {:?}", err),
         }
+
+        // max length (32 bytes)
+        let binary = Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvA=").unwrap();
+        let array: [u8; 32] = binary.to_array().unwrap();
+        assert_eq!(
+            array,
+            [
+                0xb7, 0x5d, 0x7d, 0x24, 0xe4, 0x28, 0xc7, 0x85, 0x94, 0x40, 0x49, 0x8e, 0xfe, 0x7c,
+                0xaa, 0x39, 0x97, 0xce, 0xfb, 0x08, 0xc9, 0x9b, 0xdd, 0x58, 0x1b, 0x6b, 0x1f, 0x9f,
+                0x86, 0x60, 0x96, 0xf0,
+            ]
+        );
+
+        // long array > 32 bytes (does not compile yet since Default is not implemented for `[u8; 39]`)
+        // let binary =
+        //     Binary::from_base64("t119JOQox4WUQEmO/nyqOZfO+wjJm91YG2sfn4ZglvBzyMOwMWq+").unwrap();
+        // let array: [u8; 39] = binary.to_array().unwrap();
     }
 
     #[test]
