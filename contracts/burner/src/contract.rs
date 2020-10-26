@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, BankMsg, Binary, Deps, DepsMutMut, Env, HandleResponse, InitResponse, MessageInfo,
+    attr, BankMsg, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
     MigrateResponse, Order, StdError, StdResult,
 };
 
