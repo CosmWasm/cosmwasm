@@ -5,25 +5,26 @@ use crate::QuerierWrapper;
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Deps<S: Storage, A: Api, Q: Querier> {
+pub struct OwnedDeps<S: Storage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
     pub querier: Q,
 }
 
-pub struct DepsMut<'a> {
+pub struct Deps<'a> {
     pub storage: &'a mut dyn Storage,
     pub api: &'a dyn Api,
     pub querier: QuerierWrapper<'a>,
 }
 
+#[derive(Copy, Clone)]
 pub struct DepsRef<'a> {
     pub storage: &'a dyn Storage,
     pub api: &'a dyn Api,
     pub querier: QuerierWrapper<'a>,
 }
 
-impl<S: Storage, A: Api, Q: Querier> Deps<S, A, Q> {
+impl<S: Storage, A: Api, Q: Querier> OwnedDeps<S, A, Q> {
     pub fn as_ref(&'_ self) -> DepsRef<'_> {
         DepsRef {
             storage: &self.storage,
@@ -32,8 +33,8 @@ impl<S: Storage, A: Api, Q: Querier> Deps<S, A, Q> {
         }
     }
 
-    pub fn as_mut(&'_ mut self) -> DepsMut<'_> {
-        DepsMut {
+    pub fn as_mut(&'_ mut self) -> Deps<'_> {
+        Deps {
             storage: &mut self.storage,
             api: &self.api,
             querier: QuerierWrapper::new(&self.querier),
@@ -41,7 +42,7 @@ impl<S: Storage, A: Api, Q: Querier> Deps<S, A, Q> {
     }
 }
 
-impl<'a> DepsMut<'a> {
+impl<'a> Deps<'a> {
     pub fn as_ref(&'_ self) -> DepsRef<'_> {
         DepsRef {
             storage: self.storage,

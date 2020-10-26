@@ -11,7 +11,7 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 
-use crate::deps::Deps;
+use crate::deps::OwnedDeps;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
 use crate::results::{
@@ -19,7 +19,7 @@ use crate::results::{
 };
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
-use crate::{DepsMut, DepsRef, MessageInfo};
+use crate::{Deps, DepsRef, MessageInfo};
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -68,7 +68,7 @@ macro_rules! r#try_into_contract_result {
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -94,7 +94,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -120,7 +120,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -159,7 +159,7 @@ where
 }
 
 fn _do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -182,7 +182,7 @@ where
 }
 
 fn _do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -205,7 +205,7 @@ where
 }
 
 fn _do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(Deps, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -247,8 +247,8 @@ where
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
-fn make_dependencies() -> Deps<ExternalStorage, ExternalApi, ExternalQuerier> {
-    Deps {
+fn make_dependencies() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier> {
+    OwnedDeps {
         storage: ExternalStorage::new(),
         api: ExternalApi::new(),
         querier: ExternalQuerier::new(),
