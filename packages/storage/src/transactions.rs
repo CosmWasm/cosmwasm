@@ -103,6 +103,13 @@ impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
         self.local_state.insert(key.to_vec(), op.to_delta());
         self.rep_log.append(op);
     }
+
+    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
+    /// which unfortunately Rust does not allow us to do directly
+    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
+    fn as_readonly(&self) -> &dyn ReadonlyStorage {
+        self
+    }
 }
 
 pub struct RepLog {

@@ -5,8 +5,8 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Deps, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
-    Querier, QueryRequest, QueryResponse, StdError, StdResult, Storage, WasmQuery,
+    Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
+    MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -86,8 +86,8 @@ pub struct RecurseResponse {
 
 pub const CONFIG_KEY: &[u8] = b"config";
 
-pub fn init<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
+pub fn init(
+    deps: DepsMut,
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
@@ -109,8 +109,8 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     Ok(ctx.try_into()?)
 }
 
-pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
+pub fn migrate(
+    deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
     msg: MigrateMsg,
@@ -126,8 +126,8 @@ pub fn migrate<S: Storage, A: Api, Q: Querier>(
     Ok(MigrateResponse::default())
 }
 
-pub fn handle<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
+pub fn handle(
+    deps: DepsMut,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
@@ -139,15 +139,11 @@ pub fn handle<S: Storage, A: Api, Q: Querier>(
         HandleMsg::MemoryLoop {} => do_memory_loop(),
         HandleMsg::AllocateLargeMemory {} => do_allocate_large_memory(),
         HandleMsg::Panic {} => do_panic(),
-        HandleMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(&deps.api),
+        HandleMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(deps.api),
     }
 }
 
-fn do_release<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    env: Env,
-    info: MessageInfo,
-) -> Result<HandleResponse, HackError> {
+fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -183,9 +179,7 @@ fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_storage_loop<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-) -> Result<HandleResponse, HackError> {
+fn do_storage_loop(deps: DepsMut) -> Result<HandleResponse, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -226,7 +220,7 @@ fn do_panic() -> Result<HandleResponse, HackError> {
     panic!("This page intentionally faulted");
 }
 
-fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackError> {
+fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<HandleResponse, HackError> {
     // Canonicalize
 
     let empty = HumanAddr::from("");
@@ -294,11 +288,7 @@ fn do_user_errors_in_api_calls<A: Api>(api: &A) -> Result<HandleResponse, HackEr
     Ok(HandleResponse::default())
 }
 
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
-    env: Env,
-    msg: QueryMsg,
-) -> StdResult<QueryResponse> {
+pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
@@ -308,9 +298,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
     }
 }
 
-fn query_verifier<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
-) -> StdResult<VerifierResponse> {
+fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -320,16 +308,13 @@ fn query_verifier<S: Storage, A: Api, Q: Querier>(
     Ok(VerifierResponse { verifier: addr })
 }
 
-fn query_other_balance<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
-    address: HumanAddr,
-) -> StdResult<AllBalanceResponse> {
+fn query_other_balance(deps: Deps, address: HumanAddr) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
+fn query_recurse(
+    deps: Deps,
     depth: u32,
     work: u32,
     contract: HumanAddr,
@@ -386,7 +371,7 @@ mod tests {
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(&mut deps, mock_env(), info, msg).unwrap();
+        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(res.attributes[0].key, "Let the");
@@ -410,11 +395,11 @@ mod tests {
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(&mut deps, mock_env(), info, msg).unwrap();
+        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
-        let query_response = query_verifier(&deps).unwrap();
+        let query_response = query_verifier(deps.as_ref()).unwrap();
         assert_eq!(query_response.verifier, verifier);
     }
 
@@ -430,11 +415,11 @@ mod tests {
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(&mut deps, mock_env(), info, msg).unwrap();
+        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'verifies'
-        let query_response = query(&deps, mock_env(), QueryMsg::Verifier {}).unwrap();
+        let query_response = query(deps.as_ref(), mock_env(), QueryMsg::Verifier {}).unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
@@ -443,11 +428,11 @@ mod tests {
             verifier: new_verifier.clone(),
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = migrate(&mut deps, mock_env(), info, msg).unwrap();
+        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
-        let query_response = query_verifier(&deps).unwrap();
+        let query_response = query_verifier(deps.as_ref()).unwrap();
         assert_eq!(query_response.verifier, new_verifier);
     }
 
@@ -458,11 +443,11 @@ mod tests {
         let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
-        let bal = query_other_balance(&deps, rich_addr).unwrap();
+        let bal = query_other_balance(deps.as_ref(), rich_addr).unwrap();
         assert_eq!(bal.amount, rich_balance);
 
         // querying other accounts gets none
-        let bal = query_other_balance(&deps, HumanAddr::from("someone else")).unwrap();
+        let bal = query_other_balance(deps.as_ref(), HumanAddr::from("someone else")).unwrap();
         assert_eq!(bal.amount, vec![]);
     }
 
@@ -481,7 +466,7 @@ mod tests {
         };
         let init_amount = coins(1000, "earth");
         let init_info = mock_info(creator.as_str(), &init_amount);
-        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -489,7 +474,13 @@ mod tests {
 
         // beneficiary can release it
         let handle_info = mock_info(verifier.as_str(), &[]);
-        let handle_res = handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {}).unwrap();
+        let handle_res = handle(
+            deps.as_mut(),
+            mock_env(),
+            handle_info,
+            HandleMsg::Release {},
+        )
+        .unwrap();
         assert_eq!(handle_res.messages.len(), 1);
         let msg = handle_res.messages.get(0).expect("no message");
         assert_eq!(
@@ -523,7 +514,7 @@ mod tests {
         };
         let init_amount = coins(1000, "earth");
         let init_info = mock_info(creator.as_str(), &init_amount);
-        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -531,7 +522,12 @@ mod tests {
 
         // beneficiary cannot release it
         let handle_info = mock_info(beneficiary.as_str(), &[]);
-        let handle_res = handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {});
+        let handle_res = handle(
+            deps.as_mut(),
+            mock_env(),
+            handle_info,
+            HandleMsg::Release {},
+        );
         match handle_res.unwrap_err() {
             HackError::Unauthorized { .. } => {}
             _ => panic!("Expect unauthorized error"),
@@ -565,12 +561,12 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));
-        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_info = mock_info(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = handle(&mut deps, mock_env(), handle_info, HandleMsg::Panic {});
+        let _ = handle(deps.as_mut(), mock_env(), handle_info, HandleMsg::Panic {});
     }
 
     #[test]
@@ -582,12 +578,12 @@ mod tests {
             beneficiary: HumanAddr::from("benefits"),
         };
         let init_info = mock_info("creator", &coins(1000, "earth"));
-        let init_res = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_info = mock_info("anyone", &[]);
         handle(
-            &mut deps,
+            deps.as_mut(),
             mock_env(),
             handle_info,
             HandleMsg::UserErrorsInApiCalls {},
@@ -605,7 +601,7 @@ mod tests {
         let bin_contract: &[u8] = b"my-contract";
 
         // return the unhashed value here
-        let no_work_query = query_recurse(&deps, 0, 0, contract.clone()).unwrap();
+        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract.clone()).unwrap();
         assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
 
         // let's see if 5 hashes are done right
@@ -613,7 +609,7 @@ mod tests {
         for _ in 0..4 {
             expected_hash = Sha256::digest(&expected_hash);
         }
-        let work_query = query_recurse(&deps, 0, 5, contract).unwrap();
+        let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
         assert_eq!(work_query.hashed, expected_hash.to_vec().into());
     }
 }

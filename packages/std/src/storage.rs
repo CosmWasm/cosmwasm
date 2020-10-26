@@ -79,6 +79,13 @@ impl Storage for MemoryStorage {
     fn remove(&mut self, key: &[u8]) {
         self.data.remove(key);
     }
+
+    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
+    /// which unfortunately Rust does not allow us to do directly
+    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
+    fn as_readonly(&self) -> &dyn ReadonlyStorage {
+        self
+    }
 }
 
 #[cfg(test)]

@@ -20,7 +20,7 @@ mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
 pub use crate::coins::{coin, coins, has_coins, Coin};
-pub use crate::deps::Deps;
+pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::encoding::Binary;
 pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]
@@ -38,7 +38,7 @@ pub use crate::results::{
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
-pub use crate::traits::{Api, Querier, QuerierResult, ReadonlyStorage, Storage};
+pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, ReadonlyStorage, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 // Exposed in wasm build only

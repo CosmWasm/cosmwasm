@@ -23,25 +23,40 @@ major releases of `cosmwasm`. Note that you can also view the
   In order to use backtraces for debugging, run
   `RUST_BACKTRACE=1 cargo +nightly unit-test --features backtraces`.
 
-- Rename the type `Extern` to `Deps` in `init`/`handle`/`migrate`/`query`, e.g.
+- Rename the type `Extern` to `Deps`, and radically simplify the
+  `init`/`handle`/`migrate`/`query` entrypoints. Rather than
+  `&mut Extern<S, A, Q>`, use `DepsMut`. And instead of `&Extern<S, A, Q>`, use
+  `DepsRef`. If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use
+  dynamic trait pointers: `foo(api: &dyn Api)`. Here is the quick search-replace
+  guide on how to fix `contract.rs`:
 
-  ```rust
-  // before
-  pub fn migrate<S: Storage, A: Api, Q: Querier>(
-      deps: &mut Extern<S, A, Q>,
-      _env: Env,
-      _info: MessageInfo,
-      msg: MigrateMsg,
-  ) -> Result<MigrateResponse, HackError> {
+  _In production (non-test) code:_
 
-  // after
-  pub fn migrate<S: Storage, A: Api, Q: Querier>(
-    deps: &mut Deps<S, A, Q>,
-    _env: Env,
-    _info: MessageInfo,
-    msg: MigrateMsg,
-  ) -> Result<MigrateResponse, HackError> {
-  ```
+  - `<S: Storage, A: Api, Q: Querier>` => ``
+  - `&mut Extern<S, A, Q>` => `Deps`
+  - `&Extern<S, A, Q>` => `DepsRef`
+  - `&mut deps.storage` => `deps.storage` where passing into `state.rs` helpers
+  - `&deps.storage` => `deps.storage.as_readonly()` where passing into `state.rs`
+    helpers
+
+  On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add
+  `use cosmwasm_std::{Deps, DepsRef}`.
+
+  _In test code only:_
+
+  - `&mut deps,` => `deps.as_mut(),`
+  - `&deps,` => `deps.as_ref(),`
+
+  You may have to add `use cosmwasm_std::{Storage}` if the compile complains
+  about the trait
+
+  _If you use cosmwasm-storage, in `state.rs`:_
+
+  - `<S: Storage>` => ``
+  - `<S: ReadonlyStorage>` => ``
+  - `<S,` => `<`
+  - `&mut S` => `&mut dyn Storage`
+  - `&S` => `&dyn ReadonlyStorage`
 
 ## 0.10 -> 0.11
 
