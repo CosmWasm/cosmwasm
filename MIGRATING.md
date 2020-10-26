@@ -34,8 +34,9 @@ major releases of `cosmwasm`. Note that you can also view the
   * `&mut Extern<S, A, Q>` => `DepsMut`
   * `&Extern<S, A, Q>` => `DepsRef`
   * `&mut deps.storage` => `deps.storage`  where passing into `state.rs` helpers
-  * `&deps.storage` => `deps.storage.as_ref()` where passing into `state.rs` helpers
-  
+  * `&deps.storage` => `deps.storage.as_readonly()` where passing into
+    `state.rs` helpers that expect `&dyn ReadonlyStorage`
+
   On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add `use cosmwasm_std::{DepsMut, DepsRef}`.
   
   *In test code only:*

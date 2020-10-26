@@ -98,7 +98,7 @@ pub fn query(deps: DepsRef, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 fn query_owner(deps: DepsRef) -> StdResult<OwnerResponse> {
-    let state = config_read(deps.storage.as_ref()).load()?;
+    let state = config_read(deps.storage.as_readonly()).load()?;
     let resp = OwnerResponse {
         owner: deps.api.human_address(&state.owner)?,
     };
