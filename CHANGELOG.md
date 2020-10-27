@@ -13,8 +13,25 @@
   `StdError::SerializeErr::target` to `StdError::SerializeErr::target_type` to
   work around speacial treatment of the field name `source` in thiserror.
 - Rename `Extern` to `Deps` to unify naming.
+- Simplify ownership of calling `handle`, etc. with `Deps` and `DepsMut` struct
+  that just contains references (`DepsMut` has `&mut Storage` otherwise the
+  same)
 - Remove unused `Deps::change_querier`. If you need this or similar
   functionality, create a new struct with the right querier.
+- Remove `ReadonlyStorage`. You can just use `Storage` everywhere. And use
+  `&Storage` to provide readonly access. This was only needed to let
+  `PrefixedStorage`/`ReadonlyPrefixedStorage` implement the common interface,
+  which is something we don't need.
+
+**cosmwasm-storage**
+
+- `PrefixedStorage`/`ReadonlyPrefixedStorage` do not implement the
+  `Storage`/`ReadonlyStorage` traits anymore. If you need nested prefixes, you
+  need to construct them directly via `PrefixedStorage::multilevel` and
+  `ReadonlyPrefixedStorage::multilevel`.
+- Remove unused `TypedStorage`. If you need this or similar functionality, you
+  probably want to use `Bucket` or `Singleton`. If you really need it, please
+  copy the v0.11 code into your project.
 
 **cosmwasm-vm**
 

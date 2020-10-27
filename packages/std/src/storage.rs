@@ -6,7 +6,7 @@ use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
-use crate::traits::{ReadonlyStorage, Storage};
+use crate::traits::Storage;
 
 #[derive(Default)]
 pub struct MemoryStorage {
@@ -19,9 +19,17 @@ impl MemoryStorage {
     }
 }
 
-impl ReadonlyStorage for MemoryStorage {
+impl Storage for MemoryStorage {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         self.data.get(key).cloned()
+    }
+
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        self.data.insert(key.to_vec(), value.to_vec());
+    }
+
+    fn remove(&mut self, key: &[u8]) {
+        self.data.remove(key);
     }
 
     #[cfg(feature = "iterator")]
@@ -69,23 +77,6 @@ type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
     let (key, value) = item_ref;
     (key.clone(), value.clone())
-}
-
-impl Storage for MemoryStorage {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
-        self.data.insert(key.to_vec(), value.to_vec());
-    }
-
-    fn remove(&mut self, key: &[u8]) {
-        self.data.remove(key);
-    }
-
-    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
-    /// which unfortunately Rust does not allow us to do directly
-    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
-    fn as_readonly(&self) -> &dyn ReadonlyStorage {
-        self
-    }
 }
 
 #[cfg(test)]

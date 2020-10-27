@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
+use cosmwasm_std::{to_vec, StdError, StdResult, Storage};
 
 use crate::length_prefixed::to_length_prefixed;
 use crate::type_helpers::{may_deserialize, must_deserialize};
@@ -15,10 +15,7 @@ where
 }
 
 /// An alias of ReadonlySingleton::new for less verbose usage
-pub fn singleton_read<'a, T>(
-    storage: &'a dyn ReadonlyStorage,
-    key: &[u8],
-) -> ReadonlySingleton<'a, T>
+pub fn singleton_read<'a, T>(storage: &'a dyn Storage, key: &[u8]) -> ReadonlySingleton<'a, T>
 where
     T: Serialize + DeserializeOwned,
 {
@@ -90,13 +87,13 @@ where
     }
 }
 
-/// ReadonlySingleton only requires a ReadonlyStorage and exposes only the
+/// ReadonlySingleton only requires a Storage and exposes only the
 /// methods of Singleton that don't modify state.
 pub struct ReadonlySingleton<'a, T>
 where
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a dyn ReadonlyStorage,
+    storage: &'a dyn Storage,
     key: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
@@ -106,7 +103,7 @@ impl<'a, T> ReadonlySingleton<'a, T>
 where
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a dyn ReadonlyStorage, key: &[u8]) -> Self {
+    pub fn new(storage: &'a dyn Storage, key: &[u8]) -> Self {
         ReadonlySingleton {
             storage,
             key: to_length_prefixed(key),

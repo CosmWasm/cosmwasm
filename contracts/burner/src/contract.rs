@@ -71,7 +71,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
-    use cosmwasm_std::{coins, HumanAddr, ReadonlyStorage, StdError, Storage};
+    use cosmwasm_std::{coins, HumanAddr, StdError, Storage};
 
     #[test]
     fn init_fails() {

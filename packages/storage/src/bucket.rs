@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, ser::Serialize};
 use std::marker::PhantomData;
 
-use cosmwasm_std::{to_vec, ReadonlyStorage, StdError, StdResult, Storage};
+use cosmwasm_std::{to_vec, StdError, StdResult, Storage};
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
 
@@ -22,10 +22,7 @@ where
 }
 
 /// An alias of ReadonlyBucket::new for less verbose usage
-pub fn bucket_read<'a, T>(
-    storage: &'a dyn ReadonlyStorage,
-    namespace: &[u8],
-) -> ReadonlyBucket<'a, T>
+pub fn bucket_read<'a, T>(storage: &'a dyn Storage, namespace: &[u8]) -> ReadonlyBucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
 {
@@ -74,14 +71,14 @@ where
 
     /// load will return an error if no data is set at the given key, or on parse error
     pub fn load(&self, key: &[u8]) -> StdResult<T> {
-        let value = get_with_prefix(self.storage.as_readonly(), &self.prefix, key);
+        let value = get_with_prefix(self.storage, &self.prefix, key);
         must_deserialize(&value)
     }
 
     /// may_load will parse the data stored at the key if present, returns Ok(None) if no data there.
     /// returns an error on issues parsing
     pub fn may_load(&self, key: &[u8]) -> StdResult<Option<T>> {
-        let value = get_with_prefix(self.storage.as_readonly(), &self.prefix, key);
+        let value = get_with_prefix(self.storage, &self.prefix, key);
         may_deserialize(&value)
     }
 
@@ -92,7 +89,7 @@ where
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = StdResult<KV<T>>> + 'b> {
-        let mapped = range_with_prefix(self.storage.as_readonly(), &self.prefix, start, end, order)
+        let mapped = range_with_prefix(self.storage, &self.prefix, start, end, order)
             .map(deserialize_kv::<T>);
         Box::new(mapped)
     }
@@ -117,7 +114,7 @@ pub struct ReadonlyBucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
 {
-    storage: &'a dyn ReadonlyStorage,
+    storage: &'a dyn Storage,
     prefix: Vec<u8>,
     // see https://doc.rust-lang.org/std/marker/struct.PhantomData.html#unused-type-parameters for why this is needed
     data: PhantomData<T>,
@@ -127,7 +124,7 @@ impl<'a, T> ReadonlyBucket<'a, T>
 where
     T: Serialize + DeserializeOwned,
 {
-    pub fn new(storage: &'a dyn ReadonlyStorage, namespace: &[u8]) -> Self {
+    pub fn new(storage: &'a dyn Storage, namespace: &[u8]) -> Self {
         ReadonlyBucket {
             storage,
             prefix: to_length_prefixed(namespace),
@@ -135,7 +132,7 @@ where
         }
     }
 
-    pub fn multilevel(storage: &'a dyn ReadonlyStorage, namespaces: &[&[u8]]) -> Self {
+    pub fn multilevel(storage: &'a dyn Storage, namespaces: &[&[u8]]) -> Self {
         ReadonlyBucket {
             storage,
             prefix: to_length_prefixed_nested(namespaces),

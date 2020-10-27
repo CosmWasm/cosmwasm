@@ -10,14 +10,14 @@ use std::ops::{Bound, RangeBounds};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{ReadonlyStorage, StdResult, Storage};
+use cosmwasm_std::{StdResult, Storage};
 
 #[cfg(feature = "iterator")]
 /// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
 /// This is internal as it can change any time if the map implementation is swapped out.
 type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
-pub struct StorageTransaction<'a, S: ReadonlyStorage> {
+pub struct StorageTransaction<'a, S: Storage> {
     /// read-only access to backing storage
     storage: &'a S,
     /// these are local changes not flushed to backing storage
@@ -26,7 +26,7 @@ pub struct StorageTransaction<'a, S: ReadonlyStorage> {
     rep_log: RepLog,
 }
 
-impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
+impl<'a, S: Storage> StorageTransaction<'a, S> {
     pub fn new(storage: &'a S) -> Self {
         StorageTransaction {
             storage,
@@ -44,7 +44,7 @@ impl<'a, S: ReadonlyStorage> StorageTransaction<'a, S> {
     pub fn rollback(self) {}
 }
 
-impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
+impl<'a, S: Storage> Storage for StorageTransaction<'a, S> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
             Some(val) => match val {
@@ -53,6 +53,21 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
             },
             None => self.storage.get(key),
         }
+    }
+
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        let op = Op::Set {
+            key: key.to_vec(),
+            value: value.to_vec(),
+        };
+        self.local_state.insert(key.to_vec(), op.to_delta());
+        self.rep_log.append(op);
+    }
+
+    fn remove(&mut self, key: &[u8]) {
+        let op = Op::Delete { key: key.to_vec() };
+        self.local_state.insert(key.to_vec(), op.to_delta());
+        self.rep_log.append(op);
     }
 
     #[cfg(feature = "iterator")]
@@ -85,30 +100,6 @@ impl<'a, S: ReadonlyStorage> ReadonlyStorage for StorageTransaction<'a, S> {
         let base = self.storage.range(start, end, order);
         let merged = MergeOverlay::new(local, base, order);
         Box::new(merged)
-    }
-}
-
-impl<'a, S: ReadonlyStorage> Storage for StorageTransaction<'a, S> {
-    fn set(&mut self, key: &[u8], value: &[u8]) {
-        let op = Op::Set {
-            key: key.to_vec(),
-            value: value.to_vec(),
-        };
-        self.local_state.insert(key.to_vec(), op.to_delta());
-        self.rep_log.append(op);
-    }
-
-    fn remove(&mut self, key: &[u8]) {
-        let op = Op::Delete { key: key.to_vec() };
-        self.local_state.insert(key.to_vec(), op.to_delta());
-        self.rep_log.append(op);
-    }
-
-    /// Converts a `&dyn Storage` to a reference of the super trait `&dyn ReadonlyStorage`,
-    /// which unfortunately Rust does not allow us to do directly
-    /// (see https://github.com/rust-lang/rfcs/issues/2368 and linked threads).
-    fn as_readonly(&self) -> &dyn ReadonlyStorage {
-        self
     }
 }
 

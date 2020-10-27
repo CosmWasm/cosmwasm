@@ -134,7 +134,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleRespo
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     // ensure we have the proper denom
-    let invest = invest_info_read(deps.storage.as_readonly()).load()?;
+    let invest = invest_info_read(deps.storage).load()?;
     // payment finds the proper coin (or throws an error)
     let payment = info
         .sent_funds
@@ -190,7 +190,7 @@ pub fn unbond(
 ) -> StdResult<HandleResponse> {
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
-    let invest = invest_info_read(deps.storage.as_readonly()).load()?;
+    let invest = invest_info_read(deps.storage).load()?;
     // ensure it is big enough to care
     if amount < invest.min_withdrawal {
         return Err(StdError::generic_err(format!(
@@ -254,7 +254,7 @@ pub fn unbond(
 
 pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
     // find how many tokens the contract has
-    let invest = invest_info_read(deps.storage.as_readonly()).load()?;
+    let invest = invest_info_read(deps.storage).load()?;
     let mut balance = deps
         .querier
         .query_balance(&env.contract.address, &invest.bond_denom)?;
@@ -303,7 +303,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
 /// to reinvest the new earnings (and anything else that accumulated)
 pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<HandleResponse> {
     let contract_addr = env.contract.address;
-    let invest = invest_info_read(deps.storage.as_readonly()).load()?;
+    let invest = invest_info_read(deps.storage).load()?;
     let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
@@ -338,7 +338,7 @@ pub fn _bond_all_tokens(
     }
 
     // find how many tokens we have to bond
-    let invest = invest_info_read(deps.storage.as_readonly()).load()?;
+    let invest = invest_info_read(deps.storage).load()?;
     let mut balance = deps
         .querier
         .query_balance(&env.contract.address, &invest.bond_denom)?;
@@ -381,12 +381,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
 }
 
 pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
-    token_info_read(deps.storage.as_readonly()).load()
+    token_info_read(deps.storage).load()
 }
 
 pub fn query_balance(deps: Deps, address: HumanAddr) -> StdResult<BalanceResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
-    let balance = balances_read(deps.storage.as_readonly())
+    let balance = balances_read(deps.storage)
         .may_load(address_raw.as_slice())?
         .unwrap_or_default();
     Ok(BalanceResponse { balance })
@@ -394,15 +394,15 @@ pub fn query_balance(deps: Deps, address: HumanAddr) -> StdResult<BalanceRespons
 
 pub fn query_claims(deps: Deps, address: HumanAddr) -> StdResult<ClaimsResponse> {
     let address_raw = deps.api.canonical_address(&address)?;
-    let claims = claims_read(deps.storage.as_readonly())
+    let claims = claims_read(deps.storage)
         .may_load(address_raw.as_slice())?
         .unwrap_or_default();
     Ok(ClaimsResponse { claims })
 }
 
 pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
-    let invest = invest_info_read(deps.storage.as_readonly()).load()?;
-    let supply = total_supply_read(deps.storage.as_readonly()).load()?;
+    let invest = invest_info_read(deps.storage).load()?;
+    let supply = total_supply_read(deps.storage).load()?;
 
     let res = InvestmentResponse {
         owner: deps.api.human_address(&invest.owner)?,
