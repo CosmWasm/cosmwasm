@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::fmt;
 #[cfg(feature = "iterator")]
 use std::iter;
 #[cfg(feature = "iterator")]
@@ -57,6 +58,28 @@ impl Storage for MemoryStorage {
             Order::Ascending => Box::new(iter.map(clone_item)),
             Order::Descending => Box::new(iter.rev().map(clone_item)),
         }
+    }
+}
+
+/// This debug implementation is made for inspecting storages in unit testing.
+/// It is made for human readability only and the output can change at any time.
+impl fmt::Debug for MemoryStorage {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "MemoryStorage ({} entries)", self.data.len())?;
+        f.write_str(" {\n")?;
+        for (key, value) in &self.data {
+            f.write_str("  0x")?;
+            for byte in key {
+                write!(f, "{:02x}", byte)?;
+            }
+            f.write_str(": 0x")?;
+            for byte in value {
+                write!(f, "{:02x}", byte)?;
+            }
+            f.write_str("\n")?;
+        }
+        f.write_str("}")?;
+        Ok(())
     }
 }
 
@@ -242,5 +265,57 @@ mod test {
                 ]
             );
         }
+    }
+
+    #[test]
+    fn memory_storage_implements_debug() {
+        let store = MemoryStorage::new();
+        assert_eq!(
+            format!("{:?}", store),
+            "MemoryStorage (0 entries) {\n\
+            }"
+        );
+
+        // With one element
+        let mut store = MemoryStorage::new();
+        store.set(&[0x00, 0xAB, 0xDD], &[0xFF, 0xD5]);
+        assert_eq!(
+            format!("{:?}", store),
+            "MemoryStorage (1 entries) {\n\
+            \x20\x200x00abdd: 0xffd5\n\
+            }"
+        );
+
+        // Sorted by key
+        let mut store = MemoryStorage::new();
+        store.set(&[0x00, 0xAB, 0xDD], &[0xFF, 0xD5]);
+        store.set(&[0x00, 0xAB, 0xEE], &[0xFF, 0xD5]);
+        store.set(&[0x00, 0xAB, 0xCC], &[0xFF, 0xD5]);
+        assert_eq!(
+            format!("{:?}", store),
+            "MemoryStorage (3 entries) {\n\
+            \x20\x200x00abcc: 0xffd5\n\
+            \x20\x200x00abdd: 0xffd5\n\
+            \x20\x200x00abee: 0xffd5\n\
+            }"
+        );
+
+        // Different lnegths
+        let mut store = MemoryStorage::new();
+        store.set(&[], &[]);
+        store.set(&[0xAA], &[0x11]);
+        store.set(&[0xAA, 0xBB], &[0x11, 0x22]);
+        store.set(&[0xAA, 0xBB, 0xCC], &[0x11, 0x22, 0x33]);
+        store.set(&[0xAA, 0xBB, 0xCC, 0xDD], &[0x11, 0x22, 0x33, 0x44]);
+        assert_eq!(
+            format!("{:?}", store),
+            "MemoryStorage (5 entries) {\n\
+            \x20\x200x: 0x\n\
+            \x20\x200xaa: 0x11\n\
+            \x20\x200xaabb: 0x1122\n\
+            \x20\x200xaabbcc: 0x112233\n\
+            \x20\x200xaabbccdd: 0x11223344\n\
+            }"
+        );
     }
 }
