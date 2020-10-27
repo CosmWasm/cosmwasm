@@ -99,7 +99,7 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.11.1"
+version = "0.11.2"
 dependencies = [
  "schemars",
  "serde_json",
@@ -107,7 +107,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.11.1"
+version = "0.11.2"
 dependencies = [
  "base64",
  "schemars",
@@ -118,7 +118,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.11.1"
+version = "0.11.2"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -126,7 +126,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.11.1"
+version = "0.11.2"
 dependencies = [
  "cosmwasm-std",
  "hex",
@@ -596,7 +596,7 @@ checksum = "2439c63f3f6139d1b57529d16bc3b8bb855230c8efcc5d3a896c8bea7c3b1e84"
 
 [[package]]
 name = "reflect"
-version = "0.11.1"
+version = "0.11.2"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",

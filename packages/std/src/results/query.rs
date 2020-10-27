@@ -1,4 +1,4 @@
-use crate::encoding::Binary;
+use crate::binary::Binary;
 use crate::errors::StdError;
 
 pub type QueryResponse = Binary;

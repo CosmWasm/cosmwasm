@@ -610,6 +610,6 @@ mod tests {
             expected_hash = Sha256::digest(&expected_hash);
         }
         let work_query = query_recurse(deps.as_ref(), 0, 5, contract).unwrap();
-        assert_eq!(work_query.hashed, expected_hash.to_vec().into());
+        assert_eq!(work_query.hashed, expected_hash.to_vec());
     }
 }

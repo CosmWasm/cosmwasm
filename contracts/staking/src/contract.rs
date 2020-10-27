@@ -78,10 +78,10 @@ pub fn transfer(
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     let mut accounts = balances(deps.storage);
-    accounts.update(sender_raw.as_slice(), |balance: Option<Uint128>| {
+    accounts.update(&sender_raw, |balance: Option<Uint128>| {
         balance.unwrap_or_default() - send
     })?;
-    accounts.update(rcpt_raw.as_slice(), |balance: Option<Uint128>| {
+    accounts.update(&rcpt_raw, |balance: Option<Uint128>| -> StdResult<_> {
         Ok(balance.unwrap_or_default() + send)
     })?;
 
@@ -160,7 +160,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleRespo
     totals.save(&supply)?;
 
     // update the balance of the sender
-    balances(deps.storage).update(sender_raw.as_slice(), |balance| {
+    balances(deps.storage).update(&sender_raw, |balance| -> StdResult<_> {
         Ok(balance.unwrap_or_default() + to_mint)
     })?;
 
@@ -203,12 +203,12 @@ pub fn unbond(
 
     // deduct all from the account
     let mut accounts = balances(deps.storage);
-    accounts.update(sender_raw.as_slice(), |balance| {
+    accounts.update(&sender_raw, |balance| -> StdResult<_> {
         balance.unwrap_or_default() - amount
     })?;
     if tax > Uint128(0) {
         // add tax to the owner
-        accounts.update(invest.owner.as_slice(), |balance: Option<Uint128>| {
+        accounts.update(&invest.owner, |balance: Option<Uint128>| -> StdResult<_> {
             Ok(balance.unwrap_or_default() + tax)
         })?;
     }
@@ -230,7 +230,7 @@ pub fn unbond(
     totals.save(&supply)?;
 
     // add a claim to this user to get their tokens after the unbonding period
-    claims(deps.storage).update(sender_raw.as_slice(), |claim| {
+    claims(deps.storage).update(&sender_raw, |claim| -> StdResult<_> {
         Ok(claim.unwrap_or_default() + unbond)
     })?;
 
@@ -274,7 +274,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
     })?;
 
     // update total supply (lower claim)
-    total_supply(deps.storage).update(|mut supply| {
+    total_supply(deps.storage).update(|mut supply| -> StdResult<_> {
         supply.claims = (supply.claims - to_send)?;
         Ok(supply)
     })?;

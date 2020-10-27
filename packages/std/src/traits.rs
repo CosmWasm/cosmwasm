@@ -1,8 +1,8 @@
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};

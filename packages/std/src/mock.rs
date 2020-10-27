@@ -2,9 +2,9 @@ use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
-use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
@@ -122,7 +122,7 @@ impl Api for MockApi {
         // Remove NULL bytes (i.e. the padding)
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed).map_err(StdError::invalid_utf8)?;
+        let human = String::from_utf8(trimmed)?;
         Ok(human.into())
     }
 

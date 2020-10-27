@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 use crate::addresses::HumanAddr;
+use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::encoding::Binary;
 use crate::types::Empty;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
