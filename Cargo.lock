@@ -1102,6 +1102,7 @@ checksum = "cccddf32554fecc6acb585f82a32a72e28b48f8c4c1883ddfeeeaa96f7d8e519"
 [[package]]
 name = "wasmer"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "cfg-if 0.1.10",
  "indexmap",
@@ -1122,6 +1123,7 @@ dependencies = [
 [[package]]
 name = "wasmer-compiler"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "enumset",
  "raw-cpuid",
@@ -1138,6 +1140,7 @@ dependencies = [
 [[package]]
 name = "wasmer-compiler-cranelift"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "cranelift-codegen",
  "cranelift-frontend",
@@ -1154,6 +1157,7 @@ dependencies = [
 [[package]]
 name = "wasmer-compiler-singlepass"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -1171,6 +1175,7 @@ dependencies = [
 [[package]]
 name = "wasmer-engine"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "backtrace",
  "bincode",
@@ -1189,6 +1194,7 @@ dependencies = [
 [[package]]
 name = "wasmer-engine-jit"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "bincode",
  "cfg-if 0.1.10",
@@ -1205,6 +1211,7 @@ dependencies = [
 [[package]]
 name = "wasmer-engine-native"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "bincode",
  "cfg-if 0.1.10",
@@ -1224,6 +1231,7 @@ dependencies = [
 [[package]]
 name = "wasmer-object"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "object 0.19.0",
  "thiserror",
@@ -1234,6 +1242,7 @@ dependencies = [
 [[package]]
 name = "wasmer-types"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "cranelift-entity",
  "serde",
@@ -1242,6 +1251,7 @@ dependencies = [
 [[package]]
 name = "wasmer-vm"
 version = "1.0.0-alpha4"
+source = "git+https://github.com/wasmerio/wasmer?branch=master#3663140dadddcf4806102b7c1d027482174ef27b"
 dependencies = [
  "backtrace",
  "cc",
