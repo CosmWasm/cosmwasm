@@ -906,22 +906,25 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_works() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         // set up iterator over all space
         let id = do_scan::<MS, MQ>(&mut env, 0, 0, Order::Ascending.into()).unwrap();
         assert_eq!(1, id);
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
     }
@@ -929,22 +932,25 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_descending_works() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         // set up iterator over all space
         let id = do_scan::<MS, MQ>(&mut env, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(1, id);
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
     }
@@ -961,11 +967,13 @@ mod test {
 
         let id = do_scan::<MS, MQ>(&mut env, start, end, Order::Ascending.into()).unwrap();
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
     }
@@ -973,7 +981,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_multiple_iterators() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         // unbounded, ascending and descending
@@ -983,27 +991,32 @@ mod test {
         assert_eq!(id2, 2);
 
         // first item, first iterator
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id1)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id1)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
 
         // second item, first iterator
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id1)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id1)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // first item, second iterator
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id2)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id2)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY2.to_vec(), VALUE2.to_vec()));
 
         // end, first iterator
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id1)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id1)))
             .unwrap();
         assert!(item.0.unwrap().is_none());
 
         // second item, second iterator
-        let item = with_storage_from_context::<MS, MQ, _, _>(&mut env, |store| Ok(store.next(id2)))
+        let item = env
+            .with_storage_from_context::<_, _>(|store| Ok(store.next(id2)))
             .unwrap();
         assert_eq!(item.0.unwrap().unwrap(), (KEY1.to_vec(), VALUE1.to_vec()));
     }
@@ -1011,7 +1024,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_errors_for_invalid_order_value() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
         leave_default_data(&mut env);
 
         // set up iterator over all space
@@ -1027,7 +1040,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_next_works() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
 
         leave_default_data(&mut env);
 
@@ -1056,7 +1069,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_next_fails_for_non_existent_id() {
-        let (mut env, mut instance) = make_instance();
+        let (mut env, _) = make_instance();
 
         leave_default_data(&mut env);
 
