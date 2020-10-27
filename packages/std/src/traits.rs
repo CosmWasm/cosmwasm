@@ -1,8 +1,8 @@
 use serde::{de::DeserializeOwned, Serialize};
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::encoding::Binary;
 use crate::errors::{StdError, StdResult};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
@@ -18,31 +18,9 @@ use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::types::Empty;
 
-/// Holds all external dependencies of the contract.
-/// Designed to allow easy dependency injection at runtime.
-/// This cannot be copied or cloned since it would behave differently
-/// for mock storages and a bridge storage in the VM.
-pub struct Extern<S: Storage, A: Api, Q: Querier> {
-    pub storage: S,
-    pub api: A,
-    pub querier: Q,
-}
-
-impl<S: Storage, A: Api, Q: Querier> Extern<S, A, Q> {
-    /// change_querier is a helper mainly for test code when swapping out the Querier
-    /// from the auto-generated one from mock_dependencies. This changes the type of
-    /// Extern so replaces requires some boilerplate.
-    pub fn change_querier<T: Querier, F: Fn(Q) -> T>(self, transform: F) -> Extern<S, A, T> {
-        Extern {
-            storage: self.storage,
-            api: self.api,
-            querier: transform(self.querier),
-        }
-    }
-}
-
-/// ReadonlyStorage is access to the contracts persistent data store
-pub trait ReadonlyStorage {
+/// Storage provides read and write access to a persistent storage.
+/// If you only want to provide read access, provide `&Storage`
+pub trait Storage {
     /// Returns None when key does not exist.
     /// Returns Some(Vec<u8>) when key exists.
     ///
@@ -62,10 +40,7 @@ pub trait ReadonlyStorage {
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = KV> + 'a>;
-}
 
-// Storage extends ReadonlyStorage to give mutable access
-pub trait Storage: ReadonlyStorage {
     fn set(&mut self, key: &[u8], value: &[u8]);
     /// Removes a database entry at `key`.
     ///
@@ -88,7 +63,7 @@ pub trait Storage: ReadonlyStorage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api: Copy + Clone + Send {
+pub trait Api {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
@@ -106,10 +81,26 @@ pub trait Querier {
     /// types. People using the querier probably want one of the simpler auto-generated
     /// helper methods
     fn raw_query(&self, bin_request: &[u8]) -> QuerierResult;
+}
+
+#[derive(Copy, Clone)]
+pub struct QuerierWrapper<'a>(&'a dyn Querier);
+
+impl<'a> QuerierWrapper<'a> {
+    pub fn new(querier: &'a dyn Querier) -> Self {
+        QuerierWrapper(querier)
+    }
+
+    /// This allows us to pass through binary queries from one level to another without
+    /// knowing the custom format, or we can decode it, with the knowledge of the allowed
+    /// types. You probably want one of the simpler auto-generated helper methods
+    pub fn raw_query(&self, bin_request: &[u8]) -> QuerierResult {
+        self.0.raw_query(bin_request)
+    }
 
     /// query is a shorthand for custom_query when we are not using a custom type,
     /// this allows us to avoid specifying "Empty" in all the type definitions.
-    fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Empty>) -> StdResult<T> {
+    pub fn query<T: DeserializeOwned>(&self, request: &QueryRequest<Empty>) -> StdResult<T> {
         self.custom_query(request)
     }
 
@@ -120,7 +111,7 @@ pub trait Querier {
     /// Any error (System Error, Error or called contract, or Parse Error) are flattened into
     /// one level. Only use this if you don't need to check the SystemError
     /// eg. If you don't differentiate between contract missing and contract returned error
-    fn custom_query<C: CustomQuery, U: DeserializeOwned>(
+    pub fn custom_query<C: CustomQuery, U: DeserializeOwned>(
         &self,
         request: &QueryRequest<C>,
     ) -> StdResult<U> {
@@ -139,7 +130,7 @@ pub trait Querier {
         }
     }
 
-    fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
+    pub fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
             denom: denom.to_string(),
@@ -149,7 +140,7 @@ pub trait Querier {
         Ok(res.amount)
     }
 
-    fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
+    pub fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -160,7 +151,7 @@ pub trait Querier {
 
     // this queries another wasm contract. You should know a priori the proper types for T and U
     // (response and request) based on the contract API
-    fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<HumanAddr>>(
+    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<HumanAddr>>(
         &self,
         contract: V,
         msg: &U,
@@ -180,7 +171,7 @@ pub trait Querier {
     //
     // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
     // It only returns error on some runtime issue, not on any data cases.
-    fn query_wasm_raw<T: Into<HumanAddr>, U: Into<Binary>>(
+    pub fn query_wasm_raw<T: Into<HumanAddr>, U: Into<Binary>>(
         &self,
         contract: T,
         key: U,
@@ -214,21 +205,21 @@ pub trait Querier {
     }
 
     #[cfg(feature = "staking")]
-    fn query_validators(&self) -> StdResult<Vec<Validator>> {
+    pub fn query_validators(&self) -> StdResult<Vec<Validator>> {
         let request = StakingQuery::Validators {}.into();
         let res: ValidatorsResponse = self.query(&request)?;
         Ok(res.validators)
     }
 
     #[cfg(feature = "staking")]
-    fn query_bonded_denom(&self) -> StdResult<String> {
+    pub fn query_bonded_denom(&self) -> StdResult<String> {
         let request = StakingQuery::BondedDenom {}.into();
         let res: BondedDenomResponse = self.query(&request)?;
         Ok(res.denom)
     }
 
     #[cfg(feature = "staking")]
-    fn query_all_delegations<U: Into<HumanAddr>>(
+    pub fn query_all_delegations<U: Into<HumanAddr>>(
         &self,
         delegator: U,
     ) -> StdResult<Vec<Delegation>> {
@@ -241,7 +232,7 @@ pub trait Querier {
     }
 
     #[cfg(feature = "staking")]
-    fn query_delegation<U: Into<HumanAddr>>(
+    pub fn query_delegation<U: Into<HumanAddr>>(
         &self,
         delegator: U,
         validator: U,

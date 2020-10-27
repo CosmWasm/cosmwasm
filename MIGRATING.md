@@ -23,6 +23,43 @@ major releases of `cosmwasm`. Note that you can also view the
   In order to use backtraces for debugging, run
   `RUST_BACKTRACE=1 cargo +nightly unit-test --features backtraces`.
 
+- Rename the type `Extern` to `Deps`, and radically simplify the
+  `init`/`handle`/`migrate`/`query` entrypoints. Rather than
+  `&mut Extern<S, A, Q>`, use `DepsMut`. And instead of `&Extern<S, A, Q>`, use
+  `DepsRef`. If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use
+  dynamic trait pointers: `foo(api: &dyn Api)`. Here is the quick search-replace
+  guide on how to fix `contract.rs`:
+
+  _In production (non-test) code:_
+
+  - `<S: Storage, A: Api, Q: Querier>` => ``
+  - `&mut Extern<S, A, Q>` => `Deps`
+  - `&Extern<S, A, Q>` => `DepsRef`
+  - `&mut deps.storage` => `deps.storage` where passing into `state.rs` helpers
+  - `&deps.storage` => `deps.storage` where passing into `state.rs` helpers
+
+  On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add
+  `use cosmwasm_std::{Deps, DepsRef}`.
+
+  _In test code only:_
+
+  - `&mut deps,` => `deps.as_mut(),`
+  - `&deps,` => `deps.as_ref(),`
+
+  You may have to add `use cosmwasm_std::{Storage}` if the compile complains
+  about the trait
+
+  _If you use cosmwasm-storage, in `state.rs`:_
+
+  - `<S: Storage>` => ``
+  - `<S: ReadonlyStorage>` => ``
+  - `<S,` => `<`
+  - `&mut S` => `&mut dyn Storage`
+  - `&S` => `&dyn Storage`
+
+- If you have any references to `ReadonlyStorage` left after the above, please
+  replace them with `Storage`
+
 ## 0.10 -> 0.11
 
 - Contracts now support any custom error type `E: ToString + From<StdError>`.

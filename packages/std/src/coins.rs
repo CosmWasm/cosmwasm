@@ -10,21 +10,58 @@ pub struct Coin {
 }
 
 impl Coin {
-    pub fn new(amount: u128, denom: &str) -> Self {
+    pub fn new<S: Into<String>>(amount: u128, denom: S) -> Self {
         Coin {
             amount: Uint128(amount),
-            denom: denom.to_string(),
+            denom: denom.into(),
         }
     }
 }
 
-// coins is a shortcut constructor for a set of one denomination of coins
-pub fn coins(amount: u128, denom: &str) -> Vec<Coin> {
+/// A shortcut constructor for a set of one denomination of coins
+///
+/// # Examples
+///
+/// ```
+/// # use cosmwasm_std::{coins, BankMsg, CosmosMsg, HandleResponse};
+/// # use cosmwasm_std::testing::{mock_env, mock_info};
+/// # let env = mock_env();
+/// # let info = mock_info("sender", &[]);
+/// let tip = coins(123, "ucosm");
+///
+/// let mut response: HandleResponse = Default::default();
+/// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
+///   from_address: env.contract.address,
+///   to_address: info.sender,
+///   amount: tip,
+/// })];
+/// ```
+pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
     vec![coin(amount, denom)]
 }
 
-// coin is a shorthand constructor for Coin
-pub fn coin(amount: u128, denom: &str) -> Coin {
+/// A shorthand constructor for Coin
+///
+/// # Examples
+///
+/// ```
+/// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, HandleResponse};
+/// # use cosmwasm_std::testing::{mock_env, mock_info};
+/// # let env = mock_env();
+/// # let info = mock_info("sender", &[]);
+/// let tip = vec![
+///     coin(123, "ucosm"),
+///     coin(24, "ustake"),
+/// ];
+///
+/// let mut response: HandleResponse = Default::default();
+/// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
+///     from_address: env.contract.address,
+///     to_address: info.sender,
+///     amount: tip,
+/// })];
+/// ```
+pub fn coin<S: Into<String>>(amount: u128, denom: S) -> Coin {
     Coin::new(amount, denom)
 }
 
@@ -40,6 +77,66 @@ pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn coin_works() {
+        let a = coin(123, "ucosm");
+        assert_eq!(
+            a,
+            Coin {
+                amount: Uint128(123),
+                denom: "ucosm".to_string()
+            }
+        );
+
+        let zero = coin(0, "ucosm");
+        assert_eq!(
+            zero,
+            Coin {
+                amount: Uint128(0),
+                denom: "ucosm".to_string()
+            }
+        );
+
+        let string_denom = coin(42, String::from("ucosm"));
+        assert_eq!(
+            string_denom,
+            Coin {
+                amount: Uint128(42),
+                denom: "ucosm".to_string()
+            }
+        );
+    }
+
+    #[test]
+    fn coins_works() {
+        let a = coins(123, "ucosm");
+        assert_eq!(
+            a,
+            vec![Coin {
+                amount: Uint128(123),
+                denom: "ucosm".to_string()
+            }]
+        );
+
+        let zero = coins(0, "ucosm");
+        assert_eq!(
+            zero,
+            vec![Coin {
+                amount: Uint128(0),
+                denom: "ucosm".to_string()
+            }]
+        );
+
+        let string_denom = coins(42, String::from("ucosm"));
+        assert_eq!(
+            string_denom,
+            vec![Coin {
+                amount: Uint128(42),
+                denom: "ucosm".to_string()
+            }]
+        );
+    }
 
     #[test]
     fn has_coins_matches() {

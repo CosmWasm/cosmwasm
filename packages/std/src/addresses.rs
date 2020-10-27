@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Deref;
 
-use crate::encoding::Binary;
+use crate::binary::Binary;
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);
@@ -58,9 +58,33 @@ impl Deref for HumanAddr {
     }
 }
 
+/// Implement `HumanAddr == str`, which gives us `&HumanAddr == &str`.
+/// Do we really need &HumanAddr comparisons?
 impl PartialEq<str> for HumanAddr {
-    fn eq(&self, other: &str) -> bool {
-        self.0 == other
+    fn eq(&self, rhs: &str) -> bool {
+        self.0 == rhs
+    }
+}
+
+/// Implement `str == HumanAddr`, which gives us `&str == &HumanAddr`.
+/// Do we really need &HumanAddr comparisons?
+impl PartialEq<HumanAddr> for str {
+    fn eq(&self, rhs: &HumanAddr) -> bool {
+        self == rhs.0
+    }
+}
+
+/// Implement `HumanAddr == &str`
+impl PartialEq<&str> for HumanAddr {
+    fn eq(&self, rhs: &&str) -> bool {
+        self.0 == *rhs
+    }
+}
+
+/// Implement `&str == HumanAddr`
+impl PartialEq<HumanAddr> for &str {
+    fn eq(&self, rhs: &HumanAddr) -> bool {
+        *self == rhs.0
     }
 }
 
@@ -170,9 +194,20 @@ mod test {
     }
 
     #[test]
-    fn human_addr_implements_partial_eq() {
-        let human_addr = HumanAddr::from("cos934gh9034hg04g0h134");
-        assert_eq!(&human_addr, "cos934gh9034hg04g0h134");
+    fn human_addr_implements_partial_eq_with_str() {
+        let addr = HumanAddr::from("cos934gh9034hg04g0h134");
+
+        // Owned HumanAddr
+        assert_eq!(addr, "cos934gh9034hg04g0h134");
+        assert_eq!("cos934gh9034hg04g0h134", addr);
+        assert_ne!(addr, "mos973z7z");
+        assert_ne!("mos973z7z", addr);
+
+        // HumanAddr reference (do we really need those?)
+        assert_eq!(&addr, "cos934gh9034hg04g0h134");
+        assert_eq!("cos934gh9034hg04g0h134", &addr);
+        assert_ne!(&addr, "mos973z7z");
+        assert_ne!("mos973z7z", &addr);
     }
 
     #[test]

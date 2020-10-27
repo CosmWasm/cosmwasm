@@ -32,6 +32,13 @@ pub enum StdError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Invalid data size: expected={expected} actual={actual}")]
+    InvalidDataSize {
+        expected: u64,
+        actual: u64,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
     #[error("Cannot decode UTF8 bytes into string: {msg}")]
     InvalidUtf8 {
@@ -87,6 +94,16 @@ impl StdError {
         }
     }
 
+    pub fn invalid_data_size(expected: usize, actual: usize) -> Self {
+        StdError::InvalidDataSize {
+            // Cast is safe because usize is 32 or 64 bit large in all environments we support
+            expected: expected as u64,
+            actual: actual as u64,
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     pub fn invalid_utf8<S: ToString>(msg: S) -> Self {
         StdError::InvalidUtf8 {
             msg: msg.to_string(),
@@ -131,6 +148,18 @@ impl StdError {
     }
 }
 
+impl From<std::str::Utf8Error> for StdError {
+    fn from(source: std::str::Utf8Error) -> Self {
+        Self::invalid_utf8(source)
+    }
+}
+
+impl From<std::string::FromUtf8Error> for StdError {
+    fn from(source: std::string::FromUtf8Error) -> Self {
+        Self::invalid_utf8(source)
+    }
+}
+
 /// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
@@ -141,6 +170,7 @@ pub type StdResult<T> = core::result::Result<T, StdError>;
 #[cfg(test)]
 mod test {
     use super::*;
+    use std::str;
 
     // constructors
 
@@ -185,6 +215,20 @@ mod test {
         match error {
             StdError::InvalidBase64 { msg, .. } => {
                 assert_eq!(msg, "Encoded text cannot have a 6-bit remainder.");
+            }
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
+    fn invalid_data_size_works() {
+        let error = StdError::invalid_data_size(31, 14);
+        match error {
+            StdError::InvalidDataSize {
+                expected, actual, ..
+            } => {
+                assert_eq!(expected, 31);
+                assert_eq!(actual, 14);
             }
             _ => panic!("expect different error"),
         }
@@ -297,5 +341,31 @@ mod test {
         let error: StdError = StdError::underflow(3, 5);
         let embedded = format!("Display message: {}", error);
         assert_eq!(embedded, "Display message: Cannot subtract 5 from 3");
+    }
+
+    #[test]
+    fn from_std_str_utf8error_works() {
+        let error: StdError = str::from_utf8(b"Hello \xF0\x90\x80World")
+            .unwrap_err()
+            .into();
+        match error {
+            StdError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn from_std_string_fromutf8error_works() {
+        let error: StdError = String::from_utf8(b"Hello \xF0\x90\x80World".to_vec())
+            .unwrap_err()
+            .into();
+        match error {
+            StdError::InvalidUtf8 { msg, .. } => {
+                assert_eq!(msg, "invalid utf-8 sequence of 3 bytes from index 6")
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 }

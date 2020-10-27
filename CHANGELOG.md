@@ -12,6 +12,26 @@
 - Rename `StdError::ParseErr::source` to `StdError::ParseErr::source_type` and
   `StdError::SerializeErr::target` to `StdError::SerializeErr::target_type` to
   work around speacial treatment of the field name `source` in thiserror.
+- Rename `Extern` to `Deps` to unify naming.
+- Simplify ownership of calling `handle`, etc. with `Deps` and `DepsMut` struct
+  that just contains references (`DepsMut` has `&mut Storage` otherwise the
+  same)
+- Remove unused `Deps::change_querier`. If you need this or similar
+  functionality, create a new struct with the right querier.
+- Remove `ReadonlyStorage`. You can just use `Storage` everywhere. And use
+  `&Storage` to provide readonly access. This was only needed to let
+  `PrefixedStorage`/`ReadonlyPrefixedStorage` implement the common interface,
+  which is something we don't need.
+
+**cosmwasm-storage**
+
+- `PrefixedStorage`/`ReadonlyPrefixedStorage` do not implement the
+  `Storage`/`ReadonlyStorage` traits anymore. If you need nested prefixes, you
+  need to construct them directly via `PrefixedStorage::multilevel` and
+  `ReadonlyPrefixedStorage::multilevel`.
+- Remove unused `TypedStorage`. If you need this or similar functionality, you
+  probably want to use `Bucket` or `Singleton`. If you really need it, please
+  copy the v0.11 code into your project.
 
 **cosmwasm-vm**
 
@@ -23,6 +43,22 @@
   boundary to Go.
 - `MockStorage` now implementes the new `Storage` trait and has an additional
   `MockStorage::all` for getting all elements of an iterator in tests.
+- Remove unused `Extern::change_querier`. If you need this or similar
+  functionality, create a new struct with the right querier.
+
+## 0.11.2 (2020-10-26)
+
+**cosmwasm-std**
+
+- Implement `From<std::str::Utf8Error>` and `From<std::string::FromUtf8Error>`
+  for `StdError`.
+- Generalize denom argument from `&str` to `S: Into<String>` in `coin`, `coins`
+  and `Coin::new`.
+- Implement `PartialEq` between `Binary` and `Vec<u8>`/`&[u8]`.
+- Add missing `PartialEq` implementations between `HumanAddr` and `str`/`&str`.
+- Add `Binary::to_array`, which allows you to copy binary content into a
+  fixed-length `u8` array. This is espeically useful for creating integers from
+  binary data.
 
 ## 0.11.1 (2020-10-12)
 

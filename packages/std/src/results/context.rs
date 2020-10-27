@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use std::convert::TryFrom;
 use std::fmt;
 
-use crate::encoding::Binary;
+use crate::binary::Binary;
 use crate::errors::StdError;
 use crate::types::Empty;
 

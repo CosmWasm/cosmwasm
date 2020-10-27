@@ -6,8 +6,7 @@
 
 # Build results
 target/
-contracts/**/contract.wasm
-contracts/**/hash.txt
+artifacts/
 
 # IDEs
 .vscode/

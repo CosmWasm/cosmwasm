@@ -6,36 +6,38 @@ example contracts, see
 
 ## Optimized builds
 
-`hackatom`, `reflect` and `queue` are used for testing in other repos, e.g.
-[in go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm/tree/master/api/testdata).
-`staking` is used by a demo project in CosmWasm JS
-(https://github.com/CosmWasm/cosmwasm-js/issues/170).
+Those development contracts are used for testing in other repos, e.g. in
+[go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm/tree/master/api/testdata)
+or
+[cosmjs](https://github.com/CosmWasm/cosmjs/tree/master/scripts/wasmd/contracts).
 
-To rebuild all contracts as part of a release use the following commands:
+They are [built and deployed](https://github.com/CosmWasm/cosmwasm/releases) by
+the CI for every release tag. In case you need to build them manually for some
+reason, use the following commands:
 
 ```sh
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.1 ./contracts/burner
+  cosmwasm/rust-optimizer:0.10.4 ./contracts/burner
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.1 ./contracts/hackatom
+  cosmwasm/rust-optimizer:0.10.4 ./contracts/hackatom
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_queue",target=/code/contracts/queue/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.1 ./contracts/queue
+  cosmwasm/rust-optimizer:0.10.4 ./contracts/queue
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_reflect",target=/code/contracts/reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.1 ./contracts/reflect
+  cosmwasm/rust-optimizer:0.10.4 ./contracts/reflect
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_staking",target=/code/contracts/staking/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.9.1 ./contracts/staking
+  cosmwasm/rust-optimizer:0.10.4 ./contracts/staking
 ```

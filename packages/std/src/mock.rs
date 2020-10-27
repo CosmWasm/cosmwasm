@@ -2,8 +2,9 @@ use serde::de::DeserializeOwned;
 use std::collections::HashMap;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::encoding::Binary;
+use crate::deps::OwnedDeps;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
@@ -13,16 +14,18 @@ use crate::query::{
 use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
-use crate::traits::{Api, Extern, Querier, QuerierResult};
+use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_dependencies(
+    contract_balance: &[Coin],
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
-    Extern {
+    OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
@@ -33,8 +36,8 @@ pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockA
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
-    Extern {
+) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
+    OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(balances),
@@ -119,7 +122,7 @@ impl Api for MockApi {
         // Remove NULL bytes (i.e. the padding)
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
-        let human = String::from_utf8(trimmed).map_err(StdError::invalid_utf8)?;
+        let human = String::from_utf8(trimmed)?;
         Ok(human.into())
     }
 

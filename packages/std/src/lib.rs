@@ -3,8 +3,9 @@
 // Exposed on all platforms
 
 mod addresses;
+mod binary;
 mod coins;
-mod encoding;
+mod deps;
 mod entry_points;
 mod errors;
 #[cfg(feature = "iterator")]
@@ -18,8 +19,9 @@ mod traits;
 mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
+pub use crate::binary::{Binary, ByteArray};
 pub use crate::coins::{coin, coins, has_coins, Coin};
-pub use crate::encoding::Binary;
+pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
@@ -36,7 +38,7 @@ pub use crate::results::{
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
-pub use crate::traits::{Api, Extern, Querier, QuerierResult, ReadonlyStorage, Storage};
+pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
 
 // Exposed in wasm build only

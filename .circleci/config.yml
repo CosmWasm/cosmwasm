@@ -677,8 +677,8 @@ jobs:
             for contract_dir in ./contracts/*/; do
               name=$(basename $contract_dir)
               echo "Building $name ..."
-              docker run --volumes-from with_code cosmwasm/rust-optimizer:0.9.1 ./contracts/$name
-              docker cp with_code:/code/contracts/$name/contract.wasm ./artifacts/$name.wasm
+              docker run --volumes-from with_code cosmwasm/rust-optimizer:0.10.4 ./contracts/$name
+              docker cp with_code:/code/artifacts/$name.wasm ./artifacts/$name.wasm
             done
       - run:
           name: Create checksums
