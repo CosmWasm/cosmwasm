@@ -19,14 +19,19 @@
 - Remove unused `Deps::change_querier`. If you need this or similar
   functionality, create a new struct with the right querier.
 - Remove `ReadonlyStorage`. You can just use `Storage` everywhere. And use
-  `&Storage` to provide readonly access. This was only needed for the unused
-  `PrefixedStorage`, which we also removed.
+  `&Storage` to provide readonly access. This was only needed to let
+  `PrefixedStorage`/`ReadonlyPrefixedStorage` implement the common interface,
+  which is something we don't need.
 
 **cosmwasm-storage**
 
-- Remove unused `PrefixedStorage` and `TypedStorage`. If you need this or
-  similar functionality, you probably want to use `Bucket` or `Singleton`. If
-  you really need one of those, please copy the v0.11 code into your project.
+- `PrefixedStorage`/`ReadonlyPrefixedStorage` do not implement the
+  `Storage`/`ReadonlyStorage` traits anymore. If you need nested prefixes, you
+  need to construct them directly via `PrefixedStorage::multilevel` and
+  `ReadonlyPrefixedStorage::multilevel`.
+- Remove unused `TypedStorage`. If you need this or similar functionality, you
+  probably want to use `Bucket` or `Singleton`. If you really need it, please
+  copy the v0.11 code into your project.
 
 **cosmwasm-vm**
 
