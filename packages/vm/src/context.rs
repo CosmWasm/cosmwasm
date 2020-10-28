@@ -314,11 +314,12 @@ mod test {
 
     const GAS_LIMIT: u64 = 5_000_000;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
+    const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let mut env = Env::new(GAS_LIMIT);
 
-        let module = compile(&CONTRACT).unwrap();
+        let module = compile(&CONTRACT, MEMORY_LIMIT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {

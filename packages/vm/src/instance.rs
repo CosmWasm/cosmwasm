@@ -3,10 +3,8 @@ use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use wasmer::{
-    Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Store, Type,
-    Val,
+    Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Type, Val,
 };
-use wasmer_engine_jit::JIT;
 
 use crate::context::{move_into_context, move_out_of_context, Env};
 use crate::conversion::to_u32;
@@ -20,7 +18,9 @@ use crate::imports::{
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
-use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
+use crate::wasm_backend::{compile, get_gas_left, make_store_headless, set_gas_left};
+
+const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -62,7 +62,7 @@ where
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
-        let module = compile(code)?;
+        let module = compile(code, MEMORY_LIMIT)?;
         Instance::from_module(&module, deps, gas_limit, print_debug)
     }
 
@@ -75,8 +75,7 @@ where
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
 
-        let engine = JIT::headless().engine();
-        let store = Store::new(&engine);
+        let store = make_store_headless(MEMORY_LIMIT);
 
         let mut env = Env::new(gas_limit);
 

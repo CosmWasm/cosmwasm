@@ -9,10 +9,10 @@ use std::{
 };
 
 use wasmer::{Module, Store};
-use wasmer_engine_jit::JIT;
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
+use crate::wasm_backend::make_store_headless;
 
 /// Bump this version whenever the module system changes in a way
 /// that old stored modules would be corrupt when loaded in the new system.
@@ -22,6 +22,8 @@ use crate::errors::{VmError, VmResult};
 /// easy to interprete for system admins. It should allow easy clearing
 /// of old versions.
 const MODULE_SERIALIZATION_VERSION: &str = "v1";
+
+const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -40,8 +42,7 @@ impl FileSystemCache {
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
     pub unsafe fn new<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
-        let engine = JIT::headless().engine();
-        let store = Store::new(&engine); // engine is cloned into the store internally
+        let store = make_store_headless(MEMORY_LIMIT);
 
         let path: PathBuf = path.into();
         if path.exists() {
@@ -128,7 +129,7 @@ mod tests {
         .unwrap();
         let checksum = Checksum::generate(&wasm);
 
-        let module = compile(&wasm).unwrap();
+        let module = compile(&wasm, MEMORY_LIMIT).unwrap();
 
         let cache_dir = env::temp_dir();
         let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };

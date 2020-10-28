@@ -14,6 +14,7 @@ use crate::wasm_backend::compile;
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
+const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
 #[derive(Debug, Default, Clone)]
 struct Stats {
@@ -75,7 +76,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
-        let module = compile(wasm)?;
+        let module = compile(wasm, MEMORY_LIMIT)?;
         self.modules.store(&checksum, module)?;
         Ok(checksum)
     }
