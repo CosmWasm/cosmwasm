@@ -1,4 +1,3 @@
-mod backends;
 mod cache;
 mod calls;
 mod checksum;
@@ -16,6 +15,7 @@ mod modules;
 mod serde;
 pub mod testing;
 mod traits;
+mod wasm_backend;
 
 pub use crate::cache::CosmCache;
 pub use crate::calls::{

@@ -4,13 +4,13 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use crate::backends::{backend, compile};
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
 use crate::traits::{Api, Extern, Querier, Storage};
+use crate::wasm_backend::{backend, compile};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";

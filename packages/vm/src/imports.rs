@@ -7,7 +7,6 @@ use std::convert::TryInto;
 use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
-use crate::backends::get_gas_left;
 use crate::context::{process_gas_info, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -17,6 +16,7 @@ use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
 use crate::traits::{Api, Querier, Storage};
+use crate::wasm_backend::get_gas_left;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -277,10 +277,10 @@ mod test {
     use std::ptr::NonNull;
     use wasmer::{imports, Instance as WasmerInstance};
 
-    use crate::backends::compile;
     use crate::context::move_into_context;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::traits::Storage;
+    use crate::wasm_backend::compile;
     use crate::FfiError;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");

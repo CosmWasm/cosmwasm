@@ -11,9 +11,9 @@ use std::{
 use wasmer::{Module, Store};
 use wasmer_engine_jit::JIT;
 
-use crate::backends::backend;
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
+use crate::wasm_backend::backend;
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -97,7 +97,7 @@ impl FileSystemCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backends::compile;
+    use crate::wasm_backend::compile;
     use std::env;
     use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};

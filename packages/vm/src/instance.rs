@@ -8,7 +8,6 @@ use wasmer::{
 };
 use wasmer_engine_jit::JIT;
 
-use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{move_into_context, move_out_of_context, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -21,6 +20,7 @@ use crate::imports::{
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
+use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
