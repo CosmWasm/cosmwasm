@@ -25,6 +25,9 @@ const MODULE_SERIALIZATION_VERSION: &str = "v1";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
+    /// The Wasmer store for deserializing modules.
+    /// This contains the engine (JIT or native), which is set in the constructor.
+    store: Store,
     path: PathBuf,
 }
 
@@ -37,12 +40,15 @@ impl FileSystemCache {
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
     pub unsafe fn new<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
+        let engine = JIT::headless().engine();
+        let store = Store::new(&engine); // engine is cloned into the store internally
+
         let path: PathBuf = path.into();
         if path.exists() {
             let metadata = path.metadata()?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
-                    Ok(Self { path })
+                    Ok(Self { store, path })
                 } else {
                     // This directory is readonly.
                     Err(io::Error::new(
@@ -63,7 +69,7 @@ impl FileSystemCache {
         } else {
             // Create the directory and any parent directories if they don't yet exist.
             fs::create_dir_all(&path)?;
-            Ok(Self { path })
+            Ok(Self { store, path })
         }
     }
 
@@ -79,9 +85,7 @@ impl FileSystemCache {
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
-        let engine = JIT::headless().engine();
-        let store = Store::new(&engine);
-        let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
+        let module = unsafe { Module::deserialize(&self.store, &mmap[..]) }?;
         Ok(module)
     }
 
