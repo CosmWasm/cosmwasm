@@ -13,7 +13,15 @@ use wasmer_engine_jit::JIT;
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::backend;
+
+/// Bump this version whenever the module system changes in a way
+/// that old stored modules would be corrupt when loaded in the new system.
+/// This needs to be done e.g. when switching between the jit/native engine.
+///
+/// The string is used as a folder and should be named in a way that is
+/// easy to interprete for system admins. It should allow easy clearing
+/// of old versions.
+const MODULE_SERIALIZATION_VERSION: &str = "v1";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -60,12 +68,12 @@ impl FileSystemCache {
     }
 
     pub fn load(&self, checksum: &Checksum) -> VmResult<Module> {
-        self.load_with_backend(checksum, backend())
-    }
-
-    pub fn load_with_backend(&self, checksum: &Checksum, backend: &str) -> VmResult<Module> {
         let filename = checksum.to_hex();
-        let file_path = self.path.clone().join(backend).join(filename);
+        let file_path = self
+            .path
+            .clone()
+            .join(MODULE_SERIALIZATION_VERSION)
+            .join(filename);
         let file = File::open(file_path)
             .map_err(|e| VmError::cache_err(format!("Error opening module file: {}", e)))?;
         let mmap = unsafe { Mmap::map(&file) }
@@ -78,7 +86,7 @@ impl FileSystemCache {
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        let modules_dir = self.path.clone().join(backend());
+        let modules_dir = self.path.clone().join(MODULE_SERIALIZATION_VERSION);
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
 

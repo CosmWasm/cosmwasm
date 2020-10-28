@@ -13,7 +13,3 @@ pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = Module::new(&store, code)?;
     Ok(module)
 }
-
-pub fn backend() -> &'static str {
-    "singlepass"
-}

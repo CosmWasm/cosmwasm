@@ -10,7 +10,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::modules::FileSystemCache;
 use crate::traits::{Api, Extern, Querier, Storage};
-use crate::wasm_backend::{backend, compile};
+use crate::wasm_backend::compile;
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -104,7 +104,7 @@ where
         gas_limit: u64,
     ) -> VmResult<Instance<S, A, Q>> {
         // try from the module cache
-        let res = self.modules.load_with_backend(checksum, backend());
+        let res = self.modules.load(checksum);
         if let Ok(module) = res {
             self.stats.hits_module += 1;
             return Instance::from_module(&module, deps, gas_limit, self.print_debug);
