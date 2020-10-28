@@ -25,28 +25,38 @@ impl<T: Tunables> LimitingTunables<T> {
         Self { limit, base }
     }
 
-    /// Takes in input type as requested by the guest and returns a
-    /// limited memory type that is ready for processing.
-    fn adjust_memory(&self, requested: &MemoryType) -> Result<MemoryType, MemoryError> {
-        if requested.minimum > self.limit {
+    /// Takes in input memory type as requested by the guest and sets
+    /// a maximum if missing. The resulting memory type is final if
+    /// valid. However, this can produce invalid types, such that
+    /// validate_memory must be called before creating the memory.
+    fn adjust_memory(&self, requested: &MemoryType) -> MemoryType {
+        let mut adjusted = requested.clone();
+        if requested.maximum.is_none() {
+            adjusted.maximum = Some(self.limit);
+        }
+        adjusted
+    }
+
+    /// Ensures the a given memory type does not exceed the memory limit.
+    /// Call this after adjusting the memory.
+    fn validate_memory(&self, ty: &MemoryType) -> Result<(), MemoryError> {
+        if ty.minimum > self.limit {
             return Err(MemoryError::Generic(
-                "Minimum of requested memory exceeds the allowed memory limit".to_string(),
+                "Minimum exceeds the allowed memory limit".to_string(),
             ));
         }
 
-        if let Some(max) = requested.maximum {
+        if let Some(max) = ty.maximum {
             if max > self.limit {
                 return Err(MemoryError::Generic(
-                    "Maximum of requested memory exceeds the allowed memory limit".to_string(),
+                    "Maximum exceeds the allowed memory limit".to_string(),
                 ));
             }
+        } else {
+            return Err(MemoryError::Generic("Maximum unset".to_string()));
         }
 
-        let mut adjusted = requested.clone();
-        // We know that if `requested.maximum` is set, it is less than or equal to `self.limit`.
-        // So this sets maximum to (pseudo-code) `min(requested.maximum, self.limit)`
-        adjusted.maximum = Some(requested.maximum.unwrap_or(self.limit));
-        Ok(adjusted)
+        Ok(())
     }
 }
 
@@ -55,7 +65,8 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
     ///
     /// Delegated to base.
     fn memory_style(&self, memory: &MemoryType) -> MemoryStyle {
-        self.base.memory_style(memory)
+        let adjusted = self.adjust_memory(memory);
+        self.base.memory_style(&adjusted)
     }
 
     /// Construct a `TableStyle` for the provided `TableType`
@@ -73,7 +84,8 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
         ty: &MemoryType,
         style: &MemoryStyle,
     ) -> Result<Arc<dyn vm::Memory>, MemoryError> {
-        let adjusted = self.adjust_memory(ty)?;
+        let adjusted = self.adjust_memory(ty);
+        self.validate_memory(&adjusted)?;
         self.base.create_host_memory(&adjusted, style)
     }
 
@@ -86,7 +98,8 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
         style: &MemoryStyle,
         vm_definition_location: NonNull<VMMemoryDefinition>,
     ) -> Result<Arc<dyn vm::Memory>, MemoryError> {
-        let adjusted = self.adjust_memory(ty)?;
+        let adjusted = self.adjust_memory(ty);
+        self.validate_memory(&adjusted)?;
         self.base
             .create_vm_memory(&adjusted, style, vm_definition_location)
     }
@@ -128,43 +141,78 @@ mod test {
 
         // No maximum
         let requested = MemoryType::new(3, None, true);
-        let adjusted = limiting.adjust_memory(&requested).unwrap();
+        let adjusted = limiting.adjust_memory(&requested);
         assert_eq!(adjusted, MemoryType::new(3, Some(12), true));
 
         // Maximum smaller than limit
         let requested = MemoryType::new(3, Some(7), true);
-        let adjusted = limiting.adjust_memory(&requested).unwrap();
-        assert_eq!(adjusted, MemoryType::new(3, Some(7), true));
+        let adjusted = limiting.adjust_memory(&requested);
+        assert_eq!(adjusted, requested);
 
         // Maximum equal to limit
         let requested = MemoryType::new(3, Some(12), true);
-        let adjusted = limiting.adjust_memory(&requested).unwrap();
-        assert_eq!(adjusted, MemoryType::new(3, Some(12), true));
+        let adjusted = limiting.adjust_memory(&requested);
+        assert_eq!(adjusted, requested);
 
         // Maximum greater than limit
         let requested = MemoryType::new(3, Some(20), true);
-        let result = limiting.adjust_memory(&requested);
+        let adjusted = limiting.adjust_memory(&requested);
+        assert_eq!(adjusted, requested);
+
+        // Minimum greater than maximum (not our problem)
+        let requested = MemoryType::new(5, Some(3), true);
+        let adjusted = limiting.adjust_memory(&requested);
+        assert_eq!(adjusted, requested);
+
+        // Minimum greater than limit
+        let requested = MemoryType::new(20, Some(20), true);
+        let adjusted = limiting.adjust_memory(&requested);
+        assert_eq!(adjusted, requested);
+    }
+
+    #[test]
+    fn validate_memory_works() {
+        let limit = Pages(12);
+        let limiting =
+            LimitingTunables::new(ReferenceTunables::for_target(&Target::default()), limit);
+
+        // Maximum smaller than limit
+        let memory = MemoryType::new(3, Some(7), true);
+        limiting.validate_memory(&memory).unwrap();
+
+        // Maximum equal to limit
+        let memory = MemoryType::new(3, Some(12), true);
+        limiting.validate_memory(&memory).unwrap();
+
+        // Maximum greater than limit
+        let memory = MemoryType::new(3, Some(20), true);
+        let result = limiting.validate_memory(&memory);
         match result.unwrap_err() {
-            MemoryError::Generic(msg) => assert_eq!(
-                msg,
-                "Maximum of requested memory exceeds the allowed memory limit"
-            ),
+            MemoryError::Generic(msg) => {
+                assert_eq!(msg, "Maximum exceeds the allowed memory limit")
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+
+        // Maximum not set
+        let memory = MemoryType::new(3, None, true);
+        let result = limiting.validate_memory(&memory);
+        match result.unwrap_err() {
+            MemoryError::Generic(msg) => assert_eq!(msg, "Maximum unset"),
             err => panic!("Unexpected error: {:?}", err),
         }
 
         // Minimum greater than maximum (not our problem)
-        let requested = MemoryType::new(5, Some(3), true);
-        let adjusted = limiting.adjust_memory(&requested).unwrap();
-        assert_eq!(adjusted, MemoryType::new(5, Some(3), true));
+        let memory = MemoryType::new(5, Some(3), true);
+        limiting.validate_memory(&memory).unwrap();
 
         // Minimum greater than limit
-        let requested = MemoryType::new(20, Some(20), true);
-        let result = limiting.adjust_memory(&requested);
+        let memory = MemoryType::new(20, Some(20), true);
+        let result = limiting.validate_memory(&memory);
         match result.unwrap_err() {
-            MemoryError::Generic(msg) => assert_eq!(
-                msg,
-                "Minimum of requested memory exceeds the allowed memory limit"
-            ),
+            MemoryError::Generic(msg) => {
+                assert_eq!(msg, "Minimum exceeds the allowed memory limit")
+            }
             err => panic!("Unexpected error: {:?}", err),
         }
     }
