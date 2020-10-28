@@ -1,4 +1,3 @@
-pub mod cranelift;
 pub mod singlepass;
 
 use crate::context::Env;
@@ -24,14 +23,9 @@ pub fn decrease_gas_left<S: Storage, Q: Querier>(
     }
 }
 
-#[cfg(feature = "default-cranelift")]
-pub use cranelift::{backend, compile, get_gas_left, set_gas_left};
-
-#[cfg(feature = "default-singlepass")]
 pub use singlepass::{backend, compile, get_gas_left, set_gas_left};
 
 #[cfg(test)]
-#[cfg(feature = "default-singlepass")]
 mod test {
     use super::*;
     use crate::testing::{MockQuerier, MockStorage};

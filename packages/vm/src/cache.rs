@@ -407,7 +407,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn resets_gas_when_reusing_instance() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache =
@@ -439,7 +438,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn recovers_from_out_of_gas() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache =

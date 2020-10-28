@@ -12,13 +12,7 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-default = ["default-singlepass", "staking"]
-# multiple backends may be activated here (available through eg. backends::cranelift::*)
-cranelift = ["wasmer-compiler-cranelift"]
-singlepass = ["wasmer-compiler-singlepass"]
-# default selects which *one* is re-exported in backends/mod.rs (available through eg backends::*)
-default-cranelift = ["wasmer-compiler-cranelift"]
-default-singlepass = ["wasmer-compiler-singlepass"]
+default = ["staking"]
 # The backtraces fature is unused for now, i.e. it does nothing.
 backtraces = []
 # iterator allows us to iterate over all DB items in a given range
@@ -42,8 +36,7 @@ sha2 = "0.9.1"
 thiserror = "1.0"
 wasmer = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
 wasmer-compiler = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
-wasmer-compiler-cranelift = { git = "https://github.com/wasmerio/wasmer", branch = "master", optional = true }
-wasmer-compiler-singlepass = { git = "https://github.com/wasmerio/wasmer", branch = "master", optional = true }
+wasmer-compiler-singlepass = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
 wasmer-engine = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
 wasmer-engine-jit = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
 wasmer-types = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
@@ -51,8 +44,7 @@ wasmer-types = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
 # Wasmer local (used for quick local debugging or patching)
 # wasmer = { path = "../../../wasmer/lib/api" }
 # wasmer-compiler = { path = "../../../wasmer/lib/compiler" }
-# wasmer-compiler-cranelift = { path = "../../../wasmer/lib/compiler-cranelift", optional = true }
-# wasmer-compiler-singlepass = { path = "../../../wasmer/lib/compiler-singlepass", optional = true }
+# wasmer-compiler-singlepass = { path = "../../../wasmer/lib/compiler-singlepass" }
 # wasmer-engine = { path = "../../../wasmer/lib/engine" }
 # wasmer-engine-jit = { path = "../../../wasmer/lib/engine-jit" }
 # wasmer-types = { path = "../../../wasmer/lib/wasmer-types" }

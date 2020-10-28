@@ -257,7 +257,6 @@ fn account_for_externally_used_gas<S: Storage, Q: Querier>(
     account_for_externally_used_gas_impl(env, amount)
 }
 
-#[cfg(feature = "default-singlepass")]
 fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
     env: &mut Env<S, Q>,
     used_gas: u64,
@@ -287,14 +286,6 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
             Ok(())
         }
     })
-}
-
-#[cfg(feature = "default-cranelift")]
-fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
-    _ctx: &mut Ctx,
-    _used_gas: u64,
-) -> VmResult<()> {
-    Ok(())
 }
 
 #[cfg(test)]
@@ -390,7 +381,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn gas_tracking_works_correctly() {
         let (mut env, _) = make_instance();
 
@@ -411,7 +401,6 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
     fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
         let (mut env, _) = make_instance();
 

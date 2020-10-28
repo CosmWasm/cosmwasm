@@ -1,5 +1,3 @@
-#![cfg(any(feature = "singlepass", feature = "default-singlepass"))]
-
 // use wasmer_middleware_common::metering;
 use wasmer::{Module, Store};
 use wasmer_compiler_singlepass::Singlepass;

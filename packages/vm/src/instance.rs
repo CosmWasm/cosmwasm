@@ -496,52 +496,14 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-cranelift")]
-    fn set_get_and_gas_cranelift() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
-        let orig_gas = instance.get_gas_left();
-        assert_eq!(orig_gas, 1_000_000); // We expect a dummy value for cranelift
-    }
-
-    #[test]
-    #[cfg(feature = "default-singlepass")]
-    fn set_get_and_gas_singlepass() {
+    fn set_get_and_gas() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
 
     #[test]
-    #[cfg(feature = "default-cranelift")]
-    fn create_gas_report_works_cranelift() {
-        const LIMIT: u64 = 7_000_000;
-        /// Value hardcoded in cranelift backend
-        const FAKE_REMANING: u64 = 1_000_000;
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
-
-        let report1 = instance.create_gas_report();
-        assert_eq!(report1.used_externally, 0);
-        assert_eq!(report1.used_internally, LIMIT - FAKE_REMANING);
-        assert_eq!(report1.limit, LIMIT);
-        assert_eq!(report1.remaining, FAKE_REMANING);
-
-        // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-
-        let report2 = instance.create_gas_report();
-        assert_eq!(report2.used_externally, 0);
-        assert_eq!(report2.used_internally, LIMIT - FAKE_REMANING);
-        assert_eq!(report2.limit, LIMIT);
-        assert_eq!(report2.remaining, FAKE_REMANING);
-    }
-
-    #[test]
-    #[cfg(feature = "default-singlepass")]
-    fn create_gas_report_works_singlepass() {
+    fn create_gas_report_works() {
         const LIMIT: u64 = 7_000_000;
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
 
@@ -738,7 +700,6 @@ mod test {
 }
 
 #[cfg(test)]
-#[cfg(feature = "default-singlepass")]
 mod singlepass_test {
     use cosmwasm_std::{coins, Empty};
 
