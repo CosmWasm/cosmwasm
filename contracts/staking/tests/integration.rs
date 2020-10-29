@@ -20,7 +20,9 @@
 use cosmwasm_std::{
     coin, from_binary, ContractResult, Decimal, HumanAddr, InitResponse, Uint128, Validator,
 };
-use cosmwasm_vm::testing::{init, mock_dependencies, mock_env, mock_info, query};
+use cosmwasm_vm::testing::{
+    init, mock_dependencies, mock_env, mock_info, mock_instance_options, query,
+};
 use cosmwasm_vm::Instance;
 
 use staking::msg::{
@@ -46,7 +48,7 @@ fn initialization_with_missing_validator() {
     let mut ext = mock_dependencies(&[]);
     ext.querier
         .update_staking("ustake", &[sample_validator("john")], &[]);
-    let mut deps = Instance::from_code(WASM, ext, 500_000, false).unwrap();
+    let mut deps = Instance::from_code(WASM, ext, mock_instance_options()).unwrap();
 
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
@@ -81,7 +83,7 @@ fn proper_initialization() {
         ],
         &[],
     );
-    let mut deps = Instance::from_code(WASM, ext, 500_000, false).unwrap();
+    let mut deps = Instance::from_code(WASM, ext, mock_instance_options()).unwrap();
     assert_eq!(deps.required_features.len(), 1);
     assert!(deps.required_features.contains("staking"));
 
