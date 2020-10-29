@@ -188,8 +188,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
                 .memories()
                 .map(|pair| pair.1.clone())
                 .collect();
-            let memory = memories.pop().unwrap();
-            memory
+            memories.pop().unwrap()
         })
     }
 }

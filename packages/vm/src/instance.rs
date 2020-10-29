@@ -151,10 +151,10 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "debug",
-            Function::new_with_env(store, &i32_to_void, env.clone(), move |mut env, args| {
+            Function::new_with_env(store, &i32_to_void, env.clone(), move |env, args| {
                 let message_ptr = args[0].unwrap_i32() as u32;
                 if print_debug {
-                    print_debug_message(&mut env, message_ptr)?;
+                    print_debug_message(&env, message_ptr)?;
                 }
                 Ok(vec![])
             }),
