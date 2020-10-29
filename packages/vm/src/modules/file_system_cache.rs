@@ -115,7 +115,7 @@ impl FileSystemCache {
 mod tests {
     use super::*;
     use crate::backends::compile;
-    use std::env;
+    use tempfile::TempDir;
     use wabt::wat2wasm;
 
     #[test]
@@ -139,8 +139,8 @@ mod tests {
         // assert we are using the proper backend
         assert_eq!(BACKEND_NAME.to_string(), module.info().backend.to_string());
 
-        let cache_dir = env::temp_dir();
-        let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };
+        let tmp_dir = TempDir::new().unwrap();
+        let mut fs_cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 
         // Module does not exist
         let cached = fs_cache.load(&checksum).unwrap();
