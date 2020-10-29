@@ -18,7 +18,7 @@ use crate::imports::{
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
-use crate::wasm_backend::{compile, get_gas_left, make_store_headless, set_gas_left};
+use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
 
 const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
@@ -75,7 +75,7 @@ where
         // copy this so it can be moved into the closures, without pulling in deps
         let api = deps.api;
 
-        let store = make_store_headless(MEMORY_LIMIT);
+        let store = module.store();
 
         let mut env = Env::new(gas_limit);
 
@@ -91,14 +91,14 @@ where
         // Ownership of the value pointer is transferred to the contract.
         env_imports.insert(
             "db_read",
-            Function::new_native_with_env(&store, env.clone(), native_db_read),
+            Function::new_native_with_env(store, env.clone(), native_db_read),
         );
 
         // Writes the given value into the database entry at the given key.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "db_write",
-            Function::new_native_with_env(&store, env.clone(), native_db_write),
+            Function::new_native_with_env(store, env.clone(), native_db_write),
         );
 
         // Removes the value at the given key. Different than writing &[] as future
@@ -107,7 +107,7 @@ where
         // Ownership of both key pointer is not transferred to the host.
         env_imports.insert(
             "db_remove",
-            Function::new_native_with_env(&store, env.clone(), native_db_remove),
+            Function::new_native_with_env(store, env.clone(), native_db_remove),
         );
 
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
@@ -116,7 +116,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "canonicalize_address",
-            Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |mut env, args| {
                 let source_ptr = args[0].unwrap_i32() as u32;
                 let destination_ptr = args[1].unwrap_i32() as u32;
                 let ptr =
@@ -131,7 +131,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "humanize_address",
-            Function::new_with_env(&store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |mut env, args| {
                 let source_ptr = args[0].unwrap_i32() as u32;
                 let destination_ptr = args[1].unwrap_i32() as u32;
                 let ptr =
@@ -146,7 +146,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "debug",
-            Function::new_with_env(&store, &i32_to_void, env.clone(), move |mut env, args| {
+            Function::new_with_env(store, &i32_to_void, env.clone(), move |mut env, args| {
                 let message_ptr = args[0].unwrap_i32() as u32;
                 if print_debug {
                     print_debug_message(&mut env, message_ptr)?;
@@ -157,7 +157,7 @@ where
 
         env_imports.insert(
             "query_chain",
-            Function::new_native_with_env(&store, env.clone(), native_query_chain),
+            Function::new_native_with_env(store, env.clone(), native_query_chain),
         );
 
         // Creates an iterator that will go from start to end.
@@ -169,7 +169,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_scan",
-            Function::new_native_with_env(&store, env.clone(), native_db_scan),
+            Function::new_native_with_env(store, env.clone(), native_db_scan),
         );
 
         // Get next element of iterator with ID `iterator_id`.
@@ -180,7 +180,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next",
-            Function::new_native_with_env(&store, env.clone(), native_db_next),
+            Function::new_native_with_env(store, env.clone(), native_db_next),
         );
 
         import_obj.register("env", env_imports);
