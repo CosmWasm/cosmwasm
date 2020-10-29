@@ -8,7 +8,7 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer::{Module, Store};
+use wasmer::Module;
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
@@ -23,13 +23,8 @@ use crate::wasm_backend::make_store_headless;
 /// of old versions.
 const MODULE_SERIALIZATION_VERSION: &str = "v1";
 
-const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
-
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
-    /// The Wasmer store for deserializing modules.
-    /// This contains the engine (JIT or native), which is set in the constructor.
-    store: Store,
     path: PathBuf,
 }
 
@@ -42,14 +37,12 @@ impl FileSystemCache {
     /// This method is unsafe because there's no way to ensure the artifacts
     /// stored in this cache haven't been corrupted or tampered with.
     pub unsafe fn new<P: Into<PathBuf>>(path: P) -> io::Result<Self> {
-        let store = make_store_headless(MEMORY_LIMIT);
-
         let path: PathBuf = path.into();
         if path.exists() {
             let metadata = path.metadata()?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
-                    Ok(Self { store, path })
+                    Ok(Self { path })
                 } else {
                     // This directory is readonly.
                     Err(io::Error::new(
@@ -70,11 +63,11 @@ impl FileSystemCache {
         } else {
             // Create the directory and any parent directories if they don't yet exist.
             fs::create_dir_all(&path)?;
-            Ok(Self { store, path })
+            Ok(Self { path })
         }
     }
 
-    pub fn load(&self, checksum: &Checksum) -> VmResult<Module> {
+    pub fn load(&self, checksum: &Checksum, memory_limit: u32) -> VmResult<Module> {
         let filename = checksum.to_hex();
         let file_path = self
             .path
@@ -86,7 +79,8 @@ impl FileSystemCache {
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
-        let module = unsafe { Module::deserialize(&self.store, &mmap[..]) }?;
+        let store = make_store_headless(memory_limit);
+        let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
         Ok(module)
     }
 
@@ -115,6 +109,8 @@ mod tests {
     use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};
 
+    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+
     #[test]
     fn test_file_system_cache_run() {
         let wasm = wat2wasm(
@@ -129,7 +125,7 @@ mod tests {
         .unwrap();
         let checksum = Checksum::generate(&wasm);
 
-        let module = compile(&wasm, MEMORY_LIMIT).unwrap();
+        let module = compile(&wasm, TESTING_MEMORY_LIMIT).unwrap();
 
         let cache_dir = env::temp_dir();
         let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };
@@ -138,7 +134,7 @@ mod tests {
         fs_cache.store(&checksum, module.clone()).unwrap();
 
         // load module
-        let cached_result = fs_cache.load(&checksum);
+        let cached_result = fs_cache.load(&checksum, TESTING_MEMORY_LIMIT);
 
         let cached_module = cached_result.unwrap();
         let import_object = imports! {};

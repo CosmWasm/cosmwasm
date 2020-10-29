@@ -75,11 +75,11 @@ mod test {
     type MQ = MockQuerier;
     const GAS_LIMIT: u64 = 5_000_000;
     const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
-    const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
     fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let mut env = Env::new(GAS_LIMIT);
-        let module = compile(code, MEMORY_LIMIT).unwrap();
+        let module = compile(code, TESTING_MEMORY_LIMIT).unwrap();
         let import_obj = imports! { "env" => {}, };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 

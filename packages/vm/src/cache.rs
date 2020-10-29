@@ -14,7 +14,6 @@ use crate::wasm_backend::compile;
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
-const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
 #[derive(Debug, Default, Clone)]
 struct Stats {
@@ -73,6 +72,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
+        const MEMORY_LIMIT: u32 = 256; // Hmm, is this even used?
         let module = compile(wasm, MEMORY_LIMIT)?;
         self.modules.store(&checksum, module)?;
         Ok(checksum)
@@ -102,7 +102,7 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // try from the module cache
-        let res = self.modules.load(checksum);
+        let res = self.modules.load(checksum, options.memory_limit);
         if let Ok(module) = res {
             self.stats.hits_module += 1;
             return Instance::from_module(&module, deps, options.gas_limit, options.print_debug);
@@ -166,8 +166,10 @@ mod test {
     use wabt::wat2wasm;
 
     const TESTING_GAS_LIMIT: u64 = 400_000;
+    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
+        memory_limit: TESTING_MEMORY_LIMIT,
         print_debug: false,
     };
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
@@ -445,6 +447,7 @@ mod test {
         // Init from module cache
         let options = InstanceOptions {
             gas_limit: 10,
+            memory_limit: TESTING_MEMORY_LIMIT,
             print_debug: false,
         };
         let mut instance1 = cache.get_instance(&id, deps1, options).unwrap();
@@ -463,6 +466,7 @@ mod test {
         // Init from instance cache
         let options = InstanceOptions {
             gas_limit: TESTING_GAS_LIMIT,
+            memory_limit: TESTING_MEMORY_LIMIT,
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, deps2, options).unwrap();

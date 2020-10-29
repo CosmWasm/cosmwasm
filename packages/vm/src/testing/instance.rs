@@ -14,6 +14,7 @@ use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
 const DEFAULT_GAS_LIMIT: u64 = 500_000;
+const DEFAULT_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
@@ -131,6 +132,7 @@ pub fn mock_instance_with_options(
     };
     let options = InstanceOptions {
         gas_limit: options.gas_limit,
+        memory_limit: DEFAULT_MEMORY_LIMIT,
         print_debug: options.print_debug,
     };
     Instance::from_code(wasm, deps, options).unwrap()
@@ -140,6 +142,7 @@ pub fn mock_instance_with_options(
 pub fn mock_instance_options() -> InstanceOptions {
     InstanceOptions {
         gas_limit: DEFAULT_GAS_LIMIT,
+        memory_limit: DEFAULT_MEMORY_LIMIT,
         print_debug: DEFAULT_PRINT_DEBUG,
     }
 }

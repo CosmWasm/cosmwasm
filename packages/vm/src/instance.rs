@@ -20,8 +20,6 @@ use crate::memory::{read_region, write_region};
 use crate::traits::{Api, Extern, Querier, Storage};
 use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
 
-const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
-
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
     /// The original limit the instance was created with
@@ -38,6 +36,8 @@ pub struct GasReport {
 #[derive(Copy, Clone, Debug)]
 pub struct InstanceOptions {
     pub gas_limit: u64,
+    /// Memory limit in Wasm pages (64 KiB per page)
+    pub memory_limit: u32,
     pub print_debug: bool,
 }
 
@@ -67,7 +67,7 @@ where
         deps: Extern<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Self> {
-        let module = compile(code, MEMORY_LIMIT)?;
+        let module = compile(code, options.memory_limit)?;
         Instance::from_module(&module, deps, options.gas_limit, options.print_debug)
     }
 
