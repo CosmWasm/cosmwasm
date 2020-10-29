@@ -101,8 +101,8 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // try from the module cache
-        let res = self.modules.load(checksum);
-        if let Ok(module) = res {
+        let module = self.modules.load(checksum)?;
+        if let Some(module) = module {
             self.stats.hits_module += 1;
             return Instance::from_module(&module, deps, options.gas_limit, options.print_debug);
         }

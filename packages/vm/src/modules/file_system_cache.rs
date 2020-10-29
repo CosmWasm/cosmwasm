@@ -4,7 +4,7 @@
 use memmap::Mmap;
 use std::{
     fs::{self, File},
-    io::{self, Write},
+    io::{self, ErrorKind, Write},
     path::PathBuf,
 };
 
@@ -58,13 +58,25 @@ impl FileSystemCache {
         }
     }
 
-    pub fn load(&self, checksum: &Checksum) -> VmResult<Module> {
+    pub fn load(&self, checksum: &Checksum) -> VmResult<Option<Module>> {
         let backend = BACKEND_NAME;
 
         let filename = checksum.to_hex();
         let file_path = self.path.clone().join(backend).join(filename);
-        let file = File::open(file_path)
-            .map_err(|e| VmError::cache_err(format!("Error opening module file: {}", e)))?;
+
+        let file = match File::open(file_path) {
+            Ok(file) => file,
+            Err(err) => match err.kind() {
+                ErrorKind::NotFound => return Ok(None),
+                _ => {
+                    return Err(VmError::cache_err(format!(
+                        "Error opening module file: {}",
+                        err
+                    )))
+                }
+            },
+        };
+
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
@@ -77,7 +89,7 @@ impl FileSystemCache {
                     .as_ref(),
             )
         }?;
-        Ok(module)
+        Ok(Some(module))
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
@@ -130,13 +142,18 @@ mod tests {
         let cache_dir = env::temp_dir();
         let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };
 
-        // store module
+        // Module does not exist
+        let cached = fs_cache.load(&checksum).unwrap();
+        assert!(cached.is_none());
+
+        // Store module
         fs_cache.store(&checksum, module.clone()).unwrap();
 
-        // load module
-        let cached_result = fs_cache.load(&checksum);
+        // Load module
+        let cached = fs_cache.load(&checksum).unwrap();
+        assert!(cached.is_some());
 
-        let cached_module = cached_result.unwrap();
+        let cached_module = cached.unwrap();
         let import_object = imports! {};
         let instance = cached_module.instantiate(&import_object).unwrap();
         let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
