@@ -8,6 +8,8 @@ use crate::errors::VmResult;
 
 const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
+pub const BACKEND_NAME: &str = "cranelift";
+
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let config = CompilerConfig {
         enable_verification: false, // As discussed in https://github.com/CosmWasm/cosmwasm/issues/155
@@ -19,10 +21,6 @@ pub fn compile(code: &[u8]) -> VmResult<Module> {
 
 pub fn compiler() -> Box<dyn Compiler> {
     Box::new(CraneliftCompiler::new())
-}
-
-pub fn backend() -> &'static str {
-    "cranelift"
 }
 
 /// Set the amount of gas units that can be used in the context.

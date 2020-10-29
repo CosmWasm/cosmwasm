@@ -10,7 +10,7 @@ use std::{
 
 use wasmer_runtime_core::{cache::Artifact, module::Module};
 
-use crate::backends::{backend, compiler_for_backend};
+use crate::backends::{compiler_for_backend, BACKEND_NAME};
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
 
@@ -59,7 +59,7 @@ impl FileSystemCache {
     }
 
     pub fn load(&self, checksum: &Checksum) -> VmResult<Module> {
-        let backend = backend();
+        let backend = BACKEND_NAME;
 
         let filename = checksum.to_hex();
         let file_path = self.path.clone().join(backend).join(filename);
@@ -125,7 +125,7 @@ mod tests {
         let module = compile(&wasm).unwrap();
 
         // assert we are using the proper backend
-        assert_eq!(backend().to_string(), module.info().backend.to_string());
+        assert_eq!(BACKEND_NAME.to_string(), module.info().backend.to_string());
 
         let cache_dir = env::temp_dir();
         let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };
