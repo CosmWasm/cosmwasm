@@ -35,6 +35,12 @@ pub struct GasReport {
     pub used_internally: u64,
 }
 
+#[derive(Copy, Clone, Debug)]
+pub struct InstanceOptions {
+    pub gas_limit: u64,
+    pub print_debug: bool,
+}
+
 pub struct Instance<S: Storage, A: Api, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
@@ -59,11 +65,10 @@ where
     pub fn from_code(
         code: &[u8],
         deps: Extern<S, A, Q>,
-        gas_limit: u64,
-        print_debug: bool,
+        options: InstanceOptions,
     ) -> VmResult<Self> {
         let module = compile(code, MEMORY_LIMIT)?;
-        Instance::from_module(&module, deps, gas_limit, print_debug)
+        Instance::from_module(&module, deps, options.gas_limit, options.print_debug)
     }
 
     pub(crate) fn from_module(
@@ -308,8 +313,8 @@ mod test {
     use super::*;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_with_balances,
-        mock_instance_with_failing_api, mock_instance_with_gas_limit,
+        mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_options,
+        mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
     };
     use crate::traits::Storage;
     use crate::{call_init, FfiError};
@@ -322,14 +327,13 @@ mod test {
     const WASM_PAGE_SIZE: u64 = 64 * 1024;
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
-    const DEFAULT_GAS_LIMIT: u64 = 500_000;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     #[test]
     fn required_features_works() {
         let deps = mock_dependencies(&[]);
-        let instance = Instance::from_code(CONTRACT, deps, DEFAULT_GAS_LIMIT, false).unwrap();
+        let instance = Instance::from_code(CONTRACT, deps, mock_instance_options()).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
@@ -350,7 +354,7 @@ mod test {
         .unwrap();
 
         let deps = mock_dependencies(&[]);
-        let instance = Instance::from_code(&wasm, deps, DEFAULT_GAS_LIMIT, false).unwrap();
+        let instance = Instance::from_code(&wasm, deps, mock_instance_options()).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));

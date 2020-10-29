@@ -23,8 +23,8 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
-        MOCK_CONTRACT_ADDR,
+        handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query, MockApi,
+        MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Extern, Instance,
 };
@@ -178,7 +178,7 @@ fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
     let custom = mock_dependencies_with_custom_querier(&[]);
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
-    let mut deps = Instance::from_code(WASM, custom, 500_000, false).unwrap();
+    let mut deps = Instance::from_code(WASM, custom, mock_instance_options()).unwrap();
 
     // we don't even initialize, just trigger a query
     let res = query(
