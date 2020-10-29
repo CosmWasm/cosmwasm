@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use crate::backends::{backend, compile};
+use crate::backends::compile;
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
@@ -101,7 +101,7 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // try from the module cache
-        let res = self.modules.load_with_backend(checksum, backend());
+        let res = self.modules.load(checksum);
         if let Ok(module) = res {
             self.stats.hits_module += 1;
             return Instance::from_module(&module, deps, options.gas_limit, options.print_debug);

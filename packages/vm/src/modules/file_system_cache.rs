@@ -59,10 +59,8 @@ impl FileSystemCache {
     }
 
     pub fn load(&self, checksum: &Checksum) -> VmResult<Module> {
-        self.load_with_backend(checksum, backend())
-    }
+        let backend = backend();
 
-    pub fn load_with_backend(&self, checksum: &Checksum, backend: &str) -> VmResult<Module> {
         let filename = checksum.to_hex();
         let file_path = self.path.clone().join(backend).join(filename);
         let file = File::open(file_path)
