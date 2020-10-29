@@ -45,6 +45,10 @@
   `MockStorage::all` for getting all elements of an iterator in tests.
 - Remove unused `Extern::change_querier`. If you need this or similar
   functionality, create a new struct with the right querier.
+- Let `Instance::from_code` and `CosmCache::get_instance` take options as an
+  `InstanceOptions` struct. This contains `gas_limit` and `print_debug` for now
+  and can easily be extended. `cosmwasm_vm::testing::mock_instance_options` can
+  be used for creating such a struct in integration tests.
 
 ## 0.11.2 (2020-10-26)
 

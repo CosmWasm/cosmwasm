@@ -6,12 +6,15 @@ use std::collections::HashSet;
 
 use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
-use crate::instance::Instance;
+use crate::instance::{Instance, InstanceOptions};
 use crate::{Api, Extern, Querier, Storage};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
+
+const DEFAULT_GAS_LIMIT: u64 = 500_000;
+const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
     wasm: &[u8],
@@ -92,8 +95,8 @@ impl Default for MockInstanceOptions<'_> {
 
             // instance
             supported_features: features_from_csv("staking"),
-            gas_limit: 500_000,
-            print_debug: true,
+            gas_limit: DEFAULT_GAS_LIMIT,
+            print_debug: DEFAULT_PRINT_DEBUG,
         }
     }
 }
@@ -126,7 +129,19 @@ pub fn mock_instance_with_options(
         querier: MockQuerier::new(&balances),
         api,
     };
-    Instance::from_code(wasm, deps, options.gas_limit, options.print_debug).unwrap()
+    let options = InstanceOptions {
+        gas_limit: options.gas_limit,
+        print_debug: options.print_debug,
+    };
+    Instance::from_code(wasm, deps, options).unwrap()
+}
+
+/// Creates InstanceOptions for testing
+pub fn mock_instance_options() -> InstanceOptions {
+    InstanceOptions {
+        gas_limit: DEFAULT_GAS_LIMIT,
+        print_debug: DEFAULT_PRINT_DEBUG,
+    }
 }
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
