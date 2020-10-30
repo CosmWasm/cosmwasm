@@ -49,6 +49,9 @@
   `InstanceOptions` struct. This contains `gas_limit` and `print_debug` for now
   and can easily be extended. `cosmwasm_vm::testing::mock_instance_options` can
   be used for creating such a struct in integration tests.
+- Make `FileSystemCache` crate internal. This should be used via `CosmCache`.
+- Fix return type of `FileSystemCache::load` to `VmResult<Option<Module>>` in
+  order to differentiate missing files from errors.
 
 ## 0.11.2 (2020-10-26)
 

@@ -4,7 +4,7 @@
 use memmap::Mmap;
 use std::{
     fs::{self, File},
-    io::{self, Write},
+    io::{self, ErrorKind, Write},
     path::PathBuf,
 };
 
@@ -67,21 +67,33 @@ impl FileSystemCache {
         }
     }
 
-    pub fn load(&self, checksum: &Checksum, memory_limit: u32) -> VmResult<Module> {
+    pub fn load(&self, checksum: &Checksum, memory_limit: u32) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
         let file_path = self
             .path
             .clone()
             .join(MODULE_SERIALIZATION_VERSION)
             .join(filename);
-        let file = File::open(file_path)
-            .map_err(|e| VmError::cache_err(format!("Error opening module file: {}", e)))?;
+
+        let file = match File::open(file_path) {
+            Ok(file) => file,
+            Err(err) => match err.kind() {
+                ErrorKind::NotFound => return Ok(None),
+                _ => {
+                    return Err(VmError::cache_err(format!(
+                        "Error opening module file: {}",
+                        err
+                    )))
+                }
+            },
+        };
+
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
         let store = make_store_headless(memory_limit);
         let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
-        Ok(module)
+        Ok(Some(module))
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
@@ -105,7 +117,7 @@ impl FileSystemCache {
 mod tests {
     use super::*;
     use crate::wasm_backend::compile;
-    use std::env;
+    use tempfile::TempDir;
     use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};
 
@@ -127,16 +139,21 @@ mod tests {
 
         let module = compile(&wasm, TESTING_MEMORY_LIMIT).unwrap();
 
-        let cache_dir = env::temp_dir();
-        let mut fs_cache = unsafe { FileSystemCache::new(cache_dir).unwrap() };
+        let tmp_dir = TempDir::new().unwrap();
+        let mut fs_cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 
-        // store module
+        // Module does not exist
+        let cached = fs_cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        assert!(cached.is_none());
+
+        // Store module
         fs_cache.store(&checksum, module.clone()).unwrap();
 
-        // load module
-        let cached_result = fs_cache.load(&checksum, TESTING_MEMORY_LIMIT);
+        // Load module
+        let cached = fs_cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        assert!(cached.is_some());
 
-        let cached_module = cached_result.unwrap();
+        let cached_module = cached.unwrap();
         let import_object = imports! {};
         let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
         let add_one = instance.exports.get_function("add_one").unwrap();

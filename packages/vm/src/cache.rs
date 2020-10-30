@@ -17,14 +17,14 @@ const MODULES_DIR: &str = "modules";
 
 #[derive(Debug, Default, Clone)]
 struct Stats {
-    hits_module: u32,
+    hits_fs_cache: u32,
     misses: u32,
 }
 
 pub struct CosmCache<S: Storage, A: Api, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
-    modules: FileSystemCache,
+    fs_cache: FileSystemCache,
     stats: Stats,
     // Those two don't store data but only fix type information
     type_storage: PhantomData<S>,
@@ -56,12 +56,12 @@ where
         create_dir_all(&wasm_path)
             .map_err(|e| VmError::cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
 
-        let modules = FileSystemCache::new(base.join(MODULES_DIR))
+        let fs_cache = FileSystemCache::new(base.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(CosmCache {
             wasm_path,
             supported_features,
-            modules,
+            fs_cache,
             stats: Stats::default(),
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
@@ -74,7 +74,7 @@ where
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
         const MEMORY_LIMIT: u32 = 256; // Hmm, is this even used?
         let module = compile(wasm, MEMORY_LIMIT)?;
-        self.modules.store(&checksum, module)?;
+        self.fs_cache.store(&checksum, module)?;
         Ok(checksum)
     }
 
@@ -102,9 +102,9 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // try from the module cache
-        let res = self.modules.load(checksum, options.memory_limit);
-        if let Ok(module) = res {
-            self.stats.hits_module += 1;
+        let module = self.fs_cache.load(checksum, options.memory_limit)?;
+        if let Some(module) = module {
+            self.stats.hits_fs_cache += 1;
             return Instance::from_module(&module, deps, options.gas_limit, options.print_debug);
         }
 
@@ -299,7 +299,7 @@ mod test {
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(&[]);
         let _instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
     }
 
@@ -314,7 +314,7 @@ mod test {
         let _instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
         let _instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
         let _instance3 = cache.get_instance(&id, deps3, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_module, 3);
+        assert_eq!(cache.stats.hits_fs_cache, 3);
         assert_eq!(cache.stats.misses, 0);
     }
 
@@ -416,7 +416,7 @@ mod test {
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         let original_gas = instance1.get_gas_left();
 
@@ -430,7 +430,7 @@ mod test {
 
         // Init from instance cache
         let instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_module, 2);
+        assert_eq!(cache.stats.hits_fs_cache, 2);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
     }
@@ -451,7 +451,7 @@ mod test {
             print_debug: false,
         };
         let mut instance1 = cache.get_instance(&id, deps1, options).unwrap();
-        assert_eq!(cache.stats.hits_module, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
 
         // Consume some gas. This fails
@@ -470,7 +470,7 @@ mod test {
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, deps2, options).unwrap();
-        assert_eq!(cache.stats.hits_module, 2);
+        assert_eq!(cache.stats.hits_fs_cache, 2);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
