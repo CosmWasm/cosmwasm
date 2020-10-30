@@ -23,6 +23,8 @@ use crate::middleware::DeterministicMiddleware;
 /// far below u64::MAX.
 const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
 
+pub const BACKEND_NAME: &str = "singlepass";
+
 pub fn compile(code: &[u8]) -> VmResult<Module> {
     let module = compile_with(code, compiler().as_ref())?;
     Ok(module)
@@ -36,10 +38,6 @@ pub fn compiler() -> Box<dyn Compiler> {
         chain
     });
     Box::new(c)
-}
-
-pub fn backend() -> &'static str {
-    "singlepass"
 }
 
 /// Set the amount of gas units that can be used in the context.

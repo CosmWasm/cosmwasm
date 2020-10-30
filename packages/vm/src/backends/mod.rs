@@ -34,10 +34,10 @@ pub fn decrease_gas_left(ctx: &mut Ctx, amount: u64) -> Result<(), InsufficientG
 }
 
 #[cfg(feature = "default-cranelift")]
-pub use cranelift::{backend, compile, get_gas_left, set_gas_left};
+pub use cranelift::{compile, get_gas_left, set_gas_left, BACKEND_NAME};
 
 #[cfg(feature = "default-singlepass")]
-pub use singlepass::{backend, compile, get_gas_left, set_gas_left};
+pub use singlepass::{compile, get_gas_left, set_gas_left, BACKEND_NAME};
 
 #[cfg(test)]
 #[cfg(feature = "default-singlepass")]
