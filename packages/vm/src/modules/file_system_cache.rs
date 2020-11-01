@@ -116,13 +116,12 @@ mod tests {
     use super::*;
     use crate::backends::compile;
     use tempfile::TempDir;
-    use wabt::wat2wasm;
 
     #[test]
     fn test_file_system_cache_run() {
         use wasmer_runtime_core::{imports, typed_func::Func};
 
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (type $t0 (func (param i32) (result i32)))
             (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)

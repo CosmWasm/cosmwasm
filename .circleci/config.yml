@@ -150,9 +150,6 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Install CMake (required for compiling wabt-sys, a dev dependency of the VM)
-          command: apt-get update && apt-get install -y cmake
-      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
@@ -179,9 +176,6 @@ jobs:
       - image: rustlang/rust:nightly
     steps:
       - checkout
-      - run:
-          name: Install CMake (required for compiling wabt-sys, a dev dependency of the VM)
-          command: apt-get update && apt-get install -y cmake
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed

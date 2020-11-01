@@ -47,4 +47,4 @@ parity-wasm = "0.42"
 
 [dev-dependencies]
 tempfile = "3.1.0"
-wabt = "0.9.1"
+wat = "1.0"

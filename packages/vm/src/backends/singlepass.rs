@@ -63,7 +63,6 @@ pub fn get_gas_left(ctx: &Ctx) -> u64 {
 #[cfg(test)]
 mod test {
     use super::*;
-    use wabt::wat2wasm;
     use wasmer_runtime_core::{imports, Instance as WasmerInstance};
 
     fn instantiate(code: &[u8]) -> WasmerInstance {
@@ -74,7 +73,7 @@ mod test {
 
     #[test]
     fn get_gas_left_defaults_to_constant() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let instance = instantiate(&wasm);
         let gas_left = get_gas_left(instance.context());
         assert_eq!(gas_left, MAX_GAS_LIMIT);
@@ -82,7 +81,7 @@ mod test {
 
     #[test]
     fn set_gas_left_works() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let limit = 3456789;
@@ -107,7 +106,7 @@ mod test {
         expected = "Attempted to set gas limit larger than max gas limit (got: 9223372036854775808; maximum: 9223372036854775807)."
     )]
     fn set_gas_left_panic_for_values_too_large() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;

@@ -51,7 +51,6 @@ pub fn required_features_from_module(module: &Module) -> HashSet<String> {
 mod test {
     use super::*;
     use parity_wasm::elements::deserialize_buffer;
-    use wabt::wat2wasm;
 
     #[test]
     fn features_from_csv_works() {
@@ -78,7 +77,7 @@ mod test {
 
     #[test]
     fn required_features_from_module_works() {
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (type (func))
             (func (type 0) nop)
@@ -102,7 +101,7 @@ mod test {
 
     #[test]
     fn required_features_from_module_works_without_exports_section() {
-        let wasm = wat2wasm(r#"(module)"#).unwrap();
+        let wasm = wat::parse_str(r#"(module)"#).unwrap();
         let module = deserialize_buffer(&wasm).unwrap();
         let required_features = required_features_from_module(&module);
         assert_eq!(required_features.len(), 0);

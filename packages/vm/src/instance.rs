@@ -297,7 +297,6 @@ mod test {
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
     };
-    use wabt::wat2wasm;
 
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
@@ -317,7 +316,7 @@ mod test {
 
     #[test]
     fn required_features_works_for_many_exports() {
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (type (func))
             (func (type 0) nop)
