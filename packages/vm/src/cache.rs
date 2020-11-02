@@ -9,14 +9,17 @@ use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
-use crate::modules::FileSystemCache;
+use crate::modules::{FileSystemCache, InMemoryCache};
+use crate::size::Size;
 use crate::traits::{Api, Extern, Querier, Storage};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
+const IN_MEMORY_CACHE_SIZE: Size = Size::mebi(500);
 
 #[derive(Debug, Default, Clone)]
 struct Stats {
+    hits_memory_cache: u32,
     hits_fs_cache: u32,
     misses: u32,
 }
@@ -24,6 +27,7 @@ struct Stats {
 pub struct CosmCache<S: Storage, A: Api, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
+    memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
     // Those two don't store data but only fix type information
@@ -61,6 +65,7 @@ where
         Ok(CosmCache {
             wasm_path,
             supported_features,
+            memory_cache: InMemoryCache::new(IN_MEMORY_CACHE_SIZE),
             fs_cache,
             stats: Stats::default(),
             type_storage: PhantomData::<S>,
@@ -100,17 +105,32 @@ where
         deps: Extern<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
-        // try from the module cache
-        let module = self.fs_cache.load(checksum)?;
-        if let Some(module) = module {
-            self.stats.hits_fs_cache += 1;
-            return Instance::from_module(&module, deps, options.gas_limit, options.print_debug);
+        // Get module from memory cache
+        if let Some(module) = self.memory_cache.load(checksum)? {
+            self.stats.hits_memory_cache += 1;
+            let instance =
+                Instance::from_module(module, deps, options.gas_limit, options.print_debug)?;
+            return Ok(instance);
         }
 
-        // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
+        // Get module from file system cache
+        if let Some(module) = self.fs_cache.load(checksum)? {
+            self.stats.hits_fs_cache += 1;
+            let instance =
+                Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+            self.memory_cache.store(checksum, module)?;
+            return Ok(instance);
+        }
+
+        // Re-compile module from wasm
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        Instance::from_code(&wasm, deps, options)
+        let module = compile(&wasm)?;
+        let instance =
+            Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+        self.fs_cache.store(checksum, &module)?;
+        self.memory_cache.store(checksum, module)?;
+        Ok(instance)
     }
 }
 
@@ -295,22 +315,36 @@ mod test {
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(&[]);
         let _instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
     }
 
     #[test]
-    fn get_instance_finds_cached_instance() {
+    fn get_instance_finds_cached_modules_and_stores_to_memory() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps1 = mock_dependencies(&[]);
         let deps2 = mock_dependencies(&[]);
         let deps3 = mock_dependencies(&[]);
+
+        // from file system
         let _instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
+        assert_eq!(cache.stats.misses, 0);
+
+        // from memory
         let _instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
+        assert_eq!(cache.stats.misses, 0);
+
+        // from memory again
         let _instance3 = cache.get_instance(&id, deps3, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 3);
+        assert_eq!(cache.stats.hits_memory_cache, 2);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
     }
 
@@ -413,6 +447,7 @@ mod test {
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         let original_gas = instance1.get_gas_left();
@@ -425,9 +460,10 @@ mod test {
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
 
-        // Init from instance cache
+        // Init from memory cache
         let instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 2);
+        assert_eq!(cache.stats.hits_memory_cache, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
     }
@@ -460,13 +496,14 @@ mod test {
         }
         assert_eq!(instance1.get_gas_left(), 0);
 
-        // Init from instance cache
+        // Init from memory cache
         let options = InstanceOptions {
             gas_limit: TESTING_GAS_LIMIT,
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, deps2, options).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 2);
+        assert_eq!(cache.stats.hits_memory_cache, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
