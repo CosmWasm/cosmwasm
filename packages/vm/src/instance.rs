@@ -291,7 +291,7 @@ mod test {
     use crate::context::is_storage_readonly;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_options,
+        mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         MockQuerier, MockStorage,
     };
@@ -313,8 +313,8 @@ mod test {
 
     #[test]
     fn required_features_works() {
-        let deps = mock_dependencies(&[]);
-        let instance = Instance::from_code(CONTRACT, deps, mock_instance_options()).unwrap();
+        let backend = mock_backend(&[]);
+        let instance = Instance::from_code(CONTRACT, backend, mock_instance_options()).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
@@ -334,8 +334,8 @@ mod test {
         )
         .unwrap();
 
-        let deps = mock_dependencies(&[]);
-        let instance = Instance::from_code(&wasm, deps, mock_instance_options()).unwrap();
+        let backend = mock_backend(&[]);
+        let instance = Instance::from_code(&wasm, backend, mock_instance_options()).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));

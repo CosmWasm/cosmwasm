@@ -11,7 +11,7 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(contract_balance: &[Coin]) -> Backend<MockStorage, MockApi, MockQuerier> {
+pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Backend {
         storage: MockStorage::default(),
@@ -22,7 +22,7 @@ pub fn mock_dependencies(contract_balance: &[Coin]) -> Backend<MockStorage, Mock
 
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
-pub fn mock_dependencies_with_balances(
+pub fn mock_backend_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
 ) -> Backend<MockStorage, MockApi, MockQuerier> {
     Backend {
