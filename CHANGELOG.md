@@ -52,6 +52,9 @@
 - Make `FileSystemCache` crate internal. This should be used via `CosmCache`.
 - Fix return type of `FileSystemCache::load` to `VmResult<Option<Module>>` in
   order to differentiate missing files from errors.
+- Add in-memory caching for recently used Wasm modules.
+- Rename `CosmCache` to just `cosmwasm_vm::Cache` and add `CacheOptions` to
+  configure it.
 
 ## 0.11.2 (2020-10-26)
 

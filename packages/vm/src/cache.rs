@@ -9,7 +9,8 @@ use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
-use crate::modules::FileSystemCache;
+use crate::modules::{FileSystemCache, InMemoryCache};
+use crate::size::Size;
 use crate::traits::{Api, Extern, Querier, Storage};
 
 const WASM_DIR: &str = "wasm";
@@ -17,13 +18,21 @@ const MODULES_DIR: &str = "modules";
 
 #[derive(Debug, Default, Clone)]
 struct Stats {
+    hits_memory_cache: u32,
     hits_fs_cache: u32,
     misses: u32,
 }
 
-pub struct CosmCache<S: Storage, A: Api, Q: Querier> {
+pub struct CacheOptions {
+    base_dir: PathBuf,
+    supported_features: HashSet<String>,
+    memory_cache_size: Size,
+}
+
+pub struct Cache<S: Storage, A: Api, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
+    memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
     // Those two don't store data but only fix type information
@@ -32,7 +41,7 @@ pub struct CosmCache<S: Storage, A: Api, Q: Querier> {
     type_querier: PhantomData<Q>,
 }
 
-impl<S, A, Q> CosmCache<S, A, Q>
+impl<S, A, Q> Cache<S, A, Q>
 where
     S: Storage,
     A: Api + 'static, // 'static is needed by `impl<…> Instance`
@@ -47,20 +56,22 @@ where
     /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
     /// assumes the disk contents are correct, and there's no way to ensure the artifacts
     //  stored in the cache haven't been corrupted or tampered with.
-    pub unsafe fn new<P: Into<PathBuf>>(
-        base_dir: P,
-        supported_features: HashSet<String>,
-    ) -> VmResult<Self> {
-        let base = base_dir.into();
-        let wasm_path = base.join(WASM_DIR);
+    pub unsafe fn new(options: CacheOptions) -> VmResult<Self> {
+        let CacheOptions {
+            base_dir,
+            supported_features,
+            memory_cache_size,
+        } = options;
+        let wasm_path = base_dir.join(WASM_DIR);
         create_dir_all(&wasm_path)
             .map_err(|e| VmError::cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
 
-        let fs_cache = FileSystemCache::new(base.join(MODULES_DIR))
+        let fs_cache = FileSystemCache::new(base_dir.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
-        Ok(CosmCache {
+        Ok(Cache {
             wasm_path,
             supported_features,
+            memory_cache: InMemoryCache::new(memory_cache_size),
             fs_cache,
             stats: Stats::default(),
             type_storage: PhantomData::<S>,
@@ -73,7 +84,7 @@ where
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
-        self.fs_cache.store(&checksum, module)?;
+        self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
 
@@ -100,17 +111,32 @@ where
         deps: Extern<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
-        // try from the module cache
-        let module = self.fs_cache.load(checksum)?;
-        if let Some(module) = module {
-            self.stats.hits_fs_cache += 1;
-            return Instance::from_module(&module, deps, options.gas_limit, options.print_debug);
+        // Get module from memory cache
+        if let Some(module) = self.memory_cache.load(checksum)? {
+            self.stats.hits_memory_cache += 1;
+            let instance =
+                Instance::from_module(module, deps, options.gas_limit, options.print_debug)?;
+            return Ok(instance);
         }
 
-        // fall back to wasm cache (and re-compiling) - this is for backends that don't support serialization
+        // Get module from file system cache
+        if let Some(module) = self.fs_cache.load(checksum)? {
+            self.stats.hits_fs_cache += 1;
+            let instance =
+                Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+            self.memory_cache.store(checksum, module)?;
+            return Ok(instance);
+        }
+
+        // Re-compile module from wasm
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        Instance::from_code(&wasm, deps, options)
+        let module = compile(&wasm)?;
+        let instance =
+            Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+        self.fs_cache.store(checksum, &module)?;
+        self.memory_cache.store(checksum, module)?;
+        Ok(instance)
     }
 }
 
@@ -168,26 +194,34 @@ mod test {
         gas_limit: TESTING_GAS_LIMIT,
         print_debug: false,
     };
+    const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
+
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     fn default_features() -> HashSet<String> {
         features_from_csv("staking")
     }
 
+    fn make_testing_options() -> CacheOptions {
+        CacheOptions {
+            base_dir: TempDir::new().unwrap().into_path(),
+            supported_features: default_features(),
+            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+        }
+    }
+
     #[test]
     fn save_wasm_works() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
-            unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
     }
 
     #[test]
     // This property is required when the same bytecode is uploaded multiple times
     fn save_wasm_allows_saving_multiple_times() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
-            unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
         cache.save_wasm(CONTRACT).unwrap();
     }
@@ -206,9 +240,8 @@ mod test {
         )
         .unwrap();
 
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
-            unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
@@ -219,10 +252,26 @@ mod test {
     }
 
     #[test]
+    fn save_wasm_fills_file_system_but_not_memory_cache() {
+        // Who knows if and when the uploaded contract will be executed. Don't pollute
+        // memory cache before the init call.
+
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        let deps = mock_dependencies(&[]);
+        let _ = cache
+            .get_instance(&checksum, deps, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
+        assert_eq!(cache.stats.misses, 0);
+    }
+
+    #[test]
     fn load_wasm_works() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
-            unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         let restored = cache.load_wasm(&id).unwrap();
@@ -232,18 +281,27 @@ mod test {
     #[test]
     fn load_wasm_works_across_multiple_cache_instances() {
         let tmp_dir = TempDir::new().unwrap();
-        let tmp_path = tmp_dir.path();
         let id: Checksum;
 
         {
-            let mut cache1: CosmCache<MockStorage, MockApi, MockQuerier> =
-                unsafe { CosmCache::new(tmp_path, default_features()).unwrap() };
+            let options1 = CacheOptions {
+                base_dir: tmp_dir.path().to_path_buf(),
+                supported_features: default_features(),
+                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+            };
+            let mut cache1: Cache<MockStorage, MockApi, MockQuerier> =
+                unsafe { Cache::new(options1).unwrap() };
             id = cache1.save_wasm(CONTRACT).unwrap();
         }
 
         {
-            let cache2: CosmCache<MockStorage, MockApi, MockQuerier> =
-                unsafe { CosmCache::new(tmp_path, default_features()).unwrap() };
+            let options2 = CacheOptions {
+                base_dir: tmp_dir.path().to_path_buf(),
+                supported_features: default_features(),
+                memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+            };
+            let cache2: Cache<MockStorage, MockApi, MockQuerier> =
+                unsafe { Cache::new(options2).unwrap() };
             let restored = cache2.load_wasm(&id).unwrap();
             assert_eq!(restored, CONTRACT);
         }
@@ -251,9 +309,8 @@ mod test {
 
     #[test]
     fn load_wasm_errors_for_non_existent_id() {
-        let tmp_dir = TempDir::new().unwrap();
-        let cache: CosmCache<MockStorage, MockApi, MockQuerier> =
-            unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let cache: Cache<MockStorage, MockApi, MockQuerier> =
+            unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = Checksum::from([
             5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
             5, 5, 5,
@@ -271,8 +328,13 @@ mod test {
     #[test]
     fn load_wasm_errors_for_corrupted_wasm() {
         let tmp_dir = TempDir::new().unwrap();
-        let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
-            unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let options = CacheOptions {
+            base_dir: tmp_dir.path().to_path_buf(),
+            supported_features: default_features(),
+            memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+        };
+        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+            unsafe { Cache::new(options).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         // Corrupt cache file
@@ -290,34 +352,45 @@ mod test {
 
     #[test]
     fn get_instance_finds_cached_module() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(&[]);
         let _instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
     }
 
     #[test]
-    fn get_instance_finds_cached_instance() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+    fn get_instance_finds_cached_modules_and_stores_to_memory() {
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps1 = mock_dependencies(&[]);
         let deps2 = mock_dependencies(&[]);
         let deps3 = mock_dependencies(&[]);
+
+        // from file system
         let _instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
+        assert_eq!(cache.stats.misses, 0);
+
+        // from memory
         let _instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
+        assert_eq!(cache.stats.misses, 0);
+
+        // from memory again
         let _instance3 = cache.get_instance(&id, deps3, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 3);
+        assert_eq!(cache.stats.hits_memory_cache, 2);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
     }
 
     #[test]
     fn init_cached_contract() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let deps = mock_dependencies(&[]);
         let mut instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
@@ -334,8 +407,7 @@ mod test {
 
     #[test]
     fn run_cached_contract() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         // TODO: contract balance
         let deps = mock_dependencies(&[]);
@@ -358,8 +430,7 @@ mod test {
 
     #[test]
     fn use_multiple_cached_instances_of_same_contract() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         // these differentiate the two instances of the same contract
@@ -404,8 +475,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn resets_gas_when_reusing_instance() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         let deps1 = mock_dependencies(&[]);
@@ -413,6 +483,7 @@ mod test {
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         let original_gas = instance1.get_gas_left();
@@ -425,9 +496,10 @@ mod test {
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
 
-        // Init from instance cache
+        // Init from memory cache
         let instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 2);
+        assert_eq!(cache.stats.hits_memory_cache, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
     }
@@ -435,8 +507,7 @@ mod test {
     #[test]
     #[cfg(feature = "default-singlepass")]
     fn recovers_from_out_of_gas() {
-        let tmp_dir = TempDir::new().unwrap();
-        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         let deps1 = mock_dependencies(&[]);
@@ -460,13 +531,14 @@ mod test {
         }
         assert_eq!(instance1.get_gas_left(), 0);
 
-        // Init from instance cache
+        // Init from memory cache
         let options = InstanceOptions {
             gas_limit: TESTING_GAS_LIMIT,
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, deps2, options).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 2);
+        assert_eq!(cache.stats.hits_memory_cache, 1);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
