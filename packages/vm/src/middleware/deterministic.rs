@@ -168,7 +168,6 @@ mod tests {
     // No 'use super::*;' here. This is strange and means we are not testing the functions in this module directly.
     use crate::backends::compile;
     use crate::errors::VmError;
-    use wabt::wat2wasm;
     use wasmer_runtime_core::{imports, typed_func::Func};
 
     #[test]
@@ -181,7 +180,7 @@ mod tests {
                     i32.add
                 ))
             "#;
-        let wasm = wat2wasm(input).unwrap();
+        let wasm = wat::parse_str(input).unwrap();
         let module = compile(&wasm).unwrap();
         let instance = module.instantiate(&imports! {}).unwrap();
 
@@ -200,7 +199,7 @@ mod tests {
                     f32.convert_u/i32
                 ))
             "#;
-        let wasm = wat2wasm(input).unwrap();
+        let wasm = wat::parse_str(input).unwrap();
         let res = compile(&wasm);
 
         match res.err().unwrap() {

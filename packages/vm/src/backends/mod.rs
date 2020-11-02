@@ -43,7 +43,6 @@ pub use singlepass::{compile, get_gas_left, set_gas_left, BACKEND_NAME};
 #[cfg(feature = "default-singlepass")]
 mod test {
     use super::*;
-    use wabt::wat2wasm;
     use wasmer_runtime_core::{imports, Instance as WasmerInstance};
 
     fn instantiate(code: &[u8]) -> WasmerInstance {
@@ -54,7 +53,7 @@ mod test {
 
     #[test]
     fn decrease_gas_left_works() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let before = get_gas_left(instance.context());
@@ -65,7 +64,7 @@ mod test {
 
     #[test]
     fn decrease_gas_left_can_consume_all_gas() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let before = get_gas_left(instance.context());
@@ -76,7 +75,7 @@ mod test {
 
     #[test]
     fn decrease_gas_left_errors_for_amount_greater_than_remaining() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let mut instance = instantiate(&wasm);
 
         let before = get_gas_left(instance.context());

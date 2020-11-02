@@ -158,7 +158,6 @@ mod test {
     use crate::errors::VmError;
     use parity_wasm::elements::Internal;
     use std::iter::FromIterator;
-    use wabt::wat2wasm;
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
@@ -241,13 +240,13 @@ mod test {
 
     #[test]
     fn test_check_wasm_memories_ok() {
-        let wasm = wat2wasm("(module (memory 1))").unwrap();
+        let wasm = wat::parse_str("(module (memory 1))").unwrap();
         check_wasm_memories(&deserialize(&wasm).unwrap()).unwrap()
     }
 
     #[test]
     fn test_check_wasm_memories_no_memory() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         match check_wasm_memories(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract doesn't have a memory section"));
@@ -304,10 +303,10 @@ mod test {
 
     #[test]
     fn test_check_wasm_memories_initial_size() {
-        let wasm_ok = wat2wasm("(module (memory 512))").unwrap();
+        let wasm_ok = wat::parse_str("(module (memory 512))").unwrap();
         check_wasm_memories(&deserialize(&wasm_ok).unwrap()).unwrap();
 
-        let wasm_too_big = wat2wasm("(module (memory 513))").unwrap();
+        let wasm_too_big = wat::parse_str("(module (memory 513))").unwrap();
         match check_wasm_memories(&deserialize(&wasm_too_big).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's minimum must not exceed 512 pages"));
@@ -319,7 +318,7 @@ mod test {
 
     #[test]
     fn test_check_wasm_memories_maximum_size() {
-        let wasm_max = wat2wasm("(module (memory 1 5))").unwrap();
+        let wasm_max = wat::parse_str("(module (memory 1 5))").unwrap();
         match check_wasm_memories(&deserialize(&wasm_max).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with("Wasm contract memory's maximum must be unset"));
@@ -340,7 +339,7 @@ mod test {
                 i32.const 1
                 i32.add))
         "#;
-        let wasm_missing_exports = wat2wasm(WAT_MISSING_EXPORTS).unwrap();
+        let wasm_missing_exports = wat::parse_str(WAT_MISSING_EXPORTS).unwrap();
 
         let module = deserialize(&wasm_missing_exports).unwrap();
         match check_wasm_exports(&module) {
@@ -370,7 +369,7 @@ mod test {
 
     #[test]
     fn check_wasm_imports_ok() {
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (import "env" "db_read" (func (param i32 i32) (result i32)))
             (import "env" "db_write" (func (param i32 i32) (result i32)))
@@ -399,7 +398,7 @@ mod test {
 
     #[test]
     fn test_check_wasm_imports_wrong_type() {
-        let wasm = wat2wasm(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
+        let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
         match check_wasm_imports(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(
@@ -413,7 +412,7 @@ mod test {
 
     #[test]
     fn check_wasm_features_ok() {
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (type (func))
             (func (type 0) nop)
@@ -442,7 +441,7 @@ mod test {
 
     #[test]
     fn check_wasm_features_fails_for_missing() {
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (type (func))
             (func (type 0) nop)
