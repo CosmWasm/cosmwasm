@@ -73,7 +73,7 @@ where
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
         let module = compile(wasm)?;
-        self.fs_cache.store(&checksum, module)?;
+        self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
 

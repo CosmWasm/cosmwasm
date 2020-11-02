@@ -92,7 +92,8 @@ impl FileSystemCache {
         Ok(Some(module))
     }
 
-    pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
+    /// Stores a serialization of the module to the file system
+    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
         let backend_str = module.info().backend.to_string();
         let modules_dir = self.path.clone().join(backend_str);
         fs::create_dir_all(&modules_dir)
@@ -143,7 +144,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        cache.store(&checksum, module.clone()).unwrap();
+        cache.store(&checksum, &module).unwrap();
 
         // Load module
         let cached = cache.load(&checksum).unwrap();
