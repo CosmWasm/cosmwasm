@@ -11,7 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache};
 use crate::size::Size;
-use crate::traits::{Api, Extern, Querier, Storage};
+use crate::traits::{Api, Backend, Querier, Storage};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -108,14 +108,14 @@ where
     pub fn get_instance(
         &mut self,
         checksum: &Checksum,
-        deps: Extern<S, A, Q>,
+        backend: Backend<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // Get module from memory cache
         if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
             let instance =
-                Instance::from_module(module, deps, options.gas_limit, options.print_debug)?;
+                Instance::from_module(module, backend, options.gas_limit, options.print_debug)?;
             return Ok(instance);
         }
 
@@ -123,7 +123,7 @@ where
         if let Some(module) = self.fs_cache.load(checksum)? {
             self.stats.hits_fs_cache += 1;
             let instance =
-                Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+                Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
             self.memory_cache.store(checksum, module)?;
             return Ok(instance);
         }
@@ -133,7 +133,7 @@ where
         self.stats.misses += 1;
         let module = compile(&wasm)?;
         let instance =
-            Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+            Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
         self.memory_cache.store(checksum, module)?;
         Ok(instance)

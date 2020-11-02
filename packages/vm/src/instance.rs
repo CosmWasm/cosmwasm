@@ -26,7 +26,7 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
-use crate::traits::{Api, Extern, Querier, Storage};
+use crate::traits::{Api, Backend, Querier, Storage};
 
 const WASM_PAGE_SIZE: u64 = 64 * 1024;
 
@@ -71,16 +71,16 @@ where
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
         code: &[u8],
-        deps: Extern<S, A, Q>,
+        backend: Backend<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Self> {
         let module = compile(code)?;
-        Instance::from_module(&module, deps, options.gas_limit, options.print_debug)
+        Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 
     pub(crate) fn from_module(
         module: &Module,
-        deps: Extern<S, A, Q>,
+        backend: Backend<S, A, Q>,
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
@@ -88,7 +88,7 @@ where
             imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
 
         // copy this so it can be moved into the closures, without pulling in deps
-        let api = deps.api;
+        let api = backend.api;
         import_obj.extend(imports! {
             "env" => {
                 // Reads the database entry at the given key into the the value.
@@ -173,10 +173,14 @@ where
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
-        move_into_context(wasmer_instance.context_mut(), deps.storage, deps.querier);
+        move_into_context(
+            wasmer_instance.context_mut(),
+            backend.storage,
+            backend.querier,
+        );
         let instance = Instance {
             inner: wasmer_instance,
-            api: deps.api,
+            api: backend.api,
             required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
@@ -186,9 +190,9 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(mut self) -> Option<Extern<S, A, Q>> {
+    pub fn recycle(mut self) -> Option<Backend<S, A, Q>> {
         if let (Some(storage), Some(querier)) = move_out_of_context(self.inner.context_mut()) {
-            Some(Extern {
+            Some(Backend {
                 storage,
                 api: self.api,
                 querier,

@@ -55,6 +55,7 @@
 - Add in-memory caching for recently used Wasm modules.
 - Rename `CosmCache` to just `cosmwasm_vm::Cache` and add `CacheOptions` to
   configure it.
+- Rename `Extern` to `Backend`.
 
 ## 0.11.2 (2020-10-26)
 

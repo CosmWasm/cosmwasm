@@ -33,4 +33,4 @@ pub use crate::ffi::{FfiError, FfiResult, GasInfo};
 pub use crate::instance::{GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
-pub use crate::traits::{Api, Extern, Querier, Storage};
+pub use crate::traits::{Api, Backend, Querier, Storage};
