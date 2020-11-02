@@ -20,9 +20,7 @@
 use cosmwasm_std::{
     coin, from_binary, ContractResult, Decimal, HumanAddr, InitResponse, Uint128, Validator,
 };
-use cosmwasm_vm::testing::{
-    init, mock_dependencies, mock_env, mock_info, mock_instance_options, query,
-};
+use cosmwasm_vm::testing::{init, mock_backend, mock_env, mock_info, mock_instance_options, query};
 use cosmwasm_vm::Instance;
 
 use staking::msg::{
@@ -45,10 +43,11 @@ fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
 
 #[test]
 fn initialization_with_missing_validator() {
-    let mut ext = mock_dependencies(&[]);
-    ext.querier
+    let mut backend = mock_backend(&[]);
+    backend
+        .querier
         .update_staking("ustake", &[sample_validator("john")], &[]);
-    let mut deps = Instance::from_code(WASM, ext, mock_instance_options()).unwrap();
+    let mut deps = Instance::from_code(WASM, backend, mock_instance_options()).unwrap();
 
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
@@ -73,8 +72,8 @@ fn initialization_with_missing_validator() {
 #[test]
 fn proper_initialization() {
     // we need to use the verbose approach here to customize the querier with staking info
-    let mut ext = mock_dependencies(&[]);
-    ext.querier.update_staking(
+    let mut backend = mock_backend(&[]);
+    backend.querier.update_staking(
         "ustake",
         &[
             sample_validator("john"),
@@ -83,7 +82,7 @@ fn proper_initialization() {
         ],
         &[],
     );
-    let mut deps = Instance::from_code(WASM, ext, mock_instance_options()).unwrap();
+    let mut deps = Instance::from_code(WASM, backend, mock_instance_options()).unwrap();
     assert_eq!(deps.required_features.len(), 1);
     assert!(deps.required_features.contains("staking"));
 

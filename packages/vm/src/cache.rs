@@ -11,7 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache};
 use crate::size::Size;
-use crate::traits::{Api, Extern, Querier, Storage};
+use crate::traits::{Api, Backend, Querier, Storage};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -108,14 +108,14 @@ where
     pub fn get_instance(
         &mut self,
         checksum: &Checksum,
-        deps: Extern<S, A, Q>,
+        backend: Backend<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // Get module from memory cache
         if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
             let instance =
-                Instance::from_module(module, deps, options.gas_limit, options.print_debug)?;
+                Instance::from_module(module, backend, options.gas_limit, options.print_debug)?;
             return Ok(instance);
         }
 
@@ -123,7 +123,7 @@ where
         if let Some(module) = self.fs_cache.load(checksum)? {
             self.stats.hits_fs_cache += 1;
             let instance =
-                Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+                Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
             self.memory_cache.store(checksum, module)?;
             return Ok(instance);
         }
@@ -133,7 +133,7 @@ where
         self.stats.misses += 1;
         let module = compile(&wasm)?;
         let instance =
-            Instance::from_module(&module, deps, options.gas_limit, options.print_debug)?;
+            Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
         self.memory_cache.store(checksum, module)?;
         Ok(instance)
@@ -181,9 +181,7 @@ mod test {
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
     use crate::features::features_from_csv;
-    use crate::testing::{
-        mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
-    };
+    use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;
     use std::io::Write;
@@ -259,9 +257,9 @@ mod test {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
-        let deps = mock_dependencies(&[]);
+        let backend = mock_backend(&[]);
         let _ = cache
-            .get_instance(&checksum, deps, TESTING_OPTIONS)
+            .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
@@ -354,8 +352,8 @@ mod test {
     fn get_instance_finds_cached_module() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let deps = mock_dependencies(&[]);
-        let _instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
+        let backend = mock_backend(&[]);
+        let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
@@ -365,24 +363,24 @@ mod test {
     fn get_instance_finds_cached_modules_and_stores_to_memory() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let deps1 = mock_dependencies(&[]);
-        let deps2 = mock_dependencies(&[]);
-        let deps3 = mock_dependencies(&[]);
+        let backend1 = mock_backend(&[]);
+        let backend2 = mock_backend(&[]);
+        let backend3 = mock_backend(&[]);
 
         // from file system
-        let _instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        let _instance1 = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
 
         // from memory
-        let _instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
+        let _instance2 = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 1);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
 
         // from memory again
-        let _instance3 = cache.get_instance(&id, deps3, TESTING_OPTIONS).unwrap();
+        let _instance3 = cache.get_instance(&id, backend3, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 2);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
@@ -392,8 +390,8 @@ mod test {
     fn init_cached_contract() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
-        let deps = mock_dependencies(&[]);
-        let mut instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
+        let backend = mock_backend(&[]);
+        let mut instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
 
         // run contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -410,8 +408,8 @@ mod test {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         // TODO: contract balance
-        let deps = mock_dependencies(&[]);
-        let mut instance = cache.get_instance(&id, deps, TESTING_OPTIONS).unwrap();
+        let backend = mock_backend(&[]);
+        let mut instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
 
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
@@ -434,29 +432,29 @@ mod test {
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         // these differentiate the two instances of the same contract
-        let deps1 = mock_dependencies(&[]);
-        let deps2 = mock_dependencies(&[]);
+        let backend1 = mock_backend(&[]);
+        let backend2 = mock_backend(&[]);
 
         // init instance 1
-        let mut instance = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        let mut instance = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = r#"{"verifier": "sue", "beneficiary": "mary"}"#.as_bytes();
         let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let deps1 = instance.recycle().unwrap();
+        let backend1 = instance.recycle().unwrap();
 
         // init instance 2
-        let mut instance = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
+        let mut instance = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
         let info = mock_info("owner2", &coins(500, "earth"));
         let msg = r#"{"verifier": "bob", "beneficiary": "john"}"#.as_bytes();
         let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
-        let deps2 = instance.recycle().unwrap();
+        let backend2 = instance.recycle().unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
+        let mut instance = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
         let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
@@ -464,7 +462,7 @@ mod test {
         assert_eq!(1, msgs.len());
 
         // run contract 1 - just sanity check - results validate in contract unit tests
-        let mut instance = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        let mut instance = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
         let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
         let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
@@ -478,11 +476,11 @@ mod test {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
-        let deps1 = mock_dependencies(&[]);
-        let deps2 = mock_dependencies(&[]);
+        let backend1 = mock_backend(&[]);
+        let backend2 = mock_backend(&[]);
 
         // Init from module cache
-        let mut instance1 = cache.get_instance(&id, deps1, TESTING_OPTIONS).unwrap();
+        let mut instance1 = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 0);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
@@ -497,7 +495,7 @@ mod test {
         assert!(instance1.get_gas_left() < original_gas);
 
         // Init from memory cache
-        let instance2 = cache.get_instance(&id, deps2, TESTING_OPTIONS).unwrap();
+        let instance2 = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 1);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
@@ -510,15 +508,15 @@ mod test {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
-        let deps1 = mock_dependencies(&[]);
-        let deps2 = mock_dependencies(&[]);
+        let backend1 = mock_backend(&[]);
+        let backend2 = mock_backend(&[]);
 
         // Init from module cache
         let options = InstanceOptions {
             gas_limit: 10,
             print_debug: false,
         };
-        let mut instance1 = cache.get_instance(&id, deps1, options).unwrap();
+        let mut instance1 = cache.get_instance(&id, backend1, options).unwrap();
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);
 
@@ -536,7 +534,7 @@ mod test {
             gas_limit: TESTING_GAS_LIMIT,
             print_debug: false,
         };
-        let mut instance2 = cache.get_instance(&id, deps2, options).unwrap();
+        let mut instance2 = cache.get_instance(&id, backend2, options).unwrap();
         assert_eq!(cache.stats.hits_memory_cache, 1);
         assert_eq!(cache.stats.hits_fs_cache, 1);
         assert_eq!(cache.stats.misses, 0);

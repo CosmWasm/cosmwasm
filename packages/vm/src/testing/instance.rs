@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::{Instance, InstanceOptions};
-use crate::{Api, Extern, Querier, Storage};
+use crate::{Api, Backend, Querier, Storage};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
@@ -124,7 +124,7 @@ pub fn mock_instance_with_options(
         MockApi::default()
     };
 
-    let deps = Extern {
+    let backend = Backend {
         storage: MockStorage::default(),
         querier: MockQuerier::new(&balances),
         api,
@@ -133,7 +133,7 @@ pub fn mock_instance_with_options(
         gas_limit: options.gas_limit,
         print_debug: options.print_debug,
     };
-    Instance::from_code(wasm, deps, options).unwrap()
+    Instance::from_code(wasm, backend, options).unwrap()
 }
 
 /// Creates InstanceOptions for testing

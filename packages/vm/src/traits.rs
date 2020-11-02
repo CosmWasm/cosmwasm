@@ -8,7 +8,7 @@ use crate::ffi::FfiResult;
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Extern<S: Storage, A: Api, Q: Querier> {
+pub struct Backend<S: Storage, A: Api, Q: Querier> {
     pub storage: S,
     pub api: A,
     pub querier: Q,

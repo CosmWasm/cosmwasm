@@ -3,7 +3,7 @@ use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr,
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, GasInfo};
+use crate::{Api, Backend, FfiError, FfiResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
@@ -11,9 +11,9 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
-    Extern {
+    Backend {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
@@ -22,10 +22,10 @@ pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockA
 
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
-pub fn mock_dependencies_with_balances(
+pub fn mock_backend_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
-    Extern {
+) -> Backend<MockStorage, MockApi, MockQuerier> {
+    Backend {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(balances),
