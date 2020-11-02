@@ -121,6 +121,10 @@ mod tests {
     fn test_file_system_cache_run() {
         use wasmer_runtime_core::{imports, typed_func::Func};
 
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+
+        // Create module
         let wasm = wat::parse_str(
             r#"(module
             (type $t0 (func (param i32) (result i32)))
@@ -132,34 +136,29 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-
         let module = compile(&wasm).unwrap();
 
-        // assert we are using the proper backend
-        assert_eq!(BACKEND_NAME.to_string(), module.info().backend.to_string());
-
-        let tmp_dir = TempDir::new().unwrap();
-        let mut fs_cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
-
         // Module does not exist
-        let cached = fs_cache.load(&checksum).unwrap();
+        let cached = cache.load(&checksum).unwrap();
         assert!(cached.is_none());
 
         // Store module
-        fs_cache.store(&checksum, module.clone()).unwrap();
+        cache.store(&checksum, module.clone()).unwrap();
 
         // Load module
-        let cached = fs_cache.load(&checksum).unwrap();
+        let cached = cache.load(&checksum).unwrap();
         assert!(cached.is_some());
 
-        let cached_module = cached.unwrap();
-        let import_object = imports! {};
-        let instance = cached_module.instantiate(&import_object).unwrap();
-        let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
-
-        let value = add_one.call(42).unwrap();
-
-        // verify it works
-        assert_eq!(value, 43);
+        // Check the returned module is functional.
+        // This is not really testing the cache API but better safe than sorry.
+        {
+            assert_eq!(module.info().backend.to_string(), BACKEND_NAME.to_string());
+            let cached_module = cached.unwrap();
+            let import_object = imports! {};
+            let instance = cached_module.instantiate(&import_object).unwrap();
+            let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
+            let value = add_one.call(42).unwrap();
+            assert_eq!(value, 43);
+        }
     }
 }
