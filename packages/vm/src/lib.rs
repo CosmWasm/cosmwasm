@@ -18,7 +18,7 @@ mod size;
 pub mod testing;
 mod traits;
 
-pub use crate::cache::CosmCache;
+pub use crate::cache::Cache;
 pub use crate::calls::{
     call_handle, call_handle_raw, call_init, call_init_raw, call_migrate, call_migrate_raw,
     call_query, call_query_raw,
