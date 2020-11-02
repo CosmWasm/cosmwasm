@@ -239,6 +239,24 @@ mod test {
     }
 
     #[test]
+    fn save_wasm_fills_file_system_but_not_memory_cache() {
+        // Who knows if and when the uploaded contract will be executed. Don't pollute
+        // memory cache before the init call.
+
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { CosmCache::new(tmp_dir.path(), default_features()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        let deps = mock_dependencies(&[]);
+        let _ = cache
+            .get_instance(&checksum, deps, TESTING_OPTIONS)
+            .unwrap();
+        assert_eq!(cache.stats.hits_memory_cache, 0);
+        assert_eq!(cache.stats.hits_fs_cache, 1);
+        assert_eq!(cache.stats.misses, 0);
+    }
+
+    #[test]
     fn load_wasm_works() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache: CosmCache<MockStorage, MockApi, MockQuerier> =
