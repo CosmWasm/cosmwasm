@@ -2,8 +2,8 @@ use std::fmt::{Debug, Display};
 use thiserror::Error;
 
 use super::communication_error::CommunicationError;
+use crate::backend::BackendError;
 use crate::backends::InsufficientGasLeft;
-use crate::ffi::BackendError;
 
 #[derive(Error, Debug)]
 #[non_exhaustive]

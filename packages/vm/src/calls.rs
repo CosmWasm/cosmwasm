@@ -5,10 +5,10 @@ use cosmwasm_std::{
     ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
 };
 
+use crate::backend::{Api, Querier, Storage};
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Func, Instance};
 use crate::serde::{from_slice, to_vec};
-use crate::traits::{Api, Querier, Storage};
 use schemars::JsonSchema;
 
 const MAX_LENGTH_INIT: usize = 100_000;

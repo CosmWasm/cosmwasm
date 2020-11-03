@@ -11,6 +11,7 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
+use crate::backend::{Api, Backend, Querier, Storage};
 use crate::backends::{compile, get_gas_left, set_gas_left};
 use crate::context::{
     get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
@@ -26,7 +27,6 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{do_next, do_scan};
 use crate::memory::{get_memory_info, read_region, write_region};
-use crate::traits::{Api, Backend, Querier, Storage};
 
 const WASM_PAGE_SIZE: u64 = 64 * 1024;
 
@@ -288,6 +288,7 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::backend::Storage;
     use crate::context::is_storage_readonly;
     use crate::errors::VmError;
     use crate::testing::{
@@ -295,7 +296,6 @@ mod test {
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         MockQuerier, MockStorage,
     };
-    use crate::traits::Storage;
     use crate::{call_init, BackendError};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,

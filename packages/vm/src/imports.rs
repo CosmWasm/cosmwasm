@@ -8,6 +8,7 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 use wasmer_runtime_core::vm::Ctx;
 
+use crate::backend::{Api, BackendError, Querier, Storage};
 use crate::backends::get_gas_left;
 use crate::context::{
     is_storage_readonly, process_gas_info, with_func_from_context, with_querier_from_context,
@@ -15,12 +16,10 @@ use crate::context::{
 };
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
-use crate::ffi::BackendError;
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
-use crate::traits::{Api, Querier, Storage};
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -228,13 +227,12 @@ mod test {
     use std::ptr::NonNull;
     use wasmer_runtime_core::{imports, typed_func::Func, Instance as WasmerInstance};
 
+    use crate::backend::{BackendError, Storage};
     use crate::backends::compile;
     use crate::context::{
         move_into_context, set_storage_readonly, set_wasmer_instance, setup_context,
     };
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::traits::Storage;
-    use crate::BackendError;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 

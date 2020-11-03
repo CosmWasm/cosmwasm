@@ -4,6 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
+use crate::backend::{Api, Backend, Querier, Storage};
 use crate::backends::compile;
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
@@ -11,7 +12,6 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache};
 use crate::size::Size;
-use crate::traits::{Api, Backend, Querier, Storage};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
