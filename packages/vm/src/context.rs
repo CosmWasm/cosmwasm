@@ -9,10 +9,9 @@ use wasmer_runtime_core::{
     Instance as WasmerInstance,
 };
 
+use crate::backend::{GasInfo, Querier, Storage};
 use crate::backends::decrease_gas_left;
 use crate::errors::{VmError, VmResult};
-use crate::ffi::GasInfo;
-use crate::traits::{Querier, Storage};
 
 /** context data **/
 
@@ -278,10 +277,10 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::backend::Storage;
     use crate::backends::{compile, decrease_gas_left, set_gas_left};
     use crate::errors::VmError;
     use crate::testing::{MockQuerier, MockStorage};
-    use crate::traits::Storage;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };

@@ -76,7 +76,7 @@ pub struct MockInstanceOptions<'a> {
     pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
     /// This option is merged into balances and might override an existing value
     pub contract_balance: Option<&'a [Coin]>,
-    /// When set, all calls to the API fail with FfiError::Unknown containing this message
+    /// When set, all calls to the API fail with BackendError::Unknown containing this message
     pub backend_error: Option<&'static str>,
 
     // instance
