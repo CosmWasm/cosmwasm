@@ -29,7 +29,7 @@ pub use crate::errors::{
     VmError, VmResult,
 };
 pub use crate::features::features_from_csv;
-pub use crate::ffi::{FfiError, FfiResult, GasInfo};
+pub use crate::ffi::{BackendError, BackendResult, GasInfo};
 pub use crate::instance::{GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;

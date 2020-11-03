@@ -296,7 +296,7 @@ mod test {
         MockQuerier, MockStorage,
     };
     use crate::traits::Storage;
-    use crate::{call_init, FfiError};
+    use crate::{call_init, BackendError};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
@@ -445,11 +445,11 @@ mod test {
             b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
         );
 
-        // in this case we get a `VmError::FfiError` rather than a `VmError::RuntimeErr` because the conversion
+        // in this case we get a `VmError::BackendErr` rather than a `VmError::RuntimeErr` because the conversion
         // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
         match init_result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::Unknown { msg, .. },
+            VmError::BackendErr {
+                source: BackendError::Unknown { msg, .. },
             } if msg == Some(error_message.to_string()) => {}
             other => panic!("unexpected error: {:?}", other),
         }

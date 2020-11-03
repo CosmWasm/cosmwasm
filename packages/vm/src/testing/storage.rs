@@ -10,8 +10,8 @@ use std::ops::{Bound, RangeBounds};
 use cosmwasm_std::{Order, KV};
 
 #[cfg(feature = "iterator")]
-use crate::FfiError;
-use crate::{FfiResult, GasInfo, Storage};
+use crate::BackendError;
+use crate::{BackendResult, GasInfo, Storage};
 
 #[cfg(feature = "iterator")]
 const GAS_COST_LAST_ITERATION: u64 = 37;
@@ -39,7 +39,7 @@ impl MockStorage {
     }
 
     #[cfg(feature = "iterator")]
-    pub fn all(&mut self, iterator_id: u32) -> FfiResult<Vec<KV>> {
+    pub fn all(&mut self, iterator_id: u32) -> BackendResult<Vec<KV>> {
         let mut out: Vec<KV> = Vec::new();
         let mut total = GasInfo::free();
         loop {
@@ -61,13 +61,18 @@ impl MockStorage {
 }
 
 impl Storage for MockStorage {
-    fn get(&self, key: &[u8]) -> FfiResult<Option<Vec<u8>>> {
+    fn get(&self, key: &[u8]) -> BackendResult<Option<Vec<u8>>> {
         let gas_info = GasInfo::with_externally_used(key.len() as u64);
         (Ok(self.data.get(key).cloned()), gas_info)
     }
 
     #[cfg(feature = "iterator")]
-    fn scan(&mut self, start: Option<&[u8]>, end: Option<&[u8]>, order: Order) -> FfiResult<u32> {
+    fn scan(
+        &mut self,
+        start: Option<&[u8]>,
+        end: Option<&[u8]>,
+        order: Order,
+    ) -> BackendResult<u32> {
         let gas_info = GasInfo::with_externally_used(GAS_COST_RANGE);
         let bounds = range_bounds(start, end);
 
@@ -97,12 +102,12 @@ impl Storage for MockStorage {
     }
 
     #[cfg(feature = "iterator")]
-    fn next(&mut self, iterator_id: u32) -> FfiResult<Option<KV>> {
+    fn next(&mut self, iterator_id: u32) -> BackendResult<Option<KV>> {
         let iterator = match self.iterators.get_mut(&iterator_id) {
             Some(i) => i,
             None => {
                 return (
-                    Err(FfiError::iterator_does_not_exist(iterator_id)),
+                    Err(BackendError::iterator_does_not_exist(iterator_id)),
                     GasInfo::free(),
                 )
             }
@@ -120,13 +125,13 @@ impl Storage for MockStorage {
         (Ok(value), gas_info)
     }
 
-    fn set(&mut self, key: &[u8], value: &[u8]) -> FfiResult<()> {
+    fn set(&mut self, key: &[u8], value: &[u8]) -> BackendResult<()> {
         self.data.insert(key.to_vec(), value.to_vec());
         let gas_info = GasInfo::with_externally_used((key.len() + value.len()) as u64);
         (Ok(()), gas_info)
     }
 
-    fn remove(&mut self, key: &[u8]) -> FfiResult<()> {
+    fn remove(&mut self, key: &[u8]) -> BackendResult<()> {
         self.data.remove(key);
         let gas_info = GasInfo::with_externally_used(key.len() as u64);
         (Ok(()), gas_info)

@@ -6,7 +6,7 @@ use cosmwasm_std::{
     QueryRequest, SystemError, SystemResult,
 };
 
-use crate::{FfiError, FfiResult, GasInfo, Querier};
+use crate::{BackendError, BackendResult, GasInfo, Querier};
 
 const GAS_COST_QUERY_FLAT: u64 = 100_000;
 /// Gas per request byte
@@ -60,7 +60,7 @@ impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
         &self,
         bin_request: &[u8],
         gas_limit: u64,
-    ) -> FfiResult<SystemResult<ContractResult<Binary>>> {
+    ) -> BackendResult<SystemResult<ContractResult<Binary>>> {
         let response = self.querier.raw_query(bin_request);
         let gas_info = GasInfo::with_externally_used(
             GAS_COST_QUERY_FLAT
@@ -72,10 +72,10 @@ impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
         // In a production implementation, this should stop the query execution in the middle of the computation.
         // Thus no query response is returned to the caller.
         if gas_info.externally_used > gas_limit {
-            return (Err(FfiError::out_of_gas()), gas_info);
+            return (Err(BackendError::out_of_gas()), gas_info);
         }
 
-        // We don't use FFI in the mock implementation, so FfiResult is always Ok() regardless of error on other levels
+        // We don't use FFI in the mock implementation, so BackendResult is always Ok() regardless of error on other levels
         (Ok(response), gas_info)
     }
 }
@@ -85,7 +85,7 @@ impl MockQuerier {
         &self,
         request: &QueryRequest<C>,
         gas_limit: u64,
-    ) -> FfiResult<SystemResult<ContractResult<Binary>>> {
+    ) -> BackendResult<SystemResult<ContractResult<Binary>>> {
         // encode the request, then call raw_query
         let request_binary = match to_vec(request) {
             Ok(raw) => raw,
@@ -120,7 +120,7 @@ mod test {
         let gas_limit = 20;
         let (result, _gas_info) = querier.query_raw(b"broken request", gas_limit);
         match result.unwrap_err() {
-            FfiError::OutOfGas {} => {}
+            BackendError::OutOfGas {} => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }
