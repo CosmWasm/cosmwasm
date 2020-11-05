@@ -1,3 +1,4 @@
+#[derive(Copy, Clone, Debug)]
 pub struct Size(pub usize);
 
 impl Size {
@@ -58,5 +59,13 @@ mod test {
 
         assert_eq!(Size::gibi(0).0, 0);
         assert_eq!(Size::gibi(3).0, 3221225472);
+    }
+
+    #[test]
+    fn implements_debug() {
+        assert_eq!(format!("{:?}", Size(0)), "Size(0)");
+        assert_eq!(format!("{:?}", Size(123)), "Size(123)");
+        assert_eq!(format!("{:?}", Size::kibi(2)), "Size(2048)");
+        assert_eq!(format!("{:?}", Size::mebi(1)), "Size(1048576)");
     }
 }

@@ -23,10 +23,11 @@ struct Stats {
     misses: u32,
 }
 
+#[derive(Clone, Debug)]
 pub struct CacheOptions {
-    base_dir: PathBuf,
-    supported_features: HashSet<String>,
-    memory_cache_size: Size,
+    pub base_dir: PathBuf,
+    pub supported_features: HashSet<String>,
+    pub memory_cache_size: Size,
 }
 
 pub struct Cache<S: Storage, A: Api, Q: Querier> {
