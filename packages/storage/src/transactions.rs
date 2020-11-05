@@ -8,30 +8,34 @@ use std::iter::Peekable;
 #[cfg(feature = "iterator")]
 use std::ops::{Bound, RangeBounds};
 
+use cosmwasm_std::Storage;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, KV};
-use cosmwasm_std::{StdResult, Storage};
+use serde::export::PhantomData;
+use std::ops::Deref;
 
 #[cfg(feature = "iterator")]
 /// The BTreeMap specific key-value pair reference type, as returned by BTreeMap<Vec<u8>, T>::range.
 /// This is internal as it can change any time if the map implementation is swapped out.
 type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
-pub struct StorageTransaction<'a, S: Storage> {
+pub struct StorageTransaction<S: Storage, T: Deref<Target = S>> {
     /// read-only access to backing storage
-    storage: &'a S,
+    storage: T,
     /// these are local changes not flushed to backing storage
     local_state: BTreeMap<Vec<u8>, Delta>,
     /// a log of local changes not yet flushed to backing storage
     rep_log: RepLog,
+    storage_type: PhantomData<S>,
 }
 
-impl<'a, S: Storage> StorageTransaction<'a, S> {
-    pub fn new(storage: &'a S) -> Self {
+impl<S: Storage, T: Deref<Target = S>> StorageTransaction<S, T> {
+    pub fn new(storage: T) -> Self {
         StorageTransaction {
             storage,
             local_state: BTreeMap::new(),
             rep_log: RepLog::new(),
+            storage_type: PhantomData,
         }
     }
 
@@ -40,11 +44,12 @@ impl<'a, S: Storage> StorageTransaction<'a, S> {
         self.rep_log
     }
 
-    /// rollback will consume the checkpoint and drop all changes (no really needed, going out of scope does the same, but nice for clarity)
+    /// rollback will consume the checkpoint and drop all changes (not really needed, going out of scope does the same, but nice for clarity)
+    #[allow(dead_code)]
     pub fn rollback(self) {}
 }
 
-impl<'a, S: Storage> Storage for StorageTransaction<'a, S> {
+impl<S: Storage, T: Deref<Target = S>> Storage for StorageTransaction<S, T> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
             Some(val) => match val {
@@ -248,17 +253,6 @@ where
     }
 }
 
-pub fn transactional<S, C, T>(storage: &mut S, callback: C) -> StdResult<T>
-where
-    S: Storage,
-    C: FnOnce(&mut StorageTransaction<S>) -> StdResult<T>,
-{
-    let mut stx = StorageTransaction::new(storage);
-    let res = callback(&mut stx)?;
-    stx.prepare().commit(storage);
-    Ok(res)
-}
-
 #[cfg(feature = "iterator")]
 fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Vec<u8>> {
     (
@@ -270,7 +264,32 @@ fn range_bounds(start: Option<&[u8]>, end: Option<&[u8]>) -> impl RangeBounds<Ve
 #[cfg(test)]
 mod test {
     use super::*;
-    use cosmwasm_std::{MemoryStorage, StdError};
+    use std::cell::RefCell;
+    use std::ops::DerefMut;
+
+    use cosmwasm_std::MemoryStorage;
+
+    #[test]
+    fn wrap_ref() {
+        let mut store = MemoryStorage::new();
+        let mut wrap = StorageTransaction::new(&store);
+        wrap.set(b"foo", b"bar");
+
+        assert_eq!(None, store.get(b"foo"));
+        wrap.prepare().commit(&mut store);
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
+    }
+
+    #[test]
+    fn wrap_ref_cell() {
+        let store = RefCell::new(MemoryStorage::new());
+        let mut wrap = StorageTransaction::new(store.borrow());
+        wrap.set(b"foo", b"bar");
+
+        assert_eq!(None, store.borrow().get(b"foo"));
+        wrap.prepare().commit(store.borrow_mut().deref_mut());
+        assert_eq!(Some(b"bar".to_vec()), store.borrow().get(b"foo"));
+    }
 
     #[cfg(feature = "iterator")]
     // iterator_test_suite takes a storage, adds data and runs iterator tests
@@ -414,8 +433,8 @@ mod test {
 
     #[test]
     fn delete_local() {
-        let mut base = MemoryStorage::new();
-        let mut check = StorageTransaction::new(&base);
+        let base = RefCell::new(MemoryStorage::new());
+        let mut check = StorageTransaction::new(base.borrow());
         check.set(b"foo", b"bar");
         check.set(b"food", b"bank");
         check.remove(b"foo");
@@ -424,16 +443,16 @@ mod test {
         assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
-        check.prepare().commit(&mut base);
-        assert_eq!(base.get(b"foo"), None);
-        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
+        check.prepare().commit(base.borrow_mut().deref_mut());
+        assert_eq!(base.borrow().get(b"foo"), None);
+        assert_eq!(base.borrow().get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
     fn delete_from_base() {
-        let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
-        let mut check = StorageTransaction::new(&base);
+        let base = RefCell::new(MemoryStorage::new());
+        base.borrow_mut().set(b"foo", b"bar");
+        let mut check = StorageTransaction::new(base.borrow());
         check.set(b"food", b"bank");
         check.remove(b"foo");
 
@@ -441,16 +460,16 @@ mod test {
         assert_eq!(check.get(b"food"), Some(b"bank".to_vec()));
 
         // now commit to base and query there
-        check.prepare().commit(&mut base);
-        assert_eq!(base.get(b"foo"), None);
-        assert_eq!(base.get(b"food"), Some(b"bank".to_vec()));
+        check.prepare().commit(base.borrow_mut().deref_mut());
+        assert_eq!(base.borrow().get(b"foo"), None);
+        assert_eq!(base.borrow().get(b"food"), Some(b"bank".to_vec()));
     }
 
     #[test]
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_empty_base() {
-        let base = MemoryStorage::new();
-        let mut check = StorageTransaction::new(&base);
+        let base = RefCell::new(MemoryStorage::new());
+        let mut check = StorageTransaction::new(base.borrow());
         check.set(b"foo", b"bar");
         iterator_test_suite(&mut check);
     }
@@ -458,34 +477,34 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_with_base_data() {
-        let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
-        let mut check = StorageTransaction::new(&base);
+        let base = RefCell::new(MemoryStorage::new());
+        base.borrow_mut().set(b"foo", b"bar");
+        let mut check = StorageTransaction::new(base.borrow());
         iterator_test_suite(&mut check);
     }
 
     #[test]
     #[cfg(feature = "iterator")]
     fn storage_transaction_iterator_removed_items_from_base() {
-        let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
-        base.set(b"food", b"bank");
-        let mut check = StorageTransaction::new(&base);
+        let base = RefCell::new(MemoryStorage::new());
+        base.borrow_mut().set(b"foo", b"bar");
+        base.borrow_mut().set(b"food", b"bank");
+        let mut check = StorageTransaction::new(base.borrow());
         check.remove(b"food");
         iterator_test_suite(&mut check);
     }
 
     #[test]
     fn commit_writes_through() {
-        let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
+        let base = RefCell::new(MemoryStorage::new());
+        base.borrow_mut().set(b"foo", b"bar");
 
-        let mut check = StorageTransaction::new(&base);
+        let mut check = StorageTransaction::new(base.borrow());
         assert_eq!(check.get(b"foo"), Some(b"bar".to_vec()));
         check.set(b"subtx", b"works");
-        check.prepare().commit(&mut base);
+        check.prepare().commit(base.borrow_mut().deref_mut());
 
-        assert_eq!(base.get(b"subtx"), Some(b"works".to_vec()));
+        assert_eq!(base.borrow().get(b"subtx"), Some(b"works".to_vec()));
     }
 
     #[test]
@@ -530,34 +549,5 @@ mod test {
         check.set(b"subtx", b"works");
 
         assert_eq!(base.get(b"subtx"), None);
-    }
-
-    #[test]
-    fn transactional_works() {
-        let mut base = MemoryStorage::new();
-        base.set(b"foo", b"bar");
-
-        // writes on success
-        let res: StdResult<i32> = transactional(&mut base, |store| {
-            // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-            // we write in the Ok case
-            store.set(b"good", b"one");
-            Ok(5)
-        });
-        assert_eq!(res.unwrap(), 5);
-        assert_eq!(base.get(b"good"), Some(b"one".to_vec()));
-
-        // rolls back on error
-        let res: StdResult<i32> = transactional(&mut base, |store| {
-            // ensure we can read from the backing store
-            assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
-            assert_eq!(store.get(b"good"), Some(b"one".to_vec()));
-            // we write in the Error case
-            store.set(b"bad", b"value");
-            Err(StdError::underflow(8, 65))
-        });
-        assert!(res.is_err());
-        assert_eq!(base.get(b"bad"), None);
     }
 }
