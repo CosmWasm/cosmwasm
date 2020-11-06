@@ -313,6 +313,26 @@ mod test {
         assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
     }
 
+    #[test]
+    fn wrap_ref_cell_dyn_storage() {
+        let inner: Box<dyn Storage> = Box::new(MemoryStorage::new());
+        let store = RefCell::new(inner);
+        // Tricky but working
+        // 1. we cannot inline StorageTransaction::new(store.borrow().as_ref()) as Ref must outlive StorageTransaction
+        // 2. we cannot call ops.commit() until refer is out of scope - borrow_mut() and borrow() on the same object
+        // This can work with some careful scoping, this provides a good reference
+        let ops = {
+            let refer = store.borrow();
+            let mut wrap = StorageTransaction::new(refer.as_ref());
+            wrap.set(b"foo", b"bar");
+
+            assert_eq!(None, store.borrow().get(b"foo"));
+            wrap.prepare()
+        };
+        ops.commit(store.borrow_mut().as_mut());
+        assert_eq!(Some(b"bar".to_vec()), store.borrow().get(b"foo"));
+    }
+
     #[cfg(feature = "iterator")]
     // iterator_test_suite takes a storage, adds data and runs iterator tests
     // the storage must previously have exactly one key: "foo" = "bar"
