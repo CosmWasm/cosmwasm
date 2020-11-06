@@ -19,7 +19,7 @@ use std::ops::Deref;
 /// This is internal as it can change any time if the map implementation is swapped out.
 type BTreeMapPairRef<'a, T = Vec<u8>> = (&'a Vec<u8>, &'a T);
 
-pub struct StorageTransaction<S: Storage, T: Deref<Target = S>> {
+pub struct StorageTransaction<S: Storage + ?Sized, T: Deref<Target = S>> {
     /// read-only access to backing storage
     storage: T,
     /// these are local changes not flushed to backing storage
@@ -29,7 +29,7 @@ pub struct StorageTransaction<S: Storage, T: Deref<Target = S>> {
     storage_type: PhantomData<S>,
 }
 
-impl<S: Storage, T: Deref<Target = S>> StorageTransaction<S, T> {
+impl<S: Storage + ?Sized, T: Deref<Target = S>> StorageTransaction<S, T> {
     pub fn new(storage: T) -> Self {
         StorageTransaction {
             storage,
@@ -49,7 +49,7 @@ impl<S: Storage, T: Deref<Target = S>> StorageTransaction<S, T> {
     pub fn rollback(self) {}
 }
 
-impl<S: Storage, T: Deref<Target = S>> Storage for StorageTransaction<S, T> {
+impl<S: Storage + ?Sized, T: Deref<Target = S>> Storage for StorageTransaction<S, T> {
     fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         match self.local_state.get(key) {
             Some(val) => match val {
@@ -124,7 +124,7 @@ impl RepLog {
     }
 
     /// applies the stored list of `Op`s to the provided `Storage`
-    pub fn commit<S: Storage>(self, storage: &mut S) {
+    pub fn commit<S: Storage + ?Sized>(self, storage: &mut S) {
         for op in self.ops_log {
             op.apply(storage);
         }
@@ -146,7 +146,7 @@ enum Op {
 
 impl Op {
     /// applies this `Op` to the provided storage
-    pub fn apply<S: Storage>(&self, storage: &mut S) {
+    pub fn apply<S: Storage + ?Sized>(&self, storage: &mut S) {
         match self {
             Op::Set { key, value } => storage.set(&key, &value),
             Op::Delete { key } => storage.remove(&key),
@@ -270,7 +270,7 @@ mod test {
     use cosmwasm_std::MemoryStorage;
 
     #[test]
-    fn wrap_ref() {
+    fn wrap_storage() {
         let mut store = MemoryStorage::new();
         let mut wrap = StorageTransaction::new(&store);
         wrap.set(b"foo", b"bar");
@@ -289,6 +289,28 @@ mod test {
         assert_eq!(None, store.borrow().get(b"foo"));
         wrap.prepare().commit(store.borrow_mut().deref_mut());
         assert_eq!(Some(b"bar".to_vec()), store.borrow().get(b"foo"));
+    }
+
+    #[test]
+    fn wrap_box_storage() {
+        let mut store: Box<MemoryStorage> = Box::new(MemoryStorage::new());
+        let mut wrap = StorageTransaction::new(store.as_ref());
+        wrap.set(b"foo", b"bar");
+
+        assert_eq!(None, store.get(b"foo"));
+        wrap.prepare().commit(store.as_mut());
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
+    }
+
+    #[test]
+    fn wrap_box_dyn_storage() {
+        let mut store: Box<dyn Storage> = Box::new(MemoryStorage::new());
+        let mut wrap = StorageTransaction::new(store.as_ref());
+        wrap.set(b"foo", b"bar");
+
+        assert_eq!(None, store.get(b"foo"));
+        wrap.prepare().commit(store.as_mut());
+        assert_eq!(Some(b"bar".to_vec()), store.get(b"foo"));
     }
 
     #[cfg(feature = "iterator")]
