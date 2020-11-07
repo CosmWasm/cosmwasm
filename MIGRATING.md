@@ -26,20 +26,20 @@ major releases of `cosmwasm`. Note that you can also view the
 - Rename the type `Extern` to `Deps`, and radically simplify the
   `init`/`handle`/`migrate`/`query` entrypoints. Rather than
   `&mut Extern<S, A, Q>`, use `DepsMut`. And instead of `&Extern<S, A, Q>`, use
-  `DepsRef`. If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use
+  `Deps`. If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use
   dynamic trait pointers: `foo(api: &dyn Api)`. Here is the quick search-replace
   guide on how to fix `contract.rs`:
 
   _In production (non-test) code:_
 
   - `<S: Storage, A: Api, Q: Querier>` => ``
-  - `&mut Extern<S, A, Q>` => `Deps`
-  - `&Extern<S, A, Q>` => `DepsRef`
+  - `&mut Extern<S, A, Q>` => `DepsMut`
+  - `&Extern<S, A, Q>` => `Deps`
   - `&mut deps.storage` => `deps.storage` where passing into `state.rs` helpers
   - `&deps.storage` => `deps.storage` where passing into `state.rs` helpers
 
   On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add
-  `use cosmwasm_std::{Deps, DepsRef}`.
+  `use cosmwasm_std::{Deps, DepsMut}`.
 
   _In test code only:_
 
