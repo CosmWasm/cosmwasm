@@ -51,18 +51,8 @@ impl<'a> DepsMut<'a> {
         }
     }
 
-    pub fn dup(&'_ mut self) -> DepsMut<'_> {
+    pub fn branch(&'_ mut self) -> DepsMut<'_> {
         DepsMut {
-            storage: self.storage,
-            api: self.api,
-            querier: self.querier,
-        }
-    }
-}
-
-impl<'a> Deps<'a> {
-    pub fn dup(&'_ self) -> Deps<'_> {
-        Deps {
             storage: self.storage,
             api: self.api,
             querier: self.querier,
@@ -77,15 +67,15 @@ mod test {
 
     // ensure we can call these many times, eg. as sub-calls
     fn handle(mut deps: DepsMut) {
-        handle2(deps.dup());
+        handle2(deps.branch());
         query(deps.as_ref());
-        handle2(deps.dup());
+        handle2(deps.branch());
     }
     fn handle2(_deps: DepsMut) {}
 
     fn query(deps: Deps) {
-        query2(deps.dup());
-        query2(deps.dup());
+        query2(deps.clone());
+        query2(deps.clone());
     }
     fn query2(_deps: Deps) {}
 
