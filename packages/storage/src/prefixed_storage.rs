@@ -41,29 +41,31 @@ impl<'a> PrefixedStorage<'a> {
             prefix: to_length_prefixed_nested(namespaces),
         }
     }
+}
 
-    pub fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+impl Storage for PrefixedStorage<'_> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
-    }
-
-    pub fn set(&mut self, key: &[u8], value: &[u8]) {
-        set_with_prefix(self.storage, &self.prefix, key, value);
-    }
-
-    pub fn remove(&mut self, key: &[u8]) {
-        remove_with_prefix(self.storage, &self.prefix, key);
     }
 
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    pub fn range<'b>(
+    fn range<'b>(
         &'b self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = KV> + 'b> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
+    }
+
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        set_with_prefix(self.storage, &self.prefix, key, value);
+    }
+
+    fn remove(&mut self, key: &[u8]) {
+        remove_with_prefix(self.storage, &self.prefix, key);
     }
 }
 
@@ -88,20 +90,30 @@ impl<'a> ReadonlyPrefixedStorage<'a> {
             prefix: to_length_prefixed_nested(namespaces),
         }
     }
+}
 
-    pub fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+impl Storage for ReadonlyPrefixedStorage<'_> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
-    pub fn range<'b>(
+    fn range<'b>(
         &'b self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
     ) -> Box<dyn Iterator<Item = KV> + 'b> {
         range_with_prefix(self.storage, &self.prefix, start, end, order)
+    }
+
+    fn set(&mut self, _key: &[u8], _value: &[u8]) {
+        unimplemented!("Use PrefixedStorage for writing")
+    }
+
+    fn remove(&mut self, _key: &[u8]) {
+        unimplemented!("Use PrefixedStorage for writing")
     }
 }
 
