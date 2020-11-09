@@ -18,7 +18,9 @@ impl<E: Ord + AsRef<str>> LimitedDisplay for BTreeSet<E> {
 
 impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
     fn to_string_limited(&self, max_length: usize) -> String {
-        let sorted = BTreeSet::from_iter(self); // TODO: do we want to sort this?
+        // Iteration order in HashSet is undeterminstic. We sort
+        // here to be on the safe side and to simplify testing.
+        let sorted = BTreeSet::from_iter(self);
         sorted.to_string_limited(max_length)
     }
 }
