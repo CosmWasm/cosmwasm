@@ -32,6 +32,9 @@
 - Remove unused `TypedStorage`. If you need this or similar functionality, you
   probably want to use `Bucket` or `Singleton`. If you really need it, please
   copy the v0.11 code into your project.
+- Remove `StorageTransaction` along with `transactional` and `RepLog`. This has
+  not been used actively for contract development and is now maintained in a
+  contract testing framework.
 
 **cosmwasm-vm**
 
