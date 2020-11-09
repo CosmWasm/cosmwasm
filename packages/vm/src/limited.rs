@@ -10,9 +10,8 @@ pub trait LimitedDisplay {
     fn to_string_limited(&self, max_length: usize) -> String;
 }
 
-impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
+impl<E: Ord + AsRef<str>> LimitedDisplay for BTreeSet<E> {
     fn to_string_limited(&self, max_length: usize) -> String {
-        let sorted = BTreeSet::from_iter(self);
         let mut out = String::with_capacity(max_length * 130 / 100);
         let opening = "{";
         let closing = "}";
@@ -20,7 +19,7 @@ impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
         let mut first = true;
         out.push_str(opening);
         let mut lengths_stack = Vec::<usize>::new();
-        for element in sorted.iter() {
+        for element in self.iter() {
             lengths_stack.push(out.len());
 
             if first {
@@ -45,8 +44,8 @@ impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
                 let previous_length = lengths_stack
                     .pop()
                     .expect("Cannot remove hide enough elements to fit in length limit.");
-                let skipped = sorted.len() - lengths_stack.len();
-                let remaining = sorted.len() - skipped;
+                let skipped = self.len() - lengths_stack.len();
+                let remaining = self.len() - skipped;
                 let skipped_text = if remaining == 0 {
                     format!("... {} elements", skipped)
                 } else {
@@ -60,6 +59,13 @@ impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
                 }
             }
         }
+    }
+}
+
+impl<E: Ord + AsRef<str>> LimitedDisplay for HashSet<E> {
+    fn to_string_limited(&self, max_length: usize) -> String {
+        let sorted = BTreeSet::from_iter(self); // TODO: do we want to sort this?
+        sorted.to_string_limited(max_length)
     }
 }
 
