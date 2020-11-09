@@ -5,6 +5,7 @@ use std::iter::FromIterator;
 
 use crate::errors::{VmError, VmResult};
 use crate::features::required_features_from_module;
+use crate::limited::LimitedDisplay;
 
 /// Lists all imports we provide upon instantiating the instance in Instance::from_module()
 /// This should be updated when new imports are added
@@ -145,8 +146,8 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
         // We switch to BTreeSet to get a sorted error message
         let unsupported = BTreeSet::from_iter(required_features.difference(&supported_features));
         return Err(VmError::static_validation_err(format!(
-            "Wasm contract requires unsupported features: {:?}",
-            unsupported
+            "Wasm contract requires unsupported features: {}",
+            unsupported.to_string_limited(200)
         )));
     }
     Ok(())
