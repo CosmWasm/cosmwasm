@@ -93,6 +93,44 @@ mod test {
     use super::*;
 
     #[test]
+    fn works_for_btreeset() {
+        let set = BTreeSet::<String>::new();
+        assert_eq!(set.to_string_limited(100), "{}");
+        assert_eq!(set.to_string_limited(20), "{}");
+        assert_eq!(set.to_string_limited(2), "{}");
+
+        let fruits = BTreeSet::from_iter(
+            [
+                "watermelon".to_string(),
+                "apple".to_string(),
+                "banana".to_string(),
+            ]
+            .iter()
+            .cloned(),
+        );
+        assert_eq!(
+            fruits.to_string_limited(100),
+            "{\"apple\", \"banana\", \"watermelon\"}"
+        );
+        assert_eq!(
+            fruits.to_string_limited(33),
+            "{\"apple\", \"banana\", \"watermelon\"}"
+        );
+        assert_eq!(
+            fruits.to_string_limited(32),
+            "{\"apple\", \"banana\", ... 1 more}"
+        );
+        assert_eq!(
+            fruits.to_string_limited(31),
+            "{\"apple\", \"banana\", ... 1 more}"
+        );
+        assert_eq!(fruits.to_string_limited(30), "{\"apple\", ... 2 more}");
+        assert_eq!(fruits.to_string_limited(21), "{\"apple\", ... 2 more}");
+        assert_eq!(fruits.to_string_limited(20), "{... 3 elements}");
+        assert_eq!(fruits.to_string_limited(16), "{... 3 elements}");
+    }
+
+    #[test]
     fn works_for_hashset() {
         let set = HashSet::<String>::new();
         assert_eq!(set.to_string_limited(100), "{}");
