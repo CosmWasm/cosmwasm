@@ -10,6 +10,7 @@ mod errors;
 mod features;
 mod imports;
 mod instance;
+mod limited;
 mod memory;
 mod middleware;
 mod modules;
