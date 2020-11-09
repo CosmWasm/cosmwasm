@@ -51,7 +51,7 @@ pub fn check_wasm(wasm_code: &[u8], supported_features: &HashSet<String>) -> VmR
     let module = deserialize(wasm_code)?;
     check_wasm_memories(&module)?;
     check_wasm_exports(&module)?;
-    check_wasm_imports(&module)?;
+    check_wasm_imports(&module, SUPPORTED_IMPORTS)?;
     check_wasm_features(&module, supported_features)?;
     Ok(())
 }
@@ -115,7 +115,7 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
 /// Checks if the import requirements of the contract are satisfied.
 /// When this is not the case, we either have an incompatibility between contract and VM
 /// or a error in the contract.
-fn check_wasm_imports(module: &Module) -> VmResult<()> {
+fn check_wasm_imports(module: &Module, supported_imports: &[&str]) -> VmResult<()> {
     let required_imports: Vec<ImportEntry> = module
         .import_section()
         .map_or(vec![], |import_section| import_section.entries().to_vec());
@@ -123,10 +123,10 @@ fn check_wasm_imports(module: &Module) -> VmResult<()> {
 
     for required_import in required_imports {
         let full_name = full_import_name(&required_import);
-        if !SUPPORTED_IMPORTS.contains(&full_name.as_str()) {
+        if !supported_imports.contains(&full_name.as_str()) {
             return Err(VmError::static_validation_err(format!(
                 "Wasm contract requires unsupported import: \"{}\". Required imports: {}. Available imports: {:?}.",
-                full_name, required_import_names.to_string_limited(200), SUPPORTED_IMPORTS
+                full_name, required_import_names.to_string_limited(200), supported_imports
             )));
         }
 
@@ -385,7 +385,7 @@ mod test {
         )"#,
         )
         .unwrap();
-        check_wasm_imports(&deserialize(&wasm).unwrap()).unwrap();
+        check_wasm_imports(&deserialize(&wasm).unwrap(), SUPPORTED_IMPORTS).unwrap();
     }
 
     #[test]
@@ -407,13 +407,22 @@ mod test {
         )"#,
         )
         .unwrap();
-        let result = check_wasm_imports(&deserialize(&wasm).unwrap());
+        let supported_imports: &[&str] = &[
+            "env.db_read",
+            "env.db_write",
+            "env.db_remove",
+            "env.canonicalize_address",
+            "env.humanize_address",
+            "env.debug",
+            "env.query_chain",
+        ];
+        let result = check_wasm_imports(&deserialize(&wasm).unwrap(), supported_imports);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 println!("{}", msg);
                 assert_eq!(
                     msg,
-                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.canonicalize_address", "env.humanize_address", "env.debug", "env.query_chain", "env.db_scan", "env.db_next"]."#
+                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.canonicalize_address", "env.humanize_address", "env.debug", "env.query_chain"]."#
                 );
             }
             err => panic!("Unexpected error: {:?}", err),
@@ -423,7 +432,7 @@ mod test {
     #[test]
     fn test_check_wasm_imports_of_old_contract() {
         let module = deserialize(CONTRACT_0_7).unwrap();
-        let result = check_wasm_imports(&module);
+        let result = check_wasm_imports(&module, SUPPORTED_IMPORTS);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
@@ -437,7 +446,7 @@ mod test {
     #[test]
     fn test_check_wasm_imports_wrong_type() {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
-        let result = check_wasm_imports(&deserialize(&wasm).unwrap());
+        let result = check_wasm_imports(&deserialize(&wasm).unwrap(), SUPPORTED_IMPORTS);
         match result.unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(
