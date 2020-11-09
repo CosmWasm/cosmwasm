@@ -119,13 +119,14 @@ fn check_wasm_imports(module: &Module) -> VmResult<()> {
     let required_imports: Vec<ImportEntry> = module
         .import_section()
         .map_or(vec![], |import_section| import_section.entries().to_vec());
+    let required_import_names = BTreeSet::from_iter(required_imports.iter().map(full_import_name));
 
     for required_import in required_imports {
-        let full_name = format!("{}.{}", required_import.module(), required_import.field());
+        let full_name = full_import_name(&required_import);
         if !SUPPORTED_IMPORTS.contains(&full_name.as_str()) {
             return Err(VmError::static_validation_err(format!(
-                "Wasm contract requires unsupported import: \"{}\". Imports supported by VM: {:?}. Contract version too new for this VM?",
-                full_name, SUPPORTED_IMPORTS
+                "Wasm contract requires unsupported import: \"{}\". Required imports: {}. Available imports: {:?}.",
+                full_name, required_import_names.to_string_limited(200), SUPPORTED_IMPORTS
             )));
         }
 
@@ -138,6 +139,10 @@ fn check_wasm_imports(module: &Module) -> VmResult<()> {
         };
     }
     Ok(())
+}
+
+fn full_import_name(ie: &ImportEntry) -> String {
+    format!("{}.{}", ie.module(), ie.field())
 }
 
 fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) -> VmResult<()> {
@@ -381,6 +386,38 @@ mod test {
         )
         .unwrap();
         check_wasm_imports(&deserialize(&wasm).unwrap()).unwrap();
+    }
+
+    #[test]
+    fn test_check_wasm_imports_missing() {
+        let wasm = wat::parse_str(
+            r#"(module
+            (import "env" "foo" (func (param i32 i32) (result i32)))
+            (import "env" "bar" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam01" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam02" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam03" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam04" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam05" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam06" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam07" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam08" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam09" (func (param i32 i32) (result i32)))
+            (import "env" "spammyspam10" (func (param i32 i32) (result i32)))
+        )"#,
+        )
+        .unwrap();
+        let result = check_wasm_imports(&deserialize(&wasm).unwrap());
+        match result.unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
+                println!("{}", msg);
+                assert_eq!(
+                    msg,
+                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.canonicalize_address", "env.humanize_address", "env.debug", "env.query_chain", "env.db_scan", "env.db_next"]."#
+                );
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]
