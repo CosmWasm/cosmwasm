@@ -386,28 +386,28 @@ mod test {
     #[test]
     fn test_check_wasm_imports_of_old_contract() {
         let module = deserialize(CONTRACT_0_7).unwrap();
-        match check_wasm_imports(&module) {
-            Err(VmError::StaticValidationErr { msg, .. }) => {
+        let result = check_wasm_imports(&module);
+        match result.unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
                 assert!(
                     msg.starts_with("Wasm contract requires unsupported import: \"env.read_db\"")
                 );
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
-            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
     #[test]
     fn test_check_wasm_imports_wrong_type() {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
-        match check_wasm_imports(&deserialize(&wasm).unwrap()) {
-            Err(VmError::StaticValidationErr { msg, .. }) => {
+        let result = check_wasm_imports(&deserialize(&wasm).unwrap());
+        match result.unwrap_err() {
+            VmError::StaticValidationErr { msg, .. } => {
                 assert!(
                     msg.starts_with("Wasm contract requires non-function import: \"env.db_read\"")
                 );
             }
-            Err(e) => panic!("Unexpected error {:?}", e),
-            Ok(_) => panic!("Didn't reject wasm with invalid api"),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
