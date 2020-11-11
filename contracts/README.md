@@ -19,25 +19,25 @@ reason, use the following commands:
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_burner",target=/code/contracts/burner/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.10.4 ./contracts/burner
+  cosmwasm/rust-optimizer:0.10.5 ./contracts/burner
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.10.4 ./contracts/hackatom
+  cosmwasm/rust-optimizer:0.10.5 ./contracts/hackatom
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_queue",target=/code/contracts/queue/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.10.4 ./contracts/queue
+  cosmwasm/rust-optimizer:0.10.5 ./contracts/queue
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_reflect",target=/code/contracts/reflect/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.10.4 ./contracts/reflect
+  cosmwasm/rust-optimizer:0.10.5 ./contracts/reflect
 
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_staking",target=/code/contracts/staking/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.10.4 ./contracts/staking
+  cosmwasm/rust-optimizer:0.10.5 ./contracts/staking
 ```
