@@ -50,4 +50,39 @@ impl<'a> DepsMut<'a> {
             querier: self.querier,
         }
     }
+
+    pub fn branch(&'_ mut self) -> DepsMut<'_> {
+        DepsMut {
+            storage: self.storage,
+            api: self.api,
+            querier: self.querier,
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::mock::mock_dependencies;
+
+    // ensure we can call these many times, eg. as sub-calls
+    fn handle(mut deps: DepsMut) {
+        handle2(deps.branch());
+        query(deps.as_ref());
+        handle2(deps.branch());
+    }
+    fn handle2(_deps: DepsMut) {}
+
+    fn query(deps: Deps) {
+        query2(deps.clone());
+        query2(deps.clone());
+    }
+    fn query2(_deps: Deps) {}
+
+    #[test]
+    fn ensure_easy_reuse() {
+        let mut deps = mock_dependencies(&[]);
+        handle(deps.as_mut());
+        query(deps.as_ref())
+    }
 }

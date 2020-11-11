@@ -6,6 +6,7 @@ use wasmer::{
     Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Type, Val,
 };
 
+use crate::backend::{Api, Backend, Querier, Storage};
 use crate::context::{move_into_context, move_out_of_context, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -17,7 +18,6 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
-use crate::traits::{Api, Extern, Querier, Storage};
 use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
 
 #[derive(Copy, Clone, Debug)]
@@ -64,21 +64,21 @@ where
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
         code: &[u8],
-        deps: Extern<S, A, Q>,
+        backend: Backend<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Self> {
         let module = compile(code, options.memory_limit)?;
-        Instance::from_module(&module, deps, options.gas_limit, options.print_debug)
+        Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 
     pub(crate) fn from_module(
         module: &Module,
-        deps: Extern<S, A, Q>,
+        backend: Backend<S, A, Q>,
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
         // copy this so it can be moved into the closures, without pulling in deps
-        let api = deps.api;
+        let api = backend.api;
 
         let store = module.store();
 
@@ -203,11 +203,11 @@ where
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
-        move_into_context(&mut env, deps.storage, deps.querier);
+        move_into_context(&mut env, backend.storage, backend.querier);
         let instance = Instance {
             inner: wasmer_instance,
             env,
-            api: deps.api,
+            api: backend.api,
             required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
@@ -217,9 +217,9 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(mut self) -> Option<Extern<S, A, Q>> {
+    pub fn recycle(mut self) -> Option<Backend<S, A, Q>> {
         if let (Some(storage), Some(querier)) = move_out_of_context(&mut self.env) {
-            Some(Extern {
+            Some(Backend {
                 storage,
                 api: self.api,
                 querier,
@@ -311,18 +311,17 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::backend::Storage;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_dependencies, mock_env, mock_info, mock_instance, mock_instance_options,
+        mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
     };
-    use crate::traits::Storage;
-    use crate::{call_init, FfiError};
+    use crate::{call_init, BackendError};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
     };
-    use wabt::wat2wasm;
 
     const WASM_PAGE_SIZE: u64 = 64 * 1024;
     const KIB: usize = 1024;
@@ -332,14 +331,14 @@ mod test {
 
     #[test]
     fn required_features_works() {
-        let deps = mock_dependencies(&[]);
-        let instance = Instance::from_code(CONTRACT, deps, mock_instance_options()).unwrap();
+        let backend = mock_backend(&[]);
+        let instance = Instance::from_code(CONTRACT, backend, mock_instance_options()).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
     #[test]
     fn required_features_works_for_many_exports() {
-        let wasm = wat2wasm(
+        let wasm = wat::parse_str(
             r#"(module
             (type (func))
             (func (type 0) nop)
@@ -353,8 +352,8 @@ mod test {
         )
         .unwrap();
 
-        let deps = mock_dependencies(&[]);
-        let instance = Instance::from_code(&wasm, deps, mock_instance_options()).unwrap();
+        let backend = mock_backend(&[]);
+        let instance = Instance::from_code(&wasm, backend, mock_instance_options()).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));
@@ -442,11 +441,11 @@ mod test {
             b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
         );
 
-        // in this case we get a `VmError::FfiError` rather than a `VmError::RuntimeErr` because the conversion
+        // in this case we get a `VmError::BackendErr` rather than a `VmError::RuntimeErr` because the conversion
         // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
         match init_result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::Unknown { msg, .. },
+            VmError::BackendErr {
+                source: BackendError::Unknown { msg, .. },
             } if msg == Some(error_message.to_string()) => {}
             other => panic!("unexpected error: {:?}", other),
         }
@@ -525,7 +524,7 @@ mod test {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 146);
-        assert_eq!(report2.used_internally, 76343);
+        assert_eq!(report2.used_internally, 76371);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -724,7 +723,7 @@ mod singlepass_test {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 76489);
+        assert_eq!(init_used, 76517);
     }
 
     #[test]
@@ -747,7 +746,7 @@ mod singlepass_test {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 208629);
+        assert_eq!(handle_used, 208653);
     }
 
     #[test]
@@ -781,6 +780,6 @@ mod singlepass_test {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 61212);
+        assert_eq!(query_used, 61219);
     }
 }

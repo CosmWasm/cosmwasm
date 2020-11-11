@@ -3,7 +3,7 @@ use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr,
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
-use crate::{Api, Extern, FfiError, FfiResult, GasInfo};
+use crate::{Api, Backend, BackendError, BackendResult, GasInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
@@ -11,9 +11,9 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockApi, MockQuerier> {
+pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockStorage, MockApi, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
-    Extern {
+    Backend {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
@@ -22,10 +22,10 @@ pub fn mock_dependencies(contract_balance: &[Coin]) -> Extern<MockStorage, MockA
 
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
-pub fn mock_dependencies_with_balances(
+pub fn mock_backend_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
-) -> Extern<MockStorage, MockApi, MockQuerier> {
-    Extern {
+) -> Backend<MockStorage, MockApi, MockQuerier> {
+    Backend {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: MockQuerier::new(balances),
@@ -40,7 +40,7 @@ pub struct MockApi {
     /// Length of canonical addresses created with this API. Contracts should not make any assumtions
     /// what this value is.
     pub canonical_length: usize,
-    /// When set, all calls to the API fail with FfiError::Unknown containing this message
+    /// When set, all calls to the API fail with BackendError::Unknown containing this message
     backend_error: Option<&'static str>,
 }
 
@@ -71,23 +71,27 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn canonical_address(&self, human: &HumanAddr) -> FfiResult<CanonicalAddr> {
+    fn canonical_address(&self, human: &HumanAddr) -> BackendResult<CanonicalAddr> {
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         if let Some(backend_error) = self.backend_error {
-            return (Err(FfiError::unknown(backend_error)), gas_info);
+            return (Err(BackendError::unknown(backend_error)), gas_info);
         }
 
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
             return (
-                Err(FfiError::user_err("Invalid input: human address too short")),
+                Err(BackendError::user_err(
+                    "Invalid input: human address too short",
+                )),
                 gas_info,
             );
         }
         if human.len() > self.canonical_length {
             return (
-                Err(FfiError::user_err("Invalid input: human address too long")),
+                Err(BackendError::user_err(
+                    "Invalid input: human address too long",
+                )),
                 gas_info,
             );
         }
@@ -105,16 +109,16 @@ impl Api for MockApi {
         (Ok(out.into()), gas_info)
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> FfiResult<HumanAddr> {
+    fn human_address(&self, canonical: &CanonicalAddr) -> BackendResult<HumanAddr> {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         if let Some(backend_error) = self.backend_error {
-            return (Err(FfiError::unknown(backend_error)), gas_info);
+            return (Err(BackendError::unknown(backend_error)), gas_info);
         }
 
         if canonical.len() != self.canonical_length {
             return (
-                Err(FfiError::user_err(
+                Err(BackendError::user_err(
                     "Invalid input: canonical address length not correct",
                 )),
                 gas_info,
@@ -171,7 +175,7 @@ pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::FfiError;
+    use crate::BackendError;
     use cosmwasm_std::{coins, Binary};
 
     #[test]
@@ -204,7 +208,7 @@ mod test {
         let input = CanonicalAddr(Binary(vec![61; 11]));
         let (result, _gas_info) = api.human_address(&input);
         match result.unwrap_err() {
-            FfiError::UserErr { .. } => {}
+            BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }
@@ -214,7 +218,7 @@ mod test {
         let api = MockApi::default();
         let human = HumanAddr::from("1");
         match api.canonical_address(&human).0.unwrap_err() {
-            FfiError::UserErr { .. } => {}
+            BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }
@@ -224,7 +228,7 @@ mod test {
         let api = MockApi::default();
         let human = HumanAddr::from("longer-than-the-address-length-supported-by-this-api");
         match api.canonical_address(&human).0.unwrap_err() {
-            FfiError::UserErr { .. } => {}
+            BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }

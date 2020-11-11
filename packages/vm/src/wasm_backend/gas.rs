@@ -1,5 +1,5 @@
+use crate::backend::{Querier, Storage};
 use crate::context::Env;
-use crate::traits::{Querier, Storage};
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
 /// This causes issues when trying to instantiate the same compiled module with a different gas limit.
@@ -68,7 +68,6 @@ mod test {
     use crate::testing::{MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
     use std::ptr::NonNull;
-    use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};
 
     type MS = MockStorage;
@@ -91,7 +90,7 @@ mod test {
 
     #[test]
     fn decrease_gas_left_works() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let (mut env, _) = instantiate(&wasm);
 
         let before = get_gas_left(&env);
@@ -102,7 +101,7 @@ mod test {
 
     #[test]
     fn decrease_gas_left_can_consume_all_gas() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let (mut env, _) = instantiate(&wasm);
 
         let before = get_gas_left(&env);
@@ -113,7 +112,7 @@ mod test {
 
     #[test]
     fn decrease_gas_left_errors_for_amount_greater_than_remaining() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let (mut env, _) = instantiate(&wasm);
 
         let before = get_gas_left(&env);
@@ -127,7 +126,7 @@ mod test {
 
     #[test]
     fn get_gas_left_defaults_to_constant() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let (env, _) = instantiate(&wasm);
         let gas_left = get_gas_left(&env);
         assert_eq!(gas_left, MAX_GAS_LIMIT);
@@ -135,7 +134,7 @@ mod test {
 
     #[test]
     fn set_gas_left_works() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let (mut env, _) = instantiate(&wasm);
 
         let limit = 3456789;
@@ -160,7 +159,7 @@ mod test {
         expected = "Attempted to set gas limit larger than max gas limit (got: 9223372036854775808; maximum: 9223372036854775807)."
     )]
     fn set_gas_left_panic_for_values_too_large() {
-        let wasm = wat2wasm("(module)").unwrap();
+        let wasm = wat::parse_str("(module)").unwrap();
         let (mut env, _) = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;

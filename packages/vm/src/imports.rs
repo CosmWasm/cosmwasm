@@ -7,15 +7,14 @@ use std::convert::TryInto;
 use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
+use crate::backend::{Api, BackendError, Querier, Storage};
 use crate::context::{process_gas_info, Env};
 use crate::conversion::to_u32;
 use crate::errors::{CommunicationError, VmError, VmResult};
-use crate::ffi::FfiError;
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
-use crate::traits::{Api, Querier, Storage};
 use crate::wasm_backend::get_gas_left;
 
 /// A kibi (kilo binary)
@@ -159,7 +158,9 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
             write_region(&env.memory(), destination_ptr, canonical.as_slice())?;
             Ok(0)
         }
-        Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(env, msg.as_bytes())?),
+        Err(BackendError::UserErr { msg, .. }) => {
+            Ok(write_to_contract::<S, Q>(env, msg.as_bytes())?)
+        }
         Err(err) => Err(VmError::from(err)),
     }
 }
@@ -183,7 +184,9 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
             write_region(&env.memory(), destination_ptr, human.as_str().as_bytes())?;
             Ok(0)
         }
-        Err(FfiError::UserErr { msg, .. }) => Ok(write_to_contract::<S, Q>(env, msg.as_bytes())?),
+        Err(BackendError::UserErr { msg, .. }) => {
+            Ok(write_to_contract::<S, Q>(env, msg.as_bytes())?)
+        }
         Err(err) => Err(VmError::from(err)),
     }
 }
@@ -277,11 +280,10 @@ mod test {
     use std::ptr::NonNull;
     use wasmer::{imports, Instance as WasmerInstance};
 
+    use crate::backend::{BackendError, Storage};
     use crate::context::move_into_context;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::traits::Storage;
     use crate::wasm_backend::compile;
-    use crate::FfiError;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -673,8 +675,8 @@ mod test {
         let api = MockApi::new_failing("Temporarily unavailable");
         let result = do_canonicalize_address::<MA, MS, MQ>(api, &mut env, source_ptr, dest_ptr);
         match result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::Unknown { msg, .. },
+            VmError::BackendErr {
+                source: BackendError::Unknown { msg, .. },
             } => {
                 assert_eq!(msg.unwrap(), "Temporarily unavailable");
             }
@@ -775,8 +777,8 @@ mod test {
         let api = MockApi::new_failing("Temporarily unavailable");
         let result = do_humanize_address::<MA, MS, MQ>(api, &mut env, source_ptr, dest_ptr);
         match result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::Unknown { msg, .. },
+            VmError::BackendErr {
+                source: BackendError::Unknown { msg, .. },
             } => assert_eq!(msg.unwrap(), "Temporarily unavailable"),
             err => panic!("Incorrect error returned: {:?}", err),
         };
@@ -1077,8 +1079,8 @@ mod test {
         let non_existent_id = 42u32;
         let result = do_next::<MS, MQ>(&mut env, non_existent_id);
         match result.unwrap_err() {
-            VmError::FfiErr {
-                source: FfiError::IteratorDoesNotExist { id, .. },
+            VmError::BackendErr {
+                source: BackendError::IteratorDoesNotExist { id, .. },
             } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),
         }

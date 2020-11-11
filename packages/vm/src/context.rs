@@ -5,9 +5,8 @@ use std::sync::{Arc, RwLock};
 
 use wasmer::{Function, Instance as WasmerInstance, Memory};
 
+use crate::backend::{GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::ffi::GasInfo;
-use crate::traits::{Querier, Storage};
 use crate::wasm_backend::{decrease_gas_left, get_gas_left, set_gas_left};
 
 /** context data **/
@@ -288,10 +287,10 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::backend::Storage;
     use crate::errors::VmError;
     use crate::testing::{MockQuerier, MockStorage};
-    use crate::traits::Storage;
-    use crate::wasm_backend::compile;
+    use crate::wasm_backend::{compile, decrease_gas_left, set_gas_left};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };

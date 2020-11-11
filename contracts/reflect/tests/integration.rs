@@ -26,7 +26,7 @@ use cosmwasm_vm::{
         handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query, MockApi,
         MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
-    Extern, Instance,
+    Backend, Instance,
 };
 
 use reflect::msg::{
@@ -43,13 +43,13 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 /// that supports SpecialQuery.
 pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
-) -> Extern<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
+) -> Backend<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
-    Extern {
+    Backend {
         storage: MockStorage::default(),
         api: MockApi::default(),
         querier: custom_querier,

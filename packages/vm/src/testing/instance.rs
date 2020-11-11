@@ -7,7 +7,7 @@ use std::collections::HashSet;
 use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::{Instance, InstanceOptions};
-use crate::{Api, Extern, Querier, Storage};
+use crate::{Api, Backend, Querier, Storage};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
@@ -77,7 +77,7 @@ pub struct MockInstanceOptions<'a> {
     pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
     /// This option is merged into balances and might override an existing value
     pub contract_balance: Option<&'a [Coin]>,
-    /// When set, all calls to the API fail with FfiError::Unknown containing this message
+    /// When set, all calls to the API fail with BackendError::Unknown containing this message
     pub backend_error: Option<&'static str>,
 
     // instance
@@ -125,7 +125,7 @@ pub fn mock_instance_with_options(
         MockApi::default()
     };
 
-    let deps = Extern {
+    let backend = Backend {
         storage: MockStorage::default(),
         querier: MockQuerier::new(&balances),
         api,
@@ -135,7 +135,7 @@ pub fn mock_instance_with_options(
         memory_limit: DEFAULT_MEMORY_LIMIT,
         print_debug: options.print_debug,
     };
-    Instance::from_code(wasm, deps, options).unwrap()
+    Instance::from_code(wasm, backend, options).unwrap()
 }
 
 /// Creates InstanceOptions for testing

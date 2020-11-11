@@ -96,7 +96,7 @@ impl FileSystemCache {
         Ok(Some(module))
     }
 
-    pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
+    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
         let modules_dir = self.path.clone().join(MODULE_SERIALIZATION_VERSION);
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
@@ -118,14 +118,17 @@ mod tests {
     use super::*;
     use crate::wasm_backend::compile;
     use tempfile::TempDir;
-    use wabt::wat2wasm;
     use wasmer::{imports, Instance as WasmerInstance};
 
     const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
     #[test]
     fn test_file_system_cache_run() {
-        let wasm = wat2wasm(
+        let tmp_dir = TempDir::new().unwrap();
+        let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
+
+        // Create module
+        let wasm = wat::parse_str(
             r#"(module
             (type $t0 (func (param i32) (result i32)))
             (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
@@ -136,31 +139,28 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-
         let module = compile(&wasm, TESTING_MEMORY_LIMIT).unwrap();
 
-        let tmp_dir = TempDir::new().unwrap();
-        let mut fs_cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
-
         // Module does not exist
-        let cached = fs_cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_none());
 
         // Store module
-        fs_cache.store(&checksum, module.clone()).unwrap();
+        cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let cached = fs_cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_some());
 
-        let cached_module = cached.unwrap();
-        let import_object = imports! {};
-        let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
-        let add_one = instance.exports.get_function("add_one").unwrap();
-
-        let result = add_one.call(&[42.into()]).unwrap();
-
-        // verify it works
-        assert_eq!(result[0].unwrap_i32(), 43);
+        // Check the returned module is functional.
+        // This is not really testing the cache API but better safe than sorry.
+        {
+            let cached_module = cached.unwrap();
+            let import_object = imports! {};
+            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
+        }
     }
 }

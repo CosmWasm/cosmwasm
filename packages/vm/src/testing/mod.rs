@@ -13,8 +13,7 @@ pub use instance::{
     test_io, MockInstanceOptions,
 };
 pub use mock::{
-    mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MockApi,
-    MOCK_CONTRACT_ADDR,
+    mock_backend, mock_backend_with_balances, mock_env, mock_info, MockApi, MOCK_CONTRACT_ADDR,
 };
 pub use querier::MockQuerier;
 pub use storage::MockStorage;

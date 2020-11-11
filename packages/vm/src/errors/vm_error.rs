@@ -2,7 +2,7 @@ use std::fmt::{Debug, Display};
 use thiserror::Error;
 
 use super::communication_error::CommunicationError;
-use crate::ffi::FfiError;
+use crate::backend::BackendError;
 use crate::wasm_backend::InsufficientGasLeft;
 
 #[derive(Error, Debug)]
@@ -50,8 +50,8 @@ pub enum VmError {
     StaticValidationErr { msg: String },
     #[error("Uninitialized Context Data: {}", kind)]
     UninitializedContextData { kind: String },
-    #[error("Calling external function through FFI: {}", source)]
-    FfiErr { source: FfiError },
+    #[error("Error calling into the VM's backend: {}", source)]
+    BackendErr { source: BackendError },
     #[error("Ran out of gas during contract execution")]
     GasDepletion,
     #[error("Must not call a writing storage function in this context.")]
@@ -126,11 +126,11 @@ impl VmError {
     }
 }
 
-impl From<FfiError> for VmError {
-    fn from(ffi_error: FfiError) -> Self {
-        match ffi_error {
-            FfiError::OutOfGas {} => VmError::GasDepletion,
-            _ => VmError::FfiErr { source: ffi_error },
+impl From<BackendError> for VmError {
+    fn from(original: BackendError) -> Self {
+        match original {
+            BackendError::OutOfGas {} => VmError::GasDepletion,
+            _ => VmError::BackendErr { source: original },
         }
     }
 }

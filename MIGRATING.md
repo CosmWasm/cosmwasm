@@ -6,6 +6,20 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.11 -> 0.12
 
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.12.0"
+  cosmwasm-storage = "0.12.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.12.0"
+  cosmwasm-vm = "0.12.0"
+  # ...
+  ```
+
 - In your contract's `.cargo/config` remove `--features backtraces`, which is
   now available in Rust nightly only:
 
@@ -26,20 +40,20 @@ major releases of `cosmwasm`. Note that you can also view the
 - Rename the type `Extern` to `Deps`, and radically simplify the
   `init`/`handle`/`migrate`/`query` entrypoints. Rather than
   `&mut Extern<S, A, Q>`, use `DepsMut`. And instead of `&Extern<S, A, Q>`, use
-  `DepsRef`. If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use
+  `Deps`. If you ever pass eg. `foo<A: Api>(api: A)` around, you must now use
   dynamic trait pointers: `foo(api: &dyn Api)`. Here is the quick search-replace
   guide on how to fix `contract.rs`:
 
   _In production (non-test) code:_
 
   - `<S: Storage, A: Api, Q: Querier>` => ``
-  - `&mut Extern<S, A, Q>` => `Deps`
-  - `&Extern<S, A, Q>` => `DepsRef`
+  - `&mut Extern<S, A, Q>` => `DepsMut`
+  - `&Extern<S, A, Q>` => `Deps`
   - `&mut deps.storage` => `deps.storage` where passing into `state.rs` helpers
   - `&deps.storage` => `deps.storage` where passing into `state.rs` helpers
 
   On the top, remove `use cosmwasm_std::{Api, Extern, Querier, Storage}`. Add
-  `use cosmwasm_std::{Deps, DepsRef}`.
+  `use cosmwasm_std::{Deps, DepsMut}`.
 
   _In test code only:_
 
@@ -61,6 +75,20 @@ major releases of `cosmwasm`. Note that you can also view the
   replace them with `Storage`
 
 ## 0.10 -> 0.11
+
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.11.0"
+  cosmwasm-storage = "0.11.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.11.0"
+  cosmwasm-vm = "0.11.0"
+  # ...
+  ```
 
 - Contracts now support any custom error type `E: ToString + From<StdError>`.
   Previously this has been `StdError`, which you can still use. However, you can
@@ -313,6 +341,20 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.9 -> 0.10
 
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.10.0"
+  cosmwasm-storage = "0.10.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.10.0"
+  cosmwasm-vm = "0.10.0"
+  # ...
+  ```
+
 Integration tests:
 
 - Calls to `Api::human_address` and `Api::canonical_address` now return a pair
@@ -349,12 +391,19 @@ Contracts:
 
 ## 0.8 -> 0.9
 
-`dependencies`/`dev-dependencies` in `Cargo.toml`:
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
 
-- Replace `cosmwasm-schema = "0.8"` with `cosmwasm-schema = "0.9"`
-- Replace `cosmwasm-std = "0.8"` with `cosmwasm-std = "0.9"`
-- Replace `cosmwasm-storage = "0.8"` with `cosmwasm-storage = "0.9"`
-- Replace `cosmwasm-vm = "0.8"` with `cosmwasm-vm = "0.9"`
+  ```
+  [dependencies]
+  cosmwasm-std = "0.9.0"
+  cosmwasm-storage = "0.9.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.9.0"
+  cosmwasm-vm = "0.9.0"
+  # ...
+  ```
 
 `lib.rs`:
 

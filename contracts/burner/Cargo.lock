@@ -66,7 +66,7 @@ dependencies = [
 
 [[package]]
 name = "burner"
-version = "0.11.2"
+version = "0.12.0-alpha3"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
@@ -103,6 +103,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "clru"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6add52b3696a2015ab5bab92e99e75e8a9eb7a10b76b92dbb3a43f25adbd7629"
+
+[[package]]
 name = "constant_time_eq"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -110,7 +116,7 @@ checksum = "245097e9a4535ee1e3e3931fcfcd55a796a44c643e8596ff6566d68f09b87bbc"
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.11.2"
+version = "0.12.0-alpha3"
 dependencies = [
  "schemars",
  "serde_json",
@@ -118,7 +124,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.11.2"
+version = "0.12.0-alpha3"
 dependencies = [
  "base64",
  "schemars",
@@ -129,8 +135,9 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.11.2"
+version = "0.12.0-alpha3"
 dependencies = [
+ "clru",
  "cosmwasm-std",
  "hex",
  "memmap",

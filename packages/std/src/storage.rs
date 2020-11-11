@@ -26,6 +26,10 @@ impl Storage for MemoryStorage {
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
+        if value.is_empty() {
+            panic!("TL;DR: Value must not be empty in Storage::set but in most cases you can use Storage::remove instead. Long story: Getting empty values from storage is not well supported at the moment. Some of our internal interfaces cannot differentiate between a non-existent key and an empty value. Right now, you cannot rely on the behaviour of empty values. To protect you from trouble later on, we stop here. Sorry for the inconvenience! We highly welcome you to contribute to CosmWasm, making this more solid one way or the other.");
+        }
+
         self.data.insert(key.to_vec(), value.to_vec());
     }
 
@@ -113,6 +117,15 @@ mod test {
         store.set(b"foo", b"bar");
         assert_eq!(store.get(b"foo"), Some(b"bar".to_vec()));
         assert_eq!(store.get(b"food"), None);
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Getting empty values from storage is not well supported at the moment."
+    )]
+    fn set_panics_for_empty() {
+        let mut store = MemoryStorage::new();
+        store.set(b"foo", b"");
     }
 
     #[test]
@@ -300,17 +313,15 @@ mod test {
             }"
         );
 
-        // Different lnegths
+        // Different lengths
         let mut store = MemoryStorage::new();
-        store.set(&[], &[]);
         store.set(&[0xAA], &[0x11]);
         store.set(&[0xAA, 0xBB], &[0x11, 0x22]);
         store.set(&[0xAA, 0xBB, 0xCC], &[0x11, 0x22, 0x33]);
         store.set(&[0xAA, 0xBB, 0xCC, 0xDD], &[0x11, 0x22, 0x33, 0x44]);
         assert_eq!(
             format!("{:?}", store),
-            "MemoryStorage (5 entries) {\n\
-            \x20\x200x: 0x\n\
+            "MemoryStorage (4 entries) {\n\
             \x20\x200xaa: 0x11\n\
             \x20\x200xaabb: 0x1122\n\
             \x20\x200xaabbcc: 0x112233\n\
