@@ -34,12 +34,12 @@ serde_json = "1.0"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 sha2 = "0.9.1"
 thiserror = "1.0"
-wasmer = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
-wasmer-compiler = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
-wasmer-compiler-singlepass = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
-wasmer-engine = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
-wasmer-engine-jit = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
-wasmer-types = { git = "https://github.com/wasmerio/wasmer", branch = "master" }
+wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-alpha5" }
+wasmer-compiler = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-alpha5" }
+wasmer-compiler-singlepass = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-alpha5" }
+wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-alpha5" }
+wasmer-engine-jit = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-alpha5" }
+wasmer-types = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-alpha5" }
 
 # Wasmer local (used for quick local debugging or patching)
 # wasmer = { path = "../../../wasmer/lib/api" }
