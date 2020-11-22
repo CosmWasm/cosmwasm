@@ -350,7 +350,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
-    // import trait ReadonlyStorage to get access to read
+    // import trait Storage to get access to read
     use cosmwasm_std::{attr, coins, Storage};
 
     #[test]
