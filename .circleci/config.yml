@@ -654,9 +654,6 @@ jobs:
       - setup_remote_docker
       - checkout
       - run:
-          name: Create atrifacts directory
-          command: mkdir ./artifacts
-      - run:
           # We cannot mount local folders, see https://circleci.com/docs/2.0/building-docker-images/#mounting-folders
           name: Prepare volume with source code
           command: |
@@ -670,7 +667,7 @@ jobs:
           command: |
             echo "Building all contracts under ./contracts"
             docker run --volumes-from with_code cosmwasm/rust-optimizer:0.10.6 ./contracts/*/
-            docker cp with_code:/code/artifacts ./artifacts
+            docker cp with_code:/code/artifacts .
       - run:
           name: Publish artifacts on GitHub
           command: |
