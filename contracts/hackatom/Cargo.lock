@@ -380,7 +380,7 @@ dependencies = [
 
 [[package]]
 name = "hackatom"
-version = "0.12.0"
+version = "0.0.0"
 dependencies = [
  "cosmwasm-schema",
  "cosmwasm-std",
