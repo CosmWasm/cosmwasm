@@ -117,7 +117,9 @@ macro_rules! implement_from_for_fixed_length_arrays {
             impl From<[u8; $N]> for Binary {
                 fn from(source: [u8; $N]) -> Self {
                     // Implementation available for $N <= 64.
-                    // Requires https://caniuse.rs/features/vec_from_array, available since Rust 1.44.0.
+                    // Requires https://caniuse.rs/features/vec_from_array available since Rust 1.44.0
+                    // as well as "Traits on larger arrays" (https://blog.rust-lang.org/2020/10/08/Rust-1.47.html#traits-on-larger-arrays)
+                    // available since Rust 1.47.0
                     Self(source.into())
                 }
             }
