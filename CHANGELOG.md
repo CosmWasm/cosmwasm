@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.13.0 (2020-11-23)
+
+**all**
+
+- Drop support for Rust versions lower than 1.47.0.
+
 ## 0.12.0 (2020-11-19)
 
 **cosmwasm-std**
