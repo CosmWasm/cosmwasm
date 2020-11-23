@@ -46,13 +46,11 @@ cargo +nightly build
 FILES_MODIFIED+=("Cargo.lock")
 
 for contract_dir in contracts/*/; do
-  CARGO_TOML="$contract_dir/Cargo.toml"
   CARGO_LOCK="$contract_dir/Cargo.lock"
 
-  "$gnused" -i -e "s/version[[:space:]]*=[[:space:]]*\"$OLD\"/version = \"$NEW\"/" "$CARGO_TOML"
   (cd "$contract_dir" && cargo build)
 
-  FILES_MODIFIED+=("$CARGO_TOML" "$CARGO_LOCK")
+  FILES_MODIFIED+=("$CARGO_LOCK")
 done
 
 echo "Staging ${FILES_MODIFIED[*]} ..."
