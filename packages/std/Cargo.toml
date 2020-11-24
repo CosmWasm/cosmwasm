@@ -29,7 +29,7 @@ staking = []
 backtraces = []
 
 [dependencies]
-base64 = "0.11.0"
+base64 = "0.13.0"
 serde-json-wasm = { version = "0.2.1" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
