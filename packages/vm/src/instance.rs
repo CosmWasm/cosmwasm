@@ -82,7 +82,7 @@ where
 
         let store = module.store();
 
-        let mut env = Env::new(gas_limit);
+        let env = Env::new(gas_limit);
 
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
         let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
@@ -121,11 +121,11 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "canonicalize_address",
-            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
                 let source_ptr = args[0].unwrap_i32() as u32;
                 let destination_ptr = args[1].unwrap_i32() as u32;
                 let ptr =
-                    do_canonicalize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
+                    do_canonicalize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
                 Ok(vec![ptr.into()])
             }),
         );
@@ -136,11 +136,10 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "humanize_address",
-            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |mut env, args| {
+            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
                 let source_ptr = args[0].unwrap_i32() as u32;
                 let destination_ptr = args[1].unwrap_i32() as u32;
-                let ptr =
-                    do_humanize_address::<A, S, Q>(api, &mut env, source_ptr, destination_ptr)?;
+                let ptr = do_humanize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
                 Ok(vec![ptr.into()])
             }),
         );
@@ -196,14 +195,14 @@ where
             },
         )?);
 
-        set_gas_left(&mut env, gas_limit);
+        set_gas_left(&env, gas_limit);
         env.with_gas_state_mut(|gas_state| {
             gas_state.set_gas_limit(gas_limit);
         });
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
-        move_into_context(&mut env, backend.storage, backend.querier);
+        move_into_context(&env, backend.storage, backend.querier);
         let instance = Instance {
             inner: wasmer_instance,
             env,
@@ -217,8 +216,8 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(mut self) -> Option<Backend<S, A, Q>> {
-        if let (Some(storage), Some(querier)) = move_out_of_context(&mut self.env) {
+    pub fn recycle(self) -> Option<Backend<S, A, Q>> {
+        if let (Some(storage), Some(querier)) = move_out_of_context(&self.env) {
             Some(Backend {
                 storage,
                 api: self.api,

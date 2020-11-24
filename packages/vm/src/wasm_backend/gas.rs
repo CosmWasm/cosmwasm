@@ -21,7 +21,7 @@ pub struct InsufficientGasLeft;
 /// If the amount exceeds the available gas, the remaining gas is set to 0 and
 /// an InsufficientGasLeft error is returned.
 pub fn decrease_gas_left<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
     amount: u64,
 ) -> Result<(), InsufficientGasLeft> {
     let remaining = get_gas_left(env);
@@ -35,7 +35,7 @@ pub fn decrease_gas_left<S: Storage, Q: Querier>(
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left<S: Storage, Q: Querier>(_env: &mut Env<S, Q>, _amount: u64) {}
+pub fn set_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
 pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
@@ -77,7 +77,7 @@ mod test {
     const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
     fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let mut env = Env::new(GAS_LIMIT);
+        let env = Env::new(GAS_LIMIT);
         let module = compile(code, TESTING_MEMORY_LIMIT).unwrap();
         let import_obj = imports! { "env" => {}, };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
@@ -91,10 +91,10 @@ mod test {
     #[test]
     fn decrease_gas_left_works() {
         let wasm = wat::parse_str("(module)").unwrap();
-        let (mut env, _) = instantiate(&wasm);
+        let (env, _) = instantiate(&wasm);
 
         let before = get_gas_left(&env);
-        decrease_gas_left(&mut env, 32).unwrap();
+        decrease_gas_left(&env, 32).unwrap();
         let after = get_gas_left(&env);
         assert_eq!(after, before - 32);
     }
@@ -102,10 +102,10 @@ mod test {
     #[test]
     fn decrease_gas_left_can_consume_all_gas() {
         let wasm = wat::parse_str("(module)").unwrap();
-        let (mut env, _) = instantiate(&wasm);
+        let (env, _) = instantiate(&wasm);
 
         let before = get_gas_left(&env);
-        decrease_gas_left(&mut env, before).unwrap();
+        decrease_gas_left(&env, before).unwrap();
         let after = get_gas_left(&env);
         assert_eq!(after, 0);
     }
@@ -113,10 +113,10 @@ mod test {
     #[test]
     fn decrease_gas_left_errors_for_amount_greater_than_remaining() {
         let wasm = wat::parse_str("(module)").unwrap();
-        let (mut env, _) = instantiate(&wasm);
+        let (env, _) = instantiate(&wasm);
 
         let before = get_gas_left(&env);
-        let result = decrease_gas_left(&mut env, before + 1);
+        let result = decrease_gas_left(&env, before + 1);
         match result.unwrap_err() {
             InsufficientGasLeft => {}
         }
@@ -135,22 +135,22 @@ mod test {
     #[test]
     fn set_gas_left_works() {
         let wasm = wat::parse_str("(module)").unwrap();
-        let (mut env, _) = instantiate(&wasm);
+        let (env, _) = instantiate(&wasm);
 
         let limit = 3456789;
-        set_gas_left(&mut env, limit);
+        set_gas_left(&env, limit);
         assert_eq!(get_gas_left(&env), limit);
 
         let limit = 1;
-        set_gas_left(&mut env, limit);
+        set_gas_left(&env, limit);
         assert_eq!(get_gas_left(&env), limit);
 
         let limit = 0;
-        set_gas_left(&mut env, limit);
+        set_gas_left(&env, limit);
         assert_eq!(get_gas_left(&env), limit);
 
         let limit = MAX_GAS_LIMIT;
-        set_gas_left(&mut env, limit);
+        set_gas_left(&env, limit);
         assert_eq!(get_gas_left(&env), limit);
     }
 
@@ -160,9 +160,9 @@ mod test {
     )]
     fn set_gas_left_panic_for_values_too_large() {
         let wasm = wat::parse_str("(module)").unwrap();
-        let (mut env, _) = instantiate(&wasm);
+        let (env, _) = instantiate(&wasm);
 
         let limit = MAX_GAS_LIMIT + 1;
-        set_gas_left(&mut env, limit);
+        set_gas_left(&env, limit);
     }
 }

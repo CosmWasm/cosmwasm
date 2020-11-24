@@ -81,7 +81,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
     }
 
     pub fn with_context_data_mut<Callback, CallbackReturn>(
-        &mut self,
+        &self,
         callback: Callback,
     ) -> CallbackReturn
     where
@@ -101,10 +101,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         callback(context_data)
     }
 
-    pub fn with_gas_state_mut<Callback, CallbackReturn>(
-        &mut self,
-        callback: Callback,
-    ) -> CallbackReturn
+    pub fn with_gas_state_mut<Callback, CallbackReturn>(&self, callback: Callback) -> CallbackReturn
     where
         Callback: FnOnce(&mut GasState) -> CallbackReturn,
     {
@@ -119,7 +116,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
     }
 
     pub fn with_func_from_context<Callback, CallbackData>(
-        &mut self,
+        &self,
         name: &str,
         callback: Callback,
     ) -> VmResult<CallbackData>
@@ -137,7 +134,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         })
     }
 
-    pub fn with_storage_from_context<F, T>(&mut self, func: F) -> VmResult<T>
+    pub fn with_storage_from_context<F, T>(&self, func: F) -> VmResult<T>
     where
         F: FnOnce(&mut S) -> VmResult<T>,
     {
@@ -147,7 +144,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         })
     }
 
-    pub fn with_querier_from_context<F, T>(&mut self, func: F) -> VmResult<T>
+    pub fn with_querier_from_context<F, T>(&self, func: F) -> VmResult<T>
     where
         F: FnOnce(&mut Q) -> VmResult<T>,
     {
@@ -158,7 +155,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
     }
 
     /// Creates a back reference from a contact to its partent instance
-    pub fn set_wasmer_instance(&mut self, wasmer_instance: Option<NonNull<WasmerInstance>>) {
+    pub fn set_wasmer_instance(&self, wasmer_instance: Option<NonNull<WasmerInstance>>) {
         self.with_context_data_mut(|context_data| {
             context_data.wasmer_instance = wasmer_instance;
         });
@@ -169,7 +166,7 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         self.with_context_data(|context_data| context_data.storage_readonly)
     }
 
-    pub fn set_storage_readonly(&mut self, new_value: bool) {
+    pub fn set_storage_readonly(&self, new_value: bool) {
         self.with_context_data_mut(|context_data| {
             context_data.storage_readonly = new_value;
         })
@@ -216,7 +213,7 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
 /// Returns the original storage and querier as owned instances, and closes any remaining
 /// iterators. This is meant to be called when recycling the instance.
 pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
 ) -> (Option<S>, Option<Q>) {
     env.with_context_data_mut(|context_data| {
         (context_data.storage.take(), context_data.querier.take())
@@ -225,21 +222,14 @@ pub(crate) fn move_out_of_context<S: Storage, Q: Querier>(
 
 /// Moves owned instances of storage and querier into the env.
 /// Should be followed by exactly one call to move_out_of_context when the instance is finished.
-pub(crate) fn move_into_context<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
-    storage: S,
-    querier: Q,
-) {
+pub(crate) fn move_into_context<S: Storage, Q: Querier>(env: &Env<S, Q>, storage: S, querier: Q) {
     env.with_context_data_mut(|context_data| {
         context_data.storage = Some(storage);
         context_data.querier = Some(querier);
     });
 }
 
-pub fn process_gas_info<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
-    info: GasInfo,
-) -> VmResult<()> {
+pub fn process_gas_info<S: Storage, Q: Querier>(env: &Env<S, Q>, info: GasInfo) -> VmResult<()> {
     decrease_gas_left(env, info.cost)?;
     account_for_externally_used_gas(env, info.externally_used)?;
     Ok(())
@@ -249,20 +239,20 @@ pub fn process_gas_info<S: Storage, Q: Querier>(
 /// reported there was externally metered gas used.
 /// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
 fn account_for_externally_used_gas<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
     amount: u64,
 ) -> VmResult<()> {
     account_for_externally_used_gas_impl(env, amount)
 }
 
 fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
     used_gas: u64,
 ) -> VmResult<()> {
     // WFT?!
-    let mut env1 = env.clone();
+    let env1 = env.clone();
     let env2 = env.clone();
-    let mut env3 = env.clone();
+    let env3 = env.clone();
 
     env1.with_context_data_mut(|context_data| {
         let gas_state = &mut context_data.gas_state;
@@ -274,7 +264,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_left(&mut env3, new_limit);
+        set_gas_left(&env3, new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
@@ -315,7 +305,7 @@ mod test {
     const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let mut env = Env::new(GAS_LIMIT);
+        let env = Env::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT, MEMORY_LIMIT).unwrap();
         // we need stubs for all required imports
@@ -340,7 +330,7 @@ mod test {
         (env, instance)
     }
 
-    fn leave_default_data(env: &mut Env<MS, MQ>) {
+    fn leave_default_data(env: &Env<MS, MQ>) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage
@@ -354,16 +344,16 @@ mod test {
 
     #[test]
     fn leave_and_take_context_data() {
-        let (mut env, _) = make_instance();
+        let (env, _) = make_instance();
 
         // empty data on start
-        let (inits, initq) = move_out_of_context::<MS, MQ>(&mut env);
+        let (inits, initq) = move_out_of_context::<MS, MQ>(&env);
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
-        leave_default_data(&mut env);
-        let (s, q) = move_out_of_context::<MS, MQ>(&mut env);
+        leave_default_data(&env);
+        let (s, q) = move_out_of_context::<MS, MQ>(&env);
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
@@ -372,26 +362,26 @@ mod test {
         );
 
         // now is empty again
-        let (ends, endq) = move_out_of_context::<MS, MQ>(&mut env);
+        let (ends, endq) = move_out_of_context::<MS, MQ>(&env);
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
 
     #[test]
     fn gas_tracking_works_correctly() {
-        let (mut env, _) = make_instance();
+        let (env, _) = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(&mut env, gas_limit);
+        set_gas_left(&env, gas_limit);
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
 
         // Consume all the Gas that we allocated
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 70).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 4).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 70).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(&mut env, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(&env, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -399,23 +389,23 @@ mod test {
 
     #[test]
     fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
-        let (mut env, _) = make_instance();
+        let (env, _) = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(&mut env, gas_limit);
+        set_gas_left(&env, gas_limit);
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
 
         // Some gas was consumed externally
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 50).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 4).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 50).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(&mut env, 20).unwrap();
+        decrease_gas_left(&env, 20).unwrap();
 
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&mut env, 20).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 6).unwrap();
+        account_for_externally_used_gas::<MS, MQ>(&env, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(&mut env, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MS, MQ>(&env, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -423,16 +413,16 @@ mod test {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         assert_eq!(env.is_storage_readonly(), true);
     }
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         // change
         env.set_storage_readonly(false);
@@ -449,8 +439,8 @@ mod test {
 
     #[test]
     fn with_func_from_context_works() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         let ptr = env
             .with_func_from_context::<_, _>("allocate", |alloc_func| {
@@ -464,8 +454,8 @@ mod test {
 
     #[test]
     fn with_func_from_context_fails_for_missing_instance() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         // Clear context's wasmer_instance
         env.set_wasmer_instance(None);
@@ -481,8 +471,8 @@ mod test {
 
     #[test]
     fn with_func_from_context_fails_for_missing_function() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         let res = env.with_func_from_context::<_, ()>("doesnt_exist", |_func| {
             panic!("unexpected callback call");
@@ -500,8 +490,8 @@ mod test {
 
     #[test]
     fn with_storage_from_context_set_get() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -533,8 +523,8 @@ mod test {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         env.with_storage_from_context::<_, ()>(|_store| {
             panic!("A panic occurred in the callback.")
@@ -544,8 +534,8 @@ mod test {
 
     #[test]
     fn with_querier_from_context_works() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         let res = env
             .with_querier_from_context::<_, _>(|querier| {
@@ -567,8 +557,8 @@ mod test {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
-        let (mut env, _) = make_instance();
-        leave_default_data(&mut env);
+        let (env, _) = make_instance();
+        leave_default_data(&env);
 
         env.with_querier_from_context::<_, ()>(|_querier| {
             panic!("A panic occurred in the callback.")
