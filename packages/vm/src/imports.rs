@@ -37,25 +37,25 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 // Function::new_native_with_env interface. Those require an env in the first
 // argument and cannot capiture other variables such as the Api.
 
-pub fn native_db_read<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
+pub fn native_db_read<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
     let ptr = do_read::<S, Q>(env, key_ptr)?;
     Ok(ptr)
 }
 
 pub fn native_db_write<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
     do_write(env, key_ptr, value_ptr)
 }
 
-pub fn native_db_remove<S: Storage, Q: Querier>(env: &mut Env<S, Q>, key_ptr: u32) -> VmResult<()> {
+pub fn native_db_remove<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<()> {
     do_remove(env, key_ptr)
 }
 
 pub fn native_query_chain<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
     do_query_chain(env, request_ptr)
@@ -63,7 +63,7 @@ pub fn native_query_chain<S: Storage, Q: Querier>(
 
 #[cfg(feature = "iterator")]
 pub fn native_db_scan<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
+    env: &Env<S, Q>,
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
@@ -72,10 +72,7 @@ pub fn native_db_scan<S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn native_db_next<S: Storage, Q: Querier>(
-    env: &mut Env<S, Q>,
-    iterator_id: u32,
-) -> VmResult<u32> {
+pub fn native_db_next<S: Storage, Q: Querier>(env: &Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
     do_next(env, iterator_id)
 }
 
