@@ -1,6 +1,16 @@
 # CHANGELOG
 
-## 0.12.0 (unreleased)
+## 0.13.0 (unreleased)
+
+**all**
+
+- Drop support for Rust versions lower than 1.47.0.
+
+**cosmwasm-std**
+
+- Extend binary to array support to 64 bytes.
+
+## 0.12.0 (2020-11-19)
 
 **cosmwasm-std**
 
