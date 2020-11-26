@@ -44,3 +44,8 @@ command -v shellcheck > /dev/null && shellcheck "$0"
   && cargo test --features iterator with_storage_works \
   && cargo test --features iterator write_and_read_memory_works \
   && cargo clippy --features iterator -- -D warnings)
+
+# Contracts
+for contract_dir in contracts/*/; do
+  (cd "$contract_dir" && cargo wasm && cargo integration-test) || break;
+done
