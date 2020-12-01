@@ -17,6 +17,7 @@ command -v shellcheck > /dev/null && shellcheck "$0"
   && cargo test --features iterator limiting_tunables:: \
   && cargo test --features iterator memory:: \
   && cargo test --features iterator modules:: \
+  && cargo test --features iterator imports:: \
   && cargo test --features iterator testing:: \
   && cargo test --features iterator instance:: \
   && cargo test --features iterator cache:: \

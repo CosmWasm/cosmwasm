@@ -271,7 +271,7 @@ mod test {
         SystemError, SystemResult, WasmQuery,
     };
     use std::ptr::NonNull;
-    use wasmer::{imports, Instance as WasmerInstance};
+    use wasmer::{imports, Function, FunctionType, Instance as WasmerInstance, Type, Val};
 
     use crate::backend::{BackendError, Storage};
     use crate::context::move_into_context;
@@ -304,18 +304,25 @@ mod test {
         let env = Env::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
+        let store = module.store();
+        let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
+        let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
+        let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
+        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
+        let i32i32i32_to_i32 =
+            FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                // "db_read" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
-                // "db_write" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| {}),
-                // "db_remove" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
-                // "db_scan" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32, _c: i32| -> u32 { 0 }),
-                // "db_next" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
-                // "query_chain" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
-                // "canonicalize_address" => Func::new(|_ctx: &mut Ctx, _a: i32, _b: i32| -> u32 { 0 }),
-                // "humanize_address" => Func::new(|_ctx: &mut Ctx, _a: i32, _b: i32| -> u32 { 0 }),
-                // "debug" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
+                "db_read" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "db_write" => Function::new(store, &i32i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
+                "db_remove" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
+                "db_scan" => Function::new(store, &i32i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "db_next" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "query_chain" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "canonicalize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "humanize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "debug" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
@@ -337,16 +344,17 @@ mod test {
         move_into_context(env, storage, querier);
     }
 
-    fn write_data(wasmer_instance: &mut WasmerInstance, data: &[u8]) -> u32 {
-        let allocate = wasmer_instance
-            .exports
-            .get_function("allocate")
-            .expect("error getting function");
-        let result = allocate
-            .call(&[(data.len() as u32).into()])
-            .expect("error calling allocate");
-        let region_ptr = result[0].unwrap_i32() as u32;
-        // write_region(&mut wasmer_instance, region_ptr, data).expect("error writing");
+    fn write_data(env: &Env<MS, MQ>, data: &[u8]) -> u32 {
+        let region_ptr = env
+            .with_func_from_context::<_, _>("allocate", |alloc_func| {
+                let result = alloc_func
+                    .call(&[(data.len() as u32).into()])
+                    .expect("error calling allocate");
+                let ptr = result[0].unwrap_i32() as u32;
+                Ok(ptr)
+            })
+            .unwrap();
+        write_region(&env.memory(), region_ptr, data).expect("error writing");
         region_ptr
     }
 
@@ -369,10 +377,10 @@ mod test {
 
     #[test]
     fn do_read_works() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
-        let key_ptr = write_data(&mut instance, KEY1);
+        let key_ptr = write_data(&env, KEY1);
         let result = do_read::<MS, MQ>(&env, key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
@@ -381,20 +389,20 @@ mod test {
 
     #[test]
     fn do_read_works_for_non_existent_key() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
-        let key_ptr = write_data(&mut instance, b"I do not exist in storage");
+        let key_ptr = write_data(&env, b"I do not exist in storage");
         let result = do_read::<MS, MQ>(&env, key_ptr);
         assert_eq!(result.unwrap(), 0);
     }
 
     #[test]
     fn do_read_fails_for_large_key() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
-        let key_ptr = write_data(&mut instance, &vec![7u8; 300 * 1024]);
+        let key_ptr = write_data(&env, &vec![7u8; 300 * 1024]);
         let result = do_read::<MS, MQ>(&env, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
@@ -406,10 +414,10 @@ mod test {
 
     #[test]
     fn do_write_works() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, b"new storage key");
-        let value_ptr = write_data(&mut instance, b"new value");
+        let key_ptr = write_data(&env, b"new storage key");
+        let value_ptr = write_data(&env, b"new value");
 
         leave_default_data(&env);
 
@@ -428,10 +436,10 @@ mod test {
 
     #[test]
     fn do_write_can_override() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, KEY1);
-        let value_ptr = write_data(&mut instance, VALUE2);
+        let key_ptr = write_data(&env, KEY1);
+        let value_ptr = write_data(&env, VALUE2);
 
         leave_default_data(&env);
 
@@ -447,10 +455,10 @@ mod test {
 
     #[test]
     fn do_write_works_for_empty_value() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, b"new storage key");
-        let value_ptr = write_data(&mut instance, b"");
+        let key_ptr = write_data(&env, b"new storage key");
+        let value_ptr = write_data(&env, b"");
 
         leave_default_data(&env);
 
@@ -469,10 +477,10 @@ mod test {
 
     #[test]
     fn do_write_fails_for_large_key() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, &vec![4u8; 300 * 1024]);
-        let value_ptr = write_data(&mut instance, b"new value");
+        let key_ptr = write_data(&env, &vec![4u8; 300 * 1024]);
+        let value_ptr = write_data(&env, b"new value");
 
         leave_default_data(&env);
 
@@ -493,10 +501,10 @@ mod test {
 
     #[test]
     fn do_write_fails_for_large_value() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, b"new storage key");
-        let value_ptr = write_data(&mut instance, &vec![5u8; 300 * 1024]);
+        let key_ptr = write_data(&env, b"new storage key");
+        let value_ptr = write_data(&env, &vec![5u8; 300 * 1024]);
 
         leave_default_data(&env);
 
@@ -517,10 +525,10 @@ mod test {
 
     #[test]
     fn do_write_is_prohibited_in_readonly_contexts() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, b"new storage key");
-        let value_ptr = write_data(&mut instance, b"new value");
+        let key_ptr = write_data(&env, b"new storage key");
+        let value_ptr = write_data(&env, b"new value");
 
         leave_default_data(&env);
         env.set_storage_readonly(true);
@@ -534,14 +542,26 @@ mod test {
 
     #[test]
     fn do_remove_works() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
         let existing_key = KEY1;
-        let key_ptr = write_data(&mut instance, existing_key);
+        let key_ptr = write_data(&env, existing_key);
 
         leave_default_data(&env);
 
+        env.with_storage_from_context::<_, _>(|store| {
+            println!("{:?}", store);
+            Ok(())
+        })
+        .unwrap();
+
         do_remove::<MS, MQ>(&env, key_ptr).unwrap();
+
+        env.with_storage_from_context::<_, _>(|store| {
+            println!("{:?}", store);
+            Ok(())
+        })
+        .unwrap();
 
         let value = env
             .with_storage_from_context::<_, _>(|store| {
@@ -553,10 +573,10 @@ mod test {
 
     #[test]
     fn do_remove_works_for_non_existent_key() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
         let non_existent_key = b"I do not exist";
-        let key_ptr = write_data(&mut instance, non_existent_key);
+        let key_ptr = write_data(&env, non_existent_key);
 
         leave_default_data(&env);
 
@@ -573,9 +593,9 @@ mod test {
 
     #[test]
     fn do_remove_fails_for_large_key() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, &vec![26u8; 300 * 1024]);
+        let key_ptr = write_data(&env, &vec![26u8; 300 * 1024]);
 
         leave_default_data(&env);
 
@@ -596,9 +616,9 @@ mod test {
 
     #[test]
     fn do_remove_is_prohibited_in_readonly_contexts() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let key_ptr = write_data(&mut instance, b"a storage key");
+        let key_ptr = write_data(&env, b"a storage key");
 
         leave_default_data(&env);
         env.set_storage_readonly(true);
@@ -615,7 +635,7 @@ mod test {
         let (env, mut instance) = make_instance();
         let api = MockApi::default();
 
-        let source_ptr = write_data(&mut instance, b"foo");
+        let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, api.canonical_length as u32);
 
         leave_default_data(&env);
@@ -630,9 +650,9 @@ mod test {
     fn do_canonicalize_address_reports_invalid_input_back_to_contract() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr1 = write_data(&mut instance, b"fo\x80o"); // invalid UTF-8 (fo�o)
-        let source_ptr2 = write_data(&mut instance, b""); // empty
-        let source_ptr3 = write_data(&mut instance, b"addressexceedingaddressspace"); // too long
+        let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
+        let source_ptr2 = write_data(&env, b""); // empty
+        let source_ptr3 = write_data(&env, b"addressexceedingaddressspace"); // too long
         let dest_ptr = create_empty(&mut instance, 8);
 
         leave_default_data(&env);
@@ -658,7 +678,7 @@ mod test {
     fn do_canonicalize_address_fails_for_broken_backend() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr = write_data(&mut instance, b"foo");
+        let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, 7);
 
         leave_default_data(&env);
@@ -679,7 +699,7 @@ mod test {
     fn do_canonicalize_address_fails_for_large_inputs() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr = write_data(&mut instance, &vec![61; 100]);
+        let source_ptr = write_data(&env, &vec![61; 100]);
         let dest_ptr = create_empty(&mut instance, 8);
 
         leave_default_data(&env);
@@ -704,7 +724,7 @@ mod test {
     fn do_canonicalize_address_fails_for_small_destination_region() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr = write_data(&mut instance, b"foo");
+        let source_ptr = write_data(&env, b"foo");
         let dest_ptr = create_empty(&mut instance, 7);
 
         leave_default_data(&env);
@@ -728,7 +748,7 @@ mod test {
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length];
-        let source_ptr = write_data(&mut instance, &source_data);
+        let source_ptr = write_data(&env, &source_data);
         let dest_ptr = create_empty(&mut instance, 50);
 
         leave_default_data(&env);
@@ -743,7 +763,7 @@ mod test {
     fn do_humanize_address_reports_invalid_input_back_to_contract() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr = write_data(&mut instance, b"foo"); // too short
+        let source_ptr = write_data(&env, b"foo"); // too short
         let dest_ptr = create_empty(&mut instance, 50);
 
         leave_default_data(&env);
@@ -759,7 +779,7 @@ mod test {
     fn do_humanize_address_fails_for_broken_backend() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr = write_data(&mut instance, b"foo\0\0\0\0\0");
+        let source_ptr = write_data(&env, b"foo\0\0\0\0\0");
         let dest_ptr = create_empty(&mut instance, 50);
 
         leave_default_data(&env);
@@ -778,7 +798,7 @@ mod test {
     fn do_humanize_address_fails_for_input_too_long() {
         let (env, mut instance) = make_instance();
 
-        let source_ptr = write_data(&mut instance, &vec![61; 33]);
+        let source_ptr = write_data(&env, &vec![61; 33]);
         let dest_ptr = create_empty(&mut instance, 50);
 
         leave_default_data(&env);
@@ -805,7 +825,7 @@ mod test {
         let api = MockApi::default();
 
         let source_data = vec![0x22; api.canonical_length];
-        let source_ptr = write_data(&mut instance, &source_data);
+        let source_ptr = write_data(&env, &source_data);
         let dest_ptr = create_empty(&mut instance, 2);
 
         leave_default_data(&env);
@@ -825,13 +845,13 @@ mod test {
 
     #[test]
     fn do_query_chain_works() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
         let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
             address: HumanAddr::from(INIT_ADDR),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
-        let request_ptr = write_data(&mut instance, &request_data);
+        let request_ptr = write_data(&env, &request_data);
 
         leave_default_data(&env);
 
@@ -848,10 +868,10 @@ mod test {
 
     #[test]
     fn do_query_chain_fails_for_broken_request() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
         let request = b"Not valid JSON for sure";
-        let request_ptr = write_data(&mut instance, request);
+        let request_ptr = write_data(&env, request);
 
         leave_default_data(&env);
 
@@ -871,14 +891,14 @@ mod test {
 
     #[test]
     fn do_query_chain_fails_for_missing_contract() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
         let request: QueryRequest<Empty> = QueryRequest::Wasm(WasmQuery::Smart {
             contract_addr: HumanAddr::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
-        let request_ptr = write_data(&mut instance, &request_data);
+        let request_ptr = write_data(&env, &request_data);
 
         leave_default_data(&env);
 
@@ -951,10 +971,10 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_bound_works() {
-        let (env, mut instance) = make_instance();
+        let (env, _instance) = make_instance();
 
-        let start = write_data(&mut instance, b"anna");
-        let end = write_data(&mut instance, b"bert");
+        let start = write_data(&env, b"anna");
+        let end = write_data(&env, b"bert");
 
         leave_default_data(&env);
 
