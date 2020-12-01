@@ -18,6 +18,7 @@ command -v shellcheck > /dev/null && shellcheck "$0"
   && cargo test --features iterator modules:: \
   && cargo test --features iterator testing:: \
   && cargo test --features iterator instance::tests::call_func_works \
+  && cargo test --features iterator instance::tests::allocate_deallocate_works \
   && cargo test --features iterator instance::tests::get_memory_size_works \
   && cargo test --features iterator instance::tests::read_memory_errors_when_when_length_is_too_long \
   && cargo test --features iterator instance::tests::required_features_works \

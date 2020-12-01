@@ -316,6 +316,7 @@ mod tests {
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
+        mock_instance_with_options, MockInstanceOptions,
     };
     use crate::{call_init, BackendError};
     use cosmwasm_std::{
@@ -386,7 +387,13 @@ mod tests {
 
     #[test]
     fn allocate_deallocate_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance_with_options(
+            &CONTRACT,
+            MockInstanceOptions {
+                memory_limit: Size::mebi(500),
+                ..Default::default()
+            },
+        );
 
         let sizes: Vec<usize> = vec![
             0,
