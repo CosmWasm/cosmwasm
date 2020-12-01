@@ -84,7 +84,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
-        const MEMORY_LIMIT: u32 = 256; // Hmm, is this even used?
+        const MEMORY_LIMIT: Size = Size::mebi(16);
         let module = compile(wasm, MEMORY_LIMIT)?;
         self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
@@ -190,7 +190,7 @@ mod tests {
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 400_000;
-    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
         memory_limit: TESTING_MEMORY_LIMIT,

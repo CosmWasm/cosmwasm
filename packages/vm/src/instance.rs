@@ -18,6 +18,7 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
+use crate::size::Size;
 use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
 
 #[derive(Copy, Clone, Debug)]
@@ -36,8 +37,8 @@ pub struct GasReport {
 #[derive(Copy, Clone, Debug)]
 pub struct InstanceOptions {
     pub gas_limit: u64,
-    /// Memory limit in Wasm pages (64 KiB per page)
-    pub memory_limit: u32,
+    /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
+    pub memory_limit: Size,
     pub print_debug: bool,
 }
 

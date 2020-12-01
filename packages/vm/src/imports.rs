@@ -275,6 +275,7 @@ mod test {
 
     use crate::backend::{BackendError, Storage};
     use crate::context::move_into_context;
+    use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
 
@@ -297,7 +298,7 @@ mod test {
     const INIT_DENOM: &str = "TOKEN";
 
     const GAS_LIMIT: u64 = 5_000_000;
-    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let env = Env::new(GAS_LIMIT);

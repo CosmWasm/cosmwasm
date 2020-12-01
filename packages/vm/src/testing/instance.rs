@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::{Instance, InstanceOptions};
+use crate::size::Size;
 use crate::{Api, Backend, Querier, Storage};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
@@ -14,7 +15,7 @@ use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
 const DEFAULT_GAS_LIMIT: u64 = 500_000;
-const DEFAULT_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(16);
 const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
@@ -84,6 +85,8 @@ pub struct MockInstanceOptions<'a> {
     pub supported_features: HashSet<String>,
     pub gas_limit: u64,
     pub print_debug: bool,
+    /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
+    pub memory_limit: Size,
 }
 
 impl Default for MockInstanceOptions<'_> {
@@ -98,6 +101,7 @@ impl Default for MockInstanceOptions<'_> {
             supported_features: features_from_csv("staking"),
             gas_limit: DEFAULT_GAS_LIMIT,
             print_debug: DEFAULT_PRINT_DEBUG,
+            memory_limit: DEFAULT_MEMORY_LIMIT,
         }
     }
 }
@@ -132,7 +136,7 @@ pub fn mock_instance_with_options(
     };
     let options = InstanceOptions {
         gas_limit: options.gas_limit,
-        memory_limit: DEFAULT_MEMORY_LIMIT,
+        memory_limit: options.memory_limit,
         print_debug: options.print_debug,
     };
     Instance::from_code(wasm, backend, options).unwrap()

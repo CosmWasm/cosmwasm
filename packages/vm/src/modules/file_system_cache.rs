@@ -12,6 +12,7 @@ use wasmer::Module;
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
+use crate::size::Size;
 use crate::wasm_backend::make_store_headless;
 
 /// Bump this version whenever the module system changes in a way
@@ -67,7 +68,7 @@ impl FileSystemCache {
         }
     }
 
-    pub fn load(&self, checksum: &Checksum, memory_limit: u32) -> VmResult<Option<Module>> {
+    pub fn load(&self, checksum: &Checksum, memory_limit: Size) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
         let file_path = self
             .path
@@ -120,7 +121,7 @@ mod tests {
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance};
 
-    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     #[test]
     fn test_file_system_cache_run() {

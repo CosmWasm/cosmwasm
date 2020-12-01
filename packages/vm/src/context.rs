@@ -285,6 +285,7 @@ mod test {
     use super::*;
     use crate::backend::Storage;
     use crate::errors::VmError;
+    use crate::size::Size;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::wasm_backend::{compile, decrease_gas_left, set_gas_left};
     use cosmwasm_std::{
@@ -308,12 +309,12 @@ mod test {
 
     const GAS_LIMIT: u64 = 5_000_000;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    const MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let env = Env::new(GAS_LIMIT);
 
-        let module = compile(&CONTRACT, MEMORY_LIMIT).unwrap();
+        let module = compile(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {

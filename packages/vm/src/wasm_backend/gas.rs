@@ -65,6 +65,7 @@ pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::size::Size;
     use crate::testing::{MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
     use std::ptr::NonNull;
@@ -74,7 +75,7 @@ mod test {
     type MQ = MockQuerier;
     const GAS_LIMIT: u64 = 5_000_000;
     const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
-    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let env = Env::new(GAS_LIMIT);

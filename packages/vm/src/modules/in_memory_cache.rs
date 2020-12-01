@@ -36,7 +36,7 @@ mod tests {
     use crate::wasm_backend::compile;
     use wasmer::{imports, Instance as WasmerInstance};
 
-    const TESTING_MEMORY_LIMIT: u32 = 256; // 256 pages = 16 MiB
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     #[test]
     fn test_in_memory_cache_run() {
