@@ -6,6 +6,7 @@ command -v shellcheck > /dev/null && shellcheck "$0"
 (cd packages/vm \
   && cargo check --tests \
   && cargo check --features iterator --tests \
+  && cargo test --features iterator calls:: \
   && cargo test --features iterator checksum:: \
   && cargo test --features iterator conversion:: \
   && cargo test --features iterator compatibility \
