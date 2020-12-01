@@ -63,7 +63,8 @@ pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
 // }
 
 #[cfg(test)]
-mod test {
+#[cfg(feature = "metering")]
+mod tests {
     use super::*;
     use crate::size::Size;
     use crate::testing::{MockQuerier, MockStorage};
