@@ -173,3 +173,61 @@ fn call_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance.deallocate(res_region_ptr)?;
     Ok(data)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testing::{mock_env, mock_info, mock_instance};
+    use cosmwasm_std::{coins, Empty};
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+
+    #[test]
+    fn call_init_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_handle_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // handle
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"release":{}}"#;
+        call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_query_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // query
+        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let query_response = contract_result.unwrap();
+        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    }
+}
