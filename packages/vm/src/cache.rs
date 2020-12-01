@@ -178,7 +178,7 @@ fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResul
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;

@@ -308,7 +308,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::backend::Storage;
     use crate::errors::VmError;
