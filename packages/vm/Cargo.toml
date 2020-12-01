@@ -22,6 +22,7 @@ backtraces = []
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
+metering = []
 
 [dependencies]
 clru = "0.2.0"

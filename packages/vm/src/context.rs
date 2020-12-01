@@ -287,11 +287,13 @@ mod test {
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockQuerier, MockStorage};
-    use crate::wasm_backend::{compile, decrease_gas_left, set_gas_left};
+    #[cfg(feature = "metering")]
+    use crate::wasm_backend::decrease_gas_left;
+    use crate::wasm_backend::{compile, set_gas_left};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
-    use wasmer::imports;
+    use wasmer::{imports, Function, FunctionType, Instance as WasmerInstance, Type, Val};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -315,18 +317,25 @@ mod test {
         let env = Env::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
+        let store = module.store();
+        let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
+        let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
+        let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
+        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
+        let i32i32i32_to_i32 =
+            FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                // "db_read" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
-                // "db_write" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| {}),
-                // "db_remove" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
-                // "db_scan" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32, _c: i32| -> u32 { 0 }),
-                // "db_next" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
-                // "query_chain" => Func::new(|_ctx: &mut Ctx, _a: u32| -> u32 { 0 }),
-                // "canonicalize_address" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| -> u32 { 0 }),
-                // "humanize_address" => Func::new(|_ctx: &mut Ctx, _a: u32, _b: u32| -> u32 { 0 }),
-                // "debug" => Func::new(|_ctx: &mut Ctx, _a: u32| {}),
+                "db_read" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "db_write" => Function::new(store, &i32i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
+                "db_remove" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
+                "db_scan" => Function::new(store, &i32i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "db_next" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "query_chain" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "canonicalize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "humanize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "debug" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
@@ -395,6 +404,7 @@ mod test {
     }
 
     #[test]
+    #[cfg(feature = "metering")]
     fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
         let (env, _instance) = make_instance();
 
@@ -486,10 +496,7 @@ mod test {
         });
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
-                assert_eq!(
-                    msg,
-                    "Wasmer resolve error: ExportNotFound { name: \"doesnt_exist\" }"
-                );
+                assert_eq!(msg, "Could not get export: Missing(\"doesnt_exist\")");
             }
             err => panic!("Unexpected error: {:?}", err),
         }
