@@ -7,8 +7,7 @@ workflows:
       - package_schema
       - package_std
       - package_storage
-      - package_vm_cranelift
-      - package_vm_singlepass
+      - package_vm
       - contract_burner
       - contract_hackatom
       - contract_hackatom_in_singlepass_vm
@@ -144,34 +143,7 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_storage-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
-  package_vm_cranelift:
-    docker:
-      - image: rust:1.47.0
-    steps:
-      - checkout
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Build
-          working_directory: ~/project/packages/vm
-          command: cargo build --locked --no-default-features --features default-cranelift,iterator
-      - run:
-          name: Test
-          working_directory: ~/project/packages/vm
-          command: cargo test --locked --no-default-features --features default-cranelift,iterator
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
-
-  package_vm_singlepass:
+  package_vm:
     docker:
       - image: rustlang/rust:nightly
     steps:
@@ -181,7 +153,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_vm-rust:nightly-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -204,7 +176,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_vm-rust:nightly-{{ checksum "Cargo.lock" }}
 
   contract_burner:
     docker:
