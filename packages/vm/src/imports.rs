@@ -899,7 +899,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_works() {
-        let (env, _) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
         // set up iterator over all space
@@ -925,7 +925,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_unbound_descending_works() {
-        let (env, _) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
         // set up iterator over all space
@@ -974,7 +974,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_multiple_iterators() {
-        let (env, _) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
         // unbounded, ascending and descending
@@ -1017,7 +1017,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_scan_errors_for_invalid_order_value() {
-        let (env, _) = make_instance();
+        let (env, _instance) = make_instance();
         leave_default_data(&env);
 
         // set up iterator over all space
@@ -1033,7 +1033,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_next_works() {
-        let (env, _) = make_instance();
+        let (env, _instance) = make_instance();
 
         leave_default_data(&env);
 
@@ -1062,7 +1062,7 @@ mod test {
     #[test]
     #[cfg(feature = "iterator")]
     fn do_next_fails_for_non_existent_id() {
-        let (env, _) = make_instance();
+        let (env, _instance) = make_instance();
 
         leave_default_data(&env);
 
