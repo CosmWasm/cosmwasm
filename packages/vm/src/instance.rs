@@ -312,15 +312,19 @@ where
 mod tests {
     use super::*;
     use crate::backend::Storage;
+    use crate::call_init;
     use crate::errors::VmError;
+    #[cfg(feature = "metering")]
+    use crate::testing::mock_instance_with_gas_limit;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
-        mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
-        mock_instance_with_options, MockInstanceOptions,
+        mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_options,
+        MockInstanceOptions,
     };
-    use crate::{call_init, BackendError};
+    #[cfg(feature = "metering")]
+    use cosmwasm_std::coins;
     use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
+        coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
     };
 
@@ -445,7 +449,7 @@ mod tests {
     }
 
     #[test]
-    fn errors_in_imports_are_unwrapped_from_wasmer_errors() {
+    fn errors_in_imports() {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
         let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
@@ -456,13 +460,9 @@ mod tests {
             b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
         );
 
-        // in this case we get a `VmError::BackendErr` rather than a `VmError::RuntimeErr` because the conversion
-        // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
         match init_result.unwrap_err() {
-            VmError::BackendErr {
-                source: BackendError::Unknown { msg, .. },
-            } if msg == Some(error_message.to_string()) => {}
-            other => panic!("unexpected error: {:?}", other),
+            VmError::RuntimeErr { msg, .. } => assert!(msg.contains(error_message)),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -513,6 +513,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "metering")]
     fn set_get_and_gas() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
@@ -520,6 +521,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "metering")]
     fn create_gas_report_works() {
         const LIMIT: u64 = 7_000_000;
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
@@ -717,7 +719,8 @@ mod tests {
 }
 
 #[cfg(test)]
-mod singlepass_test {
+#[cfg(feature = "metering")]
+mod singlepass_tests {
     use cosmwasm_std::{coins, Empty};
 
     use crate::calls::{call_handle, call_init, call_query};

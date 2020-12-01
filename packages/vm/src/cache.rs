@@ -475,6 +475,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "metering")]
     fn resets_gas_when_reusing_instance() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
@@ -506,6 +507,7 @@ mod tests {
     }
 
     #[test]
+    #[cfg(feature = "metering")]
     fn recovers_from_out_of_gas() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
