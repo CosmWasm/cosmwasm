@@ -364,15 +364,23 @@ mod test {
         let instance = mock_instance(&CONTRACT, &[]);
 
         // can call function few times
-        let _ptr1 = instance
+        let result = instance
             .call_function("allocate", &[0u32.into()])
             .expect("error calling allocate");
-        let _ptr2 = instance
+        assert_eq!(result.len(), 1);
+        assert_ne!(result[0].unwrap_i32(), 0);
+
+        let result = instance
             .call_function("allocate", &[1u32.into()])
             .expect("error calling allocate");
-        let _ptr3 = instance
+        assert_eq!(result.len(), 1);
+        assert_ne!(result[0].unwrap_i32(), 0);
+
+        let result = instance
             .call_function("allocate", &[33u32.into()])
             .expect("error calling allocate");
+        assert_eq!(result.len(), 1);
+        assert_ne!(result[0].unwrap_i32(), 0);
     }
 
     #[test]
