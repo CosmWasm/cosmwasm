@@ -3,7 +3,7 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{Function, Instance as WasmerInstance, Memory};
+use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, WasmerEnv};
 
 use crate::backend::{GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
@@ -70,6 +70,12 @@ impl<S: Storage, Q: Querier> Clone for Env<S, Q> {
         Env {
             data: self.data.clone(),
         }
+    }
+}
+
+impl<S: Storage, Q: Querier> WasmerEnv for Env<S, Q> {
+    fn init_with_instance(&mut self, _instance: &WasmerInstance) -> Result<(), HostEnvInitError> {
+        Ok(())
     }
 }
 
