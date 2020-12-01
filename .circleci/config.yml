@@ -534,23 +534,11 @@ jobs:
   clippy:
     docker:
       - image: rust:1.47.0
-    environment:
-      # Make sure to choose version with clippy present: https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
-      NIGHTLY_TOOLCHAIN: nightly-2020-09-08
     steps:
       - checkout
       - run:
-          name: Install Rust nightly
-          command: |
-            rustup --version
-            rustup toolchain install $NIGHTLY_TOOLCHAIN --allow-downgrade --profile minimal --component clippy
-            rustup target list --installed
-      - run:
-          name: Version information (default; stable)
+          name: Version information
           command: rustc --version && cargo --version
-      - run:
-          name: Version information (nightly)
-          command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
             - cargocache-v2-clippy-rust:1.47.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
@@ -581,21 +569,13 @@ jobs:
           working_directory: ~/project/packages/storage
           command: cargo clippy --features iterator -- -D warnings
       - run:
-          name: Clippy linting on vm (singlepass; no feature flags)
+          name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy -- -D warnings
+          command: cargo clippy -- -D warnings
       - run:
-          name: Clippy linting on vm (singlepass; all feature flags)
+          name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy --features iterator -- -D warnings
-      - run:
-          name: Clippy linting on vm (cranelift; no feature flags)
-          working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy --no-default-features --features default-cranelift -- -D warnings
-      - run:
-          name: Clippy linting on vm (cranelift; all feature flags)
-          working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy --no-default-features --features default-cranelift,iterator -- -D warnings
+          command: cargo clippy --features iterator -- -D warnings
       #
       # Contracts
       #
