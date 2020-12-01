@@ -14,7 +14,6 @@ pull_request_rules:
       - "status-success=ci/circleci: package_vm"
       - "status-success=ci/circleci: contract_burner"
       - "status-success=ci/circleci: contract_hackatom"
-      - "status-success=ci/circleci: contract_hackatom_in_singlepass_vm"
       - "status-success=ci/circleci: contract_queue"
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"

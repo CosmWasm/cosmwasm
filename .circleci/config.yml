@@ -10,7 +10,6 @@ workflows:
       - package_vm
       - contract_burner
       - contract_hackatom
-      - contract_hackatom_in_singlepass_vm
       - contract_queue
       - contract_reflect
       - contract_staking
@@ -275,41 +274,6 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_hackatom-rust:1.47.0-{{ checksum "Cargo.lock" }}
-
-  # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
-  # Avoid duplicating generic checks like unit tests or schema generation – they belong in the generic hackatom job.
-  contract_hackatom_in_singlepass_vm:
-    docker:
-      - image: rustlang/rust:nightly
-    working_directory: ~/cosmwasm/contracts/hackatom
-    steps:
-      - checkout:
-          path: ~/cosmwasm
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - cargocache-v2-contract_hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Integration tests
-          command: cargo integration-test --no-default-features --features singlepass --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-            - target/wasm32-unknown-unknown/release/.fingerprint
-            - target/wasm32-unknown-unknown/release/build
-            - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:
