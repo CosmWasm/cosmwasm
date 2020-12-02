@@ -38,3 +38,31 @@ jobs:
         run: cargo unit-test --locked
       - name: Integration Test hackatom
         run: cargo integration-test --locked
+  test-hackatom-in-singlepass-vm:
+    name: ${{ matrix.build }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - build: macOS
+            os: macOS-latest
+          - build: Windows
+            os: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./contracts/hackatom
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Install rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly
+          target: wasm32-unknown-unknown
+          profile: minimal
+          override: true
+      - name: Build hackatom wasm
+        run: cargo wasm --locked
+      - name: Integration Test hackatom
+        run: cargo integration-test --no-default-features --features singlepass --locked
