@@ -7,7 +7,7 @@ on:
 
 jobs:
   test-hackatom:
-    name: ${{ matrix.build }}
+    name: Rust stable on ${{ matrix.build }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -39,15 +39,13 @@ jobs:
       - name: Integration Test hackatom
         run: cargo integration-test --locked
   test-hackatom-in-singlepass-vm:
-    name: ${{ matrix.build }}
+    name: Rust nightly on ${{ matrix.build }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
           - build: macOS
             os: macOS-latest
-          - build: Windows
-            os: windows-latest
     defaults:
       run:
         shell: bash
