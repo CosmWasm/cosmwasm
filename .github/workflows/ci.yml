@@ -27,7 +27,7 @@ jobs:
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
-      - name: Install rust
+      - name: Install Rust
         uses: actions-rs/toolchain@v1
         with:
           toolchain: 1.47.0
