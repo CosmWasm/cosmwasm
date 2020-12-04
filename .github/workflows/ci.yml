@@ -41,3 +41,5 @@ jobs:
         run: cargo unit-test --locked
       - name: Integration Test hackatom
         run: cargo integration-test --locked
+        env:
+          RUST_BACKTRACE: 1
