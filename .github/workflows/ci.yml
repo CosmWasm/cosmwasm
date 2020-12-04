@@ -1,4 +1,4 @@
-name: CI
+name: Contract Development
 
 on: 
   pull_request:
