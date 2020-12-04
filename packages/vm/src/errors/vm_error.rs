@@ -141,20 +141,20 @@ impl From<wasmer::ExportError> for VmError {
     }
 }
 
-impl From<wasmer_engine::SerializeError> for VmError {
-    fn from(original: wasmer_engine::SerializeError) -> Self {
+impl From<wasmer::SerializeError> for VmError {
+    fn from(original: wasmer::SerializeError) -> Self {
         VmError::cache_err(format!("Could not serialize module: {:?}", original))
     }
 }
 
-impl From<wasmer_engine::DeserializeError> for VmError {
-    fn from(original: wasmer_engine::DeserializeError) -> Self {
+impl From<wasmer::DeserializeError> for VmError {
+    fn from(original: wasmer::DeserializeError) -> Self {
         VmError::cache_err(format!("Could not deserialize module: {:?}", original))
     }
 }
 
-impl From<wasmer_engine::RuntimeError> for VmError {
-    fn from(original: wasmer_engine::RuntimeError) -> Self {
+impl From<wasmer::RuntimeError> for VmError {
+    fn from(original: wasmer::RuntimeError) -> Self {
         VmError::runtime_err(format!("Wasmer runtime error: {:?}", original))
     }
 }
@@ -177,10 +177,10 @@ impl From<std::convert::Infallible> for VmError {
     }
 }
 
-impl From<VmError> for wasmer_engine::RuntimeError {
-    fn from(original: VmError) -> wasmer_engine::RuntimeError {
+impl From<VmError> for wasmer::RuntimeError {
+    fn from(original: VmError) -> wasmer::RuntimeError {
         let msg: String = original.to_string();
-        wasmer_engine::RuntimeError::new(msg)
+        wasmer::RuntimeError::new(msg)
     }
 }
 
