@@ -164,7 +164,6 @@ dependencies = [
  "wasmer-compiler-singlepass",
  "wasmer-engine",
  "wasmer-engine-jit",
- "wasmer-types",
  "wat",
 ]
 

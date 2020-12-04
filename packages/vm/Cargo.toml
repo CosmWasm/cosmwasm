@@ -41,7 +41,6 @@ wasmer-compiler = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-bet
 wasmer-compiler-singlepass = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-beta1" }
 wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-beta1" }
 wasmer-engine-jit = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-beta1" }
-wasmer-types = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-beta1" }
 
 # Wasmer local (used for quick local debugging or patching)
 # wasmer = { path = "../../../wasmer/lib/api" }
@@ -49,7 +48,6 @@ wasmer-types = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.0-beta1"
 # wasmer-compiler-singlepass = { path = "../../../wasmer/lib/compiler-singlepass" }
 # wasmer-engine = { path = "../../../wasmer/lib/engine" }
 # wasmer-engine-jit = { path = "../../../wasmer/lib/engine-jit" }
-# wasmer-types = { path = "../../../wasmer/lib/wasmer-types" }
 
 [dev-dependencies]
 tempfile = "3.1.0"
