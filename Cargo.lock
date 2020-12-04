@@ -161,9 +161,7 @@ dependencies = [
  "thiserror",
  "wasmer",
  "wasmer-compiler",
- "wasmer-compiler-singlepass",
  "wasmer-engine",
- "wasmer-engine-jit",
  "wat",
 ]
 

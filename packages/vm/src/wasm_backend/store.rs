@@ -1,7 +1,5 @@
-use wasmer::{Bytes, Pages, Store, Target, Tunables as ReferenceTunables};
-use wasmer_compiler_singlepass::Singlepass;
+use wasmer::{Bytes, Pages, Singlepass, Store, Target, Tunables as ReferenceTunables, JIT};
 use wasmer_engine::{Engine, Tunables};
-use wasmer_engine_jit::JIT;
 
 use crate::size::Size;
 
