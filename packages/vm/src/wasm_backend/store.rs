@@ -1,5 +1,5 @@
-use wasmer::{Bytes, Pages, Singlepass, Store, Target, Tunables as ReferenceTunables, JIT};
-use wasmer_engine::{Engine, Tunables};
+use wasmer::{Bytes, Engine, Pages, Singlepass, Store, Target, Tunables as ReferenceTunables, JIT};
+use wasmer_engine::Tunables; // See https://github.com/wasmerio/wasmer/issues/1872
 
 use crate::size::Size;
 
