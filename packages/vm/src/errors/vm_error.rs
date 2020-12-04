@@ -159,8 +159,8 @@ impl From<wasmer::RuntimeError> for VmError {
     }
 }
 
-impl From<wasmer_compiler::CompileError> for VmError {
-    fn from(original: wasmer_compiler::CompileError) -> Self {
+impl From<wasmer::CompileError> for VmError {
+    fn from(original: wasmer::CompileError) -> Self {
         VmError::compile_err(format!("Could not compile: {:?}", original))
     }
 }
