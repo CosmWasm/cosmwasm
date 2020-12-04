@@ -1,0 +1,42 @@
+name: Contract Development
+
+on: 
+  pull_request:
+    branches:
+      - master
+  push:
+    branches:
+      - master
+      - 0.[0-9]+
+
+jobs:
+  test-hackatom:
+    name: ${{ matrix.build }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - build: macOS
+            os: macOS-latest
+          - build: Windows
+            os: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: ./contracts/hackatom
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: 1.47.0
+          target: wasm32-unknown-unknown
+          profile: minimal
+          override: true
+      - name: Build hackatom wasm
+        run: cargo wasm --locked
+      - name: Unit Test hackatom
+        run: cargo unit-test --locked
+      - name: Integration Test hackatom
+        run: cargo integration-test --locked
