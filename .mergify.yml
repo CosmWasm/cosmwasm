@@ -21,6 +21,9 @@ pull_request_rules:
       - "status-success=ci/circleci: contract_staking"
       - "status-success=ci/circleci: fmt"
       - "status-success=ci/circleci: clippy"
+      - "status-success=Windows"
+      - "status-success=macOS"
+
     actions:
       merge:
         method: merge
