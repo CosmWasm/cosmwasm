@@ -36,8 +36,6 @@ jobs:
           override: true
       - name: Build hackatom wasm
         run: cargo wasm --locked
-      - name: Check hackatom
-        run: cargo check --locked --tests
       - name: Unit Test hackatom
         run: cargo unit-test --locked
       - name: Integration Test hackatom
