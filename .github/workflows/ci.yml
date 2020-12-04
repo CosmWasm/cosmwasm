@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - master
+      - upgrade-to-wasmer-reborn
   push:
     branches:
       - master
