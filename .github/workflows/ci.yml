@@ -11,7 +11,7 @@ on:
 
 jobs:
   test-hackatom:
-    name: Rust stable on ${{ matrix.build }}
+    name: ${{ matrix.build }}
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
