@@ -8,7 +8,7 @@ use super::limiting_tunables::LimitingTunables;
 /// Created a store with the default compiler and the given memory limit (in pages)
 pub fn make_store(memory_limit: Size) -> Store {
     let compiler = Singlepass::default();
-    let engine = JIT::new(&compiler).engine();
+    let engine = JIT::new(compiler).engine();
     make_store_with_engine(&engine, memory_limit)
 }
 
