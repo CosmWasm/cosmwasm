@@ -137,31 +137,31 @@ impl From<BackendError> for VmError {
 
 impl From<wasmer::ExportError> for VmError {
     fn from(original: wasmer::ExportError) -> Self {
-        VmError::resolve_err(format!("Could not get export: {:?}", original))
+        VmError::resolve_err(format!("Could not get export: {}", original))
     }
 }
 
 impl From<wasmer::SerializeError> for VmError {
     fn from(original: wasmer::SerializeError) -> Self {
-        VmError::cache_err(format!("Could not serialize module: {:?}", original))
+        VmError::cache_err(format!("Could not serialize module: {}", original))
     }
 }
 
 impl From<wasmer::DeserializeError> for VmError {
     fn from(original: wasmer::DeserializeError) -> Self {
-        VmError::cache_err(format!("Could not deserialize module: {:?}", original))
+        VmError::cache_err(format!("Could not deserialize module: {}", original))
     }
 }
 
 impl From<wasmer::RuntimeError> for VmError {
     fn from(original: wasmer::RuntimeError) -> Self {
-        VmError::runtime_err(format!("Wasmer runtime error: {:?}", original))
+        VmError::runtime_err(format!("Wasmer runtime error: {}", original))
     }
 }
 
 impl From<wasmer::CompileError> for VmError {
     fn from(original: wasmer::CompileError) -> Self {
-        VmError::compile_err(format!("Could not compile: {:?}", original))
+        VmError::compile_err(format!("Could not compile: {}", original))
     }
 }
 

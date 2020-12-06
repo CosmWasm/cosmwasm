@@ -496,7 +496,7 @@ mod test {
         });
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
-                assert_eq!(msg, "Could not get export: Missing(\"doesnt_exist\")");
+                assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
             }
             err => panic!("Unexpected error: {:?}", err),
         }
