@@ -216,6 +216,8 @@ jobs:
   contract_burner:
     docker:
       - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/burner
     steps:
       - checkout:
@@ -234,7 +236,6 @@ jobs:
           command: cargo wasm --locked
       - run:
           name: Unit tests
-          env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
           name: Integration tests (cranelift backend)
@@ -268,6 +269,8 @@ jobs:
   contract_hackatom:
     docker:
       - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/hackatom
     steps:
       - checkout:
@@ -286,7 +289,6 @@ jobs:
           command: cargo wasm --locked
       - run:
           name: Unit tests
-          env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
           name: Integration tests (cranelift backend)
@@ -320,6 +322,8 @@ jobs:
   contract_queue:
     docker:
       - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/queue
     steps:
       - checkout:
@@ -338,7 +342,6 @@ jobs:
           command: cargo wasm --locked
       - run:
           name: Unit tests
-          env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
           name: Integration tests (cranelift backend)
@@ -372,6 +375,8 @@ jobs:
   contract_reflect:
     docker:
       - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/reflect
     steps:
       - checkout:
@@ -390,7 +395,6 @@ jobs:
           command: cargo wasm --locked
       - run:
           name: Unit tests
-          env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
           name: Integration tests (cranelift backend)
@@ -424,6 +428,8 @@ jobs:
   contract_staking:
     docker:
       - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
     working_directory: ~/cosmwasm/contracts/staking
     steps:
       - checkout:
@@ -442,7 +448,6 @@ jobs:
           command: cargo wasm --locked
       - run:
           name: Unit tests
-          env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
           name: Integration tests (cranelift backend)

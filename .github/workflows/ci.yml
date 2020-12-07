@@ -9,6 +9,9 @@ on:
       - master
       - 0.[0-9]+
 
+env:
+  RUST_BACKTRACE: 1
+
 jobs:
   test-hackatom:
     name: ${{ matrix.build }}
