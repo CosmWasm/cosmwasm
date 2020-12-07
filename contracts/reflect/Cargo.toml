@@ -24,7 +24,10 @@ incremental = false
 overflow-checks = true
 
 [features]
-default = []
+# Change this to [] if you don't need Windows support and want faster integration tests.
+default = ["cranelift"]
+# Use cranelift backend instead of singlepass. This is required for development on Windows.
+cranelift = ["cosmwasm-vm/cranelift"]
 # for quicker tests, cargo test --lib
 # for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]

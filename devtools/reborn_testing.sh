@@ -6,6 +6,8 @@ command -v shellcheck > /dev/null && shellcheck "$0"
 (cd packages/vm \
   && cargo check --tests \
   && cargo check --features iterator --tests \
+  && cargo check --features cranelift --tests \
+  && cargo check --features cranelift,iterator --tests \
   && cargo test --features iterator calls:: \
   && cargo test --features iterator checksum:: \
   && cargo test --features iterator context:: \
@@ -25,5 +27,8 @@ command -v shellcheck > /dev/null && shellcheck "$0"
 
 # Contracts
 for contract_dir in contracts/*/; do
-  (cd "$contract_dir" && cargo wasm && cargo integration-test) || break;
+  # 1. Build Wasm
+  # 2. Run in Cranelift
+  # 3. Run in Singlepass (fails on Windows)
+  (cd "$contract_dir" && cargo wasm && cargo integration-test && cargo integration-test --no-default-features) || break;
 done

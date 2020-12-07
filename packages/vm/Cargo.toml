@@ -23,6 +23,8 @@ backtraces = []
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
 metering = []
+# Use cranelift backend instead of singlepass. This is required for development on Windows.
+cranelift = ["wasmer/cranelift"]
 
 [dependencies]
 clru = "0.2.0"

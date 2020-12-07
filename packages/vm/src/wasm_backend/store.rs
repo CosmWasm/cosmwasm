@@ -1,4 +1,8 @@
-use wasmer::{Bytes, Engine, Pages, Singlepass, Store, Target, Tunables as ReferenceTunables, JIT};
+#[cfg(feature = "cranelift")]
+use wasmer::Cranelift;
+#[cfg(not(feature = "cranelift"))]
+use wasmer::Singlepass;
+use wasmer::{Bytes, Engine, Pages, Store, Target, Tunables as ReferenceTunables, JIT};
 use wasmer_engine::Tunables; // See https://github.com/wasmerio/wasmer/issues/1872
 
 use crate::size::Size;
@@ -7,9 +11,19 @@ use super::limiting_tunables::LimitingTunables;
 
 /// Created a store with the default compiler and the given memory limit (in pages)
 pub fn make_store(memory_limit: Size) -> Store {
-    let compiler = Singlepass::default();
-    let engine = JIT::new(compiler).engine();
-    make_store_with_engine(&engine, memory_limit)
+    #[cfg(feature = "cranelift")]
+    {
+        let compiler = Cranelift::default();
+        let engine = JIT::new(compiler).engine();
+        make_store_with_engine(&engine, memory_limit)
+    }
+
+    #[cfg(not(feature = "cranelift"))]
+    {
+        let compiler = Singlepass::default();
+        let engine = JIT::new(compiler).engine();
+        make_store_with_engine(&engine, memory_limit)
+    }
 }
 
 /// Created a store with no compiler and the given memory limit (in pages)

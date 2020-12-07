@@ -8,6 +8,7 @@ workflows:
       - package_std
       - package_storage
       - package_vm
+      - package_vm_cranelift
       - contract_burner
       - contract_hackatom
       - contract_queue
@@ -177,6 +178,41 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_vm-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
+  package_vm_cranelift:
+    docker:
+      - image: rust:1.47.0
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/vm
+          command: cargo build --locked --features cranelift
+      - run:
+          name: Build with iterator
+          working_directory: ~/project/packages/vm
+          command: cargo build --locked --features cranelift,iterator
+      - run:
+          name: Test
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features cranelift
+      - run:
+          name: Test with iterator
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features cranelift,iterator
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
+
   contract_burner:
     docker:
       - image: rust:1.47.0
@@ -201,8 +237,11 @@ jobs:
           env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -250,8 +289,11 @@ jobs:
           env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -299,8 +341,11 @@ jobs:
           env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -348,8 +393,11 @@ jobs:
           env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -397,8 +445,11 @@ jobs:
           env: RUST_BACKTRACE=1
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -511,7 +562,7 @@ jobs:
       - run:
           name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --features iterator -- -D warnings
+          command: cargo clippy --features cranelift,iterator -- -D warnings
       #
       # Contracts
       #
