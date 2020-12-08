@@ -255,6 +255,7 @@ impl<'a> QuerierWrapper<'a> {
 mod test {
     use super::*;
     use crate::mock::MockQuerier;
+    use crate::{coins, from_slice, Uint128};
 
     // this is a simple demo helper to prove we can use it
     fn demo_helper(_querier: &dyn Querier) -> u64 {
@@ -274,5 +275,23 @@ mod test {
         // call with explicit deref
         let res = demo_helper(wrapper.deref());
         assert_eq!(2, res);
+    }
+
+    #[test]
+    fn auto_deref_raw_query() {
+        let acct = HumanAddr::from("foobar");
+        let querier: MockQuerier<Empty> = MockQuerier::new(&[(&acct, &coins(5, "BTC"))]);
+        let wrapper = QuerierWrapper::new(&querier);
+        let query = QueryRequest::<Empty>::Bank(BankQuery::Balance {
+            address: acct,
+            denom: "BTC".to_string(),
+        });
+
+        let raw = wrapper
+            .raw_query(&to_vec(&query).unwrap())
+            .unwrap()
+            .unwrap();
+        let balance: BalanceResponse = from_slice(&raw).unwrap();
+        assert_eq!(balance.amount.amount, Uint128(5));
     }
 }
