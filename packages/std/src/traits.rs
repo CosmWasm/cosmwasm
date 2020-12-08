@@ -17,6 +17,7 @@ use crate::query::{
 use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
 use crate::types::Empty;
+use std::ops::Deref;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`
@@ -85,6 +86,14 @@ pub trait Querier {
 
 #[derive(Copy, Clone)]
 pub struct QuerierWrapper<'a>(&'a dyn Querier);
+
+impl<'a> Deref for QuerierWrapper<'a> {
+    type Target = dyn Querier + 'a;
+
+    fn deref(&self) -> &Self::Target {
+        self.0
+    }
+}
 
 impl<'a> QuerierWrapper<'a> {
     pub fn new(querier: &'a dyn Querier) -> Self {
@@ -244,5 +253,31 @@ impl<'a> QuerierWrapper<'a> {
         .into();
         let res: DelegationResponse = self.query(&request)?;
         Ok(res.delegation)
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+    use crate::mock::MockQuerier;
+
+    // this is a simple demo helper to prove we can use it
+    fn demo_helper(_querier: &dyn Querier) -> u64 {
+        2
+    }
+
+    // this just needs to compile to prove we can use it
+    #[test]
+    fn use_querier_wrapper_as_querier() {
+        let querier: MockQuerier<Empty> = MockQuerier::new(&[]);
+        let wrapper = QuerierWrapper::new(&querier);
+
+        // call with deref shortcut
+        let res = demo_helper(&*wrapper);
+        assert_eq!(2, res);
+
+        // call with explicit deref
+        let res = demo_helper(wrapper.deref());
+        assert_eq!(2, res);
     }
 }
