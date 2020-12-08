@@ -678,11 +678,11 @@ jobs:
       - run:
           name: Run benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN bench --no-default-features --features singlepass,default-singlepass
+          command: cargo +$NIGHTLY_TOOLCHAIN bench --no-default-features --features singlepass,default-singlepass -- --save-baseline singlepass
       - run:
           name: Run benchmarks (Cranelift)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN bench --no-default-features --features cranelift,default-cranelift
+          command: cargo +$NIGHTLY_TOOLCHAIN bench --no-default-features --features cranelift,default-cranelift -- --save-baseline cranelift
       - save_cache:
           paths:
             - /usr/local/cargo/registry
