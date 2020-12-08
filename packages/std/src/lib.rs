@@ -31,6 +31,7 @@ pub use crate::query::{
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
+#[allow(deprecated)]
 pub use crate::results::{
     attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
     InitResponse, InitResult, MigrateResponse, MigrateResult, QueryResponse, QueryResult,
