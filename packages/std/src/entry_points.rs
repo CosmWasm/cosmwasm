@@ -39,7 +39,7 @@
 /// #   Ok(Default::default())
 /// }
 /// ```
-/// Where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`
+/// where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`.
 ///
 /// # Example
 ///
@@ -99,14 +99,14 @@ macro_rules! create_entry_points {
 /// # type MigrateMsg = ();
 /// pub fn migrate(
 ///     deps: DepsMut,
-///     _env: Env,
-///     _info: MessageInfo,
+///     env: Env,
+///     info: MessageInfo,
 ///     msg: MigrateMsg,
 /// ) -> Result<MigrateResponse, StdError> {
 /// #   Ok(Default::default())
 /// }
 /// ```
-/// Where `MigrateMsg` is a type that implements `DeserializeOwned + JsonSchema`
+/// where `MigrateMsg` is a type that implements `DeserializeOwned + JsonSchema`.
 ///
 /// # Example
 ///
