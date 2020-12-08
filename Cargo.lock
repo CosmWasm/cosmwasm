@@ -1068,7 +1068,7 @@ checksum = "1a143597ca7c7793eff794def352d41792a93c481eb1042423ff7ff72ba2c31f"
 [[package]]
 name = "wasmer"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "cfg-if 0.1.10",
  "indexmap",
@@ -1090,7 +1090,7 @@ dependencies = [
 [[package]]
 name = "wasmer-compiler"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "enumset",
  "raw-cpuid",
@@ -1107,7 +1107,7 @@ dependencies = [
 [[package]]
 name = "wasmer-compiler-cranelift"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "cranelift-codegen",
  "cranelift-frontend",
@@ -1125,7 +1125,7 @@ dependencies = [
 [[package]]
 name = "wasmer-compiler-singlepass"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "byteorder",
  "dynasm",
@@ -1143,7 +1143,7 @@ dependencies = [
 [[package]]
 name = "wasmer-derive"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "proc-macro-error",
  "proc-macro2",
@@ -1154,7 +1154,7 @@ dependencies = [
 [[package]]
 name = "wasmer-engine"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "backtrace",
  "bincode",
@@ -1173,7 +1173,7 @@ dependencies = [
 [[package]]
 name = "wasmer-engine-jit"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "bincode",
  "cfg-if 0.1.10",
@@ -1190,7 +1190,7 @@ dependencies = [
 [[package]]
 name = "wasmer-engine-native"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "bincode",
  "cfg-if 0.1.10",
@@ -1210,7 +1210,7 @@ dependencies = [
 [[package]]
 name = "wasmer-object"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "object 0.22.0",
  "thiserror",
@@ -1221,7 +1221,7 @@ dependencies = [
 [[package]]
 name = "wasmer-types"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "cranelift-entity",
  "serde",
@@ -1230,7 +1230,7 @@ dependencies = [
 [[package]]
 name = "wasmer-vm"
 version = "1.0.0-beta1"
-source = "git+https://github.com/wasmerio/wasmer?rev=e9529c2c86#e9529c2c868c6c4d7f39bad2d2194682066a9522"
+source = "git+https://github.com/wasmerio/wasmer?rev=9fc32dfd0f3#9fc32dfd0f321fc359a7858a49588d1c952e67f8"
 dependencies = [
  "backtrace",
  "cc",
