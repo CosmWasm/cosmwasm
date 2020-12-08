@@ -37,7 +37,7 @@ pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmRe
         );
     }
 
-    match WasmPtr::<u8, Array>::new(region.offset).deref(&memory, 0, region.length) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
@@ -81,7 +81,7 @@ pub fn write_region(memory: &wasmer::Memory, ptr: u32, data: &[u8]) -> VmResult<
     if data.len() > region_capacity {
         return Err(CommunicationError::region_too_small(region_capacity, data.len()).into());
     }
-    match WasmPtr::<u8, Array>::new(region.offset).deref(&memory, 0, region.capacity) {
+    match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
         Some(cells) => {
             // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
             // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
@@ -89,7 +89,7 @@ pub fn write_region(memory: &wasmer::Memory, ptr: u32, data: &[u8]) -> VmResult<
                 cells[i].set(data[i])
             }
             region.length = data.len() as u32;
-            set_region(&memory, ptr, region)?;
+            set_region(memory, ptr, region)?;
             Ok(())
         },
         None => Err(CommunicationError::deref_err(region.offset, format!(
