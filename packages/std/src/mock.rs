@@ -58,16 +58,6 @@ pub struct MockApi {
     pub canonical_length: usize,
 }
 
-impl MockApi {
-    #[deprecated(
-        since = "0.11.0",
-        note = "The canonical length argument is unused. Use MockApi::default() instead."
-    )]
-    pub fn new(_canonical_length: usize) -> Self {
-        MockApi::default()
-    }
-}
-
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
