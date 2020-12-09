@@ -6,8 +6,8 @@
 /// The second module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, DepsMut, Deps, Env, StdResult, Binary, MessageInfo,
-/// #     InitResult, HandleResult, QueryResult,
+/// #     Storage, Api, Querier, DepsMut, Deps, Env, StdError, MessageInfo,
+/// #     InitResponse, HandleResponse, QueryResponse,
 /// # };
 /// #
 /// # type InitMsg = ();
@@ -16,7 +16,7 @@
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: InitMsg,
-/// ) -> InitResult {
+/// ) -> Result<InitResponse, StdError> {
 /// #   Ok(Default::default())
 /// }
 ///
@@ -26,7 +26,7 @@
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: HandleMsg,
-/// ) -> HandleResult {
+/// ) -> Result<HandleResponse, StdError> {
 /// #   Ok(Default::default())
 /// }
 ///
@@ -35,11 +35,11 @@
 ///     deps: Deps,
 ///     env: Env,
 ///     msg: QueryMsg,
-/// ) -> QueryResult {
-/// #   Ok(Binary(Vec::new()))
+/// ) -> Result<QueryResponse, StdError> {
+/// #   Ok(Default::default())
 /// }
 /// ```
-/// Where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`
+/// where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`.
 ///
 /// # Example
 ///
@@ -94,19 +94,19 @@ macro_rules! create_entry_points {
 /// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, DepsMut, Env, StdResult, Binary, MigrateResult, MessageInfo,
+/// #     Storage, Api, Querier, DepsMut, Env, StdError, MigrateResponse, MessageInfo,
 /// # };
 /// # type MigrateMsg = ();
 /// pub fn migrate(
 ///     deps: DepsMut,
-///     _env: Env,
-///     _info: MessageInfo,
+///     env: Env,
+///     info: MessageInfo,
 ///     msg: MigrateMsg,
-/// ) -> MigrateResult {
+/// ) -> Result<MigrateResponse, StdError> {
 /// #   Ok(Default::default())
 /// }
 /// ```
-/// Where `MigrateMsg` is a type that implements `DeserializeOwned + JsonSchema`
+/// where `MigrateMsg` is a type that implements `DeserializeOwned + JsonSchema`.
 ///
 /// # Example
 ///

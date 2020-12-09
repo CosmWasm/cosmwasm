@@ -1,13 +1,12 @@
 name: Contract Development
 
+# Pushes to long living branches and all PRs
 on:
-  pull_request:
-    branches:
-      - master
   push:
     branches:
       - master
       - 0.[0-9]+
+  pull_request:
 
 env:
   RUST_BACKTRACE: 1

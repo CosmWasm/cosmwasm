@@ -33,4 +33,9 @@ where
     }
 }
 
+#[deprecated(
+    since = "0.12.1",
+    note = "HandleResult is deprecated because it uses StdError, which should be replaced with custom errors in CosmWasm 0.11+. \
+            Replace this with Result<HandleResponse, StdError> or Result<HandleResponse<U>, StdError> and consider migrating to custom errors from there."
+)]
 pub type HandleResult<U = Empty> = Result<HandleResponse<U>, StdError>;
