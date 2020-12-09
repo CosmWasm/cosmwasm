@@ -80,7 +80,7 @@ impl<S> From<ContractResult<S>> for Result<S, String> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::{from_slice, to_vec, HandleResponse, HandleResult, StdError, StdResult};
+    use crate::{from_slice, to_vec, HandleResponse, StdError, StdResult};
 
     #[test]
     fn contract_result_serialization_works() {
@@ -140,11 +140,11 @@ mod test {
 
     #[test]
     fn can_convert_from_core_result() {
-        let original: HandleResult = Ok(HandleResponse::default());
+        let original: Result<HandleResponse, StdError> = Ok(HandleResponse::default());
         let converted: ContractResult<HandleResponse> = original.into();
         assert_eq!(converted, ContractResult::Ok(HandleResponse::default()));
 
-        let original: HandleResult = Err(StdError::generic_err("broken"));
+        let original: Result<HandleResponse, StdError> = Err(StdError::generic_err("broken"));
         let converted: ContractResult<HandleResponse> = original.into();
         assert_eq!(
             converted,

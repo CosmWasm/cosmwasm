@@ -1,6 +1,7 @@
 use cosmwasm_std::{
     attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, QueryRequest, StdError, StdResult, SystemResult,
+    HumanAddr, InitResponse, MessageInfo, QueryRequest, QueryResponse, StdError, StdResult,
+    SystemResult,
 };
 
 use crate::errors::ReflectError;
@@ -87,7 +88,7 @@ pub fn try_change_owner(
     })
 }
 
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),

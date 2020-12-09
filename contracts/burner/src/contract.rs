@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, BankMsg, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
-    MigrateResponse, Order, StdError, StdResult,
+    attr, BankMsg, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse,
+    Order, QueryResponse, StdError, StdResult,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
@@ -61,7 +61,7 @@ pub fn migrate(
     })
 }
 
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
     ))

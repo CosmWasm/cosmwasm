@@ -1,6 +1,7 @@
 use cosmwasm_std::{
-    attr, coin, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Env, HandleResponse, HumanAddr,
-    InitResponse, MessageInfo, QuerierWrapper, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
+    attr, coin, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HandleResponse, HumanAddr,
+    InitResponse, MessageInfo, QuerierWrapper, QueryResponse, StakingMsg, StdError, StdResult,
+    Uint128, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -371,7 +372,7 @@ pub fn _bond_all_tokens(
     Ok(res)
 }
 
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
         QueryMsg::Investment {} => to_binary(&query_investment(deps)?),
