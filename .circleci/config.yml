@@ -628,6 +628,8 @@ jobs:
   benchmarking:
     docker:
       - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
     steps:
       - checkout
       - run:

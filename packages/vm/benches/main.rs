@@ -38,7 +38,7 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute init", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 5_000_000_000,
+            gas_limit: 500_000_000_000,
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance = Instance::from_code(CONTRACT, backend, much_gas).unwrap();
@@ -55,7 +55,7 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute handle", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 5_000_000_000,
+            gas_limit: 500_000_000_000,
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance = Instance::from_code(CONTRACT, backend, much_gas).unwrap();
