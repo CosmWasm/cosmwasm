@@ -6,6 +6,9 @@
 
 - Deprecate `InitResult`, `HandleResult`, `MigrateResult` and `QueryResult` in
   order to make error type explicit an encourage migration to custom errors.
+- Implement `Deref` for `QuerierWrapper`, such that `QuerierWrapper` behaves
+  like a smart pointer to `Querier` allowing you to access `Querier` methods
+  directly.
 
 ## 0.12.0 (2020-11-19)
 
