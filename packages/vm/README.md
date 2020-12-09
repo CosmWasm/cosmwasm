@@ -58,6 +58,22 @@ cd packages/vm
 cargo test --no-default-features --features default-cranelift
 ```
 
+## Benchmarking
+
+Using Singlepass (requires Rust nightly):
+
+```
+cd packages/vm
+cargo +nightly bench --no-default-features --features singlepass,default-singlepass
+```
+
+Using Cranelift:
+
+```
+cd packages/vm
+cargo bench --no-default-features --features cranelift,default-cranelift
+```
+
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache

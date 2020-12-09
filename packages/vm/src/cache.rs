@@ -16,11 +16,11 @@ use crate::size::Size;
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
 
-#[derive(Debug, Default, Clone)]
-struct Stats {
-    hits_memory_cache: u32,
-    hits_fs_cache: u32,
-    misses: u32,
+#[derive(Debug, Default, Clone, Copy)]
+pub struct Stats {
+    pub hits_memory_cache: u32,
+    pub hits_fs_cache: u32,
+    pub misses: u32,
 }
 
 #[derive(Clone, Debug)]
@@ -79,6 +79,10 @@ where
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
         })
+    }
+
+    pub fn stats(&self) -> Stats {
+        self.stats
     }
 
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
@@ -262,9 +266,9 @@ mod test {
         let _ = cache
             .get_instance(&checksum, backend, TESTING_OPTIONS)
             .unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 0);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
     }
 
     #[test]
@@ -355,9 +359,9 @@ mod test {
         let id = cache.save_wasm(CONTRACT).unwrap();
         let backend = mock_backend(&[]);
         let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 0);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
     }
 
     #[test]
@@ -370,21 +374,21 @@ mod test {
 
         // from file system
         let _instance1 = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 0);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
 
         // from memory
         let _instance2 = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 1);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
 
         // from memory again
         let _instance3 = cache.get_instance(&id, backend3, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 2);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 2);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
     }
 
     #[test]
@@ -482,9 +486,9 @@ mod test {
 
         // Init from module cache
         let mut instance1 = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 0);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
         let original_gas = instance1.get_gas_left();
 
         // Consume some gas
@@ -497,9 +501,9 @@ mod test {
 
         // Init from memory cache
         let instance2 = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 1);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
     }
 
@@ -518,8 +522,8 @@ mod test {
             print_debug: false,
         };
         let mut instance1 = cache.get_instance(&id, backend1, options).unwrap();
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
 
         // Consume some gas. This fails
         let info1 = mock_info("owner1", &coins(1000, "earth"));
@@ -536,9 +540,9 @@ mod test {
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, backend2, options).unwrap();
-        assert_eq!(cache.stats.hits_memory_cache, 1);
-        assert_eq!(cache.stats.hits_fs_cache, 1);
-        assert_eq!(cache.stats.misses, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
         assert_eq!(instance2.get_gas_left(), TESTING_GAS_LIMIT);
 
         // Now it works

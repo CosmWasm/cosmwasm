@@ -29,6 +29,10 @@ backtraces = []
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
 
+[lib]
+# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false
+
 [dependencies]
 clru = "0.2.0"
 # Uses the path when built locally; uses the given version from crates.io when published
@@ -47,5 +51,10 @@ wasmer-clif-backend = { version = "=0.17.0", optional = true }
 wasmer-singlepass-backend = { version = "=0.17.0", optional = true }
 
 [dev-dependencies]
+criterion = "0.3"
 tempfile = "3.1.0"
 wat = "1.0"
+
+[[bench]]
+name = "main"
+harness = false
