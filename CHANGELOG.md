@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.12.1 (unreleased)
+
+**cosmwasm-std**
+
+- Deprecate `InitResult`, `HandleResult`, `MigrateResult` and `QueryResult` in
+  order to make error type explicit an encourage migration to custom errors.
+
 ## 0.12.0 (2020-11-19)
 
 **cosmwasm-std**
