@@ -16,6 +16,17 @@ workflows:
       - contract_staking
       - fmt
       - clippy
+      - benchmarking:
+          requires:
+            - package_vm_cranelift
+            - package_vm_singlepass
+          filters:
+            branches:
+              only:
+                - master
+                # 👇 Add your branch here if benchmarking matters to your work
+                - benchmarking
+                - upgrade-to-wasmer-reborn
   deploy:
     jobs:
       - build_and_upload_devcontracts:
@@ -613,6 +624,36 @@ jobs:
             - contracts/staking/target/debug/build
             - contracts/staking/target/debug/deps
           key: cargocache-v2-clippy-rust:1.47.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+
+  benchmarking:
+    docker:
+      - image: rust:1.47.0
+    steps:
+      - checkout
+      - run:
+          name: Version information (default; stable)
+          command: rustc --version && cargo --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-benchmarking-rust:1.47.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Run benchmarks (Singlepass)
+          working_directory: ~/project/packages/vm
+          command: cargo bench --no-default-features -- --save-baseline singlepass
+      - run:
+          name: Run benchmarks (Cranelift)
+          working_directory: ~/project/packages/vm
+          command: cargo bench --no-default-features --features cranelift -- --save-baseline cranelift
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/release/.fingerprint
+            - target/release/build
+            - target/release/deps
+          key: cargocache-v2-benchmarking-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
   # This job roughly follows the instructions from https://circleci.com/blog/publishing-to-github-releases-via-circleci/
   build_and_upload_devcontracts:

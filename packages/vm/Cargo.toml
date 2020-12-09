@@ -26,6 +26,10 @@ metering = []
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
 
+[lib]
+# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false
+
 [dependencies]
 clru = "0.2.0"
 # Uses the path when built locally; uses the given version from crates.io when published
@@ -46,5 +50,10 @@ wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "e1c92737" }
 # wasmer-engine = { path = "../../../wasmer/lib/engine" }
 
 [dev-dependencies]
+criterion = "0.3"
 tempfile = "3.1.0"
 wat = "1.0"
+
+[[bench]]
+name = "main"
+harness = false

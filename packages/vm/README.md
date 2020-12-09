@@ -52,6 +52,22 @@ cargo test --features iterator
 cargo test --features cranelift,iterator
 ```
 
+## Benchmarking
+
+Using Singlepass:
+
+```
+cd packages/vm
+cargo bench --no-default-features
+```
+
+Using Cranelift:
+
+```
+cd packages/vm
+cargo bench --no-default-features --features cranelift
+```
+
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache
