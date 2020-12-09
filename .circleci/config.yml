@@ -18,8 +18,8 @@ workflows:
       - clippy
       - benchmarking:
           requires:
+            - package_vm
             - package_vm_cranelift
-            - package_vm_singlepass
           filters:
             branches:
               only:
