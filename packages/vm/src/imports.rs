@@ -9,7 +9,7 @@ use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
 use crate::backend::{Api, BackendError, Querier, Storage};
 use crate::context::{process_gas_info, Env};
-use crate::conversion::to_u32;
+use crate::conversion::{ref_to_u32, to_u32};
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -201,7 +201,7 @@ fn write_to_contract<S: Storage, Q: Querier>(env: &Env<S, Q>, input: &[u8]) -> V
     let target_ptr = env.with_func_from_context::<_, u32>("allocate", |allocate| {
         let out_size = to_u32(input.len())?;
         let result = allocate.call(&[out_size.into()])?;
-        let ptr = result[0].unwrap_i32() as u32;
+        let ptr = ref_to_u32(&result[0])?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
         }
@@ -350,7 +350,7 @@ mod test {
                 let result = alloc_func
                     .call(&[(data.len() as u32).into()])
                     .expect("error calling allocate");
-                let ptr = result[0].unwrap_i32() as u32;
+                let ptr = ref_to_u32(&result[0])?;
                 Ok(ptr)
             })
             .unwrap();
@@ -366,7 +366,7 @@ mod test {
         let result = allocate
             .call(&[capacity.into()])
             .expect("error calling allocate");
-        let region_ptr = result[0].unwrap_i32() as u32;
+        let region_ptr = ref_to_u32(&result[0]).expect("error converting result");
         region_ptr
     }
 

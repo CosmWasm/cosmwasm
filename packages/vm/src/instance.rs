@@ -8,7 +8,7 @@ use wasmer::{
 
 use crate::backend::{Api, Backend, Querier, Storage};
 use crate::context::{move_into_context, move_out_of_context, Env};
-use crate::conversion::to_u32;
+use crate::conversion::{ref_to_u32, to_u32};
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
@@ -123,8 +123,8 @@ where
         env_imports.insert(
             "canonicalize_address",
             Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
-                let source_ptr = args[0].unwrap_i32() as u32;
-                let destination_ptr = args[1].unwrap_i32() as u32;
+                let source_ptr = ref_to_u32(&args[0])?;
+                let destination_ptr = ref_to_u32(&args[1])?;
                 let ptr =
                     do_canonicalize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
                 Ok(vec![ptr.into()])
@@ -138,8 +138,8 @@ where
         env_imports.insert(
             "humanize_address",
             Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
-                let source_ptr = args[0].unwrap_i32() as u32;
-                let destination_ptr = args[1].unwrap_i32() as u32;
+                let source_ptr = ref_to_u32(&args[0])?;
+                let destination_ptr = ref_to_u32(&args[1])?;
                 let ptr = do_humanize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
                 Ok(vec![ptr.into()])
             }),
@@ -152,7 +152,7 @@ where
         env_imports.insert(
             "debug",
             Function::new_with_env(store, &i32_to_void, env.clone(), move |env, args| {
-                let message_ptr = args[0].unwrap_i32() as u32;
+                let message_ptr = ref_to_u32(&args[0])?;
                 if print_debug {
                     print_debug_message(&env, message_ptr)?;
                 }
@@ -275,7 +275,7 @@ where
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
         let ret = self.call_function("allocate", &[to_u32(size)?.into()])?;
-        let ptr = ret.as_ref()[0].unwrap_i32() as u32;
+        let ptr = ref_to_u32(&ret.as_ref()[0])?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
         }

@@ -8,6 +8,7 @@ use cosmwasm_std::{
 };
 
 use crate::backend::{Api, Querier, Storage};
+use crate::conversion::ref_to_u32;
 use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
@@ -153,7 +154,7 @@ fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
         arg_region_ptrs.push(region_ptr.into());
     }
     let result = instance.call_function(name, &arg_region_ptrs)?;
-    let res_region_ptr = result[0].unwrap_i32() as u32;
+    let res_region_ptr = ref_to_u32(&result[0])?;
     let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
