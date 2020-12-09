@@ -284,6 +284,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
 mod test {
     use super::*;
     use crate::backend::Storage;
+    use crate::conversion::ref_to_u32;
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockQuerier, MockStorage};
@@ -462,7 +463,7 @@ mod test {
         let ptr = env
             .with_func_from_context::<_, _>("allocate", |alloc_func| {
                 let result = alloc_func.call(&[10u32.into()])?;
-                let ptr = result[0].unwrap_i32() as u32;
+                let ptr = ref_to_u32(&result[0])?;
                 Ok(ptr)
             })
             .unwrap();
