@@ -21,6 +21,12 @@ workflows:
           requires:
             - package_vm_cranelift
             - package_vm_singlepass
+          filters:
+            branches:
+              only:
+                - master
+                # 👇 Add your branch here if benchmarking matters to your work
+                - benchmarking
   deploy:
     jobs:
       - build_and_upload_devcontracts:
