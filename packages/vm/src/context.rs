@@ -255,22 +255,17 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
     env: &Env<S, Q>,
     used_gas: u64,
 ) -> VmResult<()> {
-    // WFT?!
-    let env1 = env.clone();
-    let env2 = env.clone();
-    let env3 = env.clone();
-
-    env1.with_context_data_mut(|context_data| {
+    env.with_context_data_mut(|context_data| {
         let gas_state = &mut context_data.gas_state;
 
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(&env2));
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(env));
 
         gas_state.increase_externally_used_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_left(&env3, new_limit);
+        set_gas_left(env, new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::GasDepletion)
