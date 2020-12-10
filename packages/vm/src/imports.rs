@@ -8,8 +8,8 @@ use cosmwasm_std::Order;
 use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
 use crate::backend::{Api, BackendError, Querier, Storage};
-use crate::context::{process_gas_info, Env};
 use crate::conversion::{ref_to_u32, to_u32};
+use crate::environment::{process_gas_info, Env};
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -274,7 +274,7 @@ mod test {
     use wasmer::{imports, Function, FunctionType, Instance as WasmerInstance, Type, Val};
 
     use crate::backend::{BackendError, Storage};
-    use crate::context::move_into_context;
+    use crate::environment::move_into_context;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile;

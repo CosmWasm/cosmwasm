@@ -7,8 +7,8 @@ use wasmer::{
 };
 
 use crate::backend::{Api, Backend, Querier, Storage};
-use crate::context::{move_into_context, move_out_of_context, Env};
 use crate::conversion::{ref_to_u32, to_u32};
+use crate::environment::{move_into_context, move_out_of_context, Env};
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{

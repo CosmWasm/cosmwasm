@@ -1,5 +1,5 @@
 use crate::backend::{Querier, Storage};
-use crate::context::Env;
+use crate::environment::Env;
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
 /// This causes issues when trying to instantiate the same compiled module with a different gas limit.
