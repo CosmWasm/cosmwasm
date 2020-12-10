@@ -86,48 +86,41 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         }
     }
 
-    pub fn with_context_data_mut<Callback, CallbackReturn>(
-        &self,
-        callback: Callback,
-    ) -> CallbackReturn
+    pub fn with_context_data_mut<C, R>(&self, callback: C) -> R
     where
-        Callback: FnOnce(&mut ContextData<S, Q>) -> CallbackReturn,
+        C: FnOnce(&mut ContextData<S, Q>) -> R,
     {
         let mut guard = self.data.as_ref().write().unwrap();
         let context_data = guard.borrow_mut();
         callback(context_data)
     }
 
-    pub fn with_context_data<Callback, CallbackReturn>(&self, callback: Callback) -> CallbackReturn
+    pub fn with_context_data<C, R>(&self, callback: C) -> R
     where
-        Callback: FnOnce(&ContextData<S, Q>) -> CallbackReturn,
+        C: FnOnce(&ContextData<S, Q>) -> R,
     {
         let guard = self.data.as_ref().read().unwrap();
         let context_data = guard.borrow();
         callback(context_data)
     }
 
-    pub fn with_gas_state_mut<Callback, CallbackReturn>(&self, callback: Callback) -> CallbackReturn
+    pub fn with_gas_state_mut<C, R>(&self, callback: C) -> R
     where
-        Callback: FnOnce(&mut GasState) -> CallbackReturn,
+        C: FnOnce(&mut GasState) -> R,
     {
         self.with_context_data_mut(|context_data| callback(&mut context_data.gas_state))
     }
 
-    pub fn with_gas_state<Callback, CallbackReturn>(&self, callback: Callback) -> CallbackReturn
+    pub fn with_gas_state<C, R>(&self, callback: C) -> R
     where
-        Callback: FnOnce(&GasState) -> CallbackReturn,
+        C: FnOnce(&GasState) -> R,
     {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
-    pub fn with_func_from_context<Callback, CallbackData>(
-        &self,
-        name: &str,
-        callback: Callback,
-    ) -> VmResult<CallbackData>
+    pub fn with_func_from_context<C, T>(&self, name: &str, callback: C) -> VmResult<T>
     where
-        Callback: FnOnce(&Function) -> VmResult<CallbackData>,
+        C: FnOnce(&Function) -> VmResult<T>,
     {
         self.with_context_data_mut(|context_data| match context_data.wasmer_instance {
             Some(instance_ptr) => {
@@ -140,22 +133,22 @@ impl<S: Storage, Q: Querier> Env<S, Q> {
         })
     }
 
-    pub fn with_storage_from_context<F, T>(&self, func: F) -> VmResult<T>
+    pub fn with_storage_from_context<C, T>(&self, callback: C) -> VmResult<T>
     where
-        F: FnOnce(&mut S) -> VmResult<T>,
+        C: FnOnce(&mut S) -> VmResult<T>,
     {
         self.with_context_data_mut(|context_data| match context_data.storage.as_mut() {
-            Some(data) => func(data),
+            Some(data) => callback(data),
             None => Err(VmError::uninitialized_context_data("storage")),
         })
     }
 
-    pub fn with_querier_from_context<F, T>(&self, func: F) -> VmResult<T>
+    pub fn with_querier_from_context<C, T>(&self, callback: C) -> VmResult<T>
     where
-        F: FnOnce(&mut Q) -> VmResult<T>,
+        C: FnOnce(&mut Q) -> VmResult<T>,
     {
         self.with_context_data_mut(|context_data| match context_data.querier.as_mut() {
-            Some(querier) => func(querier),
+            Some(querier) => callback(querier),
             None => Err(VmError::uninitialized_context_data("querier")),
         })
     }
