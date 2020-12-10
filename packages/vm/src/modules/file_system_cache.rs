@@ -1,14 +1,8 @@
-// copied from https://github.com/wasmerio/wasmer/blob/0.8.0/lib/runtime/src/cache.rs
-// with some minor modifications
+use std::fs;
+use std::io;
+use std::path::PathBuf;
 
-use memmap::Mmap;
-use std::{
-    fs::{self, File},
-    io::{self, ErrorKind, Write},
-    path::PathBuf,
-};
-
-use wasmer::Module;
+use wasmer::{DeserializeError, Module};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
@@ -76,40 +70,33 @@ impl FileSystemCache {
             .join(MODULE_SERIALIZATION_VERSION)
             .join(filename);
 
-        let file = match File::open(file_path) {
-            Ok(file) => file,
-            Err(err) => match err.kind() {
-                ErrorKind::NotFound => return Ok(None),
-                _ => {
-                    return Err(VmError::cache_err(format!(
-                        "Error opening module file: {}",
-                        err
-                    )))
-                }
-            },
-        };
-
-        let mmap = unsafe { Mmap::map(&file) }
-            .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
-
         let store = make_store_headless(Some(memory_limit));
-        let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
-        Ok(Some(module))
+        let result = unsafe { Module::deserialize_from_file(&store, &file_path) };
+        match result {
+            Ok(module) => Ok(Some(module)),
+            Err(DeserializeError::Io(err)) => match err.kind() {
+                io::ErrorKind::NotFound => Ok(None),
+                _ => Err(VmError::cache_err(format!(
+                    "Error opening module file: {}",
+                    err
+                ))),
+            },
+            Err(err) => Err(VmError::cache_err(format!(
+                "Error deserializing module: {}",
+                err
+            ))),
+        }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
         let modules_dir = self.path.clone().join(MODULE_SERIALIZATION_VERSION);
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
-
-        let buffer = module.serialize()?;
-
         let filename = checksum.to_hex();
-        let mut file = File::create(modules_dir.join(filename))
-            .map_err(|e| VmError::cache_err(format!("Error creating module file: {}", e)))?;
-        file.write_all(&buffer)
+        let path = modules_dir.join(filename);
+        module
+            .serialize_to_file(path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-
         Ok(())
     }
 }

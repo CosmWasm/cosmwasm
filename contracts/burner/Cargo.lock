@@ -139,7 +139,6 @@ dependencies = [
  "clru",
  "cosmwasm-std",
  "hex",
- "memmap",
  "parity-wasm",
  "schemars",
  "serde",

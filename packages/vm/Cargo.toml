@@ -37,7 +37,6 @@ clru = "0.2.0"
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.12.2" }
 hex = "0.4"
-memmap = "0.7"
 parity-wasm = "0.42"
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
