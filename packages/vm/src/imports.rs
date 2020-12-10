@@ -85,6 +85,20 @@ pub fn native_db_next<S: Storage, Q: Querier>(
     do_next(env, iterator_id)
 }
 
+/// Prints a debug message to console.
+/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
+pub fn native_debug<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    message_ptr: u32,
+) -> VmResult<()> {
+    if env.print_debug {
+        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+        let msg = String::from_utf8_lossy(&message_data);
+        println!("{}", msg);
+    }
+    Ok(())
+}
+
 //
 // Import implementations
 //
@@ -195,18 +209,6 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
         }
         Err(err) => Err(VmError::from(err)),
     }
-}
-
-/// Prints a debug message to console.
-/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
-pub fn print_debug_message<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
-    message_ptr: u32,
-) -> VmResult<()> {
-    let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
-    let msg = String::from_utf8_lossy(&message_data);
-    println!("{}", msg);
-    Ok(())
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -320,7 +322,7 @@ mod test {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance() -> (Environment<MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(GAS_LIMIT);
+        let env = Environment::new(GAS_LIMIT, false);
 
         let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();

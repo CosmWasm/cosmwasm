@@ -62,12 +62,14 @@ impl GasState {
 /// The environment is clonable but clones access the same underlying data.
 pub struct Environment<S: Storage, Q: Querier> {
     data: Arc<RwLock<ContextData<S, Q>>>,
+    pub print_debug: bool,
 }
 
 impl<S: Storage, Q: Querier> Clone for Environment<S, Q> {
     fn clone(&self) -> Self {
         Environment {
             data: self.data.clone(),
+            print_debug: self.print_debug,
         }
     }
 }
@@ -79,9 +81,10 @@ impl<S: Storage, Q: Querier> WasmerEnv for Environment<S, Q> {
 }
 
 impl<S: Storage, Q: Querier> Environment<S, Q> {
-    pub fn new(gas_limit: u64) -> Self {
+    pub fn new(gas_limit: u64, print_debug: bool) -> Self {
         Environment {
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
+            print_debug,
         }
     }
 
@@ -309,7 +312,7 @@ mod test {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance() -> (Environment<MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(GAS_LIMIT);
+        let env = Environment::new(GAS_LIMIT, false);
 
         let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();

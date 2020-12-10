@@ -13,7 +13,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     do_canonicalize_address, do_humanize_address, native_db_read, native_db_remove,
-    native_db_write, native_query_chain, print_debug_message,
+    native_db_write, native_debug, native_query_chain,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
@@ -83,9 +83,8 @@ where
 
         let store = module.store();
 
-        let env = Environment::new(gas_limit);
+        let env = Environment::new(gas_limit, print_debug);
 
-        let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
         let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
 
         let mut import_obj = ImportObject::new();
@@ -151,13 +150,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "debug",
-            Function::new_with_env(store, &i32_to_void, env.clone(), move |env, args| {
-                let message_ptr = ref_to_u32(&args[0])?;
-                if print_debug {
-                    print_debug_message(&env, message_ptr)?;
-                }
-                Ok(vec![])
-            }),
+            Function::new_native_with_env(store, env.clone(), native_debug),
         );
 
         env_imports.insert(

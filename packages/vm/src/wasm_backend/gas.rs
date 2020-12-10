@@ -79,7 +79,7 @@ mod tests {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn instantiate(code: &[u8]) -> (Environment<MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(GAS_LIMIT);
+        let env = Environment::new(GAS_LIMIT, false);
         let module = compile(code, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let import_obj = imports! { "env" => {}, };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
