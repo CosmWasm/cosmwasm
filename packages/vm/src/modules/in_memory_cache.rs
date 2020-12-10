@@ -54,7 +54,7 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm, TESTING_MEMORY_LIMIT).unwrap();
+        let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
         let cached = cache.load(&checksum).unwrap();

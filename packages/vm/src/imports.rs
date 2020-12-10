@@ -303,7 +303,7 @@ mod test {
     fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let env = Env::new(GAS_LIMIT);
 
-        let module = compile(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
+        let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
         let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);

@@ -80,7 +80,7 @@ mod tests {
 
     fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
         let env = Env::new(GAS_LIMIT);
-        let module = compile(code, TESTING_MEMORY_LIMIT).unwrap();
+        let module = compile(code, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let import_obj = imports! { "env" => {}, };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
 

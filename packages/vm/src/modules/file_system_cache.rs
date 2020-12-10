@@ -92,7 +92,7 @@ impl FileSystemCache {
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
-        let store = make_store_headless(memory_limit);
+        let store = make_store_headless(Some(memory_limit));
         let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
         Ok(Some(module))
     }
@@ -140,7 +140,7 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm, TESTING_MEMORY_LIMIT).unwrap();
+        let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
         let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();

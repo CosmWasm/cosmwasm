@@ -88,8 +88,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
-        const MEMORY_LIMIT: Size = Size::mebi(16);
-        let module = compile(wasm, MEMORY_LIMIT)?;
+        let module = compile(wasm, None)?;
         self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
@@ -137,7 +136,7 @@ where
         // Re-compile module from wasm
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        let module = compile(&wasm, options.memory_limit)?;
+        let module = compile(&wasm, Some(options.memory_limit))?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
