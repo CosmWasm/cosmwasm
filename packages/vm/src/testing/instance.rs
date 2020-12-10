@@ -7,6 +7,7 @@ use std::collections::HashSet;
 use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::{Instance, InstanceOptions};
+use crate::size::Size;
 use crate::{Api, Backend, Querier, Storage};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
@@ -14,6 +15,7 @@ use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
 const DEFAULT_GAS_LIMIT: u64 = 500_000;
+const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(16);
 const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
@@ -83,6 +85,8 @@ pub struct MockInstanceOptions<'a> {
     pub supported_features: HashSet<String>,
     pub gas_limit: u64,
     pub print_debug: bool,
+    /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
+    pub memory_limit: Size,
 }
 
 impl Default for MockInstanceOptions<'_> {
@@ -97,6 +101,7 @@ impl Default for MockInstanceOptions<'_> {
             supported_features: features_from_csv("staking"),
             gas_limit: DEFAULT_GAS_LIMIT,
             print_debug: DEFAULT_PRINT_DEBUG,
+            memory_limit: DEFAULT_MEMORY_LIMIT,
         }
     }
 }
@@ -131,6 +136,7 @@ pub fn mock_instance_with_options(
     };
     let options = InstanceOptions {
         gas_limit: options.gas_limit,
+        memory_limit: options.memory_limit,
         print_debug: options.print_debug,
     };
     Instance::from_code(wasm, backend, options).unwrap()
@@ -140,13 +146,16 @@ pub fn mock_instance_with_options(
 pub fn mock_instance_options() -> InstanceOptions {
     InstanceOptions {
         gas_limit: DEFAULT_GAS_LIMIT,
+        memory_limit: DEFAULT_MEMORY_LIMIT,
         print_debug: DEFAULT_PRINT_DEBUG,
     }
 }
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
 /// This could be especially useful when run with some kind of leak detector.
-pub fn test_io<S: Storage, A: Api + 'static, Q: Querier>(instance: &mut Instance<S, A, Q>) {
+pub fn test_io<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
+    instance: &mut Instance<S, A, Q>,
+) {
     let sizes: Vec<usize> = vec![0, 1, 3, 10, 200, 2000, 5 * 1024];
     let bytes: Vec<u8> = vec![0x00, 0xA5, 0xFF];
 

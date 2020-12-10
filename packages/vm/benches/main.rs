@@ -11,12 +11,16 @@ use cosmwasm_vm::{
     InstanceOptions, Size,
 };
 
-const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
-const GAS_LIMIT: u64 = 400_000;
-const INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
-    gas_limit: GAS_LIMIT,
+// Instance
+const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
+const DEFAULT_GAS_LIMIT: u64 = 400_000;
+const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
+    gas_limit: DEFAULT_GAS_LIMIT,
     print_debug: false,
+    memory_limit: DEFAULT_MEMORY_LIMIT,
 };
+// Cache
+const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -34,8 +38,8 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute init", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 5_000_000_000,
-            print_debug: false,
+            gas_limit: 500_000_000_000,
+            ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance = Instance::from_code(CONTRACT, backend, much_gas).unwrap();
 
@@ -51,8 +55,8 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("execute handle", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
-            gas_limit: 5_000_000_000,
-            print_debug: false,
+            gas_limit: 500_000_000_000,
+            ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance = Instance::from_code(CONTRACT, backend, much_gas).unwrap();
 
@@ -105,7 +109,7 @@ fn bench_cache(c: &mut Criterion) {
 
         b.iter(|| {
             let _ = cache
-                .get_instance(&checksum, mock_backend(&[]), INSTANCE_OPTIONS)
+                .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_memory_cache, 0);
             assert!(cache.stats().hits_fs_cache >= 1);
@@ -119,13 +123,13 @@ fn bench_cache(c: &mut Criterion) {
             unsafe { Cache::new(options.clone()).unwrap() };
         // Load into memory
         cache
-            .get_instance(&checksum, mock_backend(&[]), INSTANCE_OPTIONS)
+            .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
             .unwrap();
 
         b.iter(|| {
             let backend = mock_backend(&[]);
             let _ = cache
-                .get_instance(&checksum, backend, INSTANCE_OPTIONS)
+                .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert!(cache.stats().hits_memory_cache >= 1);

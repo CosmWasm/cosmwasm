@@ -7,11 +7,10 @@ workflows:
       - package_schema
       - package_std
       - package_storage
+      - package_vm
       - package_vm_cranelift
-      - package_vm_singlepass
       - contract_burner
       - contract_hackatom
-      - contract_hackatom_in_singlepass_vm
       - contract_queue
       - contract_reflect
       - contract_staking
@@ -19,14 +18,15 @@ workflows:
       - clippy
       - benchmarking:
           requires:
+            - package_vm
             - package_vm_cranelift
-            - package_vm_singlepass
           filters:
             branches:
               only:
                 - master
                 # 👇 Add your branch here if benchmarking matters to your work
                 - benchmarking
+                - upgrade-to-wasmer-reborn
   deploy:
     jobs:
       - build_and_upload_devcontracts:
@@ -154,7 +154,7 @@ jobs:
             - target/debug/deps
           key: cargocache-v2-package_storage-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
-  package_vm_cranelift:
+  package_vm:
     docker:
       - image: rust:1.47.0
     steps:
@@ -164,34 +164,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Build
-          working_directory: ~/project/packages/vm
-          command: cargo build --locked --no-default-features --features default-cranelift,iterator
-      - run:
-          name: Test
-          working_directory: ~/project/packages/vm
-          command: cargo test --locked --no-default-features --features default-cranelift,iterator
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-          key: cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
-
-  package_vm_singlepass:
-    docker:
-      - image: rustlang/rust:nightly
-    steps:
-      - checkout
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
-      - restore_cache:
-          keys:
-            - cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_vm-rust:1.47.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/vm
@@ -214,7 +187,42 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_vm_singlepass-rust:nightly-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_vm-rust:1.47.0-{{ checksum "Cargo.lock" }}
+
+  package_vm_cranelift:
+    docker:
+      - image: rust:1.47.0
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/vm
+          command: cargo build --locked --features cranelift
+      - run:
+          name: Build with iterator
+          working_directory: ~/project/packages/vm
+          command: cargo build --locked --features cranelift,iterator
+      - run:
+          name: Test
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features cranelift
+      - run:
+          name: Test with iterator
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features cranelift,iterator
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_vm_cranelift-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
   contract_burner:
     docker:
@@ -241,8 +249,11 @@ jobs:
           name: Unit tests
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -291,8 +302,11 @@ jobs:
           name: Unit tests
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -315,43 +329,6 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_hackatom-rust:1.47.0-{{ checksum "Cargo.lock" }}
-
-  # In this job we use singlepass as the VM to execute integration tests. This requires Rust nightly.
-  # Avoid duplicating generic checks like unit tests or schema generation – they belong in the generic hackatom job.
-  contract_hackatom_in_singlepass_vm:
-    docker:
-      - image: rustlang/rust:nightly
-    environment:
-      RUST_BACKTRACE: 1
-    working_directory: ~/cosmwasm/contracts/hackatom
-    steps:
-      - checkout:
-          path: ~/cosmwasm
-      - run:
-          name: Version information
-          command: rustc --version; cargo --version; rustup --version
-      - restore_cache:
-          keys:
-            - cargocache-v2-contract_hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Add wasm32 target
-          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
-      - run:
-          name: Build wasm binary
-          command: cargo wasm --locked
-      - run:
-          name: Integration tests
-          command: cargo integration-test --no-default-features --features singlepass --locked
-      - save_cache:
-          paths:
-            - /usr/local/cargo/registry
-            - target/debug/.fingerprint
-            - target/debug/build
-            - target/debug/deps
-            - target/wasm32-unknown-unknown/release/.fingerprint
-            - target/wasm32-unknown-unknown/release/build
-            - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_hackatom_in_singlepass_vm-rust:nightly-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:
@@ -378,8 +355,11 @@ jobs:
           name: Unit tests
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -428,8 +408,11 @@ jobs:
           name: Unit tests
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -478,8 +461,11 @@ jobs:
           name: Unit tests
           command: cargo unit-test --locked
       - run:
-          name: Integration tests
+          name: Integration tests (cranelift backend)
           command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
       - run:
           name: Build and run schema generator
           command: cargo schema --locked
@@ -551,23 +537,11 @@ jobs:
   clippy:
     docker:
       - image: rust:1.47.0
-    environment:
-      # Make sure to choose version with clippy present: https://rust-lang.github.io/rustup-components-history/x86_64-unknown-linux-gnu.html
-      NIGHTLY_TOOLCHAIN: nightly-2020-09-08
     steps:
       - checkout
       - run:
-          name: Install Rust nightly
-          command: |
-            rustup --version
-            rustup toolchain install $NIGHTLY_TOOLCHAIN --allow-downgrade --profile minimal --component clippy
-            rustup target list --installed
-      - run:
-          name: Version information (default; stable)
+          name: Version information
           command: rustc --version && cargo --version
-      - run:
-          name: Version information (nightly)
-          command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
             - cargocache-v2-clippy-rust:1.47.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
@@ -598,21 +572,13 @@ jobs:
           working_directory: ~/project/packages/storage
           command: cargo clippy --features iterator -- -D warnings
       - run:
-          name: Clippy linting on vm (singlepass; no feature flags)
+          name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy -- -D warnings
+          command: cargo clippy -- -D warnings
       - run:
-          name: Clippy linting on vm (singlepass; all feature flags)
+          name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy --features iterator -- -D warnings
-      - run:
-          name: Clippy linting on vm (cranelift; no feature flags)
-          working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy --no-default-features --features default-cranelift -- -D warnings
-      - run:
-          name: Clippy linting on vm (cranelift; all feature flags)
-          working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN clippy --no-default-features --features default-cranelift,iterator -- -D warnings
+          command: cargo clippy --features cranelift,iterator -- -D warnings
       #
       # Contracts
       #
@@ -663,32 +629,23 @@ jobs:
     docker:
       - image: rust:1.47.0
     environment:
-      NIGHTLY_TOOLCHAIN: nightly-2020-09-08
+      RUST_BACKTRACE: 1
     steps:
       - checkout
       - run:
-          name: Install Rust nightly
-          command: |
-            rustup --version
-            rustup toolchain install $NIGHTLY_TOOLCHAIN --allow-downgrade --profile minimal --component clippy
-            rustup target list --installed
-      - run:
           name: Version information (default; stable)
           command: rustc --version && cargo --version
-      - run:
-          name: Version information (nightly)
-          command: rustc +$NIGHTLY_TOOLCHAIN --version && cargo +$NIGHTLY_TOOLCHAIN --version
       - restore_cache:
           keys:
             - cargocache-v2-benchmarking-rust:1.47.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Run benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN bench --no-default-features --features singlepass,default-singlepass -- --save-baseline singlepass
+          command: cargo bench --no-default-features -- --save-baseline singlepass
       - run:
           name: Run benchmarks (Cranelift)
           working_directory: ~/project/packages/vm
-          command: cargo +$NIGHTLY_TOOLCHAIN bench --no-default-features --features cranelift,default-cranelift -- --save-baseline cranelift
+          command: cargo bench --no-default-features --features cranelift -- --save-baseline cranelift
       - save_cache:
           paths:
             - /usr/local/cargo/registry

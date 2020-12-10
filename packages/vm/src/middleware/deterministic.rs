@@ -163,7 +163,7 @@ fn parse_wasm_opcode(opcode: &Operator) -> Result<(), CompileError> {
 
 /// Middleware is only supported in singlepass backend, see
 /// https://github.com/CosmWasm/cosmwasm/issues/311
-#[cfg(all(test, feature = "default-singlepass"))]
+#[cfg(test)]
 mod tests {
     // No 'use super::*;' here. This is strange and means we are not testing the functions in this module directly.
     use crate::backends::compile;

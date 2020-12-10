@@ -1,15 +1,17 @@
+use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use std::fmt;
+use wasmer::Val;
 
 use cosmwasm_std::{
     ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
 };
 
 use crate::backend::{Api, Querier, Storage};
+use crate::conversion::ref_to_u32;
 use crate::errors::{VmError, VmResult};
-use crate::instance::{Func, Instance};
+use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
-use schemars::JsonSchema;
 
 const MAX_LENGTH_INIT: usize = 100_000;
 const MAX_LENGTH_HANDLE: usize = 100_000;
@@ -23,9 +25,9 @@ pub fn call_init<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<InitResponse<U>>>
 where
-    S: Storage,
+    S: Storage + 'static,
     A: Api + 'static,
-    Q: Querier,
+    Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -42,9 +44,9 @@ pub fn call_handle<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<HandleResponse<U>>>
 where
-    S: Storage,
+    S: Storage + 'static,
     A: Api + 'static,
-    Q: Querier,
+    Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -61,9 +63,9 @@ pub fn call_migrate<S, A, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
-    S: Storage,
+    S: Storage + 'static,
     A: Api + 'static,
-    Q: Querier,
+    Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -73,7 +75,7 @@ where
     Ok(result)
 }
 
-pub fn call_query<S: Storage, A: Api + 'static, Q: Querier>(
+pub fn call_query<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
     msg: &[u8],
@@ -94,7 +96,7 @@ pub fn call_query<S: Storage, A: Api + 'static, Q: Querier>(
 
 /// Calls Wasm export "init" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_init_raw<S: Storage, A: Api + 'static, Q: Querier>(
+pub fn call_init_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     info: &[u8],
@@ -106,7 +108,7 @@ pub fn call_init_raw<S: Storage, A: Api + 'static, Q: Querier>(
 
 /// Calls Wasm export "handle" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
+pub fn call_handle_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     info: &[u8],
@@ -118,7 +120,7 @@ pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_migrate_raw<S: Storage, A: Api + 'static, Q: Querier>(
+pub fn call_migrate_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     info: &[u8],
@@ -130,7 +132,7 @@ pub fn call_migrate_raw<S: Storage, A: Api + 'static, Q: Querier>(
 
 /// Calls Wasm export "query" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_query_raw<S: Storage, A: Api + 'static, Q: Querier>(
+pub fn call_query_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
     msg: &[u8],
@@ -139,35 +141,20 @@ pub fn call_query_raw<S: Storage, A: Api + 'static, Q: Querier>(
     call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
 }
 
-fn call_raw<S: Storage, A: Api + 'static, Q: Querier>(
+fn call_raw<S: Storage + 'static, A: Api + 'static, Q: Querier + 'static>(
     instance: &mut Instance<S, A, Q>,
     name: &str,
     args: &[&[u8]],
     result_max_length: usize,
 ) -> VmResult<Vec<u8>> {
-    let mut arg_region_ptrs = Vec::<u32>::with_capacity(args.len());
+    let mut arg_region_ptrs = Vec::<Val>::with_capacity(args.len());
     for arg in args {
         let region_ptr = instance.allocate(arg.len())?;
         instance.write_memory(region_ptr, arg)?;
-        arg_region_ptrs.push(region_ptr);
+        arg_region_ptrs.push(region_ptr.into());
     }
-
-    let res_region_ptr = match args.len() {
-        1 => {
-            let func: Func<u32, u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0])?
-        }
-        2 => {
-            let func: Func<(u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1])?
-        }
-        3 => {
-            let func: Func<(u32, u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1], arg_region_ptrs[2])?
-        }
-        _ => panic!("call_raw called with unsupported number of arguments"),
-    };
-
+    let result = instance.call_function(name, &arg_region_ptrs)?;
+    let res_region_ptr = ref_to_u32(&result[0])?;
     let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;

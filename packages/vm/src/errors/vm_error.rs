@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use super::communication_error::CommunicationError;
 use crate::backend::BackendError;
-use crate::backends::InsufficientGasLeft;
+use crate::wasm_backend::InsufficientGasLeft;
 
 #[derive(Error, Debug)]
 #[non_exhaustive]
@@ -135,52 +135,52 @@ impl From<BackendError> for VmError {
     }
 }
 
-impl From<wasmer_runtime_core::cache::Error> for VmError {
-    fn from(original: wasmer_runtime_core::cache::Error) -> Self {
-        VmError::cache_err(format!("Wasmer cache error: {:?}", original))
+impl From<wasmer::ExportError> for VmError {
+    fn from(original: wasmer::ExportError) -> Self {
+        VmError::resolve_err(format!("Could not get export: {}", original))
     }
 }
 
-impl From<wasmer_runtime_core::error::CompileError> for VmError {
-    fn from(original: wasmer_runtime_core::error::CompileError) -> Self {
-        VmError::compile_err(format!("Wasmer compile error: {:?}", original))
+impl From<wasmer::SerializeError> for VmError {
+    fn from(original: wasmer::SerializeError) -> Self {
+        VmError::cache_err(format!("Could not serialize module: {}", original))
     }
 }
 
-impl From<wasmer_runtime_core::error::ResolveError> for VmError {
-    fn from(original: wasmer_runtime_core::error::ResolveError) -> Self {
-        VmError::resolve_err(format!("Wasmer resolve error: {:?}", original))
+impl From<wasmer::DeserializeError> for VmError {
+    fn from(original: wasmer::DeserializeError) -> Self {
+        VmError::cache_err(format!("Could not deserialize module: {}", original))
     }
 }
 
-impl From<wasmer_runtime_core::error::RuntimeError> for VmError {
-    fn from(original: wasmer_runtime_core::error::RuntimeError) -> Self {
-        use wasmer_runtime_core::error::{InvokeError, RuntimeError};
+impl From<wasmer::RuntimeError> for VmError {
+    fn from(original: wasmer::RuntimeError) -> Self {
+        VmError::runtime_err(format!("Wasmer runtime error: {}", original))
+    }
+}
 
-        fn runtime_error(err: RuntimeError) -> VmError {
-            VmError::runtime_err(format!("Wasmer runtime error: {:?}", err))
-        }
-
-        match original {
-            // TODO: fix the issue described below:
-            // `InvokeError::FailedWithNoError` happens when running out of gas in singlepass v0.17
-            // but it's supposed to indicate bugs in Wasmer...
-            // https://github.com/wasmerio/wasmer/issues/1452
-            // https://github.com/CosmWasm/cosmwasm/issues/375
-            RuntimeError::InvokeError(InvokeError::FailedWithNoError) => VmError::GasDepletion,
-            // This variant contains the error we return from imports.
-            RuntimeError::User(err) => match err.downcast::<VmError>() {
-                Ok(err) => *err,
-                Err(err) => runtime_error(RuntimeError::User(err)),
-            },
-            _ => runtime_error(original),
-        }
+impl From<wasmer::CompileError> for VmError {
+    fn from(original: wasmer::CompileError) -> Self {
+        VmError::compile_err(format!("Could not compile: {}", original))
     }
 }
 
 impl From<InsufficientGasLeft> for VmError {
     fn from(_original: InsufficientGasLeft) -> Self {
         VmError::GasDepletion
+    }
+}
+
+impl From<std::convert::Infallible> for VmError {
+    fn from(_original: std::convert::Infallible) -> Self {
+        unreachable!();
+    }
+}
+
+impl From<VmError> for wasmer::RuntimeError {
+    fn from(original: VmError) -> wasmer::RuntimeError {
+        let msg: String = original.to_string();
+        wasmer::RuntimeError::new(msg)
     }
 }
 

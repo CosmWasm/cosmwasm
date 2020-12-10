@@ -44,34 +44,28 @@ docker run --rm -v "$(pwd)":/code \
 ## Testing
 
 By default, this repository is built and tested with the singlepass backend.
-This requires running Rust nighty:
+You can enable the `cranelift` feature to override the default backend with Cranelift
 
 ```sh
 cd packages/vm
-cargo +nightly test
-```
-
-To test with Rust stable, you need to switch to cranelift:
-
-```sh
-cd packages/vm
-cargo test --no-default-features --features default-cranelift
+cargo test --features iterator
+cargo test --features cranelift,iterator
 ```
 
 ## Benchmarking
 
-Using Singlepass (requires Rust nightly):
+Using Singlepass:
 
 ```
 cd packages/vm
-cargo +nightly bench --no-default-features --features singlepass,default-singlepass
+cargo bench --no-default-features
 ```
 
 Using Cranelift:
 
 ```
 cd packages/vm
-cargo bench --no-default-features --features cranelift,default-cranelift
+cargo bench --no-default-features --features cranelift
 ```
 
 ## License

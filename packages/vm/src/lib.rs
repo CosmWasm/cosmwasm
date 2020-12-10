@@ -1,11 +1,10 @@
 mod backend;
-mod backends;
 mod cache;
 mod calls;
 mod checksum;
 mod compatibility;
-mod context;
 mod conversion;
+mod environment;
 mod errors;
 mod features;
 mod imports;
@@ -17,6 +16,7 @@ mod modules;
 mod serde;
 mod size;
 pub mod testing;
+mod wasm_backend;
 
 pub use crate::backend::{Api, Backend, BackendError, BackendResult, GasInfo, Querier, Storage};
 pub use crate::cache::{Cache, CacheOptions, Stats};

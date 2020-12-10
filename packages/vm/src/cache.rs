@@ -5,13 +5,13 @@ use std::marker::PhantomData;
 use std::path::PathBuf;
 
 use crate::backend::{Api, Backend, Querier, Storage};
-use crate::backends::compile;
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache};
 use crate::size::Size;
+use crate::wasm_backend::compile;
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -44,9 +44,9 @@ pub struct Cache<S: Storage, A: Api, Q: Querier> {
 
 impl<S, A, Q> Cache<S, A, Q>
 where
-    S: Storage,
-    A: Api + 'static, // 'static is needed by `impl<…> Instance`
-    Q: Querier,
+    S: Storage + 'static, // 'static is needed by `impl<…> Instance`
+    A: Api + 'static,     // 'static is needed by `impl<…> Instance`
+    Q: Querier + 'static, // 'static is needed by `impl<…> Instance`
 {
     /// new stores the data for cache under base_dir
     ///
@@ -88,7 +88,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
-        let module = compile(wasm)?;
+        let module = compile(wasm, None)?;
         self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
@@ -125,7 +125,7 @@ where
         }
 
         // Get module from file system cache
-        if let Some(module) = self.fs_cache.load(checksum)? {
+        if let Some(module) = self.fs_cache.load(checksum, options.memory_limit)? {
             self.stats.hits_fs_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
@@ -136,7 +136,7 @@ where
         // Re-compile module from wasm
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        let module = compile(&wasm)?;
+        let module = compile(&wasm, Some(options.memory_limit))?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
@@ -181,7 +181,7 @@ fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResul
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
@@ -193,8 +193,10 @@ mod test {
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 400_000;
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
+        memory_limit: TESTING_MEMORY_LIMIT,
         print_debug: false,
     };
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
@@ -476,7 +478,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
+    #[cfg(feature = "metering")]
     fn resets_gas_when_reusing_instance() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
@@ -508,7 +510,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "default-singlepass")]
+    #[cfg(feature = "metering")]
     fn recovers_from_out_of_gas() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
@@ -519,6 +521,7 @@ mod test {
         // Init from module cache
         let options = InstanceOptions {
             gas_limit: 10,
+            memory_limit: TESTING_MEMORY_LIMIT,
             print_debug: false,
         };
         let mut instance1 = cache.get_instance(&id, backend1, options).unwrap();
@@ -537,6 +540,7 @@ mod test {
         // Init from memory cache
         let options = InstanceOptions {
             gas_limit: TESTING_GAS_LIMIT,
+            memory_limit: TESTING_MEMORY_LIMIT,
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, backend2, options).unwrap();

@@ -1,7 +1,7 @@
 use parity_wasm::elements::{Internal, Module};
 use std::collections::HashSet;
 use std::iter::FromIterator;
-use wasmer_runtime_core::{export::Export, Instance as WasmerInstance};
+use wasmer::{ExternType, Instance as WasmerInstance};
 
 const REQUIRES_PREFIX: &str = "requires_";
 
@@ -16,10 +16,12 @@ pub fn features_from_csv(csv: &str) -> HashSet<String> {
 }
 
 pub fn required_features_from_wasmer_instance(wasmer_instance: &WasmerInstance) -> HashSet<String> {
-    HashSet::from_iter(wasmer_instance.exports().filter_map(|(mut name, export)| {
-        if let Export::Function { .. } = export {
+    let module = wasmer_instance.module();
+    HashSet::from_iter(module.exports().filter_map(|export| {
+        if let ExternType::Function { .. } = export.ty() {
+            let name = export.name();
             if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
-                let required_feature = name.split_off(REQUIRES_PREFIX.len());
+                let required_feature = name.to_string().split_off(REQUIRES_PREFIX.len());
                 return Some(required_feature);
             }
         }

@@ -8,11 +8,21 @@ use std::{
     path::PathBuf,
 };
 
-use wasmer_runtime_core::{cache::Artifact, module::Module};
+use wasmer::Module;
 
-use crate::backends::{compiler_for_backend, BACKEND_NAME};
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
+use crate::size::Size;
+use crate::wasm_backend::make_store_headless;
+
+/// Bump this version whenever the module system changes in a way
+/// that old stored modules would be corrupt when loaded in the new system.
+/// This needs to be done e.g. when switching between the jit/native engine.
+///
+/// The string is used as a folder and should be named in a way that is
+/// easy to interprete for system admins. It should allow easy clearing
+/// of old versions.
+const MODULE_SERIALIZATION_VERSION: &str = "v1";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
@@ -58,11 +68,13 @@ impl FileSystemCache {
         }
     }
 
-    pub fn load(&self, checksum: &Checksum) -> VmResult<Option<Module>> {
-        let backend = BACKEND_NAME;
-
+    pub fn load(&self, checksum: &Checksum, memory_limit: Size) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
-        let file_path = self.path.clone().join(backend).join(filename);
+        let file_path = self
+            .path
+            .clone()
+            .join(MODULE_SERIALIZATION_VERSION)
+            .join(filename);
 
         let file = match File::open(file_path) {
             Ok(file) => file,
@@ -80,27 +92,17 @@ impl FileSystemCache {
         let mmap = unsafe { Mmap::map(&file) }
             .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
 
-        let serialized_cache = Artifact::deserialize(&mmap[..])?;
-        let module = unsafe {
-            wasmer_runtime_core::load_cache_with(
-                serialized_cache,
-                compiler_for_backend(backend)
-                    .ok_or_else(|| VmError::cache_err(format!("Unsupported backend: {}", backend)))?
-                    .as_ref(),
-            )
-        }?;
+        let store = make_store_headless(Some(memory_limit));
+        let module = unsafe { Module::deserialize(&store, &mmap[..]) }?;
         Ok(Some(module))
     }
 
-    /// Stores a serialization of the module to the file system
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
-        let backend_str = module.info().backend.to_string();
-        let modules_dir = self.path.clone().join(backend_str);
+        let modules_dir = self.path.clone().join(MODULE_SERIALIZATION_VERSION);
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
 
-        let serialized_cache = module.cache()?;
-        let buffer = serialized_cache.serialize()?;
+        let buffer = module.serialize()?;
 
         let filename = checksum.to_hex();
         let mut file = File::create(modules_dir.join(filename))
@@ -115,13 +117,14 @@ impl FileSystemCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backends::compile;
+    use crate::wasm_backend::compile;
     use tempfile::TempDir;
+    use wasmer::{imports, Instance as WasmerInstance};
+
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     #[test]
     fn test_file_system_cache_run() {
-        use wasmer_runtime_core::{imports, typed_func::Func};
-
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 
@@ -137,29 +140,28 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm).unwrap();
+        let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
-        let cached = cache.load(&checksum).unwrap();
+        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_none());
 
         // Store module
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum).unwrap();
+        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
         assert!(cached.is_some());
 
         // Check the returned module is functional.
         // This is not really testing the cache API but better safe than sorry.
         {
-            assert_eq!(module.info().backend.to_string(), BACKEND_NAME.to_string());
             let cached_module = cached.unwrap();
             let import_object = imports! {};
-            let instance = cached_module.instantiate(&import_object).unwrap();
-            let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
-            let value = add_one.call(42).unwrap();
-            assert_eq!(value, 43);
+            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
 }

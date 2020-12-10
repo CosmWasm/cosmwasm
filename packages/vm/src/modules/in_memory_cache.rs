@@ -1,5 +1,5 @@
 use clru::CLruCache;
-use wasmer_runtime_core::module::Module;
+use wasmer::Module;
 
 use crate::{Checksum, Size, VmResult};
 
@@ -33,12 +33,13 @@ impl InMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backends::{compile, BACKEND_NAME};
+    use crate::wasm_backend::compile;
+    use wasmer::{imports, Instance as WasmerInstance};
+
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     #[test]
     fn test_in_memory_cache_run() {
-        use wasmer_runtime_core::{imports, typed_func::Func};
-
         let mut cache = InMemoryCache::new(Size::mebi(200));
 
         // Create module
@@ -53,7 +54,7 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm).unwrap();
+        let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
         let cached = cache.load(&checksum).unwrap();
@@ -69,13 +70,12 @@ mod tests {
         // Check the returned module is functional.
         // This is not really testing the cache API but better safe than sorry.
         {
-            assert_eq!(module.info().backend.to_string(), BACKEND_NAME.to_string());
             let cached_module = cached.unwrap();
             let import_object = imports! {};
-            let instance = cached_module.instantiate(&import_object).unwrap();
-            let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
-            let value = add_one.call(42).unwrap();
-            assert_eq!(value, 43);
+            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
 }
