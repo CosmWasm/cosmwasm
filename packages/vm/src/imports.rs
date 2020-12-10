@@ -9,7 +9,7 @@ use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
 
 use crate::backend::{Api, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::{process_gas_info, Env};
+use crate::environment::{process_gas_info, Environment};
 use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
@@ -37,25 +37,31 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 // Function::new_native_with_env interface. Those require an env in the first
 // argument and cannot capiture other variables such as the Api.
 
-pub fn native_db_read<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
+pub fn native_db_read<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    key_ptr: u32,
+) -> VmResult<u32> {
     let ptr = do_read::<S, Q>(env, key_ptr)?;
     Ok(ptr)
 }
 
 pub fn native_db_write<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     key_ptr: u32,
     value_ptr: u32,
 ) -> VmResult<()> {
     do_write(env, key_ptr, value_ptr)
 }
 
-pub fn native_db_remove<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<()> {
+pub fn native_db_remove<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    key_ptr: u32,
+) -> VmResult<()> {
     do_remove(env, key_ptr)
 }
 
 pub fn native_query_chain<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
     do_query_chain(env, request_ptr)
@@ -63,7 +69,7 @@ pub fn native_query_chain<S: Storage, Q: Querier>(
 
 #[cfg(feature = "iterator")]
 pub fn native_db_scan<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
@@ -72,7 +78,10 @@ pub fn native_db_scan<S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn native_db_next<S: Storage, Q: Querier>(env: &Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
+pub fn native_db_next<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    iterator_id: u32,
+) -> VmResult<u32> {
     do_next(env, iterator_id)
 }
 
@@ -81,7 +90,7 @@ pub fn native_db_next<S: Storage, Q: Querier>(env: &Env<S, Q>, iterator_id: u32)
 //
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-fn do_read<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<u32> {
+fn do_read<S: Storage, Q: Querier>(env: &Environment<S, Q>, key_ptr: u32) -> VmResult<u32> {
     let key = read_region(&env.memory(), key_ptr, MAX_LENGTH_DB_KEY)?;
 
     let (result, gas_info) = env.with_storage_from_context::<_, _>(|store| Ok(store.get(&key)))?;
@@ -96,7 +105,11 @@ fn do_read<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<u3
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-fn do_write<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32, value_ptr: u32) -> VmResult<()> {
+fn do_write<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    key_ptr: u32,
+    value_ptr: u32,
+) -> VmResult<()> {
     if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
@@ -112,7 +125,7 @@ fn do_write<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32, value_ptr: u3
     Ok(())
 }
 
-fn do_remove<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<()> {
+fn do_remove<S: Storage, Q: Querier>(env: &Environment<S, Q>, key_ptr: u32) -> VmResult<()> {
     if env.is_storage_readonly() {
         return Err(VmError::write_access_denied());
     }
@@ -129,7 +142,7 @@ fn do_remove<S: Storage, Q: Querier>(env: &Env<S, Q>, key_ptr: u32) -> VmResult<
 
 pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     api: A,
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
@@ -160,7 +173,7 @@ pub fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
 
 pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     api: A,
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
@@ -187,7 +200,7 @@ pub fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn print_debug_message<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
     let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
@@ -197,7 +210,10 @@ pub fn print_debug_message<S: Storage, Q: Querier>(
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
-fn write_to_contract<S: Storage, Q: Querier>(env: &Env<S, Q>, input: &[u8]) -> VmResult<u32> {
+fn write_to_contract<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    input: &[u8],
+) -> VmResult<u32> {
     let target_ptr = env.with_func_from_context::<_, u32>("allocate", |allocate| {
         let out_size = to_u32(input.len())?;
         let result = allocate.call(&[out_size.into()])?;
@@ -211,7 +227,10 @@ fn write_to_contract<S: Storage, Q: Querier>(env: &Env<S, Q>, input: &[u8]) -> V
     Ok(target_ptr)
 }
 
-fn do_query_chain<S: Storage, Q: Querier>(env: &Env<S, Q>, request_ptr: u32) -> VmResult<u32> {
+fn do_query_chain<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    request_ptr: u32,
+) -> VmResult<u32> {
     let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
     let gas_remaining = get_gas_left(env);
@@ -225,7 +244,7 @@ fn do_query_chain<S: Storage, Q: Querier>(env: &Env<S, Q>, request_ptr: u32) -> 
 
 #[cfg(feature = "iterator")]
 fn do_scan<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     start_ptr: u32,
     end_ptr: u32,
     order: i32,
@@ -245,7 +264,7 @@ fn do_scan<S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_next<S: Storage, Q: Querier>(env: &Env<S, Q>, iterator_id: u32) -> VmResult<u32> {
+fn do_next<S: Storage, Q: Querier>(env: &Environment<S, Q>, iterator_id: u32) -> VmResult<u32> {
     let (result, gas_info) =
         env.with_storage_from_context::<_, _>(|store| Ok(store.next(iterator_id)))?;
     process_gas_info::<S, Q>(env, gas_info)?;
@@ -300,8 +319,8 @@ mod test {
     const GAS_LIMIT: u64 = 5_000_000;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
-    fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let env = Env::new(GAS_LIMIT);
+    fn make_instance() -> (Environment<MS, MQ>, Box<WasmerInstance>) {
+        let env = Environment::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();
@@ -334,7 +353,7 @@ mod test {
         (env, instance)
     }
 
-    fn leave_default_data(env: &Env<MS, MQ>) {
+    fn leave_default_data(env: &Environment<MS, MQ>) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage.set(KEY1, VALUE1).0.expect("error setting");
@@ -344,7 +363,7 @@ mod test {
         move_into_environment(env, storage, querier);
     }
 
-    fn write_data(env: &Env<MS, MQ>, data: &[u8]) -> u32 {
+    fn write_data(env: &Environment<MS, MQ>, data: &[u8]) -> u32 {
         let region_ptr = env
             .with_func_from_context::<_, _>("allocate", |alloc_func| {
                 let result = alloc_func
@@ -371,7 +390,7 @@ mod test {
     }
 
     /// A Region reader that is just good enough for the tests in this file
-    fn force_read(env: &Env<MS, MQ>, region_ptr: u32) -> Vec<u8> {
+    fn force_read(env: &Environment<MS, MQ>, region_ptr: u32) -> Vec<u8> {
         read_region(&env.memory(), region_ptr, 5000).unwrap()
     }
 

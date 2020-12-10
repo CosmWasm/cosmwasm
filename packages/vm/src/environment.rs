@@ -58,30 +58,29 @@ impl GasState {
     }
 }
 
-/// A ContextEnv is an env that provides access to the
-/// ContextData. The env is clonable but a clone accesses
-/// the same underlying data.
-pub struct Env<S: Storage, Q: Querier> {
+/// A environment that provides access to the ContextData.
+/// The environment is clonable but clones access the same underlying data.
+pub struct Environment<S: Storage, Q: Querier> {
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
-impl<S: Storage, Q: Querier> Clone for Env<S, Q> {
+impl<S: Storage, Q: Querier> Clone for Environment<S, Q> {
     fn clone(&self) -> Self {
-        Env {
+        Environment {
             data: self.data.clone(),
         }
     }
 }
 
-impl<S: Storage, Q: Querier> WasmerEnv for Env<S, Q> {
+impl<S: Storage, Q: Querier> WasmerEnv for Environment<S, Q> {
     fn init_with_instance(&mut self, _instance: &WasmerInstance) -> Result<(), HostEnvInitError> {
         Ok(())
     }
 }
 
-impl<S: Storage, Q: Querier> Env<S, Q> {
+impl<S: Storage, Q: Querier> Environment<S, Q> {
     pub fn new(gas_limit: u64) -> Self {
-        Env {
+        Environment {
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         }
     }
@@ -212,7 +211,7 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
 /// Returns the original storage and querier as owned instances, and closes any remaining
 /// iterators. This is meant to be called when recycling the instance.
 pub(crate) fn move_out_of_environment<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
 ) -> (Option<S>, Option<Q>) {
     env.with_context_data_mut(|context_data| {
         (context_data.storage.take(), context_data.querier.take())
@@ -222,7 +221,7 @@ pub(crate) fn move_out_of_environment<S: Storage, Q: Querier>(
 /// Moves owned instances of storage and querier into the env.
 /// Should be followed by exactly one call to move_out_of_environment when the instance is finished.
 pub(crate) fn move_into_environment<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     storage: S,
     querier: Q,
 ) {
@@ -232,7 +231,10 @@ pub(crate) fn move_into_environment<S: Storage, Q: Querier>(
     });
 }
 
-pub fn process_gas_info<S: Storage, Q: Querier>(env: &Env<S, Q>, info: GasInfo) -> VmResult<()> {
+pub fn process_gas_info<S: Storage, Q: Querier>(
+    env: &Environment<S, Q>,
+    info: GasInfo,
+) -> VmResult<()> {
     decrease_gas_left(env, info.cost)?;
     account_for_externally_used_gas(env, info.externally_used)?;
     Ok(())
@@ -242,14 +244,14 @@ pub fn process_gas_info<S: Storage, Q: Querier>(env: &Env<S, Q>, info: GasInfo) 
 /// reported there was externally metered gas used.
 /// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
 fn account_for_externally_used_gas<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     amount: u64,
 ) -> VmResult<()> {
     account_for_externally_used_gas_impl(env, amount)
 }
 
 fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     used_gas: u64,
 ) -> VmResult<()> {
     env.with_context_data_mut(|context_data| {
@@ -306,8 +308,8 @@ mod test {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
-    fn make_instance() -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let env = Env::new(GAS_LIMIT);
+    fn make_instance() -> (Environment<MS, MQ>, Box<WasmerInstance>) {
+        let env = Environment::new(GAS_LIMIT);
 
         let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();
@@ -339,7 +341,7 @@ mod test {
         (env, instance)
     }
 
-    fn leave_default_data(env: &Env<MS, MQ>) {
+    fn leave_default_data(env: &Environment<MS, MQ>) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage

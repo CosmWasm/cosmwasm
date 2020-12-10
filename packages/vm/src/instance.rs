@@ -8,7 +8,7 @@ use wasmer::{
 
 use crate::backend::{Api, Backend, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::{move_into_environment, move_out_of_environment, Env};
+use crate::environment::{move_into_environment, move_out_of_environment, Environment};
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
@@ -47,7 +47,7 @@ pub struct Instance<S: Storage, A: Api, Q: Querier> {
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
     inner: Box<WasmerInstance>,
-    env: Env<S, Q>,
+    env: Environment<S, Q>,
     pub api: A,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
@@ -57,9 +57,9 @@ pub struct Instance<S: Storage, A: Api, Q: Querier> {
 
 impl<S, A, Q> Instance<S, A, Q>
 where
-    S: Storage + 'static, // 'static is needed here to allow using this in an Env that is cloned into closures
+    S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
     A: Api + 'static,     // 'static is needed here to allow copying API instances into closures
-    Q: Querier + 'static, // 'static is needed here to allow using this in an Env that is cloned into closures
+    Q: Querier + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
 {
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
@@ -83,7 +83,7 @@ where
 
         let store = module.store();
 
-        let env = Env::new(gas_limit);
+        let env = Environment::new(gas_limit);
 
         let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
         let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);

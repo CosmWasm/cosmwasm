@@ -1,5 +1,5 @@
 use crate::backend::{Querier, Storage};
-use crate::environment::Env;
+use crate::environment::Environment;
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
 /// This causes issues when trying to instantiate the same compiled module with a different gas limit.
@@ -21,7 +21,7 @@ pub struct InsufficientGasLeft;
 /// If the amount exceeds the available gas, the remaining gas is set to 0 and
 /// an InsufficientGasLeft error is returned.
 pub fn decrease_gas_left<S: Storage, Q: Querier>(
-    env: &Env<S, Q>,
+    env: &Environment<S, Q>,
     amount: u64,
 ) -> Result<(), InsufficientGasLeft> {
     let remaining = get_gas_left(env);
@@ -35,10 +35,10 @@ pub fn decrease_gas_left<S: Storage, Q: Querier>(
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>, _amount: u64) {}
+pub fn set_gas_left<S: Storage, Q: Querier>(_env: &Environment<S, Q>, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
-pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Env<S, Q>) -> u64 {
+pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Environment<S, Q>) -> u64 {
     FAKE_GAS_AVAILABLE
 }
 
@@ -78,8 +78,8 @@ mod tests {
     const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
-    fn instantiate(code: &[u8]) -> (Env<MS, MQ>, Box<WasmerInstance>) {
-        let env = Env::new(GAS_LIMIT);
+    fn instantiate(code: &[u8]) -> (Environment<MS, MQ>, Box<WasmerInstance>) {
+        let env = Environment::new(GAS_LIMIT);
         let module = compile(code, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let import_obj = imports! { "env" => {}, };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
