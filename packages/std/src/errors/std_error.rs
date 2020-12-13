@@ -1,3 +1,4 @@
+use derivative::Derivative;
 #[cfg(feature = "backtraces")]
 use std::backtrace::Backtrace;
 use thiserror::Error;
@@ -17,19 +18,22 @@ use thiserror::Error;
 /// Checklist for adding a new error:
 /// - Add enum case
 /// - Add creator function in std_error_helpers.rs
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Derivative)]
+#[derivative(PartialEq)]
 pub enum StdError {
     /// Whenever there is no specific error type available
     #[error("Generic error: {msg}")]
     GenericErr {
         msg: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     #[error("Invalid Base64 string: {msg}")]
     InvalidBase64 {
         msg: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     #[error("Invalid data size: expected={expected} actual={actual}")]
@@ -37,6 +41,7 @@ pub enum StdError {
         expected: u64,
         actual: u64,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     /// Whenever UTF-8 bytes cannot be decoded into a unicode string, e.g. in String::from_utf8 or str::from_utf8.
@@ -44,12 +49,14 @@ pub enum StdError {
     InvalidUtf8 {
         msg: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     #[error("{kind} not found")]
     NotFound {
         kind: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     #[error("Error parsing into type {target_type}: {msg}")]
@@ -58,6 +65,7 @@ pub enum StdError {
         target_type: String,
         msg: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     #[error("Error serializing type {source_type}: {msg}")]
@@ -66,6 +74,7 @@ pub enum StdError {
         source_type: String,
         msg: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
     #[error("Cannot subtract {subtrahend} from {minuend}")]
@@ -73,6 +82,7 @@ pub enum StdError {
         minuend: String,
         subtrahend: String,
         #[cfg(feature = "backtraces")]
+        #[derivative(PartialEq = "ignore")]
         backtrace: Backtrace,
     },
 }
