@@ -528,10 +528,7 @@ mod tests {
             handle_info,
             HandleMsg::Release {},
         );
-        match handle_res.unwrap_err() {
-            HackError::Unauthorized { .. } => {}
-            _ => panic!("Expect unauthorized error"),
-        }
+        assert_eq!(handle_res.unwrap_err(), HackError::Unauthorized {});
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");

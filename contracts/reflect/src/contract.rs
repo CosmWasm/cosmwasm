@@ -225,11 +225,8 @@ mod tests {
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            ReflectError::MessagesEmpty => {}
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(err, ReflectError::MessagesEmpty);
     }
 
     #[test]
@@ -302,14 +299,10 @@ mod tests {
             owner: new_owner.clone(),
         };
 
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            ReflectError::NotCurrentOwner { expected, actual } => {
-                assert_eq!(expected, deps.api.canonical_address(&creator).unwrap());
-                assert_eq!(actual, deps.api.canonical_address(&random).unwrap());
-            }
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let expected = deps.api.canonical_address(&creator).unwrap();
+        let actual = deps.api.canonical_address(&random).unwrap();
+        assert_eq!(err, ReflectError::NotCurrentOwner { expected, actual });
     }
 
     #[test]
@@ -325,12 +318,12 @@ mod tests {
         let msg = HandleMsg::ChangeOwner {
             owner: HumanAddr::from("x"),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
+        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        match err {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
                 assert!(msg.contains("human address too short"))
             }
-            err => panic!("Unexpected error: {:?}", err),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
