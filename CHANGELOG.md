@@ -16,6 +16,14 @@
 - Export method `cosmwasm_vm::Cache::stats` and response type `Stats`.
 - Remove `cosmwasm_vm::testing::MockApi::new`. Use `MockApi::default` instead.
 
+## 0.12.2 (2020-12-14)
+
+**cosmwasm-std**
+
+- `StdError` now implements `PartialEq` (ignoring backtrace if any). This allows
+  simpler `assert_eq!()` when testing error conditions (rather than match
+  statements as now).
+
 ## 0.12.1 (2020-12-09)
 
 **cosmwasm-std**
