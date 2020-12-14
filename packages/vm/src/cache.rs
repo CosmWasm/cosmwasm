@@ -117,10 +117,10 @@ where
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
         // Get module from memory cache
-        if let Some(module) = self.memory_cache.load(checksum)? {
+        if let Some(module) = self.memory_cache.load(checksum, options.memory_limit)? {
             self.stats.hits_memory_cache += 1;
             let instance =
-                Instance::from_module(module, backend, options.gas_limit, options.print_debug)?;
+                Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
             return Ok(instance);
         }
 

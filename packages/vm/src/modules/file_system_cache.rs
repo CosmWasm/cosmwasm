@@ -62,6 +62,8 @@ impl FileSystemCache {
         }
     }
 
+    /// Loads an artifact from the file system, creates a new store and returns
+    /// a module (i.e. artifact + store).
     pub fn load(&self, checksum: &Checksum, memory_limit: Size) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
         let file_path = self
