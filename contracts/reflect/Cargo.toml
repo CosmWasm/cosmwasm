@@ -1,6 +1,6 @@
 [package]
 name = "reflect"
-version = "0.12.1"
+version = "0.12.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 publish = false
