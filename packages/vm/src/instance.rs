@@ -183,7 +183,7 @@ where
 
         import_obj.register("env", env_imports);
 
-        let wasmer_instance = Box::from(WasmerInstance::new(&module, &import_obj).map_err(
+        let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
             |original| {
                 VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
             },
