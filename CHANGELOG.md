@@ -15,6 +15,7 @@
 
 - Export method `cosmwasm_vm::Cache::stats` and response type `Stats`.
 - Remove `cosmwasm_vm::testing::MockApi::new`. Use `MockApi::default` instead.
+- Convert field `Instance::api` to a method.
 
 ## 0.12.2 (2020-12-14)
 

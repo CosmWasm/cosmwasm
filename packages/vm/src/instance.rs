@@ -46,7 +46,6 @@ pub struct Instance<S: Storage, A: Api, Q: Querier> {
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
     inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
-    pub api: A,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
@@ -182,7 +181,6 @@ where
         let instance = Instance {
             inner: wasmer_instance,
             env,
-            api: backend.api,
             required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
@@ -190,13 +188,18 @@ where
         Ok(instance)
     }
 
+    pub fn api(&self) -> &A {
+        &self.env.api
+    }
+
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
     pub fn recycle(self) -> Option<Backend<S, A, Q>> {
         if let (Some(storage), Some(querier)) = move_out_of_environment(&self.env) {
+            let api = self.env.api;
             Some(Backend {
                 storage,
-                api: self.api,
+                api,
                 querier,
             })
         } else {

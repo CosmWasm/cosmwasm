@@ -56,9 +56,9 @@ fn proper_initialization() {
     let beneficiary = HumanAddr(String::from("benefits"));
     let creator = HumanAddr(String::from("creator"));
     let expected_state = State {
-        verifier: deps.api.canonical_address(&verifier).0.unwrap(),
-        beneficiary: deps.api.canonical_address(&beneficiary).0.unwrap(),
-        funder: deps.api.canonical_address(&creator).0.unwrap(),
+        verifier: deps.api().canonical_address(&verifier).0.unwrap(),
+        beneficiary: deps.api().canonical_address(&beneficiary).0.unwrap(),
+        funder: deps.api().canonical_address(&creator).0.unwrap(),
     };
 
     let msg = InitMsg {
@@ -271,9 +271,9 @@ fn handle_release_fails_for_wrong_sender() {
     assert_eq!(
         state,
         State {
-            verifier: deps.api.canonical_address(&verifier).0.unwrap(),
-            beneficiary: deps.api.canonical_address(&beneficiary).0.unwrap(),
-            funder: deps.api.canonical_address(&creator).0.unwrap(),
+            verifier: deps.api().canonical_address(&verifier).0.unwrap(),
+            beneficiary: deps.api().canonical_address(&beneficiary).0.unwrap(),
+            funder: deps.api().canonical_address(&creator).0.unwrap(),
         }
     );
 }
