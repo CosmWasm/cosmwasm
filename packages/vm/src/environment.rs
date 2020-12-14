@@ -283,6 +283,7 @@ mod test {
     use crate::backend::Storage;
     use crate::conversion::ref_to_u32;
     use crate::errors::VmError;
+    use crate::signatures::*;
     use crate::size::Size;
     use crate::testing::{MockQuerier, MockStorage};
     #[cfg(feature = "metering")]
@@ -291,7 +292,7 @@ mod test {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
-    use wasmer::{imports, Function, FunctionType, Instance as WasmerInstance, Type, Val};
+    use wasmer::{imports, Function, Instance as WasmerInstance, Val};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -316,24 +317,18 @@ mod test {
 
         let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();
-        let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
-        let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
-        let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
-        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
-        let i32i32i32_to_i32 =
-            FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                "db_read" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "db_write" => Function::new(store, &i32i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
-                "db_remove" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
-                "db_scan" => Function::new(store, &i32i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "db_next" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "query_chain" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "canonicalize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "humanize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "debug" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
+                "db_read" => Function::new(store, I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "db_write" => Function::new(store, I32_I32_TO_VOID, |_args: &[Val]| { Ok(vec![]) }),
+                "db_remove" => Function::new(store, I32_TO_VOID, |_args: &[Val]| { Ok(vec![]) }),
+                "db_scan" => Function::new(store, I32_I32_I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "db_next" => Function::new(store, I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "query_chain" => Function::new(store, I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "canonicalize_address" => Function::new(store, I32_I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "humanize_address" => Function::new(store, I32_I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
+                "debug" => Function::new(store, I32_TO_VOID, |_args: &[Val]| { Ok(vec![]) }),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());

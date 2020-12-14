@@ -14,6 +14,7 @@ mod memory;
 mod middleware;
 mod modules;
 mod serde;
+mod signatures;
 mod size;
 pub mod testing;
 mod wasm_backend;

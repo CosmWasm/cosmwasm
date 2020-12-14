@@ -2,9 +2,7 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-use wasmer::{
-    Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Type, Val,
-};
+use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::backend::{Api, Backend, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -18,6 +16,7 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
+use crate::signatures::*;
 use crate::size::Size;
 use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
 
@@ -85,8 +84,6 @@ where
 
         let env = Environment::new(gas_limit, print_debug);
 
-        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
-
         let mut import_obj = ImportObject::new();
         let mut env_imports = Exports::new();
 
@@ -121,7 +118,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "canonicalize_address",
-            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
+            Function::new_with_env(store, I32_I32_TO_I32, env.clone(), move |env, args| {
                 let source_ptr = ref_to_u32(&args[0])?;
                 let destination_ptr = ref_to_u32(&args[1])?;
                 let ptr =
@@ -136,7 +133,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "humanize_address",
-            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
+            Function::new_with_env(store, I32_I32_TO_I32, env.clone(), move |env, args| {
                 let source_ptr = ref_to_u32(&args[0])?;
                 let destination_ptr = ref_to_u32(&args[1])?;
                 let ptr = do_humanize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
