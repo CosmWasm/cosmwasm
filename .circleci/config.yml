@@ -26,7 +26,7 @@ workflows:
                 - master
                 # 👇 Add your branch here if benchmarking matters to your work
                 - benchmarking
-                - upgrade-to-wasmer-reborn
+                - update-wasmer
   deploy:
     jobs:
       - build_and_upload_devcontracts:
