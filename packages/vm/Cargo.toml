@@ -43,8 +43,8 @@ serde = { version = "1.0.103", default-features = false, features = ["derive", "
 serde_json = "1.0"
 sha2 = "0.9.1"
 thiserror = "1.0"
-wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "17752cd", default-features = false, features = ["jit", "singlepass"] }
-wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "17752cd" }
+wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "ae9a5f0a", default-features = false, features = ["jit", "singlepass"] }
+wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "ae9a5f0a" }
 
 # Wasmer local (used for quick local debugging or patching)
 # wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["jit", "singlepass"] }
