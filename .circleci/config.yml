@@ -641,11 +641,11 @@ jobs:
       - run:
           name: Run benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
-          command: cargo bench --no-default-features -- --save-baseline singlepass
+          command: cargo bench --no-default-features -- --color never --save-baseline singlepass
       - run:
           name: Run benchmarks (Cranelift)
           working_directory: ~/project/packages/vm
-          command: cargo bench --no-default-features --features cranelift -- --save-baseline cranelift
+          command: cargo bench --no-default-features --features cranelift -- --color never --save-baseline cranelift
       - save_cache:
           paths:
             - /usr/local/cargo/registry
