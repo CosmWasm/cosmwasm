@@ -354,6 +354,21 @@ mod test {
     }
 
     #[test]
+    fn implements_partial_eq() {
+        let u1 = StdError::underflow(3, 5);
+        let u2 = StdError::underflow(3, 5);
+        let u3 = StdError::underflow(3, 7);
+        let s1 = StdError::serialize_err("Book", "Content too long");
+        let s2 = StdError::serialize_err("Book", "Content too long");
+        let s3 = StdError::serialize_err("Book", "Title too long");
+        assert_eq!(u1, u2);
+        assert_ne!(u1, u3);
+        assert_ne!(u1, s1);
+        assert_eq!(s1, s2);
+        assert_ne!(s1, s3);
+    }
+
+    #[test]
     fn from_std_str_utf8error_works() {
         let error: StdError = str::from_utf8(b"Hello \xF0\x90\x80World")
             .unwrap_err()
