@@ -4,9 +4,9 @@
 
 **cosmwasm-std**
 
-- `StdError` now implements `PartialEq` (ignoring backtrace if any). This
-  allows simpler `assert_eq!()` when testing error conditions (rather
-  than match statements as now).
+- `StdError` now implements `PartialEq` (ignoring backtrace if any). This allows
+  simpler `assert_eq!()` when testing error conditions (rather than match
+  statements as now).
 
 ## 0.12.1 (2020-12-09)
 
