@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
+use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Type, Val};
 
 use crate::backend::{Api, Backend, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -16,9 +16,10 @@ use crate::imports::{
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
-use crate::signatures::*;
 use crate::size::Size;
 use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
+
+const I32_I32_TO_I32: ([Type; 2], [Type; 1]) = ([Type::I32, Type::I32], [Type::I32]);
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {

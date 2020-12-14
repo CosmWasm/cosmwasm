@@ -292,11 +292,10 @@ mod test {
         SystemError, SystemResult, WasmQuery,
     };
     use std::ptr::NonNull;
-    use wasmer::{imports, Function, Instance as WasmerInstance, Val};
+    use wasmer::{imports, Function, Instance as WasmerInstance};
 
     use crate::backend::{BackendError, Storage};
     use crate::environment::move_into_environment;
-    use crate::signatures::*;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
@@ -330,15 +329,15 @@ mod test {
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                "db_read" => Function::new(store, I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "db_write" => Function::new(store, I32_I32_TO_VOID, |_args: &[Val]| { Ok(vec![]) }),
-                "db_remove" => Function::new(store, I32_TO_VOID, |_args: &[Val]| { Ok(vec![]) }),
-                "db_scan" => Function::new(store, I32_I32_I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "db_next" => Function::new(store, I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "query_chain" => Function::new(store, I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "canonicalize_address" => Function::new(store, I32_I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "humanize_address" => Function::new(store, I32_I32_TO_I32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "debug" => Function::new(store, I32_TO_VOID, |_args: &[Val]| { Ok(vec![]) }),
+                "db_read" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "db_write" => Function::new_native(&store, |_a: u32, _b: u32| {}),
+                "db_remove" => Function::new_native(&store, |_a: u32| {}),
+                "db_scan" => Function::new_native(&store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
+                "db_next" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "canonicalize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "humanize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "debug" => Function::new_native(&store, |_a: u32| {}),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
