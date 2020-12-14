@@ -191,6 +191,23 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
             memories.pop().unwrap()
         })
     }
+
+    /// Moves owned instances of storage and querier into the env.
+    /// Should be followed by exactly one call to move_out when the instance is finished.
+    pub fn move_in(&self, storage: S, querier: Q) {
+        self.with_context_data_mut(|context_data| {
+            context_data.storage = Some(storage);
+            context_data.querier = Some(querier);
+        });
+    }
+
+    /// Returns the original storage and querier as owned instances, and closes any remaining
+    /// iterators. This is meant to be called when recycling the instance.
+    pub fn move_out(&self) -> (Option<S>, Option<Q>) {
+        self.with_context_data_mut(|context_data| {
+            (context_data.storage.take(), context_data.querier.take())
+        })
+    }
 }
 
 pub struct ContextData<S: Storage, Q: Querier> {
@@ -212,29 +229,6 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
             wasmer_instance: None,
         }
     }
-}
-
-/// Returns the original storage and querier as owned instances, and closes any remaining
-/// iterators. This is meant to be called when recycling the instance.
-pub(crate) fn move_out_of_environment<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-) -> (Option<S>, Option<Q>) {
-    env.with_context_data_mut(|context_data| {
-        (context_data.storage.take(), context_data.querier.take())
-    })
-}
-
-/// Moves owned instances of storage and querier into the env.
-/// Should be followed by exactly one call to move_out_of_environment when the instance is finished.
-pub(crate) fn move_into_environment<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    storage: S,
-    querier: Q,
-) {
-    env.with_context_data_mut(|context_data| {
-        context_data.storage = Some(storage);
-        context_data.querier = Some(querier);
-    });
 }
 
 pub fn process_gas_info<A: Api, S: Storage, Q: Querier>(
@@ -351,21 +345,21 @@ mod test {
             .expect("error setting value");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_environment(env, storage, querier);
+        env.move_in(storage, querier);
     }
 
     #[test]
-    fn leave_and_take_context_data() {
+    fn move_out_works() {
         let (env, _instance) = make_instance();
 
         // empty data on start
-        let (inits, initq) = move_out_of_environment::<MA, MS, MQ>(&env);
+        let (inits, initq) = env.move_out();
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
         leave_default_data(&env);
-        let (s, q) = move_out_of_environment::<MA, MS, MQ>(&env);
+        let (s, q) = env.move_out();
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
@@ -374,7 +368,7 @@ mod test {
         );
 
         // now is empty again
-        let (ends, endq) = move_out_of_environment::<MA, MS, MQ>(&env);
+        let (ends, endq) = env.move_out();
         assert!(ends.is_none());
         assert!(endq.is_none());
     }

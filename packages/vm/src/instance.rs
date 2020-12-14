@@ -6,7 +6,7 @@ use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module
 
 use crate::backend::{Api, Backend, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::{move_into_environment, move_out_of_environment, Environment};
+use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
@@ -177,7 +177,7 @@ where
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
-        move_into_environment(&env, backend.storage, backend.querier);
+        env.move_in(backend.storage, backend.querier);
         let instance = Instance {
             inner: wasmer_instance,
             env,
@@ -195,7 +195,7 @@ where
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
     pub fn recycle(self) -> Option<Backend<S, A, Q>> {
-        if let (Some(storage), Some(querier)) = move_out_of_environment(&self.env) {
+        if let (Some(storage), Some(querier)) = self.env.move_out() {
             let api = self.env.api;
             Some(Backend {
                 storage,

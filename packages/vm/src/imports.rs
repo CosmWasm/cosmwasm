@@ -323,7 +323,6 @@ mod test {
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
     use crate::backend::{BackendError, Storage};
-    use crate::environment::move_into_environment;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
@@ -384,7 +383,7 @@ mod test {
         storage.set(KEY2, VALUE2).0.expect("error setting");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_environment(env, storage, querier);
+        env.move_in(storage, querier);
     }
 
     fn write_data(env: &Environment<MA, MS, MQ>, data: &[u8]) -> u32 {
