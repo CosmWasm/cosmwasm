@@ -129,7 +129,6 @@ dependencies = [
  "base64",
  "chrono",
  "cosmwasm-schema",
- "derivative",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -287,17 +286,6 @@ checksum = "4434400df11d95d556bac068ddfedd482915eb18fe8bea89bc80b6e4b1c179e5"
 dependencies = [
  "generic-array 0.12.3",
  "subtle",
-]
-
-[[package]]
-name = "derivative"
-version = "2.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb582b60359da160a9477ee80f15c8d784c477e69c217ef2cdd4169c24ea380f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

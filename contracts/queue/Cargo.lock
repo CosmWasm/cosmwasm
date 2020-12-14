@@ -116,7 +116,6 @@ name = "cosmwasm-std"
 version = "0.12.1"
 dependencies = [
  "base64",
- "derivative",
  "schemars",
  "serde",
  "serde-json-wasm",
@@ -265,17 +264,6 @@ checksum = "b584a330336237c1eecd3e94266efb216c56ed91225d634cb2991c5f3fd1aeab"
 dependencies = [
  "generic-array 0.14.4",
  "subtle",
-]
-
-[[package]]
-name = "derivative"
-version = "2.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cb582b60359da160a9477ee80f15c8d784c477e69c217ef2cdd4169c24ea380f"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
 ]
 
 [[package]]

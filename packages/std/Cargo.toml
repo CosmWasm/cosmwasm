@@ -34,7 +34,6 @@ serde-json-wasm = { version = "0.2.1" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 thiserror = "1.0"
-derivative = "2.1.1"
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
