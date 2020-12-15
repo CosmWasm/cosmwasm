@@ -7,7 +7,7 @@ use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, Was
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::{decrease_gas_left, get_gas_left, set_gas_left};
+use crate::wasm_backend::{decrease_gas_left, get_gas_left, set_gas_left_to_wasmer_instance};
 
 /** context data **/
 
@@ -180,6 +180,15 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
+    pub fn set_gas_left(&self, new_value: u64) {
+        self.with_context_data_mut(|context_data| {
+            let instance_ptr = context_data
+                .wasmer_instance
+                .expect("Wasmer instance is not set. This is a bug.");
+            let instance = unsafe { instance_ptr.as_ref() };
+            set_gas_left_to_wasmer_instance(instance, new_value);
+        })
+    }
 
     pub fn memory(&self) -> Memory {
         self.with_context_data(|context_data| {
@@ -268,8 +277,16 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
+
         // This tells wasmer how much more gas it can consume from this point in time.
-        set_gas_left(env, new_limit);
+        // set_gas_left implementation without a deadlock
+        {
+            let instance_ptr = context_data
+                .wasmer_instance
+                .expect("Wasmer instance is not set. This is a bug.");
+            let instance = unsafe { instance_ptr.as_ref() };
+            set_gas_left_to_wasmer_instance(instance, new_limit);
+        }
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
             Err(VmError::gas_depletion())
@@ -287,9 +304,9 @@ mod test {
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
+    use crate::wasm_backend::compile_and_use;
     #[cfg(feature = "metering")]
     use crate::wasm_backend::decrease_gas_left;
-    use crate::wasm_backend::{compile_and_use, set_gas_left};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
@@ -315,7 +332,8 @@ mod test {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance() -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(MockApi::default(), GAS_LIMIT, false);
+        let gas_limit = GAS_LIMIT;
+        let env = Environment::new(MockApi::default(), gas_limit, false);
 
         let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let store = module.store();
@@ -337,6 +355,8 @@ mod test {
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
+        env.set_gas_left(gas_limit);
+        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
 
         (env, instance)
     }
@@ -383,7 +403,7 @@ mod test {
         let (env, _instance) = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(&env, gas_limit);
+        env.set_gas_left(gas_limit);
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
 
         // Consume all the Gas that we allocated
@@ -404,7 +424,7 @@ mod test {
         let (env, _instance) = make_instance();
 
         let gas_limit = 100;
-        set_gas_left(&env, gas_limit);
+        env.set_gas_left(gas_limit);
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
 
         // Some gas was consumed externally

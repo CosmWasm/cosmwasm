@@ -1,3 +1,5 @@
+use wasmer::Instance as WasmerInstance;
+
 use crate::backend::{Api, Querier, Storage};
 use crate::environment::Environment;
 
@@ -40,6 +42,16 @@ pub fn set_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>,
 /// Get how many more gas units can be used in the context.
 pub fn get_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>) -> u64 {
     FAKE_GAS_AVAILABLE
+}
+
+/// A copy of https://github.com/wasmerio/wasmer/blob/873560e2033afb54e7bec123e9d2e1f6ab55fd58/lib/middlewares/src/metering.rs#L68-L78
+pub fn set_gas_left_to_wasmer_instance(instance: &WasmerInstance, new_value: u64) {
+    instance
+        .exports
+        .get_global("remaining_points")
+        .expect("Can't get `remaining_points` from Instance")
+        .set(new_value.into())
+        .expect("Can't set `remaining_points` in Instance");
 }
 
 // /// Set the amount of gas units that can be used in the context.

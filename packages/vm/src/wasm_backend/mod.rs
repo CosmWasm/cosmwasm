@@ -4,6 +4,8 @@ mod limiting_tunables;
 mod store;
 
 pub use compile::{compile_and_use, compile_only};
-pub use gas::{decrease_gas_left, get_gas_left, set_gas_left, InsufficientGasLeft};
+pub use gas::{
+    decrease_gas_left, get_gas_left, set_gas_left_to_wasmer_instance, InsufficientGasLeft,
+};
 pub use limiting_tunables::LimitingTunables;
 pub use store::make_runtime_store;

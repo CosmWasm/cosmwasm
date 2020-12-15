@@ -17,7 +17,7 @@ use crate::imports::{
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile_and_use, get_gas_left, set_gas_left};
+use crate::wasm_backend::{compile_and_use, get_gas_left};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -170,13 +170,11 @@ where
             },
         )?);
 
-        set_gas_left(&env, gas_limit);
-        env.with_gas_state_mut(|gas_state| {
-            gas_state.set_gas_limit(gas_limit);
-        });
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
+        env.set_gas_left(gas_limit);
+        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.move_in(backend.storage, backend.querier);
         let instance = Instance {
             inner: wasmer_instance,

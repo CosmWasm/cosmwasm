@@ -349,7 +349,8 @@ mod test {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(api, GAS_LIMIT, false);
+        let gas_limit = GAS_LIMIT;
+        let env = Environment::new(api, gas_limit, false);
 
         let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let store = module.store();
@@ -371,6 +372,8 @@ mod test {
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
+        env.set_gas_left(gas_limit);
+        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.set_storage_readonly(false);
 
         (env, instance)

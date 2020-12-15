@@ -103,11 +103,12 @@ impl FileSystemCache {
 mod tests {
     use super::*;
     use crate::size::Size;
-    use crate::wasm_backend::{compile_only, make_runtime_store};
+    use crate::wasm_backend::{compile_only, make_runtime_store, set_gas_left_to_wasmer_instance};
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance};
 
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
+    const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
     fn test_file_system_cache_run() {
@@ -147,6 +148,7 @@ mod tests {
             let cached_module = cached.unwrap();
             let import_object = imports! {};
             let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+            set_gas_left_to_wasmer_instance(&instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
             let result = add_one.call(&[42.into()]).unwrap();
             assert_eq!(result[0].unwrap_i32(), 43);
