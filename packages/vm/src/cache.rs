@@ -11,7 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache};
 use crate::size::Size;
-use crate::wasm_backend::compile;
+use crate::wasm_backend::{compile, make_store_headless};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -116,8 +116,9 @@ where
         backend: Backend<S, A, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<S, A, Q>> {
+        let store = make_store_headless(Some(options.memory_limit));
         // Get module from memory cache
-        if let Some(module) = self.memory_cache.load(checksum, options.memory_limit)? {
+        if let Some(module) = self.memory_cache.load(checksum, &store)? {
             self.stats.hits_memory_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
@@ -125,7 +126,7 @@ where
         }
 
         // Get module from file system cache
-        if let Some(module) = self.fs_cache.load(checksum, options.memory_limit)? {
+        if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;

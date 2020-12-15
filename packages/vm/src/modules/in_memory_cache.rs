@@ -1,7 +1,6 @@
 use clru::CLruCache;
-use wasmer::Module;
+use wasmer::{Module, Store};
 
-use crate::wasm_backend::make_store_headless;
 use crate::{Checksum, Size, VmResult};
 
 const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
@@ -26,15 +25,12 @@ impl InMemoryCache {
         Ok(())
     }
 
-    /// Looks up a module in the cache and takes its artifact, creates a new store and
+    /// Looks up a module in the cache and takes its artifact and
     /// creates a new module from store and artifact.
-    pub fn load(&mut self, checksum: &Checksum, memory_limit: Size) -> VmResult<Option<Module>> {
+    pub fn load(&mut self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         match self.artifacts.get(checksum) {
             Some(serialized_artifact) => {
-                // Swap out store. Looks complicated because a lot of artifact
-                // APIs are private.
-                let store = make_store_headless(Some(memory_limit));
-                let new_module = unsafe { Module::deserialize(&store, &serialized_artifact) }?;
+                let new_module = unsafe { Module::deserialize(store, &serialized_artifact) }?;
                 Ok(Some(new_module))
             }
             None => Ok(None),
@@ -45,7 +41,8 @@ impl InMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::compile;
+    use crate::size::Size;
+    use crate::wasm_backend::{compile, make_store_headless};
     use wasmer::{imports, Instance as WasmerInstance};
 
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
@@ -69,14 +66,16 @@ mod tests {
         let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
-        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        let store = make_store_headless(Some(TESTING_MEMORY_LIMIT));
+        let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_none());
 
         // Store module
         cache.store(&checksum, module.clone()).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        let store = make_store_headless(Some(TESTING_MEMORY_LIMIT));
+        let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_some());
 
         // Check the returned module is functional.

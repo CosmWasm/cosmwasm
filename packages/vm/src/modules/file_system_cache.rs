@@ -2,12 +2,10 @@ use std::fs;
 use std::io;
 use std::path::PathBuf;
 
-use wasmer::{DeserializeError, Module};
+use wasmer::{DeserializeError, Module, Store};
 
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
-use crate::size::Size;
-use crate::wasm_backend::make_store_headless;
 
 /// Bump this version whenever the module system changes in a way
 /// that old stored modules would be corrupt when loaded in the new system.
@@ -62,9 +60,8 @@ impl FileSystemCache {
         }
     }
 
-    /// Loads an artifact from the file system, creates a new store and returns
-    /// a module (i.e. artifact + store).
-    pub fn load(&self, checksum: &Checksum, memory_limit: Size) -> VmResult<Option<Module>> {
+    /// Loads an artifact from the file system and returns a module (i.e. artifact + store).
+    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
         let file_path = self
             .path
@@ -72,8 +69,7 @@ impl FileSystemCache {
             .join(MODULE_SERIALIZATION_VERSION)
             .join(filename);
 
-        let store = make_store_headless(Some(memory_limit));
-        let result = unsafe { Module::deserialize_from_file(&store, &file_path) };
+        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
             Ok(module) => Ok(Some(module)),
             Err(DeserializeError::Io(err)) => match err.kind() {
@@ -106,7 +102,8 @@ impl FileSystemCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::compile;
+    use crate::size::Size;
+    use crate::wasm_backend::{compile, make_store_headless};
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance};
 
@@ -132,14 +129,16 @@ mod tests {
         let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
-        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        let store = make_store_headless(Some(TESTING_MEMORY_LIMIT));
+        let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_none());
 
         // Store module
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum, TESTING_MEMORY_LIMIT).unwrap();
+        let store = make_store_headless(Some(TESTING_MEMORY_LIMIT));
+        let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_some());
 
         // Check the returned module is functional.
