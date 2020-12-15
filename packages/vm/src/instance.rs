@@ -17,7 +17,7 @@ use crate::imports::{
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile_and_use, get_gas_left};
+use crate::wasm_backend::compile_and_use;
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -223,7 +223,7 @@ where
     /// an instance.
     pub fn create_gas_report(&self) -> GasReport {
         let state = self.env.with_gas_state(|gas_state| gas_state.clone());
-        let gas_left = get_gas_left(&self.env);
+        let gas_left = self.env.get_gas_left();
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,

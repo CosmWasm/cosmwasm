@@ -15,7 +15,6 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
-use crate::wasm_backend::get_gas_left;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -260,7 +259,7 @@ fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
-    let gas_remaining = get_gas_left(env);
+    let gas_remaining = env.get_gas_left();
     let (result, gas_info) = env.with_querier_from_context::<_, _>(|querier| {
         Ok(querier.query_raw(&request, gas_remaining))
     })?;

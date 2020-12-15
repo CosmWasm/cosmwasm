@@ -7,9 +7,7 @@ use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, Was
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::{
-    get_gas_left, get_gas_left_from_wasmer_instance, set_gas_left_to_wasmer_instance,
-};
+use crate::wasm_backend::{get_gas_left_from_wasmer_instance, set_gas_left_to_wasmer_instance};
 
 #[derive(Debug)]
 pub struct InsufficientGasLeft;
@@ -185,6 +183,16 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
+    pub fn get_gas_left(&self) -> u64 {
+        self.with_context_data_mut(|context_data| {
+            let instance_ptr = context_data
+                .wasmer_instance
+                .expect("Wasmer instance is not set. This is a bug.");
+            let instance = unsafe { instance_ptr.as_ref() };
+            get_gas_left_from_wasmer_instance(instance)
+        })
+    }
+
     pub fn set_gas_left(&self, new_value: u64) {
         self.with_context_data_mut(|context_data| {
             let instance_ptr = context_data
@@ -297,7 +305,15 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
     env.with_context_data_mut(|context_data| {
         let gas_state = &mut context_data.gas_state;
 
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(get_gas_left(env));
+        // get_gas_left implementation without a deadlock
+        let gas_left = {
+            let instance_ptr = context_data
+                .wasmer_instance
+                .expect("Wasmer instance is not set. This is a bug.");
+            let instance = unsafe { instance_ptr.as_ref() };
+            get_gas_left_from_wasmer_instance(instance)
+        };
+        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
 
         gas_state.increase_externally_used_gas(used_gas);
         // These lines reduce the amount of gas available to wasmer

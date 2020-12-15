@@ -1,27 +1,6 @@
 use std::convert::TryInto;
 use wasmer::Instance as WasmerInstance;
 
-use crate::backend::{Api, Querier, Storage};
-use crate::environment::Environment;
-
-/// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
-/// This causes issues when trying to instantiate the same compiled module with a different gas limit.
-/// A fix for this is proposed here: https://github.com/wasmerio/wasmer/pull/996.
-///
-/// To work around this limitation, we set the gas limit of all Wasmer instances to this very high value,
-/// assuming users won't request more than this amount of gas. In order to set the real gas limit, we pretend
-/// to consume the difference between the two in `set_gas_left` ("points used" in the metering middleware).
-/// Since we observed overflow behaviour in the points used, we ensure both MAX_GAS_LIMIT and points used stay
-/// far below u64::MAX.
-// const MAX_GAS_LIMIT: u64 = u64::MAX / 2;
-
-const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
-
-/// Get how many more gas units can be used in the context.
-pub fn get_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>) -> u64 {
-    FAKE_GAS_AVAILABLE
-}
-
 /// A copy of https://github.com/wasmerio/wasmer/blob/873560e2033afb54e7bec123e9d2e1f6ab55fd58/lib/middlewares/src/metering.rs#L56-L66
 pub fn get_gas_left_from_wasmer_instance(instance: &WasmerInstance) -> u64 {
     instance
