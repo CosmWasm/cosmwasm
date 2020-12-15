@@ -37,7 +37,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     #[cfg(feature = "cranelift")]
     {
         let mut config = Cranelift::default();
-        config.push_middleware(metering.clone());
+        config.push_middleware(metering);
         let engine = JIT::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
     }
@@ -45,7 +45,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     #[cfg(not(feature = "cranelift"))]
     {
         let mut config = Singlepass::default();
-        config.push_middleware(metering.clone());
+        config.push_middleware(metering);
         let engine = JIT::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
     }
