@@ -1,4 +1,4 @@
-use crate::backend::{Querier, Storage};
+use crate::backend::{Api, Querier, Storage};
 use crate::environment::Environment;
 
 /// In Wasmer, the gas limit is set on modules during compilation and is included in the cached modules.
@@ -20,8 +20,8 @@ pub struct InsufficientGasLeft;
 /// Decreases gas left by the given amount.
 /// If the amount exceeds the available gas, the remaining gas is set to 0 and
 /// an InsufficientGasLeft error is returned.
-pub fn decrease_gas_left<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
+pub fn decrease_gas_left<A: Api, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
     amount: u64,
 ) -> Result<(), InsufficientGasLeft> {
     let remaining = get_gas_left(env);
@@ -35,10 +35,10 @@ pub fn decrease_gas_left<S: Storage, Q: Querier>(
 }
 
 /// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left<S: Storage, Q: Querier>(_env: &Environment<S, Q>, _amount: u64) {}
+pub fn set_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>, _amount: u64) {}
 
 /// Get how many more gas units can be used in the context.
-pub fn get_gas_left<S: Storage, Q: Querier>(_env: &Environment<S, Q>) -> u64 {
+pub fn get_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>) -> u64 {
     FAKE_GAS_AVAILABLE
 }
 
