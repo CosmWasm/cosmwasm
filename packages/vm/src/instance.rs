@@ -290,17 +290,13 @@ mod tests {
     use crate::backend::Storage;
     use crate::call_init;
     use crate::errors::VmError;
-    #[cfg(feature = "metering")]
-    use crate::testing::mock_instance_with_gas_limit;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
-        mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_options,
-        MockInstanceOptions,
+        mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
+        mock_instance_with_options, MockInstanceOptions,
     };
-    #[cfg(feature = "metering")]
-    use cosmwasm_std::coins;
     use cosmwasm_std::{
-        coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
+        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
     };
 
@@ -490,15 +486,13 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "metering")]
-    fn set_get_and_gas() {
+    fn get_gas_left_works() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
 
     #[test]
-    #[cfg(feature = "metering")]
     fn create_gas_report_works() {
         const LIMIT: u64 = 7_000_000;
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
@@ -518,7 +512,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 146);
-        assert_eq!(report2.used_internally, 76371);
+        assert_eq!(report2.used_internally, 657571);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -696,7 +690,6 @@ mod tests {
 }
 
 #[cfg(test)]
-#[cfg(feature = "metering")]
 mod singlepass_tests {
     use cosmwasm_std::{coins, Empty};
 
@@ -718,7 +711,7 @@ mod singlepass_tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 76517);
+        assert_eq!(init_used, 657717);
     }
 
     #[test]
@@ -741,7 +734,7 @@ mod singlepass_tests {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 208653);
+        assert_eq!(handle_used, 993266);
     }
 
     #[test]
@@ -775,6 +768,6 @@ mod singlepass_tests {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 61219);
+        assert_eq!(query_used, 513496);
     }
 }
