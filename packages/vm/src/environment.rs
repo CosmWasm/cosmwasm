@@ -180,12 +180,13 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
+
     pub fn memory(&self) -> Memory {
-        self.with_context_data(|context| {
-            let ptr = context
+        self.with_context_data(|context_data| {
+            let instance_ptr = context_data
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { ptr.as_ref() };
+            let instance = unsafe { instance_ptr.as_ref() };
             let mut memories: Vec<Memory> = instance
                 .exports
                 .iter()
