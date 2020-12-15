@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use wasmer::Instance as WasmerInstance;
 
 use crate::backend::{Api, Querier, Storage};
@@ -16,32 +17,20 @@ use crate::environment::Environment;
 
 const FAKE_GAS_AVAILABLE: u64 = 1_000_000;
 
-#[derive(Debug)]
-pub struct InsufficientGasLeft;
-
-/// Decreases gas left by the given amount.
-/// If the amount exceeds the available gas, the remaining gas is set to 0 and
-/// an InsufficientGasLeft error is returned.
-pub fn decrease_gas_left<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    amount: u64,
-) -> Result<(), InsufficientGasLeft> {
-    let remaining = get_gas_left(env);
-    if amount > remaining {
-        set_gas_left(env, 0);
-        Err(InsufficientGasLeft)
-    } else {
-        set_gas_left(env, remaining - amount);
-        Ok(())
-    }
-}
-
-/// Set the amount of gas units that can be used in the context.
-pub fn set_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>, _amount: u64) {}
-
 /// Get how many more gas units can be used in the context.
 pub fn get_gas_left<A: Api, S: Storage, Q: Querier>(_env: &Environment<A, S, Q>) -> u64 {
     FAKE_GAS_AVAILABLE
+}
+
+/// A copy of https://github.com/wasmerio/wasmer/blob/873560e2033afb54e7bec123e9d2e1f6ab55fd58/lib/middlewares/src/metering.rs#L56-L66
+pub fn get_gas_left_from_wasmer_instance(instance: &WasmerInstance) -> u64 {
+    instance
+        .exports
+        .get_global("remaining_points")
+        .expect("Can't get `remaining_points` from Instance")
+        .get()
+        .try_into()
+        .expect("`remaining_points` from Instance has wrong type")
 }
 
 /// A copy of https://github.com/wasmerio/wasmer/blob/873560e2033afb54e7bec123e9d2e1f6ab55fd58/lib/middlewares/src/metering.rs#L68-L78

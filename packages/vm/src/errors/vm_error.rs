@@ -5,7 +5,7 @@ use thiserror::Error;
 
 use super::communication_error::CommunicationError;
 use crate::backend::BackendError;
-use crate::wasm_backend::InsufficientGasLeft;
+use crate::environment::InsufficientGasLeft;
 
 #[derive(Error, Debug)]
 #[non_exhaustive]

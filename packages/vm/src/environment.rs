@@ -7,7 +7,12 @@ use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, Was
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::{decrease_gas_left, get_gas_left, set_gas_left_to_wasmer_instance};
+use crate::wasm_backend::{
+    get_gas_left, get_gas_left_from_wasmer_instance, set_gas_left_to_wasmer_instance,
+};
+
+#[derive(Debug)]
+pub struct InsufficientGasLeft;
 
 /** context data **/
 
@@ -190,6 +195,27 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         })
     }
 
+    /// Decreases gas left by the given amount.
+    /// If the amount exceeds the available gas, the remaining gas is set to 0 and
+    /// an InsufficientGasLeft error is returned.
+    pub fn decrease_gas_left(&self, amount: u64) -> Result<(), InsufficientGasLeft> {
+        self.with_context_data_mut(|context_data| {
+            let instance_ptr = context_data
+                .wasmer_instance
+                .expect("Wasmer instance is not set. This is a bug.");
+            let instance = unsafe { instance_ptr.as_ref() };
+
+            let remaining = get_gas_left_from_wasmer_instance(instance);
+            if amount > remaining {
+                set_gas_left_to_wasmer_instance(instance, 0);
+                Err(InsufficientGasLeft)
+            } else {
+                set_gas_left_to_wasmer_instance(instance, remaining - amount);
+                Ok(())
+            }
+        })
+    }
+
     pub fn memory(&self) -> Memory {
         self.with_context_data(|context_data| {
             let instance_ptr = context_data
@@ -249,7 +275,7 @@ pub fn process_gas_info<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     info: GasInfo,
 ) -> VmResult<()> {
-    decrease_gas_left(env, info.cost)?;
+    env.decrease_gas_left(info.cost)?;
     account_for_externally_used_gas(env, info.externally_used)?;
     Ok(())
 }
@@ -305,8 +331,6 @@ mod test {
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile_and_use;
-    #[cfg(feature = "metering")]
-    use crate::wasm_backend::decrease_gas_left;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
@@ -432,7 +456,7 @@ mod test {
         account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
-        decrease_gas_left(&env, 20).unwrap();
+        env.decrease_gas_left(20).unwrap();
 
         account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
         account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
