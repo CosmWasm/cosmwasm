@@ -3,9 +3,8 @@ use std::sync::Arc;
 
 use wasmer::{
     vm::{self, MemoryError, MemoryStyle, TableStyle, VMMemoryDefinition, VMTableDefinition},
-    MemoryType, Pages, TableType,
+    MemoryType, Pages, TableType, Tunables,
 };
-use wasmer_engine::Tunables;
 
 /// A custom tunables that allows you to set a memory limit.
 ///
@@ -131,13 +130,12 @@ impl<T: Tunables> Tunables for LimitingTunables<T> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use wasmer::{Target, Tunables as ReferenceTunables};
+    use wasmer::{BaseTunables, Target};
 
     #[test]
     fn adjust_memory_works() {
         let limit = Pages(12);
-        let limiting =
-            LimitingTunables::new(ReferenceTunables::for_target(&Target::default()), limit);
+        let limiting = LimitingTunables::new(BaseTunables::for_target(&Target::default()), limit);
 
         // No maximum
         let requested = MemoryType::new(3, None, true);
@@ -173,8 +171,7 @@ mod test {
     #[test]
     fn validate_memory_works() {
         let limit = Pages(12);
-        let limiting =
-            LimitingTunables::new(ReferenceTunables::for_target(&Target::default()), limit);
+        let limiting = LimitingTunables::new(BaseTunables::for_target(&Target::default()), limit);
 
         // Maximum smaller than limit
         let memory = MemoryType::new(3, Some(7), true);

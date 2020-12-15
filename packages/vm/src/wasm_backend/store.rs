@@ -3,11 +3,7 @@ use std::convert::TryInto;
 use wasmer::Cranelift;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
-use wasmer::{
-    Engine, Pages, Store, Target,
-    Tunables as ReferenceTunables, /* See https://github.com/wasmerio/wasmer/issues/1872 */
-    JIT, WASM_PAGE_SIZE,
-};
+use wasmer::{BaseTunables, Engine, Pages, Store, Target, JIT, WASM_PAGE_SIZE};
 
 use crate::size::Size;
 
@@ -54,7 +50,7 @@ fn make_store_with_engine(engine: &dyn Engine, memory_limit: Option<Size>) -> St
             let pages: u32 = (capped / WASM_PAGE_SIZE)
                 .try_into()
                 .expect("Value must be <= 4 GiB/64KiB, i.e. fit in uint32. This is a bug.");
-            let base = ReferenceTunables::for_target(&Target::default());
+            let base = BaseTunables::for_target(&Target::default());
             let tunables = LimitingTunables::new(base, Pages(pages));
             Store::new_with_tunables(engine, tunables)
         }
