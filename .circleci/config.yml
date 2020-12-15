@@ -28,6 +28,7 @@ workflows:
                 - benchmarking
                 - update-wasmer
                 - metering-restart
+                - cache-artifact-not-module
   deploy:
     jobs:
       - build_and_upload_devcontracts:
