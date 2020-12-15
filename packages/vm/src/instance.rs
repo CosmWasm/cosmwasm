@@ -479,6 +479,7 @@ mod tests {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 6);
                 assert_eq!(max_length, 5);

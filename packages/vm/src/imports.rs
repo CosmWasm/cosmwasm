@@ -428,6 +428,7 @@ mod test {
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
             } => assert_eq!(length, 300 * 1024),
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -512,6 +513,7 @@ mod test {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_KEY);
@@ -536,6 +538,7 @@ mod test {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_VALUE);
@@ -627,6 +630,7 @@ mod test {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 300 * 1024);
                 assert_eq!(max_length, MAX_LENGTH_DB_KEY);
@@ -709,6 +713,7 @@ mod test {
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
+                ..
             } => {
                 assert_eq!(msg.unwrap(), "Temporarily unavailable");
             }
@@ -733,6 +738,7 @@ mod test {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 100);
                 assert_eq!(max_length, 90);
@@ -755,6 +761,7 @@ mod test {
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
+                ..
             } => {
                 assert_eq!(size, 7);
                 assert_eq!(required, api.canonical_length);
@@ -810,6 +817,7 @@ mod test {
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
+                ..
             } => assert_eq!(msg.unwrap(), "Temporarily unavailable"),
             err => panic!("Incorrect error returned: {:?}", err),
         };
@@ -832,6 +840,7 @@ mod test {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 33);
                 assert_eq!(max_length, 32);
@@ -856,6 +865,7 @@ mod test {
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
+                ..
             } => {
                 assert_eq!(size, 2);
                 assert_eq!(required, api.canonical_length);
