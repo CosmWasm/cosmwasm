@@ -13,7 +13,9 @@ maintenance = { status = "actively-developed" }
 
 [features]
 default = ["staking"]
-# The backtraces fature is unused for now, i.e. it does nothing.
+# backtraces provides much better context at runtime errors (in non-wasm code)
+# at the cost of a bit of code size and performance.
+# This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
 # iterator allows us to iterate over all DB items in a given range
 # this must be enabled to support cosmwasm contracts compiled with the 'iterator' feature

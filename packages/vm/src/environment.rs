@@ -270,7 +270,7 @@ fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
         set_gas_left(env, new_limit);
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
-            Err(VmError::GasDepletion)
+            Err(VmError::gas_depletion())
         } else {
             Ok(())
         }
@@ -396,7 +396,7 @@ mod test {
         account_for_externally_used_gas::<MS, MQ>(&env, 20).unwrap();
         // Using one more unit of gas triggers a failure
         match account_for_externally_used_gas::<MS, MQ>(&env, 1).unwrap_err() {
-            VmError::GasDepletion => {}
+            VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
     }

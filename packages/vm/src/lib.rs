@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "backtraces", feature(backtrace))]
+
 mod backend;
 mod cache;
 mod calls;
