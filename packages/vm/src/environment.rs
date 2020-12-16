@@ -7,7 +7,7 @@ use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, Was
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::{get_gas_left_from_wasmer_instance, set_gas_left_to_wasmer_instance};
+use crate::wasm_backend::{get_remaining_points, set_remaining_points};
 
 #[derive(Debug)]
 pub struct InsufficientGasLeft;
@@ -189,7 +189,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            get_gas_left_from_wasmer_instance(instance)
+            get_remaining_points(instance)
         })
     }
 
@@ -199,7 +199,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            set_gas_left_to_wasmer_instance(instance, new_value);
+            set_remaining_points(instance, new_value);
         })
     }
 
@@ -213,12 +213,12 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
 
-            let remaining = get_gas_left_from_wasmer_instance(instance);
+            let remaining = get_remaining_points(instance);
             if amount > remaining {
-                set_gas_left_to_wasmer_instance(instance, 0);
+                set_remaining_points(instance, 0);
                 Err(InsufficientGasLeft)
             } else {
-                set_gas_left_to_wasmer_instance(instance, remaining - amount);
+                set_remaining_points(instance, remaining - amount);
                 Ok(())
             }
         })
@@ -311,7 +311,7 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            get_gas_left_from_wasmer_instance(instance)
+            get_remaining_points(instance)
         };
         let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
 
@@ -327,7 +327,7 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            set_gas_left_to_wasmer_instance(instance, new_limit);
+            set_remaining_points(instance, new_limit);
         }
 
         if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
