@@ -37,15 +37,14 @@ clru = "0.2.0"
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.12.2" }
 hex = "0.4"
-memmap = "0.7"
 parity-wasm = "0.42"
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0"
 sha2 = "0.9.1"
 thiserror = "1.0"
-wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "df3a21160a9a", default-features = false, features = ["jit", "singlepass"] }
-wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "df3a21160a9a" }
+wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "22c7bc8", default-features = false, features = ["jit", "singlepass"] }
+wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "22c7bc8" }
 
 # Wasmer local (used for quick local debugging or patching)
 # wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["jit", "singlepass"] }

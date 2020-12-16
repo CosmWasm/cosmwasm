@@ -5,7 +5,7 @@ use std::sync::{Arc, RwLock};
 
 use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, WasmerEnv};
 
-use crate::backend::{GasInfo, Querier, Storage};
+use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
 use crate::wasm_backend::{decrease_gas_left, get_gas_left, set_gas_left};
 
@@ -60,31 +60,38 @@ impl GasState {
 
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
-pub struct Environment<S: Storage, Q: Querier> {
-    data: Arc<RwLock<ContextData<S, Q>>>,
+pub struct Environment<A: Api, S: Storage, Q: Querier> {
+    pub api: A,
     pub print_debug: bool,
+    data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
-impl<S: Storage, Q: Querier> Clone for Environment<S, Q> {
+unsafe impl<A: Api, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}
+
+unsafe impl<A: Api, S: Storage, Q: Querier> Sync for Environment<A, S, Q> {}
+
+impl<A: Api, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     fn clone(&self) -> Self {
         Environment {
-            data: self.data.clone(),
+            api: self.api,
             print_debug: self.print_debug,
+            data: self.data.clone(),
         }
     }
 }
 
-impl<S: Storage, Q: Querier> WasmerEnv for Environment<S, Q> {
+impl<A: Api, S: Storage, Q: Querier> WasmerEnv for Environment<A, S, Q> {
     fn init_with_instance(&mut self, _instance: &WasmerInstance) -> Result<(), HostEnvInitError> {
         Ok(())
     }
 }
 
-impl<S: Storage, Q: Querier> Environment<S, Q> {
-    pub fn new(gas_limit: u64, print_debug: bool) -> Self {
+impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
+    pub fn new(api: A, gas_limit: u64, print_debug: bool) -> Self {
         Environment {
-            data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
+            api,
             print_debug,
+            data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         }
     }
 
@@ -188,6 +195,23 @@ impl<S: Storage, Q: Querier> Environment<S, Q> {
             memories.pop().unwrap()
         })
     }
+
+    /// Moves owned instances of storage and querier into the env.
+    /// Should be followed by exactly one call to move_out when the instance is finished.
+    pub fn move_in(&self, storage: S, querier: Q) {
+        self.with_context_data_mut(|context_data| {
+            context_data.storage = Some(storage);
+            context_data.querier = Some(querier);
+        });
+    }
+
+    /// Returns the original storage and querier as owned instances, and closes any remaining
+    /// iterators. This is meant to be called when recycling the instance.
+    pub fn move_out(&self) -> (Option<S>, Option<Q>) {
+        self.with_context_data_mut(|context_data| {
+            (context_data.storage.take(), context_data.querier.take())
+        })
+    }
 }
 
 pub struct ContextData<S: Storage, Q: Querier> {
@@ -211,31 +235,8 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
     }
 }
 
-/// Returns the original storage and querier as owned instances, and closes any remaining
-/// iterators. This is meant to be called when recycling the instance.
-pub(crate) fn move_out_of_environment<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
-) -> (Option<S>, Option<Q>) {
-    env.with_context_data_mut(|context_data| {
-        (context_data.storage.take(), context_data.querier.take())
-    })
-}
-
-/// Moves owned instances of storage and querier into the env.
-/// Should be followed by exactly one call to move_out_of_environment when the instance is finished.
-pub(crate) fn move_into_environment<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
-    storage: S,
-    querier: Q,
-) {
-    env.with_context_data_mut(|context_data| {
-        context_data.storage = Some(storage);
-        context_data.querier = Some(querier);
-    });
-}
-
-pub fn process_gas_info<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
+pub fn process_gas_info<A: Api, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
     info: GasInfo,
 ) -> VmResult<()> {
     decrease_gas_left(env, info.cost)?;
@@ -246,15 +247,15 @@ pub fn process_gas_info<S: Storage, Q: Querier>(
 /// Use this function to adjust the VM's gas limit when a call into the backend
 /// reported there was externally metered gas used.
 /// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
-fn account_for_externally_used_gas<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
+fn account_for_externally_used_gas<A: Api, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
     amount: u64,
 ) -> VmResult<()> {
     account_for_externally_used_gas_impl(env, amount)
 }
 
-fn account_for_externally_used_gas_impl<S: Storage, Q: Querier>(
-    env: &Environment<S, Q>,
+fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
     used_gas: u64,
 ) -> VmResult<()> {
     env.with_context_data_mut(|context_data| {
@@ -284,18 +285,19 @@ mod test {
     use crate::conversion::ref_to_u32;
     use crate::errors::VmError;
     use crate::size::Size;
-    use crate::testing::{MockQuerier, MockStorage};
+    use crate::testing::{MockApi, MockQuerier, MockStorage};
     #[cfg(feature = "metering")]
     use crate::wasm_backend::decrease_gas_left;
     use crate::wasm_backend::{compile, set_gas_left};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
-    use wasmer::{imports, Function, FunctionType, Instance as WasmerInstance, Type, Val};
+    use wasmer::{imports, Function, Instance as WasmerInstance};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
     // shorthands for function generics below
+    type MA = MockApi;
     type MS = MockStorage;
     type MQ = MockQuerier;
 
@@ -311,29 +313,23 @@ mod test {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
-    fn make_instance() -> (Environment<MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(GAS_LIMIT, false);
+    fn make_instance() -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
+        let env = Environment::new(MockApi::default(), GAS_LIMIT, false);
 
         let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
         let store = module.store();
-        let i32_to_void = FunctionType::new(vec![Type::I32], vec![]);
-        let i32_to_i32 = FunctionType::new(vec![Type::I32], vec![Type::I32]);
-        let i32i32_to_void = FunctionType::new(vec![Type::I32, Type::I32], vec![]);
-        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
-        let i32i32i32_to_i32 =
-            FunctionType::new(vec![Type::I32, Type::I32, Type::I32], vec![Type::I32]);
         // we need stubs for all required imports
         let import_obj = imports! {
             "env" => {
-                "db_read" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "db_write" => Function::new(store, &i32i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
-                "db_remove" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
-                "db_scan" => Function::new(store, &i32i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "db_next" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "query_chain" => Function::new(store, &i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "canonicalize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "humanize_address" => Function::new(store, &i32i32_to_i32, |_args: &[Val]| { Ok(vec![Val::I32(0)]) }),
-                "debug" => Function::new(store, &i32_to_void, |_args: &[Val]| { Ok(vec![]) }),
+                "db_read" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "db_write" => Function::new_native(&store, |_a: u32, _b: u32| {}),
+                "db_remove" => Function::new_native(&store, |_a: u32| {}),
+                "db_scan" => Function::new_native(&store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
+                "db_next" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "canonicalize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "humanize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "debug" => Function::new_native(&store, |_a: u32| {}),
             },
         };
         let instance = Box::from(WasmerInstance::new(&module, &import_obj).unwrap());
@@ -344,7 +340,7 @@ mod test {
         (env, instance)
     }
 
-    fn leave_default_data(env: &Environment<MS, MQ>) {
+    fn leave_default_data(env: &Environment<MA, MS, MQ>) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage
@@ -353,21 +349,21 @@ mod test {
             .expect("error setting value");
         let querier: MockQuerier<Empty> =
             MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
-        move_into_environment(env, storage, querier);
+        env.move_in(storage, querier);
     }
 
     #[test]
-    fn leave_and_take_context_data() {
+    fn move_out_works() {
         let (env, _instance) = make_instance();
 
         // empty data on start
-        let (inits, initq) = move_out_of_environment::<MS, MQ>(&env);
+        let (inits, initq) = env.move_out();
         assert!(inits.is_none());
         assert!(initq.is_none());
 
         // store it on the instance
         leave_default_data(&env);
-        let (s, q) = move_out_of_environment::<MS, MQ>(&env);
+        let (s, q) = env.move_out();
         assert!(s.is_some());
         assert!(q.is_some());
         assert_eq!(
@@ -376,7 +372,7 @@ mod test {
         );
 
         // now is empty again
-        let (ends, endq) = move_out_of_environment::<MS, MQ>(&env);
+        let (ends, endq) = env.move_out();
         assert!(ends.is_none());
         assert!(endq.is_none());
     }
@@ -390,12 +386,12 @@ mod test {
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
 
         // Consume all the Gas that we allocated
-        account_for_externally_used_gas::<MS, MQ>(&env, 70).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&env, 4).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&env, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&env, 20).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 70).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(&env, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MA, MS, MQ>(&env, 1).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -411,16 +407,16 @@ mod test {
         env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
 
         // Some gas was consumed externally
-        account_for_externally_used_gas::<MS, MQ>(&env, 50).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&env, 4).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 50).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
 
         // Consume 20 gas directly in wasmer
         decrease_gas_left(&env, 20).unwrap();
 
-        account_for_externally_used_gas::<MS, MQ>(&env, 6).unwrap();
-        account_for_externally_used_gas::<MS, MQ>(&env, 20).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
+        account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MS, MQ>(&env, 1).unwrap_err() {
+        match account_for_externally_used_gas::<MA, MS, MQ>(&env, 1).unwrap_err() {
             VmError::GasDepletion => {}
             err => panic!("unexpected error: {:?}", err),
         }

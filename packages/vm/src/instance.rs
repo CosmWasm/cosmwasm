@@ -2,18 +2,16 @@ use std::collections::HashSet;
 use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-use wasmer::{
-    Exports, Function, FunctionType, ImportObject, Instance as WasmerInstance, Module, Type, Val,
-};
+use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::backend::{Api, Backend, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
-use crate::environment::{move_into_environment, move_out_of_environment, Environment};
+use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    do_canonicalize_address, do_humanize_address, native_db_read, native_db_remove,
-    native_db_write, native_debug, native_query_chain,
+    native_canonicalize_address, native_db_read, native_db_remove, native_db_write, native_debug,
+    native_humanize_address, native_query_chain,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
@@ -47,8 +45,7 @@ pub struct Instance<S: Storage, A: Api, Q: Querier> {
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
     inner: Box<WasmerInstance>,
-    env: Environment<S, Q>,
-    pub api: A,
+    env: Environment<A, S, Q>,
     pub required_features: HashSet<String>,
     // This does not store data but only fixes type information
     type_storage: PhantomData<S>,
@@ -78,14 +75,9 @@ where
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
-        // copy this so it can be moved into the closures, without pulling in deps
-        let api = backend.api;
-
         let store = module.store();
 
-        let env = Environment::new(gas_limit, print_debug);
-
-        let i32i32_to_i32 = FunctionType::new(vec![Type::I32, Type::I32], vec![Type::I32]);
+        let env = Environment::new(backend.api, gas_limit, print_debug);
 
         let mut import_obj = ImportObject::new();
         let mut env_imports = Exports::new();
@@ -121,13 +113,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "canonicalize_address",
-            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
-                let source_ptr = ref_to_u32(&args[0])?;
-                let destination_ptr = ref_to_u32(&args[1])?;
-                let ptr =
-                    do_canonicalize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
-                Ok(vec![ptr.into()])
-            }),
+            Function::new_native_with_env(store, env.clone(), native_canonicalize_address),
         );
 
         // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
@@ -136,12 +122,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "humanize_address",
-            Function::new_with_env(store, &i32i32_to_i32, env.clone(), move |env, args| {
-                let source_ptr = ref_to_u32(&args[0])?;
-                let destination_ptr = ref_to_u32(&args[1])?;
-                let ptr = do_humanize_address::<A, S, Q>(api, &env, source_ptr, destination_ptr)?;
-                Ok(vec![ptr.into()])
-            }),
+            Function::new_native_with_env(store, env.clone(), native_humanize_address),
         );
 
         // Allows the contract to emit debug logs that the host can either process or ignore.
@@ -196,11 +177,10 @@ where
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
-        move_into_environment(&env, backend.storage, backend.querier);
+        env.move_in(backend.storage, backend.querier);
         let instance = Instance {
             inner: wasmer_instance,
             env,
-            api: backend.api,
             required_features,
             type_storage: PhantomData::<S> {},
             type_querier: PhantomData::<Q> {},
@@ -208,13 +188,18 @@ where
         Ok(instance)
     }
 
+    pub fn api(&self) -> &A {
+        &self.env.api
+    }
+
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
     pub fn recycle(self) -> Option<Backend<S, A, Q>> {
-        if let (Some(storage), Some(querier)) = move_out_of_environment(&self.env) {
+        if let (Some(storage), Some(querier)) = self.env.move_out() {
+            let api = self.env.api;
             Some(Backend {
                 storage,
-                api: self.api,
+                api,
                 querier,
             })
         } else {
