@@ -14,7 +14,10 @@ use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
-const DEFAULT_GAS_LIMIT: u64 = 5_000_000;
+/// This gas limit is used in integration tests and should be high enough to allow a reasonable
+/// number of contract executions and queries on one instance. For this reason it is significatly
+/// higher than the limit for a single execution that we have in the production setup.
+const DEFAULT_GAS_LIMIT: u64 = 50_000_000;
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(16);
 const DEFAULT_PRINT_DEBUG: bool = true;
 
