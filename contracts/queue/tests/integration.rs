@@ -20,7 +20,8 @@
 use cosmwasm_std::{from_binary, from_slice, HandleResponse, HumanAddr, InitResponse, MessageInfo};
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
+        handle, init, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi,
+        MockQuerier, MockStorage,
     },
     Instance,
 };
@@ -32,7 +33,8 @@ use queue::contract::{
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
 fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInfo) {
-    let mut deps = mock_instance(WASM, &[]);
+    let gas_limit = 500_000_000; // enough for many executions within one instance
+    let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
     let creator = HumanAddr(String::from("creator"));
     let info = mock_info(creator.as_str(), &[]);
     let res: InitResponse = init(&mut deps, mock_env(), info.clone(), InitMsg {}).unwrap();
