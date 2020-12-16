@@ -66,6 +66,10 @@ pub struct Environment<A: Api, S: Storage, Q: Querier> {
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
+unsafe impl<A: Api, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}
+
+unsafe impl<A: Api, S: Storage, Q: Querier> Sync for Environment<A, S, Q> {}
+
 impl<A: Api, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     fn clone(&self) -> Self {
         Environment {
