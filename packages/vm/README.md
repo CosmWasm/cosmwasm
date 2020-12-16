@@ -43,8 +43,9 @@ docker run --rm -v "$(pwd)":/code \
 
 ## Testing
 
-By default, this repository is built and tested with the singlepass backend.
-You can enable the `cranelift` feature to override the default backend with Cranelift
+By default, this repository is built and tested with the singlepass backend. You
+can enable the `cranelift` feature to override the default backend with
+Cranelift
 
 ```sh
 cd packages/vm
