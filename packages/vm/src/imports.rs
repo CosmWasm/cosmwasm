@@ -325,7 +325,7 @@ mod test {
     use crate::backend::{BackendError, Storage};
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::compile;
+    use crate::wasm_backend::compile_and_use;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -351,7 +351,7 @@ mod test {
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let env = Environment::new(api, GAS_LIMIT, false);
 
-        let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
+        let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let store = module.store();
         // we need stubs for all required imports
         let import_obj = imports! {

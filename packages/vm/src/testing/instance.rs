@@ -14,7 +14,7 @@ use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
 
-const DEFAULT_GAS_LIMIT: u64 = 500_000;
+const DEFAULT_GAS_LIMIT: u64 = 5_000_000;
 const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(16);
 const DEFAULT_PRINT_DEBUG: bool = true;
 

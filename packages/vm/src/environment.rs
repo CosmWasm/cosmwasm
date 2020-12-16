@@ -288,7 +288,7 @@ mod test {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     #[cfg(feature = "metering")]
     use crate::wasm_backend::decrease_gas_left;
-    use crate::wasm_backend::{compile, set_gas_left};
+    use crate::wasm_backend::{compile_and_use, set_gas_left};
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
@@ -316,7 +316,7 @@ mod test {
     fn make_instance() -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let env = Environment::new(MockApi::default(), GAS_LIMIT, false);
 
-        let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
+        let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let store = module.store();
         // we need stubs for all required imports
         let import_obj = imports! {

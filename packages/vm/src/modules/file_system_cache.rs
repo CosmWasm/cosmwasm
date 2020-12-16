@@ -103,7 +103,7 @@ impl FileSystemCache {
 mod tests {
     use super::*;
     use crate::size::Size;
-    use crate::wasm_backend::{compile, make_store_headless};
+    use crate::wasm_backend::{compile_only, make_runtime_store};
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance};
 
@@ -126,18 +126,18 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm, Some(TESTING_MEMORY_LIMIT)).unwrap();
 
         // Module does not exist
-        let store = make_store_headless(Some(TESTING_MEMORY_LIMIT));
+        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
         let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_none());
 
         // Store module
+        let module = compile_only(&wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let store = make_store_headless(Some(TESTING_MEMORY_LIMIT));
+        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
         let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_some());
 

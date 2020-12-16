@@ -11,7 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache};
 use crate::size::Size;
-use crate::wasm_backend::{compile, make_store_headless};
+use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -88,7 +88,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
-        let module = compile(wasm, None)?;
+        let module = compile_only(wasm)?;
         self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
@@ -116,7 +116,7 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let store = make_store_headless(Some(options.memory_limit));
+        let store = make_runtime_store(options.memory_limit);
         // Get module from memory cache
         if let Some(module) = self.memory_cache.load(checksum, &store)? {
             self.stats.hits_memory_cache += 1;
@@ -137,7 +137,7 @@ where
         // Re-compile module from wasm
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        let module = compile(&wasm, Some(options.memory_limit))?;
+        let module = compile_and_use(&wasm, options.memory_limit)?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;

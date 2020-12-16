@@ -17,7 +17,7 @@ use crate::imports::{
 use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
-use crate::wasm_backend::{compile, get_gas_left, set_gas_left};
+use crate::wasm_backend::{compile_and_use, get_gas_left, set_gas_left};
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -65,7 +65,7 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Self> {
-        let module = compile(code, Some(options.memory_limit))?;
+        let module = compile_and_use(code, options.memory_limit)?;
         Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 
