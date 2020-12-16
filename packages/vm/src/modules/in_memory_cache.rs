@@ -1,5 +1,6 @@
 use clru::CLruCache;
-use wasmer::{Module, Store};
+use std::sync::Arc;
+use wasmer::{Artifact, Module, Store};
 
 use crate::{Checksum, Size, VmResult};
 
@@ -7,7 +8,7 @@ const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
 
 /// An in-memory module cache
 pub struct InMemoryCache {
-    artifacts: CLruCache<Checksum, Vec<u8>>,
+    artifacts: CLruCache<Checksum, Arc<dyn Artifact>>,
 }
 
 impl InMemoryCache {
@@ -20,8 +21,8 @@ impl InMemoryCache {
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        let serialized_artifact = module.serialize()?;
-        self.artifacts.put(*checksum, serialized_artifact);
+        let artifact = Arc::clone(module.artifact());
+        self.artifacts.put(*checksum, artifact);
         Ok(())
     }
 
@@ -29,8 +30,8 @@ impl InMemoryCache {
     /// creates a new module from store and artifact.
     pub fn load(&mut self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         match self.artifacts.get(checksum) {
-            Some(serialized_artifact) => {
-                let new_module = unsafe { Module::deserialize(store, &serialized_artifact) }?;
+            Some(artifact) => {
+                let new_module = Module::from_artifact(store, Arc::clone(artifact));
                 Ok(Some(new_module))
             }
             None => Ok(None),
