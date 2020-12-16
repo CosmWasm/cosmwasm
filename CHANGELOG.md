@@ -16,6 +16,8 @@
 - Export method `cosmwasm_vm::Cache::stats` and response type `Stats`.
 - Remove `cosmwasm_vm::testing::MockApi::new`. Use `MockApi::default` instead.
 - Convert field `Instance::api` to a method.
+- Change order of generic arguments for consistency in `Instance`, `Cache` and
+  `Backend` to always match `<A: Api, S: Storage, Q: Querier>`.
 
 ## 0.12.2 (2020-12-14)
 

@@ -40,7 +40,7 @@ pub struct InstanceOptions {
     pub print_debug: bool,
 }
 
-pub struct Instance<S: Storage, A: Api, Q: Querier> {
+pub struct Instance<A: Api, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
@@ -52,17 +52,17 @@ pub struct Instance<S: Storage, A: Api, Q: Querier> {
     type_querier: PhantomData<Q>,
 }
 
-impl<S, A, Q> Instance<S, A, Q>
+impl<A, S, Q> Instance<A, S, Q>
 where
+    A: Api + 'static, // 'static is needed here to allow copying API instances into closures
     S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
-    A: Api + 'static,     // 'static is needed here to allow copying API instances into closures
     Q: Querier + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
 {
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
         code: &[u8],
-        backend: Backend<S, A, Q>,
+        backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Self> {
         let module = compile(code, Some(options.memory_limit))?;
@@ -71,7 +71,7 @@ where
 
     pub(crate) fn from_module(
         module: &Module,
-        backend: Backend<S, A, Q>,
+        backend: Backend<A, S, Q>,
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
@@ -194,12 +194,12 @@ where
 
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(self) -> Option<Backend<S, A, Q>> {
+    pub fn recycle(self) -> Option<Backend<A, S, Q>> {
         if let (Some(storage), Some(querier)) = self.env.move_out() {
             let api = self.env.api;
             Some(Backend {
-                storage,
                 api,
+                storage,
                 querier,
             })
         } else {

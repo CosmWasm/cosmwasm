@@ -30,22 +30,22 @@ pub struct CacheOptions {
     pub memory_cache_size: Size,
 }
 
-pub struct Cache<S: Storage, A: Api, Q: Querier> {
+pub struct Cache<A: Api, S: Storage, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
     // Those two don't store data but only fix type information
-    type_storage: PhantomData<S>,
     type_api: PhantomData<A>,
+    type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
 }
 
-impl<S, A, Q> Cache<S, A, Q>
+impl<A, S, Q> Cache<A, S, Q>
 where
-    S: Storage + 'static, // 'static is needed by `impl<…> Instance`
     A: Api + 'static,     // 'static is needed by `impl<…> Instance`
+    S: Storage + 'static, // 'static is needed by `impl<…> Instance`
     Q: Querier + 'static, // 'static is needed by `impl<…> Instance`
 {
     /// new stores the data for cache under base_dir
@@ -113,9 +113,9 @@ where
     pub fn get_instance(
         &mut self,
         checksum: &Checksum,
-        backend: Backend<S, A, Q>,
+        backend: Backend<A, S, Q>,
         options: InstanceOptions,
-    ) -> VmResult<Instance<S, A, Q>> {
+    ) -> VmResult<Instance<A, S, Q>> {
         let store = make_store_headless(Some(options.memory_limit));
         // Get module from memory cache
         if let Some(module) = self.memory_cache.load(checksum, &store)? {
@@ -218,7 +218,7 @@ mod tests {
 
     #[test]
     fn save_wasm_works() {
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
     }
@@ -226,7 +226,7 @@ mod tests {
     #[test]
     // This property is required when the same bytecode is uploaded multiple times
     fn save_wasm_allows_saving_multiple_times() {
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
         cache.save_wasm(CONTRACT).unwrap();
@@ -246,7 +246,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
@@ -276,7 +276,7 @@ mod tests {
 
     #[test]
     fn load_wasm_works() {
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
@@ -295,7 +295,7 @@ mod tests {
                 supported_features: default_features(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             };
-            let mut cache1: Cache<MockStorage, MockApi, MockQuerier> =
+            let mut cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
             id = cache1.save_wasm(CONTRACT).unwrap();
         }
@@ -306,7 +306,7 @@ mod tests {
                 supported_features: default_features(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             };
-            let cache2: Cache<MockStorage, MockApi, MockQuerier> =
+            let cache2: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options2).unwrap() };
             let restored = cache2.load_wasm(&id).unwrap();
             assert_eq!(restored, CONTRACT);
@@ -315,7 +315,7 @@ mod tests {
 
     #[test]
     fn load_wasm_errors_for_non_existent_id() {
-        let cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = Checksum::from([
             5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
@@ -339,7 +339,7 @@ mod tests {
             supported_features: default_features(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
         };
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 

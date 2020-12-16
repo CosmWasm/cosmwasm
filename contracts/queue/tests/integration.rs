@@ -31,7 +31,7 @@ use queue::contract::{
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
-fn create_contract() -> (Instance<MockStorage, MockApi, MockQuerier>, MessageInfo) {
+fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInfo) {
     let mut deps = mock_instance(WASM, &[]);
     let creator = HumanAddr(String::from("creator"));
     let info = mock_info(creator.as_str(), &[]);
@@ -40,13 +40,13 @@ fn create_contract() -> (Instance<MockStorage, MockApi, MockQuerier>, MessageInf
     (deps, info)
 }
 
-fn get_count(deps: &mut Instance<MockStorage, MockApi, MockQuerier>) -> u32 {
+fn get_count(deps: &mut Instance<MockApi, MockStorage, MockQuerier>) -> u32 {
     let data = query(deps, mock_env(), QueryMsg::Count {}).unwrap();
     let res: CountResponse = from_binary(&data).unwrap();
     res.count
 }
 
-fn get_sum(deps: &mut Instance<MockStorage, MockApi, MockQuerier>) -> i32 {
+fn get_sum(deps: &mut Instance<MockApi, MockStorage, MockQuerier>) -> i32 {
     let data = query(deps, mock_env(), QueryMsg::Sum {}).unwrap();
     let res: SumResponse = from_binary(&data).unwrap();
     res.sum

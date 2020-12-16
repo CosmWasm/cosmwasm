@@ -88,7 +88,7 @@ fn bench_cache(c: &mut Criterion) {
     };
 
     group.bench_function("save wasm", |b| {
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
 
         b.iter(|| {
@@ -103,7 +103,7 @@ fn bench_cache(c: &mut Criterion) {
             supported_features: features_from_csv("staking"),
             memory_cache_size: Size(0),
         };
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
@@ -119,7 +119,7 @@ fn bench_cache(c: &mut Criterion) {
 
     group.bench_function("instantiate from memory", |b| {
         let checksum = Checksum::generate(CONTRACT);
-        let mut cache: Cache<MockStorage, MockApi, MockQuerier> =
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
         // Load into memory
         cache
