@@ -43,15 +43,15 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 /// that supports SpecialQuery.
 pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
-) -> Backend<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
+) -> Backend<MockApi, MockStorage, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Backend {
-        storage: MockStorage::default(),
         api: MockApi::default(),
+        storage: MockStorage::default(),
         querier: custom_querier,
     }
 }

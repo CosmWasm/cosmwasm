@@ -17,15 +17,15 @@ use crate::{Api, Querier, Storage};
 // init mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn init<S, A, Q, M, U>(
-    instance: &mut Instance<S, A, Q>,
+pub fn init<A, S, Q, M, U>(
+    instance: &mut Instance<A, S, Q>,
     env: Env,
     info: MessageInfo,
     msg: M,
 ) -> ContractResult<InitResponse<U>>
 where
-    S: Storage + 'static,
     A: Api + 'static,
+    S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -37,15 +37,15 @@ where
 // handle mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn handle<S, A, Q, M, U>(
-    instance: &mut Instance<S, A, Q>,
+pub fn handle<A, S, Q, M, U>(
+    instance: &mut Instance<A, S, Q>,
     env: Env,
     info: MessageInfo,
     msg: M,
 ) -> ContractResult<HandleResponse<U>>
 where
-    S: Storage + 'static,
     A: Api + 'static,
+    S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -57,15 +57,15 @@ where
 // migrate mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn migrate<S, A, Q, M, U>(
-    instance: &mut Instance<S, A, Q>,
+pub fn migrate<A, S, Q, M, U>(
+    instance: &mut Instance<A, S, Q>,
     env: Env,
     info: MessageInfo,
     msg: M,
 ) -> ContractResult<MigrateResponse<U>>
 where
-    S: Storage + 'static,
     A: Api + 'static,
+    S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -77,14 +77,14 @@ where
 // query mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn query<S, A, Q, M>(
-    instance: &mut Instance<S, A, Q>,
+pub fn query<A, S, Q, M>(
+    instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: M,
 ) -> ContractResult<QueryResponse>
 where
-    S: Storage + 'static,
     A: Api + 'static,
+    S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
 {
