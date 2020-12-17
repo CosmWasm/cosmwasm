@@ -15,7 +15,6 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
-use crate::wasm_backend::get_gas_left;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -260,7 +259,7 @@ fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let request = read_region(&env.memory(), request_ptr, MAX_LENGTH_QUERY_CHAIN_REQUEST)?;
 
-    let gas_remaining = get_gas_left(env);
+    let gas_remaining = env.get_gas_left();
     let (result, gas_info) = env.with_querier_from_context::<_, _>(|querier| {
         Ok(querier.query_raw(&request, gas_remaining))
     })?;
@@ -325,7 +324,7 @@ mod test {
     use crate::backend::{BackendError, Storage};
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::compile;
+    use crate::wasm_backend::compile_and_use;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 
@@ -349,9 +348,10 @@ mod test {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
-        let env = Environment::new(api, GAS_LIMIT, false);
+        let gas_limit = GAS_LIMIT;
+        let env = Environment::new(api, gas_limit, false);
 
-        let module = compile(&CONTRACT, Some(TESTING_MEMORY_LIMIT)).unwrap();
+        let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let store = module.store();
         // we need stubs for all required imports
         let import_obj = imports! {
@@ -371,6 +371,8 @@ mod test {
 
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
+        env.set_gas_left(gas_limit);
+        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.set_storage_readonly(false);
 
         (env, instance)

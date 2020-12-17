@@ -24,7 +24,6 @@ backtraces = []
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
-metering = []
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
 
@@ -45,10 +44,12 @@ sha2 = "0.9.1"
 thiserror = "1.0"
 wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "22c7bc8", default-features = false, features = ["jit", "singlepass"] }
 wasmer-engine = { git = "https://github.com/wasmerio/wasmer", rev = "22c7bc8" }
+wasmer-middlewares = { git = "https://github.com/wasmerio/wasmer", rev = "22c7bc8" }
 
 # Wasmer local (used for quick local debugging or patching)
 # wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["jit", "singlepass"] }
 # wasmer-engine = { path = "../../../wasmer/lib/engine" }
+# wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
 
 [dev-dependencies]
 criterion = "0.3"
