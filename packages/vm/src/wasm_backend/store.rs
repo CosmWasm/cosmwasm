@@ -10,6 +10,7 @@ use wasmer::{
 };
 use wasmer_middlewares::Metering;
 
+use crate::middleware::Deterministic;
 use crate::size::Size;
 
 use super::limiting_tunables::LimitingTunables;
@@ -32,11 +33,13 @@ fn cost(operator: &Operator) -> u64 {
 /// If memory_limit is None, no limit is applied.
 pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     let gas_limit = 0;
+    let deterministic = Arc::new(Deterministic::new());
     let metering = Arc::new(Metering::new(gas_limit, cost));
 
     #[cfg(feature = "cranelift")]
     {
         let mut config = Cranelift::default();
+        config.push_middleware(deterministic);
         config.push_middleware(metering);
         let engine = JIT::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
@@ -45,6 +48,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     #[cfg(not(feature = "cranelift"))]
     {
         let mut config = Singlepass::default();
+        config.push_middleware(deterministic);
         config.push_middleware(metering);
         let engine = JIT::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
