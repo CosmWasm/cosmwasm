@@ -50,7 +50,7 @@ impl Into<Vec<u8>> for Checksum {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

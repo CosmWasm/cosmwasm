@@ -38,7 +38,7 @@ where
 pub type InitResult<U = Empty> = Result<InitResponse<U>, StdError>;
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::super::BankMsg;
     use super::*;
     use crate::addresses::HumanAddr;

@@ -311,7 +311,7 @@ impl From<std::string::FromUtf8Error> for StdError {
 pub type StdResult<T> = core::result::Result<T, StdError>;
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use std::str;
 

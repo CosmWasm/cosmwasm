@@ -83,7 +83,7 @@ fn namespace_upper_bound(input: &[u8]) -> Vec<u8> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::length_prefixed::to_length_prefixed;
     use cosmwasm_std::testing::MockStorage;

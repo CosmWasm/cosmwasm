@@ -61,7 +61,7 @@ impl<'a> DepsMut<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::mock::mock_dependencies;
 

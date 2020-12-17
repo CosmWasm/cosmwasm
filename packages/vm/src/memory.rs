@@ -154,7 +154,7 @@ fn set_region(memory: &wasmer::Memory, ptr: u32, data: Region) -> CommunicationR
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

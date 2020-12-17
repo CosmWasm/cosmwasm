@@ -102,7 +102,7 @@ impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::coins;
 

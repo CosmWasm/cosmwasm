@@ -104,7 +104,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::super::{BankMsg, HandleResponse, InitResponse, MigrateResponse};
     use super::*;
     use crate::addresses::HumanAddr;

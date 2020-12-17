@@ -36,7 +36,7 @@ impl RegionValidationError {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     // constructors

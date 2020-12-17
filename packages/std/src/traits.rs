@@ -252,7 +252,7 @@ impl<'a> QuerierWrapper<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::mock::MockQuerier;
     use crate::{coins, from_slice, Uint128};

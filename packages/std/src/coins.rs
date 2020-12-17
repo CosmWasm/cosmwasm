@@ -75,7 +75,7 @@ pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

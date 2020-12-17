@@ -248,7 +248,7 @@ implement_fixes_size_arrays! {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::errors::StdError;
     use crate::serde::{from_slice, to_vec};

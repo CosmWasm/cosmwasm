@@ -205,7 +205,7 @@ impl From<FromUtf8Error> for BackendError {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

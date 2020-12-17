@@ -167,7 +167,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
     use cosmwasm_std::StdError;

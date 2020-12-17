@@ -159,7 +159,7 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::errors::VmError;
     use parity_wasm::elements::Internal;

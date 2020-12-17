@@ -31,7 +31,7 @@ pub fn to_i32<T: TryInto<i32> + ToString + Copy>(input: T) -> VmResult<i32> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::errors::VmError;
 

@@ -28,7 +28,7 @@ pub fn custom_query_execute(query: &SpecialQuery) -> ContractResult<Binary> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::{from_binary, QuerierWrapper, QueryRequest};
 
