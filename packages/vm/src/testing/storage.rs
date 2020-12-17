@@ -158,7 +158,7 @@ fn clone_item<T: Clone>(item_ref: BTreeMapPairRef<T>) -> KV<T> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

@@ -380,7 +380,7 @@ pub fn digit_sum(input: &[u8]) -> usize {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::query::Delegation;
     use crate::{coin, coins, from_binary, Decimal, HumanAddr};

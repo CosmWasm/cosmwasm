@@ -106,7 +106,7 @@ impl<'a> ReadonlyPrefixedStorage<'a> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
 

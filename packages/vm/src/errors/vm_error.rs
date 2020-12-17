@@ -298,7 +298,7 @@ impl From<VmError> for wasmer::RuntimeError {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     // constructors

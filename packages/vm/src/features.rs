@@ -50,7 +50,7 @@ pub fn required_features_from_module(module: &Module) -> HashSet<String> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use parity_wasm::elements::deserialize_buffer;
 

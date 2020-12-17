@@ -339,7 +339,7 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::backend::Storage;
     use crate::conversion::ref_to_u32;

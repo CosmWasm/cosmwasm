@@ -165,7 +165,7 @@ pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::BackendError;
     use cosmwasm_std::{coins, Binary};

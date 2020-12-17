@@ -34,7 +34,7 @@ pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: KV) -> StdResult<KV<T>> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::{to_vec, StdError};
     use serde::{Deserialize, Serialize};
@@ -81,7 +81,7 @@ mod test {
         let parsed = must_deserialize::<Person>(&None);
         match parsed.unwrap_err() {
             StdError::NotFound { kind, .. } => {
-                assert_eq!(kind, "cosmwasm_storage::type_helpers::test::Person")
+                assert_eq!(kind, "cosmwasm_storage::type_helpers::tests::Person")
             }
             e => panic!("Unexpected error {}", e),
         }

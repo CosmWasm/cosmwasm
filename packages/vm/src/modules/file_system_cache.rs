@@ -111,7 +111,7 @@ mod tests {
     const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
-    fn test_file_system_cache_run() {
+    fn file_system_cache_run() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 

@@ -35,7 +35,7 @@ pub fn remove_schemas(schemas_dir: &path::Path) -> Result<(), io::Error> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use std::ffi::OsStr;
     use std::path::Path;

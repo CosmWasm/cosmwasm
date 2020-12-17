@@ -105,7 +105,7 @@ impl MockQuerier {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::{coin, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty};
 

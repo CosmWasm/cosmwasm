@@ -78,7 +78,7 @@ impl<S> From<ContractResult<S>> for Result<S, String> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::{from_slice, to_vec, HandleResponse, StdError, StdResult};
 

@@ -138,7 +138,7 @@ impl fmt::Display for CanonicalAddr {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use std::collections::hash_map::DefaultHasher;
     use std::collections::HashSet;

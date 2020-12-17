@@ -312,7 +312,7 @@ fn do_next<A: Api, S: Storage, Q: Querier>(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::{
         coins, from_binary, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,

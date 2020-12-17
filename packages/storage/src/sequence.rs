@@ -22,7 +22,7 @@ pub fn nextval(seq: &mut Singleton<u64>) -> StdResult<u64> {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
 

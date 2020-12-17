@@ -10,7 +10,7 @@ pub fn to_snake_case(name: &str) -> String {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

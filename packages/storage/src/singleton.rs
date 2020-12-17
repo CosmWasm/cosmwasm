@@ -126,7 +126,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use cosmwasm_std::testing::MockStorage;
     use serde::{Deserialize, Serialize};

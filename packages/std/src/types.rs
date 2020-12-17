@@ -98,7 +98,7 @@ pub struct ContractInfo {
 pub struct Empty {}
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     use crate::serde::{from_slice, to_vec};
