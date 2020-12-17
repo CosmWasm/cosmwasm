@@ -175,7 +175,7 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialize_works() {
+    fn deserialize_works() {
         let module = deserialize(CONTRACT).unwrap();
         assert_eq!(module.version(), 1);
 
@@ -210,7 +210,7 @@ mod tests {
     }
 
     #[test]
-    fn test_deserialize_corrupted_data() {
+    fn deserialize_corrupted_data() {
         match deserialize(CORRUPTED).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => {
                 assert!(msg.starts_with("Wasm bytecode could not be deserialized."))
@@ -220,13 +220,13 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm() {
+    fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(CONTRACT, &default_features()).unwrap();
     }
 
     #[test]
-    fn test_check_wasm_old_contract() {
+    fn check_wasm_old_contract() {
         match check_wasm(CONTRACT_0_7, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
                 "Wasm contract doesn't have required export: \"cosmwasm_vm_version_4\""
@@ -245,13 +245,13 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_memories_ok() {
+    fn check_wasm_memories_ok() {
         let wasm = wat::parse_str("(module (memory 1))").unwrap();
         check_wasm_memories(&deserialize(&wasm).unwrap()).unwrap()
     }
 
     #[test]
-    fn test_check_wasm_memories_no_memory() {
+    fn check_wasm_memories_no_memory() {
         let wasm = wat::parse_str("(module)").unwrap();
         match check_wasm_memories(&deserialize(&wasm).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
@@ -263,7 +263,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_memories_two_memories() {
+    fn check_wasm_memories_two_memories() {
         // Generated manually because wat2wasm protects us from creating such Wasm:
         // "error: only one memory block allowed"
         let wasm = hex::decode(concat!(
@@ -287,7 +287,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_memories_zero_memories() {
+    fn check_wasm_memories_zero_memories() {
         // Generated manually because wat2wasm would not create an empty memory section
         let wasm = hex::decode(concat!(
             "0061736d", // magic bytes
@@ -308,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_memories_initial_size() {
+    fn check_wasm_memories_initial_size() {
         let wasm_ok = wat::parse_str("(module (memory 512))").unwrap();
         check_wasm_memories(&deserialize(&wasm_ok).unwrap()).unwrap();
 
@@ -323,7 +323,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_memories_maximum_size() {
+    fn check_wasm_memories_maximum_size() {
         let wasm_max = wat::parse_str("(module (memory 1 5))").unwrap();
         match check_wasm_memories(&deserialize(&wasm_max).unwrap()) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
@@ -335,7 +335,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_exports() {
+    fn check_wasm_exports_works() {
         // this is invalid, as it doesn't contain all required exports
         const WAT_MISSING_EXPORTS: &'static str = r#"
             (module
@@ -360,7 +360,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_exports_of_old_contract() {
+    fn check_wasm_exports_of_old_contract() {
         let module = deserialize(CONTRACT_0_7).unwrap();
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
@@ -389,7 +389,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_imports_missing() {
+    fn check_wasm_imports_missing() {
         let wasm = wat::parse_str(
             r#"(module
             (import "env" "foo" (func (param i32 i32) (result i32)))
@@ -430,7 +430,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_imports_of_old_contract() {
+    fn check_wasm_imports_of_old_contract() {
         let module = deserialize(CONTRACT_0_7).unwrap();
         let result = check_wasm_imports(&module, SUPPORTED_IMPORTS);
         match result.unwrap_err() {
@@ -444,7 +444,7 @@ mod tests {
     }
 
     #[test]
-    fn test_check_wasm_imports_wrong_type() {
+    fn check_wasm_imports_wrong_type() {
         let wasm = wat::parse_str(r#"(module (import "env" "db_read" (memory 1 1)))"#).unwrap();
         let result = check_wasm_imports(&deserialize(&wasm).unwrap(), SUPPORTED_IMPORTS);
         match result.unwrap_err() {

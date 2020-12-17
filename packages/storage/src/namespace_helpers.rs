@@ -105,7 +105,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn test_range() {
+    fn range_works() {
         let mut storage = MockStorage::new();
         let prefix = to_length_prefixed(b"foo");
         let other_prefix = to_length_prefixed(b"food");
@@ -138,7 +138,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn test_range_with_prefix_wrapover() {
+    fn range_with_prefix_wrapover() {
         let mut storage = MockStorage::new();
         // if we don't properly wrap over there will be issues here (note 255+1 is used to calculate end)
         let prefix = to_length_prefixed(b"f\xff\xff");
@@ -165,7 +165,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn test_range_with_start_end_set() {
+    fn range_with_start_end_set() {
         let mut storage = MockStorage::new();
         // if we don't properly wrap over there will be issues here (note 255+1 is used to calculate end)
         let prefix = to_length_prefixed(b"f\xff\xff");
@@ -205,7 +205,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn test_namespace_upper_bound() {
+    fn namespace_upper_bound_works() {
         assert_eq!(namespace_upper_bound(b"bob"), b"boc".to_vec());
         assert_eq!(namespace_upper_bound(b"fo\xfe"), b"fo\xff".to_vec());
         assert_eq!(namespace_upper_bound(b"fo\xff"), b"fp\x00".to_vec());

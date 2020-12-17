@@ -49,7 +49,7 @@ mod tests {
     const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
-    fn test_in_memory_cache_run() {
+    fn in_memory_cache_run() {
         let mut cache = InMemoryCache::new(Size::mebi(200));
 
         // Create module
