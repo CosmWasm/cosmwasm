@@ -1,5 +1,8 @@
-use wasmer::wasmparser::{BinaryReader, Operator, Result as WpResult};
-use wasmer::{FunctionMiddleware, LocalFunctionIndex, MiddlewareReaderState, ModuleMiddleware};
+use wasmer::wasmparser::Operator;
+use wasmer::{
+    FunctionMiddleware, LocalFunctionIndex, MiddlewareError, MiddlewareReaderState,
+    ModuleMiddleware,
+};
 
 /// A middleware that ensures only deterministic operations are used (i.e. no floats)
 #[derive(Debug)]
@@ -26,7 +29,7 @@ impl FunctionMiddleware for FunctionDeterministic {
         &mut self,
         operator: Operator<'a>,
         state: &mut MiddlewareReaderState<'a>,
-    ) -> WpResult<()> {
+    ) -> Result<(), MiddlewareError> {
         match operator {
             Operator::Unreachable
             | Operator::Nop
@@ -140,11 +143,8 @@ impl FunctionMiddleware for FunctionDeterministic {
                 Ok(())
             }
             _ => {
-                // Dirty hack: create an BinaryReaderError
-                // See https://github.com/wasmerio/wasmer/issues/1950
-                let mut reader = BinaryReader::new(b"\0\0\0\0");
-                let error = reader.read_bytes(10).unwrap_err();
-                Err(error)
+                let msg = format!("Non-determinstic operator detected: {:?}", operator);
+                Err(MiddlewareError::new("Deterministic", msg))
             }
         }
     }
