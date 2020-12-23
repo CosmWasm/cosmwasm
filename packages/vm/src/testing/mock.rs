@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
-use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
+use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageAuth};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -165,8 +165,8 @@ pub fn mock_env() -> Env {
 
 /// Just set sender and sent funds for the message. The essential for
 /// This is intended for use in test code only.
-pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
-    MessageInfo {
+pub fn mock_auth<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageAuth {
+    MessageAuth {
         sender: sender.into(),
         sent_funds: sent.to_vec(),
     }
@@ -179,13 +179,13 @@ mod test {
     use cosmwasm_std::{coins, Binary};
 
     #[test]
-    fn mock_info_arguments() {
+    fn mock_auth_arguments() {
         let name = HumanAddr("my name".to_string());
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_info("my name", &coins(100, "atom"));
-        let b = mock_info(&name, &coins(100, "atom"));
-        let c = mock_info(name, &coins(100, "atom"));
+        let a = mock_auth("my name", &coins(100, "atom"));
+        let b = mock_auth(&name, &coins(100, "atom"));
+        let c = mock_auth(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

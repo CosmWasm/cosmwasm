@@ -190,14 +190,14 @@ custom `InitMsg` and `HandleMsg` structs for parsing your custom message types
 pub fn init<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msg: InitMsg,
 ) -> StdResult<InitResponse> {}
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msg: HandleMsg,
 ) -> Result<HandleResponse, ContractError> { }
 
@@ -210,7 +210,7 @@ pub fn query<S: Storage, A: Api, Q: Querier>(
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msg: HandleMsg,
 ) -> Result<HandleResponse, MigrateError> { }
 ```

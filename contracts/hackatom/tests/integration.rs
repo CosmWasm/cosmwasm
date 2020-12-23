@@ -24,7 +24,7 @@ use cosmwasm_std::{
 use cosmwasm_vm::{
     call_handle, from_slice,
     testing::{
-        handle, init, migrate, mock_env, mock_info, mock_instance, mock_instance_with_balances,
+        handle, init, migrate, mock_env, mock_auth, mock_instance, mock_instance_with_balances,
         query, test_io, MOCK_CONTRACT_ADDR,
     },
     Api, Storage, VmError,
@@ -65,8 +65,8 @@ fn proper_initialization() {
         verifier,
         beneficiary,
     };
-    let info = mock_info("creator", &coins(1000, "earth"));
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let auth = mock_auth("creator", &coins(1000, "earth"));
+    let res: InitResponse = init(&mut deps, mock_env(), auth, msg).unwrap();
     assert_eq!(res.messages.len(), 0);
     assert_eq!(res.attributes.len(), 1);
     assert_eq!(res.attributes[0].key, "Let the");
@@ -97,8 +97,8 @@ fn init_and_query() {
         verifier: verifier.clone(),
         beneficiary,
     };
-    let info = mock_info(creator.as_str(), &coins(1000, "earth"));
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let auth = mock_auth(creator.as_str(), &coins(1000, "earth"));
+    let res: InitResponse = init(&mut deps, mock_env(), auth, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
@@ -122,8 +122,8 @@ fn migrate_verifier() {
         verifier: verifier.clone(),
         beneficiary,
     };
-    let info = mock_info(creator.as_str(), &[]);
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let auth = mock_auth(creator.as_str(), &[]);
+    let res: InitResponse = init(&mut deps, mock_env(), auth, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'verifies'
@@ -134,8 +134,8 @@ fn migrate_verifier() {
     let msg = MigrateMsg {
         verifier: HumanAddr::from("someone else"),
     };
-    let info = mock_info(creator.as_str(), &[]);
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
+    let auth = mock_auth(creator.as_str(), &[]);
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), auth, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'someone else'
@@ -170,10 +170,10 @@ fn querier_callbacks_work() {
 #[test]
 fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
-    let info = mock_info("creator", &coins(1000, "earth"));
+    let auth = mock_auth("creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
     let res: ContractResult<InitResponse> =
-        init(&mut deps, mock_env(), info, HandleMsg::Release {});
+        init(&mut deps, mock_env(), auth, HandleMsg::Release {});
     let msg = res.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -192,8 +192,8 @@ fn handle_release_works() {
         beneficiary: beneficiary.clone(),
     };
     let init_amount = coins(1000, "earth");
-    let init_info = mock_info(creator.as_str(), &init_amount);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_auth = mock_auth(creator.as_str(), &init_amount);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
     // balance changed in init
@@ -204,9 +204,9 @@ fn handle_release_works() {
     .unwrap();
 
     // beneficiary can release it
-    let handle_info = mock_info(verifier.as_str(), &[]);
+    let handle_auth = mock_auth(verifier.as_str(), &[]);
     let handle_res: HandleResponse =
-        handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {}).unwrap();
+        handle(&mut deps, mock_env(), handle_auth, HandleMsg::Release {}).unwrap();
     assert_eq!(handle_res.messages.len(), 1);
     let msg = handle_res.messages.get(0).expect("no message");
     assert_eq!(
@@ -239,8 +239,8 @@ fn handle_release_fails_for_wrong_sender() {
         beneficiary: beneficiary.clone(),
     };
     let init_amount = coins(1000, "earth");
-    let init_info = mock_info(creator.as_str(), &init_amount);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_auth = mock_auth(creator.as_str(), &init_amount);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
     // balance changed in init
@@ -251,9 +251,9 @@ fn handle_release_fails_for_wrong_sender() {
     .unwrap();
 
     // beneficiary cannot release it
-    let handle_info = mock_info(beneficiary.as_str(), &[]);
+    let handle_auth = mock_auth(beneficiary.as_str(), &[]);
     let handle_res: ContractResult<HandleResponse> =
-        handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {});
+        handle(&mut deps, mock_env(), handle_auth, HandleMsg::Release {});
     let msg = handle_res.unwrap_err();
     assert!(msg.contains("Unauthorized"));
 
@@ -283,17 +283,17 @@ fn handle_panic() {
     let mut deps = mock_instance(WASM, &[]);
 
     let (init_msg, creator) = make_init_msg();
-    let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_auth = mock_auth(creator.as_str(), &[]);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
-    let handle_info = mock_info(creator.as_str(), &[]);
+    let handle_auth = mock_auth(creator.as_str(), &[]);
     // panic inside contract should not panic out here
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
     let handle_res = call_handle::<_, _, _, Empty>(
         &mut deps,
         &mock_env(),
-        &handle_info,
+        &handle_auth,
         &to_vec(&HandleMsg::Panic {}).unwrap(),
     );
     match handle_res.unwrap_err() {
@@ -308,14 +308,14 @@ fn handle_user_errors_in_api_calls() {
     let mut deps = mock_instance(WASM, &[]);
 
     let (init_msg, creator) = make_init_msg();
-    let init_info = mock_info(creator.as_str(), &[]);
-    let _init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_auth = mock_auth(creator.as_str(), &[]);
+    let _init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
 
-    let handle_info = mock_info(creator.as_str(), &[]);
+    let handle_auth = mock_auth(creator.as_str(), &[]);
     let _handle_res: HandleResponse = handle(
         &mut deps,
         mock_env(),
-        handle_info,
+        handle_auth,
         HandleMsg::UserErrorsInApiCalls {},
     )
     .unwrap();
@@ -336,11 +336,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_auth = mock_auth(creator.as_str(), &[]);
+        let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info(creator.as_str(), &[]);
+        let handle_auth = mock_auth(creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
@@ -357,11 +357,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
+        let init_auth = mock_auth(creator.as_str(), &[]);
         let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info(creator.as_str(), &[]);
+        let handle_auth = mock_auth(creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
@@ -378,11 +378,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
+        let init_auth = mock_auth(creator.as_str(), &[]);
         let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info(creator.as_str(), &[]);
+        let handle_auth = mock_auth(creator.as_str(), &[]);
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
@@ -402,11 +402,11 @@ mod singlepass_tests {
         let mut deps = mock_instance(WASM, &[]);
 
         let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
+        let init_auth = mock_auth(creator.as_str(), &[]);
         let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info(creator.as_str(), &[]);
+        let handle_auth = mock_auth(creator.as_str(), &[]);
         let gas_before = deps.get_gas_left();
         // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
         let handle_res = call_handle::<_, _, _, Empty>(

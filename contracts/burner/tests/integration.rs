@@ -20,7 +20,7 @@
 use cosmwasm_std::{
     coins, BankMsg, ContractResult, HumanAddr, InitResponse, MigrateResponse, Order,
 };
-use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance, MOCK_CONTRACT_ADDR};
+use cosmwasm_vm::testing::{init, migrate, mock_env, mock_auth, mock_instance, MOCK_CONTRACT_ADDR};
 
 use burner::msg::{InitMsg, MigrateMsg};
 use cosmwasm_vm::Storage;
@@ -35,9 +35,9 @@ fn init_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {};
-    let info = mock_info("creator", &coins(1000, "earth"));
+    let auth = mock_auth("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
-    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), auth, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -66,8 +66,8 @@ fn migrate_cleans_up_data() {
     let msg = MigrateMsg {
         payout: payout.clone(),
     };
-    let info = mock_info("creator", &[]);
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
+    let auth = mock_auth("creator", &[]);
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), auth, msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");

@@ -15,7 +15,7 @@ use crate::results::{ContractResult, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Querier, QuerierResult};
-use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
+use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageAuth};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -152,8 +152,8 @@ pub fn mock_env() -> Env {
 
 /// Just set sender and sent funds for the message. The essential for
 /// This is intended for use in test code only.
-pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
-    MessageInfo {
+pub fn mock_auth<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageAuth{
+    MessageAuth {
         sender: sender.into(),
         sent_funds: sent.to_vec(),
     }
@@ -226,7 +226,7 @@ impl<C: CustomQuery + DeserializeOwned> Querier for MockQuerier<C> {
             Ok(v) => v,
             Err(e) => {
                 return SystemResult::Err(SystemError::InvalidRequest {
-                    error: format!("Parsing query request: {}", e),
+                    error: format!("Parsing query request: {:?}", e),
                     request: bin_request.into(),
                 })
             }
@@ -396,13 +396,13 @@ mod test {
     use crate::{coin, coins, from_binary, Decimal, HumanAddr};
 
     #[test]
-    fn mock_info_arguments() {
+    fn mock_auth_arguments() {
         let name = HumanAddr("my name".to_string());
 
         // make sure we can generate with &str, &HumanAddr, and HumanAddr
-        let a = mock_info("my name", &coins(100, "atom"));
-        let b = mock_info(&name, &coins(100, "atom"));
-        let c = mock_info(name, &coins(100, "atom"));
+        let a = mock_auth("my name", &coins(100, "atom"));
+        let b = mock_auth(&name, &coins(100, "atom"));
+        let c = mock_auth(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);

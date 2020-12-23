@@ -19,7 +19,7 @@ use crate::results::{
 };
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
-use crate::{Deps, DepsMut, MessageInfo};
+use crate::{Deps, DepsMut, MessageAuth};
 
 #[cfg(feature = "staking")]
 #[no_mangle]
@@ -68,7 +68,7 @@ macro_rules! r#try_into_contract_result {
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(DepsMut, Env, MessageAuth, M) -> Result<InitResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -94,7 +94,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(DepsMut, Env, MessageAuth, M) -> Result<HandleResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -120,7 +120,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, MessageAuth, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -159,9 +159,9 @@ where
 }
 
 fn _do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(DepsMut, Env, MessageAuth, M) -> Result<InitResponse<C>, E>,
     env_ptr: *mut Region,
-    info_ptr: *mut Region,
+    auth_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<InitResponse<C>>
 where
@@ -170,21 +170,21 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
+    let auth: Vec<u8> = unsafe { consume_region(auth_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
+    let auth: MessageAuth = try_into_contract_result!(from_slice(&auth));
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    init_fn(deps.as_mut(), env, info, msg).into()
+    init_fn(deps.as_mut(), env, auth, msg).into()
 }
 
 fn _do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(DepsMut, Env, MessageAuth, M) -> Result<HandleResponse<C>, E>,
     env_ptr: *mut Region,
-    info_ptr: *mut Region,
+    auth_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<HandleResponse<C>>
 where
@@ -193,21 +193,21 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
+    let auth: Vec<u8> = unsafe { consume_region(auth_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
+    let auth: MessageAuth = try_into_contract_result!(from_slice(&auth));
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    handle_fn(deps.as_mut(), env, info, msg).into()
+    handle_fn(deps.as_mut(), env, auth, msg).into()
 }
 
 fn _do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, MessageAuth, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
-    info_ptr: *mut Region,
+    auth_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<MigrateResponse<C>>
 where
@@ -216,15 +216,15 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
+    let auth: Vec<u8> = unsafe { consume_region(auth_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
+    let auth: MessageAuth = try_into_contract_result!(from_slice(&auth));
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    migrate_fn(deps.as_mut(), env, info, msg).into()
+    migrate_fn(deps.as_mut(), env, auth, msg).into()
 }
 
 fn _do_query<M, E>(

@@ -20,7 +20,7 @@
 use cosmwasm_std::{
     coin, from_binary, ContractResult, Decimal, HumanAddr, InitResponse, Uint128, Validator,
 };
-use cosmwasm_vm::testing::{init, mock_backend, mock_env, mock_info, mock_instance_options, query};
+use cosmwasm_vm::testing::{init, mock_backend, mock_env, mock_auth, mock_instance_options, query};
 use cosmwasm_vm::Instance;
 
 use staking::msg::{
@@ -58,10 +58,10 @@ fn initialization_with_missing_validator() {
         exit_tax: Decimal::percent(2),
         min_withdrawal: Uint128(50),
     };
-    let info = mock_info(&creator, &[]);
+    let auth = mock_auth(&creator, &[]);
 
     // make sure we can init with this
-    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), info, msg.clone());
+    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), auth, msg.clone());
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -95,10 +95,10 @@ fn proper_initialization() {
         exit_tax: Decimal::percent(2),
         min_withdrawal: Uint128(50),
     };
-    let info = mock_info(&creator, &[]);
+    let auth = mock_auth(&creator, &[]);
 
     // make sure we can init with this
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg.clone()).unwrap();
+    let res: InitResponse = init(&mut deps, mock_env(), auth, msg.clone()).unwrap();
     assert_eq!(0, res.messages.len());
 
     // token info is proper

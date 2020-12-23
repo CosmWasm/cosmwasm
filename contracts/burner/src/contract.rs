@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, BankMsg, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
+    attr, BankMsg, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageAuth,
     MigrateResponse, Order, StdError, StdResult,
 };
 
@@ -8,7 +8,7 @@ use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 pub fn init(
     _deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    _auth: MessageAuth,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
     Err(StdError::generic_err(
@@ -19,7 +19,7 @@ pub fn init(
 pub fn handle(
     _deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    _auth: MessageAuth,
     _msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     Err(StdError::generic_err(
@@ -30,7 +30,7 @@ pub fn handle(
 pub fn migrate(
     deps: DepsMut,
     env: Env,
-    _info: MessageInfo,
+    _auth: MessageAuth,
     msg: MigrateMsg,
 ) -> StdResult<MigrateResponse> {
     // delete all state
@@ -70,7 +70,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<Binary> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_auth, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{coins, HumanAddr, StdError, Storage};
 
     #[test]
@@ -78,9 +78,9 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let auth = mock_auth("creator", &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
-        let res = init(deps.as_mut(), mock_env(), info, msg);
+        let res = init(deps.as_mut(), mock_env(), auth, msg);
         match res.unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "You can only use this contract for migrations")
@@ -105,8 +105,8 @@ mod tests {
         let msg = MigrateMsg {
             payout: payout.clone(),
         };
-        let info = mock_info("creator", &[]);
-        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &[]);
+        let res = migrate(deps.as_mut(), mock_env(), auth, msg).unwrap();
         // check payout
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");

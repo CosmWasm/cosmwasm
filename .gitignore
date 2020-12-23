@@ -15,3 +15,5 @@ artifacts/
 
 # Auto-gen
 .cargo-ok
+
+*.wasm

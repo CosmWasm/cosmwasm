@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse,
-    MessageInfo, Order, QueryResponse, StdResult,
+    MessageAuth, Order, QueryResponse, StdResult,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -67,7 +67,7 @@ pub struct ListResponse {
 pub fn init(
     _deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    _auth: MessageAuth,
     _msg: InitMsg,
 ) -> StdResult<InitResponse> {
     Ok(InitResponse::default())
@@ -76,7 +76,7 @@ pub fn init(
 pub fn handle(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    _auth: MessageAuth,
     msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     match msg {
@@ -194,16 +194,16 @@ fn query_list(deps: Deps) -> StdResult<ListResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+        mock_dependencies, mock_env, mock_auth, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{coins, from_binary, OwnedDeps};
 
-    fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
+    fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageAuth) {
         let mut deps = mock_dependencies(&coins(1000, "earth"));
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let res = init(deps.as_mut(), mock_env(), info.clone(), InitMsg {}).unwrap();
+        let auth = mock_auth("creator", &coins(1000, "earth"));
+        let res = init(deps.as_mut(), mock_env(), auth.clone(), InitMsg {}).unwrap();
         assert_eq!(0, res.messages.len());
-        (deps, info)
+        (deps, auth)
     }
 
     fn get_count(deps: Deps) -> u32 {
@@ -223,11 +223,11 @@ mod tests {
 
     #[test]
     fn push_and_query() {
-        let (mut deps, info) = create_contract();
+        let (mut deps, auth) = create_contract();
         handle(
             deps.as_mut(),
             mock_env(),
-            info,
+            auth,
             HandleMsg::Enqueue { value: 25 },
         )
         .unwrap();
@@ -237,25 +237,25 @@ mod tests {
 
     #[test]
     fn multiple_push() {
-        let (mut deps, info) = create_contract();
+        let (mut deps, auth) = create_contract();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 25 },
         )
         .unwrap();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 35 },
         )
         .unwrap();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 45 },
         )
         .unwrap();
@@ -265,25 +265,25 @@ mod tests {
 
     #[test]
     fn push_and_pop() {
-        let (mut deps, info) = create_contract();
+        let (mut deps, auth) = create_contract();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 25 },
         )
         .unwrap();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 17 },
         )
         .unwrap();
         let res = handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Dequeue {},
         )
         .unwrap();
@@ -299,32 +299,32 @@ mod tests {
 
     #[test]
     fn push_and_reduce() {
-        let (mut deps, info) = create_contract();
+        let (mut deps, auth) = create_contract();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 40 },
         )
         .unwrap();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 15 },
         )
         .unwrap();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: 85 },
         )
         .unwrap();
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            auth.clone(),
             HandleMsg::Enqueue { value: -10 },
         )
         .unwrap();
@@ -336,12 +336,12 @@ mod tests {
 
     #[test]
     fn query_list() {
-        let (mut deps, info) = create_contract();
+        let (mut deps, auth) = create_contract();
         for _ in 0..0x25 {
             handle(
                 deps.as_mut(),
                 mock_env(),
-                info.clone(),
+                auth.clone(),
                 HandleMsg::Enqueue { value: 40 },
             )
             .unwrap();
@@ -350,7 +350,7 @@ mod tests {
             handle(
                 deps.as_mut(),
                 mock_env(),
-                info.clone(),
+                auth.clone(),
                 HandleMsg::Dequeue {},
             )
             .unwrap();

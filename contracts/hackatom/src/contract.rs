@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
+    Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageAuth,
     MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
@@ -89,7 +89,7 @@ pub const CONFIG_KEY: &[u8] = b"config";
 pub fn init(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msg: InitMsg,
 ) -> Result<InitResponse, HackError> {
     deps.api.debug("here we go 🚀");
@@ -99,7 +99,7 @@ pub fn init(
         &to_vec(&State {
             verifier: deps.api.canonical_address(&msg.verifier)?,
             beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: deps.api.canonical_address(&info.sender)?,
+            funder: deps.api.canonical_address(&auth.sender)?,
         })?,
     );
 
@@ -112,7 +112,7 @@ pub fn init(
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
+    _auth: MessageAuth,
     msg: MigrateMsg,
 ) -> Result<MigrateResponse, HackError> {
     let data = deps
@@ -129,11 +129,11 @@ pub fn migrate(
 pub fn handle(
     deps: DepsMut,
     env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msg: HandleMsg,
 ) -> Result<HandleResponse, HackError> {
     match msg {
-        HandleMsg::Release {} => do_release(deps, env, info),
+        HandleMsg::Release {} => do_release(deps, env, auth),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
         HandleMsg::MemoryLoop {} => do_memory_loop(),
@@ -143,14 +143,14 @@ pub fn handle(
     }
 }
 
-fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, HackError> {
+fn do_release(deps: DepsMut, env: Env, auth: MessageAuth) -> Result<HandleResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if deps.api.canonical_address(&info.sender)? == state.verifier {
+    if deps.api.canonical_address(&auth.sender)? == state.verifier {
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
@@ -348,7 +348,7 @@ fn query_recurse(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_dependencies_with_balances, mock_env, mock_auth, MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
     use cosmwasm_std::{attr, coins, Storage};
@@ -370,8 +370,8 @@ mod tests {
             verifier,
             beneficiary,
         };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth(creator.as_str(), &[]);
+        let res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(res.attributes[0].key, "Let the");
@@ -394,8 +394,8 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth(creator.as_str(), &[]);
+        let res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
@@ -414,8 +414,8 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth(creator.as_str(), &[]);
+        let res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'verifies'
@@ -427,8 +427,8 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth(creator.as_str(), &[]);
+        let res = migrate(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
@@ -465,19 +465,19 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_info = mock_info(creator.as_str(), &init_amount);
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_auth = mock_auth(creator.as_str(), &init_amount);
+        let init_res = init(deps.as_mut(), mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary can release it
-        let handle_info = mock_info(verifier.as_str(), &[]);
+        let handle_auth = mock_auth(verifier.as_str(), &[]);
         let handle_res = handle(
             deps.as_mut(),
             mock_env(),
-            handle_info,
+            handle_auth,
             HandleMsg::Release {},
         )
         .unwrap();
@@ -513,19 +513,19 @@ mod tests {
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_info = mock_info(creator.as_str(), &init_amount);
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_auth = mock_auth(creator.as_str(), &init_amount);
+        let init_res = init(deps.as_mut(), mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary cannot release it
-        let handle_info = mock_info(beneficiary.as_str(), &[]);
+        let handle_auth = mock_auth(beneficiary.as_str(), &[]);
         let handle_res = handle(
             deps.as_mut(),
             mock_env(),
-            handle_info,
+            handle_auth,
             HandleMsg::Release {},
         );
         match handle_res.unwrap_err() {
@@ -560,13 +560,13 @@ mod tests {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
-        let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_auth = mock_auth(creator.as_str(), &coins(1000, "earth"));
+        let init_res = init(deps.as_mut(), mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info(beneficiary.as_str(), &[]);
+        let handle_auth = mock_auth(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = handle(deps.as_mut(), mock_env(), handle_info, HandleMsg::Panic {});
+        let _ = handle(deps.as_mut(), mock_env(), handle_auth, HandleMsg::Panic {});
     }
 
     #[test]
@@ -577,15 +577,15 @@ mod tests {
             verifier: HumanAddr::from("verifies"),
             beneficiary: HumanAddr::from("benefits"),
         };
-        let init_info = mock_info("creator", &coins(1000, "earth"));
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_auth = mock_auth("creator", &coins(1000, "earth"));
+        let init_res = init(deps.as_mut(), mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info("anyone", &[]);
+        let handle_auth = mock_auth("anyone", &[]);
         handle(
             deps.as_mut(),
             mock_env(),
-            handle_info,
+            handle_auth,
             HandleMsg::UserErrorsInApiCalls {},
         )
         .unwrap();

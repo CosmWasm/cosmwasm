@@ -39,7 +39,7 @@ pub use crate::results::{
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
-pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
+pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageAuth};
 
 // Exposed in wasm build only
 
@@ -63,7 +63,7 @@ mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
     pub use crate::mock::{
-        digit_sum, mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info,
+        digit_sum, mock_dependencies, mock_dependencies_with_balances, mock_env, mock_auth,
         riffle_shuffle, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
         MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };

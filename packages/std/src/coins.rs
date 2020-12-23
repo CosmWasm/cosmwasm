@@ -24,15 +24,15 @@ impl Coin {
 ///
 /// ```
 /// # use cosmwasm_std::{coins, BankMsg, CosmosMsg, HandleResponse};
-/// # use cosmwasm_std::testing::{mock_env, mock_info};
+/// # use cosmwasm_std::testing::{mock_env, mock_auth};
 /// # let env = mock_env();
-/// # let info = mock_info("sender", &[]);
+/// # let auth = mock_auth("sender", &[]);
 /// let tip = coins(123, "ucosm");
 ///
 /// let mut response: HandleResponse = Default::default();
 /// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
 ///   from_address: env.contract.address,
-///   to_address: info.sender,
+///   to_address: auth.sender,
 ///   amount: tip,
 /// })];
 /// ```
@@ -46,9 +46,9 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 ///
 /// ```
 /// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, HandleResponse};
-/// # use cosmwasm_std::testing::{mock_env, mock_info};
+/// # use cosmwasm_std::testing::{mock_env, mock_auth};
 /// # let env = mock_env();
-/// # let info = mock_info("sender", &[]);
+/// # let auth = mock_auth("sender", &[]);
 /// let tip = vec![
 ///     coin(123, "ucosm"),
 ///     coin(24, "ustake"),
@@ -57,7 +57,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 /// let mut response: HandleResponse = Default::default();
 /// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
 ///     from_address: env.contract.address,
-///     to_address: info.sender,
+///     to_address: auth.sender,
 ///     amount: tip,
 /// })];
 /// ```

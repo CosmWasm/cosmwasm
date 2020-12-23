@@ -108,8 +108,8 @@
 - The serialization of the result from `init`/`migrate`/`handle`/`query` changed
   in an incompatible way. See the new `ContractResult` and `SystemResult` types
   and their documentation.
-- Pass `Env` into `query` as well. As this doesn't have `MessageInfo`, we
-  removed `MessageInfo` from `Env` and pass that as a separate argument to
+- Pass `Env` into `query` as well. As this doesn't have `MessageAuth`, we
+  removed `MessageAuth` from `Env` and pass that as a separate argument to
   `init`, `handle`, and `query`. See the example
   [type definitions in the README](README.md#implementing-the-smart-contract) to
   see how to update your contract exports (just add one extra arg each).

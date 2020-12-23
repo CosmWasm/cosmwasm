@@ -6,7 +6,7 @@
 /// The second module should export three functions with the following signatures:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, DepsMut, Deps, Env, StdResult, Binary, MessageInfo,
+/// #     Storage, Api, Querier, DepsMut, Deps, Env, StdResult, Binary, MessageAuth,
 /// #     InitResult, HandleResult, QueryResult,
 /// # };
 /// #
@@ -14,7 +14,7 @@
 /// pub fn init(
 ///     deps: DepsMut,
 ///     env: Env,
-///     info: MessageInfo,
+///     auth: MessageAuth,
 ///     msg: InitMsg,
 /// ) -> InitResult {
 /// #   Ok(Default::default())
@@ -24,7 +24,7 @@
 /// pub fn handle(
 ///     deps: DepsMut,
 ///     env: Env,
-///     info: MessageInfo,
+///     auth: MessageAuth,
 ///     msg: HandleMsg,
 /// ) -> HandleResult {
 /// #   Ok(Default::default())
@@ -94,13 +94,13 @@ macro_rules! create_entry_points {
 /// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, DepsMut, Env, StdResult, Binary, MigrateResult, MessageInfo,
+/// #     Storage, Api, Querier, DepsMut, Env, StdResult, Binary, MigrateResult, MessageAuth,
 /// # };
 /// # type MigrateMsg = ();
 /// pub fn migrate(
 ///     deps: DepsMut,
 ///     _env: Env,
-///     _info: MessageInfo,
+///     _auth: MessageAuth,
 ///     msg: MigrateMsg,
 /// ) -> MigrateResult {
 /// #   Ok(Default::default())

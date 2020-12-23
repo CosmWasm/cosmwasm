@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, QueryRequest, StdError, StdResult, SystemResult,
+    HumanAddr, InitResponse, MessageAuth, QueryRequest, StdError, StdResult, SystemResult,
 };
 
 use crate::errors::ReflectError;
@@ -13,11 +13,11 @@ use crate::state::{config, config_read, State};
 pub fn init(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     _msg: InitMsg,
 ) -> StdResult<InitResponse<CustomMsg>> {
     let state = State {
-        owner: deps.api.canonical_address(&info.sender)?,
+        owner: deps.api.canonical_address(&auth.sender)?,
     };
 
     config(deps.storage).save(&state)?;
@@ -27,24 +27,24 @@ pub fn init(
 pub fn handle(
     deps: DepsMut,
     env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msg: HandleMsg,
 ) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     match msg {
-        HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
-        HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, info, owner),
+        HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, auth, msgs),
+        HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, auth, owner),
     }
 }
 
 pub fn try_reflect(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     msgs: Vec<CosmosMsg<CustomMsg>>,
 ) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     let state = config(deps.storage).load()?;
 
-    let sender = deps.api.canonical_address(&info.sender)?;
+    let sender = deps.api.canonical_address(&auth.sender)?;
     if sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
             expected: state.owner,
@@ -66,12 +66,12 @@ pub fn try_reflect(
 pub fn try_change_owner(
     deps: DepsMut,
     _env: Env,
-    info: MessageInfo,
+    auth: MessageAuth,
     owner: HumanAddr,
 ) -> Result<HandleResponse<CustomMsg>, ReflectError> {
     let api = deps.api;
     config(deps.storage).update(|mut state| {
-        let sender = api.canonical_address(&info.sender)?;
+        let sender = api.canonical_address(&auth.sender)?;
         if sender != state.owner {
             return Err(ReflectError::NotCurrentOwner {
                 expected: state.owner,
@@ -138,7 +138,7 @@ fn query_raw(deps: Deps, contract: HumanAddr, key: Binary) -> StdResult<RawRespo
 mod tests {
     use super::*;
     use crate::testing::mock_dependencies_with_custom_querier;
-    use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::testing::{mock_env, mock_auth, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, Api, BankMsg, BankQuery, Binary, StakingMsg,
         StdError,
@@ -149,10 +149,10 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
+        let auth = mock_auth("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
@@ -165,8 +165,8 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
             from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
@@ -178,8 +178,8 @@ mod tests {
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let info = mock_info("creator", &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &[]);
+        let res = handle(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(payload, res.messages);
     }
 
@@ -188,8 +188,8 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
         // signer is not owner
         let payload = vec![BankMsg::Send {
@@ -202,8 +202,8 @@ mod tests {
             msgs: payload.clone(),
         };
 
-        let info = mock_info("random", &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
+        let auth = mock_auth("random", &[]);
+        let res = handle(deps.as_mut(), mock_env(), auth, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
@@ -215,16 +215,16 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
-        let info = mock_info("creator", &[]);
+        let auth = mock_auth("creator", &[]);
         let payload = vec![];
 
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
+        let res = handle(deps.as_mut(), mock_env(), auth, msg);
         match res.unwrap_err() {
             ReflectError::MessagesEmpty => {}
             err => panic!("Unexpected error: {:?}", err),
@@ -236,8 +236,8 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
         let payload = vec![
             BankMsg::Send {
@@ -259,8 +259,8 @@ mod tests {
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let info = mock_info("creator", &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &[]);
+        let res = handle(deps.as_mut(), mock_env(), auth, msg).unwrap();
         assert_eq!(payload, res.messages);
     }
 
@@ -269,15 +269,15 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg {};
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
-        let info = mock_info("creator", &[]);
+        let auth = mock_auth("creator", &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = handle(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
         // should change state
         assert_eq!(0, res.messages.len());
@@ -291,17 +291,17 @@ mod tests {
 
         let msg = InitMsg {};
         let creator = HumanAddr::from("creator");
-        let info = mock_info(&creator, &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth(&creator, &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
         let random = HumanAddr::from("random");
-        let info = mock_info(&random, &[]);
+        let auth = mock_auth(&random, &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner {
             owner: new_owner.clone(),
         };
 
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
+        let res = handle(deps.as_mut(), mock_env(), auth, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { expected, actual } => {
                 assert_eq!(expected, deps.api.canonical_address(&creator).unwrap());
@@ -317,14 +317,14 @@ mod tests {
         let creator = HumanAddr::from("creator");
 
         let msg = InitMsg {};
-        let info = mock_info(&creator, &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let auth = mock_auth(&creator, &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), auth, msg).unwrap();
 
-        let info = mock_info(&creator, &[]);
+        let auth = mock_auth(&creator, &[]);
         let msg = HandleMsg::ChangeOwner {
             owner: HumanAddr::from("x"),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
+        let res = handle(deps.as_mut(), mock_env(), auth, msg);
         match res.unwrap_err() {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
                 assert!(msg.contains("human address too short"))

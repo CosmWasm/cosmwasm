@@ -16,7 +16,7 @@ pub struct BlockInfo {
     /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
     ///
     /// The source of this is the [BFT Time in Tendermint](https://docs.tendermint.com/master/spec/consensus/bft-time.html),
-    /// converted from nanoseconds to second precision by truncating the fractioal part.
+    /// converted from nanoseconds to second precision by truncating the fractional part.
     pub time: u64,
     /// The fractional part of the block time in nanoseconds since `time` (0 to 999999999).
     /// Add this to `time` if you need a high precision block time.
@@ -26,7 +26,7 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageInfo};
+    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageAuth};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -46,7 +46,7 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageInfo};
+    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageAuth};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -64,10 +64,10 @@ pub struct BlockInfo {
     pub chain_id: String,
 }
 
-/// MessageInfo is sent with `init`, `handle`, and `migrate` calls, but not with queries.
+/// MessageAuth is sent with `init`, `handle`, and `migrate` calls, but not with queries.
 /// It contains the essential info for authorization - identity of the call, and payment
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
-pub struct MessageInfo {
+pub struct MessageAuth {
     /// The `sender` field from the `wasm/MsgStoreCode`, `wasm/MsgInstantiateContract`, `wasm/MsgMigrateContract`
     /// or `wasm/MsgExecuteContract` message.
     /// You can think of this as the address that initiated the action (i.e. the message). What that

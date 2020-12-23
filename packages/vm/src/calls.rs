@@ -2,7 +2,7 @@ use serde::de::DeserializeOwned;
 use std::fmt;
 
 use cosmwasm_std::{
-    ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
+    ContractResult, Env, HandleResponse, InitResponse, MessageAuth, MigrateResponse, QueryResponse,
 };
 
 use crate::backend::{Api, Querier, Storage};
@@ -19,7 +19,7 @@ const MAX_LENGTH_QUERY: usize = 100_000;
 pub fn call_init<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
-    info: &MessageInfo,
+    auth: &MessageAuth,
     msg: &[u8],
 ) -> VmResult<ContractResult<InitResponse<U>>>
 where
@@ -29,8 +29,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let info = to_vec(info)?;
-    let data = call_init_raw(instance, &env, &info, msg)?;
+    let auth = to_vec(auth)?;
+    let data = call_init_raw(instance, &env, &auth, msg)?;
     let result: ContractResult<InitResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -38,7 +38,7 @@ where
 pub fn call_handle<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
-    info: &MessageInfo,
+    auth: &MessageAuth,
     msg: &[u8],
 ) -> VmResult<ContractResult<HandleResponse<U>>>
 where
@@ -48,8 +48,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let info = to_vec(info)?;
-    let data = call_handle_raw(instance, &env, &info, msg)?;
+    let auth = to_vec(auth)?;
+    let data = call_handle_raw(instance, &env, &auth, msg)?;
     let result: ContractResult<HandleResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -57,7 +57,7 @@ where
 pub fn call_migrate<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
-    info: &MessageInfo,
+    auth: &MessageAuth,
     msg: &[u8],
 ) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
@@ -67,8 +67,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let info = to_vec(info)?;
-    let data = call_migrate_raw(instance, &env, &info, msg)?;
+    let auth = to_vec(auth)?;
+    let data = call_migrate_raw(instance, &env, &auth, msg)?;
     let result: ContractResult<MigrateResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -97,11 +97,11 @@ pub fn call_query<S: Storage, A: Api + 'static, Q: Querier>(
 pub fn call_init_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
-    info: &[u8],
+    auth: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
     instance.set_storage_readonly(false);
-    call_raw(instance, "init", &[env, info, msg], MAX_LENGTH_INIT)
+    call_raw(instance, "init", &[env, auth, msg], MAX_LENGTH_INIT)
 }
 
 /// Calls Wasm export "handle" and returns raw data from the contract.
@@ -109,11 +109,11 @@ pub fn call_init_raw<S: Storage, A: Api + 'static, Q: Querier>(
 pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
-    info: &[u8],
+    auth: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
     instance.set_storage_readonly(false);
-    call_raw(instance, "handle", &[env, info, msg], MAX_LENGTH_HANDLE)
+    call_raw(instance, "handle", &[env, auth, msg], MAX_LENGTH_HANDLE)
 }
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
@@ -121,11 +121,11 @@ pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
 pub fn call_migrate_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
-    info: &[u8],
+    auth: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
     instance.set_storage_readonly(false);
-    call_raw(instance, "migrate", &[env, info, msg], MAX_LENGTH_MIGRATE)
+    call_raw(instance, "migrate", &[env, auth, msg], MAX_LENGTH_MIGRATE)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
