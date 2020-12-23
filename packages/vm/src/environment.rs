@@ -4,10 +4,10 @@ use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
 use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, WasmerEnv};
+use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points};
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::{get_remaining_points, set_remaining_points};
 
 #[derive(Debug)]
 pub struct InsufficientGasLeft;

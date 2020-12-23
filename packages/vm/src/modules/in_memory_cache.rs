@@ -42,8 +42,9 @@ impl InMemoryCache {
 mod tests {
     use super::*;
     use crate::size::Size;
-    use crate::wasm_backend::{compile_only, make_runtime_store, set_remaining_points};
+    use crate::wasm_backend::{compile_only, make_runtime_store};
     use wasmer::{imports, Instance as WasmerInstance};
+    use wasmer_middlewares::metering::set_remaining_points;
 
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_GAS_LIMIT: u64 = 5_000;
