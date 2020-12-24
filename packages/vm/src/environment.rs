@@ -4,7 +4,7 @@ use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
 use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, WasmerEnv};
-use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points};
+use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
@@ -189,7 +189,10 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            get_remaining_points(instance)
+            match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            }
         })
     }
 
@@ -213,7 +216,10 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
 
-            let remaining = get_remaining_points(instance);
+            let remaining = match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            };
             if amount > remaining {
                 set_remaining_points(instance, 0);
                 Err(InsufficientGasLeft)
@@ -311,7 +317,10 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            get_remaining_points(instance)
+            match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            }
         };
         let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
 
