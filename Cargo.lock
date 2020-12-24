@@ -209,7 +209,6 @@ dependencies = [
  "tempfile",
  "thiserror",
  "wasmer",
- "wasmer-engine",
  "wasmer-middlewares",
  "wat",
 ]

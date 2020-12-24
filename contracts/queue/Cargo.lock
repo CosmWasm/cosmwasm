@@ -135,7 +135,6 @@ dependencies = [
  "sha2",
  "thiserror",
  "wasmer",
- "wasmer-engine",
  "wasmer-middlewares",
 ]
 
