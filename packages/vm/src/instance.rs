@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
@@ -47,9 +46,6 @@ pub struct Instance<A: Api, S: Storage, Q: Querier> {
     inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
     pub required_features: HashSet<String>,
-    // This does not store data but only fixes type information
-    type_storage: PhantomData<S>,
-    type_querier: PhantomData<Q>,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -180,8 +176,6 @@ where
             inner: wasmer_instance,
             env,
             required_features,
-            type_storage: PhantomData::<S> {},
-            type_querier: PhantomData::<Q> {},
         };
         Ok(instance)
     }
