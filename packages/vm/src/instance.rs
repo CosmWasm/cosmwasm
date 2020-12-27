@@ -43,7 +43,7 @@ pub struct Instance<A: Api, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
-    inner: Box<WasmerInstance>,
+    _inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
     pub required_features: HashSet<String>,
 }
@@ -173,7 +173,7 @@ where
         env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.move_in(backend.storage, backend.querier);
         let instance = Instance {
-            inner: wasmer_instance,
+            _inner: wasmer_instance,
             env,
             required_features,
         };
@@ -272,9 +272,7 @@ where
     }
 
     pub(crate) fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
-        let function = self.inner.exports.get_function(name)?;
-        let result = function.call(args)?;
-        Ok(result)
+        self.env.call_function(name, args)
     }
 }
 

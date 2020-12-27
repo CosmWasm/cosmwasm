@@ -3,7 +3,7 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, WasmerEnv};
+use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
@@ -130,7 +130,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
-    pub fn with_func_from_context<C, T>(&self, name: &str, callback: C) -> VmResult<T>
+    fn with_func_from_context<C, T>(&self, name: &str, callback: C) -> VmResult<T>
     where
         C: FnOnce(&Function) -> VmResult<T>,
     {
@@ -143,6 +143,12 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
             }
             None => Err(VmError::uninitialized_context_data("wasmer_instance")),
         })
+    }
+
+    pub fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
+        // Clone function before calling it to avoid dead locks
+        let func = self.with_func_from_context(name, |func| Ok(func.clone()))?;
+        Ok(func.call(args)?)
     }
 
     pub fn with_storage_from_context<C, T>(&self, callback: C) -> VmResult<T>
@@ -570,6 +576,45 @@ mod tests {
         let res = env.with_func_from_context::<_, ()>("doesnt_exist", |_func| {
             panic!("unexpected callback call");
         });
+        match res.unwrap_err() {
+            VmError::ResolveErr { msg, .. } => {
+                assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
+            }
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_function_works() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function("allocate", &[10u32.into()]).unwrap();
+        let ptr = ref_to_u32(&result[0]).unwrap();
+        assert!(ptr > 0);
+    }
+
+    #[test]
+    fn call_function_fails_for_missing_instance() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        // Clear context's wasmer_instance
+        env.set_wasmer_instance(None);
+
+        let res = env.call_function("allocate", &[]);
+        match res.unwrap_err() {
+            VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_function_fails_for_missing_function() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let res = env.call_function("doesnt_exist", &[]);
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
                 assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
