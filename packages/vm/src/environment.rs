@@ -141,7 +141,19 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
             }
             None => Err(VmError::uninitialized_context_data("wasmer_instance")),
         })?;
-        Ok(func.call(args)?)
+
+        func.call(args).map_err(|runtime_err| -> VmError {
+            self.with_context_data(|context_data| match context_data.wasmer_instance {
+                Some(instance_ptr) => {
+                    let instance_ref = unsafe { instance_ptr.as_ref() };
+                    match get_remaining_points(instance_ref) {
+                        MeteringPoints::Remaining(_) => VmError::from(runtime_err),
+                        MeteringPoints::Exhausted => VmError::gas_depletion(),
+                    }
+                }
+                None => VmError::uninitialized_context_data("wasmer_instance"),
+            })
+        })
     }
 
     pub fn with_storage_from_context<C, T>(&self, callback: C) -> VmResult<T>

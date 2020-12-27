@@ -297,8 +297,7 @@ fn handle_panic() {
         &to_vec(&HandleMsg::Panic {}).unwrap(),
     );
     match handle_res.unwrap_err() {
-        // TODO: Don't accept GasDepletion here (https://github.com/CosmWasm/cosmwasm/issues/501)
-        VmError::RuntimeErr { .. } | VmError::GasDepletion { .. } => {}
+        VmError::RuntimeErr { .. } => {}
         err => panic!("Unexpected error: {:?}", err),
     }
 }
