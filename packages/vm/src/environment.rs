@@ -3,7 +3,7 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
+use wasmer::{HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
@@ -130,24 +130,17 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
-    fn with_func_from_context<C, T>(&self, name: &str, callback: C) -> VmResult<T>
-    where
-        C: FnOnce(&Function) -> VmResult<T>,
-    {
-        self.with_context_data_mut(|context_data| match context_data.wasmer_instance {
+    pub fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
+        // Clone function before calling it to avoid dead locks
+        let func = self.with_context_data(|context_data| match context_data.wasmer_instance {
             Some(instance_ptr) => {
                 let func = unsafe { instance_ptr.as_ref() }
                     .exports
                     .get_function(name)?;
-                callback(func)
+                Ok(func.clone())
             }
             None => Err(VmError::uninitialized_context_data("wasmer_instance")),
-        })
-    }
-
-    pub fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
-        // Clone function before calling it to avoid dead locks
-        let func = self.with_func_from_context(name, |func| Ok(func.clone()))?;
+        })?;
         Ok(func.call(args)?)
     }
 
@@ -534,54 +527,6 @@ mod tests {
         // change back
         env.set_storage_readonly(true);
         assert_eq!(env.is_storage_readonly(), true);
-    }
-
-    #[test]
-    fn with_func_from_context_works() {
-        let (env, _instance) = make_instance();
-        leave_default_data(&env);
-
-        let ptr = env
-            .with_func_from_context::<_, _>("allocate", |alloc_func| {
-                let result = alloc_func.call(&[10u32.into()])?;
-                let ptr = ref_to_u32(&result[0])?;
-                Ok(ptr)
-            })
-            .unwrap();
-        assert!(ptr > 0);
-    }
-
-    #[test]
-    fn with_func_from_context_fails_for_missing_instance() {
-        let (env, _instance) = make_instance();
-        leave_default_data(&env);
-
-        // Clear context's wasmer_instance
-        env.set_wasmer_instance(None);
-
-        let res = env.with_func_from_context::<_, ()>("allocate", |_func| {
-            panic!("unexpected callback call");
-        });
-        match res.unwrap_err() {
-            VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
-            err => panic!("Unexpected error: {:?}", err),
-        }
-    }
-
-    #[test]
-    fn with_func_from_context_fails_for_missing_function() {
-        let (env, _instance) = make_instance();
-        leave_default_data(&env);
-
-        let res = env.with_func_from_context::<_, ()>("doesnt_exist", |_func| {
-            panic!("unexpected callback call");
-        });
-        match res.unwrap_err() {
-            VmError::ResolveErr { msg, .. } => {
-                assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
-            }
-            err => panic!("Unexpected error: {:?}", err),
-        }
     }
 
     #[test]
