@@ -130,7 +130,11 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
-    pub fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
+    /// Calls a function with the given name and arguments.
+    /// The number of return values is variable and controlled by the guest.
+    /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
+    /// or [`Self::call_function1`] to ensure the number of return values is checked.
+    fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
         // Clone function before calling it to avoid dead locks
         let func = self.with_context_data(|context_data| match context_data.wasmer_instance {
             Some(instance_ptr) => {
@@ -154,6 +158,26 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 None => VmError::uninitialized_context_data("wasmer_instance"),
             })
         })
+    }
+
+    pub fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
+        let result = self.call_function(name, args)?;
+        let expected = 0;
+        let actual = result.len();
+        if actual != expected {
+            return Err(VmError::result_mismatch(name, expected, actual));
+        }
+        Ok(())
+    }
+
+    pub fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
+        let result = self.call_function(name, args)?;
+        let expected = 1;
+        let actual = result.len();
+        if actual != expected {
+            return Err(VmError::result_mismatch(name, expected, actual));
+        }
+        Ok(result[0].clone())
     }
 
     pub fn with_storage_from_context<C, T>(&self, callback: C) -> VmResult<T>
@@ -577,6 +601,68 @@ mod tests {
                 assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
             }
             err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_function0_works() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        env.call_function0("cosmwasm_vm_version_4", &[]).unwrap();
+    }
+
+    #[test]
+    fn call_function0_errors_for_wrong_result_count() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function0("allocate", &[10u32.into()]);
+        match result.unwrap_err() {
+            VmError::ResultMismatch {
+                function_name,
+                expected,
+                actual,
+            } => {
+                assert_eq!(function_name, "allocate");
+                assert_eq!(expected, 0);
+                assert_eq!(actual, 1);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_function1_works() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
+        let ptr = ref_to_u32(&result).unwrap();
+        assert!(ptr > 0);
+    }
+
+    #[test]
+    fn call_function1_errors_for_wrong_result_count() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
+        let ptr = ref_to_u32(&result).unwrap();
+        assert!(ptr > 0);
+
+        let result = env.call_function1("deallocate", &[ptr.into()]);
+        match result.unwrap_err() {
+            VmError::ResultMismatch {
+                function_name,
+                expected,
+                actual,
+            } => {
+                assert_eq!(function_name, "deallocate");
+                assert_eq!(expected, 1);
+                assert_eq!(actual, 0);
+            }
+            err => panic!("unexpected error: {:?}", err),
         }
     }
 

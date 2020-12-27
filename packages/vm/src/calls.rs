@@ -166,6 +166,8 @@ where
     call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
 }
 
+/// Calls a function with the given arguments.
+/// The exported function must return exactly one result (an offset to the result Region).
 fn call_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     name: &str,
@@ -183,8 +185,8 @@ where
         instance.write_memory(region_ptr, arg)?;
         arg_region_ptrs.push(region_ptr.into());
     }
-    let result = instance.call_function(name, &arg_region_ptrs)?;
-    let res_region_ptr = ref_to_u32(&result[0])?;
+    let result = instance.call_function1(name, &arg_region_ptrs)?;
+    let res_region_ptr = ref_to_u32(&result)?;
     let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;

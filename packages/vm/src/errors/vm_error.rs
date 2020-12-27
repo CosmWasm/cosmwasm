@@ -88,6 +88,19 @@ pub enum VmError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error(
+        "Unexpected number of result values when calling '{}'. Expected: {}, actual: {}.",
+        function_name,
+        expected,
+        actual
+    )]
+    ResultMismatch {
+        function_name: String,
+        expected: usize,
+        actual: usize,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Error executing Wasm: {}", msg)]
     RuntimeErr {
         msg: String,
@@ -202,6 +215,20 @@ impl VmError {
     pub(crate) fn resolve_err<S: Into<String>>(msg: S) -> Self {
         VmError::ResolveErr {
             msg: msg.into(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub(crate) fn result_mismatch<S: Into<String>>(
+        function_name: S,
+        expected: usize,
+        actual: usize,
+    ) -> Self {
+        VmError::ResultMismatch {
+            function_name: function_name.into(),
+            expected,
+            actual,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -423,6 +450,24 @@ mod tests {
         let error = VmError::resolve_err("function has different signature");
         match error {
             VmError::ResolveErr { msg, .. } => assert_eq!(msg, "function has different signature"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn result_mismatch_works() {
+        let error = VmError::result_mismatch("action", 0, 1);
+        match error {
+            VmError::ResultMismatch {
+                function_name,
+                expected,
+                actual,
+                ..
+            } => {
+                assert_eq!(function_name, "action");
+                assert_eq!(expected, 0);
+                assert_eq!(actual, 1);
+            }
             e => panic!("Unexpected error: {:?}", e),
         }
     }

@@ -241,8 +241,8 @@ fn write_to_contract<A: Api, S: Storage, Q: Querier>(
     input: &[u8],
 ) -> VmResult<u32> {
     let out_size = to_u32(input.len())?;
-    let result = env.call_function("allocate", &[out_size.into()])?;
-    let target_ptr = ref_to_u32(&result[0])?;
+    let result = env.call_function1("allocate", &[out_size.into()])?;
+    let target_ptr = ref_to_u32(&result)?;
     if target_ptr == 0 {
         return Err(CommunicationError::zero_address().into());
     }
@@ -387,9 +387,9 @@ mod tests {
 
     fn write_data(env: &Environment<MA, MS, MQ>, data: &[u8]) -> u32 {
         let result = env
-            .call_function("allocate", &[(data.len() as u32).into()])
+            .call_function1("allocate", &[(data.len() as u32).into()])
             .unwrap();
-        let region_ptr = ref_to_u32(&result[0]).unwrap();
+        let region_ptr = ref_to_u32(&result).unwrap();
         write_region(&env.memory(), region_ptr, data).expect("error writing");
         region_ptr
     }
