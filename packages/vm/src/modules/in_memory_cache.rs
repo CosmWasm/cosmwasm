@@ -60,32 +60,39 @@ mod tests {
             (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
                 get_local $p0
                 i32.const 1
-                i32.add))
-            "#,
+                i32.add)
+            )"#,
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
         let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        let cached = cache.load(&checksum, &store).unwrap();
-        assert!(cached.is_none());
+        let cache_entry = cache.load(&checksum, &store).unwrap();
+        assert!(cache_entry.is_none());
+
+        // Compile module
+        let original = compile_only(&wasm).unwrap();
+
+        // Ensure original module can be executed
+        {
+            let instance = WasmerInstance::new(&original, &imports! {}).unwrap();
+            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
+        }
 
         // Store module
-        let module = compile_only(&wasm).unwrap();
-        cache.store(&checksum, module).unwrap();
+        cache.store(&checksum, original).unwrap();
 
         // Load module
         let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        let cached = cache.load(&checksum, &store).unwrap();
-        assert!(cached.is_some());
+        let cached = cache.load(&checksum, &store).unwrap().unwrap();
 
-        // Check the returned module is functional.
-        // This is not really testing the cache API but better safe than sorry.
+        // Ensure cached module can be executed
         {
-            let cached_module = cached.unwrap();
-            let import_object = imports! {};
-            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+            let instance = WasmerInstance::new(&cached, &imports! {}).unwrap();
             set_remaining_points(&instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
             let result = add_one.call(&[42.into()]).unwrap();
