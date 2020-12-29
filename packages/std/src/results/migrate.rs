@@ -33,4 +33,24 @@ where
     }
 }
 
+pub struct SystemResponse<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub messages: Vec<CosmosMsg<T>>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
+    pub data: Option<Binary>,
+}
+impl<T> Default for SystemResponse {
+    fn default() -> Self {
+        SystemResponse {
+            messages: vec![],
+            attributes: vec![],
+            data: None,
+        }
+    }
+}
+
 pub type MigrateResult<U = Empty> = Result<MigrateResponse<U>, StdError>;
+pub type SystemResult<U = Empty> = Result<SystemResponse<U>, StdError>;

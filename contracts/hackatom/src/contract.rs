@@ -30,6 +30,12 @@ pub struct MigrateMsg {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum SystemMsg {
+    Migrate(MigrateMsg),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub verifier: CanonicalAddr,
     pub beneficiary: CanonicalAddr,
@@ -109,11 +115,11 @@ pub fn init(
     Ok(ctx.try_into()?)
 }
 
-pub fn migrate(
+pub fn system(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: MigrateMsg,
+    msg: SystemMsg,
 ) -> Result<MigrateResponse, HackError> {
     let data = deps
         .storage
