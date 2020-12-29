@@ -395,43 +395,101 @@ mod tests {
     }
 
     #[test]
-    fn init_cached_contract() {
+    fn execute_init_on_cached_contract() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let id = cache.save_wasm(CONTRACT).unwrap();
-        let backend = mock_backend(&[]);
-        let mut instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
 
-        // run contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        // from file system
+        {
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_memory_cache, 0);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
 
-        // call and check
-        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(msgs.len(), 0);
+            // init
+            let info = mock_info("creator", &coins(1000, "earth"));
+            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+            let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let msgs = res.unwrap().messages;
+            assert_eq!(msgs.len(), 0);
+        }
+
+        // from memory
+        {
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            // init
+            let info = mock_info("creator", &coins(1000, "earth"));
+            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+            let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let msgs = res.unwrap().messages;
+            assert_eq!(msgs.len(), 0);
+        }
     }
 
     #[test]
-    fn run_cached_contract() {
+    fn execute_handle_on_cached_contract() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
-        let id = cache.save_wasm(CONTRACT).unwrap();
-        // TODO: contract balance
-        let backend = mock_backend(&[]);
-        let mut instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
 
-        // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(msgs.len(), 0);
+        // from file system
+        {
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_memory_cache, 0);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
 
-        // run contract - just sanity check - results validate in contract unit tests
-        let info = mock_info("verifies", &coins(15, "earth"));
-        let msg = br#"{"release":{}}"#;
-        let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(1, msgs.len());
+            // init
+            let info = mock_info("creator", &coins(1000, "earth"));
+            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+            let response = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.messages.len(), 0);
+
+            // handle
+            let info = mock_info("verifies", &coins(15, "earth"));
+            let msg = br#"{"release":{}}"#;
+            let response = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.messages.len(), 1);
+        }
+
+        // from memory
+        {
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            // init
+            let info = mock_info("creator", &coins(1000, "earth"));
+            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+            let response = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.messages.len(), 0);
+
+            // handle
+            let info = mock_info("verifies", &coins(15, "earth"));
+            let msg = br#"{"release":{}}"#;
+            let response = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.messages.len(), 1);
+        }
     }
 
     #[test]
