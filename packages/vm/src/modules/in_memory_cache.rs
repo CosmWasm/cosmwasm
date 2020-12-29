@@ -8,7 +8,9 @@ const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
 
 /// An in-memory module cache
 pub struct InMemoryCache {
-    artifacts: CLruCache<Checksum, Arc<dyn Artifact>>,
+    // Keep the original store in cache due to https://github.com/wasmerio/wasmer/issues/1943.
+    // We never re-use it.
+    artifacts: CLruCache<Checksum, (Arc<dyn Artifact>, Store)>,
 }
 
 impl InMemoryCache {
@@ -22,7 +24,8 @@ impl InMemoryCache {
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
         let artifact = Arc::clone(module.artifact());
-        self.artifacts.put(*checksum, artifact);
+        let store = module.store().clone();
+        self.artifacts.put(*checksum, (artifact, store));
         Ok(())
     }
 
@@ -30,7 +33,7 @@ impl InMemoryCache {
     /// creates a new module from store and artifact.
     pub fn load(&mut self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         match self.artifacts.get(checksum) {
-            Some(artifact) => {
+            Some((artifact, _store)) => {
                 let new_module = Module::from_artifact(store, Arc::clone(artifact));
                 Ok(Some(new_module))
             }
