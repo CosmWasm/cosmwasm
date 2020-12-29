@@ -146,7 +146,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
             None => Err(VmError::uninitialized_context_data("wasmer_instance")),
         })?;
 
-        func.call(args).map_err(|runtime_err| -> VmError {
+        let result_values = func.call(args).map_err(|runtime_err| -> VmError {
             self.with_context_data(|context_data| match context_data.wasmer_instance {
                 Some(instance_ptr) => {
                     let instance_ref = unsafe { instance_ptr.as_ref() };
@@ -157,7 +157,8 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 }
                 None => VmError::uninitialized_context_data("wasmer_instance"),
             })
-        })
+        })?;
+        Ok(result_values)
     }
 
     pub fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
