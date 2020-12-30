@@ -17,7 +17,7 @@ pub struct InitMsg {
     pub beneficiary: HumanAddr,
 }
 
-/// MigrateMsg allows a priviledged contract administrator to run
+/// MigrateMsg allows a privileged contract administrator to run
 /// a migration on the contract. In this (demo) case it is just migrating
 /// from one hackatom code to the same code, but taking advantage of the
 /// migration step to set a new validator.
@@ -31,9 +31,7 @@ pub struct MigrateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum SystemMsg {
-    Migrate(MigrateMsg),
-}
+pub enum SystemMsg { Migrate(MigrateMsg), }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {

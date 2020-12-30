@@ -9,6 +9,7 @@ mod init;
 mod migrate;
 mod query;
 mod system_result;
+mod system;
 
 pub use attribute::{attr, Attribute};
 pub use context::Context;
@@ -17,5 +18,6 @@ pub use cosmos_msg::{BankMsg, CosmosMsg, StakingMsg, WasmMsg};
 pub use handle::{HandleResponse, HandleResult};
 pub use init::{InitResponse, InitResult};
 pub use migrate::{MigrateResponse, MigrateResult};
+pub use system::{SystemResponse, SystemResult as SystemRes};
 pub use query::{QueryResponse, QueryResult};
 pub use system_result::SystemResult;
