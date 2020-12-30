@@ -87,7 +87,11 @@ fn limit_to_pages(limit: Size) -> Pages {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use wasmer::{ImportObject, Instance, Memory, Module};
+    use wasmer::{imports, Artifact, ImportObject, Instance, Memory, Module};
+    use wasmer_middlewares::metering::set_remaining_points;
+
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
+    const TESTING_GAS_LIMIT: u64 = 5_000;
 
     /// A Wasm module with an exported memory (min: 4 pages, max: none)
     const EXPORTED_MEMORY_WAT: &str = r#"(module
@@ -174,5 +178,46 @@ mod tests {
             .unwrap();
         assert_eq!(instance_memory.ty().minimum, Pages(4));
         assert_eq!(instance_memory.ty().maximum, Some(Pages(23)));
+    }
+
+    #[test]
+    fn can_compile_ahead_of_time_and_run_from_artifact() {
+        let wasm = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+
+        // Compile module
+        let compile_time_store = make_compile_time_store(None);
+        let original = Module::new(&compile_time_store, &wasm).unwrap();
+
+        // Ensure original module can be executed
+        {
+            let instance = Instance::new(&original, &imports! {}).unwrap();
+            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
+        }
+
+        // Create second module via artifact
+        let artifact: Arc<dyn Artifact> = Arc::clone(original.artifact());
+        let run_time_store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        let restored = Module::from_artifact(&run_time_store, artifact);
+
+        // Ensure restored module can be executed
+        {
+            let instance = Instance::new(&restored, &imports! {}).unwrap();
+            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
+        }
     }
 }
