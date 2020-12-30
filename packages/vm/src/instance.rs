@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-use std::marker::PhantomData;
 use std::ptr::NonNull;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
@@ -44,12 +43,9 @@ pub struct Instance<A: Api, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
-    inner: Box<WasmerInstance>,
+    _inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
     pub required_features: HashSet<String>,
-    // This does not store data but only fixes type information
-    type_storage: PhantomData<S>,
-    type_querier: PhantomData<Q>,
 }
 
 impl<A, S, Q> Instance<A, S, Q>
@@ -177,11 +173,9 @@ where
         env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.move_in(backend.storage, backend.querier);
         let instance = Instance {
-            inner: wasmer_instance,
+            _inner: wasmer_instance,
             env,
             required_features,
-            type_storage: PhantomData::<S> {},
-            type_querier: PhantomData::<Q> {},
         };
         Ok(instance)
     }
@@ -250,8 +244,8 @@ where
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
-        let ret = self.call_function("allocate", &[to_u32(size)?.into()])?;
-        let ptr = ref_to_u32(&ret.as_ref()[0])?;
+        let ret = self.call_function1("allocate", &[to_u32(size)?.into()])?;
+        let ptr = ref_to_u32(&ret)?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
         }
@@ -262,7 +256,7 @@ where
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
-        self.call_function("deallocate", &[ptr.into()])?;
+        self.call_function0("deallocate", &[ptr.into()])?;
         Ok(())
     }
 
@@ -277,10 +271,16 @@ where
         Ok(())
     }
 
-    pub(crate) fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
-        let function = self.inner.exports.get_function(name)?;
-        let result = function.call(args)?;
-        Ok(result)
+    /// Calls a function exported by the instance.
+    /// The function is expected to return no value. Otherwise this calls errors.
+    pub(crate) fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
+        self.env.call_function0(name, args)
+    }
+
+    /// Calls a function exported by the instance.
+    /// The function is expected to return one value. Otherwise this calls errors.
+    pub(crate) fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
+        self.env.call_function1(name, args)
     }
 }
 
@@ -338,27 +338,33 @@ mod tests {
     }
 
     #[test]
-    fn call_func_works() {
+    fn call_function0_works() {
+        let instance = mock_instance(&CONTRACT, &[]);
+
+        instance
+            .call_function0("cosmwasm_vm_version_4", &[])
+            .expect("error calling function");
+    }
+
+    #[test]
+    fn call_function1_works() {
         let instance = mock_instance(&CONTRACT, &[]);
 
         // can call function few times
         let result = instance
-            .call_function("allocate", &[0u32.into()])
+            .call_function1("allocate", &[0u32.into()])
             .expect("error calling allocate");
-        assert_eq!(result.len(), 1);
-        assert_ne!(result[0].unwrap_i32(), 0);
+        assert_ne!(result.unwrap_i32(), 0);
 
         let result = instance
-            .call_function("allocate", &[1u32.into()])
+            .call_function1("allocate", &[1u32.into()])
             .expect("error calling allocate");
-        assert_eq!(result.len(), 1);
-        assert_ne!(result[0].unwrap_i32(), 0);
+        assert_ne!(result.unwrap_i32(), 0);
 
         let result = instance
-            .call_function("allocate", &[33u32.into()])
+            .call_function1("allocate", &[33u32.into()])
             .expect("error calling allocate");
-        assert_eq!(result.len(), 1);
-        assert_ne!(result[0].unwrap_i32(), 0);
+        assert_ne!(result.unwrap_i32(), 0);
     }
 
     #[test]

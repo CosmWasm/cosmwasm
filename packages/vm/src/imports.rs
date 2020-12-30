@@ -240,15 +240,12 @@ fn write_to_contract<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     input: &[u8],
 ) -> VmResult<u32> {
-    let target_ptr = env.with_func_from_context::<_, u32>("allocate", |allocate| {
-        let out_size = to_u32(input.len())?;
-        let result = allocate.call(&[out_size.into()])?;
-        let ptr = ref_to_u32(&result[0])?;
-        if ptr == 0 {
-            return Err(CommunicationError::zero_address().into());
-        }
-        Ok(ptr)
-    })?;
+    let out_size = to_u32(input.len())?;
+    let result = env.call_function1("allocate", &[out_size.into()])?;
+    let target_ptr = ref_to_u32(&result)?;
+    if target_ptr == 0 {
+        return Err(CommunicationError::zero_address().into());
+    }
     write_region(&env.memory(), target_ptr, input)?;
     Ok(target_ptr)
 }
@@ -389,15 +386,10 @@ mod tests {
     }
 
     fn write_data(env: &Environment<MA, MS, MQ>, data: &[u8]) -> u32 {
-        let region_ptr = env
-            .with_func_from_context::<_, _>("allocate", |alloc_func| {
-                let result = alloc_func
-                    .call(&[(data.len() as u32).into()])
-                    .expect("error calling allocate");
-                let ptr = ref_to_u32(&result[0])?;
-                Ok(ptr)
-            })
+        let result = env
+            .call_function1("allocate", &[(data.len() as u32).into()])
             .unwrap();
+        let region_ptr = ref_to_u32(&result).unwrap();
         write_region(&env.memory(), region_ptr, data).expect("error writing");
         region_ptr
     }

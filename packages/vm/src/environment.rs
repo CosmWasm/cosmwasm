@@ -3,11 +3,11 @@ use std::borrow::{Borrow, BorrowMut};
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
-use wasmer::{Function, HostEnvInitError, Instance as WasmerInstance, Memory, WasmerEnv};
+use wasmer::{HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
+use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
-use crate::wasm_backend::{get_remaining_points, set_remaining_points};
 
 #[derive(Debug)]
 pub struct InsufficientGasLeft;
@@ -130,19 +130,54 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
-    pub fn with_func_from_context<C, T>(&self, name: &str, callback: C) -> VmResult<T>
-    where
-        C: FnOnce(&Function) -> VmResult<T>,
-    {
-        self.with_context_data_mut(|context_data| match context_data.wasmer_instance {
+    /// Calls a function with the given name and arguments.
+    /// The number of return values is variable and controlled by the guest.
+    /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
+    /// or [`Self::call_function1`] to ensure the number of return values is checked.
+    fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
+        // Clone function before calling it to avoid dead locks
+        let func = self.with_context_data(|context_data| match context_data.wasmer_instance {
             Some(instance_ptr) => {
                 let func = unsafe { instance_ptr.as_ref() }
                     .exports
                     .get_function(name)?;
-                callback(func)
+                Ok(func.clone())
             }
             None => Err(VmError::uninitialized_context_data("wasmer_instance")),
+        })?;
+
+        func.call(args).map_err(|runtime_err| -> VmError {
+            self.with_context_data(|context_data| match context_data.wasmer_instance {
+                Some(instance_ptr) => {
+                    let instance_ref = unsafe { instance_ptr.as_ref() };
+                    match get_remaining_points(instance_ref) {
+                        MeteringPoints::Remaining(_) => VmError::from(runtime_err),
+                        MeteringPoints::Exhausted => VmError::gas_depletion(),
+                    }
+                }
+                None => VmError::uninitialized_context_data("wasmer_instance"),
+            })
         })
+    }
+
+    pub fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
+        let result = self.call_function(name, args)?;
+        let expected = 0;
+        let actual = result.len();
+        if actual != expected {
+            return Err(VmError::result_mismatch(name, expected, actual));
+        }
+        Ok(())
+    }
+
+    pub fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
+        let result = self.call_function(name, args)?;
+        let expected = 1;
+        let actual = result.len();
+        if actual != expected {
+            return Err(VmError::result_mismatch(name, expected, actual));
+        }
+        Ok(result[0].clone())
     }
 
     pub fn with_storage_from_context<C, T>(&self, callback: C) -> VmResult<T>
@@ -189,7 +224,10 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            get_remaining_points(instance)
+            match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            }
         })
     }
 
@@ -213,7 +251,10 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
 
-            let remaining = get_remaining_points(instance);
+            let remaining = match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            };
             if amount > remaining {
                 set_remaining_points(instance, 0);
                 Err(InsufficientGasLeft)
@@ -311,7 +352,10 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
                 .wasmer_instance
                 .expect("Wasmer instance is not set. This is a bug.");
             let instance = unsafe { instance_ptr.as_ref() };
-            get_remaining_points(instance)
+            match get_remaining_points(instance) {
+                MeteringPoints::Remaining(count) => count,
+                MeteringPoints::Exhausted => 0,
+            }
         };
         let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
 
@@ -522,31 +566,24 @@ mod tests {
     }
 
     #[test]
-    fn with_func_from_context_works() {
+    fn call_function_works() {
         let (env, _instance) = make_instance();
         leave_default_data(&env);
 
-        let ptr = env
-            .with_func_from_context::<_, _>("allocate", |alloc_func| {
-                let result = alloc_func.call(&[10u32.into()])?;
-                let ptr = ref_to_u32(&result[0])?;
-                Ok(ptr)
-            })
-            .unwrap();
+        let result = env.call_function("allocate", &[10u32.into()]).unwrap();
+        let ptr = ref_to_u32(&result[0]).unwrap();
         assert!(ptr > 0);
     }
 
     #[test]
-    fn with_func_from_context_fails_for_missing_instance() {
+    fn call_function_fails_for_missing_instance() {
         let (env, _instance) = make_instance();
         leave_default_data(&env);
 
         // Clear context's wasmer_instance
         env.set_wasmer_instance(None);
 
-        let res = env.with_func_from_context::<_, ()>("allocate", |_func| {
-            panic!("unexpected callback call");
-        });
+        let res = env.call_function("allocate", &[]);
         match res.unwrap_err() {
             VmError::UninitializedContextData { kind, .. } => assert_eq!(kind, "wasmer_instance"),
             err => panic!("Unexpected error: {:?}", err),
@@ -554,18 +591,78 @@ mod tests {
     }
 
     #[test]
-    fn with_func_from_context_fails_for_missing_function() {
+    fn call_function_fails_for_missing_function() {
         let (env, _instance) = make_instance();
         leave_default_data(&env);
 
-        let res = env.with_func_from_context::<_, ()>("doesnt_exist", |_func| {
-            panic!("unexpected callback call");
-        });
+        let res = env.call_function("doesnt_exist", &[]);
         match res.unwrap_err() {
             VmError::ResolveErr { msg, .. } => {
                 assert_eq!(msg, "Could not get export: Missing export doesnt_exist");
             }
             err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_function0_works() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        env.call_function0("cosmwasm_vm_version_4", &[]).unwrap();
+    }
+
+    #[test]
+    fn call_function0_errors_for_wrong_result_count() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function0("allocate", &[10u32.into()]);
+        match result.unwrap_err() {
+            VmError::ResultMismatch {
+                function_name,
+                expected,
+                actual,
+            } => {
+                assert_eq!(function_name, "allocate");
+                assert_eq!(expected, 0);
+                assert_eq!(actual, 1);
+            }
+            err => panic!("unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn call_function1_works() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
+        let ptr = ref_to_u32(&result).unwrap();
+        assert!(ptr > 0);
+    }
+
+    #[test]
+    fn call_function1_errors_for_wrong_result_count() {
+        let (env, _instance) = make_instance();
+        leave_default_data(&env);
+
+        let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
+        let ptr = ref_to_u32(&result).unwrap();
+        assert!(ptr > 0);
+
+        let result = env.call_function1("deallocate", &[ptr.into()]);
+        match result.unwrap_err() {
+            VmError::ResultMismatch {
+                function_name,
+                expected,
+                actual,
+            } => {
+                assert_eq!(function_name, "deallocate");
+                assert_eq!(expected, 1);
+                assert_eq!(actual, 0);
+            }
+            err => panic!("unexpected error: {:?}", err),
         }
     }
 
