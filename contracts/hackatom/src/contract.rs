@@ -6,7 +6,7 @@ use std::convert::TryInto;
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
     Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
-    MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    MigrateResponse, SystemResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -113,11 +113,11 @@ pub fn init(
     Ok(ctx.try_into()?)
 }
 
-pub fn system(
+pub fn migrate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: SystemMsg,
+    msg: MigrateMsg,
 ) -> Result<MigrateResponse, HackError> {
     let data = deps
         .storage
@@ -128,6 +128,29 @@ pub fn system(
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
     Ok(MigrateResponse::default())
+}
+
+// This code is related to issue#674
+pub fn system(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: SystemMsg,
+) -> Result<SystemResponse, HackError> {
+    let data = deps
+        .storage
+        .get(CONFIG_KEY)
+        .ok_or_else(|| StdError::not_found("State"))?;
+    let mut config: State = from_slice(&data)?;
+    match msg {
+        SystemMsg::Migrate(migrate_msg) => {
+            config.verifier = deps.api.canonical_address(migrate_msg.verifier)?
+        }
+    }
+    deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
+
+    Ok(SystemResponse::default())
+
 }
 
 pub fn handle(
@@ -438,6 +461,20 @@ mod tests {
         // check it is 'someone else'
         let query_response = query_verifier(deps.as_ref()).unwrap();
         assert_eq!(query_response.verifier, new_verifier);
+
+        // change the verifier via system
+        let new_verifier = HumanAddr::from("some other verifier");
+        let msg = SystemMsg::Migrate(MigrateMsg {
+            verifier: new_verifier.clone(),
+        });
+        let info = mock_info(creator.as_str(), &[]);
+        let res = system(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // check it is 'some other verifier'
+        let query_response = query_verifier(deps.as_ref()).unwrap();
+        assert_eq!(query_response.verifier, new_verifier);
+
     }
 
     #[test]
