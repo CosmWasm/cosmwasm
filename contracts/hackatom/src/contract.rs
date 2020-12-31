@@ -6,7 +6,7 @@ use std::convert::TryInto;
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
     Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
-    MigrateResponse, SystemResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, SystemResponse, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -31,7 +31,9 @@ pub struct MigrateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum SystemMsg { Migrate(MigrateMsg), }
+pub enum SystemMsg {
+    Migrate(MigrateMsg),
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
@@ -150,7 +152,6 @@ pub fn system(
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
     Ok(SystemResponse::default())
-
 }
 
 pub fn handle(
@@ -474,7 +475,6 @@ mod tests {
         // check it is 'some other verifier'
         let query_response = query_verifier(deps.as_ref()).unwrap();
         assert_eq!(query_response.verifier, new_verifier);
-
     }
 
     #[test]
