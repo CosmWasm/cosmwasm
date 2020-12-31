@@ -33,4 +33,3 @@ where
     }
 }
 pub type MigrateResult<U = Empty> = Result<MigrateResponse<U>, StdError>;
-

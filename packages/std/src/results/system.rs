@@ -11,8 +11,8 @@ use super::cosmos_msg::CosmosMsg;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SystemResponse<T = Empty>
-    where
-        T: Clone + fmt::Debug + PartialEq + JsonSchema,
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     pub messages: Vec<CosmosMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
@@ -20,8 +20,8 @@ pub struct SystemResponse<T = Empty>
     pub data: Option<Binary>,
 }
 impl<T> Default for SystemResponse<T>
-    where
-        T: Clone + fmt::Debug + PartialEq + JsonSchema,
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     fn default() -> Self {
         SystemResponse {
