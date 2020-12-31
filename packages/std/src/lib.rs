@@ -33,7 +33,7 @@ pub use crate::query::{
 };
 pub use crate::results::{
     attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
-    InitResponse, InitResult, MigrateResponse, MigrateResult, SystemResponse, SystemRes, QueryResult,
+    InitResponse, InitResult, MigrateResponse, MigrateResult, SystemResponse, SystemRes, QueryResponse, QueryResult,
     StakingMsg, SystemResult, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};

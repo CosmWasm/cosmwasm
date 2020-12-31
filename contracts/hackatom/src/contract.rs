@@ -144,7 +144,7 @@ pub fn system(
     let mut config: State = from_slice(&data)?;
     match msg {
         SystemMsg::Migrate(migrate_msg) => {
-            config.verifier = deps.api.canonical_address(migrate_msg.verifier)?
+            config.verifier = deps.api.canonical_address(&migrate_msg.verifier)?
         }
     }
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
