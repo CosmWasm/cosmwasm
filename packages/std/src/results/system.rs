@@ -19,7 +19,7 @@ pub struct SystemResponse<T = Empty>
     pub attributes: Vec<Attribute>,
     pub data: Option<Binary>,
 }
-impl<T> Default for SystemResponse {
+impl<T> Default for SystemResponse<T> {
     fn default() -> Self {
         SystemResponse {
             messages: vec![],
