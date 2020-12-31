@@ -19,7 +19,10 @@ pub struct SystemResponse<T = Empty>
     pub attributes: Vec<Attribute>,
     pub data: Option<Binary>,
 }
-impl<T> Default for SystemResponse<T> {
+impl<T> Default for SystemResponse<T>
+    where
+        T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn default() -> Self {
         SystemResponse {
             messages: vec![],
