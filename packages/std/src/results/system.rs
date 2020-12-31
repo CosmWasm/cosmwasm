@@ -9,6 +9,7 @@ use crate::types::Empty;
 use super::attribute::Attribute;
 use super::cosmos_msg::CosmosMsg;
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SystemResponse<T = Empty>
     where
         T: Clone + fmt::Debug + PartialEq + JsonSchema,
