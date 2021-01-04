@@ -199,12 +199,12 @@ where
         }
     }
 
-    /// Returns the size of the default memory in bytes.
+    /// Returns the size of the default memory in pages.
     /// This provides a rough idea of the peak memory consumption. Note that
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
-    pub fn get_memory_size(&self) -> u64 {
-        self.env.memory().data_size()
+    pub fn memory_pages(&self) -> usize {
+        self.env.memory().size().0 as _
     }
 
     /// Returns the currently remaining gas.
@@ -300,7 +300,6 @@ mod tests {
         QueryRequest,
     };
 
-    const WASM_PAGE_SIZE: u64 = 64 * 1024;
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
@@ -476,7 +475,7 @@ mod tests {
     }
 
     #[test]
-    fn get_memory_size_returns_min_memory_size_by_default() {
+    fn memory_pages_returns_min_memory_size_by_default() {
         // min: 0 pages, max: none
         let wasm = wat::parse_str(
             r#"(module
@@ -495,7 +494,7 @@ mod tests {
         )
         .unwrap();
         let instance = mock_instance(&wasm, &[]);
-        assert_eq!(instance.get_memory_size(), 0 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 0);
 
         // min: 3 pages, max: none
         let wasm = wat::parse_str(
@@ -515,23 +514,23 @@ mod tests {
         )
         .unwrap();
         let instance = mock_instance(&wasm, &[]);
-        assert_eq!(instance.get_memory_size(), 3 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 3);
     }
 
     #[test]
-    fn get_memory_size_works() {
+    fn memory_pages_grows_with_usage() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(instance.get_memory_size(), 17 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 17);
 
         // 100 KiB require two more pages
         let region_ptr = instance.allocate(100 * 1024).expect("error allocating");
 
-        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 19);
 
         // Deallocating does not shrink memory
         instance.deallocate(region_ptr).expect("error deallocating");
-        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 19);
     }
 
     #[test]

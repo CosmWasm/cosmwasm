@@ -18,6 +18,7 @@
 - Convert field `Instance::api` to a method.
 - Change order of generic arguments for consistency in `Instance`, `Cache` and
   `Backend` to always match `<A: Api, S: Storage, Q: Querier>`.
+- Remove `Instance::get_memory_size`. Use `Instance::memory_pages` instead.
 
 ## 0.12.2 (2020-12-14)
 

@@ -341,7 +341,7 @@ fn handle_memory_loop() {
     assert_eq!(deps.get_gas_left(), 0);
 
     // Ran out of gas before consuming a significant amount of memory
-    assert!(deps.get_memory_size() < 20 * 1024 * 1024);
+    assert!(deps.memory_pages() < 200);
 }
 
 #[test]
@@ -352,7 +352,7 @@ fn handle_allocate_large_memory() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
-    let mut pages_before = deps.get_memory_size() / (64 * 1024);
+    let mut pages_before = deps.memory_pages();
     assert_eq!(pages_before, 18);
 
     // Grow by 48 pages (3 MiB)
@@ -376,8 +376,8 @@ fn handle_allocate_large_memory() {
     let expected = 47850; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
-    let used = deps.get_memory_size();
-    assert_eq!(used, (pages_before + 48) * 64 * 1024, "Used: {} B", used);
+    let used = deps.memory_pages();
+    assert_eq!(used, pages_before + 48, "Memory used: {} pages", used);
     pages_before += 48;
 
     // Grow by 1600 pages (100 MiB)
@@ -397,8 +397,8 @@ fn handle_allocate_large_memory() {
     let expected = 47850; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
-    let used = deps.get_memory_size();
-    assert_eq!(used, pages_before * 64 * 1024, "Used: {} B", used);
+    let used = deps.memory_pages();
+    assert_eq!(used, pages_before, "Memory used: {} pages", used);
 }
 
 #[test]
