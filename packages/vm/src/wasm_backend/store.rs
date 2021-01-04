@@ -21,12 +21,11 @@ use super::limiting_tunables::LimitingTunables;
 /// https://github.com/WebAssembly/memory64/blob/master/proposals/memory64/Overview.md
 const MAX_WASM_MEMORY: usize = 4 * 1024 * 1024 * 1024;
 
-fn cost(operator: &Operator) -> u64 {
-    match operator {
-        Operator::LocalGet { .. } | Operator::I32Const { .. } => 9,
-        Operator::I32Add { .. } => 12,
-        _ => 10,
-    }
+fn cost(_operator: &Operator) -> u64 {
+    // A flat fee in order to maintain roughly the same pricing as with Wasmer 0.17
+    // (https://github.com/wasmerio/wasmer/blob/0.17.1/lib/middleware-common/src/metering.rs#L43-L113).
+    // This should become more advanced soon: https://github.com/CosmWasm/cosmwasm/issues/670
+    1
 }
 
 /// Created a store with the default compiler and the given memory limit (in bytes).
