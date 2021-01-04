@@ -279,6 +279,109 @@ fn handle_release_fails_for_wrong_sender() {
 }
 
 #[test]
+fn handle_cpu_loop() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let (init_msg, creator) = make_init_msg();
+    let init_info = mock_info(creator.as_str(), &[]);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let handle_info = mock_info(creator.as_str(), &[]);
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    let handle_res = call_handle::<_, _, _, Empty>(
+        &mut deps,
+        &mock_env(),
+        &handle_info,
+        &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
+    );
+    assert!(handle_res.is_err());
+    assert_eq!(deps.get_gas_left(), 0);
+}
+
+#[test]
+fn handle_storage_loop() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let (init_msg, creator) = make_init_msg();
+    let init_info = mock_info(creator.as_str(), &[]);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let handle_info = mock_info(creator.as_str(), &[]);
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    let handle_res = call_handle::<_, _, _, Empty>(
+        &mut deps,
+        &mock_env(),
+        &handle_info,
+        &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
+    );
+    assert!(handle_res.is_err());
+    assert_eq!(deps.get_gas_left(), 0);
+}
+
+#[test]
+fn handle_memory_loop() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let (init_msg, creator) = make_init_msg();
+    let init_info = mock_info(creator.as_str(), &[]);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let handle_info = mock_info(creator.as_str(), &[]);
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    let handle_res = call_handle::<_, _, _, Empty>(
+        &mut deps,
+        &mock_env(),
+        &handle_info,
+        &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
+    );
+    assert!(handle_res.is_err());
+    assert_eq!(deps.get_gas_left(), 0);
+
+    // Ran out of gas before consuming a significant amount of memory
+    assert!(deps.get_memory_size() < 20 * 1024 * 1024);
+}
+
+#[test]
+fn handle_allocate_large_memory() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let (init_msg, creator) = make_init_msg();
+    let init_info = mock_info(creator.as_str(), &[]);
+    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    assert_eq!(0, init_res.messages.len());
+
+    let handle_info = mock_info(creator.as_str(), &[]);
+    let gas_before = deps.get_gas_left();
+    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
+    let handle_res = call_handle::<_, _, _, Empty>(
+        &mut deps,
+        &mock_env(),
+        &handle_info,
+        &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
+    );
+    let gas_used = gas_before - deps.get_gas_left();
+
+    // TODO: this must fail, see https://github.com/CosmWasm/cosmwasm/issues/81
+    assert_eq!(handle_res.is_err(), false);
+
+    // Gas consumtion is relatively small
+    // Note: the exact gas usage depends on the Rust version used to compile WASM,
+    // which we only fix when using cosmwasm-opt, not integration tests.
+    let expected = 47850; // +/- 20%
+    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
+    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+
+    // FIXME: Reactivate with https://github.com/CosmWasm/cosmwasm/issues/683
+    // Used between 100 and 102 MiB of memory
+    // let used = deps.get_memory_size();
+    // assert!(used > 100 * 1024 * 1024, "Memory used: {} bytes", used);
+    // assert!(used < 102 * 1024 * 1024, "Memory used: {} bytes", used);
+}
+
+#[test]
 fn handle_panic() {
     let mut deps = mock_instance(WASM, &[]);
 
@@ -324,111 +427,4 @@ fn handle_user_errors_in_api_calls() {
 fn passes_io_tests() {
     let mut deps = mock_instance(WASM, &[]);
     test_io(&mut deps);
-}
-
-mod singlepass_tests {
-    use super::*;
-
-    #[test]
-    fn handle_cpu_loop() {
-        let mut deps = mock_instance(WASM, &[]);
-
-        let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let handle_info = mock_info(creator.as_str(), &[]);
-        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, Empty>(
-            &mut deps,
-            &mock_env(),
-            &handle_info,
-            &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
-        );
-        assert!(handle_res.is_err());
-        assert_eq!(deps.get_gas_left(), 0);
-    }
-
-    #[test]
-    fn handle_storage_loop() {
-        let mut deps = mock_instance(WASM, &[]);
-
-        let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let handle_info = mock_info(creator.as_str(), &[]);
-        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, Empty>(
-            &mut deps,
-            &mock_env(),
-            &handle_info,
-            &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
-        );
-        assert!(handle_res.is_err());
-        assert_eq!(deps.get_gas_left(), 0);
-    }
-
-    #[test]
-    fn handle_memory_loop() {
-        let mut deps = mock_instance(WASM, &[]);
-
-        let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let handle_info = mock_info(creator.as_str(), &[]);
-        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, Empty>(
-            &mut deps,
-            &mock_env(),
-            &handle_info,
-            &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
-        );
-        assert!(handle_res.is_err());
-        assert_eq!(deps.get_gas_left(), 0);
-
-        // Ran out of gas before consuming a significant amount of memory
-        assert!(deps.get_memory_size() < 20 * 1024 * 1024);
-    }
-
-    #[test]
-    fn handle_allocate_large_memory() {
-        let mut deps = mock_instance(WASM, &[]);
-
-        let (init_msg, creator) = make_init_msg();
-        let init_info = mock_info(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let handle_info = mock_info(creator.as_str(), &[]);
-        let gas_before = deps.get_gas_left();
-        // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-        let handle_res = call_handle::<_, _, _, Empty>(
-            &mut deps,
-            &mock_env(),
-            &handle_info,
-            &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
-        );
-        let gas_used = gas_before - deps.get_gas_left();
-
-        // TODO: this must fail, see https://github.com/CosmWasm/cosmwasm/issues/81
-        assert_eq!(handle_res.is_err(), false);
-
-        // Gas consumtion is relatively small
-        // Note: the exact gas usage depends on the Rust version used to compile WASM,
-        // which we only fix when using cosmwasm-opt, not integration tests.
-        let expected = 47850; // +/- 20%
-        assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
-        assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
-
-        // FIXME: Reactivate with https://github.com/CosmWasm/cosmwasm/issues/683
-        // Used between 100 and 102 MiB of memory
-        // let used = deps.get_memory_size();
-        // assert!(used > 100 * 1024 * 1024, "Memory used: {} bytes", used);
-        // assert!(used < 102 * 1024 * 1024, "Memory used: {} bytes", used);
-    }
 }
