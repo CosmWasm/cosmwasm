@@ -476,6 +476,49 @@ mod tests {
     }
 
     #[test]
+    fn get_memory_size_returns_min_memory_size_by_default() {
+        // min: 0 pages, max: none
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 0)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "cosmwasm_vm_version_4" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "query" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.get_memory_size(), 0 * WASM_PAGE_SIZE);
+
+        // min: 3 pages, max: none
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "cosmwasm_vm_version_4" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "query" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.get_memory_size(), 3 * WASM_PAGE_SIZE);
+    }
+
+    #[test]
     fn get_memory_size_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
