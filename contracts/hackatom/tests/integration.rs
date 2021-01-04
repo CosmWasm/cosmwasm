@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, ContractResult, Empty,
+    attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, Binary, ContractResult, Empty,
     HandleResponse, HumanAddr, InitResponse, MigrateResponse,
 };
 use cosmwasm_vm::{
@@ -352,33 +352,53 @@ fn handle_allocate_large_memory() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
+    let mut pages_before = deps.get_memory_size() / (64 * 1024);
+    assert_eq!(pages_before, 18);
 
+    // Grow by 48 pages (3 MiB)
     let handle_info = mock_info(creator.as_str(), &[]);
     let gas_before = deps.get_gas_left();
-    // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
-    let handle_res = call_handle::<_, _, _, Empty>(
+    let handle_res: HandleResponse = handle(
         &mut deps,
-        &mock_env(),
-        &handle_info,
-        &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
+        mock_env(),
+        handle_info,
+        HandleMsg::AllocateLargeMemory { pages: 48 },
+    )
+    .unwrap();
+    assert_eq!(
+        handle_res.data.unwrap(),
+        Binary::from((pages_before as u32).to_be_bytes())
     );
     let gas_used = gas_before - deps.get_gas_left();
-
-    // TODO: this must fail, see https://github.com/CosmWasm/cosmwasm/issues/81
-    assert_eq!(handle_res.is_err(), false);
-
     // Gas consumtion is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile WASM,
     // which we only fix when using cosmwasm-opt, not integration tests.
     let expected = 47850; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+    let used = deps.get_memory_size();
+    assert_eq!(used, (pages_before + 48) * 64 * 1024, "Used: {} B", used);
+    pages_before += 48;
 
-    // FIXME: Reactivate with https://github.com/CosmWasm/cosmwasm/issues/683
-    // Used between 100 and 102 MiB of memory
-    // let used = deps.get_memory_size();
-    // assert!(used > 100 * 1024 * 1024, "Memory used: {} bytes", used);
-    // assert!(used < 102 * 1024 * 1024, "Memory used: {} bytes", used);
+    // Grow by 1600 pages (100 MiB)
+    let handle_info = mock_info(creator.as_str(), &[]);
+    let gas_before = deps.get_gas_left();
+    let result: ContractResult<HandleResponse> = handle(
+        &mut deps,
+        mock_env(),
+        handle_info,
+        HandleMsg::AllocateLargeMemory { pages: 1600 },
+    );
+    assert_eq!(result.unwrap_err(), "Generic error: memory.grow failed");
+    let gas_used = gas_before - deps.get_gas_left();
+    // Gas consumtion is relatively small
+    // Note: the exact gas usage depends on the Rust version used to compile WASM,
+    // which we only fix when using cosmwasm-opt, not integration tests.
+    let expected = 47850; // +/- 20%
+    assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
+    assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
+    let used = deps.get_memory_size();
+    assert_eq!(used, pages_before * 64 * 1024, "Used: {} B", used);
 }
 
 #[test]

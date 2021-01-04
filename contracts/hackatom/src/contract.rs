@@ -50,7 +50,7 @@ pub enum HandleMsg {
     /// Infinite loop reading and writing memory
     MemoryLoop {},
     /// Allocate large amounts of memory without consuming much gas
-    AllocateLargeMemory {},
+    AllocateLargeMemory { pages: u32 },
     /// Trigger a panic to ensure framework handles gracefully
     Panic {},
     /// Starting with CosmWasm 0.10, some API calls return user errors back to the contract.
@@ -137,7 +137,7 @@ pub fn handle(
         HandleMsg::CpuLoop {} => do_cpu_loop(),
         HandleMsg::StorageLoop {} => do_storage_loop(deps),
         HandleMsg::MemoryLoop {} => do_memory_loop(),
-        HandleMsg::AllocateLargeMemory {} => do_allocate_large_memory(),
+        HandleMsg::AllocateLargeMemory { pages } => do_allocate_large_memory(pages),
         HandleMsg::Panic {} => do_panic(),
         HandleMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(deps.api),
     }
@@ -196,7 +196,8 @@ fn do_memory_loop() -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_allocate_large_memory() -> Result<HandleResponse, HackError> {
+#[allow(unused_variables)]
+fn do_allocate_large_memory(pages: u32) -> Result<HandleResponse, HackError> {
     // We create memory pages explicitely since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
@@ -204,12 +205,14 @@ fn do_allocate_large_memory() -> Result<HandleResponse, HackError> {
     #[cfg(target_arch = "wasm32")]
     {
         use core::arch::wasm32;
-        let pages = 1_600; // 100 MiB
-        let ptr = wasm32::memory_grow(0, pages);
-        if ptr == usize::max_value() {
-            return Err(StdError::generic_err("Error in memory.grow instruction").into());
+        let old_size = wasm32::memory_grow(0, pages as usize);
+        if old_size == usize::max_value() {
+            return Err(StdError::generic_err("memory.grow failed").into());
         }
-        Ok(HandleResponse::default())
+        Ok(HandleResponse {
+            data: Some((old_size as u32).to_be_bytes().into()),
+            ..HandleResponse::default()
+        })
     }
 
     #[cfg(not(target_arch = "wasm32"))]
