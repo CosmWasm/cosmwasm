@@ -18,7 +18,9 @@ const MODULE_SERIALIZATION_VERSION: &str = "v1";
 
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
-    path: PathBuf,
+    /// The base path this cache operates in. Within this path, versioned directories are created.
+    /// A sophisticated version of this cache might be able to read multiple input versions in the future.
+    base_path: PathBuf,
 }
 
 impl FileSystemCache {
@@ -35,7 +37,7 @@ impl FileSystemCache {
             let metadata = path.metadata()?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
-                    Ok(Self { path })
+                    Ok(Self { base_path: path })
                 } else {
                     // This directory is readonly.
                     Err(io::Error::new(
@@ -56,18 +58,14 @@ impl FileSystemCache {
         } else {
             // Create the directory and any parent directories if they don't yet exist.
             fs::create_dir_all(&path)?;
-            Ok(Self { path })
+            Ok(Self { base_path: path })
         }
     }
 
     /// Loads an artifact from the file system and returns a module (i.e. artifact + store).
     pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
-        let file_path = self
-            .path
-            .clone()
-            .join(MODULE_SERIALIZATION_VERSION)
-            .join(filename);
+        let file_path = self.latest_modules_path().join(filename);
 
         let result = unsafe { Module::deserialize_from_file(store, &file_path) };
         match result {
@@ -87,7 +85,7 @@ impl FileSystemCache {
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
-        let modules_dir = self.path.clone().join(MODULE_SERIALIZATION_VERSION);
+        let modules_dir = self.latest_modules_path();
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
         let filename = checksum.to_hex();
@@ -96,6 +94,11 @@ impl FileSystemCache {
             .serialize_to_file(path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
         Ok(())
+    }
+
+    /// The path to the latest version of the modules.
+    fn latest_modules_path(&self) -> PathBuf {
+        self.base_path.join(MODULE_SERIALIZATION_VERSION)
     }
 }
 
