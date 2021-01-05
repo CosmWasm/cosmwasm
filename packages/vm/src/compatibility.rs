@@ -1,7 +1,6 @@
 use parity_wasm::elements::{deserialize_buffer, External, ImportEntry, Module};
 use std::collections::BTreeSet;
 use std::collections::HashSet;
-use std::iter::FromIterator;
 
 use crate::errors::{VmError, VmResult};
 use crate::features::required_features_from_module;
@@ -119,7 +118,8 @@ fn check_wasm_imports(module: &Module, supported_imports: &[&str]) -> VmResult<(
     let required_imports: Vec<ImportEntry> = module
         .import_section()
         .map_or(vec![], |import_section| import_section.entries().to_vec());
-    let required_import_names = BTreeSet::from_iter(required_imports.iter().map(full_import_name));
+    let required_import_names: BTreeSet<_> =
+        required_imports.iter().map(full_import_name).collect();
 
     for required_import in required_imports {
         let full_name = full_import_name(&required_import);
@@ -149,7 +149,7 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
     let required_features = required_features_from_module(module);
     if !required_features.is_subset(supported_features) {
         // We switch to BTreeSet to get a sorted error message
-        let unsupported = BTreeSet::from_iter(required_features.difference(&supported_features));
+        let unsupported: BTreeSet<_> = required_features.difference(&supported_features).collect();
         return Err(VmError::static_validation_err(format!(
             "Wasm contract requires unsupported features: {}",
             unsupported.to_string_limited(200)

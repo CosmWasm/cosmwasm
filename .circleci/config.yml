@@ -537,7 +537,9 @@ jobs:
 
   clippy:
     docker:
-      - image: rust:1.47.0
+      # In this job we use the latest Rust stable in order to check against the
+      # most recent code style recommendations.
+      - image: rust:1.49.0
     steps:
       - checkout
       - run:
@@ -545,7 +547,7 @@ jobs:
           command: rustc --version && cargo --version
       - restore_cache:
           keys:
-            - cargocache-v2-clippy-rust:1.47.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+            - cargocache-v2-clippy-rust:1.49.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
       - run:
           name: Add clippy component
           command: rustup component add clippy
@@ -624,7 +626,7 @@ jobs:
             - contracts/staking/target/debug/.fingerprint
             - contracts/staking/target/debug/build
             - contracts/staking/target/debug/deps
-          key: cargocache-v2-clippy-rust:1.47.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
+          key: cargocache-v2-clippy-rust:1.49.0-{{ checksum "Cargo.lock" }}-{{ checksum "contracts/burner/Cargo.lock" }}-{{ checksum "contracts/hackatom/Cargo.lock" }}-{{ checksum "contracts/queue/Cargo.lock" }}-{{ checksum "contracts/reflect/Cargo.lock" }}-{{ checksum "contracts/staking/Cargo.lock" }}
 
   benchmarking:
     docker:
