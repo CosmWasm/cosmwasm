@@ -341,11 +341,11 @@ mod tests {
     const INIT_AMOUNT: u128 = 500;
     const INIT_DENOM: &str = "TOKEN";
 
-    const GAS_LIMIT: u64 = 5_000_000;
+    const TESTING_GAS_LIMIT: u64 = 500_000;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
-        let gas_limit = GAS_LIMIT;
+        let gas_limit = TESTING_GAS_LIMIT;
         let env = Environment::new(api, gas_limit, false);
 
         let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();

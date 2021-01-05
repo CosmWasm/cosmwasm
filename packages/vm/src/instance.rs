@@ -199,12 +199,12 @@ where
         }
     }
 
-    /// Returns the size of the default memory in bytes.
+    /// Returns the size of the default memory in pages.
     /// This provides a rough idea of the peak memory consumption. Note that
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
-    pub fn get_memory_size(&self) -> u64 {
-        self.env.memory().data_size()
+    pub fn memory_pages(&self) -> usize {
+        self.env.memory().size().0 as _
     }
 
     /// Returns the currently remaining gas.
@@ -300,7 +300,6 @@ mod tests {
         QueryRequest,
     };
 
-    const WASM_PAGE_SIZE: u64 = 64 * 1024;
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
@@ -476,19 +475,62 @@ mod tests {
     }
 
     #[test]
-    fn get_memory_size_works() {
+    fn memory_pages_returns_min_memory_size_by_default() {
+        // min: 0 pages, max: none
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 0)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "cosmwasm_vm_version_4" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "query" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.memory_pages(), 0);
+
+        // min: 3 pages, max: none
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "cosmwasm_vm_version_4" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "query" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.memory_pages(), 3);
+    }
+
+    #[test]
+    fn memory_pages_grows_with_usage() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(instance.get_memory_size(), 17 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 17);
 
         // 100 KiB require two more pages
         let region_ptr = instance.allocate(100 * 1024).expect("error allocating");
 
-        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 19);
 
         // Deallocating does not shrink memory
         instance.deallocate(region_ptr).expect("error deallocating");
-        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 19);
     }
 
     #[test]
@@ -518,7 +560,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 146);
-        assert_eq!(report2.used_internally, 657571);
+        assert_eq!(report2.used_internally, 67318);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -717,7 +759,7 @@ mod singlepass_tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 657717);
+        assert_eq!(init_used, 67464);
     }
 
     #[test]
@@ -740,7 +782,7 @@ mod singlepass_tests {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 993266);
+        assert_eq!(handle_used, 194543);
     }
 
     #[test]
@@ -755,7 +797,7 @@ mod singlepass_tests {
     }
 
     #[test]
-    fn query_works_with_metering() {
+    fn query_works_with_gas_metering() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
@@ -774,6 +816,6 @@ mod singlepass_tests {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 513496);
+        assert_eq!(query_used, 52471);
     }
 }
