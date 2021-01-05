@@ -115,7 +115,7 @@ checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.13.0-alpha1"
+version = "0.13.0-alpha2"
 dependencies = [
  "schemars",
  "serde_json",
@@ -123,7 +123,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.13.0-alpha1"
+version = "0.13.0-alpha2"
 dependencies = [
  "base64",
  "schemars",
@@ -134,7 +134,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.13.0-alpha1"
+version = "0.13.0-alpha2"
 dependencies = [
  "clru",
  "cosmwasm-std",
