@@ -13,6 +13,7 @@
 
 **cosmwasm-vm**
 
+- Upgrade Wasmer to 1.0 and adapt all the internal workings accordingly.
 - Export method `cosmwasm_vm::Cache::stats` and response type `Stats`.
 - Remove `cosmwasm_vm::testing::MockApi::new`. Use `MockApi::default` instead.
 - Convert field `Instance::api` to a method.
