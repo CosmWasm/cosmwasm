@@ -135,6 +135,10 @@ where
         }
 
         // Re-compile module from wasm
+        //
+        // This is needed for chains that upgrade their node software in a way that changes the module
+        // serialization format. If you do not replay all transactions, previous calls of `save_wasm`
+        // stored the old module format.
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
         let module = compile_and_use(&wasm, options.memory_limit)?;
