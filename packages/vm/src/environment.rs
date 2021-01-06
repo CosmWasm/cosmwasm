@@ -9,8 +9,10 @@ use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, M
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
 
+/// Never can never be instantiated.
+/// Replace this with the [never primitive type](https://doc.rust-lang.org/std/primitive.never.html) when stable.
 #[derive(Debug)]
-pub struct InsufficientGasLeft;
+pub enum Never {}
 
 /** context data **/
 
@@ -91,7 +93,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         }
     }
 
-    pub fn with_context_data_mut<C, R>(&self, callback: C) -> R
+    fn with_context_data_mut<C, R>(&self, callback: C) -> R
     where
         C: FnOnce(&mut ContextData<S, Q>) -> R,
     {
@@ -100,7 +102,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         callback(context_data)
     }
 
-    pub fn with_context_data<C, R>(&self, callback: C) -> R
+    fn with_context_data<C, R>(&self, callback: C) -> R
     where
         C: FnOnce(&ContextData<S, Q>) -> R,
     {
@@ -116,33 +118,39 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
+    pub fn with_wasmer_instance<C, R>(&self, callback: C) -> VmResult<R>
+    where
+        C: FnOnce(&WasmerInstance) -> VmResult<R>,
+    {
+        self.with_context_data(|context_data| match context_data.wasmer_instance {
+            Some(instance_ptr) => {
+                let instance_ref = unsafe { instance_ptr.as_ref() };
+                callback(instance_ref)
+            }
+            None => Err(VmError::uninitialized_context_data("wasmer_instance")),
+        })
+    }
+
     /// Calls a function with the given name and arguments.
     /// The number of return values is variable and controlled by the guest.
     /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
     /// or [`Self::call_function1`] to ensure the number of return values is checked.
     fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
         // Clone function before calling it to avoid dead locks
-        let func = self.with_context_data(|context_data| match context_data.wasmer_instance {
-            Some(instance_ptr) => {
-                let func = unsafe { instance_ptr.as_ref() }
-                    .exports
-                    .get_function(name)?;
-                Ok(func.clone())
-            }
-            None => Err(VmError::uninitialized_context_data("wasmer_instance")),
+        let func = self.with_wasmer_instance(|instance| {
+            let func = instance.exports.get_function(name)?;
+            Ok(func.clone())
         })?;
 
         func.call(args).map_err(|runtime_err| -> VmError {
-            self.with_context_data(|context_data| match context_data.wasmer_instance {
-                Some(instance_ptr) => {
-                    let instance_ref = unsafe { instance_ptr.as_ref() };
-                    match get_remaining_points(instance_ref) {
-                        MeteringPoints::Remaining(_) => VmError::from(runtime_err),
-                        MeteringPoints::Exhausted => VmError::gas_depletion(),
-                    }
-                }
-                None => VmError::uninitialized_context_data("wasmer_instance"),
+            self.with_wasmer_instance::<_, Never>(|instance| {
+                let err: VmError = match get_remaining_points(instance) {
+                    MeteringPoints::Remaining(_) => VmError::from(runtime_err),
+                    MeteringPoints::Exhausted => VmError::gas_depletion(),
+                };
+                Err(err)
             })
+            .unwrap_err() // with_wasmer_instance can only succeed if the callback succeeds
         })
     }
 
@@ -205,45 +213,35 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
     }
 
     pub fn get_gas_left(&self) -> u64 {
-        self.with_context_data_mut(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-            match get_remaining_points(instance) {
+        self.with_wasmer_instance(|instance| {
+            Ok(match get_remaining_points(instance) {
                 MeteringPoints::Remaining(count) => count,
                 MeteringPoints::Exhausted => 0,
-            }
+            })
         })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
     pub fn set_gas_left(&self, new_value: u64) {
-        self.with_context_data_mut(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
+        self.with_wasmer_instance(|instance| {
             set_remaining_points(instance, new_value);
+            Ok(())
         })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
     /// Decreases gas left by the given amount.
     /// If the amount exceeds the available gas, the remaining gas is set to 0 and
-    /// an InsufficientGasLeft error is returned.
-    pub fn decrease_gas_left(&self, amount: u64) -> Result<(), InsufficientGasLeft> {
-        self.with_context_data_mut(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-
+    /// an VmError::GasDepletion error is returned.
+    pub fn decrease_gas_left(&self, amount: u64) -> VmResult<()> {
+        self.with_wasmer_instance(|instance| {
             let remaining = match get_remaining_points(instance) {
                 MeteringPoints::Remaining(count) => count,
                 MeteringPoints::Exhausted => 0,
             };
             if amount > remaining {
                 set_remaining_points(instance, 0);
-                Err(InsufficientGasLeft)
+                Err(VmError::gas_depletion())
             } else {
                 set_remaining_points(instance, remaining - amount);
                 Ok(())
@@ -252,19 +250,17 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
     }
 
     pub fn memory(&self) -> Memory {
-        self.with_context_data(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
+        self.with_wasmer_instance(|instance| {
             let mut memories: Vec<Memory> = instance
                 .exports
                 .iter()
                 .memories()
                 .map(|pair| pair.1.clone())
                 .collect();
-            memories.pop().unwrap()
+            let memory = memories.pop().unwrap();
+            Ok(memory)
         })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
     /// Moves owned instances of storage and querier into the env.

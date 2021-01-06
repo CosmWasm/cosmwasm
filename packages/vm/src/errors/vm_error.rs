@@ -5,7 +5,6 @@ use thiserror::Error;
 
 use super::communication_error::CommunicationError;
 use crate::backend::BackendError;
-use crate::environment::InsufficientGasLeft;
 
 #[derive(Error, Debug)]
 #[non_exhaustive]
@@ -302,12 +301,6 @@ impl From<wasmer::RuntimeError> for VmError {
 impl From<wasmer::CompileError> for VmError {
     fn from(original: wasmer::CompileError) -> Self {
         VmError::compile_err(format!("Could not compile: {}", original))
-    }
-}
-
-impl From<InsufficientGasLeft> for VmError {
-    fn from(_original: InsufficientGasLeft) -> Self {
-        VmError::gas_depletion()
     }
 }
 
