@@ -16,9 +16,10 @@ pub struct InsufficientGasLeft;
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct GasState {
-    /// Gas limit for the computation.
+    /// Gas limit for the computation, including internally and externally used gas.
+    /// This is set when the Environment is created and never mutated.
     pub gas_limit: u64,
-    /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
+    /// Tracking the gas used in the Cosmos SDK, in CosmWasm gas units.
     pub externally_used_gas: u64,
 }
 
@@ -32,10 +33,6 @@ impl GasState {
 
     fn increase_externally_used_gas(&mut self, amount: u64) {
         self.externally_used_gas += amount;
-    }
-
-    pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
-        self.gas_limit = gas_limit;
     }
 
     /// Get the amount of gas units still left for the rest of the calculation.
@@ -110,13 +107,6 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         let guard = self.data.as_ref().read().unwrap();
         let context_data = guard.borrow();
         callback(context_data)
-    }
-
-    pub fn with_gas_state_mut<C, R>(&self, callback: C) -> R
-    where
-        C: FnOnce(&mut GasState) -> R,
-    {
-        self.with_context_data_mut(|context_data| callback(&mut context_data.gas_state))
     }
 
     pub fn with_gas_state<C, R>(&self, callback: C) -> R
@@ -404,8 +394,7 @@ mod tests {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
-    fn make_instance() -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
-        let gas_limit = TESTING_GAS_LIMIT;
+    fn make_instance(gas_limit: u64) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let env = Environment::new(MockApi::default(), gas_limit, false);
 
         let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
@@ -429,7 +418,6 @@ mod tests {
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
 
         (env, instance)
     }
@@ -448,7 +436,7 @@ mod tests {
 
     #[test]
     fn move_out_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
 
         // empty data on start
         let (inits, initq) = env.move_out();
@@ -473,11 +461,9 @@ mod tests {
 
     #[test]
     fn gas_tracking_works_correctly() {
-        let (env, _instance) = make_instance();
-
         let gas_limit = 100;
-        env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
+        let (env, _instance) = make_instance(gas_limit);
+
         assert_eq!(env.get_gas_left(), 100);
 
         // Consume all the Gas that we allocated
@@ -499,11 +485,9 @@ mod tests {
 
     #[test]
     fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
-        let (env, _instance) = make_instance();
-
         let gas_limit = 100;
-        env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
+        let (env, _instance) = make_instance(gas_limit);
+
         assert_eq!(env.get_gas_left(), 100);
 
         // Some gas was consumed externally
@@ -530,7 +514,7 @@ mod tests {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         assert_eq!(env.is_storage_readonly(), true);
@@ -538,7 +522,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // change
@@ -556,7 +540,7 @@ mod tests {
 
     #[test]
     fn call_function_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function("allocate", &[10u32.into()]).unwrap();
@@ -566,7 +550,7 @@ mod tests {
 
     #[test]
     fn call_function_fails_for_missing_instance() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // Clear context's wasmer_instance
@@ -581,7 +565,7 @@ mod tests {
 
     #[test]
     fn call_function_fails_for_missing_function() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let res = env.call_function("doesnt_exist", &[]);
@@ -595,7 +579,7 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.call_function0("cosmwasm_vm_version_4", &[]).unwrap();
@@ -603,7 +587,7 @@ mod tests {
 
     #[test]
     fn call_function0_errors_for_wrong_result_count() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function0("allocate", &[10u32.into()]);
@@ -623,7 +607,7 @@ mod tests {
 
     #[test]
     fn call_function1_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
@@ -633,7 +617,7 @@ mod tests {
 
     #[test]
     fn call_function1_errors_for_wrong_result_count() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
@@ -657,7 +641,7 @@ mod tests {
 
     #[test]
     fn with_storage_from_context_set_get() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let val = env
@@ -690,7 +674,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_storage_from_context::<_, ()>(|_store| {
@@ -701,7 +685,7 @@ mod tests {
 
     #[test]
     fn with_querier_from_context_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let res = env
@@ -724,7 +708,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_querier_from_context::<_, ()>(|_querier| {

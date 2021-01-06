@@ -369,7 +369,6 @@ mod tests {
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.set_storage_readonly(false);
 
         (env, instance)
