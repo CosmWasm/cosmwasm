@@ -23,7 +23,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_auth, mock_instance, mock_instance_options, query, MockApi,
+        handle, init, mock_auth, mock_env, mock_instance, mock_instance_options, query, MockApi,
         MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Backend, Instance,

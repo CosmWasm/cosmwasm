@@ -138,7 +138,7 @@ fn query_raw(deps: Deps, contract: HumanAddr, key: Binary) -> StdResult<RawRespo
 mod tests {
     use super::*;
     use crate::testing::mock_dependencies_with_custom_querier;
-    use cosmwasm_std::testing::{mock_env, mock_auth, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::testing::{mock_auth, mock_env, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, Api, BankMsg, BankQuery, Binary, StakingMsg,
         StdError,
