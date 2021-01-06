@@ -424,7 +424,7 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_auth, mock_dependencies, mock_env, MockQuerier, MOCK_CONTRACT_ADDR,,
+        mock_auth, mock_dependencies, mock_env, MockQuerier, MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coins, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
