@@ -348,7 +348,7 @@ fn query_recurse(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_dependencies_with_balances, mock_env, mock_auth, MOCK_CONTRACT_ADDR,
+        mock_auth, mock_dependencies, mock_dependencies_with_balances, mock_env, MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
     use cosmwasm_std::{attr, coins, Storage};

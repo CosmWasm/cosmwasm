@@ -24,7 +24,7 @@ use cosmwasm_std::{
 use cosmwasm_vm::{
     call_handle, from_slice,
     testing::{
-        handle, init, migrate, mock_env, mock_auth, mock_instance, mock_instance_with_balances,
+        handle, init, migrate, mock_auth, mock_env, mock_instance, mock_instance_with_balances,
         query, test_io, MOCK_CONTRACT_ADDR,
     },
     Api, Storage, VmError,
