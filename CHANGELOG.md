@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## 0.13.0 (unreleased)
+## 0.13.0 (2020-01-06)
 
 **all**
 
