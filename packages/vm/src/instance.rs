@@ -221,7 +221,10 @@ where
             limit: state.gas_limit,
             remaining: gas_left,
             used_externally: state.externally_used_gas,
-            used_internally: state.get_gas_used_in_wasmer(gas_left),
+            used_internally: state
+                .gas_limit
+                .saturating_sub(state.externally_used_gas)
+                .saturating_sub(gas_left),
         }
     }
 

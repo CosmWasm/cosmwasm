@@ -32,28 +32,6 @@ impl GasState {
             externally_used_gas: 0,
         }
     }
-
-    fn increase_externally_used_gas(&mut self, amount: u64) {
-        self.externally_used_gas += amount;
-    }
-
-    /// Get the amount of gas units still left for the rest of the calculation.
-    ///
-    /// We need the amount of gas used in wasmer since it is not tracked inside this object.
-    fn get_gas_left(&self, wasmer_used_gas: u64) -> u64 {
-        self.gas_limit
-            .saturating_sub(self.externally_used_gas)
-            .saturating_sub(wasmer_used_gas)
-    }
-
-    /// Get the amount of gas units used so far inside wasmer.
-    ///
-    /// We need the amount of gas left in wasmer since it is not tracked inside this object.
-    pub(crate) fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
-        self.gas_limit
-            .saturating_sub(self.externally_used_gas)
-            .saturating_sub(wasmer_gas_left)
-    }
 }
 
 /// A environment that provides access to the ContextData.
@@ -116,6 +94,13 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         C: FnOnce(&GasState) -> R,
     {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
+    }
+
+    pub fn with_gas_state_mut<C, R>(&self, callback: C) -> R
+    where
+        C: FnOnce(&mut GasState) -> R,
+    {
+        self.with_context_data_mut(|context_data| callback(&mut context_data.gas_state))
     }
 
     pub fn with_wasmer_instance<C, R>(&self, callback: C) -> VmResult<R>
@@ -318,43 +303,23 @@ fn account_for_externally_used_gas<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     amount: u64,
 ) -> VmResult<()> {
-    env.with_context_data_mut(|context_data| {
-        let gas_state = &mut context_data.gas_state;
+    let gas_left = env.get_gas_left();
 
-        // get_gas_left implementation without a deadlock
-        let gas_left = {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-            match get_remaining_points(instance) {
-                MeteringPoints::Remaining(count) => count,
-                MeteringPoints::Exhausted => 0,
-            }
-        };
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
-
-        gas_state.increase_externally_used_gas(amount);
+    let new_limit = env.with_gas_state_mut(|gas_state| {
+        gas_state.externally_used_gas += amount;
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
-        let new_limit = gas_state.get_gas_left(wasmer_used_gas);
+        gas_left.saturating_sub(amount)
+    });
 
-        // This tells wasmer how much more gas it can consume from this point in time.
-        // set_gas_left implementation without a deadlock
-        {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-            set_remaining_points(instance, new_limit);
-        }
+    // This tells wasmer how much more gas it can consume from this point in time.
+    env.set_gas_left(new_limit);
 
-        if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
-            Err(VmError::gas_depletion())
-        } else {
-            Ok(())
-        }
-    })
+    if amount > gas_left {
+        Err(VmError::gas_depletion())
+    } else {
+        Ok(())
+    }
 }
 
 #[cfg(test)]
