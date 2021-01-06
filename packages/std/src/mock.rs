@@ -152,7 +152,7 @@ pub fn mock_env() -> Env {
 
 /// Just set sender and sent funds for the message. The essential for
 /// This is intended for use in test code only.
-pub fn mock_auth<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageAuth{
+pub fn mock_auth<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageAuth {
     MessageAuth {
         sender: sender.into(),
         sent_funds: sent.to_vec(),

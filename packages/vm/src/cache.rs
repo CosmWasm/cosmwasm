@@ -182,7 +182,7 @@ mod test {
     use crate::calls::{call_handle, call_init};
     use crate::errors::VmError;
     use crate::features::features_from_csv;
-    use crate::testing::{mock_backend, mock_env, mock_auth, MockApi, MockQuerier, MockStorage};
+    use crate::testing::{mock_auth, mock_backend, mock_env, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::{coins, Empty};
     use std::fs::OpenOptions;
     use std::io::Write;

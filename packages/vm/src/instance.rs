@@ -292,7 +292,7 @@ mod test {
     use crate::context::is_storage_readonly;
     use crate::errors::VmError;
     use crate::testing::{
-        mock_backend, mock_env, mock_auth, mock_instance, mock_instance_options,
+        mock_auth, mock_backend, mock_env, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
         MockQuerier, MockStorage,
     };
@@ -761,7 +761,7 @@ mod singlepass_test {
     use cosmwasm_std::{coins, Empty};
 
     use crate::calls::{call_handle, call_init, call_query};
-    use crate::testing::{mock_env, mock_auth, mock_instance, mock_instance_with_gas_limit};
+    use crate::testing::{mock_auth, mock_env, mock_instance, mock_instance_with_gas_limit};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
 

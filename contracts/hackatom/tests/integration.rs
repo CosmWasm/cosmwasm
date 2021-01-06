@@ -345,7 +345,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            &handle_info,
+            &handle_auth,
             &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
@@ -358,7 +358,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_auth = mock_auth(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_auth = mock_auth(creator.as_str(), &[]);
@@ -366,7 +366,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            &handle_info,
+            &handle_auth,
             &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
@@ -379,7 +379,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_auth = mock_auth(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_auth = mock_auth(creator.as_str(), &[]);
@@ -387,7 +387,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            &handle_info,
+            &handle_auth,
             &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
         );
         assert!(handle_res.is_err());
@@ -403,7 +403,7 @@ mod singlepass_tests {
 
         let (init_msg, creator) = make_init_msg();
         let init_auth = mock_auth(creator.as_str(), &[]);
-        let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+        let init_res: InitResponse = init(&mut deps, mock_env(), init_auth, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let handle_auth = mock_auth(creator.as_str(), &[]);
@@ -412,7 +412,7 @@ mod singlepass_tests {
         let handle_res = call_handle::<_, _, _, Empty>(
             &mut deps,
             &mock_env(),
-            &handle_info,
+            &handle_auth,
             &to_vec(&HandleMsg::AllocateLargeMemory {}).unwrap(),
         );
         let gas_used = gas_before - deps.get_gas_left();

@@ -63,7 +63,7 @@ mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
     pub use crate::mock::{
-        digit_sum, mock_dependencies, mock_dependencies_with_balances, mock_env, mock_auth,
+        digit_sum, mock_auth, mock_dependencies, mock_dependencies_with_balances, mock_env,
         riffle_shuffle, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
         MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
