@@ -17,6 +17,13 @@ pub struct GasInfo {
 }
 
 impl GasInfo {
+    pub fn new(cost: u64, externally_used: u64) -> Self {
+        GasInfo {
+            cost,
+            externally_used,
+        }
+    }
+
     pub fn with_cost(amount: u64) -> Self {
         GasInfo {
             cost: amount,

@@ -221,6 +221,9 @@ where
             limit: state.gas_limit,
             remaining: gas_left,
             used_externally: state.externally_used_gas,
+            // If externally_used_gas exceeds the gas limit, this will return 0.
+            // no matter how much gas was used internally. But then we error with out of gas
+            // anyways, and it does not matter much anymore where gas was spend.
             used_internally: state
                 .gas_limit
                 .saturating_sub(state.externally_used_gas)
