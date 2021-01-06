@@ -19,7 +19,6 @@ pub struct GasState {
     /// Gas limit for the computation.
     pub gas_limit: u64,
     /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
-    #[allow(unused)]
     pub externally_used_gas: u64,
 }
 
@@ -31,7 +30,6 @@ impl GasState {
         }
     }
 
-    #[allow(unused)]
     fn increase_externally_used_gas(&mut self, amount: u64) {
         self.externally_used_gas += amount;
     }
@@ -43,7 +41,6 @@ impl GasState {
     /// Get the amount of gas units still left for the rest of the calculation.
     ///
     /// We need the amount of gas used in wasmer since it is not tracked inside this object.
-    #[allow(unused)]
     fn get_gas_left(&self, wasmer_used_gas: u64) -> u64 {
         self.gas_limit
             .saturating_sub(self.externally_used_gas)
@@ -53,7 +50,6 @@ impl GasState {
     /// Get the amount of gas units used so far inside wasmer.
     ///
     /// We need the amount of gas left in wasmer since it is not tracked inside this object.
-    #[allow(unused)]
     pub(crate) fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
         self.gas_limit
             .saturating_sub(self.externally_used_gas)
@@ -336,13 +332,6 @@ fn account_for_externally_used_gas<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     amount: u64,
 ) -> VmResult<()> {
-    account_for_externally_used_gas_impl(env, amount)
-}
-
-fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    used_gas: u64,
-) -> VmResult<()> {
     env.with_context_data_mut(|context_data| {
         let gas_state = &mut context_data.gas_state;
 
@@ -359,7 +348,7 @@ fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
         };
         let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
 
-        gas_state.increase_externally_used_gas(used_gas);
+        gas_state.increase_externally_used_gas(amount);
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
         let new_limit = gas_state.get_gas_left(wasmer_used_gas);
