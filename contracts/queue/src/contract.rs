@@ -194,7 +194,7 @@ fn query_list(deps: Deps) -> StdResult<ListResponse> {
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_auth, MockApi, MockQuerier, MockStorage,
+        mock_auth, mock_dependencies, mock_env, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{coins, from_binary, OwnedDeps};
 

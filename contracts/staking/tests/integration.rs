@@ -20,7 +20,7 @@
 use cosmwasm_std::{
     coin, from_binary, ContractResult, Decimal, HumanAddr, InitResponse, Uint128, Validator,
 };
-use cosmwasm_vm::testing::{init, mock_backend, mock_env, mock_auth, mock_instance_options, query};
+use cosmwasm_vm::testing::{init, mock_auth, mock_backend, mock_env, mock_instance_options, query};
 use cosmwasm_vm::Instance;
 
 use staking::msg::{

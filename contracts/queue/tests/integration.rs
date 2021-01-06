@@ -20,7 +20,7 @@
 use cosmwasm_std::{from_binary, from_slice, HandleResponse, HumanAddr, InitResponse, MessageAuth};
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_auth, mock_instance, query, MockApi, MockQuerier, MockStorage,
+        handle, init, mock_auth, mock_env, mock_instance, query, MockApi, MockQuerier, MockStorage,
     },
     Instance,
 };

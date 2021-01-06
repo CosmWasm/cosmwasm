@@ -17,3 +17,5 @@ artifacts/
 .cargo-ok
 
 *.wasm
+
+*.bash
