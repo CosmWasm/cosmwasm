@@ -208,7 +208,7 @@ where
 
     /// Returns the currently remaining gas.
     pub fn get_gas_left(&self) -> u64 {
-        self.create_gas_report().remaining
+        self.env.get_gas_left()
     }
 
     /// Creates and returns a gas report.
