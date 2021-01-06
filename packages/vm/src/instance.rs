@@ -170,7 +170,6 @@ where
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
         env.move_in(backend.storage, backend.querier);
         let instance = Instance {
             _inner: wasmer_instance,
@@ -209,7 +208,7 @@ where
 
     /// Returns the currently remaining gas.
     pub fn get_gas_left(&self) -> u64 {
-        self.create_gas_report().remaining
+        self.env.get_gas_left()
     }
 
     /// Creates and returns a gas report.
@@ -222,7 +221,13 @@ where
             limit: state.gas_limit,
             remaining: gas_left,
             used_externally: state.externally_used_gas,
-            used_internally: state.get_gas_used_in_wasmer(gas_left),
+            // If externally_used_gas exceeds the gas limit, this will return 0.
+            // no matter how much gas was used internally. But then we error with out of gas
+            // anyways, and it does not matter much anymore where gas was spend.
+            used_internally: state
+                .gas_limit
+                .saturating_sub(state.externally_used_gas)
+                .saturating_sub(gas_left),
         }
     }
 

@@ -9,17 +9,19 @@ use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, M
 use crate::backend::{Api, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
 
+/// Never can never be instantiated.
+/// Replace this with the [never primitive type](https://doc.rust-lang.org/std/primitive.never.html) when stable.
 #[derive(Debug)]
-pub struct InsufficientGasLeft;
+pub enum Never {}
 
 /** context data **/
 
 #[derive(Clone, PartialEq, Debug, Default)]
 pub struct GasState {
-    /// Gas limit for the computation.
+    /// Gas limit for the computation, including internally and externally used gas.
+    /// This is set when the Environment is created and never mutated.
     pub gas_limit: u64,
-    /// Tracking the gas used in the cosmos SDK, in cosmwasm units.
-    #[allow(unused)]
+    /// Tracking the gas used in the Cosmos SDK, in CosmWasm gas units.
     pub externally_used_gas: u64,
 }
 
@@ -29,35 +31,6 @@ impl GasState {
             gas_limit,
             externally_used_gas: 0,
         }
-    }
-
-    #[allow(unused)]
-    fn increase_externally_used_gas(&mut self, amount: u64) {
-        self.externally_used_gas += amount;
-    }
-
-    pub(crate) fn set_gas_limit(&mut self, gas_limit: u64) {
-        self.gas_limit = gas_limit;
-    }
-
-    /// Get the amount of gas units still left for the rest of the calculation.
-    ///
-    /// We need the amount of gas used in wasmer since it is not tracked inside this object.
-    #[allow(unused)]
-    fn get_gas_left(&self, wasmer_used_gas: u64) -> u64 {
-        self.gas_limit
-            .saturating_sub(self.externally_used_gas)
-            .saturating_sub(wasmer_used_gas)
-    }
-
-    /// Get the amount of gas units used so far inside wasmer.
-    ///
-    /// We need the amount of gas left in wasmer since it is not tracked inside this object.
-    #[allow(unused)]
-    pub(crate) fn get_gas_used_in_wasmer(&self, wasmer_gas_left: u64) -> u64 {
-        self.gas_limit
-            .saturating_sub(self.externally_used_gas)
-            .saturating_sub(wasmer_gas_left)
     }
 }
 
@@ -98,7 +71,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         }
     }
 
-    pub fn with_context_data_mut<C, R>(&self, callback: C) -> R
+    fn with_context_data_mut<C, R>(&self, callback: C) -> R
     where
         C: FnOnce(&mut ContextData<S, Q>) -> R,
     {
@@ -107,20 +80,13 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         callback(context_data)
     }
 
-    pub fn with_context_data<C, R>(&self, callback: C) -> R
+    fn with_context_data<C, R>(&self, callback: C) -> R
     where
         C: FnOnce(&ContextData<S, Q>) -> R,
     {
         let guard = self.data.as_ref().read().unwrap();
         let context_data = guard.borrow();
         callback(context_data)
-    }
-
-    pub fn with_gas_state_mut<C, R>(&self, callback: C) -> R
-    where
-        C: FnOnce(&mut GasState) -> R,
-    {
-        self.with_context_data_mut(|context_data| callback(&mut context_data.gas_state))
     }
 
     pub fn with_gas_state<C, R>(&self, callback: C) -> R
@@ -130,33 +96,46 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         self.with_context_data(|context_data| callback(&context_data.gas_state))
     }
 
+    pub fn with_gas_state_mut<C, R>(&self, callback: C) -> R
+    where
+        C: FnOnce(&mut GasState) -> R,
+    {
+        self.with_context_data_mut(|context_data| callback(&mut context_data.gas_state))
+    }
+
+    pub fn with_wasmer_instance<C, R>(&self, callback: C) -> VmResult<R>
+    where
+        C: FnOnce(&WasmerInstance) -> VmResult<R>,
+    {
+        self.with_context_data(|context_data| match context_data.wasmer_instance {
+            Some(instance_ptr) => {
+                let instance_ref = unsafe { instance_ptr.as_ref() };
+                callback(instance_ref)
+            }
+            None => Err(VmError::uninitialized_context_data("wasmer_instance")),
+        })
+    }
+
     /// Calls a function with the given name and arguments.
     /// The number of return values is variable and controlled by the guest.
     /// Usually we expect 0 or 1 return values. Use [`Self::call_function0`]
     /// or [`Self::call_function1`] to ensure the number of return values is checked.
     fn call_function(&self, name: &str, args: &[Val]) -> VmResult<Box<[Val]>> {
         // Clone function before calling it to avoid dead locks
-        let func = self.with_context_data(|context_data| match context_data.wasmer_instance {
-            Some(instance_ptr) => {
-                let func = unsafe { instance_ptr.as_ref() }
-                    .exports
-                    .get_function(name)?;
-                Ok(func.clone())
-            }
-            None => Err(VmError::uninitialized_context_data("wasmer_instance")),
+        let func = self.with_wasmer_instance(|instance| {
+            let func = instance.exports.get_function(name)?;
+            Ok(func.clone())
         })?;
 
         func.call(args).map_err(|runtime_err| -> VmError {
-            self.with_context_data(|context_data| match context_data.wasmer_instance {
-                Some(instance_ptr) => {
-                    let instance_ref = unsafe { instance_ptr.as_ref() };
-                    match get_remaining_points(instance_ref) {
-                        MeteringPoints::Remaining(_) => VmError::from(runtime_err),
-                        MeteringPoints::Exhausted => VmError::gas_depletion(),
-                    }
-                }
-                None => VmError::uninitialized_context_data("wasmer_instance"),
+            self.with_wasmer_instance::<_, Never>(|instance| {
+                let err: VmError = match get_remaining_points(instance) {
+                    MeteringPoints::Remaining(_) => VmError::from(runtime_err),
+                    MeteringPoints::Exhausted => VmError::gas_depletion(),
+                };
+                Err(err)
             })
+            .unwrap_err() // with_wasmer_instance can only succeed if the callback succeeds
         })
     }
 
@@ -219,45 +198,36 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
     }
 
     pub fn get_gas_left(&self) -> u64 {
-        self.with_context_data_mut(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-            match get_remaining_points(instance) {
+        self.with_wasmer_instance(|instance| {
+            Ok(match get_remaining_points(instance) {
                 MeteringPoints::Remaining(count) => count,
                 MeteringPoints::Exhausted => 0,
-            }
+            })
         })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
     pub fn set_gas_left(&self, new_value: u64) {
-        self.with_context_data_mut(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
+        self.with_wasmer_instance(|instance| {
             set_remaining_points(instance, new_value);
+            Ok(())
         })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
     /// Decreases gas left by the given amount.
     /// If the amount exceeds the available gas, the remaining gas is set to 0 and
-    /// an InsufficientGasLeft error is returned.
-    pub fn decrease_gas_left(&self, amount: u64) -> Result<(), InsufficientGasLeft> {
-        self.with_context_data_mut(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-
+    /// an VmError::GasDepletion error is returned.
+    #[allow(unused)] // used in tests
+    pub fn decrease_gas_left(&self, amount: u64) -> VmResult<()> {
+        self.with_wasmer_instance(|instance| {
             let remaining = match get_remaining_points(instance) {
                 MeteringPoints::Remaining(count) => count,
                 MeteringPoints::Exhausted => 0,
             };
             if amount > remaining {
                 set_remaining_points(instance, 0);
-                Err(InsufficientGasLeft)
+                Err(VmError::gas_depletion())
             } else {
                 set_remaining_points(instance, remaining - amount);
                 Ok(())
@@ -266,19 +236,17 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
     }
 
     pub fn memory(&self) -> Memory {
-        self.with_context_data(|context_data| {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
+        self.with_wasmer_instance(|instance| {
             let mut memories: Vec<Memory> = instance
                 .exports
                 .iter()
                 .memories()
                 .map(|pair| pair.1.clone())
                 .collect();
-            memories.pop().unwrap()
+            let memory = memories.pop().unwrap();
+            Ok(memory)
         })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
     /// Moves owned instances of storage and querier into the env.
@@ -324,62 +292,25 @@ pub fn process_gas_info<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     info: GasInfo,
 ) -> VmResult<()> {
-    env.decrease_gas_left(info.cost)?;
-    account_for_externally_used_gas(env, info.externally_used)?;
-    Ok(())
-}
+    let gas_left = env.get_gas_left();
 
-/// Use this function to adjust the VM's gas limit when a call into the backend
-/// reported there was externally metered gas used.
-/// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
-fn account_for_externally_used_gas<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    amount: u64,
-) -> VmResult<()> {
-    account_for_externally_used_gas_impl(env, amount)
-}
-
-fn account_for_externally_used_gas_impl<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    used_gas: u64,
-) -> VmResult<()> {
-    env.with_context_data_mut(|context_data| {
-        let gas_state = &mut context_data.gas_state;
-
-        // get_gas_left implementation without a deadlock
-        let gas_left = {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-            match get_remaining_points(instance) {
-                MeteringPoints::Remaining(count) => count,
-                MeteringPoints::Exhausted => 0,
-            }
-        };
-        let wasmer_used_gas = gas_state.get_gas_used_in_wasmer(gas_left);
-
-        gas_state.increase_externally_used_gas(used_gas);
+    let new_limit = env.with_gas_state_mut(|gas_state| {
+        gas_state.externally_used_gas += info.externally_used;
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
-        let new_limit = gas_state.get_gas_left(wasmer_used_gas);
+        gas_left
+            .saturating_sub(info.externally_used)
+            .saturating_sub(info.cost)
+    });
 
-        // This tells wasmer how much more gas it can consume from this point in time.
-        // set_gas_left implementation without a deadlock
-        {
-            let instance_ptr = context_data
-                .wasmer_instance
-                .expect("Wasmer instance is not set. This is a bug.");
-            let instance = unsafe { instance_ptr.as_ref() };
-            set_remaining_points(instance, new_limit);
-        }
+    // This tells wasmer how much more gas it can consume from this point in time.
+    env.set_gas_left(new_limit);
 
-        if gas_state.externally_used_gas + wasmer_used_gas > gas_state.gas_limit {
-            Err(VmError::gas_depletion())
-        } else {
-            Ok(())
-        }
-    })
+    if info.externally_used + info.cost > gas_left {
+        Err(VmError::gas_depletion())
+    } else {
+        Ok(())
+    }
 }
 
 #[cfg(test)]
@@ -415,8 +346,7 @@ mod tests {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
 
-    fn make_instance() -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
-        let gas_limit = TESTING_GAS_LIMIT;
+    fn make_instance(gas_limit: u64) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let env = Environment::new(MockApi::default(), gas_limit, false);
 
         let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
@@ -440,7 +370,6 @@ mod tests {
         let instance_ptr = NonNull::from(instance.as_ref());
         env.set_wasmer_instance(Some(instance_ptr));
         env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|gas_state| gas_state.set_gas_limit(gas_limit));
 
         (env, instance)
     }
@@ -459,7 +388,7 @@ mod tests {
 
     #[test]
     fn move_out_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
 
         // empty data on start
         let (inits, initq) = env.move_out();
@@ -483,57 +412,149 @@ mod tests {
     }
 
     #[test]
-    fn gas_tracking_works_correctly() {
-        let (env, _instance) = make_instance();
-
-        let gas_limit = 100;
-        env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
+    fn process_gas_info_works_for_cost() {
+        let (env, _instance) = make_instance(100);
         assert_eq!(env.get_gas_left(), 100);
 
         // Consume all the Gas that we allocated
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 70).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(70)).unwrap();
         assert_eq!(env.get_gas_left(), 30);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(4)).unwrap();
         assert_eq!(env.get_gas_left(), 26);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(6)).unwrap();
         assert_eq!(env.get_gas_left(), 20);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(20)).unwrap();
         assert_eq!(env.get_gas_left(), 0);
 
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MA, MS, MQ>(&env, 1).unwrap_err() {
+        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
     }
 
     #[test]
-    fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
-        let (env, _instance) = make_instance();
+    fn process_gas_info_works_for_externally_used() {
+        let (env, _instance) = make_instance(100);
+        assert_eq!(env.get_gas_left(), 100);
 
-        let gas_limit = 100;
-        env.set_gas_left(gas_limit);
-        env.with_gas_state_mut(|state| state.set_gas_limit(gas_limit));
+        // Consume all the Gas that we allocated
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(70)).unwrap();
+        assert_eq!(env.get_gas_left(), 30);
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(4)).unwrap();
+        assert_eq!(env.get_gas_left(), 26);
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(6)).unwrap();
+        assert_eq!(env.get_gas_left(), 20);
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(20)).unwrap();
+        assert_eq!(env.get_gas_left(), 0);
+
+        // Using one more unit of gas triggers a failure
+        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(1)).unwrap_err() {
+            VmError::GasDepletion { .. } => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn process_gas_info_works_for_cost_and_externally_used() {
+        let (env, _instance) = make_instance(100);
+        assert_eq!(env.get_gas_left(), 100);
+        let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+        assert_eq!(gas_state.gas_limit, 100);
+        assert_eq!(gas_state.externally_used_gas, 0);
+
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(17, 4)).unwrap();
+        assert_eq!(env.get_gas_left(), 79);
+        let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+        assert_eq!(gas_state.gas_limit, 100);
+        assert_eq!(gas_state.externally_used_gas, 4);
+
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(9, 0)).unwrap();
+        assert_eq!(env.get_gas_left(), 70);
+        let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+        assert_eq!(gas_state.gas_limit, 100);
+        assert_eq!(gas_state.externally_used_gas, 4);
+
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(0, 70)).unwrap();
+        assert_eq!(env.get_gas_left(), 0);
+        let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+        assert_eq!(gas_state.gas_limit, 100);
+        assert_eq!(gas_state.externally_used_gas, 74);
+
+        // More cost fail but do not change stats
+        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(1, 0)).unwrap_err() {
+            VmError::GasDepletion { .. } => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
+        assert_eq!(env.get_gas_left(), 0);
+        let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+        assert_eq!(gas_state.gas_limit, 100);
+        assert_eq!(gas_state.externally_used_gas, 74);
+
+        // More externally used fails and changes stats
+        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(0, 1)).unwrap_err() {
+            VmError::GasDepletion { .. } => {}
+            err => panic!("unexpected error: {:?}", err),
+        }
+        assert_eq!(env.get_gas_left(), 0);
+        let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+        assert_eq!(gas_state.gas_limit, 100);
+        assert_eq!(gas_state.externally_used_gas, 75);
+    }
+
+    #[test]
+    fn process_gas_info_zeros_gas_left_when_exceeded() {
+        // with_externally_used
+        {
+            let (env, _instance) = make_instance(100);
+            let result = process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(120));
+            match result.unwrap_err() {
+                VmError::GasDepletion { .. } => {}
+                err => panic!("unexpected error: {:?}", err),
+            }
+            assert_eq!(env.get_gas_left(), 0);
+            let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+            assert_eq!(gas_state.gas_limit, 100);
+            assert_eq!(gas_state.externally_used_gas, 120);
+        }
+
+        // with_cost
+        {
+            let (env, _instance) = make_instance(100);
+            let result = process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(120));
+            match result.unwrap_err() {
+                VmError::GasDepletion { .. } => {}
+                err => panic!("unexpected error: {:?}", err),
+            }
+            assert_eq!(env.get_gas_left(), 0);
+            let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
+            assert_eq!(gas_state.gas_limit, 100);
+            assert_eq!(gas_state.externally_used_gas, 0);
+        }
+    }
+
+    #[test]
+    fn process_gas_info_works_correctly_with_gas_consumption_in_wasmer() {
+        let (env, _instance) = make_instance(100);
         assert_eq!(env.get_gas_left(), 100);
 
         // Some gas was consumed externally
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 50).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(50)).unwrap();
         assert_eq!(env.get_gas_left(), 50);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(4)).unwrap();
         assert_eq!(env.get_gas_left(), 46);
 
         // Consume 20 gas directly in wasmer
         env.decrease_gas_left(20).unwrap();
         assert_eq!(env.get_gas_left(), 26);
 
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(6)).unwrap();
         assert_eq!(env.get_gas_left(), 20);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
+        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(20)).unwrap();
         assert_eq!(env.get_gas_left(), 0);
 
         // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MA, MS, MQ>(&env, 1).unwrap_err() {
+        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -541,7 +562,7 @@ mod tests {
 
     #[test]
     fn is_storage_readonly_defaults_to_true() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         assert_eq!(env.is_storage_readonly(), true);
@@ -549,7 +570,7 @@ mod tests {
 
     #[test]
     fn set_storage_readonly_can_change_flag() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // change
@@ -567,7 +588,7 @@ mod tests {
 
     #[test]
     fn call_function_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function("allocate", &[10u32.into()]).unwrap();
@@ -577,7 +598,7 @@ mod tests {
 
     #[test]
     fn call_function_fails_for_missing_instance() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         // Clear context's wasmer_instance
@@ -592,7 +613,7 @@ mod tests {
 
     #[test]
     fn call_function_fails_for_missing_function() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let res = env.call_function("doesnt_exist", &[]);
@@ -606,7 +627,7 @@ mod tests {
 
     #[test]
     fn call_function0_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.call_function0("cosmwasm_vm_version_4", &[]).unwrap();
@@ -614,7 +635,7 @@ mod tests {
 
     #[test]
     fn call_function0_errors_for_wrong_result_count() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function0("allocate", &[10u32.into()]);
@@ -634,7 +655,7 @@ mod tests {
 
     #[test]
     fn call_function1_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
@@ -644,7 +665,7 @@ mod tests {
 
     #[test]
     fn call_function1_errors_for_wrong_result_count() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let result = env.call_function1("allocate", &[10u32.into()]).unwrap();
@@ -668,7 +689,7 @@ mod tests {
 
     #[test]
     fn with_storage_from_context_set_get() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let val = env
@@ -701,7 +722,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_storage_from_context_handles_panics() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_storage_from_context::<_, ()>(|_store| {
@@ -712,7 +733,7 @@ mod tests {
 
     #[test]
     fn with_querier_from_context_works() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         let res = env
@@ -735,7 +756,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "A panic occurred in the callback.")]
     fn with_querier_from_context_handles_panics() {
-        let (env, _instance) = make_instance();
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
         env.with_querier_from_context::<_, ()>(|_querier| {
