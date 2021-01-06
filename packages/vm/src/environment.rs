@@ -218,6 +218,7 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
     /// Decreases gas left by the given amount.
     /// If the amount exceeds the available gas, the remaining gas is set to 0 and
     /// an VmError::GasDepletion error is returned.
+    #[allow(unused)] // used in tests
     pub fn decrease_gas_left(&self, amount: u64) -> VmResult<()> {
         self.with_wasmer_instance(|instance| {
             let remaining = match get_remaining_points(instance) {
@@ -291,31 +292,21 @@ pub fn process_gas_info<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     info: GasInfo,
 ) -> VmResult<()> {
-    env.decrease_gas_left(info.cost)?;
-    account_for_externally_used_gas(env, info.externally_used)?;
-    Ok(())
-}
-
-/// Use this function to adjust the VM's gas limit when a call into the backend
-/// reported there was externally metered gas used.
-/// This does not increase the VM's gas usage but ensures the overall limit is not exceeded.
-fn account_for_externally_used_gas<A: Api, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    amount: u64,
-) -> VmResult<()> {
     let gas_left = env.get_gas_left();
 
     let new_limit = env.with_gas_state_mut(|gas_state| {
-        gas_state.externally_used_gas += amount;
+        gas_state.externally_used_gas += info.externally_used;
         // These lines reduce the amount of gas available to wasmer
         // so it can not consume gas that was consumed externally.
-        gas_left.saturating_sub(amount)
+        gas_left
+            .saturating_sub(info.externally_used)
+            .saturating_sub(info.cost)
     });
 
     // This tells wasmer how much more gas it can consume from this point in time.
     env.set_gas_left(new_limit);
 
-    if amount > gas_left {
+    if info.externally_used + info.cost > gas_left {
         Err(VmError::gas_depletion())
     } else {
         Ok(())
@@ -564,59 +555,6 @@ mod tests {
 
         // Using one more unit of gas triggers a failure
         match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(1)).unwrap_err() {
-            VmError::GasDepletion { .. } => {}
-            err => panic!("unexpected error: {:?}", err),
-        }
-    }
-
-    #[test]
-    fn gas_tracking_works_correctly() {
-        let gas_limit = 100;
-        let (env, _instance) = make_instance(gas_limit);
-
-        assert_eq!(env.get_gas_left(), 100);
-
-        // Consume all the Gas that we allocated
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 70).unwrap();
-        assert_eq!(env.get_gas_left(), 30);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
-        assert_eq!(env.get_gas_left(), 26);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
-        assert_eq!(env.get_gas_left(), 20);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
-        assert_eq!(env.get_gas_left(), 0);
-
-        // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MA, MS, MQ>(&env, 1).unwrap_err() {
-            VmError::GasDepletion { .. } => {}
-            err => panic!("unexpected error: {:?}", err),
-        }
-    }
-
-    #[test]
-    fn gas_tracking_works_correctly_with_gas_consumption_in_wasmer() {
-        let gas_limit = 100;
-        let (env, _instance) = make_instance(gas_limit);
-
-        assert_eq!(env.get_gas_left(), 100);
-
-        // Some gas was consumed externally
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 50).unwrap();
-        assert_eq!(env.get_gas_left(), 50);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 4).unwrap();
-        assert_eq!(env.get_gas_left(), 46);
-
-        // Consume 20 gas directly in wasmer
-        env.decrease_gas_left(20).unwrap();
-        assert_eq!(env.get_gas_left(), 26);
-
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 6).unwrap();
-        assert_eq!(env.get_gas_left(), 20);
-        account_for_externally_used_gas::<MA, MS, MQ>(&env, 20).unwrap();
-        assert_eq!(env.get_gas_left(), 0);
-
-        // Using one more unit of gas triggers a failure
-        match account_for_externally_used_gas::<MA, MS, MQ>(&env, 1).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
