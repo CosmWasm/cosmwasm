@@ -165,6 +165,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
+name = "cosmwasm-derive"
+version = "0.13.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
 name = "cosmwasm-schema"
 version = "0.13.0"
 dependencies = [
@@ -178,6 +187,7 @@ version = "0.13.0"
 dependencies = [
  "base64",
  "chrono",
+ "cosmwasm-derive",
  "cosmwasm-schema",
  "schemars",
  "serde",

@@ -70,3 +70,8 @@ pub mod testing {
         MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
 }
+
+// Re-exports
+
+extern crate cosmwasm_derive;
+pub use cosmwasm_derive::entry_point;

@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, BankMsg, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse,
-    Order, QueryResponse, StdError, StdResult,
+    attr, entry_point, BankMsg, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
+    MigrateResponse, Order, QueryResponse, StdError, StdResult,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
@@ -27,6 +27,7 @@ pub fn handle(
     ))
 }
 
+#[entry_point]
 pub fn migrate(
     deps: DepsMut,
     env: Env,
