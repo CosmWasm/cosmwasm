@@ -119,6 +119,30 @@ where
         }
     }
 
+    /// Pins a Wasm that was previously stored via save_wasm.
+    /// This stores an already saved wasm into the pinned memory cache.
+    ///
+    /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
+    pub fn pin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
+        let code = load_wasm_from_disk(&self.wasm_path, checksum)?;
+        // verify hash matches (integrity check)
+        if Checksum::generate(&code) != *checksum {
+            Err(VmError::integrity_err())
+        } else {
+            // store into the pinned cache
+            let module = compile_only(code.as_slice())?;
+            self.pinned_memory_cache.store(checksum, module)
+        }
+    }
+
+    /// Unpins a Wasm, i.e. removes it from the pinned memory cache.
+    ///
+    /// Not found IDs are silently ignored, and no integrity check (checksum validation) is done
+    /// on the removed value.
+    pub fn unpin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
+        self.pinned_memory_cache.remove(checksum)
+    }
+
     /// Returns an Instance tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a cached instance, a cached module or Wasm code.
     pub fn get_instance(
@@ -678,5 +702,48 @@ mod tests {
 
         let loaded = load_wasm_from_disk(&path, &id).unwrap();
         assert_eq!(code, loaded);
+    }
+
+    #[test]
+    fn pin_unpin_works() {
+        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let id = cache.save_wasm(CONTRACT).unwrap();
+
+        // check not pinned
+        let backend = mock_backend(&[]);
+        let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // pin
+        let _ = cache.pin_wasm(&id);
+
+        // check pinned
+        let backend = mock_backend(&[]);
+        let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 0);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // unpin
+        let _ = cache.unpin_wasm(&id);
+
+        // verify unpinned
+        let backend = mock_backend(&[]);
+        let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // unpin again has no effect
+        let _ = cache.unpin_wasm(&id);
+
+        // unpin non existent id has no effect
+        let non_id = Checksum::generate(b"non_existent");
+        let _ = cache.unpin_wasm(&non_id);
     }
 }

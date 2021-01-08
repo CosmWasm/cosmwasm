@@ -22,6 +22,14 @@ impl PinnedMemoryCache {
         Ok(())
     }
 
+    /// Removes a module from the cache.
+    /// Not found modules are silently ignored.
+    /// Potential integrity errors (wrong checksum) are not checked / enforced.
+    pub fn remove(&mut self, checksum: &Checksum) -> VmResult<()> {
+        self.artifacts.remove(checksum);
+        Ok(())
+    }
+
     /// Looks up a module in the cache and takes its artifact and
     /// creates a new module from store and artifact.
     pub fn load(&mut self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
