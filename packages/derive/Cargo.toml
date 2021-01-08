@@ -3,8 +3,8 @@ name = "cosmwasm-derive"
 version = "0.13.0"
 authors = ["Simon Warta <webmaster128@users.noreply.github.com>"]
 edition = "2018"
-description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/std"
+description = "A package for auto-generated code used for CosmWasm contract development. This is shipped as part of cosmwasm-std. Do not use directly."
+repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/derive"
 license = "Apache-2.0"
 readme = "README.md"
 
