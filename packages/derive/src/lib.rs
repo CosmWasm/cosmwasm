@@ -4,24 +4,29 @@ extern crate quote;
 extern crate syn;
 
 use proc_macro::TokenStream;
-use proc_macro2;
+use std::str::FromStr;
 
 #[proc_macro_attribute]
-pub fn entry_point(_attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
+    //println!("attr: \"{}\"", attr.to_string());    //println!("item: \"{}\"", item.to_string());
     let cloned = item.clone();
-    let ast = parse_macro_input!(cloned as syn::DeriveInput);
-    let export_name = format_ident!("{}", &ast.ident);
-    let export_impl = format_ident!("{}", &ast.ident);
+    let function = parse_macro_input!(cloned as syn::ItemFn);
+    let name = format_ident!("{}", &function.sig.ident);
+    // println!("name: \"{}\"", &name);
 
-    let item: proc_macro2::TokenStream = item.into();
-
-    let gen = quote! {
-        #item
-
-        #[no_mangle]
-        extern "C" fn hahaha_#export_name(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-            do_migrate(&#export_impl, env_ptr, info_ptr, msg_ptr)
-        }
-    };
-    gen.into()
+    let new_code = format!(
+        r##"
+        #[cfg(target_arch = "wasm32")]
+        mod __wasm_export_{name} {{ // new module to avoid conflict of function name
+            #[no_mangle]
+            extern "C" fn {name}(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {{
+                cosmwasm_std::do_{name}(&super::{name}, env_ptr, info_ptr, msg_ptr)
+            }}
+        }}
+    "##,
+        name = name,
+    );
+    let entry = TokenStream::from_str(&new_code).unwrap();
+    item.extend(entry);
+    item
 }
