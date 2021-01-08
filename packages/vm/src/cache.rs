@@ -740,10 +740,10 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // unpin again has no effect
-        let _ = cache.unpin_wasm(&id);
+        let _ = cache.unpin_wasm(&id).unwrap();
 
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
-        let _ = cache.unpin_wasm(&non_id);
+        let _ = cache.unpin_wasm(&non_id).unwrap();
     }
 }
