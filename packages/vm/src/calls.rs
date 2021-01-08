@@ -166,6 +166,66 @@ where
     call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
 }
 
+/// Calls Wasm export "init" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+pub fn call_init_raw_v3<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(instance, "init", &[env, msg], MAX_LENGTH_INIT)
+}
+
+/// Calls Wasm export "handle" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+pub fn call_handle_raw_v3<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(instance, "handle", &[env, msg], MAX_LENGTH_HANDLE)
+}
+
+/// Calls Wasm export "migrate" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+pub fn call_migrate_raw_v3<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
+}
+
+/// Calls Wasm export "query" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+pub fn call_query_raw_v3<A, S, Q>(instance: &mut Instance<A, S, Q>, msg: &[u8]) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(true);
+    call_raw(instance, "query", &[msg], MAX_LENGTH_QUERY)
+}
+
 /// Calls a function with the given arguments.
 /// The exported function must return exactly one result (an offset to the result Region).
 fn call_raw<A, S, Q>(

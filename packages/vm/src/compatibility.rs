@@ -25,15 +25,9 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 /// Lists all entry points we expect to be present when calling a contract.
 /// Basically, anything that is used in calls.rs
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
-const REQUIRED_EXPORTS: &[&str] = &[
-    "cosmwasm_vm_version_4",
-    "query",
-    "init",
-    "handle",
-    "allocate",
-    "deallocate",
-];
+const REQUIRED_EXPORTS: &[&str] = &["query", "init", "handle", "allocate", "deallocate"];
 
+const COSMWASM_VM_VERSION_PREFIX: &str = "cosmwasm_vm_version_";
 const MEMORY_LIMIT: u32 = 512; // in pages
 
 fn deserialize(wasm_code: &[u8]) -> VmResult<Module> {
@@ -91,6 +85,28 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
     Ok(())
 }
 
+pub fn load_cosmwasm_vm_version(module: &Module) -> VmResult<String> {
+    let cosmwasm_vm_version: Option<String> =
+        module.export_section().map_or(None, |export_section| {
+            export_section
+                .entries()
+                .iter()
+                .map(|entry| entry.field().to_string())
+                .find(|entry| entry.contains(COSMWASM_VM_VERSION_PREFIX))
+        });
+
+    if cosmwasm_vm_version.is_none() {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract doesn't have required export: \"{}*\"",
+            COSMWASM_VM_VERSION_PREFIX
+        )));
+    }
+
+    Ok(cosmwasm_vm_version
+        .unwrap()
+        .replace(COSMWASM_VM_VERSION_PREFIX, ""))
+}
+
 fn check_wasm_exports(module: &Module) -> VmResult<()> {
     let available_exports: Vec<String> = module.export_section().map_or(vec![], |export_section| {
         export_section
@@ -100,6 +116,29 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
             .collect()
     });
 
+    // Extract version info
+    let cosmwasm_vm_version = available_exports
+        .iter()
+        .find(|x| x.contains(COSMWASM_VM_VERSION_PREFIX));
+
+    if cosmwasm_vm_version.is_none() {
+        return Err(VmError::static_validation_err(format!(
+            "Wasm contract doesn't have required export: \"{}*\"",
+            COSMWASM_VM_VERSION_PREFIX
+        )));
+    }
+
+    let cosmwasm_vm_version = cosmwasm_vm_version
+        .unwrap()
+        .replace(COSMWASM_VM_VERSION_PREFIX, "");
+
+    // Only version 3 and 4 is supported
+    if cosmwasm_vm_version != "4" && cosmwasm_vm_version != "3" {
+        return Err(VmError::static_validation_err(
+            "Wasm contract version too old for this VM",
+        ));
+    }
+
     for required_export in REQUIRED_EXPORTS {
         if !available_exports.iter().any(|x| x == required_export) {
             return Err(VmError::static_validation_err(format!(
@@ -108,6 +147,7 @@ fn check_wasm_exports(module: &Module) -> VmResult<()> {
             )));
         }
     }
+
     Ok(())
 }
 
@@ -167,6 +207,7 @@ mod tests {
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
+    static CONTRACT_0_10: &[u8] = include_bytes!("../testdata/contract_0.10.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
@@ -226,10 +267,25 @@ mod tests {
     }
 
     #[test]
+    fn check_load_cosmwasm_version() {
+        let module = deserialize(CONTRACT).unwrap();
+        match load_cosmwasm_vm_version(&module) {
+            Ok(version) => assert_eq!(version, "4"),
+            Err(e) => panic!("Unexpected error {:?}", e),
+        }
+
+        let module = deserialize(CONTRACT_0_10).unwrap();
+        match load_cosmwasm_vm_version(&module) {
+            Ok(version) => assert_eq!(version, "3"),
+            Err(e) => panic!("Unexpected error {:?}", e),
+        }
+    }
+
+    #[test]
     fn check_wasm_old_contract() {
         match check_wasm(CONTRACT_0_7, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
-                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_4\""
+                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_*\""
             )),
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
@@ -237,10 +293,15 @@ mod tests {
 
         match check_wasm(CONTRACT_0_6, &default_features()) {
             Err(VmError::StaticValidationErr { msg, .. }) => assert!(msg.starts_with(
-                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_4\""
+                "Wasm contract doesn't have required export: \"cosmwasm_vm_version_*\""
             )),
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("This must not succeeed"),
+        };
+
+        match check_wasm(CONTRACT_0_10, &default_features()) {
+            Ok(_) => {}
+            Err(e) => panic!("Unexpected error {:?}", e),
         };
     }
 
@@ -351,7 +412,7 @@ mod tests {
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
-                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_4\""
+                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_*\""
                 ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
@@ -365,11 +426,20 @@ mod tests {
         match check_wasm_exports(&module) {
             Err(VmError::StaticValidationErr { msg, .. }) => {
                 assert!(msg.starts_with(
-                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_4\""
+                    "Wasm contract doesn't have required export: \"cosmwasm_vm_version_*\""
                 ));
             }
             Err(e) => panic!("Unexpected error {:?}", e),
             Ok(_) => panic!("Didn't reject wasm with invalid api"),
+        }
+    }
+
+    #[test]
+    fn check_wasm_exports_of_v3_contract() {
+        let module = deserialize(CONTRACT_0_10).unwrap();
+        match check_wasm_exports(&module) {
+            Ok(_) => {}
+            Err(e) => panic!("Unexpected error {:?}", e),
         }
     }
 
