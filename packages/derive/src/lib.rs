@@ -1,6 +1,4 @@
 #[macro_use]
-extern crate quote;
-#[macro_use]
 extern crate syn;
 
 use proc_macro::TokenStream;
@@ -8,11 +6,9 @@ use std::str::FromStr;
 
 #[proc_macro_attribute]
 pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
-    //println!("attr: \"{}\"", attr.to_string());    //println!("item: \"{}\"", item.to_string());
     let cloned = item.clone();
     let function = parse_macro_input!(cloned as syn::ItemFn);
-    let name = format_ident!("{}", &function.sig.ident);
-    // println!("name: \"{}\"", &name);
+    let name = function.sig.ident.to_string();
 
     let new_code = format!(
         r##"
