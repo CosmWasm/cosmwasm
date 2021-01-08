@@ -9,7 +9,7 @@ use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
-use crate::modules::{FileSystemCache, InMemoryCache};
+use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
 
@@ -18,6 +18,7 @@ const MODULES_DIR: &str = "modules";
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Stats {
+    pub hits_pinned_memory_cache: u32,
     pub hits_memory_cache: u32,
     pub hits_fs_cache: u32,
     pub misses: u32,
@@ -39,6 +40,7 @@ pub struct Cache<A: Api, S: Storage, Q: Querier> {
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
     instance_memory_limit: Size,
+    pinned_memory_cache: PinnedMemoryCache,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
@@ -80,6 +82,7 @@ where
             wasm_path,
             supported_features,
             instance_memory_limit,
+            pinned_memory_cache: PinnedMemoryCache::new(),
             memory_cache: InMemoryCache::new(memory_cache_size),
             fs_cache,
             stats: Stats::default(),
@@ -124,6 +127,15 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
+        let store = make_runtime_store(self.instance_memory_limit);
+        // Try to get module from the pinned memory cache
+        if let Some(module) = self.pinned_memory_cache.load(checksum, &store)? {
+            self.stats.hits_pinned_memory_cache += 1;
+            let instance =
+                Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
+            return Ok(instance);
+        }
+
         // Get module from memory cache
         if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
@@ -133,7 +145,6 @@ where
         }
 
         // Get module from file system cache
-        let store = make_runtime_store(self.instance_memory_limit);
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =
