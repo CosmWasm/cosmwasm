@@ -28,7 +28,6 @@ pub use crate::calls::{
     call_query_raw_v3,
 };
 pub use crate::checksum::Checksum;
-pub use crate::compatibility::load_cosmwasm_vm_version;
 pub use crate::errors::{
     CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
     VmError, VmResult,

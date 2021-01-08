@@ -85,27 +85,6 @@ fn check_wasm_memories(module: &Module) -> VmResult<()> {
     Ok(())
 }
 
-pub fn load_cosmwasm_vm_version(module: &Module) -> VmResult<String> {
-    let cosmwasm_vm_version: Option<String> =
-        module.export_section().map_or(None, |export_section| {
-            export_section
-                .entries()
-                .iter()
-                .map(|entry| entry.field().to_string())
-                .find(|entry| entry.contains(COSMWASM_VM_VERSION_PREFIX))
-        });
-
-    if cosmwasm_vm_version.is_none() {
-        return Err(VmError::static_validation_err(format!(
-            "Wasm contract doesn't have required export: \"{}*\"",
-            COSMWASM_VM_VERSION_PREFIX
-        )));
-    }
-
-    Ok(cosmwasm_vm_version
-        .unwrap()
-        .replace(COSMWASM_VM_VERSION_PREFIX, ""))
-}
 
 fn check_wasm_exports(module: &Module) -> VmResult<()> {
     let available_exports: Vec<String> = module.export_section().map_or(vec![], |export_section| {
@@ -264,21 +243,6 @@ mod tests {
     fn check_wasm_passes_for_latest_contract() {
         // this is our reference check, must pass
         check_wasm(CONTRACT, &default_features()).unwrap();
-    }
-
-    #[test]
-    fn check_load_cosmwasm_version() {
-        let module = deserialize(CONTRACT).unwrap();
-        match load_cosmwasm_vm_version(&module) {
-            Ok(version) => assert_eq!(version, "4"),
-            Err(e) => panic!("Unexpected error {:?}", e),
-        }
-
-        let module = deserialize(CONTRACT_0_10).unwrap();
-        match load_cosmwasm_vm_version(&module) {
-            Ok(version) => assert_eq!(version, "3"),
-            Err(e) => panic!("Unexpected error {:?}", e),
-        }
     }
 
     #[test]
