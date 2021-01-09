@@ -73,5 +73,4 @@ pub mod testing {
 
 // Re-exports
 
-extern crate cosmwasm_derive;
 pub use cosmwasm_derive::entry_point;

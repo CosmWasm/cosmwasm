@@ -4,6 +4,57 @@ extern crate syn;
 use proc_macro::TokenStream;
 use std::str::FromStr;
 
+/// This attribute macro generates the boilerplate required to call into the
+/// contract-specific logic from the entry-points to the Wasm module.
+///
+/// It should be added to the contract's init, handle, migrate and query implementations
+/// like this:
+/// ```
+/// # use cosmwasm_std::{
+/// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
+/// #     InitResponse, HandleResponse, QueryResponse,
+/// # };
+/// #
+/// # type InitMsg = ();
+/// # type HandleMsg = ();
+/// # type QueryMsg = ();
+///
+/// #[entry_point]
+/// pub fn init(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: InitMsg,
+/// ) -> Result<InitResponse, StdError> {
+/// #   Ok(Default::default())
+/// }
+///
+/// #[entry_point]
+/// pub fn handle(
+///     deps: DepsMut,
+///     env: Env,
+///     info: MessageInfo,
+///     msg: HandleMsg,
+/// ) -> Result<HandleResponse, StdError> {
+/// #   Ok(Default::default())
+/// }
+///
+/// #[entry_point]
+/// pub fn query(
+///     deps: Deps,
+///     env: Env,
+///     msg: QueryMsg,
+/// ) -> Result<QueryResponse, StdError> {
+/// #   Ok(Default::default())
+/// }
+/// ```
+///
+/// where `InitMsg`, `HandleMsg`, and `QueryMsg` are contract defined
+/// types that implement `DeserializeOwned + JsonSchema`.
+///
+/// This is an alternative implementation of `cosmwasm_std::create_entry_points!(contract)`
+/// and `cosmwasm_std::create_entry_points_with_migration!(contract)`
+/// and should not be used together.
 #[proc_macro_attribute]
 pub fn entry_point(_attr: TokenStream, mut item: TokenStream) -> TokenStream {
     let cloned = item.clone();
