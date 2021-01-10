@@ -5,6 +5,7 @@ use cosmwasm_std::{
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
 
+#[entry_point]
 pub fn init(
     _deps: DepsMut,
     _env: Env,
@@ -16,6 +17,7 @@ pub fn init(
     ))
 }
 
+#[entry_point]
 pub fn handle(
     _deps: DepsMut,
     _env: Env,
@@ -62,6 +64,7 @@ pub fn migrate(
     })
 }
 
+#[entry_point]
 pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",

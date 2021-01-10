@@ -4,8 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse,
-    MessageInfo, MigrateResponse, Order, QueryResponse, StdResult, Storage,
+    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, HandleResponse,
+    InitResponse, MessageInfo, MigrateResponse, Order, QueryResponse, StdResult, Storage,
 };
 
 use crate::msg::{InitMsg, MigrateMsg};
@@ -124,6 +124,7 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
     }
 }
 
+#[entry_point]
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
