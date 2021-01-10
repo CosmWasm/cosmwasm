@@ -55,10 +55,15 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
 }
 
 /// Created a store with no compiler and the given memory limit (in bytes)
-/// If memory_limit is None, no limit is applied.
+/// If memory_limit is 0, no limit is applied.
 pub fn make_runtime_store(memory_limit: Size) -> Store {
     let engine = JIT::headless().engine();
-    make_store_with_engine(&engine, Some(memory_limit))
+    let limit = if memory_limit.0 > 0 {
+        Some(memory_limit)
+    } else {
+        None
+    };
+    make_store_with_engine(&engine, limit)
 }
 
 /// Creates a store from an engine and an optional memory limit.
