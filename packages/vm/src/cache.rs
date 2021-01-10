@@ -122,15 +122,27 @@ where
     /// Pins a Wasm that was previously stored via save_wasm.
     /// This stores an already saved wasm into the pinned memory cache.
     ///
+    /// The module is lookup first in the memory cache, and then in the file system cache.
+    /// If not found, the code is loaded from the file system, compiled, and stored into the
+    /// pinned cache.
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
     pub fn pin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
         // Create an unlimited store (just for reading)
         let store = make_runtime_store(Size(0));
-        // Try to get module from file system cache first
+
+        // Try to get module from the memory cache
+        if let Some(module) = self.memory_cache.load(checksum, &store)? {
+            self.stats.hits_memory_cache += 1;
+            return self.pinned_memory_cache.store(checksum, module);
+        }
+
+        // Try to get module from file system cache
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             return self.pinned_memory_cache.store(checksum, module);
         }
+
+        // Load code from the file system
         let code = self.load_wasm(checksum)?;
         // compile and store into the pinned cache
         let module = compile_only(code.as_slice())?;
@@ -738,8 +750,8 @@ mod tests {
         let backend = mock_backend(&[]);
         let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 0);
-        assert_eq!(cache.stats().hits_fs_cache, 2);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
         // unpin
@@ -749,8 +761,8 @@ mod tests {
         let backend = mock_backend(&[]);
         let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
-        assert_eq!(cache.stats().hits_memory_cache, 1);
-        assert_eq!(cache.stats().hits_fs_cache, 2);
+        assert_eq!(cache.stats().hits_memory_cache, 2);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
         // unpin again has no effect
