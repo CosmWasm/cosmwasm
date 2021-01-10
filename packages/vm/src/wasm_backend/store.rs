@@ -162,6 +162,23 @@ mod tests {
             module.serialize().unwrap()
         };
 
+        // No limit
+        let store = make_runtime_store(Size(0));
+        let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
+        let module_memory = module.info().memories.last().unwrap();
+        assert_eq!(module_memory.minimum, Pages(4));
+        assert_eq!(module_memory.maximum, None);
+        let instance = Instance::new(&module, &ImportObject::new()).unwrap();
+        let instance_memory: Memory = instance
+            .exports
+            .iter()
+            .memories()
+            .map(|pair| pair.1.clone())
+            .next()
+            .unwrap();
+        assert_eq!(instance_memory.ty().minimum, Pages(4));
+        assert_eq!(instance_memory.ty().maximum, None);
+
         // Instantiate with limit
         let store = make_runtime_store(Size::kibi(23 * 64));
         let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
