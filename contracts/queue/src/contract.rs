@@ -5,11 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, HandleResponse, InitResponse,
-    MessageInfo, Order, QueryResponse, StdResult,
+    MessageInfo, MigrateResponse, Order, QueryResponse, StdResult, Storage,
 };
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {}
+use crate::msg::{InitMsg, MigrateMsg};
 
 // we store one entry for each item in the queue
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -82,16 +81,21 @@ pub fn handle(
     msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     match msg {
-        HandleMsg::Enqueue { value } => enqueue(deps, value),
-        HandleMsg::Dequeue {} => dequeue(deps),
+        HandleMsg::Enqueue { value } => handle_enqueue(deps, value),
+        HandleMsg::Dequeue {} => handle_dequeue(deps),
     }
 }
 
 const FIRST_KEY: u8 = 0;
 
-fn enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
+fn handle_enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
+    enqueue(deps.storage, value)?;
+    Ok(HandleResponse::default())
+}
+
+fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
     // find the last element in the queue and extract key
-    let last_item = deps.storage.range(None, None, Order::Descending).next();
+    let last_item = storage.range(None, None, Order::Descending).next();
 
     let new_key = match last_item {
         None => FIRST_KEY,
@@ -101,11 +105,11 @@ fn enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
     };
     let new_value = to_vec(&Item { value })?;
 
-    deps.storage.set(&[new_key], &new_value);
-    Ok(HandleResponse::default())
+    storage.set(&[new_key], &new_value);
+    Ok(())
 }
 
-fn dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
+fn handle_dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
 
@@ -118,6 +122,29 @@ fn dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
     } else {
         Ok(res)
     }
+}
+
+pub fn migrate(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    _msg: MigrateMsg,
+) -> StdResult<MigrateResponse> {
+    // clear all
+    let keys: Vec<_> = deps
+        .storage
+        .range(None, None, Order::Ascending)
+        .map(|(key, _)| key)
+        .collect();
+    for key in keys {
+        deps.storage.remove(&key);
+    }
+
+    // Write new values
+    enqueue(deps.storage, 100)?;
+    enqueue(deps.storage, 101)?;
+    enqueue(deps.storage, 102)?;
+    Ok(MigrateResponse::default())
 }
 
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
