@@ -124,15 +124,10 @@ where
     ///
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
     pub fn pin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
-        let code = load_wasm_from_disk(&self.wasm_path, checksum)?;
-        // verify hash matches (integrity check)
-        if Checksum::generate(&code) != *checksum {
-            Err(VmError::integrity_err())
-        } else {
-            // store into the pinned cache
-            let module = compile_only(code.as_slice())?;
-            self.pinned_memory_cache.store(checksum, module)
-        }
+        let code = self.load_wasm(checksum)?;
+        // compile and store into the pinned cache
+        let module = compile_only(code.as_slice())?;
+        self.pinned_memory_cache.store(checksum, module)
     }
 
     /// Unpins a Wasm, i.e. removes it from the pinned memory cache.
