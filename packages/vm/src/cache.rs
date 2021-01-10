@@ -440,6 +440,8 @@ mod tests {
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
         let backend3 = mock_backend(&[]);
+        let backend4 = mock_backend(&[]);
+        let backend5 = mock_backend(&[]);
 
         // from file system
         let _instance1 = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
@@ -459,6 +461,27 @@ mod tests {
         let _instance3 = cache.get_instance(&id, backend3, TESTING_OPTIONS).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 2);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // pinning hits the memory cache
+        cache.pin_wasm(&id).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 3);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // from pinned memory cache
+        let _instance4 = cache.get_instance(&id, backend4, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
+        assert_eq!(cache.stats().hits_memory_cache, 3);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // from pinned memory cache again
+        let _instance5 = cache.get_instance(&id, backend5, TESTING_OPTIONS).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 2);
+        assert_eq!(cache.stats().hits_memory_cache, 3);
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
     }
@@ -493,6 +516,26 @@ mod tests {
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            // init
+            let info = mock_info("creator", &coins(1000, "earth"));
+            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+            let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let msgs = res.unwrap().messages;
+            assert_eq!(msgs.len(), 0);
+        }
+
+        // from pinned memory
+        {
+            cache.pin_wasm(&checksum).unwrap();
+
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
+            assert_eq!(cache.stats().hits_memory_cache, 2);
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
@@ -544,6 +587,35 @@ mod tests {
                 .unwrap();
             assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+
+            // init
+            let info = mock_info("creator", &coins(1000, "earth"));
+            let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+            let response = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.messages.len(), 0);
+
+            // handle
+            let info = mock_info("verifies", &coins(15, "earth"));
+            let msg = br#"{"release":{}}"#;
+            let response = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            assert_eq!(response.messages.len(), 1);
+        }
+
+        // from pinned memory
+        {
+            cache.pin_wasm(&checksum).unwrap();
+
+            let mut instance = cache
+                .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_pinned_memory_cache, 1);
+            assert_eq!(cache.stats().hits_memory_cache, 2);
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
 
