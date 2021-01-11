@@ -787,7 +787,7 @@ mod singlepass_tests {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 194475);
+        assert_eq!(handle_used, 194496);
     }
 
     #[test]
