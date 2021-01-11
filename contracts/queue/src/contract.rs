@@ -124,7 +124,7 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
     }
 }
 
-#[entry_point]
+#[cfg_attr(not(feature = "library"), entry_point)]
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
