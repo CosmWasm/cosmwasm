@@ -116,9 +116,8 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let store = make_runtime_store(options.memory_limit);
         // Get module from memory cache
-        if let Some(module) = self.memory_cache.load(checksum, &store)? {
+        if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
@@ -126,6 +125,7 @@ where
         }
 
         // Get module from file system cache
+        let store = make_runtime_store(options.memory_limit);
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =
