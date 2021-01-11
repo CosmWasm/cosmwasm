@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, coin, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HandleResponse, HumanAddr,
-    InitResponse, MessageInfo, QuerierWrapper, QueryResponse, StakingMsg, StdError, StdResult,
-    Uint128, WasmMsg,
+    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HandleResponse,
+    HumanAddr, InitResponse, MessageInfo, QuerierWrapper, QueryResponse, StakingMsg, StdError,
+    StdResult, Uint128, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -16,6 +16,7 @@ use crate::state::{
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
+#[entry_point]
 pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
@@ -50,6 +51,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdRes
     Ok(InitResponse::default())
 }
 
+#[entry_point]
 pub fn handle(
     deps: DepsMut,
     env: Env,
@@ -372,6 +374,7 @@ pub fn _bond_all_tokens(
     Ok(res)
 }
 
+#[entry_point]
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),

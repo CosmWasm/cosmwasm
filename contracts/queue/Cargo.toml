@@ -28,6 +28,8 @@ default = ["cranelift"]
 cranelift = ["cosmwasm-vm/cranelift"]
 # For quicker tests, cargo test --lib. for more explicit tests, cargo test --features=backtraces
 backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
+# this is to demonstrate conditional entry-points for cosmwasm-plus style
+library = []
 
 [dependencies]
 cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }

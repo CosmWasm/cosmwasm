@@ -17,18 +17,21 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{from_binary, from_slice, HandleResponse, HumanAddr, InitResponse, MessageInfo};
+use cosmwasm_std::{
+    from_binary, from_slice, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
+};
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi,
+        handle, init, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi,
         MockQuerier, MockStorage,
     },
     Instance,
 };
 
 use queue::contract::{
-    CountResponse, HandleMsg, InitMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
+    CountResponse, HandleMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
 };
+use queue::msg::{InitMsg, MigrateMsg};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
@@ -168,6 +171,36 @@ fn push_and_reduce() {
     let data = query(&mut deps, mock_env(), QueryMsg::Reducer {}).unwrap();
     let counters = from_binary::<ReducerResponse>(&data).unwrap().counters;
     assert_eq!(counters, vec![(40, 85), (15, 125), (85, 0), (-10, 140)]);
+}
+
+#[test]
+fn migrate_works() {
+    let (mut deps, info) = create_contract();
+
+    let _: HandleResponse = handle(
+        &mut deps,
+        mock_env(),
+        info.clone(),
+        HandleMsg::Enqueue { value: 25 },
+    )
+    .unwrap();
+    let _: HandleResponse = handle(
+        &mut deps,
+        mock_env(),
+        info.clone(),
+        HandleMsg::Enqueue { value: 17 },
+    )
+    .unwrap();
+    assert_eq!(get_count(&mut deps), 2);
+    assert_eq!(get_sum(&mut deps), 25 + 17);
+
+    let msg = MigrateMsg {};
+    let info = mock_info("admin", &[]);
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
+    assert_eq!(res.messages.len(), 0);
+
+    assert_eq!(get_count(&mut deps), 3);
+    assert_eq!(get_sum(&mut deps), 100 + 101 + 102);
 }
 
 #[test]

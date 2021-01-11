@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## 0.13.1 (unreleased)
+
+**cosmwasm-std**
+
+- Add the new `#[entry_point]` macro attribute that serves as an alternative
+  implementation to `cosmwasm_std::create_entry_points!(contract)` and
+  `cosmwasm_std::create_entry_points_with_migration!(contract)`. Both ways are
+  supported in the 0.13 series.
+
 ## 0.13.0 (2020-01-06)
 
 **all**
