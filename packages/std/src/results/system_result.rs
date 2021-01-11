@@ -32,8 +32,9 @@ use super::super::errors::SystemError;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum SystemResult<S> {
+    #[serde(alias = "Ok")]
     Ok(S),
-    #[serde(rename = "error")]
+    #[serde(rename = "error", alias = "Err")]
     Err(SystemError),
 }
 
