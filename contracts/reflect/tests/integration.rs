@@ -83,7 +83,6 @@ fn reflect() {
 
     let payload = vec![
         BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -117,7 +116,6 @@ fn reflect_requires_owner() {
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
-        from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
     }
