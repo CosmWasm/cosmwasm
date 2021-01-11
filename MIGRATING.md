@@ -4,6 +4,79 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.13 -> 0.14 (unreleased)
+
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.14.0"
+  cosmwasm-storage = "0.14.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.14.0"
+  cosmwasm-vm = "0.14.0"
+  # ...
+  ```
+
+- Use the new entry point system. From `lib.rs` remove
+
+  ```rust
+  #[cfg(target_arch = "wasm32")]
+  cosmwasm_std::create_entry_points!(contract);
+
+  // or
+
+  #[cfg(target_arch = "wasm32")]
+  cosmwasm_std::create_entry_points_with_migration!(contract);
+  ```
+
+  Then add the macro attribute `#[entry_point]` to your `contract.rs` as
+  follows:
+
+  ```rust
+  use cosmwasm_std::{entry_point, … };
+
+  // …
+
+  #[entry_point]
+  pub fn init(
+      _deps: DepsMut,
+      _env: Env,
+      _info: MessageInfo,
+      _msg: InitMsg,
+  ) -> StdResult<InitResponse> {
+      // …
+  }
+
+  #[entry_point]
+  pub fn handle(
+      _deps: DepsMut,
+      _env: Env,
+      _info: MessageInfo,
+      _msg: HandleMsg,
+  ) -> StdResult<HandleResponse> {
+      // …
+  }
+
+  // only if you have migrate
+  #[entry_point]
+  pub fn migrate(
+      deps: DepsMut,
+      env: Env,
+      _info: MessageInfo,
+      msg: MigrateMsg,
+  ) -> StdResult<MigrateResponse> {
+      // …
+  }
+
+  #[entry_point]
+  pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse> {
+      // …
+  }
+  ```
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0.
