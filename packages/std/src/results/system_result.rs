@@ -31,9 +31,7 @@ use super::super::errors::SystemError;
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum SystemResult<S> {
-    #[serde(alias = "ok")]
     Ok(S),
-    #[serde(alias = "error")]
     Err(SystemError),
 }
 

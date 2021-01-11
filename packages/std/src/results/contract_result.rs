@@ -31,11 +31,9 @@ use std::fmt;
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum ContractResult<S> {
-    #[serde(alias = "ok")]
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.
     /// This could potientially have more structure, but String is the easiest.
-    #[serde(alias = "error")]
     Err(String),
 }
 
@@ -102,17 +100,17 @@ mod tests {
 
     #[test]
     fn contract_result_deserialization_works() {
-        let result: ContractResult<u64> = from_slice(br#"{"ok":12}"#).unwrap();
+        let result: ContractResult<u64> = from_slice(br#"{"Ok":12}"#).unwrap();
         assert_eq!(result, ContractResult::Ok(12));
 
-        let result: ContractResult<String> = from_slice(br#"{"ok":"foo"}"#).unwrap();
+        let result: ContractResult<String> = from_slice(br#"{"Ok":"foo"}"#).unwrap();
         assert_eq!(result, ContractResult::Ok("foo".to_string()));
 
         let result: ContractResult<HandleResponse> =
-            from_slice(br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#).unwrap();
+            from_slice(br#"{"Ok":{"messages":[],"attributes":[],"data":null}}"#).unwrap();
         assert_eq!(result, ContractResult::Ok(HandleResponse::default()));
 
-        let result: ContractResult<HandleResponse> = from_slice(br#"{"error":"broken"}"#).unwrap();
+        let result: ContractResult<HandleResponse> = from_slice(br#"{"Err":"broken"}"#).unwrap();
         assert_eq!(result, ContractResult::Err("broken".to_string()));
 
         // ignores whitespace
@@ -120,18 +118,18 @@ mod tests {
         assert_eq!(result, ContractResult::Ok(5898));
 
         // fails for additional attributes
-        let parse: StdResult<ContractResult<u64>> = from_slice(br#"{"unrelated":321,"ok":4554}"#);
+        let parse: StdResult<ContractResult<u64>> = from_slice(br#"{"unrelated":321,"Ok":4554}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
-        let parse: StdResult<ContractResult<u64>> = from_slice(br#"{"ok":4554,"unrelated":321}"#);
+        let parse: StdResult<ContractResult<u64>> = from_slice(br#"{"Ok":4554,"unrelated":321}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
         let parse: StdResult<ContractResult<u64>> =
-            from_slice(br#"{"ok":4554,"error":"What's up now?"}"#);
+            from_slice(br#"{"Ok":4554,"Err":"What's up now?"}"#);
         match parse.unwrap_err() {
             StdError::ParseErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
