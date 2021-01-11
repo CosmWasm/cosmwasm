@@ -3,9 +3,7 @@
 **cosmwasm-std**
 
 - Remove `from_address` from `BankMsg::Send`, as it always sends from the
-  contract.
-- Create `BankMsg::SendFrom` with the `from_address` field to be used if the
-  underlying blockchain supports this with native tokens.
+  contract address, and this is consistent with other `CosmosMsg` variants.
 
 ## 0.13.0 (2020-01-06)
 

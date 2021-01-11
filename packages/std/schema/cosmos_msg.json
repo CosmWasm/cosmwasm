@@ -75,36 +75,6 @@
               }
             }
           }
-        },
-        {
-          "type": "object",
-          "required": [
-            "send_from"
-          ],
-          "properties": {
-            "send_from": {
-              "type": "object",
-              "required": [
-                "amount",
-                "from_address",
-                "to_address"
-              ],
-              "properties": {
-                "amount": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Coin"
-                  }
-                },
-                "from_address": {
-                  "$ref": "#/definitions/HumanAddr"
-                },
-                "to_address": {
-                  "$ref": "#/definitions/HumanAddr"
-                }
-              }
-            }
-          }
         }
       ]
     },

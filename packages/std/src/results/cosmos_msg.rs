@@ -30,12 +30,6 @@ pub enum BankMsg {
         to_address: HumanAddr,
         amount: Vec<Coin>,
     },
-    // contract sends tokens from another account in the underlying sdk
-    SendFrom {
-        from_address: HumanAddr,
-        to_address: HumanAddr,
-        amount: Vec<Coin>,
-    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
