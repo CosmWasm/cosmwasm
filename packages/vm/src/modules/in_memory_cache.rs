@@ -7,7 +7,7 @@ const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
 
 /// An in-memory module cache
 pub struct InMemoryCache {
-    artifacts: CLruCache<Checksum, Module>,
+    modules: CLruCache<Checksum, Module>,
 }
 
 impl InMemoryCache {
@@ -15,19 +15,19 @@ impl InMemoryCache {
     pub fn new(size: Size) -> Self {
         let max_entries = size.0 / ESTIMATED_MODULE_SIZE.0;
         InMemoryCache {
-            artifacts: CLruCache::new(max_entries),
+            modules: CLruCache::new(max_entries),
         }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        self.artifacts.put(*checksum, module);
+        self.modules.put(*checksum, module);
         Ok(())
     }
 
     /// Looks up a module in the cache and takes its artifact and
     /// creates a new module from store and artifact.
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
-        match self.artifacts.get(checksum) {
+        match self.modules.get(checksum) {
             Some(module) => Ok(Some(module.clone())),
             None => Ok(None),
         }
