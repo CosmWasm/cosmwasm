@@ -32,10 +32,11 @@ use std::fmt;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ContractResult<S> {
+    #[serde(alias = "Ok")]
     Ok(S),
     /// An error type that every custom error created by contract developers can be converted to.
     /// This could potientially have more structure, but String is the easiest.
-    #[serde(rename = "error")]
+    #[serde(rename = "error", alias = "Err")]
     Err(String),
 }
 
