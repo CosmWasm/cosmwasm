@@ -20,6 +20,24 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
+- Remove `from_address` from `BankMsg::Send`, which is now automatically filled
+  with the contract address:
+
+  ```rust
+  // before
+  ctx.add_message(BankMsg::Send {
+      from_address: env.contract.address,
+      to_address: to_addr,
+      amount: balance,
+  });
+
+  // after
+  ctx.add_message(BankMsg::Send {
+      to_address: to_addr,
+      amount: balance,
+  });
+  ```
+
 - Use the new entry point system. From `lib.rs` remove
 
   ```rust
