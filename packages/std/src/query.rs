@@ -13,6 +13,16 @@ pub enum QueryRequest<C: CustomQuery> {
     Bank(BankQuery),
     Custom(C),
     Staking(StakingQuery),
+    /// A Stargate message encoded the same way as a protobof [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
+    /// The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md)
+    #[cfg(feature = "stargate")]
+    Stargate {
+        /// this is the fully qualified service path used for routing,
+        /// eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance
+        path: String,
+        /// this is the expected protobuf message type (not any), binary encoded
+        data: Binary,
+    },
     Wasm(WasmQuery),
 }
 
