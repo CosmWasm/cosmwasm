@@ -34,8 +34,6 @@ pub struct GasReport {
 #[derive(Copy, Clone, Debug)]
 pub struct InstanceOptions {
     pub gas_limit: u64,
-    /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
-    pub memory_limit: Size,
     pub print_debug: bool,
 }
 
@@ -60,8 +58,9 @@ where
         code: &[u8],
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
+        memory_limit: Size,
     ) -> VmResult<Self> {
-        let module = compile_and_use(code, options.memory_limit)?;
+        let module = compile_and_use(code, memory_limit)?;
         Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 
@@ -313,7 +312,9 @@ mod tests {
     #[test]
     fn required_features_works() {
         let backend = mock_backend(&[]);
-        let instance = Instance::from_code(CONTRACT, backend, mock_instance_options()).unwrap();
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance =
+            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
@@ -334,7 +335,8 @@ mod tests {
         .unwrap();
 
         let backend = mock_backend(&[]);
-        let instance = Instance::from_code(&wasm, backend, mock_instance_options()).unwrap();
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance = Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));

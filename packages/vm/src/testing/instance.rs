@@ -137,21 +137,23 @@ pub fn mock_instance_with_options(
         storage: MockStorage::default(),
         querier: MockQuerier::new(&balances),
     };
+    let memory_limit = options.memory_limit;
     let options = InstanceOptions {
         gas_limit: options.gas_limit,
-        memory_limit: options.memory_limit,
         print_debug: options.print_debug,
     };
-    Instance::from_code(wasm, backend, options).unwrap()
+    Instance::from_code(wasm, backend, options, memory_limit).unwrap()
 }
 
 /// Creates InstanceOptions for testing
-pub fn mock_instance_options() -> InstanceOptions {
-    InstanceOptions {
-        gas_limit: DEFAULT_GAS_LIMIT,
-        memory_limit: DEFAULT_MEMORY_LIMIT,
-        print_debug: DEFAULT_PRINT_DEBUG,
-    }
+pub fn mock_instance_options() -> (InstanceOptions, Size) {
+    (
+        InstanceOptions {
+            gas_limit: DEFAULT_GAS_LIMIT,
+            print_debug: DEFAULT_PRINT_DEBUG,
+        },
+        DEFAULT_MEMORY_LIMIT,
+    )
 }
 
 /// Runs a series of IO tests, hammering especially on allocate and deallocate.
