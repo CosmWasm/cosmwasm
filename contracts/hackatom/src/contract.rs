@@ -26,7 +26,7 @@ pub struct InitMsg {
 /// by blockchain logic (in the future by blockchain governance)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateMsg {
-    pub verifier: HumanAddr,
+    pub payout: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -112,7 +112,6 @@ pub fn init(
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
     msg: MigrateMsg,
 ) -> Result<MigrateResponse, HackError> {
     let data = deps
@@ -120,7 +119,7 @@ pub fn migrate(
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let mut config: State = from_slice(&data)?;
-    config.verifier = deps.api.canonical_address(&msg.verifier)?;
+    config.verifier = deps.api.canonical_address(&msg.payout)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
     Ok(MigrateResponse::default())
@@ -425,10 +424,9 @@ mod tests {
         // change the verifier via migrate
         let new_verifier = HumanAddr::from("someone else");
         let msg = MigrateMsg {
-            verifier: new_verifier.clone(),
+            payout: new_verifier.clone(),
         };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
