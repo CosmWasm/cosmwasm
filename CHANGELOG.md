@@ -2,6 +2,11 @@
 
 ## 0.14.0 (unreleased)
 
+**all**
+
+- The `query` enpoint is now optional. It is still hightly recommended to expose
+  it an almost any use case though.
+
 **cosmwasm-std**
 
 - Remove `from_address` from `BankMsg::Send`, as it always sends from the

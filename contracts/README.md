@@ -49,7 +49,7 @@ points in order to demonstrate and test the flexibility we have.
 
 | Contract | Macro                                         | Has `query` | Has `migrate` |
 | -------- | --------------------------------------------- | ----------- | ------------- |
-| burner   | `#[entry_point]`                              | yes         | yes           |
+| burner   | `#[entry_point]`                              | no          | yes           |
 | hackatom | [`create_entry_points_with_migration!`][cepm] | yes         | yes           |
 | queue    | mixed<sup>1</sup>                             | yes         | yes           |
 | reflect  | [`create_entry_points!`][cep]                 | yes         | no            |

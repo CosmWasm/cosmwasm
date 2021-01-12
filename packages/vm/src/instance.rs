@@ -492,7 +492,6 @@ mod tests {
                 (export "cosmwasm_vm_version_4" (func 0))
                 (export "init" (func 0))
                 (export "handle" (func 0))
-                (export "query" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
             )"#,
@@ -512,7 +511,6 @@ mod tests {
                 (export "cosmwasm_vm_version_4" (func 0))
                 (export "init" (func 0))
                 (export "handle" (func 0))
-                (export "query" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
             )"#,
