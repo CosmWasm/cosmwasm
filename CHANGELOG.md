@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 0.14.0 (unreleased)
+
+**cosmwasm-std**
+
+- Remove `from_address` from `BankMsg::Send`, as it always sends from the
+  contract address, and this is consistent with other `CosmosMsg` variants.
+
 ## 0.13.1 (2020-01-12)
 
 **cosmwasm-std**

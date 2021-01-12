@@ -170,7 +170,6 @@ mod tests {
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -194,7 +193,6 @@ mod tests {
 
         // signer is not owner
         let payload = vec![BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -239,7 +237,6 @@ mod tests {
 
         let payload = vec![
             BankMsg::Send {
-                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
                 to_address: HumanAddr::from("friend"),
                 amount: coins(1, "token"),
             }

@@ -160,7 +160,6 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleRespon
         ctx.add_attribute("action", "release");
         ctx.add_attribute("destination", &to_addr);
         ctx.add_message(BankMsg::Send {
-            from_address: env.contract.address,
             to_address: to_addr,
             amount: balance,
         });
@@ -491,7 +490,6 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
                 to_address: beneficiary,
                 amount: coins(1000, "earth"),
             }

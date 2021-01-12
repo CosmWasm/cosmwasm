@@ -50,7 +50,6 @@ pub fn migrate(
     // get balance and send all to recipient
     let balance = deps.querier.query_all_balances(&env.contract.address)?;
     let send = BankMsg::Send {
-        from_address: env.contract.address,
         to_address: msg.payout.clone(),
         amount: balance,
     };
@@ -74,7 +73,7 @@ pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse>
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info, MOCK_CONTRACT_ADDR};
+    use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
     use cosmwasm_std::{coins, HumanAddr, StdError, Storage};
 
     #[test]
@@ -117,7 +116,6 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
                 to_address: payout,
                 amount: coins(123456, "gold"),
             }

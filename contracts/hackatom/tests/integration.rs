@@ -212,7 +212,6 @@ fn handle_release_works() {
     assert_eq!(
         msg,
         &BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: beneficiary,
             amount: coins(1000, "earth"),
         }
