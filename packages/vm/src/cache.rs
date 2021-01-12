@@ -119,14 +119,13 @@ where
         }
     }
 
-    /// Pins a Wasm that was previously stored via save_wasm.
-    /// This stores an already saved wasm into the pinned memory cache.
+    /// Pins a Module that was previously stored via save_wasm.
     ///
     /// The module is lookup first in the memory cache, and then in the file system cache.
     /// If not found, the code is loaded from the file system, compiled, and stored into the
     /// pinned cache.
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
-    pub fn pin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
+    pub fn pin(&mut self, checksum: &Checksum) -> VmResult<()> {
         // Try to get module from the memory cache
         if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
@@ -142,16 +141,16 @@ where
 
         // Load code from the file system
         let code = self.load_wasm(checksum)?;
-        // compile and store into the pinned cache
+        // Compile and store into the pinned cache
         let module = compile_only(code.as_slice())?;
         self.pinned_memory_cache.store(checksum, module)
     }
 
-    /// Unpins a Wasm, i.e. removes it from the pinned memory cache.
+    /// Unpins a Module, i.e. removes it from the pinned memory cache.
     ///
     /// Not found IDs are silently ignored, and no integrity check (checksum validation) is done
     /// on the removed value.
-    pub fn unpin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
+    pub fn unpin(&mut self, checksum: &Checksum) -> VmResult<()> {
         self.pinned_memory_cache.remove(checksum)
     }
 
@@ -463,7 +462,7 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // pinning hits the memory cache
-        cache.pin_wasm(&id).unwrap();
+        cache.pin(&id).unwrap();
         assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
         assert_eq!(cache.stats().hits_memory_cache, 3);
         assert_eq!(cache.stats().hits_fs_cache, 1);
@@ -527,7 +526,7 @@ mod tests {
 
         // from pinned memory
         {
-            cache.pin_wasm(&checksum).unwrap();
+            cache.pin(&checksum).unwrap();
 
             let mut instance = cache
                 .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
@@ -607,7 +606,7 @@ mod tests {
 
         // from pinned memory
         {
-            cache.pin_wasm(&checksum).unwrap();
+            cache.pin(&checksum).unwrap();
 
             let mut instance = cache
                 .get_instance(&checksum, mock_backend(&[]), TESTING_OPTIONS)
@@ -814,7 +813,7 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // pin
-        let _ = cache.pin_wasm(&id);
+        let _ = cache.pin(&id);
 
         // check pinned
         let backend = mock_backend(&[]);
@@ -825,7 +824,7 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // unpin
-        let _ = cache.unpin_wasm(&id);
+        let _ = cache.unpin(&id);
 
         // verify unpinned
         let backend = mock_backend(&[]);
@@ -836,10 +835,10 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // unpin again has no effect
-        let _ = cache.unpin_wasm(&id).unwrap();
+        let _ = cache.unpin(&id).unwrap();
 
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
-        let _ = cache.unpin_wasm(&non_id).unwrap();
+        let _ = cache.unpin(&non_id).unwrap();
     }
 }
