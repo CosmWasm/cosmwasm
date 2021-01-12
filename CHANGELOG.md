@@ -12,6 +12,13 @@
 - Remove `from_address` from `BankMsg::Send`, as it always sends from the
   contract address, and this is consistent with other `CosmosMsg` variants.
 
+**cosmwasm-vm**
+
+- Avoid serialization of Modules in `InMemoryCache`, for performance. (#697)
+
+  Also, remove `memory_limit` from `InstanceOptions`, and define it instead at
+  `Cache` level (same memory limit for all cached instances).
+
 ## 0.13.1 (2020-01-12)
 
 **cosmwasm-std**

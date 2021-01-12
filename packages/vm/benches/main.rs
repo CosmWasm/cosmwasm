@@ -17,7 +17,6 @@ const DEFAULT_GAS_LIMIT: u64 = 400_000;
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,
     print_debug: false,
-    memory_limit: DEFAULT_MEMORY_LIMIT,
 };
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
@@ -30,8 +29,9 @@ fn bench_instance(c: &mut Criterion) {
     group.bench_function("compile and instantiate", |b| {
         b.iter(|| {
             let backend = mock_backend(&[]);
+            let (instance_options, memory_limit) = mock_instance_options();
             let _instance =
-                Instance::from_code(CONTRACT, backend, mock_instance_options()).unwrap();
+                Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
         });
     });
 
@@ -41,7 +41,8 @@ fn bench_instance(c: &mut Criterion) {
             gas_limit: 500_000_000_000,
             ..DEFAULT_INSTANCE_OPTIONS
         };
-        let mut instance = Instance::from_code(CONTRACT, backend, much_gas).unwrap();
+        let mut instance =
+            Instance::from_code(CONTRACT, backend, much_gas, DEFAULT_MEMORY_LIMIT).unwrap();
 
         b.iter(|| {
             let info = mock_info("creator", &coins(1000, "earth"));
@@ -58,7 +59,8 @@ fn bench_instance(c: &mut Criterion) {
             gas_limit: 500_000_000_000,
             ..DEFAULT_INSTANCE_OPTIONS
         };
-        let mut instance = Instance::from_code(CONTRACT, backend, much_gas).unwrap();
+        let mut instance =
+            Instance::from_code(CONTRACT, backend, much_gas, DEFAULT_MEMORY_LIMIT).unwrap();
 
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
@@ -85,6 +87,7 @@ fn bench_cache(c: &mut Criterion) {
         base_dir: TempDir::new().unwrap().into_path(),
         supported_features: features_from_csv("staking"),
         memory_cache_size: MEMORY_CACHE_SIZE,
+        instance_memory_limit: DEFAULT_MEMORY_LIMIT,
     };
 
     group.bench_function("save wasm", |b| {
@@ -102,6 +105,7 @@ fn bench_cache(c: &mut Criterion) {
             base_dir: TempDir::new().unwrap().into_path(),
             supported_features: features_from_csv("staking"),
             memory_cache_size: Size(0),
+            instance_memory_limit: DEFAULT_MEMORY_LIMIT,
         };
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };

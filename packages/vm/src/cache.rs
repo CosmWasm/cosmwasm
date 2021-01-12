@@ -28,11 +28,17 @@ pub struct CacheOptions {
     pub base_dir: PathBuf,
     pub supported_features: HashSet<String>,
     pub memory_cache_size: Size,
+    /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
+    /// e.g. full MiBs.
+    pub instance_memory_limit: Size,
 }
 
 pub struct Cache<A: Api, S: Storage, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
+    /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
+    /// e.g. full MiBs.
+    instance_memory_limit: Size,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
@@ -56,12 +62,13 @@ where
     ///
     /// This function is marked unsafe due to `FileSystemCache::new`, which implicitly
     /// assumes the disk contents are correct, and there's no way to ensure the artifacts
-    //  stored in the cache haven't been corrupted or tampered with.
+    /// stored in the cache haven't been corrupted or tampered with.
     pub unsafe fn new(options: CacheOptions) -> VmResult<Self> {
         let CacheOptions {
             base_dir,
             supported_features,
             memory_cache_size,
+            instance_memory_limit,
         } = options;
         let wasm_path = base_dir.join(WASM_DIR);
         create_dir_all(&wasm_path)
@@ -72,6 +79,7 @@ where
         Ok(Cache {
             wasm_path,
             supported_features,
+            instance_memory_limit,
             memory_cache: InMemoryCache::new(memory_cache_size),
             fs_cache,
             stats: Stats::default(),
@@ -116,9 +124,8 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let store = make_runtime_store(options.memory_limit);
         // Get module from memory cache
-        if let Some(module) = self.memory_cache.load(checksum, &store)? {
+        if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
@@ -126,6 +133,7 @@ where
         }
 
         // Get module from file system cache
+        let store = make_runtime_store(self.instance_memory_limit);
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =
@@ -141,7 +149,7 @@ where
         // stored the old module format.
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        let module = compile_and_use(&wasm, options.memory_limit)?;
+        let module = compile_and_use(&wasm, self.instance_memory_limit)?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
@@ -201,7 +209,6 @@ mod tests {
     const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
-        memory_limit: TESTING_MEMORY_LIMIT,
         print_debug: false,
     };
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
@@ -217,6 +224,7 @@ mod tests {
             base_dir: TempDir::new().unwrap().into_path(),
             supported_features: default_features(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
     }
 
@@ -298,6 +306,7 @@ mod tests {
                 base_dir: tmp_dir.path().to_path_buf(),
                 supported_features: default_features(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
             let mut cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
@@ -309,6 +318,7 @@ mod tests {
                 base_dir: tmp_dir.path().to_path_buf(),
                 supported_features: default_features(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+                instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
             let cache2: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options2).unwrap() };
@@ -342,6 +352,7 @@ mod tests {
             base_dir: tmp_dir.path().to_path_buf(),
             supported_features: default_features(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
+            instance_memory_limit: TESTING_MEMORY_LIMIT,
         };
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
@@ -582,7 +593,6 @@ mod tests {
         // Init from module cache
         let options = InstanceOptions {
             gas_limit: 10,
-            memory_limit: TESTING_MEMORY_LIMIT,
             print_debug: false,
         };
         let mut instance1 = cache.get_instance(&id, backend1, options).unwrap();
@@ -601,7 +611,6 @@ mod tests {
         // Init from memory cache
         let options = InstanceOptions {
             gas_limit: TESTING_GAS_LIMIT,
-            memory_limit: TESTING_MEMORY_LIMIT,
             print_debug: false,
         };
         let mut instance2 = cache.get_instance(&id, backend2, options).unwrap();
