@@ -120,9 +120,8 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: u32,
-    info_ptr: u32,
     msg_ptr: u32,
 ) -> u32
 where
@@ -133,7 +132,6 @@ where
     let res = _do_migrate(
         migrate_fn,
         env_ptr as *mut Region,
-        info_ptr as *mut Region,
         msg_ptr as *mut Region,
     );
     let v = to_vec(&res).unwrap();
@@ -205,9 +203,8 @@ where
 }
 
 fn _do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, M) -> Result<MigrateResponse<C>, E>,
     env_ptr: *mut Region,
-    info_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<MigrateResponse<C>>
 where
@@ -216,15 +213,13 @@ where
     E: ToString,
 {
     let env: Vec<u8> = unsafe { consume_region(env_ptr) };
-    let info: Vec<u8> = unsafe { consume_region(info_ptr) };
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let info: MessageInfo = try_into_contract_result!(from_slice(&info));
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    migrate_fn(deps.as_mut(), env, info, msg).into()
+    migrate_fn(deps.as_mut(), env, msg).into()
 }
 
 fn _do_query<M, E>(

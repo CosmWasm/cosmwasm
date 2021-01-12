@@ -422,9 +422,9 @@ mod tests {
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
-        let new_verifier = HumanAddr::from("someone else");
+        let payout = HumanAddr::from("someone else");
         let msg = MigrateMsg {
-            payout: new_verifier.clone(),
+            payout: payout.clone(),
         };
         let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         assert_eq!(0, res.messages.len());

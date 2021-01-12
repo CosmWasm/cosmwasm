@@ -57,7 +57,6 @@ where
 pub fn call_migrate<S, A, Q, U>(
     instance: &mut Instance<S, A, Q>,
     env: &Env,
-    info: &MessageInfo,
     msg: &[u8],
 ) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
@@ -67,8 +66,7 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let info = to_vec(info)?;
-    let data = call_migrate_raw(instance, &env, &info, msg)?;
+    let data = call_migrate_raw(instance, &env, msg)?;
     let result: ContractResult<MigrateResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -121,11 +119,10 @@ pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
 pub fn call_migrate_raw<S: Storage, A: Api + 'static, Q: Querier>(
     instance: &mut Instance<S, A, Q>,
     env: &[u8],
-    info: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>> {
     instance.set_storage_readonly(false);
-    call_raw(instance, "migrate", &[env, info, msg], MAX_LENGTH_MIGRATE)
+    call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.

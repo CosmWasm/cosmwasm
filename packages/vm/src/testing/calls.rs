@@ -60,7 +60,6 @@ where
 pub fn migrate<S, A, Q, M, U>(
     instance: &mut Instance<S, A, Q>,
     env: Env,
-    info: MessageInfo,
     msg: M,
 ) -> ContractResult<MigrateResponse<U>>
 where
@@ -71,7 +70,7 @@ where
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_migrate(instance, &env, &info, &serialized_msg).expect("VM error")
+    call_migrate(instance, &env, &serialized_msg).expect("VM error")
 }
 
 // query mimicks the call signature of the smart contracts.
