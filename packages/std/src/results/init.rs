@@ -48,7 +48,6 @@ mod tests {
     fn can_serialize_and_deserialize_init_response() {
         let original = InitResponse {
             messages: vec![BankMsg::Send {
-                from_address: HumanAddr::from("me"),
                 to_address: HumanAddr::from("you"),
                 amount: coins(1015, "earth"),
             }

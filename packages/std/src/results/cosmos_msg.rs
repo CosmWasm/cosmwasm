@@ -25,9 +25,8 @@ where
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BankMsg {
-    // this moves tokens in the underlying sdk
+    // sends tokens from the contract in the underlying sdk
     Send {
-        from_address: HumanAddr,
         to_address: HumanAddr,
         amount: Vec<Coin>,
     },
@@ -108,14 +107,9 @@ mod tests {
 
     #[test]
     fn from_bank_msg_works() {
-        let from_address = HumanAddr::from("me");
         let to_address = HumanAddr::from("you");
         let amount = coins(1015, "earth");
-        let bank = BankMsg::Send {
-            from_address,
-            to_address,
-            amount,
-        };
+        let bank = BankMsg::Send { to_address, amount };
         let msg: CosmosMsg = bank.clone().into();
         match msg {
             CosmosMsg::Bank(msg) => assert_eq!(bank, msg),

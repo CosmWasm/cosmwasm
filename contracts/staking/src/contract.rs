@@ -286,7 +286,6 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
     balance.amount = to_send;
     let res = HandleResponse {
         messages: vec![BankMsg::Send {
-            from_address: env.contract.address,
             to_address: info.sender.clone(),
             amount: vec![balance],
         }
