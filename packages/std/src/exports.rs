@@ -129,11 +129,7 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_migrate(
-        migrate_fn,
-        env_ptr as *mut Region,
-        msg_ptr as *mut Region,
-    );
+    let res = _do_migrate(migrate_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }

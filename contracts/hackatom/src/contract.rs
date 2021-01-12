@@ -109,11 +109,7 @@ pub fn init(
     Ok(ctx.try_into()?)
 }
 
-pub fn migrate(
-    deps: DepsMut,
-    _env: Env,
-    msg: MigrateMsg,
-) -> Result<MigrateResponse, HackError> {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<MigrateResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -422,16 +418,16 @@ mod tests {
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
-        let payout = HumanAddr::from("someone else");
+        let new_payout = HumanAddr::from("someone else");
         let msg = MigrateMsg {
-            payout: payout.clone(),
+            payout: new_payout.clone(),
         };
         let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'
         let query_response = query_verifier(deps.as_ref()).unwrap();
-        assert_eq!(query_response.verifier, new_verifier);
+        assert_eq!(query_response.verifier, new_payout);
     }
 
     #[test]
