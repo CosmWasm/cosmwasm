@@ -1,43 +1,37 @@
 use std::collections::HashMap;
-use wasmer::{Module, Store};
+use wasmer::Module;
 
 use crate::{Checksum, VmResult};
 
 /// An pinned in memory module cache
 pub struct PinnedMemoryCache {
-    artifacts: HashMap<Checksum, Vec<u8>>,
+    modules: HashMap<Checksum, Module>,
 }
 
 impl PinnedMemoryCache {
     /// Creates a new cache
     pub fn new() -> Self {
         PinnedMemoryCache {
-            artifacts: HashMap::new(),
+            modules: HashMap::new(),
         }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        let serialized_artifact = module.serialize()?;
-        self.artifacts.insert(*checksum, serialized_artifact);
+        self.modules.insert(*checksum, module);
         Ok(())
     }
 
-    /// Removes a module from the cache.
-    /// Not found modules are silently ignored.
-    /// Potential integrity errors (wrong checksum) are not checked / enforced.
+    /// Removes a module from the cache
+    /// Not found modules are silently ignored. Potential integrity errors (wrong checksum) are not checked / enforced
     pub fn remove(&mut self, checksum: &Checksum) -> VmResult<()> {
-        self.artifacts.remove(checksum);
+        self.modules.remove(checksum);
         Ok(())
     }
 
-    /// Looks up a module in the cache and takes its artifact and
-    /// creates a new module from store and artifact.
-    pub fn load(&mut self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
-        match self.artifacts.get(checksum) {
-            Some(serialized_artifact) => {
-                let new_module = unsafe { Module::deserialize(store, &serialized_artifact) }?;
-                Ok(Some(new_module))
-            }
+    /// Looks up a module in the cache and creates a new module
+    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
+        match self.modules.get(checksum) {
+            Some(module) => Ok(Some(module.clone())),
             None => Ok(None),
         }
     }
@@ -46,12 +40,10 @@ impl PinnedMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::size::Size;
-    use crate::wasm_backend::{compile_only, make_runtime_store};
+    use crate::wasm_backend::compile_only;
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
-    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
@@ -72,8 +64,7 @@ mod tests {
         let checksum = Checksum::generate(&wasm);
 
         // Module does not exist
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        let cache_entry = cache.load(&checksum, &store).unwrap();
+        let cache_entry = cache.load(&checksum).unwrap();
         assert!(cache_entry.is_none());
 
         // Compile module
@@ -92,8 +83,7 @@ mod tests {
         cache.store(&checksum, original).unwrap();
 
         // Load module
-        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
-        let cached = cache.load(&checksum, &store).unwrap().unwrap();
+        let cached = cache.load(&checksum).unwrap().unwrap();
 
         // Ensure cached module can be executed
         {

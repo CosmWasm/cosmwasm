@@ -127,16 +127,14 @@ where
     /// pinned cache.
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
     pub fn pin_wasm(&mut self, checksum: &Checksum) -> VmResult<()> {
-        // Create an unlimited store (just for reading)
-        let store = make_runtime_store(Size(0));
-
         // Try to get module from the memory cache
-        if let Some(module) = self.memory_cache.load(checksum, &store)? {
+        if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
             return self.pinned_memory_cache.store(checksum, module);
         }
 
         // Try to get module from file system cache
+        let store = make_runtime_store(self.instance_memory_limit);
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             return self.pinned_memory_cache.store(checksum, module);
@@ -165,9 +163,8 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let store = make_runtime_store(self.instance_memory_limit);
         // Try to get module from the pinned memory cache
-        if let Some(module) = self.pinned_memory_cache.load(checksum, &store)? {
+        if let Some(module) = self.pinned_memory_cache.load(checksum)? {
             self.stats.hits_pinned_memory_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
@@ -183,6 +180,7 @@ where
         }
 
         // Get module from file system cache
+        let store = make_runtime_store(self.instance_memory_limit);
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =

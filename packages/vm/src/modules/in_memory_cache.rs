@@ -24,8 +24,7 @@ impl InMemoryCache {
         Ok(())
     }
 
-    /// Looks up a module in the cache and takes its artifact and
-    /// creates a new module from store and artifact.
+    /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
         match self.modules.get(checksum) {
             Some(module) => Ok(Some(module.clone())),
