@@ -18,8 +18,8 @@ pub fn compile_only(code: &[u8]) -> VmResult<Module> {
 
 /// Compiles a given Wasm bytecode into a module.
 /// The given memory limit (in bytes) is used when memories are created.
-pub fn compile_and_use(code: &[u8], memory_limit: Size) -> VmResult<Module> {
-    let store = make_compile_time_store(Some(memory_limit));
+pub fn compile_and_use(code: &[u8], memory_limit: Option<Size>) -> VmResult<Module> {
+    let store = make_compile_time_store(memory_limit);
     let module = Module::new(&store, code)?;
     Ok(module)
 }

@@ -31,7 +31,7 @@ pub struct CacheOptions {
     pub memory_cache_size: Size,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
-    pub instance_memory_limit: Size,
+    pub instance_memory_limit: Option<Size>,
 }
 
 pub struct Cache<A: Api, S: Storage, Q: Querier> {
@@ -39,7 +39,7 @@ pub struct Cache<A: Api, S: Storage, Q: Querier> {
     supported_features: HashSet<String>,
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
-    instance_memory_limit: Size,
+    instance_memory_limit: Option<Size>,
     pinned_memory_cache: PinnedMemoryCache,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
@@ -252,7 +252,7 @@ mod tests {
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 4_000_000;
-    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
+    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
         print_debug: false,

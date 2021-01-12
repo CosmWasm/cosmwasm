@@ -12,7 +12,7 @@ use cosmwasm_vm::{
 };
 
 // Instance
-const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
+const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(64));
 const DEFAULT_GAS_LIMIT: u64 = 400_000;
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,

@@ -55,15 +55,10 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
 }
 
 /// Created a store with no compiler and the given memory limit (in bytes)
-/// If memory_limit is 0, no limit is applied.
-pub fn make_runtime_store(memory_limit: Size) -> Store {
+/// If memory_limit is None, no limit is applied.
+pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
     let engine = JIT::headless().engine();
-    let limit = if memory_limit.0 > 0 {
-        Some(memory_limit)
-    } else {
-        None
-    };
-    make_store_with_engine(&engine, limit)
+    make_store_with_engine(&engine, memory_limit)
 }
 
 /// Creates a store from an engine and an optional memory limit.
@@ -163,7 +158,7 @@ mod tests {
         };
 
         // No limit
-        let store = make_runtime_store(Size(0));
+        let store = make_runtime_store(None);
         let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));
@@ -180,7 +175,7 @@ mod tests {
         assert_eq!(instance_memory.ty().maximum, None);
 
         // Instantiate with limit
-        let store = make_runtime_store(Size::kibi(23 * 64));
+        let store = make_runtime_store(Some(Size::kibi(23 * 64)));
         let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));

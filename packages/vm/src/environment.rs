@@ -344,7 +344,7 @@ mod tests {
 
     const TESTING_GAS_LIMIT: u64 = 500_000;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
+    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
     fn make_instance(gas_limit: u64) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let env = Environment::new(MockApi::default(), gas_limit, false);

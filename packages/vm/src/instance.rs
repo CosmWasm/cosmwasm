@@ -58,7 +58,7 @@ where
         code: &[u8],
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
-        memory_limit: Size,
+        memory_limit: Option<Size>,
     ) -> VmResult<Self> {
         let module = compile_and_use(code, memory_limit)?;
         Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
@@ -378,7 +378,7 @@ mod tests {
         let mut instance = mock_instance_with_options(
             &CONTRACT,
             MockInstanceOptions {
-                memory_limit: Size::mebi(500),
+                memory_limit: Some(Size::mebi(500)),
                 ..Default::default()
             },
         );
