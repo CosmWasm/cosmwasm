@@ -4,6 +4,7 @@
 
 | Crate            | Download                                                                                                                            | Docs                                                                                    |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| cosmwasm-derive  | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive)    | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive)   |
 | cosmwasm-schema  | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema)    | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema)   |
 | cosmwasm-std     | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)             | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)         |
 | cosmwasm-storage | [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage) | [![Docs](https://docs.rs/cosmwasm-storage/badge.svg)](https://docs.rs/cosmwasm-storage) |

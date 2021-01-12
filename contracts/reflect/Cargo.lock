@@ -104,14 +104,14 @@ checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
 name = "cosmwasm-derive"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "syn",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "schemars",
  "serde_json",
@@ -119,7 +119,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "base64",
  "cosmwasm-derive",
@@ -131,7 +131,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -139,7 +139,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "clru",
  "cosmwasm-std",

@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-derive"
-version = "0.13.0"
+version = "0.13.1"
 authors = ["Simon Warta <webmaster128@users.noreply.github.com>"]
 edition = "2018"
 description = "A package for auto-generated code used for CosmWasm contract development. This is shipped as part of cosmwasm-std. Do not use directly."
