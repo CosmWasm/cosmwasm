@@ -1,26 +1,30 @@
-use clru::CLruCache;
+use std::collections::HashMap;
 use wasmer::Module;
 
-use crate::{Checksum, Size, VmResult};
+use crate::{Checksum, VmResult};
 
-const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
-
-/// An in-memory module cache
-pub struct InMemoryCache {
-    modules: CLruCache<Checksum, Module>,
+/// An pinned in memory module cache
+pub struct PinnedMemoryCache {
+    modules: HashMap<Checksum, Module>,
 }
 
-impl InMemoryCache {
-    /// Creates a new cache with the given size (in bytes)
-    pub fn new(size: Size) -> Self {
-        let max_entries = size.0 / ESTIMATED_MODULE_SIZE.0;
-        InMemoryCache {
-            modules: CLruCache::new(max_entries),
+impl PinnedMemoryCache {
+    /// Creates a new cache
+    pub fn new() -> Self {
+        PinnedMemoryCache {
+            modules: HashMap::new(),
         }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        self.modules.put(*checksum, module);
+        self.modules.insert(*checksum, module);
+        Ok(())
+    }
+
+    /// Removes a module from the cache
+    /// Not found modules are silently ignored. Potential integrity errors (wrong checksum) are not checked / enforced
+    pub fn remove(&mut self, checksum: &Checksum) -> VmResult<()> {
+        self.modules.remove(checksum);
         Ok(())
     }
 
@@ -36,7 +40,6 @@ impl InMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::size::Size;
     use crate::wasm_backend::compile_only;
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
@@ -44,8 +47,8 @@ mod tests {
     const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
-    fn in_memory_cache_run() {
-        let mut cache = InMemoryCache::new(Size::mebi(200));
+    fn pinned_memory_cache_run() {
+        let mut cache = PinnedMemoryCache::new();
 
         // Create module
         let wasm = wat::parse_str(

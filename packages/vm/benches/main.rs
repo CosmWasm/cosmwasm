@@ -42,7 +42,7 @@ fn bench_instance(c: &mut Criterion) {
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
-            Instance::from_code(CONTRACT, backend, much_gas, DEFAULT_MEMORY_LIMIT).unwrap();
+            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
 
         b.iter(|| {
             let info = mock_info("creator", &coins(1000, "earth"));
@@ -60,7 +60,7 @@ fn bench_instance(c: &mut Criterion) {
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
-            Instance::from_code(CONTRACT, backend, much_gas, DEFAULT_MEMORY_LIMIT).unwrap();
+            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
 
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
@@ -115,6 +115,7 @@ fn bench_cache(c: &mut Criterion) {
             let _ = cache
                 .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
+            assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert_eq!(cache.stats().hits_memory_cache, 0);
             assert!(cache.stats().hits_fs_cache >= 1);
             assert_eq!(cache.stats().misses, 0);
@@ -135,8 +136,28 @@ fn bench_cache(c: &mut Criterion) {
             let _ = cache
                 .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
-            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
             assert!(cache.stats().hits_memory_cache >= 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
+            assert_eq!(cache.stats().misses, 0);
+        });
+    });
+
+    group.bench_function("instantiate from pinned memory", |b| {
+        let checksum = Checksum::generate(CONTRACT);
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
+        // Load into pinned memory
+        cache.pin(&checksum).unwrap();
+
+        b.iter(|| {
+            let backend = mock_backend(&[]);
+            let _ = cache
+                .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
+                .unwrap();
+            assert_eq!(cache.stats().hits_memory_cache, 0);
+            assert!(cache.stats().hits_pinned_memory_cache >= 1);
+            assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
         });
     });

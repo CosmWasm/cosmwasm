@@ -342,7 +342,7 @@ mod tests {
     const INIT_DENOM: &str = "TOKEN";
 
     const TESTING_GAS_LIMIT: u64 = 500_000;
-    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
+    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let gas_limit = TESTING_GAS_LIMIT;

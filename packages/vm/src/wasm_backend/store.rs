@@ -56,9 +56,9 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
 
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
-pub fn make_runtime_store(memory_limit: Size) -> Store {
+pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
     let engine = JIT::headless().engine();
-    make_store_with_engine(&engine, Some(memory_limit))
+    make_store_with_engine(&engine, memory_limit)
 }
 
 /// Creates a store from an engine and an optional memory limit.
@@ -157,8 +157,25 @@ mod tests {
             module.serialize().unwrap()
         };
 
+        // No limit
+        let store = make_runtime_store(None);
+        let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
+        let module_memory = module.info().memories.last().unwrap();
+        assert_eq!(module_memory.minimum, Pages(4));
+        assert_eq!(module_memory.maximum, None);
+        let instance = Instance::new(&module, &ImportObject::new()).unwrap();
+        let instance_memory: Memory = instance
+            .exports
+            .iter()
+            .memories()
+            .map(|pair| pair.1.clone())
+            .next()
+            .unwrap();
+        assert_eq!(instance_memory.ty().minimum, Pages(4));
+        assert_eq!(instance_memory.ty().maximum, None);
+
         // Instantiate with limit
-        let store = make_runtime_store(Size::kibi(23 * 64));
+        let store = make_runtime_store(Some(Size::kibi(23 * 64)));
         let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
         let module_memory = module.info().memories.last().unwrap();
         assert_eq!(module_memory.minimum, Pages(4));

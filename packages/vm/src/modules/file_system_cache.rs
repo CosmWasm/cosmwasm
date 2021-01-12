@@ -111,7 +111,7 @@ mod tests {
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
-    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
+    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
     const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]

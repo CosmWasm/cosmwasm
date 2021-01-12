@@ -18,7 +18,7 @@ use super::storage::MockStorage;
 /// number of contract executions and queries on one instance. For this reason it is significatly
 /// higher than the limit for a single execution that we have in the production setup.
 const DEFAULT_GAS_LIMIT: u64 = 5_000_000;
-const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(16);
+const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 const DEFAULT_PRINT_DEBUG: bool = true;
 
 pub fn mock_instance(
@@ -89,7 +89,7 @@ pub struct MockInstanceOptions<'a> {
     pub gas_limit: u64,
     pub print_debug: bool,
     /// Memory limit in bytes. Use a value that is divisible by the Wasm page size 65536, e.g. full MiBs.
-    pub memory_limit: Size,
+    pub memory_limit: Option<Size>,
 }
 
 impl Default for MockInstanceOptions<'_> {
@@ -146,7 +146,7 @@ pub fn mock_instance_with_options(
 }
 
 /// Creates InstanceOptions for testing
-pub fn mock_instance_options() -> (InstanceOptions, Size) {
+pub fn mock_instance_options() -> (InstanceOptions, Option<Size>) {
     (
         InstanceOptions {
             gas_limit: DEFAULT_GAS_LIMIT,
