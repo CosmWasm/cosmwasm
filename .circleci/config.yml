@@ -27,7 +27,6 @@ workflows:
                 - master
                 - /^[0-9]+\.[0-9]+$/
                 # 👇 Add your branch here if benchmarking matters to your work
-                - pinned-memory-cache
                 - benchmarking
                 - update-wasmer
                 - metering-restart
