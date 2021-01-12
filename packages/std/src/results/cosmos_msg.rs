@@ -23,9 +23,7 @@ where
     /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
     #[cfg(feature = "stargate")]
     Stargate {
-        /// 'type' is a reserved keyword, so we need to use a serde rename
-        #[serde(rename = "type")]
-        kind: String,
+        type_url: String,
         data: Binary,
     },
     Wasm(WasmMsg),

@@ -13,8 +13,9 @@ pub enum QueryRequest<C: CustomQuery> {
     Bank(BankQuery),
     Custom(C),
     Staking(StakingQuery),
-    /// A Stargate message encoded the same way as a protobof [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
+    /// A Stargate query encoded the same way as abci_query, with path and protobuf encoded Data.
     /// The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md)
+    /// The response is also protobuf encoded. The caller is responsible for compiling the proper protobuf definitions
     #[cfg(feature = "stargate")]
     Stargate {
         /// this is the fully qualified service path used for routing,
