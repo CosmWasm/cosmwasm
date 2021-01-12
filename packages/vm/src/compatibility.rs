@@ -23,11 +23,10 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.
-/// Basically, anything that is used in calls.rs
+/// Other optional exports exist, e.g. "query" and "migrate".
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
 const REQUIRED_EXPORTS: &[&str] = &[
     "cosmwasm_vm_version_4",
-    "query",
     "init",
     "handle",
     "allocate",

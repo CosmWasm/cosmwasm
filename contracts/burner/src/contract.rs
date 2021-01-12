@@ -1,9 +1,9 @@
 use cosmwasm_std::{
-    attr, entry_point, BankMsg, Deps, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
-    MigrateResponse, Order, QueryResponse, StdError, StdResult,
+    attr, entry_point, BankMsg, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
+    MigrateResponse, Order, StdError, StdResult,
 };
 
-use crate::msg::{HandleMsg, InitMsg, MigrateMsg, QueryMsg};
+use crate::msg::{HandleMsg, InitMsg, MigrateMsg};
 
 #[entry_point]
 pub fn init(
@@ -61,13 +61,6 @@ pub fn migrate(
         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
         data: Some(data_msg.into()),
     })
-}
-
-#[entry_point]
-pub fn query(_deps: Deps, _env: Env, _msg: QueryMsg) -> StdResult<QueryResponse> {
-    Err(StdError::generic_err(
-        "You can only use this contract for migrations",
-    ))
 }
 
 #[cfg(test)]
