@@ -30,7 +30,7 @@ pub struct CacheOptions {
     pub memory_cache_size: Size,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
-    pub memory_instances_limit: Size,
+    pub instance_memory_limit: Size,
 }
 
 pub struct Cache<A: Api, S: Storage, Q: Querier> {
@@ -68,7 +68,7 @@ where
             base_dir,
             supported_features,
             memory_cache_size,
-            memory_instances_limit: instance_memory_limit,
+            instance_memory_limit,
         } = options;
         let wasm_path = base_dir.join(WASM_DIR);
         create_dir_all(&wasm_path)
@@ -224,7 +224,7 @@ mod tests {
             base_dir: TempDir::new().unwrap().into_path(),
             supported_features: default_features(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-            memory_instances_limit: TESTING_MEMORY_LIMIT,
+            instance_memory_limit: TESTING_MEMORY_LIMIT,
         }
     }
 
@@ -306,7 +306,7 @@ mod tests {
                 base_dir: tmp_dir.path().to_path_buf(),
                 supported_features: default_features(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-                memory_instances_limit: TESTING_MEMORY_LIMIT,
+                instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
             let mut cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
@@ -318,7 +318,7 @@ mod tests {
                 base_dir: tmp_dir.path().to_path_buf(),
                 supported_features: default_features(),
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-                memory_instances_limit: TESTING_MEMORY_LIMIT,
+                instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
             let cache2: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options2).unwrap() };
@@ -352,7 +352,7 @@ mod tests {
             base_dir: tmp_dir.path().to_path_buf(),
             supported_features: default_features(),
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
-            memory_instances_limit: TESTING_MEMORY_LIMIT,
+            instance_memory_limit: TESTING_MEMORY_LIMIT,
         };
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };

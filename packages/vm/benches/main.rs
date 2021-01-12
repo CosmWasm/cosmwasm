@@ -87,7 +87,7 @@ fn bench_cache(c: &mut Criterion) {
         base_dir: TempDir::new().unwrap().into_path(),
         supported_features: features_from_csv("staking"),
         memory_cache_size: MEMORY_CACHE_SIZE,
-        memory_instances_limit: DEFAULT_MEMORY_LIMIT,
+        instance_memory_limit: DEFAULT_MEMORY_LIMIT,
     };
 
     group.bench_function("save wasm", |b| {
@@ -105,7 +105,7 @@ fn bench_cache(c: &mut Criterion) {
             base_dir: TempDir::new().unwrap().into_path(),
             supported_features: features_from_csv("staking"),
             memory_cache_size: Size(0),
-            memory_instances_limit: DEFAULT_MEMORY_LIMIT,
+            instance_memory_limit: DEFAULT_MEMORY_LIMIT,
         };
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(non_memcache).unwrap() };
