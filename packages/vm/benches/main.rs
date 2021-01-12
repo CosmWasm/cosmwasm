@@ -12,7 +12,7 @@ use cosmwasm_vm::{
 };
 
 // Instance
-const DEFAULT_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(64));
+const DEFAULT_MEMORY_LIMIT: Size = Size::mebi(64);
 const DEFAULT_GAS_LIMIT: u64 = 400_000;
 const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
     gas_limit: DEFAULT_GAS_LIMIT,
@@ -42,7 +42,7 @@ fn bench_instance(c: &mut Criterion) {
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
-            Instance::from_code(CONTRACT, backend, much_gas, DEFAULT_MEMORY_LIMIT).unwrap();
+            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
 
         b.iter(|| {
             let info = mock_info("creator", &coins(1000, "earth"));
@@ -60,7 +60,7 @@ fn bench_instance(c: &mut Criterion) {
             ..DEFAULT_INSTANCE_OPTIONS
         };
         let mut instance =
-            Instance::from_code(CONTRACT, backend, much_gas, DEFAULT_MEMORY_LIMIT).unwrap();
+            Instance::from_code(CONTRACT, backend, much_gas, Some(DEFAULT_MEMORY_LIMIT)).unwrap();
 
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;

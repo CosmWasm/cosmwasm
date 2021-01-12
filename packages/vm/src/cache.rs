@@ -31,7 +31,7 @@ pub struct CacheOptions {
     pub memory_cache_size: Size,
     /// Memory limit for instances, in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
-    pub instance_memory_limit: Option<Size>,
+    pub instance_memory_limit: Size,
 }
 
 pub struct Cache<A: Api, S: Storage, Q: Querier> {
@@ -39,7 +39,7 @@ pub struct Cache<A: Api, S: Storage, Q: Querier> {
     supported_features: HashSet<String>,
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
-    instance_memory_limit: Option<Size>,
+    instance_memory_limit: Size,
     pinned_memory_cache: PinnedMemoryCache,
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
@@ -133,7 +133,7 @@ where
         }
 
         // Try to get module from file system cache
-        let store = make_runtime_store(self.instance_memory_limit);
+        let store = make_runtime_store(Some(self.instance_memory_limit));
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             return self.pinned_memory_cache.store(checksum, module);
@@ -181,7 +181,7 @@ where
         }
 
         // Get module from file system cache
-        let store = make_runtime_store(self.instance_memory_limit);
+        let store = make_runtime_store(Some(self.instance_memory_limit));
         if let Some(module) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =
@@ -197,7 +197,7 @@ where
         // stored the old module format.
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        let module = compile_and_use(&wasm, self.instance_memory_limit)?;
+        let module = compile_and_use(&wasm, Some(self.instance_memory_limit))?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
@@ -254,7 +254,7 @@ mod tests {
     use tempfile::TempDir;
 
     const TESTING_GAS_LIMIT: u64 = 4_000_000;
-    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
+    const TESTING_MEMORY_LIMIT: Size = Size::mebi(16);
     const TESTING_OPTIONS: InstanceOptions = InstanceOptions {
         gas_limit: TESTING_GAS_LIMIT,
         print_debug: false,
