@@ -14,6 +14,8 @@
 
 **cosmwasm-vm**
 
+- Add PinnedMemoryCache. (#696)
+
 - Avoid serialization of Modules in `InMemoryCache`, for performance. (#697)
 
   Also, remove `memory_limit` from `InstanceOptions`, and define it instead at
