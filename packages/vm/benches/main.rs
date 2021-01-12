@@ -147,12 +147,7 @@ fn bench_cache(c: &mut Criterion) {
         let checksum = Checksum::generate(CONTRACT);
         let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options.clone()).unwrap() };
-        // Load into memory
-        cache
-            .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
-            .unwrap();
-
-        // Pin
+        // Load into pinned memory
         cache.pin(&checksum).unwrap();
 
         b.iter(|| {
@@ -160,7 +155,7 @@ fn bench_cache(c: &mut Criterion) {
             let _ = cache
                 .get_instance(&checksum, backend, DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
-            assert_eq!(cache.stats().hits_memory_cache, 1);
+            assert_eq!(cache.stats().hits_memory_cache, 0);
             assert!(cache.stats().hits_pinned_memory_cache >= 1);
             assert_eq!(cache.stats().hits_fs_cache, 1);
             assert_eq!(cache.stats().misses, 0);
