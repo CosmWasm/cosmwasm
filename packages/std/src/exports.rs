@@ -25,6 +25,10 @@ use crate::{Deps, DepsMut, MessageInfo};
 #[no_mangle]
 extern "C" fn requires_staking() -> () {}
 
+#[cfg(feature = "stargate")]
+#[no_mangle]
+extern "C" fn requires_stargate() -> () {}
+
 /// cosmwasm_vm_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.

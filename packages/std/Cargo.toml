@@ -27,6 +27,9 @@ staking = []
 # at the cost of a bit of code size and performance.
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
+# stargate enables stargate-dependent messages and queries, like raw protobuf messages
+# as well as ibc-related functionality
+stargate = []
 
 [dependencies]
 base64 = "0.13.0"
