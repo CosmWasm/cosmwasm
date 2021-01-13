@@ -49,7 +49,20 @@ pub struct PacketMsg {
 }
 ```
 
-The responses look like:
+The responses look like one of the following:
 
-```rust
+```json
+{
+  "ok": null
+}
 ```
+
+```json
+{
+  "error": "invalid packet"
+}
+```
+
+## TODO
+
+* Expose some queries - locally as well as remote - get your address on the other chain
