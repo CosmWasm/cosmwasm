@@ -1,10 +1,11 @@
 use cosmwasm_std::{
-    attr, entry_point, DepsMut, Env, HandleResponse, IbcChannel, IbcOrder, InitResponse,
-    MessageInfo, StdError, StdResult,
+    entry_point, to_binary, DepsMut, Env, HandleResponse, HumanAddr, IbcAcknowledgement,
+    IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse,
+    MessageInfo, StdError, StdResult, WasmMsg,
 };
 
-use crate::msg::{HandleMsg, InitMsg};
-use crate::state::{config, Config};
+use crate::msg::{HandleMsg, InitMsg, ReflectInitMsg};
+use crate::state::{accounts, config, Config};
 
 const IBC_VERSION: &str = "ibc-reflect";
 
@@ -21,17 +22,45 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
 
 #[entry_point]
 pub fn handle(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
-    _msg: HandleMsg,
+    info: MessageInfo,
+    msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
-    Err(StdError::generic_err(
-        "You can only call this contract via ibc packets",
-    ))
+    match msg {
+        HandleMsg::InitCallback { id, contract_addr } => {
+            handle_init_callback(deps, info, id, contract_addr)
+        }
+    }
+}
+
+pub fn handle_init_callback(
+    deps: DepsMut,
+    info: MessageInfo,
+    id: String,
+    contract_addr: HumanAddr,
+) -> StdResult<HandleResponse> {
+    // sanity check - the caller is registering itself
+    if info.sender != contract_addr {
+        return Err(StdError::generic_err("Must register self on callback"));
+    }
+
+    // store id -> contract_addr if it is empty
+    // id comes from: `let chan_id = msg.endpoint.channel_id;` in `ibc_channel_connect`
+    accounts(deps.storage).update(id.as_bytes(), |val| -> StdResult<_> {
+        match val {
+            Some(_) => Err(StdError::generic_err(
+                "Cannot register over an existing channel",
+            )),
+            None => Ok(contract_addr),
+        }
+    })?;
+
+    Ok(HandleResponse::default())
 }
 
 #[entry_point]
+/// enforces ordering and versioing constraints
 pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannel) -> StdResult<()> {
     if msg.order != IbcOrder::Ordered {
         return Err(StdError::generic_err("Only supports ordered channels"));
@@ -44,6 +73,77 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannel) -> StdResult
     }
 
     Ok(())
+}
+
+#[entry_point]
+/// once it's established, we create the reflect contract
+pub fn ibc_channel_connect(
+    deps: DepsMut,
+    _env: Env,
+    msg: IbcChannel,
+) -> StdResult<IbcBasicResponse> {
+    let cfg = config(deps.storage).load()?;
+    let chan_id = msg.endpoint.channel_id;
+    let label = format!("ibc-reflect-{}", &chan_id);
+
+    let payload = to_binary(&ReflectInitMsg {
+        callback_id: Some(chan_id),
+    })?;
+    let msg = WasmMsg::Instantiate {
+        code_id: cfg.reflect_code_id,
+        msg: payload,
+        send: vec![],
+        label: Some(label),
+    };
+
+    Ok(IbcBasicResponse {
+        messages: vec![msg.into()],
+        attributes: vec![],
+    })
+}
+
+#[entry_point]
+/// we do nothing
+/// TODO: remove the account from the lookup?
+pub fn ibc_channel_close(
+    _deps: DepsMut,
+    _env: Env,
+    _msg: IbcChannel,
+) -> StdResult<IbcBasicResponse> {
+    Ok(IbcBasicResponse::default())
+}
+
+#[entry_point]
+/// we look for a the proper reflect contract to relay to and send the message
+/// We cannot return any meaningful response value as we do not know the response value
+/// of execution. We just return ok if we dispatched, error if we failed to dispatch
+pub fn ibc_packet_receive(
+    _deps: DepsMut,
+    _env: Env,
+    _msg: IbcPacket,
+) -> StdResult<IbcReceiveResponse> {
+    // TODO
+    Ok(IbcReceiveResponse::default())
+}
+
+#[entry_point]
+/// we do nothing
+pub fn ibc_packet_ack(
+    _deps: DepsMut,
+    _env: Env,
+    _msg: IbcAcknowledgement,
+) -> StdResult<IbcBasicResponse> {
+    Ok(IbcBasicResponse::default())
+}
+
+#[entry_point]
+/// we do nothing
+pub fn ibc_packet_timeout(
+    _deps: DepsMut,
+    _env: Env,
+    _msg: IbcPacket,
+) -> StdResult<IbcBasicResponse> {
+    Ok(IbcBasicResponse::default())
 }
 
 #[cfg(test)]
@@ -66,40 +166,5 @@ mod tests {
             }
             _ => panic!("expected migrate error message"),
         }
-    }
-
-    #[test]
-    fn migrate_cleans_up_data() {
-        let mut deps = mock_dependencies(&coins(123456, "gold"));
-
-        // store some sample data
-        deps.storage.set(b"foo", b"bar");
-        deps.storage.set(b"key2", b"data2");
-        deps.storage.set(b"key3", b"cool stuff");
-        let cnt = deps.storage.range(None, None, Order::Ascending).count();
-        assert_eq!(3, cnt);
-
-        // change the verifier via migrate
-        let payout = HumanAddr::from("someone else");
-        let msg = MigrateMsg {
-            payout: payout.clone(),
-        };
-        let info = mock_info("creator", &[]);
-        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        // check payout
-        assert_eq!(1, res.messages.len());
-        let msg = res.messages.get(0).expect("no message");
-        assert_eq!(
-            msg,
-            &BankMsg::Send {
-                to_address: payout,
-                amount: coins(123456, "gold"),
-            }
-            .into(),
-        );
-
-        // check there is no data in storage
-        let cnt = deps.storage.range(None, None, Order::Ascending).count();
-        assert_eq!(0, cnt);
     }
 }

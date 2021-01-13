@@ -1,6 +1,41 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "HandleMsg",
-  "description": "HandleMsg is a placeholder where we don't take any input",
-  "type": "object"
+  "anyOf": [
+    {
+      "description": "InitCallback is returned from reflect contract after a new contract is set up",
+      "type": "object",
+      "required": [
+        "init_callback"
+      ],
+      "properties": {
+        "init_callback": {
+          "type": "object",
+          "required": [
+            "contract_addr",
+            "id"
+          ],
+          "properties": {
+            "contract_addr": {
+              "description": "contract_addr is the address of this contract",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/HumanAddr"
+                }
+              ]
+            },
+            "id": {
+              "description": "id was provided in the InitMsg",
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "HumanAddr": {
+      "type": "string"
+    }
+  }
 }
