@@ -24,12 +24,13 @@ pub fn init(
     config(deps.storage).save(&state)?;
 
     let mut ctx = Context::new();
-    if let Some(contract_addr) = msg.callback {
+    if let Some(id) = msg.callback_id {
         let data = CallbackMsg::InitCallback {
+            id,
             contract_addr: env.contract.address,
         };
         let msg = WasmMsg::Execute {
-            contract_addr,
+            contract_addr: info.sender,
             msg: to_binary(&data)?,
             send: vec![],
         };
@@ -162,7 +163,7 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
@@ -180,7 +181,7 @@ mod tests {
         let caller = HumanAddr::from("calling-contract");
 
         let msg = InitMsg {
-            callback: Some(caller.clone()),
+            callback_id: Some("foobar".to_string()),
         };
         let info = mock_info(&caller, &coins(1000, "earth"));
 
@@ -199,6 +200,7 @@ mod tests {
                 assert_eq!(
                     parsed,
                     CallbackMsg::InitCallback {
+                        id: "foobar".to_string(),
                         contract_addr: MOCK_CONTRACT_ADDR.into(),
                     }
                 );
@@ -216,7 +218,7 @@ mod tests {
     fn reflect() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -238,7 +240,7 @@ mod tests {
     fn reflect_requires_owner() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -264,7 +266,7 @@ mod tests {
     fn reflect_reject_empty_msgs() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -282,7 +284,7 @@ mod tests {
     fn reflect_multiple_messages() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -314,7 +316,7 @@ mod tests {
     fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -335,7 +337,7 @@ mod tests {
     fn change_owner_requires_current_owner_as_sender() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let creator = HumanAddr::from("creator");
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -358,7 +360,7 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
         let creator = HumanAddr::from("creator");
 
-        let msg = InitMsg { callback: None };
+        let msg = InitMsg { callback_id: None };
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
