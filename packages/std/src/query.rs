@@ -4,6 +4,8 @@ use serde::{Deserialize, Serialize};
 use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
+#[cfg(feature = "stargate")]
+use crate::ibc::IbcQuery;
 use crate::math::Decimal;
 use crate::types::Empty;
 
@@ -24,6 +26,8 @@ pub enum QueryRequest<C: CustomQuery> {
         /// this is the expected protobuf message type (not any), binary encoded
         data: Binary,
     },
+    #[cfg(feature = "stargate")]
+    Ibc(IbcQuery),
     Wasm(WasmQuery),
 }
 
@@ -103,6 +107,13 @@ impl<C: CustomQuery> From<StakingQuery> for QueryRequest<C> {
 impl<C: CustomQuery> From<WasmQuery> for QueryRequest<C> {
     fn from(msg: WasmQuery) -> Self {
         QueryRequest::Wasm(msg)
+    }
+}
+
+#[cfg(feature = "stargate")]
+impl<C: CustomQuery> From<IbcQuery> for QueryRequest<C> {
+    fn from(msg: IbcQuery) -> Self {
+        QueryRequest::Ibc(msg)
     }
 }
 

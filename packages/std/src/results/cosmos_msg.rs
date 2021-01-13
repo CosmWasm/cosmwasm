@@ -5,6 +5,8 @@ use std::fmt;
 use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
+#[cfg(feature = "stargate")]
+use crate::ibc::IbcMsg;
 use crate::types::Empty;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -26,6 +28,8 @@ where
         type_url: String,
         data: Binary,
     },
+    #[cfg(feature = "stargate")]
+    Ibc(IbcMsg),
     Wasm(WasmMsg),
 }
 
@@ -121,6 +125,13 @@ impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<StakingMsg> for Cosmos
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg<T> {
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
+    }
+}
+
+#[cfg(feature = "stargate")]
+impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<IbcMsg> for CosmosMsg<T> {
+    fn from(msg: IbcMsg) -> Self {
+        CosmosMsg::Ibc(msg)
     }
 }
 
