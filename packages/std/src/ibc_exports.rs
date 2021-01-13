@@ -49,7 +49,7 @@ fn _do_ibc_channel_open<E>(
     contract_fn: &dyn Fn(DepsMut, Env, IbcChannel) -> Result<(), E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<bool>
+) -> ContractResult<()>
 where
     E: ToString,
 {
@@ -60,10 +60,7 @@ where
     let msg: IbcChannel = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    match contract_fn(deps.as_mut(), env, msg) {
-        Ok(_) => ContractResult::Ok(true),
-        Err(e) => ContractResult::Err(e.to_string()),
-    }
+    contract_fn(deps.as_mut(), env, msg).into()
 }
 
 /// do_ibc_channel_connect is designed for use with #[entry_point] to make a "C" extern
