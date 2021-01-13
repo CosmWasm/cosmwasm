@@ -1,6 +1,12 @@
-use cosmwasm_std::{entry_point, to_binary, DepsMut, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, StdError, StdResult, WasmMsg, from_binary, CosmosMsg};
+use cosmwasm_std::{
+    entry_point, from_binary, to_binary, CosmosMsg, DepsMut, Env, HandleResponse, HumanAddr,
+    IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse,
+    InitResponse, MessageInfo, StdError, StdResult, WasmMsg,
+};
 
-use crate::msg::{HandleMsg, InitMsg, ReflectInitMsg, PacketMsg, AcknowledgementMsg, ReflectHandleMsg};
+use crate::msg::{
+    AcknowledgementMsg, HandleMsg, InitMsg, PacketMsg, ReflectHandleMsg, ReflectInitMsg,
+};
 use crate::state::{accounts, config, Config};
 
 const IBC_VERSION: &str = "ibc-reflect";
@@ -57,11 +63,11 @@ pub fn handle_init_callback(
 
 #[entry_point]
 /// enforces ordering and versioing constraints
-pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannel) -> StdResult<()> {
-    if msg.order != IbcOrder::Ordered {
+pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
+    if channel.order != IbcOrder::Ordered {
         return Err(StdError::generic_err("Only supports ordered channels"));
     }
-    if msg.version.as_str() != IBC_VERSION {
+    if channel.version.as_str() != IBC_VERSION {
         return Err(StdError::generic_err(format!(
             "Must set version to `{}`",
             IBC_VERSION
@@ -76,10 +82,10 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannel) -> StdResult
 pub fn ibc_channel_connect(
     deps: DepsMut,
     _env: Env,
-    msg: IbcChannel,
+    channel: IbcChannel,
 ) -> StdResult<IbcBasicResponse> {
     let cfg = config(deps.storage).load()?;
-    let chan_id = msg.endpoint.channel_id;
+    let chan_id = channel.endpoint.channel_id;
     let label = format!("ibc-reflect-{}", &chan_id);
 
     let payload = to_binary(&ReflectInitMsg {
@@ -104,7 +110,7 @@ pub fn ibc_channel_connect(
 pub fn ibc_channel_close(
     _deps: DepsMut,
     _env: Env,
-    _msg: IbcChannel,
+    _channel: IbcChannel,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse::default())
 }
@@ -133,11 +139,12 @@ pub fn ibc_packet_receive(
     let (reflect_addr, msgs) = match parse_receipt(deps, packet) {
         Ok(m) => m,
         Err(_) => {
-            let acknowledgement = to_binary(&AcknowledgementMsg::Err("invalid packet".to_string()))?;
-            return Ok(IbcReceiveResponse{
+            let acknowledgement =
+                to_binary(&AcknowledgementMsg::Err("invalid packet".to_string()))?;
+            return Ok(IbcReceiveResponse {
                 acknowledgement,
                 messages: vec![],
-                attributes: vec![]
+                attributes: vec![],
             });
         }
     };
@@ -145,19 +152,17 @@ pub fn ibc_packet_receive(
     // let them know we're fine
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(()))?;
     // create the message to re-dispatch to the reflect contract
-    let reflect_msg = ReflectHandleMsg::ReflectMsg {
-        msgs,
-    };
+    let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
     let wasm_msg = WasmMsg::Execute {
         contract_addr: reflect_addr,
         msg: to_binary(&reflect_msg)?,
-        send: vec![]
+        send: vec![],
     };
     // and we are golden
-    Ok(IbcReceiveResponse{
+    Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![wasm_msg.into()],
-        attributes: vec![]
+        attributes: vec![],
     })
 }
 
@@ -166,7 +171,7 @@ pub fn ibc_packet_receive(
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
-    _msg: IbcAcknowledgement,
+    _ack: IbcAcknowledgement,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse::default())
 }
@@ -176,7 +181,7 @@ pub fn ibc_packet_ack(
 pub fn ibc_packet_timeout(
     _deps: DepsMut,
     _env: Env,
-    _msg: IbcPacket,
+    _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse::default())
 }
@@ -190,7 +195,9 @@ mod tests {
     fn init_works() {
         let mut deps = mock_dependencies(&[]);
 
-        let msg = InitMsg { reflect_code_id: 17 };
+        let msg = InitMsg {
+            reflect_code_id: 17,
+        };
         let info = mock_info("creator", &[]);
         let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len())
