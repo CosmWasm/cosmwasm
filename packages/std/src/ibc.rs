@@ -138,8 +138,15 @@ pub struct IbcAcknowledgement {
     pub original_packet: IbcPacket,
 }
 
+/// This is the return value for the majority of the ibc handlers.
+/// That are able to dispatch messages / events on their own,
+/// but have no meaningful return value to the calling code.
+///
+/// Callbacks that have return values (like receive_packet)
+/// or that cannot redispatch messages (like the handshake callbacks)
+/// will use other Response types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcConnectResponse<T = Empty>
+pub struct IbcBasicResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -148,50 +155,47 @@ where
     pub attributes: Vec<Attribute>,
 }
 
-impl<T> Default for IbcConnectResponse<T>
+impl<T> Default for IbcBasicResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     fn default() -> Self {
-        IbcConnectResponse {
+        IbcBasicResponse {
             messages: vec![],
             attributes: vec![],
         }
     }
 }
 
-// type IBCPacketReceiveResponse struct {
-//     // Acknowledgement contains the data to acknowledge the ibc packet execution
-//     Acknowledgement []byte `json:"acknowledgement"`
-//     // Messages comes directly from the contract and is it's request for action
-//     Messages []CosmosMsg `json:"messages,omitempty"`
-//     // log message to return over abci interface
-//     Attributes []cosmwasmv1.EventAttribute `json:"attributes"`
-// }
-//
-// type IBCPacketAcknowledgementResponse struct {
-//     Messages   []CosmosMsg                 `json:"messages"`
-//     Attributes []cosmwasmv1.EventAttribute `json:"attributes"`
-// }
-//
-// type IBCPacketTimeoutResponse struct {
-//     Messages   []CosmosMsg                 `json:"messages"`
-//     Attributes []cosmwasmv1.EventAttribute `json:"attributes"`
-// }
-//
-// type IBCChannelOpenResponse struct {
-//     // Success contains a boolean if the channel would be accepted
-//     Success bool `json:"result"`
-//     // Reason optional description why it was not accepted
-//     Reason string `json:"reason"`
-// }
-//
-// type IBCChannelConnectResponse struct {
-//     Messages   []CosmosMsg                 `json:"messages"`
-//     Attributes []cosmwasmv1.EventAttribute `json:"attributes"`
-// }
-//
-// type IBCChannelCloseResponse struct {
-//     Messages   []CosmosMsg                 `json:"messages"`
-//     Attributes []cosmwasmv1.EventAttribute `json:"attributes"`
-// }
+/// This is the return value for the majority of the ibc handlers.
+/// That are able to dispatch messages / events on their own,
+/// but have no meaningful return value to the calling code.
+///
+/// Callbacks that have return values (like receive_packet)
+/// or that cannot redispatch messages (like the handshake callbacks)
+/// will use other Response types
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcReceiveResponse<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    /// The bytes we return to the contract that sent the packet.
+    /// This may represent a success or error of exection
+    pub acknowledgement: Binary,
+    pub messages: Vec<CosmosMsg<T>>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
+}
+
+impl<T> Default for IbcReceiveResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn default() -> Self {
+        IbcReceiveResponse {
+            acknowledgement: Binary(vec![]),
+            messages: vec![],
+            attributes: vec![],
+        }
+    }
+}
