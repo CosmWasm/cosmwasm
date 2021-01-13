@@ -3,16 +3,11 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::HumanAddr;
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct MigrateMsg {
-    pub payout: HumanAddr,
-}
-
 /// InitMsg is a placeholder where we don't take any input
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {}
+pub struct InitMsg {
+    pub reflect_code_id: u64,
+}
 
 /// HandleMsg is a placeholder where we don't take any input
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

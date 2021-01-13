@@ -1,20 +1,22 @@
 use cosmwasm_std::{
-    attr, entry_point, BankMsg, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
-    MigrateResponse, Order, StdError, StdResult,
+    attr, entry_point, DepsMut, Env, HandleResponse, IbcChannel, IbcOrder, InitResponse,
+    MessageInfo, StdError, StdResult,
 };
 
-use crate::msg::{HandleMsg, InitMsg, MigrateMsg};
+use crate::msg::{HandleMsg, InitMsg};
+use crate::state::{config, Config};
+
+const IBC_VERSION: &str = "ibc-reflect";
 
 #[entry_point]
-pub fn init(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: InitMsg,
-) -> StdResult<InitResponse> {
-    Err(StdError::generic_err(
-        "You can only use this contract for migrations",
-    ))
+pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
+    // we store the reflect_id for creating accounts later
+    let cfg = Config {
+        reflect_code_id: msg.reflect_code_id,
+    };
+    config(deps.storage).save(&cfg)?;
+
+    Ok(InitResponse::default())
 }
 
 #[entry_point]
@@ -25,42 +27,23 @@ pub fn handle(
     _msg: HandleMsg,
 ) -> StdResult<HandleResponse> {
     Err(StdError::generic_err(
-        "You can only use this contract for migrations",
+        "You can only call this contract via ibc packets",
     ))
 }
 
 #[entry_point]
-pub fn migrate(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    msg: MigrateMsg,
-) -> StdResult<MigrateResponse> {
-    // delete all state
-    let keys: Vec<_> = deps
-        .storage
-        .range(None, None, Order::Ascending)
-        .map(|(k, _)| k)
-        .collect();
-    let count = keys.len();
-    for k in keys {
-        deps.storage.remove(&k);
+pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannel) -> StdResult<()> {
+    if msg.order != IbcOrder::Ordered {
+        return Err(StdError::generic_err("Only supports ordered channels"));
+    }
+    if msg.version.as_str() != IBC_VERSION {
+        return Err(StdError::generic_err(format!(
+            "Must set version to `{}`",
+            IBC_VERSION
+        )));
     }
 
-    // get balance and send all to recipient
-    let balance = deps.querier.query_all_balances(&env.contract.address)?;
-    let send = BankMsg::Send {
-        to_address: msg.payout.clone(),
-        amount: balance,
-    };
-
-    let data_msg = format!("burnt {} keys", count).into_bytes();
-
-    Ok(MigrateResponse {
-        messages: vec![send.into()],
-        attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
-        data: Some(data_msg.into()),
-    })
+    Ok(())
 }
 
 #[cfg(test)]
