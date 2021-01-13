@@ -110,10 +110,13 @@ pub struct IbcChannel {
 // TODO: check what representation we want here for encoding - string or number
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
+/// Naming comes from the protobuf files and go translations.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcOrder {
-    Unordered = 1,
-    Ordered = 2,
+    #[serde(rename = "ORDER_UNORDERED")]
+    Unordered,
+    #[serde(rename = "ORDER_ORDERED")]
+    Ordered,
 }
 
 // IBCTimeoutHeight Height is a monotonically increasing data type
