@@ -92,6 +92,18 @@ pub struct MockInstanceOptions<'a> {
     pub memory_limit: Option<Size>,
 }
 
+impl MockInstanceOptions<'_> {
+    #[cfg(feature = "stargate")]
+    fn default_features() -> HashSet<String> {
+        features_from_csv("staking,stargate")
+    }
+
+    #[cfg(not(feature = "stargate"))]
+    fn default_features() -> HashSet<String> {
+        features_from_csv("staking")
+    }
+}
+
 impl Default for MockInstanceOptions<'_> {
     fn default() -> Self {
         Self {
@@ -101,7 +113,7 @@ impl Default for MockInstanceOptions<'_> {
             backend_error: None,
 
             // instance
-            supported_features: features_from_csv("staking"),
+            supported_features: Self::default_features(),
             gas_limit: DEFAULT_GAS_LIMIT,
             print_debug: DEFAULT_PRINT_DEBUG,
             memory_limit: DEFAULT_MEMORY_LIMIT,
