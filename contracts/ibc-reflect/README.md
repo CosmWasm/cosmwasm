@@ -34,4 +34,6 @@ performing the requested action on behalf of the remote user.
 * How to set the return value from the execution properly? We return them
   async
 * How to handle errors properly?
+* How to send packets in the proper format. I guess we need an 
+  ibc-reflect-send contract on the origin chain?
 
