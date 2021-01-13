@@ -26,7 +26,11 @@ pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "stargate")]
-pub use crate::ibc::*;
+pub use crate::ibc::{
+    ChannelResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg,
+    IbcOrder, IbcPacket, IbcQuery, IbcReceiveResponse, IbcTimeoutHeight, ListChannelsResponse,
+    PortIdResponse,
+};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::math::{Decimal, Uint128};
@@ -63,7 +67,10 @@ pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 #[cfg(all(feature = "stargate", target_arch = "wasm32"))]
 mod ibc_exports;
 #[cfg(all(feature = "stargate", target_arch = "wasm32"))]
-pub use crate::ibc_exports::*;
+pub use crate::ibc_exports::{
+    do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
+    do_ibc_packet_receive, do_ibc_packet_timeout,
+};
 
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
