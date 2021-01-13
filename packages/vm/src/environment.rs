@@ -327,7 +327,7 @@ mod tests {
     };
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     // shorthands for function generics below
     type MA = MockApi;

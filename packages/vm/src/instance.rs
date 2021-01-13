@@ -307,7 +307,7 @@ mod tests {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn required_features_works() {
@@ -749,7 +749,7 @@ mod singlepass_tests {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn contract_deducts_gas_init() {

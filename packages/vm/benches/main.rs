@@ -21,7 +21,7 @@ const DEFAULT_INSTANCE_OPTIONS: InstanceOptions = InstanceOptions {
 // Cache
 const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
 fn bench_instance(c: &mut Criterion) {
     let mut group = c.benchmark_group("Instance");

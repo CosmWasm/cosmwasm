@@ -164,9 +164,9 @@ mod tests {
     use parity_wasm::elements::Internal;
     use std::iter::FromIterator;
 
-    static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/contract_0.6.wasm");
-    static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/contract_0.7.wasm");
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/hackatom_0.6.wasm");
+    static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
 
     fn default_features() -> HashSet<String> {

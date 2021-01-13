@@ -199,7 +199,7 @@ mod tests {
     use crate::testing::{mock_env, mock_info, mock_instance};
     use cosmwasm_std::{coins, Empty};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn call_init_works() {
