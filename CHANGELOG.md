@@ -1,33 +1,34 @@
 # CHANGELOG
 
-## 0.14.0 (unreleased)
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-**all**
+## [Unreleased]
 
-- The `query` enpoint is now optional. It is still hightly recommended to expose
-  it an almost any use case though.
+### Added
 
-**cosmwasm-std**
+- cosmwasm-vm: Add PinnedMemoryCache. (#696)
 
-- Remove `from_address` from `BankMsg::Send`, as it always sends from the
-  contract address, and this is consistent with other `CosmosMsg` variants.
+### Changed
 
-**cosmwasm-vm**
+- all: The `query` enpoint is now optional. It is still hightly recommended to
+  expose it an almost any use case though.
+- cosmwasm-std: Remove `from_address` from `BankMsg::Send`, as it always sends
+  from the contract address, and this is consistent with other `CosmosMsg`
+  variants.
+- cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
+  performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
+  instead at `Cache` level (same memory limit for all cached instances). (#697)
 
-- Add PinnedMemoryCache. (#696)
-- Avoid serialization of Modules in `InMemoryCache`, for performance. (#697)
+## [0.13.1] - 2020-01-12
 
-  Also, remove `memory_limit` from `InstanceOptions`, and define it instead at
-  `Cache` level (same memory limit for all cached instances).
+### Added
 
-## 0.13.1 (2020-01-12)
-
-**cosmwasm-std**
-
-- Add the new `#[entry_point]` macro attribute that serves as an alternative
-  implementation to `cosmwasm_std::create_entry_points!(contract)` and
-  `cosmwasm_std::create_entry_points_with_migration!(contract)`. Both ways are
-  supported in the 0.13 series.
+- cosmwasm-std: Add the new `#[entry_point]` macro attribute that serves as an
+  alternative implementation to `cosmwasm_std::create_entry_points!(contract)`
+  and `cosmwasm_std::create_entry_points_with_migration!(contract)`. Both ways
+  are supported in the 0.13 series.
 
 ## 0.13.0 (2020-01-06)
 
@@ -675,3 +676,6 @@ Some main points:
 - JSON Schema output works
 
 All future Changelog entries will reference this base
+
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...HEAD
+[0.13.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.0...v0.13.1
