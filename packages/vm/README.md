@@ -40,7 +40,7 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.10.5 ./contracts/hackatom \
-  && cp artifacts/hackatom.wasm packages/vm/testdata/contract_0.12.wasm
+  && cp artifacts/hackatom.wasm packages/vm/testdata/contract_0.14.wasm
 ```
 
 ## Testing
