@@ -34,7 +34,10 @@ pub use crate::errors::{
 };
 pub use crate::features::features_from_csv;
 #[cfg(feature = "stargate")]
-pub use crate::ibc_calls::call_ibc_channel_open;
+pub use crate::ibc_calls::{
+    call_ibc_channel_close, call_ibc_channel_connect, call_ibc_channel_open, call_ibc_packet_ack,
+    call_ibc_packet_receive, call_ibc_packet_timeout,
+};
 pub use crate::instance::{GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
