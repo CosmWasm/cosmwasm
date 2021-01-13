@@ -1,6 +1,6 @@
 #![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
-use cosmwasm_std::{HumanAddr, CosmosMsg, ContractResult};
+use cosmwasm_std::{ContractResult, CosmosMsg, HumanAddr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
