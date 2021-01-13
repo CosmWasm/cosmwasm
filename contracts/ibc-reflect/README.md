@@ -37,3 +37,19 @@ performing the requested action on behalf of the remote user.
 * How to send packets in the proper format. I guess we need an 
   ibc-reflect-send contract on the origin chain?
 
+## Protocol
+
+We require version `ibc-reflect-v1` when making the ibc handshake.
+
+The packets sent look like:
+
+```rust
+pub struct PacketMsg {
+  pub msgs: Vec<CosmosMsg>,
+}
+```
+
+The responses look like:
+
+```rust
+```

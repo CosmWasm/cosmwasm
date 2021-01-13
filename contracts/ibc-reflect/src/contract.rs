@@ -1,10 +1,6 @@
-use cosmwasm_std::{
-    entry_point, to_binary, DepsMut, Env, HandleResponse, HumanAddr, IbcAcknowledgement,
-    IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse,
-    MessageInfo, StdError, StdResult, WasmMsg,
-};
+use cosmwasm_std::{entry_point, to_binary, DepsMut, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, StdError, StdResult, WasmMsg, from_binary, CosmosMsg};
 
-use crate::msg::{HandleMsg, InitMsg, ReflectInitMsg};
+use crate::msg::{HandleMsg, InitMsg, ReflectInitMsg, PacketMsg, AcknowledgementMsg, ReflectHandleMsg};
 use crate::state::{accounts, config, Config};
 
 const IBC_VERSION: &str = "ibc-reflect";
@@ -113,17 +109,56 @@ pub fn ibc_channel_close(
     Ok(IbcBasicResponse::default())
 }
 
+// pull this into one function so we can handle all StdErrors once
+fn parse_receipt(deps: DepsMut, packet: IbcPacket) -> StdResult<(HumanAddr, Vec<CosmosMsg>)> {
+    // which local channel did this packet come on
+    let caller = packet.dest.channel_id;
+    // what is the reflect contract here
+    let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
+
+    // parse the message we got
+    let msg: PacketMsg = from_binary(&packet.data)?;
+    Ok((reflect_addr, msg.msgs))
+}
+
 #[entry_point]
 /// we look for a the proper reflect contract to relay to and send the message
 /// We cannot return any meaningful response value as we do not know the response value
 /// of execution. We just return ok if we dispatched, error if we failed to dispatch
 pub fn ibc_packet_receive(
-    _deps: DepsMut,
+    deps: DepsMut,
     _env: Env,
-    _msg: IbcPacket,
+    packet: IbcPacket,
 ) -> StdResult<IbcReceiveResponse> {
-    // TODO
-    Ok(IbcReceiveResponse::default())
+    let (reflect_addr, msgs) = match parse_receipt(deps, packet) {
+        Ok(m) => m,
+        Err(_) => {
+            let acknowledgement = to_binary(&AcknowledgementMsg::Err("invalid packet".to_string()))?;
+            return Ok(IbcReceiveResponse{
+                acknowledgement,
+                messages: vec![],
+                attributes: vec![]
+            });
+        }
+    };
+
+    // let them know we're fine
+    let acknowledgement = to_binary(&AcknowledgementMsg::Ok(()))?;
+    // create the message to re-dispatch to the reflect contract
+    let reflect_msg = ReflectHandleMsg::ReflectMsg {
+        msgs,
+    };
+    let wasm_msg = WasmMsg::Execute {
+        contract_addr: reflect_addr,
+        msg: to_binary(&reflect_msg)?,
+        send: vec![]
+    };
+    // and we are golden
+    Ok(IbcReceiveResponse{
+        acknowledgement,
+        messages: vec![wasm_msg.into()],
+        attributes: vec![]
+    })
 }
 
 #[entry_point]
