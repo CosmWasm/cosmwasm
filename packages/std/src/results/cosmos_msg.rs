@@ -120,6 +120,8 @@ pub enum IbcMsg {
         channel_id: String,
         data: Binary,
         timeout_height: u64,
+        // TODO: does the cosmos sdk support timestamp based timeouts?
+        timeout_timestamp: u64,
         version: u64,
     },
     /// This will close an existing channel that is owned by this contract.

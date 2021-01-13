@@ -9,6 +9,7 @@ mod coins;
 mod deps;
 mod entry_points;
 mod errors;
+mod ibc;
 #[cfg(feature = "iterator")]
 mod iterator;
 mod math;

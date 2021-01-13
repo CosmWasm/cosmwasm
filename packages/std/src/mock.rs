@@ -236,6 +236,10 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
                 kind: "Stargate".to_string(),
             }),
+            #[cfg(feature = "stargate")]
+            QueryRequest::Ibc(_) => SystemResult::Err(SystemError::UnsupportedRequest {
+                kind: "Ibc".to_string(),
+            }),
         }
     }
 }
