@@ -177,6 +177,10 @@ jobs:
           working_directory: ~/project/packages/vm
           command: cargo build --locked --features iterator
       - run:
+          name: Build for stargate
+          working_directory: ~/project/packages/vm
+          command: cargo build --locked --features iterator,staking,stargate
+      - run:
           name: Test
           working_directory: ~/project/packages/vm
           command: cargo test --locked
@@ -184,6 +188,10 @@ jobs:
           name: Test with iterator
           working_directory: ~/project/packages/vm
           command: cargo test --locked --features iterator
+      - run:
+          name: Test for stargate
+          working_directory: ~/project/packages/vm
+          command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
           paths:
             - /usr/local/cargo/registry
