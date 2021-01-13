@@ -5,6 +5,8 @@ use std::fmt;
 use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
+#[cfg(feature = "stargate")]
+use crate::ibc::IbcMsg;
 use crate::types::Empty;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -105,28 +107,6 @@ pub enum WasmMsg {
         /// optional human-readbale label for the contract
         label: Option<String>,
     },
-}
-
-/// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
-/// (contracts that directly speak the IBC protocol via 6 entry points)
-#[cfg(feature = "stargate")]
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum IbcMsg {
-    /// Sends an IBC packet with given data over the existing channel.
-    /// Data should be encoded in a format defined by the channel version,
-    /// and the module on the other side should know how to parse this.
-    SendPacket {
-        channel_id: String,
-        data: Binary,
-        timeout_height: u64,
-        // TODO: does the cosmos sdk support timestamp based timeouts?
-        timeout_timestamp: u64,
-        version: u64,
-    },
-    /// This will close an existing channel that is owned by this contract.
-    /// Port is auto-assigned to the contracts' ibc port
-    CloseChannel { channel_id: String },
 }
 
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {

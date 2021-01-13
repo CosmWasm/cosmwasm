@@ -5,8 +5,8 @@ use std::vec::Vec;
 use schemars::JsonSchema;
 use serde::Serialize;
 
-use crate::exports::make_dependencies;
 use crate::deps::DepsMut;
+use crate::exports::make_dependencies;
 use crate::ibc::{IbcChannel, IbcConnectResponse};
 use crate::memory::{consume_region, release_buffer, Region};
 use crate::results::ContractResult;

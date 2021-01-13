@@ -10,6 +10,26 @@ use crate::binary::Binary;
 use crate::results::{Attribute, CosmosMsg};
 use crate::types::Empty;
 
+/// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
+/// (contracts that directly speak the IBC protocol via 6 entry points)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IbcMsg {
+    /// Sends an IBC packet with given data over the existing channel.
+    /// Data should be encoded in a format defined by the channel version,
+    /// and the module on the other side should know how to parse this.
+    SendPacket {
+        channel_id: String,
+        data: Binary,
+        timeout_height: IbcTimeoutHeight,
+        timeout_timestamp: u64,
+        version: u64,
+    },
+    /// This will close an existing channel that is owned by this contract.
+    /// Port is auto-assigned to the contracts' ibc port
+    CloseChannel { channel_id: String },
+}
+
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection. These will return errors if the contract is not "ibc enabled"
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -80,6 +100,20 @@ pub enum IbcOrder {
     Ordered = 2,
 }
 
+// IBCTimeoutHeight Height is a monotonically increasing data type
+// that can be compared against another Height for the purposes of updating and
+// freezing clients.
+// Ordering is (revision_number, timeout_height)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcTimeoutHeight {
+    /// the version that the client is currently on
+    /// (eg. after reseting the chain this could increment 1 as height drops to 0)
+    pub revision_number: u64,
+    /// block height after which the packet times out.
+    /// the height within the given revision
+    pub timeout_height: u64,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcPacket {
     /// The raw data send from the other side in the packet
@@ -91,7 +125,7 @@ pub struct IbcPacket {
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
     /// block height after which the packet times out
-    pub timeout_height: u64,
+    pub timeout_height: IbcTimeoutHeight,
     /// block timestamp (in nanoseconds) after which the packet times out
     pub timeout_timestamp: u64,
     // the version that the client is currently on
