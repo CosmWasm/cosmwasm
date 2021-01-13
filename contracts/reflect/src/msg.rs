@@ -6,7 +6,17 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, HumanAddr, QueryRequest};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {}
+pub struct InitMsg {
+    /// if set, returns CallbackMsg::InitCallback{} to the caller with this contract's address
+    pub callback: Option<HumanAddr>,
+}
+
+/// This is what we return upon init if callback is set
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum CallbackMsg {
+    InitCallback { contract_addr: HumanAddr },
+}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
