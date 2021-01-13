@@ -6,7 +6,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
+use crate::addresses::HumanAddr;
 use crate::binary::Binary;
+use crate::coins::Coin;
 use crate::results::{Attribute, CosmosMsg};
 use crate::types::Empty;
 
@@ -15,6 +17,20 @@ use crate::types::Empty;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcMsg {
+    /// Sends bank tokens owned by the contract to the given address on another chain.
+    /// The channel must already be established between the ibctransfer module on this chain
+    /// and a matching module on the remote chain.
+    /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
+    /// module to.
+    Ics20Transfer {
+        /// exisiting channel to send the tokens over
+        channel_id: String,
+        /// address on the remote chain to receive these tokens
+        to_address: HumanAddr,
+        /// packet data only supports one coin
+        /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
+        amount: Coin,
+    },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
     /// and the module on the other side should know how to parse this.
