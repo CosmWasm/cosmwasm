@@ -34,26 +34,28 @@ and this project adheres to
   and `cosmwasm_std::create_entry_points_with_migration!(contract)`. Both ways
   are supported in the 0.13 series.
 
-## 0.13.0 (2020-01-06)
+## [0.13.0] – 2020-01-06
 
-**all**
+## Added
 
-- Drop support for Rust versions lower than 1.47.0.
+- cosmwasm-std: Extend binary to array support to 64 bytes.
 
-**cosmwasm-std**
+## Changed
 
-- Extend binary to array support to 64 bytes.
-- Remove `cosmwasm_std::testing::MockApi::new`. Use `MockApi::default` instead.
-
-**cosmwasm-vm**
-
-- Upgrade Wasmer to 1.0 and adapt all the internal workings accordingly.
-- Export method `cosmwasm_vm::Cache::stats` and response type `Stats`.
-- Remove `cosmwasm_vm::testing::MockApi::new`. Use `MockApi::default` instead.
-- Convert field `Instance::api` to a method.
-- Change order of generic arguments for consistency in `Instance`, `Cache` and
-  `Backend` to always match `<A: Api, S: Storage, Q: Querier>`.
-- Remove `Instance::get_memory_size`. Use `Instance::memory_pages` instead.
+- all: Drop support for Rust versions lower than 1.47.0.
+- cosmwasm-std: Remove `cosmwasm_std::testing::MockApi::new`. Use
+  `MockApi::default` instead.
+- cosmwasm-vm: Upgrade Wasmer to 1.0 and adapt all the internal workings
+  accordingly.
+- cosmwasm-vm: Export method `cosmwasm_vm::Cache::stats` and response type
+  `Stats`.
+- cosmwasm-vm: Remove `cosmwasm_vm::testing::MockApi::new`. Use
+  `MockApi::default` instead.
+- cosmwasm-vm: Convert field `Instance::api` to a method.
+- cosmwasm-vm: Change order of generic arguments for consistency in `Instance`,
+  `Cache` and `Backend` to always match `<A: Api, S: Storage, Q: Querier>`.
+- cosmwasm-vm: Remove `Instance::get_memory_size`. Use `Instance::memory_pages`
+  instead.
 
 ## 0.12.2 (2020-12-14)
 
@@ -683,3 +685,4 @@ All future Changelog entries will reference this base
 
 [unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...HEAD
 [0.13.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.12.0...v0.13.0
