@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.13.2 (2020-01-14)
+
+- cosmwasm-vm: Update Wasmer to 1.0.1.
+
 ## 0.13.1 (2020-01-12)
 
 **cosmwasm-std**
