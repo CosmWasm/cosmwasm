@@ -232,6 +232,10 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
+            #[cfg(feature = "stargate")]
+            QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
+                kind: "Stargate".to_string(),
+            }),
         }
     }
 }

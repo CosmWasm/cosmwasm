@@ -124,9 +124,7 @@ pub enum IbcMsg {
     },
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contracts' ibc port
-    CloseChannel {
-        channel_id: String,
-    }
+    CloseChannel { channel_id: String },
 }
 
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {
