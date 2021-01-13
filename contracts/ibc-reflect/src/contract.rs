@@ -185,21 +185,14 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, HumanAddr, StdError, Storage};
 
     #[test]
-    fn init_fails() {
+    fn init_works() {
         let mut deps = mock_dependencies(&[]);
 
-        let msg = InitMsg {};
-        let info = mock_info("creator", &coins(1000, "earth"));
-        // we can just call .unwrap() to assert this was a success
-        let res = init(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "You can only use this contract for migrations")
-            }
-            _ => panic!("expected migrate error message"),
-        }
+        let msg = InitMsg { reflect_code_id: 17 };
+        let info = mock_info("creator", &[]);
+        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len())
     }
 }
