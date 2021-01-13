@@ -1,4 +1,5 @@
 #![cfg(feature = "stargate")]
+
 use cosmwasm_std::{
     ContractResult, Env, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcPacket,
     IbcReceiveResponse,
