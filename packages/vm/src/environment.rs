@@ -630,7 +630,7 @@ mod tests {
         let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        env.call_function0("cosmwasm_vm_version_4", &[]).unwrap();
+        env.call_function0("interface_version_5", &[]).unwrap();
     }
 
     #[test]

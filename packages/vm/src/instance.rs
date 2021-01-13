@@ -348,7 +348,7 @@ mod tests {
         let instance = mock_instance(&CONTRACT, &[]);
 
         instance
-            .call_function0("cosmwasm_vm_version_4", &[])
+            .call_function0("interface_version_5", &[])
             .expect("error calling function");
     }
 
@@ -491,7 +491,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "cosmwasm_vm_version_4" (func 0))
+                (export "interface_version_5" (func 0))
                 (export "init" (func 0))
                 (export "handle" (func 0))
                 (export "allocate" (func 0))
@@ -510,7 +510,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "cosmwasm_vm_version_4" (func 0))
+                (export "interface_version_5" (func 0))
                 (export "init" (func 0))
                 (export "handle" (func 0))
                 (export "allocate" (func 0))

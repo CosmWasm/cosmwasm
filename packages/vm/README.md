@@ -16,6 +16,7 @@ compatibility list:
 
 | cosmwasm-vm | Supported interface versions | cosmwasm-std |
 | ----------- | ---------------------------- | ------------ |
+| 0.14        | `interface_version_5`        | 0.14         |
 | 0.13        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
 | 0.12        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
 | 0.11        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
