@@ -9,6 +9,7 @@ mod conversion;
 mod environment;
 mod errors;
 mod features;
+mod ibc_calls;
 mod imports;
 mod instance;
 mod limited;
@@ -32,6 +33,8 @@ pub use crate::errors::{
     VmError, VmResult,
 };
 pub use crate::features::features_from_csv;
+#[cfg(feature = "stargate")]
+pub use crate::ibc_calls::call_ibc_channel_open;
 pub use crate::instance::{GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;

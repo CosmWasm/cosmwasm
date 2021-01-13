@@ -24,6 +24,8 @@ backtraces = []
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
+# this enables all stargate-related functionality, including the ibc entry points
+stargate = ["cosmwasm-std/stargate"]
 # Use cranelift backend instead of singlepass. This is required for development on Windows.
 cranelift = ["wasmer/cranelift"]
 
