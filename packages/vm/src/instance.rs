@@ -307,7 +307,7 @@ mod tests {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn required_features_works() {
@@ -348,7 +348,7 @@ mod tests {
         let instance = mock_instance(&CONTRACT, &[]);
 
         instance
-            .call_function0("cosmwasm_vm_version_4", &[])
+            .call_function0("interface_version_5", &[])
             .expect("error calling function");
     }
 
@@ -491,7 +491,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "cosmwasm_vm_version_4" (func 0))
+                (export "interface_version_5" (func 0))
                 (export "init" (func 0))
                 (export "handle" (func 0))
                 (export "allocate" (func 0))
@@ -510,7 +510,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "cosmwasm_vm_version_4" (func 0))
+                (export "interface_version_5" (func 0))
                 (export "init" (func 0))
                 (export "handle" (func 0))
                 (export "allocate" (func 0))
@@ -565,7 +565,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 146);
-        assert_eq!(report2.used_internally, 67318);
+        assert_eq!(report2.used_internally, 67147);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -749,7 +749,7 @@ mod singlepass_tests {
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn contract_deducts_gas_init() {
@@ -764,7 +764,7 @@ mod singlepass_tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 67464);
+        assert_eq!(init_used, 67293);
     }
 
     #[test]
@@ -787,7 +787,7 @@ mod singlepass_tests {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 194543);
+        assert_eq!(handle_used, 191869);
     }
 
     #[test]
@@ -821,6 +821,6 @@ mod singlepass_tests {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 52471);
+        assert_eq!(query_used, 52424);
     }
 }

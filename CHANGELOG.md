@@ -21,6 +21,8 @@ and this project adheres to
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
   ([#697])
+- cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
+  `interface_version_5`.
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697

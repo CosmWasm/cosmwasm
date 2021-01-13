@@ -261,7 +261,7 @@ mod tests {
     };
     const TESTING_MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     fn default_features() -> HashSet<String> {
         features_from_csv("staking")
