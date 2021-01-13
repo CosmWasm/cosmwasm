@@ -4,6 +4,11 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use crate::binary::Binary;
+use crate::results::{Attribute, CosmosMsg};
+use crate::types::Empty;
 
 /// These are queries to the various IBC modules to see the state of the contract's
 /// IBC connection. These will return errors if the contract is not "ibc enabled"
@@ -57,13 +62,22 @@ pub struct IbcEndpoint {
 pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
-    pub order: Order,
+    pub order: IbcOrder,
     pub version: String,
     /// CounterpartyVersion can be None when not known this context, yet
     pub counterparty_version: Option<String>,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
     pub connection_id: String,
+}
+
+// TODO: check what representation we want here for encoding - string or number
+/// IbcOrder defines if a channel is ORDERED or UNORDERED
+#[repr(u8)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum IbcOrder {
+    Unordered = 1,
+    Ordered = 2,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -88,6 +102,28 @@ pub struct IbcPacket {
 pub struct IbcAcknowledgement {
     pub acknowledgement: Binary,
     pub original_packet: IbcPacket,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcConnectResponse<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub messages: Vec<CosmosMsg<T>>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
+}
+
+impl<T> Default for IbcConnectResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn default() -> Self {
+        IbcConnectResponse {
+            messages: vec![],
+            attributes: vec![],
+        }
+    }
 }
 
 // type IBCPacketReceiveResponse struct {
