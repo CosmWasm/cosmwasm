@@ -93,7 +93,7 @@ pub struct IbcChannel {
 
 // TODO: check what representation we want here for encoding - string or number
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
-#[repr(u8)]
+/// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcOrder {
     Unordered = 1,
