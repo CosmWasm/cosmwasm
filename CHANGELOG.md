@@ -8,7 +8,7 @@ and this project adheres to
 
 ### Added
 
-- cosmwasm-vm: Add PinnedMemoryCache. (#696)
+- cosmwasm-vm: Add PinnedMemoryCache. ([#696])
 
 ### Changed
 
@@ -19,7 +19,11 @@ and this project adheres to
   variants.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
-  instead at `Cache` level (same memory limit for all cached instances). (#697)
+  instead at `Cache` level (same memory limit for all cached instances).
+  ([#697])
+
+[#696]: https://github.com/CosmWasm/cosmwasm/issues/696
+[#697]: https://github.com/CosmWasm/cosmwasm/issues/697
 
 ## [0.13.1] - 2020-01-12
 
