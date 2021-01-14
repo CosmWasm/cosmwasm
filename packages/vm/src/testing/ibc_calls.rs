@@ -18,7 +18,7 @@ use crate::{Api, Querier, Storage};
 // ibc_channel_open mimicks the call signature of the smart contracts.
 // thus it moves env and channel rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn ibc_channel_open<A, S, Q, U>(
+pub fn ibc_channel_open<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     channel: IbcChannel,
