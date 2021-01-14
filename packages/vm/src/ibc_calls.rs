@@ -128,13 +128,18 @@ pub fn call_ibc_channel_open_raw<A, S, Q>(
     env: &[u8],
     channel: &[u8],
 ) -> VmResult<Vec<u8>>
-    where
-        A: Api + 'static,
-        S: Storage + 'static,
-        Q: Querier + 'static,
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "ibc_channel_open", &[env, channel], MAX_LENGTH_IBC)
+    call_raw(
+        instance,
+        "ibc_channel_open",
+        &[env, channel],
+        MAX_LENGTH_IBC,
+    )
 }
 
 pub fn call_ibc_channel_connect_raw<A, S, Q>(
@@ -142,13 +147,18 @@ pub fn call_ibc_channel_connect_raw<A, S, Q>(
     env: &[u8],
     channel: &[u8],
 ) -> VmResult<Vec<u8>>
-    where
-        A: Api + 'static,
-        S: Storage + 'static,
-        Q: Querier + 'static,
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "ibc_channel_connect", &[env, channel], MAX_LENGTH_IBC)
+    call_raw(
+        instance,
+        "ibc_channel_connect",
+        &[env, channel],
+        MAX_LENGTH_IBC,
+    )
 }
 
 pub fn call_ibc_channel_close_raw<A, S, Q>(
@@ -156,13 +166,18 @@ pub fn call_ibc_channel_close_raw<A, S, Q>(
     env: &[u8],
     channel: &[u8],
 ) -> VmResult<Vec<u8>>
-    where
-        A: Api + 'static,
-        S: Storage + 'static,
-        Q: Querier + 'static,
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "ibc_channel_close", &[env, channel], MAX_LENGTH_IBC)
+    call_raw(
+        instance,
+        "ibc_channel_close",
+        &[env, channel],
+        MAX_LENGTH_IBC,
+    )
 }
 
 pub fn call_ibc_packet_receive_raw<A, S, Q>(
@@ -170,13 +185,18 @@ pub fn call_ibc_packet_receive_raw<A, S, Q>(
     env: &[u8],
     packet: &[u8],
 ) -> VmResult<Vec<u8>>
-    where
-        A: Api + 'static,
-        S: Storage + 'static,
-        Q: Querier + 'static,
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "ibc_packet_receive", &[env, packet], MAX_LENGTH_IBC)
+    call_raw(
+        instance,
+        "ibc_packet_receive",
+        &[env, packet],
+        MAX_LENGTH_IBC,
+    )
 }
 
 pub fn call_ibc_packet_ack_raw<A, S, Q>(
@@ -184,10 +204,10 @@ pub fn call_ibc_packet_ack_raw<A, S, Q>(
     env: &[u8],
     ack: &[u8],
 ) -> VmResult<Vec<u8>>
-    where
-        A: Api + 'static,
-        S: Storage + 'static,
-        Q: Querier + 'static,
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
     call_raw(instance, "ibc_packet_ack", &[env, ack], MAX_LENGTH_IBC)
@@ -198,11 +218,16 @@ pub fn call_ibc_packet_timeout_raw<A, S, Q>(
     env: &[u8],
     packet: &[u8],
 ) -> VmResult<Vec<u8>>
-    where
-        A: Api + 'static,
-        S: Storage + 'static,
-        Q: Querier + 'static,
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "ibc_packet_timeout", &[env, packet], MAX_LENGTH_IBC)
+    call_raw(
+        instance,
+        "ibc_packet_timeout",
+        &[env, packet],
+        MAX_LENGTH_IBC,
+    )
 }
