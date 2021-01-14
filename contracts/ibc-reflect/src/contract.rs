@@ -1,13 +1,14 @@
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, CosmosMsg, DepsMut, Env, HandleResponse, HumanAddr,
+    entry_point, from_binary, to_binary, CosmosMsg, Deps, DepsMut, Env, HandleResponse, HumanAddr,
     IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse,
-    InitResponse, MessageInfo, StdError, StdResult, WasmMsg,
+    InitResponse, MessageInfo, Order, QueryResponse, StdError, StdResult, WasmMsg,
 };
 
 use crate::msg::{
-    AcknowledgementMsg, HandleMsg, InitMsg, PacketMsg, ReflectHandleMsg, ReflectInitMsg,
+    AccountInfo, AccountResponse, AcknowledgementMsg, HandleMsg, InitMsg, ListAccountsResponse,
+    PacketMsg, QueryMsg, ReflectHandleMsg, ReflectInitMsg,
 };
-use crate::state::{accounts, config, Config};
+use crate::state::{accounts, accounts_read, config, Config};
 
 const IBC_VERSION: &str = "ibc-reflect";
 
@@ -59,6 +60,37 @@ pub fn handle_init_callback(
     })?;
 
     Ok(HandleResponse::default())
+}
+
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
+    match msg {
+        QueryMsg::Account { channel_id } => to_binary(&query_account(deps, channel_id)?),
+        QueryMsg::ListAccounts {} => to_binary(&query_list_accounts(deps)?),
+    }
+}
+
+pub fn query_account(deps: Deps, channel_id: String) -> StdResult<AccountResponse> {
+    let account = accounts_read(deps.storage).load(channel_id.as_bytes())?;
+    Ok(AccountResponse {
+        account: Some(account),
+    })
+}
+
+pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
+    let accounts: StdResult<Vec<_>> = accounts_read(deps.storage)
+        .range(None, None, Order::Ascending)
+        .map(|r| {
+            let (k, account) = r?;
+            Ok(AccountInfo {
+                account,
+                channel_id: String::from_utf8(k)?,
+            })
+        })
+        .collect();
+    Ok(ListAccountsResponse {
+        accounts: accounts?,
+    })
 }
 
 #[entry_point]
@@ -194,7 +226,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{IbcEndpoint, OwnedDeps};
+    use cosmwasm_std::{from_slice, IbcEndpoint, OwnedDeps};
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
@@ -292,6 +324,11 @@ mod tests {
             panic!("invalid return message: {:?}", res.messages[0]);
         }
 
+        // no accounts set yet
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
+        let res: ListAccountsResponse = from_slice(&raw).unwrap();
+        assert_eq!(0, res.accounts.len());
+
         // we get the callback from reflect
         let handle_msg = HandleMsg::InitCallback {
             id: our_channel.clone(),
@@ -302,5 +339,27 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // ensure this is now registered
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
+        let res: ListAccountsResponse = from_slice(&raw).unwrap();
+        assert_eq!(1, res.accounts.len());
+        assert_eq!(
+            &res.accounts[0],
+            &AccountInfo {
+                account: REFLECT_ADDR.into(),
+                channel_id: our_channel.clone(),
+            }
+        );
+
+        // and the account query also works
+        let raw = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::Account {
+                channel_id: our_channel.clone(),
+            },
+        )
+        .unwrap();
+        let res: AccountResponse = from_slice(&raw).unwrap();
+        assert_eq!(res.account.unwrap(), HumanAddr::from(REFLECT_ADDR));
     }
 }
