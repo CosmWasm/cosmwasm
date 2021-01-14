@@ -1,10 +1,10 @@
 # CHANGELOG
 
-## 0.13.2 (2020-01-14)
+## 0.13.2 (2021-01-14)
 
 - cosmwasm-vm: Update Wasmer to 1.0.1.
 
-## 0.13.1 (2020-01-12)
+## 0.13.1 (2021-01-12)
 
 **cosmwasm-std**
 
@@ -13,7 +13,7 @@
   `cosmwasm_std::create_entry_points_with_migration!(contract)`. Both ways are
   supported in the 0.13 series.
 
-## 0.13.0 (2020-01-06)
+## 0.13.0 (2021-01-06)
 
 **all**
 
