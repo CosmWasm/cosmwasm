@@ -132,6 +132,14 @@ pub struct AllBalanceResponse {
     pub amount: Vec<Coin>,
 }
 
+#[cfg(feature = "stargate")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct StargateResponse {
+    /// This is the protobuf response, binary encoded.
+    /// The caller is responsible for knowing how to parse.
+    pub response: Binary,
+}
+
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingQuery {
