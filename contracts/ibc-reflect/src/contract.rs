@@ -107,6 +107,14 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdRe
     }
     // TODO: do we need to check counterparty version as well?
     // This flow needs to be well documented
+    if let Some(counter_version) = channel.counterparty_version {
+        if counter_version.as_str() != IBC_VERSION {
+            return Err(StdError::generic_err(format!(
+                "Counterparty version must be `{}`",
+                IBC_VERSION
+            )));
+        }
+    }
 
     Ok(())
 }
@@ -122,6 +130,7 @@ pub fn ibc_channel_connect(
     let chan_id = channel.endpoint.channel_id;
     let label = format!("ibc-reflect-{}", &chan_id);
 
+    // TODO: add helpers for these actions
     let payload = to_binary(&ReflectInitMsg {
         callback_id: Some(chan_id),
     })?;
@@ -186,6 +195,7 @@ pub fn ibc_packet_receive(
     // let them know we're fine
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(()))?;
     // create the message to re-dispatch to the reflect contract
+    // TODO: add helpers for these actions
     let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
     let wasm_msg = WasmMsg::Execute {
         contract_addr: reflect_addr,
@@ -226,7 +236,8 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_slice, IbcEndpoint, OwnedDeps};
+    use cosmwasm_std::{coins, from_slice, BankMsg, IbcEndpoint, IbcTimeoutHeight, OwnedDeps};
+    use serde::Serialize;
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
@@ -265,6 +276,51 @@ mod tests {
             /// channel, we only expose the first hop.
             connection_id: "connection-2".to_string(),
         }
+    }
+
+    // this provides a minimal packet around custom data, which can be modified to set certain fields
+    // TODO: something similar should be a helper in ibc.rs
+    fn mock_ibc_packet<T: Serialize>(channel_id: &str, data: &T) -> IbcPacket {
+        IbcPacket {
+            data: to_binary(data).unwrap(),
+            src: IbcEndpoint {
+                port_id: "their-port".to_string(),
+                channel_id: "channel-1234".to_string(),
+            },
+            dest: IbcEndpoint {
+                port_id: "our-port".to_string(),
+                channel_id: channel_id.into(),
+            },
+            sequence: 27,
+            timeout_height: IbcTimeoutHeight {
+                revision_number: 1,
+                timeout_height: 12345678,
+            },
+            timeout_timestamp: 0,
+            version: 1,
+        }
+    }
+
+    // connect will run through the entire handshake to set up a proper connect and
+    // save the account (tested in detail in `proper_handshake_flow`)
+    fn connect<T: Into<HumanAddr>>(mut deps: DepsMut, channel_id: &str, account: T) {
+        let account = account.into();
+        // first we try to open with a valid handshake
+        let mut valid_handshake = mock_channel(IbcOrder::Ordered, IBC_VERSION);
+        valid_handshake.endpoint.channel_id = channel_id.into();
+        ibc_channel_open(deps.branch(), mock_env(), valid_handshake.clone()).unwrap();
+
+        // then we connect (with counter-party version set)
+        valid_handshake.counterparty_version = Some(IBC_VERSION.to_string());
+        ibc_channel_connect(deps.branch(), mock_env(), valid_handshake).unwrap();
+
+        // which creates a reflect account. here we get the callback
+        let handle_msg = HandleMsg::InitCallback {
+            id: channel_id.into(),
+            contract_addr: account.clone(),
+        };
+        let info = mock_info(account, &[]);
+        handle(deps.branch(), mock_env(), info, handle_msg).unwrap();
     }
 
     #[test]
@@ -361,5 +417,81 @@ mod tests {
         .unwrap();
         let res: AccountResponse = from_slice(&raw).unwrap();
         assert_eq!(res.account.unwrap(), HumanAddr::from(REFLECT_ADDR));
+    }
+
+    #[test]
+    fn handle_packet() {
+        let mut deps = setup();
+
+        let channel_id: &str = "channel-123";
+        let account: &str = "acct-123";
+
+        // receive a packet for an unregistered channel returns app-level error (not Result::Err)
+        let ibc_msg = PacketMsg {
+            msgs: vec![BankMsg::Send {
+                to_address: "my-friend".into(),
+                amount: coins(123456789, "uatom"),
+            }
+            .into()],
+        };
+        let packet = mock_ibc_packet(channel_id, &ibc_msg);
+        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
+        // we didn't dispatch anything
+        assert_eq!(0, res.messages.len());
+        // acknowledgement is an error
+        let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
+        assert_eq!(ack.unwrap_err(), "invalid packet");
+
+        // register the channel
+        connect(deps.as_mut(), channel_id, account);
+
+        // receive a packet for an unregistered channel returns app-level error (not Result::Err)
+        let packet = mock_ibc_packet(channel_id, &ibc_msg);
+        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
+        println!(
+            "{}",
+            String::from_utf8(res.acknowledgement.0.clone()).unwrap()
+        );
+
+        // TODO: blocked on serde-json-wasm fix
+        // see: https://github.com/CosmWasm/serde-json-wasm/issues/27
+        // assert app-level success
+        // let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
+        // ack.unwrap();
+
+        // and we dispatch the BankMsg
+        assert_eq!(1, res.messages.len());
+        // parse the output, ensuring it matches
+        if let CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr,
+            msg,
+            send,
+        }) = &res.messages[0]
+        {
+            assert_eq!(account, contract_addr.as_str());
+            assert_eq!(0, send.len());
+            // parse the message - should callback with proper channel_id
+            let rmsg: ReflectHandleMsg = from_binary(&msg).unwrap();
+            assert_eq!(
+                rmsg,
+                ReflectHandleMsg::ReflectMsg {
+                    msgs: ibc_msg.msgs.clone()
+                }
+            );
+        } else {
+            panic!("invalid return message: {:?}", res.messages[0]);
+        }
+
+        // invalid packet format on registered channel also returns app-level error
+        let bad_data = InitMsg {
+            reflect_code_id: 12345,
+        };
+        let packet = mock_ibc_packet(channel_id, &bad_data);
+        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
+        // we didn't dispatch anything
+        assert_eq!(0, res.messages.len());
+        // acknowledgement is an error
+        let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
+        assert_eq!(ack.unwrap_err(), "invalid packet");
     }
 }
