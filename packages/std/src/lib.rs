@@ -41,9 +41,9 @@ pub use crate::query::{
 };
 #[allow(deprecated)]
 pub use crate::results::{
-    attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
-    InitResponse, InitResult, MigrateResponse, MigrateResult, QueryResponse, QueryResult,
-    StakingMsg, SystemResult, WasmMsg,
+    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, Context, ContractResult, CosmosMsg,
+    HandleResponse, HandleResult, InitResponse, InitResult, MigrateResponse, MigrateResult,
+    QueryResponse, QueryResult, StakingMsg, SystemResult, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
