@@ -10,7 +10,7 @@ use crate::msg::{
 };
 use crate::state::{accounts, accounts_read, config, Config};
 
-const IBC_VERSION: &str = "ibc-reflect";
+pub const IBC_VERSION: &str = "ibc-reflect";
 
 #[entry_point]
 pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
