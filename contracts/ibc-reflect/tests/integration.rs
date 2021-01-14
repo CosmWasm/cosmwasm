@@ -18,7 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    ContractResult, CosmosMsg, HumanAddr, IbcChannel, IbcEndpoint, IbcOrder, InitResponse, WasmMsg,
+    ContractResult, CosmosMsg, HandleResponse, HumanAddr, IbcBasicResponse, IbcChannel,
+    IbcEndpoint, IbcOrder, InitResponse, WasmMsg,
 };
 use cosmwasm_vm::testing::{
     handle, ibc_channel_connect, ibc_channel_open, init, mock_env, mock_info, mock_instance, query,
@@ -47,7 +48,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
         reflect_code_id: REFLECT_ID,
     };
     let info = mock_info(CREATOR, &[]);
-    let res = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
@@ -111,7 +112,8 @@ fn proper_handshake_flow() {
 
     // then we connect (with counter-party version set)
     valid_handshake.counterparty_version = Some(IBC_VERSION.to_string());
-    let res = ibc_channel_connect(&mut deps, mock_env(), valid_handshake.clone()).unwrap();
+    let res: IbcBasicResponse =
+        ibc_channel_connect(&mut deps, mock_env(), valid_handshake.clone()).unwrap();
     // and set up a reflect account
     assert_eq!(1, res.messages.len());
     let our_channel = valid_handshake.endpoint.channel_id.clone();
@@ -143,7 +145,7 @@ fn proper_handshake_flow() {
         contract_addr: REFLECT_ADDR.into(),
     };
     let info = mock_info(REFLECT_ADDR, &[]);
-    let res = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
+    let res: HandleResponse = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // ensure this is now registered
