@@ -127,8 +127,7 @@ where
         msg: payload,
         send,
         label,
-    }
-    .into())
+    })
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
@@ -142,8 +141,7 @@ where
         contract_addr: contract_addr.into(),
         msg: payload,
         send,
-    }
-    .into())
+    })
 }
 
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {

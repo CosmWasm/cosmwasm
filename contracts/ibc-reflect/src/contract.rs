@@ -223,12 +223,10 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
+        mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
+        MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{
-        coins, from_slice, BankMsg, IbcEndpoint, IbcTimeoutHeight, OwnedDeps, WasmMsg,
-    };
-    use serde::Serialize;
+    use cosmwasm_std::{coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
@@ -247,63 +245,21 @@ mod tests {
         deps
     }
 
-    // this provides a minimal channel skeleton, which can be modified to set certain fields
-    // TODO: something similar should be a helper in ibc.rs
-    fn mock_channel(order: IbcOrder, version: &str) -> IbcChannel {
-        IbcChannel {
-            endpoint: IbcEndpoint {
-                port_id: "my_port".to_string(),
-                channel_id: "channel-5".to_string(),
-            },
-            counterparty_endpoint: IbcEndpoint {
-                port_id: "their_port".to_string(),
-                channel_id: "channel-7".to_string(),
-            },
-            order,
-            version: version.to_string(),
-            /// CounterpartyVersion can be None when not known this context, yet
-            counterparty_version: None,
-            /// The connection upon which this channel was created. If this is a multi-hop
-            /// channel, we only expose the first hop.
-            connection_id: "connection-2".to_string(),
-        }
-    }
-
-    // this provides a minimal packet around custom data, which can be modified to set certain fields
-    // TODO: something similar should be a helper in ibc.rs
-    fn mock_ibc_packet<T: Serialize>(channel_id: &str, data: &T) -> IbcPacket {
-        IbcPacket {
-            data: to_binary(data).unwrap(),
-            src: IbcEndpoint {
-                port_id: "their-port".to_string(),
-                channel_id: "channel-1234".to_string(),
-            },
-            dest: IbcEndpoint {
-                port_id: "our-port".to_string(),
-                channel_id: channel_id.into(),
-            },
-            sequence: 27,
-            timeout_height: IbcTimeoutHeight {
-                revision_number: 1,
-                timeout_height: 12345678,
-            },
-            timeout_timestamp: 0,
-            version: 1,
-        }
-    }
-
     // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
     fn connect<T: Into<HumanAddr>>(mut deps: DepsMut, channel_id: &str, account: T) {
         let account = account.into();
+
+        // open packet has no counterparty versin, connect does
+        // TODO: validate this with alpe
+        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        handshake_open.counterparty_version = None;
         // first we try to open with a valid handshake
-        let mut valid_handshake = mock_channel(IbcOrder::Ordered, IBC_VERSION);
-        valid_handshake.endpoint.channel_id = channel_id.into();
-        ibc_channel_open(deps.branch(), mock_env(), valid_handshake.clone()).unwrap();
+        ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
-        valid_handshake.counterparty_version = Some(IBC_VERSION.to_string());
-        ibc_channel_connect(deps.branch(), mock_env(), valid_handshake).unwrap();
+        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
 
         // which creates a reflect account. here we get the callback
         let handle_msg = HandleMsg::InitCallback {
@@ -330,30 +286,31 @@ mod tests {
     fn enforce_version_in_handshake() {
         let mut deps = setup();
 
-        let wrong_order = mock_channel(IbcOrder::Unordered, IBC_VERSION);
+        let wrong_order = mock_ibc_channel("channel-12", IbcOrder::Unordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_order).unwrap_err();
 
-        let wrong_version = mock_channel(IbcOrder::Ordered, "reflect");
+        let wrong_version = mock_ibc_channel("channel-12", IbcOrder::Ordered, "reflect");
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_version).unwrap_err();
 
-        let valid_handshake = mock_channel(IbcOrder::Ordered, IBC_VERSION);
+        let valid_handshake = mock_ibc_channel("channel-12", IbcOrder::Ordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), valid_handshake).unwrap();
     }
 
     #[test]
     fn proper_handshake_flow() {
         let mut deps = setup();
+        let channel_id = "channel-1234";
 
         // first we try to open with a valid handshake
-        let mut valid_handshake = mock_channel(IbcOrder::Ordered, IBC_VERSION);
-        ibc_channel_open(deps.as_mut(), mock_env(), valid_handshake.clone()).unwrap();
+        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        handshake_open.counterparty_version = None;
+        ibc_channel_open(deps.as_mut(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
-        valid_handshake.counterparty_version = Some(IBC_VERSION.to_string());
-        let res = ibc_channel_connect(deps.as_mut(), mock_env(), valid_handshake.clone()).unwrap();
+        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
         // and set up a reflect account
         assert_eq!(1, res.messages.len());
-        let our_channel = valid_handshake.endpoint.channel_id.clone();
         if let CosmosMsg::Wasm(WasmMsg::Instantiate {
             code_id,
             msg,
@@ -363,10 +320,10 @@ mod tests {
         {
             assert_eq!(&REFLECT_ID, code_id);
             assert_eq!(0, send.len());
-            assert!(label.as_ref().unwrap().contains(&our_channel));
+            assert!(label.as_ref().unwrap().contains(channel_id));
             // parse the message - should callback with proper channel_id
             let rmsg: ReflectInitMsg = from_binary(&msg).unwrap();
-            assert_eq!(rmsg.callback_id, Some(our_channel.clone()));
+            assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
         } else {
             panic!("invalid return message: {:?}", res.messages[0]);
         }
@@ -378,7 +335,7 @@ mod tests {
 
         // we get the callback from reflect
         let handle_msg = HandleMsg::InitCallback {
-            id: our_channel.clone(),
+            id: channel_id.to_string(),
             contract_addr: REFLECT_ADDR.into(),
         };
         let info = mock_info(REFLECT_ADDR, &[]);
@@ -393,7 +350,7 @@ mod tests {
             &res.accounts[0],
             &AccountInfo {
                 account: REFLECT_ADDR.into(),
-                channel_id: our_channel.clone(),
+                channel_id: channel_id.to_string(),
             }
         );
 
@@ -402,7 +359,7 @@ mod tests {
             deps.as_ref(),
             mock_env(),
             QueryMsg::Account {
-                channel_id: our_channel.clone(),
+                channel_id: channel_id.to_string(),
             },
         )
         .unwrap();
@@ -425,7 +382,7 @@ mod tests {
             }
             .into()],
         };
-        let packet = mock_ibc_packet(channel_id, &ibc_msg);
+        let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
@@ -437,7 +394,7 @@ mod tests {
         connect(deps.as_mut(), channel_id, account);
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-        let packet = mock_ibc_packet(channel_id, &ibc_msg);
+        let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
 
         // TODO: blocked on serde-json-wasm fix
@@ -473,7 +430,7 @@ mod tests {
         let bad_data = InitMsg {
             reflect_code_id: 12345,
         };
-        let packet = mock_ibc_packet(channel_id, &bad_data);
+        let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
