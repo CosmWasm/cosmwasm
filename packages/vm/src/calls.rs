@@ -168,7 +168,7 @@ where
 
 /// Calls a function with the given arguments.
 /// The exported function must return exactly one result (an offset to the result Region).
-fn call_raw<A, S, Q>(
+pub(crate) fn call_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     name: &str,
     args: &[&[u8]],

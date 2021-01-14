@@ -173,17 +173,17 @@ jobs:
           working_directory: ~/project/packages/vm
           command: cargo build --locked
       - run:
-          name: Build with iterator
+          name: Build with all features
           working_directory: ~/project/packages/vm
-          command: cargo build --locked --features iterator
+          command: cargo build --locked --features iterator,staking,stargate
       - run:
           name: Test
           working_directory: ~/project/packages/vm
           command: cargo test --locked
       - run:
-          name: Test with iterator
+          name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo test --locked --features iterator
+          command: cargo test --locked --features iterator,staking,stargate
       - save_cache:
           paths:
             - /usr/local/cargo/registry
@@ -208,17 +208,17 @@ jobs:
           working_directory: ~/project/packages/vm
           command: cargo build --locked --features cranelift
       - run:
-          name: Build with iterator
+          name: Build with all features
           working_directory: ~/project/packages/vm
-          command: cargo build --locked --features cranelift,iterator
+          command: cargo build --locked --features cranelift,iterator,staking,stargate
       - run:
           name: Test
           working_directory: ~/project/packages/vm
           command: cargo test --locked --features cranelift
       - run:
-          name: Test with iterator
+          name: Test with all features
           working_directory: ~/project/packages/vm
-          command: cargo test --locked --features cranelift,iterator
+          command: cargo test --locked --features cranelift,iterator,staking,stargate
       - save_cache:
           paths:
             - /usr/local/cargo/registry
