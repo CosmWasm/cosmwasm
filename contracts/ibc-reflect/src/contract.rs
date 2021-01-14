@@ -1,7 +1,8 @@
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, CosmosMsg, Deps, DepsMut, Env, HandleResponse, HumanAddr,
-    IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse,
-    InitResponse, MessageInfo, Order, QueryResponse, StdError, StdResult, WasmMsg,
+    entry_point, from_binary, to_binary, wasm_execute, wasm_instantiate, CosmosMsg, Deps, DepsMut,
+    Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder,
+    IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError,
+    StdResult,
 };
 
 use crate::msg::{
@@ -128,19 +129,12 @@ pub fn ibc_channel_connect(
 ) -> StdResult<IbcBasicResponse> {
     let cfg = config(deps.storage).load()?;
     let chan_id = channel.endpoint.channel_id;
+
     let label = format!("ibc-reflect-{}", &chan_id);
-
-    // TODO: add helpers for these actions
-    let payload = to_binary(&ReflectInitMsg {
+    let payload = ReflectInitMsg {
         callback_id: Some(chan_id),
-    })?;
-    let msg = WasmMsg::Instantiate {
-        code_id: cfg.reflect_code_id,
-        msg: payload,
-        send: vec![],
-        label: Some(label),
     };
-
+    let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], Some(label))?;
     Ok(IbcBasicResponse {
         messages: vec![msg.into()],
         attributes: vec![],
@@ -195,13 +189,8 @@ pub fn ibc_packet_receive(
     // let them know we're fine
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(()))?;
     // create the message to re-dispatch to the reflect contract
-    // TODO: add helpers for these actions
     let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
-    let wasm_msg = WasmMsg::Execute {
-        contract_addr: reflect_addr,
-        msg: to_binary(&reflect_msg)?,
-        send: vec![],
-    };
+    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
     // and we are golden
     Ok(IbcReceiveResponse {
         acknowledgement,
@@ -236,7 +225,9 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coins, from_slice, BankMsg, IbcEndpoint, IbcTimeoutHeight, OwnedDeps};
+    use cosmwasm_std::{
+        coins, from_slice, BankMsg, IbcEndpoint, IbcTimeoutHeight, OwnedDeps, WasmMsg,
+    };
     use serde::Serialize;
 
     const CREATOR: &str = "creator";

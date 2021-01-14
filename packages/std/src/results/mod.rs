@@ -13,7 +13,7 @@ mod system_result;
 pub use attribute::{attr, Attribute};
 pub use context::Context;
 pub use contract_result::ContractResult;
-pub use cosmos_msg::{BankMsg, CosmosMsg, StakingMsg, WasmMsg};
+pub use cosmos_msg::{wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, StakingMsg, WasmMsg};
 #[allow(deprecated)]
 pub use handle::{HandleResponse, HandleResult};
 #[allow(deprecated)]

@@ -5,8 +5,10 @@ use std::fmt;
 use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
+use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
+use crate::serde::to_binary;
 use crate::types::Empty;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -107,6 +109,41 @@ pub enum WasmMsg {
         /// optional human-readbale label for the contract
         label: Option<String>,
     },
+}
+
+/// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
+pub fn wasm_instantiate<T>(
+    code_id: u64,
+    msg: &T,
+    send: Vec<Coin>,
+    label: Option<String>,
+) -> StdResult<WasmMsg>
+where
+    T: Serialize,
+{
+    let payload = to_binary(msg)?;
+    Ok(WasmMsg::Instantiate {
+        code_id,
+        msg: payload,
+        send,
+        label,
+    }
+    .into())
+}
+
+/// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
+pub fn wasm_execute<T, U>(contract_addr: T, msg: &U, send: Vec<Coin>) -> StdResult<WasmMsg>
+where
+    T: Into<HumanAddr>,
+    U: Serialize,
+{
+    let payload = to_binary(msg)?;
+    Ok(WasmMsg::Execute {
+        contract_addr: contract_addr.into(),
+        msg: payload,
+        send,
+    }
+    .into())
 }
 
 impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {
