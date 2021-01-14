@@ -22,6 +22,33 @@ pub enum HandleMsg {
     },
 }
 
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum QueryMsg {
+    /// Returns (reflect) account that is attached to this channel,
+    /// or none.
+    Account { channel_id: String },
+    /// Returns all (channel, reflect_account) pairs.
+    /// No pagination - this is a test contract
+    ListAccounts {},
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct AccountResponse {
+    pub account: Option<HumanAddr>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ListAccountsResponse {
+    pub accounts: Vec<AccountInfo>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct AccountInfo {
+    pub account: HumanAddr,
+    pub channel_id: String,
+}
+
 /// This is the message we send to the reflect contract to initialize it
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ReflectInitMsg {
