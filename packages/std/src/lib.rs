@@ -84,6 +84,8 @@ pub mod testing {
         riffle_shuffle, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
         MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
+    #[cfg(feature = "stargate")]
+    pub use crate::mock::{mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv};
 }
 
 // Re-exports
