@@ -448,10 +448,6 @@ mod tests {
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
         let packet = mock_ibc_packet(channel_id, &ibc_msg);
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
-        println!(
-            "{}",
-            String::from_utf8(res.acknowledgement.0.clone()).unwrap()
-        );
 
         // TODO: blocked on serde-json-wasm fix
         // see: https://github.com/CosmWasm/serde-json-wasm/issues/27
@@ -471,7 +467,7 @@ mod tests {
             assert_eq!(account, contract_addr.as_str());
             assert_eq!(0, send.len());
             // parse the message - should callback with proper channel_id
-            let rmsg: ReflectHandleMsg = from_binary(&msg).unwrap();
+            let rmsg: ReflectHandleMsg = from_slice(&msg).unwrap();
             assert_eq!(
                 rmsg,
                 ReflectHandleMsg::ReflectMsg {
