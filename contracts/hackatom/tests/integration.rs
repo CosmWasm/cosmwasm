@@ -369,10 +369,10 @@ fn handle_allocate_large_memory() {
         Binary::from((pages_before as u32).to_be_bytes())
     );
     let gas_used = gas_before - deps.get_gas_left();
-    // Gas consumtion is relatively small
+    // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile WASM,
     // which we only fix when using cosmwasm-opt, not integration tests.
-    let expected = 47850; // +/- 20%
+    let expected = 27880; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
     let used = deps.memory_pages();
@@ -390,10 +390,10 @@ fn handle_allocate_large_memory() {
     );
     assert_eq!(result.unwrap_err(), "Generic error: memory.grow failed");
     let gas_used = gas_before - deps.get_gas_left();
-    // Gas consumtion is relatively small
+    // Gas consumption is relatively small
     // Note: the exact gas usage depends on the Rust version used to compile WASM,
     // which we only fix when using cosmwasm-opt, not integration tests.
-    let expected = 47850; // +/- 20%
+    let expected = 31076; // +/- 20%
     assert!(gas_used > expected * 80 / 100, "Gas used: {}", gas_used);
     assert!(gas_used < expected * 120 / 100, "Gas used: {}", gas_used);
     let used = deps.memory_pages();
