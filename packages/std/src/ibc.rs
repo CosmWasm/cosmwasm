@@ -218,3 +218,22 @@ where
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json_wasm::to_string;
+
+    #[test]
+    // added this to check json format for go compat,
+    // but good to ensure it can all be serialized properly
+    fn serialize_msg() {
+        let msg = IbcMsg::Ics20Transfer {
+            channel_id: "channel-123".to_string(),
+            to_address: "my-special-addr".into(),
+            amount: Coin::new(12345678, "uatom"),
+        };
+        let _ = to_string(&msg).unwrap();
+        // {"ics20_transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"}}}
+    }
+}
