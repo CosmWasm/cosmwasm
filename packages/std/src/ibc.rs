@@ -81,7 +81,7 @@ pub struct ListChannelsResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ChannelResponse {
-    pub channel: IbcChannel,
+    pub channel: Option<IbcChannel>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -107,7 +107,6 @@ pub struct IbcChannel {
     pub connection_id: String,
 }
 
-// TODO: check what representation we want here for encoding - string or number
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
 /// Naming comes from the protobuf files and go translations.
@@ -119,10 +118,10 @@ pub enum IbcOrder {
     Ordered,
 }
 
-// IBCTimeoutHeight Height is a monotonically increasing data type
-// that can be compared against another Height for the purposes of updating and
-// freezing clients.
-// Ordering is (revision_number, timeout_height)
+/// IBCTimeoutHeight Height is a monotonically increasing data type
+/// that can be compared against another Height for the purposes of updating and
+/// freezing clients.
+/// Ordering is (revision_number, timeout_height)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcTimeoutHeight {
     /// the version that the client is currently on
@@ -186,13 +185,11 @@ where
     }
 }
 
-/// This is the return value for the majority of the ibc handlers.
-/// That are able to dispatch messages / events on their own,
-/// but have no meaningful return value to the calling code.
-///
-/// Callbacks that have return values (like receive_packet)
-/// or that cannot redispatch messages (like the handshake callbacks)
-/// will use other Response types
+// This defines the return value on packet response processing.
+// This "success" case should be returned even in application-level errors,
+// Where the acknowledgement bytes contain an encoded error message to be returned to
+// the calling chain. (Returning ContractResult::Err will abort processing of this packet
+// and not inform the calling chain).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcReceiveResponse<T = Empty>
 where
