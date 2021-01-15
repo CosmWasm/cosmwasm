@@ -39,7 +39,7 @@ fn encode_length(namespace: &[u8]) -> [u8; 2] {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

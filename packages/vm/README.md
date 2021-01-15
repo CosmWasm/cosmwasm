@@ -16,8 +16,10 @@ compatibility list:
 
 | cosmwasm-vm | Supported interface versions | cosmwasm-std |
 | ----------- | ---------------------------- | ------------ |
-| 0.12        | `cosmwasm_vm_version_4`      | 0.11-0.12    |
-| 0.11        | `cosmwasm_vm_version_4`      | 0.11-0.12    |
+| 0.14        | `interface_version_5`        | 0.14         |
+| 0.13        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
+| 0.12        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
+| 0.11        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
 | 0.10        | `cosmwasm_vm_version_3`      | 0.10         |
 | 0.9         | `cosmwasm_vm_version_2`      | 0.9          |
 | 0.8         | `cosmwasm_vm_version_1`      | 0.8          |
@@ -37,25 +39,36 @@ To rebuild the test contracts, go to the repo root and do
 docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
-  cosmwasm/rust-optimizer:0.10.5 ./contracts/hackatom \
-  && cp artifacts/hackatom.wasm packages/vm/testdata/contract_0.12.wasm
+  cosmwasm/rust-optimizer:0.10.7 ./contracts/hackatom \
+  && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_0.14.wasm
 ```
 
 ## Testing
 
-By default, this repository is built and tested with the singlepass backend.
-This requires running Rust nighty:
+By default, this repository is built and tested with the singlepass backend. You
+can enable the `cranelift` feature to override the default backend with
+Cranelift
 
 ```sh
 cd packages/vm
-cargo +nightly test
+cargo test --features iterator
+cargo test --features cranelift,iterator
 ```
 
-To test with Rust stable, you need to switch to cranelift:
+## Benchmarking
 
-```sh
+Using Singlepass:
+
+```
 cd packages/vm
-cargo test --no-default-features --features default-cranelift
+cargo bench --no-default-features
+```
+
+Using Cranelift:
+
+```
+cd packages/vm
+cargo bench --no-default-features --features cranelift
 ```
 
 ## License

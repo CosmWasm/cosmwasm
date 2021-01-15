@@ -1,22 +1,26 @@
-// copied from https://github.com/wasmerio/wasmer/blob/0.8.0/lib/runtime/src/cache.rs
-// with some minor modifications
+use std::fs;
+use std::io;
+use std::path::PathBuf;
 
-use memmap::Mmap;
-use std::{
-    fs::{self, File},
-    io::{self, ErrorKind, Write},
-    path::PathBuf,
-};
+use wasmer::{DeserializeError, Module, Store};
 
-use wasmer_runtime_core::{cache::Artifact, module::Module};
-
-use crate::backends::{compiler_for_backend, BACKEND_NAME};
 use crate::checksum::Checksum;
 use crate::errors::{VmError, VmResult};
 
+/// Bump this version whenever the module system changes in a way
+/// that old stored modules would be corrupt when loaded in the new system.
+/// This needs to be done e.g. when switching between the jit/native engine.
+///
+/// The string is used as a folder and should be named in a way that is
+/// easy to interprete for system admins. It should allow easy clearing
+/// of old versions.
+const MODULE_SERIALIZATION_VERSION: &str = "v1";
+
 /// Representation of a directory that contains compiled Wasm artifacts.
 pub struct FileSystemCache {
-    path: PathBuf,
+    /// The base path this cache operates in. Within this path, versioned directories are created.
+    /// A sophisticated version of this cache might be able to read multiple input versions in the future.
+    base_path: PathBuf,
 }
 
 impl FileSystemCache {
@@ -33,7 +37,7 @@ impl FileSystemCache {
             let metadata = path.metadata()?;
             if metadata.is_dir() {
                 if !metadata.permissions().readonly() {
-                    Ok(Self { path })
+                    Ok(Self { base_path: path })
                 } else {
                     // This directory is readonly.
                     Err(io::Error::new(
@@ -54,74 +58,64 @@ impl FileSystemCache {
         } else {
             // Create the directory and any parent directories if they don't yet exist.
             fs::create_dir_all(&path)?;
-            Ok(Self { path })
+            Ok(Self { base_path: path })
         }
     }
 
-    pub fn load(&self, checksum: &Checksum) -> VmResult<Option<Module>> {
-        let backend = BACKEND_NAME;
-
+    /// Loads an artifact from the file system and returns a module (i.e. artifact + store).
+    pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<Module>> {
         let filename = checksum.to_hex();
-        let file_path = self.path.clone().join(backend).join(filename);
+        let file_path = self.latest_modules_path().join(filename);
 
-        let file = match File::open(file_path) {
-            Ok(file) => file,
-            Err(err) => match err.kind() {
-                ErrorKind::NotFound => return Ok(None),
-                _ => {
-                    return Err(VmError::cache_err(format!(
-                        "Error opening module file: {}",
-                        err
-                    )))
-                }
+        let result = unsafe { Module::deserialize_from_file(store, &file_path) };
+        match result {
+            Ok(module) => Ok(Some(module)),
+            Err(DeserializeError::Io(err)) => match err.kind() {
+                io::ErrorKind::NotFound => Ok(None),
+                _ => Err(VmError::cache_err(format!(
+                    "Error opening module file: {}",
+                    err
+                ))),
             },
-        };
-
-        let mmap = unsafe { Mmap::map(&file) }
-            .map_err(|e| VmError::cache_err(format!("Mmap error: {}", e)))?;
-
-        let serialized_cache = Artifact::deserialize(&mmap[..])?;
-        let module = unsafe {
-            wasmer_runtime_core::load_cache_with(
-                serialized_cache,
-                compiler_for_backend(backend)
-                    .ok_or_else(|| VmError::cache_err(format!("Unsupported backend: {}", backend)))?
-                    .as_ref(),
-            )
-        }?;
-        Ok(Some(module))
+            Err(err) => Err(VmError::cache_err(format!(
+                "Error deserializing module: {}",
+                err
+            ))),
+        }
     }
 
-    /// Stores a serialization of the module to the file system
     pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
-        let backend_str = module.info().backend.to_string();
-        let modules_dir = self.path.clone().join(backend_str);
+        let modules_dir = self.latest_modules_path();
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating direcory: {}", e)))?;
-
-        let serialized_cache = module.cache()?;
-        let buffer = serialized_cache.serialize()?;
-
         let filename = checksum.to_hex();
-        let mut file = File::create(modules_dir.join(filename))
-            .map_err(|e| VmError::cache_err(format!("Error creating module file: {}", e)))?;
-        file.write_all(&buffer)
+        let path = modules_dir.join(filename);
+        module
+            .serialize_to_file(path)
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-
         Ok(())
+    }
+
+    /// The path to the latest version of the modules.
+    fn latest_modules_path(&self) -> PathBuf {
+        self.base_path.join(MODULE_SERIALIZATION_VERSION)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backends::compile;
+    use crate::size::Size;
+    use crate::wasm_backend::{compile_only, make_runtime_store};
     use tempfile::TempDir;
+    use wasmer::{imports, Instance as WasmerInstance};
+    use wasmer_middlewares::metering::set_remaining_points;
+
+    const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
+    const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
-    fn test_file_system_cache_run() {
-        use wasmer_runtime_core::{imports, typed_func::Func};
-
+    fn file_system_cache_run() {
         let tmp_dir = TempDir::new().unwrap();
         let mut cache = unsafe { FileSystemCache::new(tmp_dir.path()).unwrap() };
 
@@ -137,29 +131,31 @@ mod tests {
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm).unwrap();
 
         // Module does not exist
-        let cached = cache.load(&checksum).unwrap();
+        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_none());
 
         // Store module
+        let module = compile_only(&wasm).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum).unwrap();
+        let store = make_runtime_store(TESTING_MEMORY_LIMIT);
+        let cached = cache.load(&checksum, &store).unwrap();
         assert!(cached.is_some());
 
         // Check the returned module is functional.
         // This is not really testing the cache API but better safe than sorry.
         {
-            assert_eq!(module.info().backend.to_string(), BACKEND_NAME.to_string());
             let cached_module = cached.unwrap();
             let import_object = imports! {};
-            let instance = cached_module.instantiate(&import_object).unwrap();
-            let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
-            let value = add_one.call(42).unwrap();
-            assert_eq!(value, 43);
+            let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
+            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
 }

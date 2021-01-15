@@ -42,7 +42,7 @@ for package_dir in packages/*/; do
   FILES_MODIFIED+=("$CARGO_TOML")
 done
 
-cargo +nightly build
+cargo build
 FILES_MODIFIED+=("Cargo.lock")
 
 for contract_dir in contracts/*/; do

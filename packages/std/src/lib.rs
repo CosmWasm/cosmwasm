@@ -1,4 +1,5 @@
 #![cfg_attr(feature = "backtraces", feature(backtrace))]
+#![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
 // Exposed on all platforms
 
@@ -8,6 +9,7 @@ mod coins;
 mod deps;
 mod entry_points;
 mod errors;
+mod ibc;
 #[cfg(feature = "iterator")]
 mod iterator;
 mod math;
@@ -23,6 +25,12 @@ pub use crate::binary::{Binary, ByteArray};
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{StdError, StdResult, SystemError};
+#[cfg(feature = "stargate")]
+pub use crate::ibc::{
+    ChannelResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg,
+    IbcOrder, IbcPacket, IbcQuery, IbcReceiveResponse, IbcTimeoutHeight, ListChannelsResponse,
+    PortIdResponse,
+};
 #[cfg(feature = "iterator")]
 pub use crate::iterator::{Order, KV};
 pub use crate::math::{Decimal, Uint128};
@@ -31,6 +39,7 @@ pub use crate::query::{
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
+#[allow(deprecated)]
 pub use crate::results::{
     attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
     InitResponse, InitResult, MigrateResponse, MigrateResult, QueryResponse, QueryResult,
@@ -55,6 +64,14 @@ pub use crate::exports::{do_handle, do_init, do_migrate, do_query};
 #[cfg(target_arch = "wasm32")]
 pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 
+#[cfg(all(feature = "stargate", target_arch = "wasm32"))]
+mod ibc_exports;
+#[cfg(all(feature = "stargate", target_arch = "wasm32"))]
+pub use crate::ibc_exports::{
+    do_ibc_channel_close, do_ibc_channel_connect, do_ibc_channel_open, do_ibc_packet_ack,
+    do_ibc_packet_receive, do_ibc_packet_timeout,
+};
+
 // Exposed for testing only
 // Both unit tests and integration tests are compiled to native code, so everything in here does not need to compile to Wasm.
 
@@ -68,3 +85,7 @@ pub mod testing {
         MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
 }
+
+// Re-exports
+
+pub use cosmwasm_derive::entry_point;

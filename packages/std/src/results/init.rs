@@ -30,10 +30,15 @@ where
     }
 }
 
+#[deprecated(
+    since = "0.12.1",
+    note = "InitResult is deprecated because it uses StdError, which should be replaced with custom errors in CosmWasm 0.11+. \
+            Replace this with Result<InitResponse, StdError> or Result<InitResponse<U>, StdError> and consider migrating to custom errors from there."
+)]
 pub type InitResult<U = Empty> = Result<InitResponse<U>, StdError>;
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::super::BankMsg;
     use super::*;
     use crate::addresses::HumanAddr;
@@ -43,7 +48,6 @@ mod test {
     fn can_serialize_and_deserialize_init_response() {
         let original = InitResponse {
             messages: vec![BankMsg::Send {
-                from_address: HumanAddr::from("me"),
                 to_address: HumanAddr::from("you"),
                 amount: coins(1015, "earth"),
             }

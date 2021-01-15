@@ -104,7 +104,7 @@ where
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::super::{BankMsg, HandleResponse, InitResponse, MigrateResponse};
     use super::*;
     use crate::addresses::HumanAddr;
@@ -134,14 +134,12 @@ mod test {
         ctx.add_attribute("sender", &HumanAddr::from("john"));
         ctx.add_attribute("action", "test");
         ctx.add_message(BankMsg::Send {
-            from_address: HumanAddr::from("goo"),
             to_address: HumanAddr::from("foo"),
             amount: coins(128, "uint"),
         });
 
         // and this is what is should return
         let expected_msgs = vec![CosmosMsg::Bank(BankMsg::Send {
-            from_address: HumanAddr::from("goo"),
             to_address: HumanAddr::from("foo"),
             amount: coins(128, "uint"),
         })];

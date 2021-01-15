@@ -58,7 +58,17 @@
       ],
       "properties": {
         "allocate_large_memory": {
-          "type": "object"
+          "type": "object",
+          "required": [
+            "pages"
+          ],
+          "properties": {
+            "pages": {
+              "type": "integer",
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
         }
       }
     },

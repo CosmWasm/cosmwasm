@@ -47,7 +47,8 @@ fn initialization_with_missing_validator() {
     backend
         .querier
         .update_staking("ustake", &[sample_validator("john")], &[]);
-    let mut deps = Instance::from_code(WASM, backend, mock_instance_options()).unwrap();
+    let (instance_options, memory_limit) = mock_instance_options();
+    let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
 
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
@@ -82,7 +83,8 @@ fn proper_initialization() {
         ],
         &[],
     );
-    let mut deps = Instance::from_code(WASM, backend, mock_instance_options()).unwrap();
+    let (instance_options, memory_limit) = mock_instance_options();
+    let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
     assert_eq!(deps.required_features.len(), 1);
     assert!(deps.required_features.contains("staking"));
 

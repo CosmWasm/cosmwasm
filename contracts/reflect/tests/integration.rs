@@ -43,15 +43,15 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 /// that supports SpecialQuery.
 pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
-) -> Backend<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
+) -> Backend<MockApi, MockStorage, MockQuerier<SpecialQuery>> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<SpecialQuery> =
         MockQuerier::new(&[(&contract_addr, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Backend {
-        storage: MockStorage::default(),
         api: MockApi::default(),
+        storage: MockStorage::default(),
         querier: custom_querier,
     }
 }
@@ -83,7 +83,6 @@ fn reflect() {
 
     let payload = vec![
         BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -117,7 +116,6 @@ fn reflect_requires_owner() {
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
-        from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
         to_address: HumanAddr::from("friend"),
         amount: coins(1, "token"),
     }
@@ -178,7 +176,8 @@ fn dispatch_custom_query() {
     // stub gives us defaults. Consume it and override...
     let custom = mock_dependencies_with_custom_querier(&[]);
     // we cannot use mock_instance, so we just copy and modify code from cosmwasm_vm::testing
-    let mut deps = Instance::from_code(WASM, custom, mock_instance_options()).unwrap();
+    let (instance_options, memory_limit) = mock_instance_options();
+    let mut deps = Instance::from_code(WASM, custom, instance_options, memory_limit).unwrap();
 
     // we don't even initialize, just trigger a query
     let res = query(

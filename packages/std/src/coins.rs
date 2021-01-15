@@ -31,7 +31,6 @@ impl Coin {
 ///
 /// let mut response: HandleResponse = Default::default();
 /// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
-///   from_address: env.contract.address,
 ///   to_address: info.sender,
 ///   amount: tip,
 /// })];
@@ -56,7 +55,6 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 ///
 /// let mut response: HandleResponse = Default::default();
 /// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
-///     from_address: env.contract.address,
 ///     to_address: info.sender,
 ///     amount: tip,
 /// })];
@@ -75,7 +73,7 @@ pub fn has_coins(coins: &[Coin], required: &Coin) -> bool {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

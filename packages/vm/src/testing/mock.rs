@@ -11,11 +11,11 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
-pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockStorage, MockApi, MockQuerier> {
+pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockApi, MockStorage, MockQuerier> {
     let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Backend {
-        storage: MockStorage::default(),
         api: MockApi::default(),
+        storage: MockStorage::default(),
         querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
     }
 }
@@ -24,10 +24,10 @@ pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockStorage, MockApi, 
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_backend_with_balances(
     balances: &[(&HumanAddr, &[Coin])],
-) -> Backend<MockStorage, MockApi, MockQuerier> {
+) -> Backend<MockApi, MockStorage, MockQuerier> {
     Backend {
-        storage: MockStorage::default(),
         api: MockApi::default(),
+        storage: MockStorage::default(),
         querier: MockQuerier::new(balances),
     }
 }
@@ -45,14 +45,6 @@ pub struct MockApi {
 }
 
 impl MockApi {
-    #[deprecated(
-        since = "0.11.0",
-        note = "The canonical length argument is unused. Use MockApi::default() instead."
-    )]
-    pub fn new(_canonical_length: usize) -> Self {
-        MockApi::default()
-    }
-
     pub fn new_failing(backend_error: &'static str) -> Self {
         MockApi {
             backend_error: Some(backend_error),
@@ -173,7 +165,7 @@ pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::BackendError;
     use cosmwasm_std::{coins, Binary};

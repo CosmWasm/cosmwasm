@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-vm"
-version = "0.12.0"
+version = "0.13.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
@@ -12,14 +12,10 @@ circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
 maintenance = { status = "actively-developed" }
 
 [features]
-default = ["default-singlepass", "staking"]
-# multiple backends may be activated here (available through eg. backends::cranelift::*)
-cranelift = ["wasmer-clif-backend"]
-singlepass = ["wasmer-singlepass-backend"]
-# default selects which *one* is re-exported in backends/mod.rs (available through eg backends::*)
-default-cranelift = ["wasmer-clif-backend"]
-default-singlepass = ["wasmer-singlepass-backend"]
-# The backtraces fature is unused for now, i.e. it does nothing.
+default = ["staking"]
+# backtraces provides much better context at runtime errors (in non-wasm code)
+# at the cost of a bit of code size and performance.
+# This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
 # iterator allows us to iterate over all DB items in a given range
 # this must be enabled to support cosmwasm contracts compiled with the 'iterator' feature
@@ -28,24 +24,40 @@ backtraces = []
 # we keep this optional, to allow possible future integration (or different Cosmos Backends)
 iterator = ["cosmwasm-std/iterator"]
 staking = ["cosmwasm-std/staking"]
+# this enables all stargate-related functionality, including the ibc entry points
+stargate = ["cosmwasm-std/stargate"]
+# Use cranelift backend instead of singlepass. This is required for development on Windows.
+cranelift = ["wasmer/cranelift"]
+
+[lib]
+# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false
 
 [dependencies]
 clru = "0.2.0"
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "0.12.0" }
+cosmwasm-std = { path = "../std", version = "0.13.2" }
 hex = "0.4"
-memmap = "0.7"
 parity-wasm = "0.42"
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0"
 sha2 = "0.9.1"
 thiserror = "1.0"
-wasmer-runtime-core = "=0.17.0"
-wasmer-middleware-common = "=0.17.0"
-wasmer-clif-backend = { version = "=0.17.0", optional = true }
-wasmer-singlepass-backend = { version = "=0.17.0", optional = true }
+wasmer = { version = "1.0.1", default-features = false, features = ["jit", "singlepass"] }
+wasmer-middlewares = { version = "1.0.1" }
+
+# Wasmer git/local (used for quick local debugging or patching)
+# wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.1", default-features = false, features = ["jit", "singlepass"] }
+# wasmer-middlewares = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.1" }
+# wasmer = { path = "../../../wasmer/lib/api", default-features = false, features = ["jit", "singlepass"] }
+# wasmer-middlewares = { path = "../../../wasmer/lib/middlewares" }
 
 [dev-dependencies]
+criterion = "0.3"
 tempfile = "3.1.0"
 wat = "1.0"
+
+[[bench]]
+name = "main"
+harness = false

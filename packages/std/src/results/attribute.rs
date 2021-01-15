@@ -17,7 +17,7 @@ pub fn attr<K: ToString, V: ToString>(key: K, value: V) -> Attribute {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::addresses::HumanAddr;
     use crate::Uint128;

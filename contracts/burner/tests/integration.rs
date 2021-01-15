@@ -20,7 +20,7 @@
 use cosmwasm_std::{
     coins, BankMsg, ContractResult, HumanAddr, InitResponse, MigrateResponse, Order,
 };
-use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance, MOCK_CONTRACT_ADDR};
+use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance};
 
 use burner::msg::{InitMsg, MigrateMsg};
 use cosmwasm_vm::Storage;
@@ -73,7 +73,6 @@ fn migrate_cleans_up_data() {
     assert_eq!(
         msg,
         &BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: payout,
             amount: coins(123456, "gold"),
         }

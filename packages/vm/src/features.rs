@@ -1,30 +1,33 @@
 use parity_wasm::elements::{Internal, Module};
 use std::collections::HashSet;
-use std::iter::FromIterator;
-use wasmer_runtime_core::{export::Export, Instance as WasmerInstance};
+use wasmer::{ExternType, Instance as WasmerInstance};
 
 const REQUIRES_PREFIX: &str = "requires_";
 
 /// Takes a comma-separated string, splits it by commas, removes empty elements and returns a set of features.
 /// This can be used e.g. to initialize the cache.
 pub fn features_from_csv(csv: &str) -> HashSet<String> {
-    HashSet::from_iter(
-        csv.split(',')
-            .map(|x| x.trim().to_string())
-            .filter(|f| !f.is_empty()),
-    )
+    csv.split(',')
+        .map(|x| x.trim().to_string())
+        .filter(|f| !f.is_empty())
+        .collect()
 }
 
 pub fn required_features_from_wasmer_instance(wasmer_instance: &WasmerInstance) -> HashSet<String> {
-    HashSet::from_iter(wasmer_instance.exports().filter_map(|(mut name, export)| {
-        if let Export::Function { .. } = export {
-            if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
-                let required_feature = name.split_off(REQUIRES_PREFIX.len());
-                return Some(required_feature);
+    let module = wasmer_instance.module();
+    module
+        .exports()
+        .filter_map(|export| {
+            if let ExternType::Function { .. } = export.ty() {
+                let name = export.name();
+                if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
+                    let required_feature = name.to_string().split_off(REQUIRES_PREFIX.len());
+                    return Some(required_feature);
+                }
             }
-        }
-        None
-    }))
+            None
+        })
+        .collect()
 }
 
 /// Implementation for check_wasm, based on static analysis of the bytecode.
@@ -32,8 +35,10 @@ pub fn required_features_from_wasmer_instance(wasmer_instance: &WasmerInstance) 
 pub fn required_features_from_module(module: &Module) -> HashSet<String> {
     match module.export_section() {
         None => HashSet::new(),
-        Some(export_section) => {
-            HashSet::from_iter(export_section.entries().iter().filter_map(|entry| {
+        Some(export_section) => export_section
+            .entries()
+            .iter()
+            .filter_map(|entry| {
                 if let Internal::Function(_) = entry.internal() {
                     let name = entry.field();
                     if name.starts_with(REQUIRES_PREFIX) && name.len() > REQUIRES_PREFIX.len() {
@@ -42,13 +47,13 @@ pub fn required_features_from_module(module: &Module) -> HashSet<String> {
                     }
                 }
                 None
-            }))
-        }
+            })
+            .collect(),
     }
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use parity_wasm::elements::deserialize_buffer;
 

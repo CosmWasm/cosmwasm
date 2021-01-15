@@ -1,14 +1,87 @@
 # CHANGELOG
 
-## 0.13.0 (unreleased)
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-**all**
+## [Unreleased]
 
-- Drop support for Rust versions lower than 1.47.0.
+### Added
+
+- cosmwasm-vm: Add PinnedMemoryCache. ([#696])
+
+### Changed
+
+- all: The `query` enpoint is now optional. It is still highly recommended to
+  expose it an almost any use case though.
+- cosmwasm-std: Remove `from_address` from `BankMsg::Send`, as it always sends
+  from the contract address, and this is consistent with other `CosmosMsg`
+  variants.
+- cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
+  performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
+  instead at `Cache` level (same memory limit for all cached instances).
+  ([#697])
+- cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
+  `interface_version_5`.
+
+[#696]: https://github.com/CosmWasm/cosmwasm/issues/696
+[#697]: https://github.com/CosmWasm/cosmwasm/issues/697
+
+## [0.13.2] - 2021-01-14
+
+## Changed
+
+- cosmwasm-vm: Update Wasmer to 1.0.1.
+
+## [0.13.1] - 2021-01-12
+
+### Added
+
+- cosmwasm-std: Add the new `#[entry_point]` macro attribute that serves as an
+  alternative implementation to `cosmwasm_std::create_entry_points!(contract)`
+  and `cosmwasm_std::create_entry_points_with_migration!(contract)`. Both ways
+  are supported in the 0.13 series.
+
+## [0.13.0] – 2021-01-06
+
+## Added
+
+- cosmwasm-std: Extend binary to array support to 64 bytes.
+
+## Changed
+
+- all: Drop support for Rust versions lower than 1.47.0.
+- cosmwasm-std: Remove `cosmwasm_std::testing::MockApi::new`. Use
+  `MockApi::default` instead.
+- cosmwasm-vm: Upgrade Wasmer to 1.0 and adapt all the internal workings
+  accordingly.
+- cosmwasm-vm: Export method `cosmwasm_vm::Cache::stats` and response type
+  `Stats`.
+- cosmwasm-vm: Remove `cosmwasm_vm::testing::MockApi::new`. Use
+  `MockApi::default` instead.
+- cosmwasm-vm: Convert field `Instance::api` to a method.
+- cosmwasm-vm: Change order of generic arguments for consistency in `Instance`,
+  `Cache` and `Backend` to always match `<A: Api, S: Storage, Q: Querier>`.
+- cosmwasm-vm: Remove `Instance::get_memory_size`. Use `Instance::memory_pages`
+  instead.
+
+## 0.12.2 (2020-12-14)
 
 **cosmwasm-std**
 
-- Extend binary to array support to 64 bytes.
+- `StdError` now implements `PartialEq` (ignoring backtrace if any). This allows
+  simpler `assert_eq!()` when testing error conditions (rather than match
+  statements as now).
+
+## 0.12.1 (2020-12-09)
+
+**cosmwasm-std**
+
+- Deprecate `InitResult`, `HandleResult`, `MigrateResult` and `QueryResult` in
+  order to make error type explicit an encourage migration to custom errors.
+- Implement `Deref` for `QuerierWrapper`, such that `QuerierWrapper` behaves
+  like a smart pointer to `Querier` allowing you to access `Querier` methods
+  directly.
 
 ## 0.12.0 (2020-11-19)
 
@@ -617,3 +690,8 @@ Some main points:
 - JSON Schema output works
 
 All future Changelog entries will reference this base
+
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...HEAD
+[0.13.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.13.2
+[0.13.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.0...v0.13.1
+[0.13.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.12.0...v0.13.0

@@ -368,7 +368,7 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::errors::{StdError, StdResult};
     use crate::{from_slice, to_vec};

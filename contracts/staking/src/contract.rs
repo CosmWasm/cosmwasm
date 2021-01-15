@@ -1,6 +1,7 @@
 use cosmwasm_std::{
-    attr, coin, to_binary, BankMsg, Binary, Decimal, Deps, DepsMut, Env, HandleResponse, HumanAddr,
-    InitResponse, MessageInfo, QuerierWrapper, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
+    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HandleResponse,
+    HumanAddr, InitResponse, MessageInfo, QuerierWrapper, QueryResponse, StakingMsg, StdError,
+    StdResult, Uint128, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -15,6 +16,7 @@ use crate::state::{
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
+#[entry_point]
 pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
@@ -49,6 +51,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdRes
     Ok(InitResponse::default())
 }
 
+#[entry_point]
 pub fn handle(
     deps: DepsMut,
     env: Env,
@@ -283,7 +286,6 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
     balance.amount = to_send;
     let res = HandleResponse {
         messages: vec![BankMsg::Send {
-            from_address: env.contract.address,
             to_address: info.sender.clone(),
             amount: vec![balance],
         }
@@ -371,7 +373,8 @@ pub fn _bond_all_tokens(
     Ok(res)
 }
 
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+#[entry_point]
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
         QueryMsg::Investment {} => to_binary(&query_investment(deps)?),

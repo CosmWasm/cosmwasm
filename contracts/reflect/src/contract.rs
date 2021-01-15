@@ -1,6 +1,7 @@
 use cosmwasm_std::{
     attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, QueryRequest, StdError, StdResult, SystemResult,
+    HumanAddr, InitResponse, MessageInfo, QueryRequest, QueryResponse, StdError, StdResult,
+    SystemResult,
 };
 
 use crate::errors::ReflectError;
@@ -87,7 +88,7 @@ pub fn try_change_owner(
     })
 }
 
-pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<Binary> {
+pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
@@ -169,7 +170,6 @@ mod tests {
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -193,7 +193,6 @@ mod tests {
 
         // signer is not owner
         let payload = vec![BankMsg::Send {
-            from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
             to_address: HumanAddr::from("friend"),
             amount: coins(1, "token"),
         }
@@ -224,11 +223,8 @@ mod tests {
         let msg = HandleMsg::ReflectMsg {
             msgs: payload.clone(),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            ReflectError::MessagesEmpty => {}
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        assert_eq!(err, ReflectError::MessagesEmpty);
     }
 
     #[test]
@@ -241,7 +237,6 @@ mod tests {
 
         let payload = vec![
             BankMsg::Send {
-                from_address: HumanAddr::from(MOCK_CONTRACT_ADDR),
                 to_address: HumanAddr::from("friend"),
                 amount: coins(1, "token"),
             }
@@ -301,14 +296,10 @@ mod tests {
             owner: new_owner.clone(),
         };
 
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
-            ReflectError::NotCurrentOwner { expected, actual } => {
-                assert_eq!(expected, deps.api.canonical_address(&creator).unwrap());
-                assert_eq!(actual, deps.api.canonical_address(&random).unwrap());
-            }
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let expected = deps.api.canonical_address(&creator).unwrap();
+        let actual = deps.api.canonical_address(&random).unwrap();
+        assert_eq!(err, ReflectError::NotCurrentOwner { expected, actual });
     }
 
     #[test]
@@ -324,12 +315,12 @@ mod tests {
         let msg = HandleMsg::ChangeOwner {
             owner: HumanAddr::from("x"),
         };
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
-        match res.unwrap_err() {
+        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        match err {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
                 assert!(msg.contains("human address too short"))
             }
-            err => panic!("Unexpected error: {:?}", err),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 

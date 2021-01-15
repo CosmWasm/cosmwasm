@@ -1,6 +1,6 @@
 //! exports exposes the public wasm API
 //!
-//! cosmwasm_vm_version_4, allocate and deallocate turn into Wasm exports
+//! interface_version_5, allocate and deallocate turn into Wasm exports
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
@@ -25,11 +25,15 @@ use crate::{Deps, DepsMut, MessageInfo};
 #[no_mangle]
 extern "C" fn requires_staking() -> () {}
 
-/// cosmwasm_vm_version_* exports mark which Wasm VM interface level this contract is compiled for.
+#[cfg(feature = "stargate")]
+#[no_mangle]
+extern "C" fn requires_stargate() -> () {}
+
+/// interface_version_* exports mark which Wasm VM interface level this contract is compiled for.
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-extern "C" fn cosmwasm_vm_version_4() -> () {}
+extern "C" fn interface_version_5() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
@@ -238,7 +242,7 @@ where
 }
 
 /// Makes all bridges to external dependencies (i.e. Wasm imports) that are injected by the VM
-fn make_dependencies() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier> {
+pub(crate) fn make_dependencies() -> OwnedDeps<ExternalStorage, ExternalApi, ExternalQuerier> {
     OwnedDeps {
         storage: ExternalStorage::new(),
         api: ExternalApi::new(),

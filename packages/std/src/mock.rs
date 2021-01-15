@@ -58,16 +58,6 @@ pub struct MockApi {
     pub canonical_length: usize,
 }
 
-impl MockApi {
-    #[deprecated(
-        since = "0.11.0",
-        note = "The canonical length argument is unused. Use MockApi::default() instead."
-    )]
-    pub fn new(_canonical_length: usize) -> Self {
-        MockApi::default()
-    }
-}
-
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
@@ -242,6 +232,14 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
             QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
+            #[cfg(feature = "stargate")]
+            QueryRequest::Stargate { .. } => SystemResult::Err(SystemError::UnsupportedRequest {
+                kind: "Stargate".to_string(),
+            }),
+            #[cfg(feature = "stargate")]
+            QueryRequest::Ibc(_) => SystemResult::Err(SystemError::UnsupportedRequest {
+                kind: "Ibc".to_string(),
+            }),
         }
     }
 }
@@ -390,7 +388,7 @@ pub fn digit_sum(input: &[u8]) -> usize {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::query::Delegation;
     use crate::{coin, coins, from_binary, Decimal, HumanAddr};

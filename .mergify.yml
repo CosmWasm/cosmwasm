@@ -11,16 +11,17 @@ pull_request_rules:
       - "status-success=ci/circleci: package_schema"
       - "status-success=ci/circleci: package_std"
       - "status-success=ci/circleci: package_storage"
+      - "status-success=ci/circleci: package_vm"
       - "status-success=ci/circleci: package_vm_cranelift"
-      - "status-success=ci/circleci: package_vm_singlepass"
       - "status-success=ci/circleci: contract_burner"
       - "status-success=ci/circleci: contract_hackatom"
-      - "status-success=ci/circleci: contract_hackatom_in_singlepass_vm"
       - "status-success=ci/circleci: contract_queue"
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"
       - "status-success=ci/circleci: fmt"
       - "status-success=ci/circleci: clippy"
+      - "status-success=Windows"
+      - "status-success=macOS"
     actions:
       merge:
         method: merge

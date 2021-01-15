@@ -4,6 +4,7 @@
 
 | Crate            | Download                                                                                                                            | Docs                                                                                    |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| cosmwasm-derive  | [![cosmwasm-derive on crates.io](https://img.shields.io/crates/v/cosmwasm-derive.svg)](https://crates.io/crates/cosmwasm-derive)    | [![Docs](https://docs.rs/cosmwasm-derive/badge.svg)](https://docs.rs/cosmwasm-derive)   |
 | cosmwasm-schema  | [![cosmwasm-schema on crates.io](https://img.shields.io/crates/v/cosmwasm-schema.svg)](https://crates.io/crates/cosmwasm-schema)    | [![Docs](https://docs.rs/cosmwasm-schema/badge.svg)](https://docs.rs/cosmwasm-schema)   |
 | cosmwasm-std     | [![cosmwasm-std on crates.io](https://img.shields.io/crates/v/cosmwasm-std.svg)](https://crates.io/crates/cosmwasm-std)             | [![Docs](https://docs.rs/cosmwasm-std/badge.svg)](https://docs.rs/cosmwasm-std)         |
 | cosmwasm-storage | [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage) | [![Docs](https://docs.rs/cosmwasm-storage/badge.svg)](https://docs.rs/cosmwasm-storage) |
@@ -14,13 +15,6 @@
 This repo provides a useful functionality to build smart contracts that are
 compatible with a Cosmos SDK based runtime,
 [wasmd](https://github.com/CosmWasm/wasmd).
-
-Compatibility:
-
-- Contracts built with CosmWasm `v0.8.x` (unreleased) will run on wasmd `v0.8.x`
-  (unreleased) (master branch)
-- Contracts built with CosmWasm `v0.7.x` will run on wasmd `v0.7.x` (0.7 branch)
-- Contracts built with CosmWasm `v0.6.3+` will run on wasmd `v0.6.x`
 
 ## Overview
 
@@ -314,18 +308,24 @@ cargo fmt \
   && (cd packages/std && cargo wasm-debug --features iterator && cargo test --features iterator && cargo clippy --features iterator -- -D warnings && cargo schema) \
   && (cd packages/storage && cargo build && cargo test --features iterator && cargo clippy --features iterator -- -D warnings) \
   && (cd packages/schema && cargo build && cargo test && cargo clippy -- -D warnings) \
-  && (cd packages/vm && cargo +nightly build --features iterator && cargo +nightly test --features iterator && cargo +nightly clippy --features iterator -- -D warnings)
+  && (cd packages/vm && cargo build --features iterator && cargo test --features iterator && cargo clippy --features iterator -- -D warnings)
 ```
 
 **Contracts**
 
-Step 1 (fast checks)
+Step 1 (fast checks, rebuilds lock files)
+
+```sh
+for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo check --tests) || break; done
+```
+
+Step 2 (medium fast checks)
 
 ```sh
 for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo fmt && cargo check --tests && cargo wasm-debug && cargo unit-test && cargo clippy -- -D warnings && cargo schema) || break; done
 ```
 
-Step 2 (slower checks)
+Step 3 (slower checks)
 
 ```sh
 for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo wasm && cargo integration-test) || break; done

@@ -1,3 +1,3 @@
 mod deterministic;
 
-pub use deterministic::DeterministicMiddleware;
+pub use deterministic::Deterministic;

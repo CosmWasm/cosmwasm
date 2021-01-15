@@ -1,0 +1,25 @@
+[package]
+name = "cosmwasm-derive"
+version = "0.13.2"
+authors = ["Simon Warta <webmaster128@users.noreply.github.com>"]
+edition = "2018"
+description = "A package for auto-generated code used for CosmWasm contract development. This is shipped as part of cosmwasm-std. Do not use directly."
+repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/derive"
+license = "Apache-2.0"
+readme = "README.md"
+
+[lib]
+proc-macro = true
+
+[features]
+default = []
+
+[dependencies]
+syn = { version = "1.0", features = ["full"] }
+
+[dev-dependencies]
+# Needed for testing docs
+# "What's even more fun, Cargo packages actually can have cyclic dependencies.
+# "(a package can have an indirect dev-dependency on itself)"
+# https://users.rust-lang.org/t/does-cargo-support-cyclic-dependencies/35666/3
+cosmwasm-std = { path = "../std" }

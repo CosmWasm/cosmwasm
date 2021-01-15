@@ -148,6 +148,149 @@ impl StdError {
     }
 }
 
+impl PartialEq<StdError> for StdError {
+    fn eq(&self, rhs: &StdError) -> bool {
+        match self {
+            StdError::GenericErr {
+                msg,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::GenericErr {
+                    msg: rhs_msg,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            StdError::InvalidBase64 {
+                msg,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::InvalidBase64 {
+                    msg: rhs_msg,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            StdError::InvalidDataSize {
+                expected,
+                actual,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::InvalidDataSize {
+                    expected: rhs_expected,
+                    actual: rhs_actual,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    expected == rhs_expected && actual == rhs_actual
+                } else {
+                    false
+                }
+            }
+            StdError::InvalidUtf8 {
+                msg,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::InvalidUtf8 {
+                    msg: rhs_msg,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            StdError::NotFound {
+                kind,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::NotFound {
+                    kind: rhs_kind,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    kind == rhs_kind
+                } else {
+                    false
+                }
+            }
+            StdError::ParseErr {
+                target_type,
+                msg,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::ParseErr {
+                    target_type: rhs_target_type,
+                    msg: rhs_msg,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    target_type == rhs_target_type && msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            StdError::SerializeErr {
+                source_type,
+                msg,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::SerializeErr {
+                    source_type: rhs_source_type,
+                    msg: rhs_msg,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source_type == rhs_source_type && msg == rhs_msg
+                } else {
+                    false
+                }
+            }
+            StdError::Underflow {
+                minuend,
+                subtrahend,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::Underflow {
+                    minuend: rhs_minuend,
+                    subtrahend: rhs_subtrahend,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    minuend == rhs_minuend && subtrahend == rhs_subtrahend
+                } else {
+                    false
+                }
+            }
+        }
+    }
+}
+
 impl From<std::str::Utf8Error> for StdError {
     fn from(source: std::str::Utf8Error) -> Self {
         Self::invalid_utf8(source)
@@ -168,7 +311,7 @@ impl From<std::string::FromUtf8Error> for StdError {
 pub type StdResult<T> = core::result::Result<T, StdError>;
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use std::str;
 
@@ -341,6 +484,21 @@ mod test {
         let error: StdError = StdError::underflow(3, 5);
         let embedded = format!("Display message: {}", error);
         assert_eq!(embedded, "Display message: Cannot subtract 5 from 3");
+    }
+
+    #[test]
+    fn implements_partial_eq() {
+        let u1 = StdError::underflow(3, 5);
+        let u2 = StdError::underflow(3, 5);
+        let u3 = StdError::underflow(3, 7);
+        let s1 = StdError::serialize_err("Book", "Content too long");
+        let s2 = StdError::serialize_err("Book", "Content too long");
+        let s3 = StdError::serialize_err("Book", "Title too long");
+        assert_eq!(u1, u2);
+        assert_ne!(u1, u3);
+        assert_ne!(u1, s1);
+        assert_eq!(s1, s2);
+        assert_ne!(s1, s3);
     }
 
     #[test]

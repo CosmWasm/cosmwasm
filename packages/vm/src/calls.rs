@@ -1,31 +1,33 @@
+use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use std::fmt;
+use wasmer::Val;
 
 use cosmwasm_std::{
     ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
 };
 
 use crate::backend::{Api, Querier, Storage};
+use crate::conversion::ref_to_u32;
 use crate::errors::{VmError, VmResult};
-use crate::instance::{Func, Instance};
+use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
-use schemars::JsonSchema;
 
 const MAX_LENGTH_INIT: usize = 100_000;
 const MAX_LENGTH_HANDLE: usize = 100_000;
 const MAX_LENGTH_MIGRATE: usize = 100_000;
 const MAX_LENGTH_QUERY: usize = 100_000;
 
-pub fn call_init<S, A, Q, U>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_init<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
     msg: &[u8],
 ) -> VmResult<ContractResult<InitResponse<U>>>
 where
-    S: Storage,
     A: Api + 'static,
-    Q: Querier,
+    S: Storage + 'static,
+    Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -35,16 +37,16 @@ where
     Ok(result)
 }
 
-pub fn call_handle<S, A, Q, U>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_handle<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
     msg: &[u8],
 ) -> VmResult<ContractResult<HandleResponse<U>>>
 where
-    S: Storage,
     A: Api + 'static,
-    Q: Querier,
+    S: Storage + 'static,
+    Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -54,15 +56,15 @@ where
     Ok(result)
 }
 
-pub fn call_migrate<S, A, Q, U>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_migrate<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
 ) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
-    S: Storage,
     A: Api + 'static,
-    Q: Querier,
+    S: Storage + 'static,
+    Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
@@ -71,11 +73,16 @@ where
     Ok(result)
 }
 
-pub fn call_query<S: Storage, A: Api + 'static, Q: Querier>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_query<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<ContractResult<QueryResponse>> {
+) -> VmResult<ContractResult<QueryResponse>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
     let result: ContractResult<QueryResponse> = from_slice(&data)?;
@@ -92,81 +99,151 @@ pub fn call_query<S: Storage, A: Api + 'static, Q: Querier>(
 
 /// Calls Wasm export "init" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_init_raw<S: Storage, A: Api + 'static, Q: Querier>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_init_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
     env: &[u8],
     info: &[u8],
     msg: &[u8],
-) -> VmResult<Vec<u8>> {
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
     instance.set_storage_readonly(false);
     call_raw(instance, "init", &[env, info, msg], MAX_LENGTH_INIT)
 }
 
 /// Calls Wasm export "handle" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_handle_raw<S: Storage, A: Api + 'static, Q: Querier>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_handle_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
     env: &[u8],
     info: &[u8],
     msg: &[u8],
-) -> VmResult<Vec<u8>> {
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
     instance.set_storage_readonly(false);
     call_raw(instance, "handle", &[env, info, msg], MAX_LENGTH_HANDLE)
 }
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_migrate_raw<S: Storage, A: Api + 'static, Q: Querier>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_migrate_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
-) -> VmResult<Vec<u8>> {
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
     instance.set_storage_readonly(false);
     call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_query_raw<S: Storage, A: Api + 'static, Q: Querier>(
-    instance: &mut Instance<S, A, Q>,
+pub fn call_query_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
     env: &[u8],
     msg: &[u8],
-) -> VmResult<Vec<u8>> {
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
     instance.set_storage_readonly(true);
     call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
 }
 
-fn call_raw<S: Storage, A: Api + 'static, Q: Querier>(
-    instance: &mut Instance<S, A, Q>,
+/// Calls a function with the given arguments.
+/// The exported function must return exactly one result (an offset to the result Region).
+pub(crate) fn call_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
     name: &str,
     args: &[&[u8]],
     result_max_length: usize,
-) -> VmResult<Vec<u8>> {
-    let mut arg_region_ptrs = Vec::<u32>::with_capacity(args.len());
+) -> VmResult<Vec<u8>>
+where
+    A: Api + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    let mut arg_region_ptrs = Vec::<Val>::with_capacity(args.len());
     for arg in args {
         let region_ptr = instance.allocate(arg.len())?;
         instance.write_memory(region_ptr, arg)?;
-        arg_region_ptrs.push(region_ptr);
+        arg_region_ptrs.push(region_ptr.into());
     }
-
-    let res_region_ptr = match args.len() {
-        1 => {
-            let func: Func<u32, u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0])?
-        }
-        2 => {
-            let func: Func<(u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1])?
-        }
-        3 => {
-            let func: Func<(u32, u32, u32), u32> = instance.func(name)?;
-            func.call(arg_region_ptrs[0], arg_region_ptrs[1], arg_region_ptrs[2])?
-        }
-        _ => panic!("call_raw called with unsupported number of arguments"),
-    };
-
+    let result = instance.call_function1(name, &arg_region_ptrs)?;
+    let res_region_ptr = ref_to_u32(&result)?;
     let data = instance.read_memory(res_region_ptr, result_max_length)?;
     // free return value in wasm (arguments were freed in wasm code)
     instance.deallocate(res_region_ptr)?;
     Ok(data)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::testing::{mock_env, mock_info, mock_instance};
+    use cosmwasm_std::{coins, Empty};
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
+
+    #[test]
+    fn call_init_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_handle_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // handle
+        let info = mock_info("verifies", &coins(15, "earth"));
+        let msg = br#"{"release":{}}"#;
+        call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_query_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // query
+        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let query_response = contract_result.unwrap();
+        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
+    }
 }

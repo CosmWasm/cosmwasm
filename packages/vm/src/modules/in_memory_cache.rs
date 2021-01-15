@@ -1,5 +1,5 @@
 use clru::CLruCache;
-use wasmer_runtime_core::module::Module;
+use wasmer::Module;
 
 use crate::{Checksum, Size, VmResult};
 
@@ -7,7 +7,7 @@ const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
 
 /// An in-memory module cache
 pub struct InMemoryCache {
-    lru: CLruCache<Checksum, Module>,
+    modules: CLruCache<Checksum, Module>,
 }
 
 impl InMemoryCache {
@@ -15,30 +15,36 @@ impl InMemoryCache {
     pub fn new(size: Size) -> Self {
         let max_entries = size.0 / ESTIMATED_MODULE_SIZE.0;
         InMemoryCache {
-            lru: CLruCache::new(max_entries),
+            modules: CLruCache::new(max_entries),
         }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        self.lru.put(*checksum, module);
+        self.modules.put(*checksum, module);
         Ok(())
     }
 
-    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<&Module>> {
-        let optional = self.lru.get(checksum);
-        Ok(optional)
+    /// Looks up a module in the cache and creates a new module
+    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
+        match self.modules.get(checksum) {
+            Some(module) => Ok(Some(module.clone())),
+            None => Ok(None),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::backends::{compile, BACKEND_NAME};
+    use crate::size::Size;
+    use crate::wasm_backend::compile_only;
+    use wasmer::{imports, Instance as WasmerInstance};
+    use wasmer_middlewares::metering::set_remaining_points;
+
+    const TESTING_GAS_LIMIT: u64 = 5_000;
 
     #[test]
-    fn test_in_memory_cache_run() {
-        use wasmer_runtime_core::{imports, typed_func::Func};
-
+    fn in_memory_cache_run() {
         let mut cache = InMemoryCache::new(Size::mebi(200));
 
         // Create module
@@ -48,34 +54,41 @@ mod tests {
             (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
                 get_local $p0
                 i32.const 1
-                i32.add))
-            "#,
+                i32.add)
+            )"#,
         )
         .unwrap();
         let checksum = Checksum::generate(&wasm);
-        let module = compile(&wasm).unwrap();
 
         // Module does not exist
-        let cached = cache.load(&checksum).unwrap();
-        assert!(cached.is_none());
+        let cache_entry = cache.load(&checksum).unwrap();
+        assert!(cache_entry.is_none());
+
+        // Compile module
+        let original = compile_only(&wasm).unwrap();
+
+        // Ensure original module can be executed
+        {
+            let instance = WasmerInstance::new(&original, &imports! {}).unwrap();
+            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
+        }
 
         // Store module
-        cache.store(&checksum, module.clone()).unwrap();
+        cache.store(&checksum, original).unwrap();
 
         // Load module
-        let cached = cache.load(&checksum).unwrap();
-        assert!(cached.is_some());
+        let cached = cache.load(&checksum).unwrap().unwrap();
 
-        // Check the returned module is functional.
-        // This is not really testing the cache API but better safe than sorry.
+        // Ensure cached module can be executed
         {
-            assert_eq!(module.info().backend.to_string(), BACKEND_NAME.to_string());
-            let cached_module = cached.unwrap();
-            let import_object = imports! {};
-            let instance = cached_module.instantiate(&import_object).unwrap();
-            let add_one: Func<i32, i32> = instance.exports.get("add_one").unwrap();
-            let value = add_one.call(42).unwrap();
-            assert_eq!(value, 43);
+            let instance = WasmerInstance::new(&cached, &imports! {}).unwrap();
+            set_remaining_points(&instance, TESTING_GAS_LIMIT);
+            let add_one = instance.exports.get_function("add_one").unwrap();
+            let result = add_one.call(&[42.into()]).unwrap();
+            assert_eq!(result[0].unwrap_i32(), 43);
         }
     }
 }

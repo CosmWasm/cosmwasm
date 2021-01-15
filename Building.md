@@ -26,7 +26,7 @@ making real code.
 You must support the rust target `wasm32-unknown-unknown`.
 
 Check which ones you currently have installed via
-`rustup target list --installed`. If wasm32 is not on that list, install using
+`rustup target listfix conflicts and then com --installed`. If wasm32 is not on that list, install using
 `rustup target add wasm32-unknown-unknown`
 
 ## Building

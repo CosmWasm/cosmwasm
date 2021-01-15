@@ -17,6 +17,13 @@ pub struct GasInfo {
 }
 
 impl GasInfo {
+    pub fn new(cost: u64, externally_used: u64) -> Self {
+        GasInfo {
+            cost,
+            externally_used,
+        }
+    }
+
     pub fn with_cost(amount: u64) -> Self {
         GasInfo {
             cost: amount,
@@ -55,9 +62,9 @@ impl AddAssign for GasInfo {
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Backend<S: Storage, A: Api, Q: Querier> {
-    pub storage: S,
+pub struct Backend<A: Api, S: Storage, Q: Querier> {
     pub api: A,
+    pub storage: S,
     pub querier: Q,
 }
 
@@ -205,7 +212,7 @@ impl From<FromUtf8Error> for BackendError {
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]

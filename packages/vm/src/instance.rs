@@ -1,34 +1,22 @@
 use std::collections::HashSet;
-use std::marker::PhantomData;
 use std::ptr::NonNull;
 
-pub use wasmer_runtime_core::typed_func::Func;
-use wasmer_runtime_core::{
-    imports,
-    module::Module,
-    typed_func::{Wasm, WasmTypeList},
-    vm::Ctx,
-    Instance as WasmerInstance,
-};
+use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
 use crate::backend::{Api, Backend, Querier, Storage};
-use crate::backends::{compile, get_gas_left, set_gas_left};
-use crate::context::{
-    get_gas_state, get_gas_state_mut, move_into_context, move_out_of_context, set_storage_readonly,
-    set_wasmer_instance, setup_context, with_querier_from_context, with_storage_from_context,
-};
-use crate::conversion::to_u32;
+use crate::conversion::{ref_to_u32, to_u32};
+use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    do_canonicalize_address, do_humanize_address, do_query_chain, do_read, do_remove, do_write,
-    print_debug_message,
+    native_canonicalize_address, native_db_read, native_db_remove, native_db_write, native_debug,
+    native_humanize_address, native_query_chain,
 };
 #[cfg(feature = "iterator")]
-use crate::imports::{do_next, do_scan};
-use crate::memory::{get_memory_info, read_region, write_region};
-
-const WASM_PAGE_SIZE: u64 = 64 * 1024;
+use crate::imports::{native_db_next, native_db_scan};
+use crate::memory::{read_region, write_region};
+use crate::size::Size;
+use crate::wasm_backend::compile_and_use;
 
 #[derive(Copy, Clone, Debug)]
 pub struct GasReport {
@@ -49,152 +37,159 @@ pub struct InstanceOptions {
     pub print_debug: bool,
 }
 
-pub struct Instance<S: Storage, A: Api, Q: Querier> {
+pub struct Instance<A: Api, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
-    inner: Box<WasmerInstance>,
-    pub api: A,
+    _inner: Box<WasmerInstance>,
+    env: Environment<A, S, Q>,
     pub required_features: HashSet<String>,
-    // This does not store data but only fixes type information
-    type_storage: PhantomData<S>,
-    type_querier: PhantomData<Q>,
 }
 
-impl<S, A, Q> Instance<S, A, Q>
+impl<A, S, Q> Instance<A, S, Q>
 where
-    S: Storage,
     A: Api + 'static, // 'static is needed here to allow copying API instances into closures
-    Q: Querier,
+    S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
+    Q: Querier + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
 {
     /// This is the only Instance constructor that can be called from outside of cosmwasm-vm,
     /// e.g. in test code that needs a customized variant of cosmwasm_vm::testing::mock_instance*.
     pub fn from_code(
         code: &[u8],
-        backend: Backend<S, A, Q>,
+        backend: Backend<A, S, Q>,
         options: InstanceOptions,
+        memory_limit: Option<Size>,
     ) -> VmResult<Self> {
-        let module = compile(code)?;
+        let module = compile_and_use(code, memory_limit)?;
         Instance::from_module(&module, backend, options.gas_limit, options.print_debug)
     }
 
     pub(crate) fn from_module(
         module: &Module,
-        backend: Backend<S, A, Q>,
+        backend: Backend<A, S, Q>,
         gas_limit: u64,
         print_debug: bool,
     ) -> VmResult<Self> {
-        let mut import_obj =
-            imports! { move || { setup_context::<S, Q>(gas_limit) }, "env" => {}, };
+        let store = module.store();
 
-        // copy this so it can be moved into the closures, without pulling in deps
-        let api = backend.api;
-        import_obj.extend(imports! {
-            "env" => {
-                // Reads the database entry at the given key into the the value.
-                // Returns 0 if key does not exist and pointer to result region otherwise.
-                // Ownership of the key pointer is not transferred to the host.
-                // Ownership of the value pointer is transferred to the contract.
-                "db_read" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<u32> {
-                    do_read::<S, Q>(ctx, key_ptr)
-                }),
-                // Writes the given value into the database entry at the given key.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "db_write" => Func::new(move |ctx: &mut Ctx, key_ptr: u32, value_ptr: u32| -> VmResult<()> {
-                    do_write::<S, Q>(ctx, key_ptr, value_ptr)
-                }),
-                // Removes the value at the given key. Different than writing &[] as future
-                // scans will not find this key.
-                // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
-                // Ownership of both key pointer is not transferred to the host.
-                "db_remove" => Func::new(move |ctx: &mut Ctx, key_ptr: u32| -> VmResult<()> {
-                    do_remove::<S, Q>(ctx, key_ptr)
-                }),
-                // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
-                // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "canonicalize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
-                    do_canonicalize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
-                }),
-                // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
-                // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
-                // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "humanize_address" => Func::new(move |ctx: &mut Ctx, source_ptr: u32, destination_ptr: u32| -> VmResult<u32> {
-                    do_humanize_address::<A, S, Q>(api, ctx, source_ptr, destination_ptr)
-                }),
-                // Allows the contract to emit debug logs that the host can either process or ignore.
-                // This is never written to chain.
-                // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
-                // Ownership of both input and output pointer is not transferred to the host.
-                "debug" => Func::new(move |ctx: &mut Ctx, message_ptr: u32|-> VmResult<()> {
-                    if print_debug {
-                        print_debug_message(ctx, message_ptr)?;
-                    }
-                    Ok(())
-                }),
-                "query_chain" => Func::new(move |ctx: &mut Ctx, request_ptr: u32| -> VmResult<u32> {
-                    do_query_chain::<S, Q>(ctx, request_ptr)
-                }),
-            },
-        });
+        let env = Environment::new(backend.api, gas_limit, print_debug);
 
+        let mut import_obj = ImportObject::new();
+        let mut env_imports = Exports::new();
+
+        // Reads the database entry at the given key into the the value.
+        // Returns 0 if key does not exist and pointer to result region otherwise.
+        // Ownership of the key pointer is not transferred to the host.
+        // Ownership of the value pointer is transferred to the contract.
+        env_imports.insert(
+            "db_read",
+            Function::new_native_with_env(store, env.clone(), native_db_read),
+        );
+
+        // Writes the given value into the database entry at the given key.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "db_write",
+            Function::new_native_with_env(store, env.clone(), native_db_write),
+        );
+
+        // Removes the value at the given key. Different than writing &[] as future
+        // scans will not find this key.
+        // At the moment it is not possible to differentiate between a key that existed before and one that did not exist (https://github.com/CosmWasm/cosmwasm/issues/290).
+        // Ownership of both key pointer is not transferred to the host.
+        env_imports.insert(
+            "db_remove",
+            Function::new_native_with_env(store, env.clone(), native_db_remove),
+        );
+
+        // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
+        // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
+        // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "canonicalize_address",
+            Function::new_native_with_env(store, env.clone(), native_canonicalize_address),
+        );
+
+        // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
+        // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
+        // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "humanize_address",
+            Function::new_native_with_env(store, env.clone(), native_humanize_address),
+        );
+
+        // Allows the contract to emit debug logs that the host can either process or ignore.
+        // This is never written to chain.
+        // Takes a pointer argument of a memory region that must contain an UTF-8 encoded string.
+        // Ownership of both input and output pointer is not transferred to the host.
+        env_imports.insert(
+            "debug",
+            Function::new_native_with_env(store, env.clone(), native_debug),
+        );
+
+        env_imports.insert(
+            "query_chain",
+            Function::new_native_with_env(store, env.clone(), native_query_chain),
+        );
+
+        // Creates an iterator that will go from start to end.
+        // If start_ptr == 0, the start is unbounded.
+        // If end_ptr == 0, the end is unbounded.
+        // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
+        // Ownership of both start and end pointer is not transferred to the host.
+        // Returns an iterator ID.
         #[cfg(feature = "iterator")]
-        import_obj.extend(imports! {
-            "env" => {
-                // Creates an iterator that will go from start to end.
-                // If start_ptr == 0, the start is unbounded.
-                // If end_ptr == 0, the end is unbounded.
-                // Order is defined in cosmwasm_std::Order and may be 1 (ascending) or 2 (descending). All other values result in an error.
-                // Ownership of both start and end pointer is not transferred to the host.
-                // Returns an iterator ID.
-                "db_scan" => Func::new(move |ctx: &mut Ctx, start_ptr: u32, end_ptr: u32, order: i32| -> VmResult<u32> {
-                    do_scan::<S, Q>(ctx, start_ptr, end_ptr, order)
-                }),
-                // Get next element of iterator with ID `iterator_id`.
-                // Creates a region containing both key and value and returns its address.
-                // Ownership of the result region is transferred to the contract.
-                // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
-                // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
-                "db_next" => Func::new(move |ctx: &mut Ctx, iterator_id: u32| -> VmResult<u32> {
-                    do_next::<S, Q>(ctx, iterator_id)
-                }),
-            },
-        });
+        env_imports.insert(
+            "db_scan",
+            Function::new_native_with_env(store, env.clone(), native_db_scan),
+        );
 
-        let mut wasmer_instance =
-            Box::from(module.instantiate(&import_obj).map_err(|original| {
+        // Get next element of iterator with ID `iterator_id`.
+        // Creates a region containing both key and value and returns its address.
+        // Ownership of the result region is transferred to the contract.
+        // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value.
+        // An empty key (i.e. KV region ends with \0\0\0\0) means no more element, no matter what the value is.
+        #[cfg(feature = "iterator")]
+        env_imports.insert(
+            "db_next",
+            Function::new_native_with_env(store, env.clone(), native_db_next),
+        );
+
+        import_obj.register("env", env_imports);
+
+        let wasmer_instance = Box::from(WasmerInstance::new(module, &import_obj).map_err(
+            |original| {
                 VmError::instantiation_err(format!("Error instantiating module: {:?}", original))
-            })?);
+            },
+        )?);
 
-        set_gas_left(wasmer_instance.context_mut(), gas_limit);
-        get_gas_state_mut::<S, Q>(wasmer_instance.context_mut()).set_gas_limit(gas_limit);
         let required_features = required_features_from_wasmer_instance(wasmer_instance.as_ref());
         let instance_ptr = NonNull::from(wasmer_instance.as_ref());
-        set_wasmer_instance::<S, Q>(wasmer_instance.context_mut(), Some(instance_ptr));
-        move_into_context(
-            wasmer_instance.context_mut(),
-            backend.storage,
-            backend.querier,
-        );
+        env.set_wasmer_instance(Some(instance_ptr));
+        env.set_gas_left(gas_limit);
+        env.move_in(backend.storage, backend.querier);
         let instance = Instance {
-            inner: wasmer_instance,
-            api: backend.api,
+            _inner: wasmer_instance,
+            env,
             required_features,
-            type_storage: PhantomData::<S> {},
-            type_querier: PhantomData::<Q> {},
         };
         Ok(instance)
     }
 
+    pub fn api(&self) -> &A {
+        &self.env.api
+    }
+
     /// Decomposes this instance into its components.
     /// External dependencies are returned for reuse, the rest is dropped.
-    pub fn recycle(mut self) -> Option<Backend<S, A, Q>> {
-        if let (Some(storage), Some(querier)) = move_out_of_context(self.inner.context_mut()) {
+    pub fn recycle(self) -> Option<Backend<A, S, Q>> {
+        if let (Some(storage), Some(querier)) = self.env.move_out() {
+            let api = self.env.api;
             Some(Backend {
+                api,
                 storage,
-                api: self.api,
                 querier,
             })
         } else {
@@ -202,30 +197,36 @@ where
         }
     }
 
-    /// Returns the size of the default memory in bytes.
+    /// Returns the size of the default memory in pages.
     /// This provides a rough idea of the peak memory consumption. Note that
     /// Wasm memory always grows in 64 KiB steps (pages) and can never shrink
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
-    pub fn get_memory_size(&self) -> u64 {
-        (get_memory_info(self.inner.context()).size as u64) * WASM_PAGE_SIZE
+    pub fn memory_pages(&self) -> usize {
+        self.env.memory().size().0 as _
     }
 
     /// Returns the currently remaining gas.
     pub fn get_gas_left(&self) -> u64 {
-        self.create_gas_report().remaining
+        self.env.get_gas_left()
     }
 
     /// Creates and returns a gas report.
     /// This is a snapshot and multiple reports can be created during the lifetime of
     /// an instance.
     pub fn create_gas_report(&self) -> GasReport {
-        let state = get_gas_state::<S, Q>(self.inner.context()).clone();
-        let gas_left = get_gas_left(self.inner.context());
+        let state = self.env.with_gas_state(|gas_state| gas_state.clone());
+        let gas_left = self.env.get_gas_left();
         GasReport {
             limit: state.gas_limit,
             remaining: gas_left,
             used_externally: state.externally_used_gas,
-            used_internally: state.get_gas_used_in_wasmer(gas_left),
+            // If externally_used_gas exceeds the gas limit, this will return 0.
+            // no matter how much gas was used internally. But then we error with out of gas
+            // anyways, and it does not matter much anymore where gas was spend.
+            used_internally: state
+                .gas_limit
+                .saturating_sub(state.externally_used_gas)
+                .saturating_sub(gas_left),
         }
     }
 
@@ -233,22 +234,22 @@ where
     /// for multiple calls in integration tests, this should be set to the desired value
     /// right before every call.
     pub fn set_storage_readonly(&mut self, new_value: bool) {
-        set_storage_readonly::<S, Q>(self.inner.context_mut(), new_value);
+        self.env.set_storage_readonly(new_value);
     }
 
     pub fn with_storage<F: FnOnce(&mut S) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_storage_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
+        self.env.with_storage_from_context::<F, T>(func)
     }
 
     pub fn with_querier<F: FnOnce(&mut Q) -> VmResult<T>, T>(&mut self, func: F) -> VmResult<T> {
-        with_querier_from_context::<S, Q, F, T>(self.inner.context_mut(), func)
+        self.env.with_querier_from_context::<F, T>(func)
     }
 
     /// Requests memory allocation by the instance and returns a pointer
     /// in the Wasm address space to the created Region object.
     pub(crate) fn allocate(&mut self, size: usize) -> VmResult<u32> {
-        let alloc: Func<u32, u32> = self.func("allocate")?;
-        let ptr = alloc.call(to_u32(size)?)?;
+        let ret = self.call_function1("allocate", &[to_u32(size)?.into()])?;
+        let ptr = ref_to_u32(&ret)?;
         if ptr == 0 {
             return Err(CommunicationError::zero_address().into());
         }
@@ -259,44 +260,45 @@ where
     // allocated by us, or a pointer from a return value after we copy it into rust.
     // we need to clean up the wasm-side buffers to avoid memory leaks
     pub(crate) fn deallocate(&mut self, ptr: u32) -> VmResult<()> {
-        let dealloc: Func<u32, ()> = self.func("deallocate")?;
-        dealloc.call(ptr)?;
+        self.call_function0("deallocate", &[ptr.into()])?;
         Ok(())
     }
 
     /// Copies all data described by the Region at the given pointer from Wasm to the caller.
     pub(crate) fn read_memory(&self, region_ptr: u32, max_length: usize) -> VmResult<Vec<u8>> {
-        read_region(self.inner.context(), region_ptr, max_length)
+        read_region(&self.env.memory(), region_ptr, max_length)
     }
 
     /// Copies data to the memory region that was created before using allocate.
     pub(crate) fn write_memory(&mut self, region_ptr: u32, data: &[u8]) -> VmResult<()> {
-        write_region(self.inner.context(), region_ptr, data)?;
+        write_region(&self.env.memory(), region_ptr, data)?;
         Ok(())
     }
 
-    pub(crate) fn func<Args, Rets>(&self, name: &str) -> VmResult<Func<Args, Rets, Wasm>>
-    where
-        Args: WasmTypeList,
-        Rets: WasmTypeList,
-    {
-        let function = self.inner.exports.get(name)?;
-        Ok(function)
+    /// Calls a function exported by the instance.
+    /// The function is expected to return no value. Otherwise this calls errors.
+    pub(crate) fn call_function0(&self, name: &str, args: &[Val]) -> VmResult<()> {
+        self.env.call_function0(name, args)
+    }
+
+    /// Calls a function exported by the instance.
+    /// The function is expected to return one value. Otherwise this calls errors.
+    pub(crate) fn call_function1(&self, name: &str, args: &[Val]) -> VmResult<Val> {
+        self.env.call_function1(name, args)
     }
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
     use crate::backend::Storage;
-    use crate::context::is_storage_readonly;
+    use crate::call_init;
     use crate::errors::VmError;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
         mock_instance_with_balances, mock_instance_with_failing_api, mock_instance_with_gas_limit,
-        MockQuerier, MockStorage,
+        mock_instance_with_options, MockInstanceOptions,
     };
-    use crate::{call_init, BackendError};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
         QueryRequest,
@@ -305,16 +307,14 @@ mod test {
     const KIB: usize = 1024;
     const MIB: usize = 1024 * 1024;
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
-
-    // shorthands for function generics below
-    type MS = MockStorage;
-    type MQ = MockQuerier;
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn required_features_works() {
         let backend = mock_backend(&[]);
-        let instance = Instance::from_code(CONTRACT, backend, mock_instance_options()).unwrap();
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance =
+            Instance::from_code(CONTRACT, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_features.len(), 0);
     }
 
@@ -335,7 +335,8 @@ mod test {
         .unwrap();
 
         let backend = mock_backend(&[]);
-        let instance = Instance::from_code(&wasm, backend, mock_instance_options()).unwrap();
+        let (instance_options, memory_limit) = mock_instance_options();
+        let instance = Instance::from_code(&wasm, backend, instance_options, memory_limit).unwrap();
         assert_eq!(instance.required_features.len(), 3);
         assert!(instance.required_features.contains("nutrients"));
         assert!(instance.required_features.contains("sun"));
@@ -343,46 +344,44 @@ mod test {
     }
 
     #[test]
-    fn func_works() {
+    fn call_function0_works() {
         let instance = mock_instance(&CONTRACT, &[]);
 
-        // can get func
-        let allocate: Func<u32, u32> = instance.func("allocate").expect("error getting func");
-
-        // can call a few times
-        let _ptr1 = allocate.call(0).expect("error calling allocate func");
-        let _ptr2 = allocate.call(1).expect("error calling allocate func");
-        let _ptr3 = allocate.call(33).expect("error calling allocate func");
+        instance
+            .call_function0("interface_version_5", &[])
+            .expect("error calling function");
     }
 
     #[test]
-    fn func_errors_for_non_existent_function() {
+    fn call_function1_works() {
         let instance = mock_instance(&CONTRACT, &[]);
-        let missing_function = "bar_foo345";
-        match instance.func::<(), ()>(missing_function).err().unwrap() {
-            VmError::ResolveErr { msg, .. } => assert_eq!(
-                msg,
-                "Wasmer resolve error: ExportNotFound { name: \"bar_foo345\" }"
-            ),
-            e => panic!("unexpected error: {:?}", e),
-        }
-    }
 
-    #[test]
-    fn func_errors_for_wrong_signature() {
-        let instance = mock_instance(&CONTRACT, &[]);
-        match instance.func::<(), ()>("allocate").err().unwrap() {
-            VmError::ResolveErr { msg, .. } => assert_eq!(
-                msg,
-                "Wasmer resolve error: Signature { expected: FuncSig { params: [I32], returns: [I32] }, found: [] }"
-            ),
-            e => panic!("unexpected error: {:?}", e),
-        }
+        // can call function few times
+        let result = instance
+            .call_function1("allocate", &[0u32.into()])
+            .expect("error calling allocate");
+        assert_ne!(result.unwrap_i32(), 0);
+
+        let result = instance
+            .call_function1("allocate", &[1u32.into()])
+            .expect("error calling allocate");
+        assert_ne!(result.unwrap_i32(), 0);
+
+        let result = instance
+            .call_function1("allocate", &[33u32.into()])
+            .expect("error calling allocate");
+        assert_ne!(result.unwrap_i32(), 0);
     }
 
     #[test]
     fn allocate_deallocate_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
+        let mut instance = mock_instance_with_options(
+            &CONTRACT,
+            MockInstanceOptions {
+                memory_limit: Some(Size::mebi(500)),
+                ..Default::default()
+            },
+        );
 
         let sizes: Vec<usize> = vec![
             0,
@@ -434,7 +433,7 @@ mod test {
     }
 
     #[test]
-    fn errors_in_imports_are_unwrapped_from_wasmer_errors() {
+    fn errors_in_imports() {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
         let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
@@ -445,13 +444,9 @@ mod test {
             b"{\"verifier\": \"some1\", \"beneficiary\": \"some2\"}",
         );
 
-        // in this case we get a `VmError::BackendErr` rather than a `VmError::RuntimeErr` because the conversion
-        // from wasmer `RuntimeError` to `VmError` unwraps errors that happen in WASM imports.
         match init_result.unwrap_err() {
-            VmError::BackendErr {
-                source: BackendError::Unknown { msg, .. },
-            } if msg == Some(error_message.to_string()) => {}
-            other => panic!("unexpected error: {:?}", other),
+            VmError::RuntimeErr { msg, .. } => assert!(msg.contains(error_message)),
+            err => panic!("Unexpected error: {:?}", err),
         }
     }
 
@@ -475,6 +470,7 @@ mod test {
                     CommunicationError::RegionLengthTooBig {
                         length, max_length, ..
                     },
+                ..
             } => {
                 assert_eq!(length, 6);
                 assert_eq!(max_length, 5);
@@ -486,68 +482,71 @@ mod test {
     }
 
     #[test]
-    fn get_memory_size_works() {
+    fn memory_pages_returns_min_memory_size_by_default() {
+        // min: 0 pages, max: none
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 0)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.memory_pages(), 0);
+
+        // min: 3 pages, max: none
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.memory_pages(), 3);
+    }
+
+    #[test]
+    fn memory_pages_grows_with_usage() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(instance.get_memory_size(), 17 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 17);
 
         // 100 KiB require two more pages
         let region_ptr = instance.allocate(100 * 1024).expect("error allocating");
 
-        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 19);
 
         // Deallocating does not shrink memory
         instance.deallocate(region_ptr).expect("error deallocating");
-        assert_eq!(instance.get_memory_size(), 19 * WASM_PAGE_SIZE);
+        assert_eq!(instance.memory_pages(), 19);
     }
 
     #[test]
-    #[cfg(feature = "default-cranelift")]
-    fn set_get_and_gas_cranelift() {
-        let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
-        let orig_gas = instance.get_gas_left();
-        assert_eq!(orig_gas, 1_000_000); // We expect a dummy value for cranelift
-    }
-
-    #[test]
-    #[cfg(feature = "default-singlepass")]
-    fn set_get_and_gas_singlepass() {
+    fn get_gas_left_works() {
         let instance = mock_instance_with_gas_limit(&CONTRACT, 123321);
         let orig_gas = instance.get_gas_left();
         assert_eq!(orig_gas, 123321);
     }
 
     #[test]
-    #[cfg(feature = "default-cranelift")]
-    fn create_gas_report_works_cranelift() {
-        const LIMIT: u64 = 7_000_000;
-        /// Value hardcoded in cranelift backend
-        const FAKE_REMANING: u64 = 1_000_000;
-        let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
-
-        let report1 = instance.create_gas_report();
-        assert_eq!(report1.used_externally, 0);
-        assert_eq!(report1.used_internally, LIMIT - FAKE_REMANING);
-        assert_eq!(report1.limit, LIMIT);
-        assert_eq!(report1.remaining, FAKE_REMANING);
-
-        // init contract
-        let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-
-        let report2 = instance.create_gas_report();
-        assert_eq!(report2.used_externally, 0);
-        assert_eq!(report2.used_internally, LIMIT - FAKE_REMANING);
-        assert_eq!(report2.limit, LIMIT);
-        assert_eq!(report2.remaining, FAKE_REMANING);
-    }
-
-    #[test]
-    #[cfg(feature = "default-singlepass")]
-    fn create_gas_report_works_singlepass() {
+    fn create_gas_report_works() {
         const LIMIT: u64 = 7_000_000;
         let mut instance = mock_instance_with_gas_limit(&CONTRACT, LIMIT);
 
@@ -566,7 +565,7 @@ mod test {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 146);
-        assert_eq!(report2.used_internally, 76371);
+        assert_eq!(report2.used_internally, 52055);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -578,28 +577,16 @@ mod test {
     fn set_storage_readonly_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            true
-        );
+        assert_eq!(instance.env.is_storage_readonly(), true);
 
         instance.set_storage_readonly(false);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            false
-        );
+        assert_eq!(instance.env.is_storage_readonly(), false);
 
         instance.set_storage_readonly(false);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            false
-        );
+        assert_eq!(instance.env.is_storage_readonly(), false);
 
         instance.set_storage_readonly(true);
-        assert_eq!(
-            is_storage_readonly::<MS, MQ>(instance.inner.context()),
-            true
-        );
+        assert_eq!(instance.env.is_storage_readonly(), true);
     }
 
     #[test]
@@ -756,14 +743,13 @@ mod test {
 }
 
 #[cfg(test)]
-#[cfg(feature = "default-singlepass")]
-mod singlepass_test {
+mod singlepass_tests {
     use cosmwasm_std::{coins, Empty};
 
     use crate::calls::{call_handle, call_init, call_query};
     use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
 
-    static CONTRACT: &[u8] = include_bytes!("../testdata/contract.wasm");
+    static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
     fn contract_deducts_gas_init() {
@@ -778,7 +764,7 @@ mod singlepass_test {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 76517);
+        assert_eq!(init_used, 52201);
     }
 
     #[test]
@@ -801,7 +787,7 @@ mod singlepass_test {
             .unwrap();
 
         let handle_used = gas_before_handle - instance.get_gas_left();
-        assert_eq!(handle_used, 208653);
+        assert_eq!(handle_used, 167850);
     }
 
     #[test]
@@ -816,7 +802,7 @@ mod singlepass_test {
     }
 
     #[test]
-    fn query_works_with_metering() {
+    fn query_works_with_gas_metering() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
@@ -835,6 +821,6 @@ mod singlepass_test {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 61219);
+        assert_eq!(query_used, 36687);
     }
 }

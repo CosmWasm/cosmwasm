@@ -89,7 +89,7 @@ fn collection_to_string_limited<E: AsRef<str>, I: ExactSizeIterator<Item = E>>(
 }
 
 #[cfg(test)]
-mod test {
+mod tests {
     use super::*;
 
     #[test]
