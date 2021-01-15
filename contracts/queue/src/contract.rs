@@ -128,7 +128,6 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
 pub fn migrate(
     deps: DepsMut,
     _env: Env,
-    _info: MessageInfo,
     _msg: MigrateMsg,
 ) -> StdResult<MigrateResponse> {
     // clear all

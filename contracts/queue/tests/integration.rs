@@ -195,8 +195,7 @@ fn migrate_works() {
     assert_eq!(get_sum(&mut deps), 25 + 17);
 
     let msg = MigrateMsg {};
-    let info = mock_info("admin", &[]);
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), msg).unwrap();
     assert_eq!(res.messages.len(), 0);
 
     assert_eq!(get_count(&mut deps), 3);
