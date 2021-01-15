@@ -261,6 +261,7 @@
       ]
     },
     "IbcTimeoutHeight": {
+      "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",
       "type": "object",
       "required": [
         "revision_number",
