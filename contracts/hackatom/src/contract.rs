@@ -427,7 +427,7 @@ mod tests {
 
         // check it is 'someone else'
         let query_response = query_verifier(deps.as_ref()).unwrap();
-        assert_eq!(query_response.verifier, new_payout);
+        assert_eq!(query_response.verifier, new_verifier);
     }
 
     #[test]
