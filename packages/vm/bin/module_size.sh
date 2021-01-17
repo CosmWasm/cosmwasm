@@ -25,4 +25,4 @@ $SUM_UTIL $RESULTS >$SUMMARY
 
 # Compute compile_only() total (heap) bytes
 echo -n "module size (unserialized): "
-(tac $SUMMARY | sed -n '1,/^  n /p' | tac | grep "$PROG.rs:$LINE" | cut -f2 -d\( | cut -f1 -d\) | sed 's/,//g;s/B//' | sed ':a;N;s/\n/+/;ta' | bc -l | sed 's/$/ bytes/') && rm -f $RESULTS $SUMMARY
+(tac $SUMMARY | sed -n '1,/^  n /p' | grep "$PROG.rs:$LINE" | cut -f2 -d\( | cut -f1 -d\) | sed 's/,//g;s/B//' | sed ':a;N;s/\n/+/;ta' | bc -l | sed 's/$/ bytes/') && rm -f $RESULTS $SUMMARY
