@@ -44,3 +44,4 @@ pub use crate::ibc_calls::{
 pub use crate::instance::{GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
+pub use crate::wasm_backend::compile_only;
