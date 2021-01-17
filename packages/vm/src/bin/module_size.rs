@@ -21,7 +21,6 @@ pub fn main() {
     // File
     let path = matches.value_of("WASM").expect("Error parsing file name");
     let mut file = File::open(path).unwrap();
-    mem::drop(path);
     mem::drop(matches);
 
     // Read wasm
