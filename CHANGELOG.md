@@ -9,6 +9,8 @@ and this project adheres to
 ### Added
 
 - cosmwasm-vm: Add PinnedMemoryCache. ([#696])
+- cosmwasm-vm: The new `Instance::has_ibc_entry_points` tells the caller if the
+  contract exposes IBC entry points.
 
 ### Changed
 
