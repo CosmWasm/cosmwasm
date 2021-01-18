@@ -134,6 +134,69 @@
     "HumanAddr": {
       "type": "string"
     },
+    "IbcQuery": {
+      "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
+      "anyOf": [
+        {
+          "description": "Gets the Port ID the current contract is bound to. Returns PortIdResponse",
+          "type": "object",
+          "required": [
+            "port_id"
+          ],
+          "properties": {
+            "port_id": {
+              "type": "object"
+            }
+          }
+        },
+        {
+          "description": "Lists all (portID, channelID) pairs that are bound to a given port If port_id is omitted, list all channels bound to the contract's port. Returns ListChannelsResponse.",
+          "type": "object",
+          "required": [
+            "list_channels"
+          ],
+          "properties": {
+            "list_channels": {
+              "type": "object",
+              "properties": {
+                "port_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          "description": "Lists all information for a (portID, channelID) pair. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call) Returns ChannelResponse.",
+          "type": "object",
+          "required": [
+            "channel"
+          ],
+          "properties": {
+            "channel": {
+              "type": "object",
+              "required": [
+                "channel_id"
+              ],
+              "properties": {
+                "channel_id": {
+                  "type": "string"
+                },
+                "port_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
     "QueryRequest_for_SpecialQuery": {
       "anyOf": [
         {
@@ -166,6 +229,47 @@
           "properties": {
             "staking": {
               "$ref": "#/definitions/StakingQuery"
+            }
+          }
+        },
+        {
+          "description": "A Stargate query encoded the same way as abci_query, with path and protobuf encoded Data. The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md) The response is also protobuf encoded. The caller is responsible for compiling the proper protobuf definitions",
+          "type": "object",
+          "required": [
+            "stargate"
+          ],
+          "properties": {
+            "stargate": {
+              "type": "object",
+              "required": [
+                "data",
+                "path"
+              ],
+              "properties": {
+                "data": {
+                  "description": "this is the expected protobuf message type (not any), binary encoded",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                },
+                "path": {
+                  "description": "this is the fully qualified service path used for routing, eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance",
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "ibc"
+          ],
+          "properties": {
+            "ibc": {
+              "$ref": "#/definitions/IbcQuery"
             }
           }
         },
