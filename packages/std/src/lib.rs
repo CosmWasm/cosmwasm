@@ -41,9 +41,9 @@ pub use crate::query::{
 };
 #[allow(deprecated)]
 pub use crate::results::{
-    attr, Attribute, BankMsg, Context, ContractResult, CosmosMsg, HandleResponse, HandleResult,
-    InitResponse, InitResult, MigrateResponse, MigrateResult, QueryResponse, QueryResult,
-    StakingMsg, SystemResult, WasmMsg,
+    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, Context, ContractResult, CosmosMsg,
+    HandleResponse, HandleResult, InitResponse, InitResult, MigrateResponse, MigrateResult,
+    QueryResponse, QueryResult, StakingMsg, SystemResult, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
@@ -84,6 +84,8 @@ pub mod testing {
         riffle_shuffle, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
         MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
     };
+    #[cfg(feature = "stargate")]
+    pub use crate::mock::{mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv};
 }
 
 // Re-exports

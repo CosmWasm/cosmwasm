@@ -1,5 +1,6 @@
 //! Internal details to be used by instance.rs only
 use std::borrow::{Borrow, BorrowMut};
+use std::collections::HashSet;
 use std::ptr::NonNull;
 use std::sync::{Arc, RwLock};
 
@@ -249,6 +250,20 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
         .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
     }
 
+    /// Returns the names of exported functions.
+    pub fn exported_functions(&self) -> HashSet<String> {
+        self.with_wasmer_instance(|instance| {
+            let function_names: HashSet<String> = instance
+                .exports
+                .iter()
+                .functions()
+                .map(|pair| pair.0.clone())
+                .collect();
+            Ok(function_names)
+        })
+        .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
+    }
+
     /// Moves owned instances of storage and querier into the env.
     /// Should be followed by exactly one call to move_out when the instance is finished.
     pub fn move_in(&self, storage: S, querier: Q) {
@@ -325,6 +340,7 @@ mod tests {
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
+    use std::iter::FromIterator;
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
@@ -763,5 +779,25 @@ mod tests {
             panic!("A panic occurred in the callback.")
         })
         .unwrap();
+    }
+
+    #[test]
+    fn exported_functions_works() {
+        let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
+        leave_default_data(&env);
+
+        let functions = env.exported_functions();
+        assert_eq!(
+            functions,
+            HashSet::from_iter(vec![
+                "interface_version_5".to_string(),
+                "allocate".to_string(),
+                "deallocate".to_string(),
+                "init".to_string(),
+                "handle".to_string(),
+                "migrate".to_string(),
+                "query".to_string()
+            ])
+        );
     }
 }

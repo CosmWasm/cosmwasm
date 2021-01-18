@@ -1,11 +1,9 @@
 [package]
-name = "reflect"
+name = "ibc-reflect"
 version = "0.0.0"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 publish = false
-description = "Reflect messages to use for test cases - based on cw-mask"
-license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -33,12 +31,11 @@ cranelift = ["cosmwasm-vm/cranelift"]
 backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 
 [dependencies]
-cosmwasm-std = { path = "../../packages/std", features = ["staking", "stargate"] }
-cosmwasm-storage = { path = "../../packages/storage" }
+cosmwasm-std = { path = "../../packages/std", features = ["iterator", "stargate"] }
+cosmwasm-storage = { path = "../../packages/storage", features = ["iterator"] }
 schemars = "0.7"
-serde = { version = "=1.0.103", default-features = false, features = ["derive"] }
-thiserror = "1.0"
+serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 
 [dev-dependencies]
-cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["stargate"] }
+cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator", "stargate"] }
 cosmwasm-schema = { path = "../../packages/schema" }

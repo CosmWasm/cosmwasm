@@ -1,4 +1,6 @@
 use serde::de::DeserializeOwned;
+#[cfg(feature = "stargate")]
+use serde::Serialize;
 use std::collections::HashMap;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
@@ -6,6 +8,8 @@ use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
 use crate::errors::{StdError, StdResult, SystemError};
+#[cfg(feature = "stargate")]
+use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutHeight};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     CustomQuery, DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator,
@@ -147,6 +151,73 @@ pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
         sender: sender.into(),
         sent_funds: sent.to_vec(),
     }
+}
+
+#[cfg(feature = "stargate")]
+/// Creates an IbcChannel for testing. You set a few key parameters for handshaking,
+/// If you want to set more, use this as a default and mutate other fields
+pub fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
+    IbcChannel {
+        endpoint: IbcEndpoint {
+            port_id: "my_port".to_string(),
+            channel_id: my_channel_id.to_string(),
+        },
+        counterparty_endpoint: IbcEndpoint {
+            port_id: "their_port".to_string(),
+            channel_id: "channel-7".to_string(),
+        },
+        order,
+        version: version.to_string(),
+        counterparty_version: Some(version.to_string()),
+        connection_id: "connection-2".to_string(),
+    }
+}
+
+#[cfg(feature = "stargate")]
+/// Creates a IbcPacket for testing ibc_packet_receive. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields
+pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
+    Ok(IbcPacket {
+        data: to_binary(data)?,
+        src: IbcEndpoint {
+            port_id: "their-port".to_string(),
+            channel_id: "channel-1234".to_string(),
+        },
+        dest: IbcEndpoint {
+            port_id: "our-port".to_string(),
+            channel_id: my_channel_id.into(),
+        },
+        sequence: 27,
+        timeout_height: Some(IbcTimeoutHeight {
+            revision_number: 1,
+            timeout_height: 12345678,
+        }),
+        timeout_timestamp: None,
+    })
+}
+
+#[cfg(feature = "stargate")]
+/// Creates a IbcPacket for testing ibc_packet_{ack,timeout}. You set a few key parameters that are
+/// often parsed. If you want to set more, use this as a default and mutate other fields.
+/// The difference between mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+pub fn mock_ibc_packet_ack<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
+    Ok(IbcPacket {
+        data: to_binary(data)?,
+        src: IbcEndpoint {
+            port_id: "their-port".to_string(),
+            channel_id: my_channel_id.into(),
+        },
+        dest: IbcEndpoint {
+            port_id: "our-port".to_string(),
+            channel_id: "channel-1234".to_string(),
+        },
+        sequence: 29,
+        timeout_height: Some(IbcTimeoutHeight {
+            revision_number: 1,
+            timeout_height: 432332552,
+        }),
+        timeout_timestamp: None,
+    })
 }
 
 /// The same type as cosmwasm-std's QuerierResult, but easier to reuse in
