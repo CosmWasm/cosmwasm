@@ -12,8 +12,6 @@ BASE_DIR=`dirname $0`/..
 
 # Look for the useful info (compile_only() results)
 FN="compile_only"
-SRC="$BASE_DIR/examples/$PROG.rs"
-LINE=`grep -n $FN $SRC | tail -1 | cut -f1 -d:`
 
 BIN="$BASE_DIR/../../target/release/examples/$PROG"
 
@@ -27,4 +25,4 @@ $SUM_UTIL $RESULTS >$SUMMARY
 
 # Compute compile_only() total (heap) bytes
 echo -n "module size (unserialized): "
-tac $SUMMARY | sed -n '1,/^  n /p' | grep "$PROG.rs:$LINE" | cut -f2 -d\( | cut -f1 -d\) | sed 's/,//g;s/B//' | sed ':a;N;s/\n/+/;ta' | bc -l | sed 's/$/ bytes/'
+tac $SUMMARY | sed -n '1,/^  n /p' | grep "::$FN " | cut -f2 -d\( | cut -f1 -d\) | sed 's/,//g;s/B//' | sed ':a;N;s/\n/+/;ta' | bc -l | sed 's/$/ bytes/'
