@@ -4,6 +4,7 @@
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::cmp::{Ord, Ordering, PartialOrd};
 use std::fmt;
 
 use crate::addresses::HumanAddr;
@@ -122,7 +123,7 @@ pub enum IbcOrder {
 /// that can be compared against another Height for the purposes of updating and
 /// freezing clients.
 /// Ordering is (revision_number, timeout_height)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcTimeoutHeight {
     /// the version that the client is currently on
     /// (eg. after reseting the chain this could increment 1 as height drops to 0)
@@ -130,6 +131,21 @@ pub struct IbcTimeoutHeight {
     /// block height after which the packet times out.
     /// the height within the given revision
     pub timeout_height: u64,
+}
+
+impl PartialOrd for IbcTimeoutHeight {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for IbcTimeoutHeight {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.revision_number.cmp(other.revision_number) {
+            Ordering::Equal => self.timeout_height.cmp(other.timeout_height),
+            other => other,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -222,15 +238,53 @@ mod tests {
     use serde_json_wasm::to_string;
 
     #[test]
-    // added this to check json format for go compat,
-    // but good to ensure it can all be serialized properly
+    // added this to check json format for go compat, as I was unsure how some messages are snake encoded
     fn serialize_msg() {
         let msg = IbcMsg::Ics20Transfer {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
         };
-        let _ = to_string(&msg).unwrap();
-        // {"ics20_transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"}}}
+        let encoded = to_string(&msg).unwrap();
+        let expected = r#"{"ics20_transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"}}}"#;
+        assert_eq!(encoded.as_str(), expected);
+    }
+
+    #[test]
+    fn ibc_timeout_height_ord() {
+        let epoch1a = IbcTimeoutHeight {
+            revision_number: 1,
+            timeout_height: 1000,
+        };
+        let epoch1b = IbcTimeoutHeight {
+            revision_number: 1,
+            timeout_height: 3000,
+        };
+        let epoch2a = IbcTimeoutHeight {
+            revision_number: 2,
+            timeout_height: 500,
+        };
+        let epoch2b = IbcTimeoutHeight {
+            revision_number: 2,
+            timeout_height: 2500,
+        };
+
+        // basic checks
+        assert!(epoch1a == epoch1a);
+        assert!(epoch1a < epoch1b);
+        assert!(epoch1b > epoch1a);
+        assert!(epoch2a > epoch1a);
+        assert!(epoch2b > epoch1a);
+
+        // ensure epoch boundaries are correctly handled
+        assert!(epoch1b > epoch1a);
+        assert!(epoch2a > epoch1b);
+        assert!(epoch2b > epoch2a);
+        assert!(epoch2b > epoch1b);
+        // and check the inverse compare
+        assert!(epoch1a < epoch1b);
+        assert!(epoch1b < epoch2a);
+        assert!(epoch2a < epoch2b);
+        assert!(epoch1b < epoch2b);
     }
 }
