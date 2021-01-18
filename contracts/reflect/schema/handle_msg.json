@@ -141,15 +141,15 @@
             "stargate": {
               "type": "object",
               "required": [
-                "data",
-                "type_url"
+                "type_url",
+                "value"
               ],
               "properties": {
-                "data": {
-                  "$ref": "#/definitions/Binary"
-                },
                 "type_url": {
                   "type": "string"
+                },
+                "value": {
+                  "$ref": "#/definitions/Binary"
                 }
               }
             }
@@ -216,10 +216,10 @@
           "description": "Sends bank tokens owned by the contract to the given address on another chain. The channel must already be established between the ibctransfer module on this chain and a matching module on the remote chain. We cannot select the port_id, this is whatever the local chain has bound the ibctransfer module to.",
           "type": "object",
           "required": [
-            "ics20_transfer"
+            "transfer"
           ],
           "properties": {
-            "ics20_transfer": {
+            "transfer": {
               "type": "object",
               "required": [
                 "amount",
@@ -238,6 +238,26 @@
                 "channel_id": {
                   "description": "exisiting channel to send the tokens over",
                   "type": "string"
+                },
+                "timeout_height": {
+                  "description": "block height after which the packet times out. at least one of timeout_height, timeout_timestamp is required",
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/IbcTimeoutHeight"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "timeout_timestamp": {
+                  "description": "block timestamp (in nanoseconds) after which the packet times out. at least one of timeout_height, timeout_timestamp is required",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
+                  "format": "uint64",
+                  "minimum": 0.0
                 },
                 "to_address": {
                   "description": "address on the remote chain to receive these tokens",
@@ -262,10 +282,7 @@
               "type": "object",
               "required": [
                 "channel_id",
-                "data",
-                "timeout_height",
-                "timeout_timestamp",
-                "version"
+                "data"
               ],
               "properties": {
                 "channel_id": {
@@ -275,15 +292,22 @@
                   "$ref": "#/definitions/Binary"
                 },
                 "timeout_height": {
-                  "$ref": "#/definitions/IbcTimeoutHeight"
+                  "description": "block height after which the packet times out. at least one of timeout_height, timeout_timestamp is required",
+                  "anyOf": [
+                    {
+                      "$ref": "#/definitions/IbcTimeoutHeight"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
                 },
                 "timeout_timestamp": {
-                  "type": "integer",
-                  "format": "uint64",
-                  "minimum": 0.0
-                },
-                "version": {
-                  "type": "integer",
+                  "description": "block timestamp (in nanoseconds) after which the packet times out. at least one of timeout_height, timeout_timestamp is required",
+                  "type": [
+                    "integer",
+                    "null"
+                  ],
                   "format": "uint64",
                   "minimum": 0.0
                 }
