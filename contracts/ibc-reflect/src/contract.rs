@@ -1,13 +1,14 @@
 use cosmwasm_std::{
-    entry_point, from_binary, to_binary, wasm_execute, wasm_instantiate, CosmosMsg, Deps, DepsMut,
+    entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, CosmosMsg, Deps, DepsMut,
     Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder,
     IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError,
     StdResult,
 };
 
 use crate::msg::{
-    AccountInfo, AccountResponse, AcknowledgementMsg, HandleMsg, InitMsg, ListAccountsResponse,
-    PacketMsg, QueryMsg, ReflectHandleMsg, ReflectInitMsg,
+    AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
+    HandleMsg, InitMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectHandleMsg,
+    ReflectInitMsg, WhoAmIResponse,
 };
 use crate::state::{accounts, accounts_read, config, Config};
 
@@ -152,16 +153,64 @@ pub fn ibc_channel_close(
     Ok(IbcBasicResponse::default())
 }
 
-// pull this into one function so we can handle all StdErrors once
-fn parse_receipt(deps: DepsMut, packet: IbcPacket) -> StdResult<(HumanAddr, Vec<CosmosMsg>)> {
-    // which local channel did this packet come on
-    let caller = packet.dest.channel_id;
+// processes PacketMsg::Dispatch variant
+fn receive_dispatch(
+    deps: DepsMut,
+    caller: String,
+    msgs: Vec<CosmosMsg>,
+) -> StdResult<IbcReceiveResponse> {
     // what is the reflect contract here
     let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
 
-    // parse the message we got
-    let msg: PacketMsg = from_binary(&packet.data)?;
-    Ok((reflect_addr, msg.msgs))
+    // let them know we're fine
+    let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
+    // create the message to re-dispatch to the reflect contract
+    let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
+    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
+    // and we are golden
+    Ok(IbcReceiveResponse {
+        acknowledgement,
+        messages: vec![wasm_msg.into()],
+        attributes: vec![],
+    })
+}
+
+// processes PacketMsg::WhoAmI variant
+fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
+    let account = accounts(deps.storage).load(caller.as_bytes())?;
+    let response = WhoAmIResponse { account };
+    let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
+    // and we are golden
+    Ok(IbcReceiveResponse {
+        acknowledgement,
+        messages: vec![],
+        attributes: vec![],
+    })
+}
+
+// processes PacketMsg::Balances variant
+fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
+    let account = accounts(deps.storage).load(caller.as_bytes())?;
+    let balances = deps.querier.query_all_balances(&account)?;
+    let response = BalancesResponse { account, balances };
+    let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
+    // and we are golden
+    Ok(IbcReceiveResponse {
+        acknowledgement,
+        messages: vec![],
+        attributes: vec![],
+    })
+}
+
+fn do_packet_receive(deps: DepsMut, packet: IbcPacket) -> StdResult<IbcReceiveResponse> {
+    // which local channel did this packet come on
+    let caller = packet.dest.channel_id;
+    let msg: PacketMsg = from_slice(&packet.data)?;
+    match msg {
+        PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
+        PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
+        PacketMsg::Balances {} => receive_balances(deps, caller),
+    }
 }
 
 #[entry_point]
@@ -173,29 +222,17 @@ pub fn ibc_packet_receive(
     _env: Env,
     packet: IbcPacket,
 ) -> StdResult<IbcReceiveResponse> {
-    let (reflect_addr, msgs) = match parse_receipt(deps, packet) {
-        Ok(m) => m,
-        Err(_) => {
-            let acknowledgement =
-                to_binary(&AcknowledgementMsg::Err("invalid packet".to_string()))?;
-            return Ok(IbcReceiveResponse {
-                acknowledgement,
-                messages: vec![],
-                attributes: vec![],
-            });
-        }
-    };
-
-    // let them know we're fine
-    let acknowledgement = to_binary(&AcknowledgementMsg::Ok(()))?;
-    // create the message to re-dispatch to the reflect contract
-    let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
-    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-    // and we are golden
-    Ok(IbcReceiveResponse {
-        acknowledgement,
-        messages: vec![wasm_msg.into()],
-        attributes: vec![],
+    // we try to capture all app-level errors and convert them into
+    // acknowledgement packets that contain an error code
+    do_packet_receive(deps, packet).or_else(|e| {
+        let msg = format!("invalid packet: {}", e.to_string());
+        // we only use the error variant here, so we can use any T
+        let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Err(msg))?;
+        return Ok(IbcReceiveResponse {
+            acknowledgement,
+            messages: vec![],
+            attributes: vec![],
+        });
     })
 }
 
@@ -322,7 +359,7 @@ mod tests {
             assert_eq!(0, send.len());
             assert!(label.as_ref().unwrap().contains(channel_id));
             // parse the message - should callback with proper channel_id
-            let rmsg: ReflectInitMsg = from_binary(&msg).unwrap();
+            let rmsg: ReflectInitMsg = from_slice(&msg).unwrap();
             assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
         } else {
             panic!("invalid return message: {:?}", res.messages[0]);
@@ -368,27 +405,31 @@ mod tests {
     }
 
     #[test]
-    fn handle_packet() {
+    fn handle_dispatch_packet() {
         let mut deps = setup();
 
         let channel_id: &str = "channel-123";
         let account: &str = "acct-123";
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-        let ibc_msg = PacketMsg {
-            msgs: vec![BankMsg::Send {
-                to_address: "my-friend".into(),
-                amount: coins(123456789, "uatom"),
-            }
-            .into()],
+        let msgs_to_dispatch = vec![BankMsg::Send {
+            to_address: "my-friend".into(),
+            amount: coins(123456789, "uatom"),
+        }
+        .into()];
+        let ibc_msg = PacketMsg::Dispatch {
+            msgs: msgs_to_dispatch.clone(),
         };
         let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
         // acknowledgement is an error
-        let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
-        assert_eq!(ack.unwrap_err(), "invalid packet");
+        let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+        assert_eq!(
+            ack.unwrap_err(),
+            "invalid packet: cosmwasm_std::addresses::HumanAddr not found"
+        );
 
         // register the channel
         connect(deps.as_mut(), channel_id, account);
@@ -419,7 +460,7 @@ mod tests {
             assert_eq!(
                 rmsg,
                 ReflectHandleMsg::ReflectMsg {
-                    msgs: ibc_msg.msgs.clone()
+                    msgs: msgs_to_dispatch
                 }
             );
         } else {
@@ -435,7 +476,7 @@ mod tests {
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
         // acknowledgement is an error
-        let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
-        assert_eq!(ack.unwrap_err(), "invalid packet");
+        let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
     }
 }

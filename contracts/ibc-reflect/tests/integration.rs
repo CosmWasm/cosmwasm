@@ -30,8 +30,8 @@ use cosmwasm_vm::{from_slice, Instance};
 
 use ibc_reflect::contract::IBC_VERSION;
 use ibc_reflect::msg::{
-    AccountInfo, AccountResponse, AcknowledgementMsg, HandleMsg, InitMsg, ListAccountsResponse,
-    PacketMsg, QueryMsg, ReflectHandleMsg, ReflectInitMsg,
+    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, HandleMsg, InitMsg,
+    ListAccountsResponse, PacketMsg, QueryMsg, ReflectHandleMsg, ReflectInitMsg,
 };
 
 // This line will test the output of cargo wasm
@@ -186,19 +186,20 @@ fn proper_handshake_flow() {
 }
 
 #[test]
-fn handle_packet() {
+fn handle_dispatch_packet() {
     let mut deps = setup();
 
     let channel_id: &str = "channel-123";
     let account: &str = "acct-123";
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-    let ibc_msg = PacketMsg {
-        msgs: vec![BankMsg::Send {
-            to_address: "my-friend".into(),
-            amount: coins(123456789, "uatom"),
-        }
-        .into()],
+    let msgs_to_dispatch = vec![BankMsg::Send {
+        to_address: "my-friend".into(),
+        amount: coins(123456789, "uatom"),
+    }
+    .into()];
+    let ibc_msg = PacketMsg::Dispatch {
+        msgs: msgs_to_dispatch.clone(),
     };
     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
     let res: IbcReceiveResponse =
@@ -206,8 +207,11 @@ fn handle_packet() {
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error
-    let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
-    assert_eq!(ack.unwrap_err(), "invalid packet");
+    let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    assert_eq!(
+        ack.unwrap_err(),
+        "invalid packet: cosmwasm_std::addresses::HumanAddr not found"
+    );
 
     // register the channel
     connect(&mut deps, channel_id, account);
@@ -222,7 +226,7 @@ fn handle_packet() {
     );
 
     // assert app-level success
-    let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
+    let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
     ack.unwrap();
 
     // and we dispatch the BankMsg
@@ -241,7 +245,7 @@ fn handle_packet() {
         assert_eq!(
             rmsg,
             ReflectHandleMsg::ReflectMsg {
-                msgs: ibc_msg.msgs.clone()
+                msgs: msgs_to_dispatch
             }
         );
     } else {
@@ -258,6 +262,6 @@ fn handle_packet() {
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error
-    let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
-    assert_eq!(ack.unwrap_err(), "invalid packet");
+    let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
 }

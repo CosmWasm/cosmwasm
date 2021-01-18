@@ -1,19 +1,52 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "PacketMsg",
-  "description": "This is the format of the packets we expect to receive",
-  "type": "object",
-  "required": [
-    "msgs"
-  ],
-  "properties": {
-    "msgs": {
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/CosmosMsg_for_Empty"
+  "anyOf": [
+    {
+      "type": "object",
+      "required": [
+        "dispatch"
+      ],
+      "properties": {
+        "dispatch": {
+          "type": "object",
+          "required": [
+            "msgs"
+          ],
+          "properties": {
+            "msgs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CosmosMsg_for_Empty"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "who_am_i"
+      ],
+      "properties": {
+        "who_am_i": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "balances"
+      ],
+      "properties": {
+        "balances": {
+          "type": "object"
+        }
       }
     }
-  },
+  ],
   "definitions": {
     "BankMsg": {
       "description": "The message types of the bank module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto",

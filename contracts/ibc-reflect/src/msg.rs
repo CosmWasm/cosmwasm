@@ -87,7 +87,7 @@ pub struct WhoAmIResponse {
 /// This is the success response we send on ack for PacketMsg::Balance.
 /// Just acknowledge success or error
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct BalanceResponse {
+pub struct BalancesResponse {
     pub account: HumanAddr,
-    pub balance: Vec<Coin>,
+    pub balances: Vec<Coin>,
 }
