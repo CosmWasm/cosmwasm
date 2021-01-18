@@ -153,6 +153,40 @@ pub fn ibc_channel_close(
     Ok(IbcBasicResponse::default())
 }
 
+#[entry_point]
+/// we look for a the proper reflect contract to relay to and send the message
+/// We cannot return any meaningful response value as we do not know the response value
+/// of execution. We just return ok if we dispatched, error if we failed to dispatch
+pub fn ibc_packet_receive(
+    deps: DepsMut,
+    _env: Env,
+    packet: IbcPacket,
+) -> StdResult<IbcReceiveResponse> {
+    // put this in a closure so we can convert all error responses into acknowledgements
+    (|| {
+        // which local channel did this packet come on
+        let caller = packet.dest.channel_id;
+        let msg: PacketMsg = from_slice(&packet.data)?;
+        match msg {
+            PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
+            PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
+            PacketMsg::Balances {} => receive_balances(deps, caller),
+        }
+    })()
+    .or_else(|e| {
+        // we try to capture all app-level errors and convert them into
+        // acknowledgement packets that contain an error code.
+        let msg = format!("invalid packet: {}", e);
+        // we only use the error variant here, so we can use any T
+        let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Err(msg))?;
+        Ok(IbcReceiveResponse {
+            acknowledgement,
+            messages: vec![],
+            attributes: vec![],
+        })
+    })
+}
+
 // processes PacketMsg::Dispatch variant
 fn receive_dispatch(
     deps: DepsMut,
@@ -199,40 +233,6 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
         acknowledgement,
         messages: vec![],
         attributes: vec![],
-    })
-}
-
-fn do_packet_receive(deps: DepsMut, packet: IbcPacket) -> StdResult<IbcReceiveResponse> {
-    // which local channel did this packet come on
-    let caller = packet.dest.channel_id;
-    let msg: PacketMsg = from_slice(&packet.data)?;
-    match msg {
-        PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
-        PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
-        PacketMsg::Balances {} => receive_balances(deps, caller),
-    }
-}
-
-#[entry_point]
-/// we look for a the proper reflect contract to relay to and send the message
-/// We cannot return any meaningful response value as we do not know the response value
-/// of execution. We just return ok if we dispatched, error if we failed to dispatch
-pub fn ibc_packet_receive(
-    deps: DepsMut,
-    _env: Env,
-    packet: IbcPacket,
-) -> StdResult<IbcReceiveResponse> {
-    // we try to capture all app-level errors and convert them into
-    // acknowledgement packets that contain an error code
-    do_packet_receive(deps, packet).or_else(|e| {
-        let msg = format!("invalid packet: {}", e.to_string());
-        // we only use the error variant here, so we can use any T
-        let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Err(msg))?;
-        return Ok(IbcReceiveResponse {
-            acknowledgement,
-            messages: vec![],
-            attributes: vec![],
-        });
     })
 }
 
