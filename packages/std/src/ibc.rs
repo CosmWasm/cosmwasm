@@ -34,7 +34,8 @@ pub enum IbcMsg {
         /// block height after which the packet times out.
         /// at least one of timeout_height, timeout_timestamp is required
         timeout_height: Option<IbcTimeoutHeight>,
-        /// block timestamp (in nanoseconds) after which the packet times out.
+        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+        /// See https://golang.org/pkg/time/#Time.UnixNano
         /// at least one of timeout_height, timeout_timestamp is required
         timeout_timestamp: Option<u64>,
     },
@@ -47,7 +48,8 @@ pub enum IbcMsg {
         /// block height after which the packet times out.
         /// at least one of timeout_height, timeout_timestamp is required
         timeout_height: Option<IbcTimeoutHeight>,
-        /// block timestamp (in nanoseconds) after which the packet times out.
+        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+        /// See https://golang.org/pkg/time/#Time.UnixNano
         /// at least one of timeout_height, timeout_timestamp is required
         timeout_timestamp: Option<u64>,
     },
@@ -176,7 +178,8 @@ pub struct IbcPacket {
     /// block height after which the packet times out.
     /// at least one of timeout_height, timeout_timestamp is required
     pub timeout_height: Option<IbcTimeoutHeight>,
-    /// block timestamp (in nanoseconds) after which the packet times out.
+    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+    /// See https://golang.org/pkg/time/#Time.UnixNano
     /// at least one of timeout_height, timeout_timestamp is required
     pub timeout_timestamp: Option<u64>,
 }
