@@ -81,8 +81,8 @@ used by a compiled module.
 
 ```
 cd packages/vm
-cargo build
-./bin/module_size.sh ./testdata/hackatom.wasm
+cargo build --example module_size
+./examples/module_size.sh ./testdata/hackatom.wasm
 ```
 
 ## License

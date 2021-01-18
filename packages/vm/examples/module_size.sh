@@ -12,10 +12,10 @@ BASE_DIR=`dirname $0`/..
 
 # Look for the useful info (compile_only() results)
 FN="compile_only"
-SRC="$BASE_DIR/src/bin/$PROG.rs"
+SRC="$BASE_DIR/examples/$PROG.rs"
 LINE=`grep -n $FN $SRC | tail -1 | cut -f1 -d:`
 
-BIN="$BASE_DIR/../../target/debug/$PROG"
+BIN="$BASE_DIR/../../target/debug/examples/$PROG"
 
 RESULTS="$BASE_DIR/$PROG.log"
 SUMMARY="$BASE_DIR/ms_print.log"
