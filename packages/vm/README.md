@@ -81,7 +81,7 @@ used by a compiled module.
 
 ```
 cd packages/vm
-cargo build --example module_size
+RUSTFLAGS="-g" cargo build --release --example module_size
 ./examples/module_size.sh ./testdata/hackatom.wasm
 ```
 

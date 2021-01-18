@@ -15,10 +15,12 @@ FN="compile_only"
 SRC="$BASE_DIR/examples/$PROG.rs"
 LINE=`grep -n $FN $SRC | tail -1 | cut -f1 -d:`
 
-BIN="$BASE_DIR/../../target/debug/examples/$PROG"
+BIN="$BASE_DIR/../../target/release/examples/$PROG"
 
 RESULTS="$BASE_DIR/$PROG.log"
 SUMMARY="$BASE_DIR/ms_print.log"
+
+RUSTFLAGS="-g" cargo build --release --example module_size
 
 $MEM_UTIL --massif-out-file=$RESULTS $BIN $WASM
 $SUM_UTIL $RESULTS >$SUMMARY
