@@ -44,12 +44,26 @@ We require version `ibc-reflect-v1` when making the ibc handshake.
 The packets sent look like:
 
 ```rust
-pub struct PacketMsg {
-  pub msgs: Vec<CosmosMsg>,
+pub enum PacketMsg {
+  Dispatch { msgs: Vec<CosmosMsg> },
+  WhoAmI {},
+  Balances {},
 }
 ```
 
-The responses look like one of the following:
+That is, one of the following:
+
+```json
+[
+  { "dispatch": ["large struct here.."] },
+  { "who_am_i": {} },
+  { "balances": {} }
+]
+```
+
+The success responses look like one of the following:
+
+Dispatch:
 
 ```json
 {
@@ -57,13 +71,30 @@ The responses look like one of the following:
 }
 ```
 
+WhoAmI:
+
 ```json
 {
-  "error": "invalid packet"
+  "account": "wasm12skc92jiowf8hwfhofqfh225ss"
 }
 ```
 
-## TODO
+Balances:
 
-- Expose some queries - locally as well as remote - get your address on the
-  other chain
+```json
+{
+  "account": "wasm12skc92jiowf8hwfhofqfh225ss",
+  "balances": [
+    { "amount": "12345678", "denom": "uatom" },
+    { "amount": "777777", "denom": "tgrd" }
+  ]
+}
+```
+
+The error ack packet always looks like this:
+
+```json
+{
+  "error": "invalid packet: <detailed error message>"
+}
+```
