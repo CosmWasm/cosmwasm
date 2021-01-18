@@ -141,8 +141,8 @@ impl PartialOrd for IbcTimeoutHeight {
 
 impl Ord for IbcTimeoutHeight {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.revision_number.cmp(other.revision_number) {
-            Ordering::Equal => self.timeout_height.cmp(other.timeout_height),
+        match self.revision_number.cmp(&other.revision_number) {
+            Ordering::Equal => self.timeout_height.cmp(&other.timeout_height),
             other => other,
         }
     }
