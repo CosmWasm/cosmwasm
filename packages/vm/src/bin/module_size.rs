@@ -4,7 +4,7 @@ use std::mem;
 
 use clap::{App, Arg};
 
-use cosmwasm_vm::compile_only;
+use cosmwasm_vm::internals::compile_only;
 
 pub fn main() {
     let matches = App::new("Module size estimation")
