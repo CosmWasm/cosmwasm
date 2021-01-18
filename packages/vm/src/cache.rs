@@ -139,10 +139,9 @@ where
             return self.pinned_memory_cache.store(checksum, module);
         }
 
-        // Load code from the file system
+        // Re-compile from original Wasm bytecode
         let code = self.load_wasm(checksum)?;
-        // Compile and store into the pinned cache
-        let module = compile_only(code.as_slice())?;
+        let module = compile_and_use(&code, Some(self.instance_memory_limit))?;
         // Store into the fs cache too
         self.fs_cache.store(checksum, &module)?;
         self.pinned_memory_cache.store(checksum, module)
