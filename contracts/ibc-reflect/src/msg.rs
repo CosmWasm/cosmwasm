@@ -1,6 +1,6 @@
 #![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
-use cosmwasm_std::{ContractResult, CosmosMsg, HumanAddr};
+use cosmwasm_std::{Coin, ContractResult, CosmosMsg, HumanAddr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -61,12 +61,33 @@ pub enum ReflectHandleMsg {
     ReflectMsg { msgs: Vec<CosmosMsg> },
 }
 
-/// This is the format of the packets we expect to receive
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct PacketMsg {
-    pub msgs: Vec<CosmosMsg>,
+#[serde(rename_all = "snake_case")]
+pub enum PacketMsg {
+    Dispatch { msgs: Vec<CosmosMsg> },
+    WhoAmI {},
+    Balances {},
 }
 
-/// This is the format of the packets we send on ack
+/// All acknowledgements are wrapped in `ContractResult`.
+/// The success value depends on the PacketMsg variant.
+pub type AcknowledgementMsg<T> = ContractResult<T>;
+
+/// This is the success response we send on ack for PacketMsg::Dispatch.
 /// Just acknowledge success or error
-pub type AcknowledgementMsg = ContractResult<()>;
+pub type DispatchResponse = ();
+
+/// This is the success response we send on ack for PacketMsg::WhoAmI.
+/// Return the caller's account address on the remote chain
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct WhoAmIResponse {
+    pub account: HumanAddr,
+}
+
+/// This is the success response we send on ack for PacketMsg::Balance.
+/// Just acknowledge success or error
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct BalanceResponse {
+    pub account: HumanAddr,
+    pub balance: Vec<Coin>,
+}
