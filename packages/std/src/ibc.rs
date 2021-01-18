@@ -23,7 +23,7 @@ pub enum IbcMsg {
     /// and a matching module on the remote chain.
     /// We cannot select the port_id, this is whatever the local chain has bound the ibctransfer
     /// module to.
-    Ics20Transfer {
+    Transfer {
         /// exisiting channel to send the tokens over
         channel_id: String,
         /// address on the remote chain to receive these tokens
@@ -31,6 +31,12 @@ pub enum IbcMsg {
         /// packet data only supports one coin
         /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
         amount: Coin,
+        /// block height after which the packet times out.
+        /// at least one of timeout_height, timeout_timestamp is required
+        timeout_height: Option<IbcTimeoutHeight>,
+        /// block timestamp (in nanoseconds) after which the packet times out.
+        /// at least one of timeout_height, timeout_timestamp is required
+        timeout_timestamp: Option<u64>,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
@@ -38,9 +44,12 @@ pub enum IbcMsg {
     SendPacket {
         channel_id: String,
         data: Binary,
-        timeout_height: IbcTimeoutHeight,
-        timeout_timestamp: u64,
-        version: u64,
+        /// block height after which the packet times out.
+        /// at least one of timeout_height, timeout_timestamp is required
+        timeout_height: Option<IbcTimeoutHeight>,
+        /// block timestamp (in nanoseconds) after which the packet times out.
+        /// at least one of timeout_height, timeout_timestamp is required
+        timeout_timestamp: Option<u64>,
     },
     /// This will close an existing channel that is owned by this contract.
     /// Port is auto-assigned to the contracts' ibc port
@@ -133,6 +142,12 @@ pub struct IbcTimeoutHeight {
     pub timeout_height: u64,
 }
 
+impl IbcTimeoutHeight {
+    pub fn is_zero(&self) -> bool {
+        self.revision_number == 0 && self.timeout_height == 0
+    }
+}
+
 impl PartialOrd for IbcTimeoutHeight {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
@@ -158,12 +173,12 @@ pub struct IbcPacket {
     pub dest: IbcEndpoint,
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
-    /// block height after which the packet times out
-    pub timeout_height: IbcTimeoutHeight,
-    /// block timestamp (in nanoseconds) after which the packet times out
-    pub timeout_timestamp: u64,
-    // the version that the client is currently on
-    pub version: u64,
+    /// block height after which the packet times out.
+    /// at least one of timeout_height, timeout_timestamp is required
+    pub timeout_height: Option<IbcTimeoutHeight>,
+    /// block timestamp (in nanoseconds) after which the packet times out.
+    /// at least one of timeout_height, timeout_timestamp is required
+    pub timeout_timestamp: Option<u64>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -240,13 +255,15 @@ mod tests {
     #[test]
     // added this to check json format for go compat, as I was unsure how some messages are snake encoded
     fn serialize_msg() {
-        let msg = IbcMsg::Ics20Transfer {
+        let msg = IbcMsg::Transfer {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
+            timeout_height: None,
+            timeout_timestamp: Some(1234567890),
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"ics20_transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"}}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout_height":null,"timeout_timestamp":1234567890}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 

@@ -28,7 +28,7 @@ where
     #[cfg(feature = "stargate")]
     Stargate {
         type_url: String,
-        data: Binary,
+        value: Binary,
     },
     #[cfg(feature = "stargate")]
     Ibc(IbcMsg),
