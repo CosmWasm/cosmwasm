@@ -1,6 +1,6 @@
 # CosmWasm
 
-[![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
+[![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/main)
 
 | Crate            | Download                                                                                                                            | Docs                                                                                    |
 | ---------------- | ----------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
@@ -25,10 +25,10 @@ oriented, here is a list of the various components of the CosmWasm ecosystem:
 
 This code is compiled into Wasm bytecode as part of the smart contract.
 
-- [cosmwasm-std](https://github.com/CosmWasm/cosmwasm/tree/master/packages/std) -
+- [cosmwasm-std](https://github.com/CosmWasm/cosmwasm/tree/main/packages/std) -
   A crate in this workspace. Provides the bindings and all imports needed to
   build a smart contract.
-- [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/master/packages/storage) -
+- [cosmwasm-storage](https://github.com/CosmWasm/cosmwasm/tree/main/packages/storage) -
   A crate in this workspace. This optional addition to `cosmwasm-std` includes
   convenience helpers for interacting with storage.
 
@@ -54,11 +54,10 @@ This code is compiled into Wasm bytecode as part of the smart contract.
 
 **Executing contracts:**
 
-- [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm) -
-  A crate in this workspace. Uses the
-  [wasmer](https://github.com/wasmerio/wasmer) engine to execute a given smart
-  contract. Also contains code for gas metering, storing, and caching wasm
-  artifacts.
+- [cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm) - A
+  crate in this workspace. Uses the [wasmer](https://github.com/wasmerio/wasmer)
+  engine to execute a given smart contract. Also contains code for gas metering,
+  storing, and caching wasm artifacts.
 - [go-cosmwasm](https://github.com/CosmWasm/go-cosmwasm) - High-level go
   bindings to all the power inside `cosmwasm-vm`. Easily allows you to upload,
   instantiate and execute contracts, making use of all the optimizations and
@@ -169,7 +168,7 @@ pub struct Region {
 ```
 
 (from
-[memory.rs](https://github.com/CosmWasm/cosmwasm/blob/master/src/memory.rs#L7-L13))
+[memory.rs](https://github.com/CosmWasm/cosmwasm/blob/main/src/memory.rs#L7-L13))
 
 ## Implementing the Smart Contract
 
@@ -249,12 +248,12 @@ properly. To do so, you will want to create a canonical release build of the
 `<contract>.wasm` file and then write tests in with the same VM tooling we will
 use in production. This is a bit more complicated but we added some tools to
 help in
-[cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm)
-which can be added as a `dev-dependency`.
+[cosmwasm-vm](https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm) which
+can be added as a `dev-dependency`.
 
 You will need to first compile the contract using `cargo wasm`, then load this
 file in the integration tests. Take a
-[look at the sample tests](https://github.com/CosmWasm/cosmwasm/blob/master/contracts/hackatom/tests/integration.rs)
+[look at the sample tests](https://github.com/CosmWasm/cosmwasm/blob/main/contracts/hackatom/tests/integration.rs)
 to see how to do this... it is often quite easy to port a unit test to an
 integration test.
 

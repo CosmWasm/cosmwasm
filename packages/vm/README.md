@@ -28,9 +28,9 @@ compatibility list:
 
 There are demo files in `testdata/*.wasm`. Those are compiled and optimized
 versions of
-[contracts/hackatom](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/hackatom)
+[contracts/hackatom](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/hackatom)
 and
-[contracts/staking](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
+[contracts/staking](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/staking)
 run through [rust-optimizer](https://github.com/CosmWasm/rust-optimizer).
 
 To rebuild the test contracts, go to the repo root and do
@@ -74,6 +74,5 @@ cargo bench --no-default-features --features cranelift
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache
-License 2.0 (see
-[NOTICE](https://github.com/CosmWasm/cosmwasm/blob/master/NOTICE) and
-[LICENSE](https://github.com/CosmWasm/cosmwasm/blob/master/LICENSE)).
+License 2.0 (see [NOTICE](https://github.com/CosmWasm/cosmwasm/blob/main/NOTICE)
+and [LICENSE](https://github.com/CosmWasm/cosmwasm/blob/main/LICENSE)).
