@@ -197,7 +197,7 @@ where
 mod tests {
     use super::*;
     use crate::testing::{mock_env, mock_info, mock_instance};
-    use cosmwasm_std::{coins, Empty, HumanAddr};
+    use cosmwasm_std::{coins, Empty};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -207,7 +207,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
@@ -219,7 +219,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
@@ -238,27 +238,24 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
         // change the verifier via migrate
-        let new_verifier = HumanAddr::from("someone else");
-        let msg = MigrateMsg {
-            verifier: new_verifier,
-        };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = call_migrate(&mut instance, &mock_env(), &info, msg);
-        assert_eq!(0, res.messages.len());
+        let msg = br#"{"verifier": "someone else"}"#;
+        let info = mock_info("creator", &[]);
+        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
 
         // query the new_verifier with verifier
-        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
-        assert_eq!(query_response.verifier, new_verifier);
-
-
+        assert_eq!(
+            query_response.as_slice(),
+            b"{\"verifier\":\"someone else\"}"
+        );
     }
 
     #[test]
@@ -273,7 +270,7 @@ mod tests {
             .unwrap();
 
         // query
-        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
