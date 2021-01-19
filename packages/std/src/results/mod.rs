@@ -14,12 +14,8 @@ pub use attribute::{attr, Attribute};
 pub use context::Context;
 pub use contract_result::ContractResult;
 pub use cosmos_msg::{wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, StakingMsg, WasmMsg};
-#[allow(deprecated)]
-pub use handle::{HandleResponse, HandleResult};
-#[allow(deprecated)]
-pub use init::{InitResponse, InitResult};
-#[allow(deprecated)]
-pub use migrate::{MigrateResponse, MigrateResult};
-#[allow(deprecated)]
-pub use query::{QueryResponse, QueryResult};
+pub use handle::HandleResponse;
+pub use init::InitResponse;
+pub use migrate::MigrateResponse;
+pub use query::QueryResponse;
 pub use system_result::SystemResult;
