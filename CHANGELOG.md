@@ -19,6 +19,9 @@ and this project adheres to
 - cosmwasm-std: Remove `from_address` from `BankMsg::Send`, as it always sends
   from the contract address, and this is consistent with other `CosmosMsg`
   variants.
+- cosmwasm-std: Remove the previously deprecated `InitResult`, `HandleResult`,
+  `MigrateResult` and `QueryResult` in order to make error type explicit and
+  encourage migration to custom errors.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
@@ -80,7 +83,7 @@ and this project adheres to
 **cosmwasm-std**
 
 - Deprecate `InitResult`, `HandleResult`, `MigrateResult` and `QueryResult` in
-  order to make error type explicit an encourage migration to custom errors.
+  order to make error type explicit and encourage migration to custom errors.
 - Implement `Deref` for `QuerierWrapper`, such that `QuerierWrapper` behaves
   like a smart pointer to `Querier` allowing you to access `Querier` methods
   directly.
