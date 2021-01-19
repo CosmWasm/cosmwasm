@@ -32,6 +32,7 @@ workflows:
                 - update-wasmer
                 - metering-restart
                 - load-wasm-speed
+                - cache-analyze
   deploy:
     jobs:
       - build_and_upload_devcontracts:

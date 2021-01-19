@@ -1,3 +1,4 @@
+use parity_wasm::elements::Deserialize;
 use std::collections::HashSet;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
@@ -48,6 +49,10 @@ pub struct Cache<A: Api, S: Storage, Q: Querier> {
     type_api: PhantomData<A>,
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
+}
+
+pub struct AnalysisReport {
+    pub has_ibc_entry_points: bool,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -117,6 +122,49 @@ where
         } else {
             Ok(code)
         }
+    }
+
+    /// Performs static anlyzation on this Wasm without compiling or instantiating it.
+    ///
+    /// Once the contract was stored via [`save_wasm`], this can be called at any point in time.
+    /// It does not depend on any caching of the contract.
+    pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
+        let path = self.wasm_path.join(checksum.to_hex());
+        let mut file = File::open(path).map_err(|e| {
+            VmError::cache_err(format!("Error opening Wasm file for reading: {}", e))
+        })?;
+        let module = parity_wasm::elements::Module::deserialize(&mut file).map_err(|err| {
+            VmError::static_validation_err(format!(
+                "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
+                err
+            ))
+        })?;
+
+        // Get exported functions
+        let entries: HashSet<String> =
+            module
+                .export_section()
+                .map_or(HashSet::default(), |export_section| {
+                    export_section
+                        .entries()
+                        .iter()
+                        .filter_map(|entry| match entry.internal() {
+                            parity_wasm::elements::Internal::Function(_) => {
+                                Some(entry.field().to_string())
+                            }
+                            _ => None,
+                        })
+                        .collect()
+                });
+        let has_ibc_entry_points = entries.contains("ibc_channel_open")
+            && entries.contains("ibc_channel_connect")
+            && entries.contains("ibc_channel_close")
+            && entries.contains("ibc_packet_receive")
+            && entries.contains("ibc_packet_ack")
+            && entries.contains("ibc_packet_timeout");
+        Ok(AnalysisReport {
+            has_ibc_entry_points,
+        })
     }
 
     /// Pins a Module that was previously stored via save_wasm.
