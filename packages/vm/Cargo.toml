@@ -7,10 +7,6 @@ description = "VM bindings to run cosmwams contracts"
 repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm"
 license = "Apache-2.0"
 
-[badges]
-circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
-maintenance = { status = "actively-developed" }
-
 [features]
 default = ["staking"]
 # backtraces provides much better context at runtime errors (in non-wasm code)

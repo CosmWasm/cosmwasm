@@ -9,10 +9,6 @@ license = "Apache-2.0"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[badges]
-circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
-maintenance = { status = "actively-developed" }
-
 [features]
 # This enables iterator functionality, as exposed in cosmwasm-std/iterator
 iterator = ["cosmwasm-std/iterator"]

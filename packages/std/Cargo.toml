@@ -8,10 +8,6 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/std"
 license = "Apache-2.0"
 readme = "README.md"
 
-[badges]
-circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
-maintenance = { status = "actively-developed" }
-
 [features]
 default = []
 # iterator allows us to iterate over all DB items in a given range
