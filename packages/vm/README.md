@@ -71,6 +71,20 @@ cd packages/vm
 cargo bench --no-default-features --features cranelift
 ```
 
+## Tools
+
+`module_size` and `module_size.sh`
+
+Memory profiling of compiled modules. `module_size.sh` executes `module_size`, and
+uses valgrind's memory profiling tool (massif) to compute the amount of heap memory
+used by a compiled module.
+
+```
+cd packages/vm
+RUSTFLAGS="-g" cargo build --release --example module_size
+./examples/module_size.sh ./testdata/hackatom.wasm
+```
+
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache

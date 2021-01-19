@@ -44,3 +44,13 @@ pub use crate::ibc_calls::{
 pub use crate::instance::{GasReport, Instance, InstanceOptions};
 pub use crate::serde::{from_slice, to_vec};
 pub use crate::size::Size;
+
+#[doc(hidden)]
+pub mod internals {
+    //! We use the internals module for exporting types that are only
+    //! intended to be used in internal crates / utils.
+    //! Please don't use any of these types directly, as
+    //! they might change frequently or be removed in the future.
+
+    pub use crate::wasm_backend::{compile_and_use, make_runtime_store};
+}
