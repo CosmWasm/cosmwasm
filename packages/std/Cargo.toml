@@ -34,7 +34,7 @@ stargate = []
 [dependencies]
 base64 = "0.13.0"
 cosmwasm-derive = { path = "../derive", version = "0.13.2" }
-serde-json-wasm = { version = "0.3.0" }
+serde-json-wasm = { version = "0.3.1" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 thiserror = "1.0"
