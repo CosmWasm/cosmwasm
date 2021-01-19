@@ -197,7 +197,7 @@ where
 mod tests {
     use super::*;
     use crate::testing::{mock_env, mock_info, mock_instance};
-    use cosmwasm_std::{coins, Empty};
+    use cosmwasm_std::{coins, Empty, HumanAddr};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -230,6 +230,35 @@ mod tests {
         call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
+    }
+
+    #[test]
+    fn call_migrate_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // change the verifier via migrate
+        let new_verifier = HumanAddr::from("someone else");
+        let msg = MigrateMsg {
+            verifier: new_verifier,
+        };
+        let info = mock_info(creator.as_str(), &[]);
+        let res = call_migrate(&mut instance, &mock_env(), &info, msg);
+        assert_eq!(0, res.messages.len());
+
+        // query the new_verifier with verifier
+        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let query_response = contract_result.unwrap();
+        assert_eq!(query_response.verifier, new_verifier);
+
+
     }
 
     #[test]
