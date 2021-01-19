@@ -438,11 +438,9 @@ mod tests {
         let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
 
-        // TODO: blocked on serde-json-wasm fix
-        // see: https://github.com/CosmWasm/serde-json-wasm/issues/27
         // assert app-level success
-        // let ack: AcknowledgementMsg = from_slice(&res.acknowledgement).unwrap();
-        // ack.unwrap();
+        let ack: AcknowledgementMsg<()> = from_slice(&res.acknowledgement).unwrap();
+        ack.unwrap();
 
         // and we dispatch the BankMsg
         assert_eq!(1, res.messages.len());
