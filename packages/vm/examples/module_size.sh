@@ -15,7 +15,7 @@ PROG=`basename $0 .sh`
 BASE_DIR=`dirname $0`/..
 
 # Look for the useful info
-FNS="compile_and_use module_deserialize"
+FNS="module_compile module_deserialize"
 
 BIN="$BASE_DIR/../../target/$PROFILE/examples/$PROG"
 

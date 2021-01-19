@@ -31,22 +31,24 @@ pub fn main() {
     file.read_to_end(&mut wasm).unwrap();
     mem::drop(file);
 
-    // Report size
+    // Report wasm size
     let wasm_size = wasm.len();
     println!("wasm size: {} bytes", wasm_size);
 
-    // Compile module
     let memory_limit = Some(Size::mebi(10));
-    let module = compile_and_use(&wasm, memory_limit).unwrap();
+
+    // Compile module
+    let module = module_compile(&wasm, memory_limit);
     mem::drop(wasm);
 
     let serialized = module.serialize().unwrap();
     mem::drop(module);
 
+    // Deserialize module
     let module = module_deserialize(&serialized, memory_limit);
     mem::drop(serialized);
 
-    // Report (serialized) module size (again)
+    // Report (serialized) module size
     let serialized = module.serialize().unwrap();
     mem::drop(module);
     let ser_size = serialized.len();
@@ -55,6 +57,11 @@ pub fn main() {
         "(serialized) module size ratio: {:.2}",
         ser_size as f32 / wasm_size as f32
     );
+}
+
+#[inline(never)]
+fn module_compile(wasm: &Vec<u8>, memory_limit: Option<Size>) -> Module {
+    compile_and_use(&wasm, memory_limit).unwrap()
 }
 
 #[inline(never)]
