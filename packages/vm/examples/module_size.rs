@@ -11,7 +11,7 @@ use wasmer::Module;
 
 pub fn main() {
     let matches = App::new("Module size estimation")
-        .version("0.0.1")
+        .version("0.0.2")
         .author("Mauro Lacy <mauro@lacy.com.es>")
         .arg(
             Arg::with_name("WASM")
@@ -43,11 +43,7 @@ pub fn main() {
     let serialized = module.serialize().unwrap();
     mem::drop(module);
 
-    // Deserialize using make_runtime_store()
-    let store = make_runtime_store(memory_limit);
-
-    let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
-    mem::drop(store);
+    let module = module_deserialize(&serialized, memory_limit);
     mem::drop(serialized);
 
     // Report (serialized) module size (again)
@@ -59,4 +55,11 @@ pub fn main() {
         "(serialized) module size ratio: {:.2}",
         ser_size as f32 / wasm_size as f32
     );
+}
+
+#[inline(never)]
+fn module_deserialize(serialized: &Vec<u8>, memory_limit: Option<Size>) -> Module {
+    // Deserialize using make_runtime_store()
+    let store = make_runtime_store(memory_limit);
+    unsafe { Module::deserialize(&store, serialized) }.unwrap()
 }
