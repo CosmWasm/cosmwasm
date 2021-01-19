@@ -10,8 +10,8 @@ SUM_UTIL="ms_print"
 PROG=`basename $0 .sh`
 BASE_DIR=`dirname $0`/..
 
-# Look for the useful info (compile_only() results)
-FN="compile_only"
+# Look for the useful info (compile_and_use() results)
+FN="compile_and_use"
 
 BIN="$BASE_DIR/../../target/release/examples/$PROG"
 
@@ -23,6 +23,6 @@ RUSTFLAGS="-g" cargo build --release --example module_size
 $MEM_UTIL --massif-out-file=$RESULTS $BIN $WASM
 $SUM_UTIL $RESULTS >$SUMMARY
 
-# Compute compile_only() total (heap) bytes
+# Compute $FN() total (heap) bytes
 echo -n "module size (unserialized): "
 tac $SUMMARY | sed -n '1,/^  n /p' | grep "::$FN " | cut -f2 -d\( | cut -f1 -d\) | sed 's/,//g;s/B//' | sed ':a;N;s/\n/+/;ta' | bc -l | sed 's/$/ bytes/'

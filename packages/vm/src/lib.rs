@@ -52,5 +52,6 @@ pub mod internals {
     //! Please don't use any of these types directly, as
     //! they might change frequently or be removed in the future.
 
+    pub use crate::wasm_backend::compile_and_use;
     pub use crate::wasm_backend::compile_only;
 }

@@ -4,7 +4,8 @@ use std::mem;
 
 use clap::{App, Arg};
 
-use cosmwasm_vm::internals::compile_only;
+use cosmwasm_vm::internals::compile_and_use;
+use cosmwasm_vm::Size;
 
 pub fn main() {
     let matches = App::new("Module size estimation")
@@ -33,7 +34,7 @@ pub fn main() {
     println!("wasm size: {} bytes", wasm_size);
 
     // Compile module
-    let module = compile_only(&wasm).unwrap();
+    let module = compile_and_use(&wasm, Some(Size::mebi(10))).unwrap();
     mem::drop(wasm);
 
     // Report (serialized) module size
