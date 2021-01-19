@@ -5,7 +5,9 @@ use std::mem;
 use clap::{App, Arg};
 
 use cosmwasm_vm::internals::compile_and_use;
+use cosmwasm_vm::internals::make_runtime_store;
 use cosmwasm_vm::Size;
+use wasmer::Module;
 
 pub fn main() {
     let matches = App::new("Module size estimation")
@@ -34,11 +36,24 @@ pub fn main() {
     println!("wasm size: {} bytes", wasm_size);
 
     // Compile module
-    let module = compile_and_use(&wasm, Some(Size::mebi(10))).unwrap();
+    let memory_limit = Some(Size::mebi(10));
+    let module = compile_and_use(&wasm, memory_limit).unwrap();
     mem::drop(wasm);
 
-    // Report (serialized) module size
-    let ser_size = module.serialize().unwrap().len();
+    let serialized = module.serialize().unwrap();
+    mem::drop(module);
+
+    // Deserialize using make_runtime_store()
+    let store = make_runtime_store(memory_limit);
+
+    let module = unsafe { Module::deserialize(&store, &serialized) }.unwrap();
+    mem::drop(store);
+    mem::drop(serialized);
+
+    // Report (serialized) module size (again)
+    let serialized = module.serialize().unwrap();
+    mem::drop(module);
+    let ser_size = serialized.len();
     println!("module size (serialized): {} bytes", ser_size);
     println!(
         "(serialized) module size ratio: {:.2}",
