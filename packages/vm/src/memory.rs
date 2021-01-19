@@ -1,4 +1,5 @@
 use wasmer::{Array, ValueType, WasmPtr};
+use std::ptr;
 
 use crate::conversion::to_u32;
 use crate::errors::{
@@ -39,12 +40,12 @@ pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmRe
 
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
         Some(cells) => {
-            // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
-            // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
+            let raw_cells = cells as *const [_] as *const u8;
+            
             let len = region.length as usize;
             let mut result = vec![0u8; len];
-            for i in 0..len {
-                result[i] = cells[i].get();
+            unsafe{
+                ptr::copy(raw_cells, result.as_mut_ptr(), len);
             }
             Ok(result)
         }
