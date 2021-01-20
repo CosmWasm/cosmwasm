@@ -41,13 +41,9 @@ pub fn exported_functions(module: &Module) -> HashSet<String> {
 /// are functional and for simplicity does not even check their signatures.
 pub fn has_ibc_entry_points(module: &Module) -> bool {
     let available_exports = exported_functions(module);
-    let mut ok = true;
-    for required_export in REQUIRED_IBC_EXPORTS {
-        if !available_exports.contains(*required_export) {
-            ok = false;
-        }
-    }
-    ok
+    REQUIRED_IBC_EXPORTS
+        .iter()
+        .all(|required| available_exports.contains(*required))
 }
 
 #[cfg(test)]
