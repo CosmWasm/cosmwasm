@@ -127,7 +127,6 @@ impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
             let func = instance.exports.get_function(name)?;
             Ok(func.clone())
         })?;
-
         func.call(args).map_err(|runtime_err| -> VmError {
             self.with_wasmer_instance::<_, Never>(|instance| {
                 let err: VmError = match get_remaining_points(instance) {

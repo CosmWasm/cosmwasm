@@ -195,7 +195,6 @@ mod tests {
     use super::*;
     use crate::testing::{mock_env, mock_info, mock_instance};
     use cosmwasm_std::{coins, Empty};
-    use std::str;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -249,11 +248,6 @@ mod tests {
         let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
-        let s = match str::from_utf8(query_response.as_slice()) {
-            Ok(v) => v,
-            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
-        };
-        println!("result: {}", s);
         assert_eq!(
             query_response.as_slice(),
             b"{\"verifier\":\"someone else\"}"
