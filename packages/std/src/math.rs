@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::fmt::{self, Write};
 use std::iter::Sum;
 use std::ops;
@@ -65,42 +65,35 @@ impl FromStr for Decimal {
     /// This never performs any kind of rounding.
     /// More than 18 fractional digits, even zeros, result in an error.
     fn from_str(input: &str) -> Result<Self, Self::Err> {
-        let parts: Vec<&str> = input.split('.').collect();
-        match parts.len() {
-            1 => {
-                let whole = parts[0]
-                    .parse::<u128>()
-                    .map_err(|_| StdError::generic_err("Error parsing whole"))?;
+        let mut parts_iter = input.split('.');
 
-                let whole_as_atomics = whole
-                    .checked_mul(DECIMAL_FRACTIONAL)
-                    .ok_or_else(|| StdError::generic_err("Value too big"))?;
-                Ok(Decimal(whole_as_atomics))
-            }
-            2 => {
-                let whole = parts[0]
-                    .parse::<u128>()
-                    .map_err(|_| StdError::generic_err("Error parsing whole"))?;
-                let fractional = parts[1]
-                    .parse::<u128>()
-                    .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
-                let exp = (18usize.checked_sub(parts[1].len())).ok_or_else(|| {
-                    StdError::generic_err("Cannot parse more than 18 fractional digits")
-                })?;
-                let fractional_factor = 10u128
-                    .checked_pow(exp.try_into().unwrap())
-                    .ok_or_else(|| StdError::generic_err("Cannot compute fractional factor"))?;
+        let whole_part = parts_iter.next().unwrap(); // split always returns at least one element
+        let whole = whole_part
+            .parse::<u128>()
+            .map_err(|_| StdError::generic_err("Error parsing whole"))?;
+        let mut atomics = whole
+            .checked_mul(DECIMAL_FRACTIONAL)
+            .ok_or_else(|| StdError::generic_err("Value too big"))?;
 
-                let whole_as_atomics = whole
-                    .checked_mul(DECIMAL_FRACTIONAL)
-                    .ok_or_else(|| StdError::generic_err("Value too big"))?;
-                let atomics = whole_as_atomics
-                    .checked_add(fractional * fractional_factor)
-                    .ok_or_else(|| StdError::generic_err("Value too big"))?;
-                Ok(Decimal(atomics))
-            }
-            _ => Err(StdError::generic_err("Unexpected number of dots")),
+        if let Some(fractional_part) = parts_iter.next() {
+            let fractional = fractional_part
+                .parse::<u128>()
+                .map_err(|_| StdError::generic_err("Error parsing fractional"))?;
+            let exp = (18usize.checked_sub(fractional_part.len())).ok_or_else(|| {
+                StdError::generic_err("Cannot parse more than 18 fractional digits")
+            })?;
+            debug_assert!(exp <= 18);
+            let fractional_factor = 10u128.pow(exp as u32);
+            atomics = atomics
+                .checked_add(fractional * fractional_factor)
+                .ok_or_else(|| StdError::generic_err("Value too big"))?;
         }
+
+        if parts_iter.next().is_some() {
+            return Err(StdError::generic_err("Unexpected number of dots"));
+        }
+
+        Ok(Decimal(atomics))
     }
 }
 
