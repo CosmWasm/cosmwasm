@@ -1,4 +1,5 @@
-use parity_wasm::elements::{deserialize_buffer, Module};
+use parity_wasm::elements::{deserialize_buffer, Internal, Module};
+use std::collections::HashSet;
 
 use crate::errors::{VmError, VmResult};
 
@@ -11,10 +12,26 @@ pub fn deserialize_wasm(wasm_code: &[u8]) -> VmResult<Module> {
     })
 }
 
+pub fn exported_functions(module: &Module) -> HashSet<String> {
+    module
+        .export_section()
+        .map_or(HashSet::default(), |export_section| {
+            export_section
+                .entries()
+                .iter()
+                .filter_map(|entry| match entry.internal() {
+                    Internal::Function(_) => Some(entry.field().to_string()),
+                    _ => None,
+                })
+                .collect()
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use parity_wasm::elements::Internal;
+    use std::iter::FromIterator;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
     static CORRUPTED: &[u8] = include_bytes!("../testdata/corrupted.wasm");
@@ -62,5 +79,32 @@ mod tests {
             }
             err => panic!("Unexpected error: {:?}", err),
         }
+    }
+
+    #[test]
+    fn exported_functions_works() {
+        let wasm = wat::parse_str(r#"(module)"#).unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        let exports = exported_functions(&module);
+        assert_eq!(exports, HashSet::new());
+
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "foo" (func 0))
+                (export "bar" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        let exports = exported_functions(&module);
+        assert_eq!(
+            exports,
+            HashSet::from_iter(vec!["foo".to_string(), "bar".to_string(),])
+        );
     }
 }
