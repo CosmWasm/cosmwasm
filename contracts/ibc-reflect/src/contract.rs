@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, Deps,
-    DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
+    attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
+    Deps, DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
     IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order,
     QueryResponse, StdError, StdResult,
 };
@@ -22,7 +22,10 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
     };
     config(deps.storage).save(&cfg)?;
 
-    Ok(InitResponse::default())
+    Ok(InitResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "init")],
+    })
 }
 
 #[entry_point]
@@ -61,7 +64,11 @@ pub fn handle_init_callback(
         }
     })?;
 
-    Ok(HandleResponse::default())
+    Ok(HandleResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "handle_init_callback")],
+        data: None,
+    })
 }
 
 #[entry_point]
@@ -133,12 +140,12 @@ pub fn ibc_channel_connect(
 
     let label = format!("ibc-reflect-{}", &chan_id);
     let payload = ReflectInitMsg {
-        callback_id: Some(chan_id),
+        callback_id: Some(chan_id.clone()),
     };
     let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], Some(label))?;
     Ok(IbcBasicResponse {
         messages: vec![msg.into()],
-        attributes: vec![],
+        attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
     })
 }
 
@@ -151,9 +158,9 @@ pub fn ibc_channel_close(
     channel: IbcChannel,
 ) -> StdResult<IbcBasicResponse> {
     // get contract address and remove lookup
-    let channel_id = channel.endpoint.channel_id.as_bytes();
-    let reflect_addr = accounts(deps.storage).load(channel_id)?;
-    accounts(deps.storage).remove(channel_id);
+    let channel_id = channel.endpoint.channel_id.as_str();
+    let reflect_addr = accounts(deps.storage).load(channel_id.as_bytes())?;
+    accounts(deps.storage).remove(channel_id.as_bytes());
 
     // transfer current balance if any (steal the money)
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
@@ -171,10 +178,15 @@ pub fn ibc_channel_close(
     } else {
         vec![]
     };
+    let steal_funds = !messages.is_empty();
 
     Ok(IbcBasicResponse {
         messages,
-        attributes: vec![],
+        attributes: vec![
+            attr("action", "ibc_close"),
+            attr("channel_id", channel_id),
+            attr("steal_funds", steal_funds),
+        ],
     })
 }
 
@@ -230,7 +242,7 @@ fn receive_dispatch(
     Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![wasm_msg.into()],
-        attributes: vec![],
+        attributes: vec![attr("action", "receive_dispatch")],
     })
 }
 
@@ -243,7 +255,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![],
-        attributes: vec![],
+        attributes: vec![attr("action", "receive_who_am_i")],
     })
 }
 
@@ -257,28 +269,34 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![],
-        attributes: vec![],
+        attributes: vec![attr("action", "receive_balances")],
     })
 }
 
 #[entry_point]
-/// we do nothing
+/// never should be called as we do not send packets
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
     _ack: IbcAcknowledgement,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::default())
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_packet_ack")],
+    })
 }
 
 #[entry_point]
-/// we do nothing
+/// never should be called as we do not send packets
 pub fn ibc_packet_timeout(
     _deps: DepsMut,
     _env: Env,
     _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::default())
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_packet_timeout")],
+    })
 }
 
 #[cfg(test)]
