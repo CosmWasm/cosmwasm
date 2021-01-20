@@ -1,8 +1,8 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, CosmosMsg, Deps, DepsMut,
-    Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder,
-    IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError,
-    StdResult,
+    entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, Deps,
+    DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
+    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order,
+    QueryResponse, StdError, StdResult,
 };
 
 use crate::msg::{
@@ -143,14 +143,39 @@ pub fn ibc_channel_connect(
 }
 
 #[entry_point]
-/// we do nothing
-/// TODO: remove the account from the lookup?
+/// On closed channel, we take all tokens from reflect contract to this contract.
+/// We also delete the channel entry from accounts.
 pub fn ibc_channel_close(
-    _deps: DepsMut,
-    _env: Env,
-    _channel: IbcChannel,
+    deps: DepsMut,
+    env: Env,
+    channel: IbcChannel,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::default())
+    // get contract address and remove lookup
+    let channel_id = channel.endpoint.channel_id.as_bytes();
+    let reflect_addr = accounts(deps.storage).load(channel_id)?;
+    accounts(deps.storage).remove(channel_id);
+
+    // transfer current balance if any (steal the money)
+    let amount = deps.querier.query_all_balances(&reflect_addr)?;
+    let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
+        let bank_msg: CosmosMsg<Empty> = BankMsg::Send {
+            to_address: env.contract.address.clone(),
+            amount,
+        }
+        .into();
+        let reflect_msg = ReflectHandleMsg::ReflectMsg {
+            msgs: vec![bank_msg.into()],
+        };
+        let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
+        vec![wasm_msg.into()]
+    } else {
+        vec![]
+    };
+
+    Ok(IbcBasicResponse {
+        messages,
+        attributes: vec![],
+    })
 }
 
 #[entry_point]
@@ -261,9 +286,9 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
-        MockQuerier, MockStorage,
+        MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
+    use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
@@ -476,5 +501,60 @@ mod tests {
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
+    }
+
+    #[test]
+    fn check_close_channel() {
+        let mut deps = setup();
+
+        let channel_id: &str = "channel-123";
+        let account: &str = "acct-123";
+
+        // register the channel
+        connect(deps.as_mut(), channel_id, account);
+        // assign it some funds
+        let funds = vec![coin(123456, "uatom"), coin(7654321, "tgrd")];
+        deps.querier.update_balance(account, funds.clone());
+
+        // channel should be listed and have balance
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
+        let res: ListAccountsResponse = from_slice(&raw).unwrap();
+        assert_eq!(1, res.accounts.len());
+        let balance = deps.as_ref().querier.query_all_balances(account).unwrap();
+        assert_eq!(funds, balance);
+
+        // close the channel
+        let channel = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
+
+        // it pulls out all money from the reflect contract
+        assert_eq!(1, res.messages.len());
+        if let CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr, msg, ..
+        }) = &res.messages[0]
+        {
+            assert_eq!(contract_addr.as_str(), account);
+            let reflect: ReflectHandleMsg = from_slice(msg).unwrap();
+            match reflect {
+                ReflectHandleMsg::ReflectMsg { msgs } => {
+                    assert_eq!(1, msgs.len());
+                    assert_eq!(
+                        &msgs[0],
+                        &BankMsg::Send {
+                            to_address: MOCK_CONTRACT_ADDR.into(),
+                            amount: funds
+                        }
+                        .into()
+                    )
+                }
+            }
+        } else {
+            panic!("Unexpected message: {:?}", &res.messages[0]);
+        }
+
+        // and removes the account lookup
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
+        let res: ListAccountsResponse = from_slice(&raw).unwrap();
+        assert_eq!(0, res.accounts.len());
     }
 }
