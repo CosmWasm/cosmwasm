@@ -19,6 +19,7 @@ mod middleware;
 mod modules;
 mod serde;
 mod size;
+mod static_analysis;
 pub mod testing;
 mod wasm_backend;
 

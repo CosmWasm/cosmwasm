@@ -1,4 +1,3 @@
-use parity_wasm::elements::Deserialize;
 use std::collections::HashSet;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
@@ -12,6 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
+use crate::static_analysis::deserialize_wasm;
 use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
 
 const WASM_DIR: &str = "wasm";
@@ -129,16 +129,8 @@ where
     /// Once the contract was stored via [`save_wasm`], this can be called at any point in time.
     /// It does not depend on any caching of the contract.
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
-        let path = self.wasm_path.join(checksum.to_hex());
-        let mut file = File::open(path).map_err(|e| {
-            VmError::cache_err(format!("Error opening Wasm file for reading: {}", e))
-        })?;
-        let module = parity_wasm::elements::Module::deserialize(&mut file).map_err(|err| {
-            VmError::static_validation_err(format!(
-                "Wasm bytecode could not be deserialized. Deserialization error: \"{}\"",
-                err
-            ))
-        })?;
+        let wasm = self.load_wasm(checksum)?;
+        let module = deserialize_wasm(&wasm)?;
 
         // Get exported functions
         let entries: HashSet<String> =
