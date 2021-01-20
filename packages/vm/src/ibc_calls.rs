@@ -237,7 +237,7 @@ mod tests {
     use super::*;
     use crate::calls::{call_handle, call_init};
     use crate::testing::{mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage};
-    use cosmwasm_std::testing::mock_ibc_channel;
+    use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
     use cosmwasm_std::{Empty, IbcOrder};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
@@ -289,10 +289,60 @@ mod tests {
         call_handle::<_, _, _, Empty>(instance, &mock_env(), &info, handle_msg.as_bytes()).unwrap();
     }
 
+    const CHANNEL_ID: &str = "channel-123";
+    const ACCOUNT: &str = "account-456";
+
     #[test]
     fn handshake_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        setup(&mut instance, "channel-123", "account-456");
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+    }
+
+    #[test]
+    fn close_channel_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let handshake_close = mock_ibc_channel(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
+        call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn packet_ack_timeout_work() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
+        let ack = IbcAcknowledgement {
+            acknowledgement: br#"{}"#.into(),
+            original_packet: packet.clone(),
+        };
+
+        call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
+            .unwrap()
+            .unwrap();
+
+        call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn packet_receive_timeout_work() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let who_am_i = br#"{"who_am_i":{}}"#;
+        let packet = mock_ibc_packet_ack(CHANNEL_ID, who_am_i).unwrap();
+
+        call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
+            .unwrap()
+            .unwrap();
     }
 }
