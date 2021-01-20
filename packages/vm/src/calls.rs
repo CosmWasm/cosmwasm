@@ -86,7 +86,6 @@ where
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
     let result: ContractResult<QueryResponse> = from_slice(&data)?;
-    println!("result : {:?}", result);
     // Ensure query response is valid JSON
     if let ContractResult::Ok(binary_response) = &result {
         serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
