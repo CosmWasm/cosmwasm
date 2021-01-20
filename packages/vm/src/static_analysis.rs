@@ -3,6 +3,15 @@ use std::collections::HashSet;
 
 use crate::errors::{VmError, VmResult};
 
+pub const REQUIRED_IBC_EXPORTS: &[&str] = &[
+    "ibc_channel_open",
+    "ibc_channel_connect",
+    "ibc_channel_close",
+    "ibc_packet_receive",
+    "ibc_packet_ack",
+    "ibc_packet_timeout",
+];
+
 pub fn deserialize_wasm(wasm_code: &[u8]) -> VmResult<Module> {
     deserialize_buffer(&wasm_code).map_err(|err| {
         VmError::static_validation_err(format!(
@@ -25,6 +34,20 @@ pub fn exported_functions(module: &Module) -> HashSet<String> {
                 })
                 .collect()
         })
+}
+
+/// Returns true if and only if all IBC entry points ([`REQUIRED_IBC_EXPORTS`])
+/// exist as exported functions. This does not guarantee the entry points
+/// are functional and for simplicity does not even check their signatures.
+pub fn has_ibc_entry_points(module: &Module) -> bool {
+    let available_exports = exported_functions(module);
+    let mut ok = true;
+    for required_export in REQUIRED_IBC_EXPORTS {
+        if !available_exports.contains(*required_export) {
+            ok = false;
+        }
+    }
+    ok
 }
 
 #[cfg(test)]
@@ -106,5 +129,76 @@ mod tests {
             exports,
             HashSet::from_iter(vec!["foo".to_string(), "bar".to_string(),])
         );
+    }
+
+    #[test]
+    fn has_ibc_entry_points_works() {
+        // Non-IBC contract
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        assert_eq!(has_ibc_entry_points(&module), false);
+
+        // IBC contract
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+                (export "ibc_channel_open" (func 0))
+                (export "ibc_channel_connect" (func 0))
+                (export "ibc_channel_close" (func 0))
+                (export "ibc_packet_receive" (func 0))
+                (export "ibc_packet_ack" (func 0))
+                (export "ibc_packet_timeout" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        assert_eq!(has_ibc_entry_points(&module), true);
+
+        // Missing packet ack
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+                (export "ibc_channel_open" (func 0))
+                (export "ibc_channel_connect" (func 0))
+                (export "ibc_channel_close" (func 0))
+                (export "ibc_packet_receive" (func 0))
+                (export "ibc_packet_timeout" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let module = deserialize_wasm(&wasm).unwrap();
+        assert_eq!(has_ibc_entry_points(&module), false);
     }
 }

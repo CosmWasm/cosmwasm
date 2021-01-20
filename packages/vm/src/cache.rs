@@ -11,7 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
-use crate::static_analysis::{deserialize_wasm, exported_functions};
+use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
 use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
 
 const WASM_DIR: &str = "wasm";
@@ -131,15 +131,8 @@ where
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
         let wasm = self.load_wasm(checksum)?;
         let module = deserialize_wasm(&wasm)?;
-        let entries = exported_functions(&module);
-        let has_ibc_entry_points = entries.contains("ibc_channel_open")
-            && entries.contains("ibc_channel_connect")
-            && entries.contains("ibc_channel_close")
-            && entries.contains("ibc_packet_receive")
-            && entries.contains("ibc_packet_ack")
-            && entries.contains("ibc_packet_timeout");
         Ok(AnalysisReport {
-            has_ibc_entry_points,
+            has_ibc_entry_points: has_ibc_entry_points(&module),
         })
     }
 
