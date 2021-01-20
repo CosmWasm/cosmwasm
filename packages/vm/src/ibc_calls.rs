@@ -243,18 +243,6 @@ mod tests {
     static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
     const IBC_VERSION: &str = "ibc-reflect";
 
-    #[test]
-    fn call_init_works() {
-        let mut instance = mock_instance(&CONTRACT, &[]);
-
-        // init
-        let info = mock_info("creator", &[]);
-        let msg = br#"{"reflect_code_id":77}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-            .unwrap()
-            .unwrap();
-    }
-
     fn setup(
         instance: &mut Instance<MockApi, MockStorage, MockQuerier>,
         channel_id: &str,
