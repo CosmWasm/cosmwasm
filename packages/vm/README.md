@@ -41,6 +41,12 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.10.7 ./contracts/hackatom \
   && cp artifacts/hackatom.wasm packages/vm/testdata/hackatom_0.14.wasm
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_ibc_reflect",target=/code/contracts/ibc-reflect/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.10.7 ./contracts/ibc-reflect \
+  && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_0.14.wasm
 ```
 
 ## Testing
