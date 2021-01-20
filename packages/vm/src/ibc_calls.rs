@@ -281,16 +281,15 @@ mod tests {
     const ACCOUNT: &str = "account-456";
 
     #[test]
-    fn handshake_works() {
+    fn call_ibc_channel_open_and_connect_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         setup(&mut instance, CHANNEL_ID, ACCOUNT);
     }
 
     #[test]
-    fn close_channel_works() {
+    fn call_ibc_channel_close_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
-
         setup(&mut instance, CHANNEL_ID, ACCOUNT);
 
         let handshake_close = mock_ibc_channel(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
@@ -300,9 +299,8 @@ mod tests {
     }
 
     #[test]
-    fn packet_ack_timeout_work() {
+    fn call_ibc_packet_ack_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
-
         setup(&mut instance, CHANNEL_ID, ACCOUNT);
 
         let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
@@ -310,18 +308,24 @@ mod tests {
             acknowledgement: br#"{}"#.into(),
             original_packet: packet.clone(),
         };
-
         call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
             .unwrap()
             .unwrap();
+    }
 
+    #[test]
+    fn call_ibc_packet_timeout_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
         call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
             .unwrap()
             .unwrap();
     }
 
     #[test]
-    fn packet_receive_timeout_work() {
+    fn call_ibc_packet_receive_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         setup(&mut instance, CHANNEL_ID, ACCOUNT);
