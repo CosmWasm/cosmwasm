@@ -31,11 +31,12 @@ pub enum IbcMsg {
         /// packet data only supports one coin
         /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
         amount: Coin,
-        /// block height after which the packet times out.
-        /// at least one of timeout_height, timeout_timestamp is required
-        timeout_height: Option<IbcTimeoutHeight>,
-        /// block timestamp (in nanoseconds) after which the packet times out.
-        /// at least one of timeout_height, timeout_timestamp is required
+        /// block after which the packet times out.
+        /// at least one of timeout_block, timeout_timestamp is required
+        timeout_block: Option<IbcTimeoutBlock>,
+        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+        /// See https://golang.org/pkg/time/#Time.UnixNano
+        /// at least one of timeout_block, timeout_timestamp is required
         timeout_timestamp: Option<u64>,
     },
     /// Sends an IBC packet with given data over the existing channel.
@@ -45,10 +46,11 @@ pub enum IbcMsg {
         channel_id: String,
         data: Binary,
         /// block height after which the packet times out.
-        /// at least one of timeout_height, timeout_timestamp is required
-        timeout_height: Option<IbcTimeoutHeight>,
-        /// block timestamp (in nanoseconds) after which the packet times out.
-        /// at least one of timeout_height, timeout_timestamp is required
+        /// at least one of timeout_block, timeout_timestamp is required
+        timeout_block: Option<IbcTimeoutBlock>,
+        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+        /// See https://golang.org/pkg/time/#Time.UnixNano
+        /// at least one of timeout_block, timeout_timestamp is required
         timeout_timestamp: Option<u64>,
     },
     /// This will close an existing channel that is owned by this contract.
@@ -133,31 +135,31 @@ pub enum IbcOrder {
 /// freezing clients.
 /// Ordering is (revision_number, timeout_height)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
-pub struct IbcTimeoutHeight {
+pub struct IbcTimeoutBlock {
     /// the version that the client is currently on
     /// (eg. after reseting the chain this could increment 1 as height drops to 0)
-    pub revision_number: u64,
+    pub revision: u64,
     /// block height after which the packet times out.
     /// the height within the given revision
-    pub timeout_height: u64,
+    pub height: u64,
 }
 
-impl IbcTimeoutHeight {
+impl IbcTimeoutBlock {
     pub fn is_zero(&self) -> bool {
-        self.revision_number == 0 && self.timeout_height == 0
+        self.revision == 0 && self.height == 0
     }
 }
 
-impl PartialOrd for IbcTimeoutHeight {
+impl PartialOrd for IbcTimeoutBlock {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for IbcTimeoutHeight {
+impl Ord for IbcTimeoutBlock {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.revision_number.cmp(&other.revision_number) {
-            Ordering::Equal => self.timeout_height.cmp(&other.timeout_height),
+        match self.revision.cmp(&other.revision) {
+            Ordering::Equal => self.height.cmp(&other.height),
             other => other,
         }
     }
@@ -174,10 +176,11 @@ pub struct IbcPacket {
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
     /// block height after which the packet times out.
-    /// at least one of timeout_height, timeout_timestamp is required
-    pub timeout_height: Option<IbcTimeoutHeight>,
-    /// block timestamp (in nanoseconds) after which the packet times out.
-    /// at least one of timeout_height, timeout_timestamp is required
+    /// at least one of timeout_block, timeout_timestamp is required
+    pub timeout_block: Option<IbcTimeoutBlock>,
+    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+    /// See https://golang.org/pkg/time/#Time.UnixNano
+    /// at least one of timeout_block, timeout_timestamp is required
     pub timeout_timestamp: Option<u64>,
 }
 
@@ -259,31 +262,31 @@ mod tests {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
-            timeout_height: None,
+            timeout_block: None,
             timeout_timestamp: Some(1234567890),
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout_height":null,"timeout_timestamp":1234567890}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout_block":null,"timeout_timestamp":1234567890}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 
     #[test]
-    fn ibc_timeout_height_ord() {
-        let epoch1a = IbcTimeoutHeight {
-            revision_number: 1,
-            timeout_height: 1000,
+    fn ibc_timeout_block_ord() {
+        let epoch1a = IbcTimeoutBlock {
+            revision: 1,
+            height: 1000,
         };
-        let epoch1b = IbcTimeoutHeight {
-            revision_number: 1,
-            timeout_height: 3000,
+        let epoch1b = IbcTimeoutBlock {
+            revision: 1,
+            height: 3000,
         };
-        let epoch2a = IbcTimeoutHeight {
-            revision_number: 2,
-            timeout_height: 500,
+        let epoch2a = IbcTimeoutBlock {
+            revision: 2,
+            height: 500,
         };
-        let epoch2b = IbcTimeoutHeight {
-            revision_number: 2,
-            timeout_height: 2500,
+        let epoch2b = IbcTimeoutBlock {
+            revision: 2,
+            height: 2500,
         };
 
         // basic checks

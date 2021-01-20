@@ -183,8 +183,8 @@ fn proper_handshake_flow() {
 fn handle_dispatch_packet() {
     let mut deps = setup();
 
-    let channel_id: &str = "channel-123";
-    let account: &str = "acct-123";
+    let channel_id = "channel-123";
+    let account = "acct-123";
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
     let msgs_to_dispatch = vec![BankMsg::Send {

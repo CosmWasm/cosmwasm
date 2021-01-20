@@ -1,8 +1,8 @@
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, CosmosMsg, Deps, DepsMut,
-    Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder,
-    IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError,
-    StdResult,
+    attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
+    Deps, DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
+    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order,
+    QueryResponse, StdError, StdResult,
 };
 
 use crate::msg::{
@@ -22,7 +22,10 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
     };
     config(deps.storage).save(&cfg)?;
 
-    Ok(InitResponse::default())
+    Ok(InitResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "init")],
+    })
 }
 
 #[entry_point]
@@ -61,7 +64,11 @@ pub fn handle_init_callback(
         }
     })?;
 
-    Ok(HandleResponse::default())
+    Ok(HandleResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "handle_init_callback")],
+        data: None,
+    })
 }
 
 #[entry_point]
@@ -133,24 +140,54 @@ pub fn ibc_channel_connect(
 
     let label = format!("ibc-reflect-{}", &chan_id);
     let payload = ReflectInitMsg {
-        callback_id: Some(chan_id),
+        callback_id: Some(chan_id.clone()),
     };
     let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], Some(label))?;
     Ok(IbcBasicResponse {
         messages: vec![msg.into()],
-        attributes: vec![],
+        attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
     })
 }
 
 #[entry_point]
-/// we do nothing
-/// TODO: remove the account from the lookup?
+/// On closed channel, we take all tokens from reflect contract to this contract.
+/// We also delete the channel entry from accounts.
 pub fn ibc_channel_close(
-    _deps: DepsMut,
-    _env: Env,
-    _channel: IbcChannel,
+    deps: DepsMut,
+    env: Env,
+    channel: IbcChannel,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::default())
+    // get contract address and remove lookup
+    let channel_id = channel.endpoint.channel_id.as_str();
+    let reflect_addr = accounts(deps.storage).load(channel_id.as_bytes())?;
+    accounts(deps.storage).remove(channel_id.as_bytes());
+
+    // transfer current balance if any (steal the money)
+    let amount = deps.querier.query_all_balances(&reflect_addr)?;
+    let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
+        let bank_msg: CosmosMsg<Empty> = BankMsg::Send {
+            to_address: env.contract.address.clone(),
+            amount,
+        }
+        .into();
+        let reflect_msg = ReflectHandleMsg::ReflectMsg {
+            msgs: vec![bank_msg.into()],
+        };
+        let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
+        vec![wasm_msg.into()]
+    } else {
+        vec![]
+    };
+    let steal_funds = !messages.is_empty();
+
+    Ok(IbcBasicResponse {
+        messages,
+        attributes: vec![
+            attr("action", "ibc_close"),
+            attr("channel_id", channel_id),
+            attr("steal_funds", steal_funds),
+        ],
+    })
 }
 
 #[entry_point]
@@ -205,7 +242,7 @@ fn receive_dispatch(
     Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![wasm_msg.into()],
-        attributes: vec![],
+        attributes: vec![attr("action", "receive_dispatch")],
     })
 }
 
@@ -218,7 +255,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![],
-        attributes: vec![],
+        attributes: vec![attr("action", "receive_who_am_i")],
     })
 }
 
@@ -232,28 +269,34 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     Ok(IbcReceiveResponse {
         acknowledgement,
         messages: vec![],
-        attributes: vec![],
+        attributes: vec![attr("action", "receive_balances")],
     })
 }
 
 #[entry_point]
-/// we do nothing
+/// never should be called as we do not send packets
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
     _ack: IbcAcknowledgement,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::default())
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_packet_ack")],
+    })
 }
 
 #[entry_point]
-/// we do nothing
+/// never should be called as we do not send packets
 pub fn ibc_packet_timeout(
     _deps: DepsMut,
     _env: Env,
     _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
-    Ok(IbcBasicResponse::default())
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_packet_timeout")],
+    })
 }
 
 #[cfg(test)]
@@ -261,9 +304,9 @@ mod tests {
     use super::*;
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
-        MockQuerier, MockStorage,
+        MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
+    use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
     const CREATOR: &str = "creator";
     // code id of the reflect contract
@@ -408,8 +451,8 @@ mod tests {
     fn handle_dispatch_packet() {
         let mut deps = setup();
 
-        let channel_id: &str = "channel-123";
-        let account: &str = "acct-123";
+        let channel_id = "channel-123";
+        let account = "acct-123";
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
         let msgs_to_dispatch = vec![BankMsg::Send {
@@ -476,5 +519,60 @@ mod tests {
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
+    }
+
+    #[test]
+    fn check_close_channel() {
+        let mut deps = setup();
+
+        let channel_id = "channel-123";
+        let account = "acct-123";
+
+        // register the channel
+        connect(deps.as_mut(), channel_id, account);
+        // assign it some funds
+        let funds = vec![coin(123456, "uatom"), coin(7654321, "tgrd")];
+        deps.querier.update_balance(account, funds.clone());
+
+        // channel should be listed and have balance
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
+        let res: ListAccountsResponse = from_slice(&raw).unwrap();
+        assert_eq!(1, res.accounts.len());
+        let balance = deps.as_ref().querier.query_all_balances(account).unwrap();
+        assert_eq!(funds, balance);
+
+        // close the channel
+        let channel = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
+
+        // it pulls out all money from the reflect contract
+        assert_eq!(1, res.messages.len());
+        if let CosmosMsg::Wasm(WasmMsg::Execute {
+            contract_addr, msg, ..
+        }) = &res.messages[0]
+        {
+            assert_eq!(contract_addr.as_str(), account);
+            let reflect: ReflectHandleMsg = from_slice(msg).unwrap();
+            match reflect {
+                ReflectHandleMsg::ReflectMsg { msgs } => {
+                    assert_eq!(1, msgs.len());
+                    assert_eq!(
+                        &msgs[0],
+                        &BankMsg::Send {
+                            to_address: MOCK_CONTRACT_ADDR.into(),
+                            amount: funds
+                        }
+                        .into()
+                    )
+                }
+            }
+        } else {
+            panic!("Unexpected message: {:?}", &res.messages[0]);
+        }
+
+        // and removes the account lookup
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
+        let res: ListAccountsResponse = from_slice(&raw).unwrap();
+        assert_eq!(0, res.accounts.len());
     }
 }

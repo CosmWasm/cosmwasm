@@ -231,3 +231,110 @@ where
         MAX_LENGTH_IBC,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::calls::{call_handle, call_init};
+    use crate::testing::{mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage};
+    use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
+    use cosmwasm_std::{Empty, IbcOrder};
+
+    static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
+    const IBC_VERSION: &str = "ibc-reflect";
+
+    fn setup(
+        instance: &mut Instance<MockApi, MockStorage, MockQuerier>,
+        channel_id: &str,
+        account: &str,
+    ) {
+        // init
+        let info = mock_info("creator", &[]);
+        let msg = br#"{"reflect_code_id":77}"#;
+        call_init::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // first we try to open with a valid handshake
+        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        handshake_open.counterparty_version = None;
+        call_ibc_channel_open(instance, &mock_env(), &handshake_open)
+            .unwrap()
+            .unwrap();
+
+        // then we connect (with counter-party version set)
+        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        call_ibc_channel_connect::<_, _, _, Empty>(instance, &mock_env(), &handshake_connect)
+            .unwrap()
+            .unwrap();
+
+        // which creates a reflect account. here we get the callback
+        let handle_msg = format!(
+            r#"{{"init_callback":{{"id":"{}","contract_addr":"{}"}}}}"#,
+            channel_id, account
+        );
+        let info = mock_info(account, &[]);
+        call_handle::<_, _, _, Empty>(instance, &mock_env(), &info, handle_msg.as_bytes()).unwrap();
+    }
+
+    const CHANNEL_ID: &str = "channel-123";
+    const ACCOUNT: &str = "account-456";
+
+    #[test]
+    fn call_ibc_channel_open_and_connect_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+    }
+
+    #[test]
+    fn call_ibc_channel_close_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let handshake_close = mock_ibc_channel(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
+        call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_ibc_packet_ack_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
+        let ack = IbcAcknowledgement {
+            acknowledgement: br#"{}"#.into(),
+            original_packet: packet.clone(),
+        };
+        call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_ibc_packet_timeout_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
+        call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
+            .unwrap()
+            .unwrap();
+    }
+
+    #[test]
+    fn call_ibc_packet_receive_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        setup(&mut instance, CHANNEL_ID, ACCOUNT);
+
+        let who_am_i = br#"{"who_am_i":{}}"#;
+        let packet = mock_ibc_packet_ack(CHANNEL_ID, who_am_i).unwrap();
+
+        call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
+            .unwrap()
+            .unwrap();
+    }
+}
