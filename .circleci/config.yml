@@ -31,6 +31,7 @@ workflows:
                 - benchmarking
                 - update-wasmer
                 - metering-restart
+                - load-wasm-speed
   deploy:
     jobs:
       - build_and_upload_devcontracts:
