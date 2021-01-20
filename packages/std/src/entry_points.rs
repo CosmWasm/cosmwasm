@@ -52,8 +52,8 @@
 macro_rules! create_entry_points {
     (@migration; $contract:ident, true) => {
         #[no_mangle]
-        extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-            do_migrate(&$contract::migrate, env_ptr, info_ptr, msg_ptr)
+        extern "C" fn migrate(env_ptr: u32, msg_ptr: u32) -> u32 {
+            do_migrate(&$contract::migrate, env_ptr, msg_ptr)
         }
     };
 
@@ -99,8 +99,7 @@ macro_rules! create_entry_points {
 /// # type MigrateMsg = ();
 /// pub fn migrate(
 ///     deps: DepsMut,
-///     env: Env,
-///     info: MessageInfo,
+///     _env: Env,
 ///     msg: MigrateMsg,
 /// ) -> Result<MigrateResponse, StdError> {
 /// #   Ok(Default::default())

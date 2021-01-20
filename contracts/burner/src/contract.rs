@@ -30,12 +30,7 @@ pub fn handle(
 }
 
 #[entry_point]
-pub fn migrate(
-    deps: DepsMut,
-    env: Env,
-    _info: MessageInfo,
-    msg: MigrateMsg,
-) -> StdResult<MigrateResponse> {
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<MigrateResponse> {
     // delete all state
     let keys: Vec<_> = deps
         .storage
@@ -101,8 +96,7 @@ mod tests {
         let msg = MigrateMsg {
             payout: payout.clone(),
         };
-        let info = mock_info("creator", &[]);
-        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         // check payout
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");

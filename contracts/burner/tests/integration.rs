@@ -66,8 +66,7 @@ fn migrate_cleans_up_data() {
     let msg = MigrateMsg {
         payout: payout.clone(),
     };
-    let info = mock_info("creator", &[]);
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");

@@ -134,8 +134,7 @@ fn migrate_verifier() {
     let msg = MigrateMsg {
         verifier: HumanAddr::from("someone else"),
     };
-    let info = mock_info(creator.as_str(), &[]);
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), info, msg).unwrap();
+    let res: MigrateResponse = migrate(&mut deps, mock_env(), msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'someone else'

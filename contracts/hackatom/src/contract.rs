@@ -111,12 +111,7 @@ pub fn init(
     Ok(ctx.try_into()?)
 }
 
-pub fn migrate(
-    deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    msg: MigrateMsg,
-) -> Result<MigrateResponse, HackError> {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<MigrateResponse, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -431,8 +426,7 @@ mod tests {
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
-        let info = mock_info(creator.as_str(), &[]);
-        let res = migrate(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'someone else'

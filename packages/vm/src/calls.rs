@@ -59,7 +59,6 @@ where
 pub fn call_migrate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    info: &MessageInfo,
     msg: &[u8],
 ) -> VmResult<ContractResult<MigrateResponse<U>>>
 where
@@ -69,8 +68,7 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let info = to_vec(info)?;
-    let data = call_migrate_raw(instance, &env, &info, msg)?;
+    let data = call_migrate_raw(instance, &env, msg)?;
     let result: ContractResult<MigrateResponse<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -88,7 +86,6 @@ where
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
     let result: ContractResult<QueryResponse> = from_slice(&data)?;
-
     // Ensure query response is valid JSON
     if let ContractResult::Ok(binary_response) = &result {
         serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
@@ -138,7 +135,6 @@ where
 pub fn call_migrate_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    info: &[u8],
     msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
@@ -147,7 +143,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "migrate", &[env, info, msg], MAX_LENGTH_MIGRATE)
+    call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
@@ -245,8 +241,7 @@ mod tests {
 
         // change the verifier via migrate
         let msg = br#"{"verifier": "someone else"}"#;
-        let info = mock_info("creator", &[]);
-        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg);
 
         // query the new_verifier with verifier
         let msg = br#"{"verifier":{}}"#;
