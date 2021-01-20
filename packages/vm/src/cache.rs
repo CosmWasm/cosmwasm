@@ -129,6 +129,7 @@ where
     /// Once the contract was stored via [`save_wasm`], this can be called at any point in time.
     /// It does not depend on any caching of the contract.
     pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
+        // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
         let wasm = self.load_wasm(checksum)?;
         let module = deserialize_wasm(&wasm)?;
         Ok(AnalysisReport {
