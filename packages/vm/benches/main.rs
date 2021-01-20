@@ -100,6 +100,17 @@ fn bench_cache(c: &mut Criterion) {
         });
     });
 
+    group.bench_function("load wasm", |b| {
+        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+            unsafe { Cache::new(options.clone()).unwrap() };
+        let checksum = cache.save_wasm(CONTRACT).unwrap();
+
+        b.iter(|| {
+            let result = cache.load_wasm(&checksum);
+            assert!(result.is_ok());
+        });
+    });
+
     group.bench_function("instantiate from fs", |b| {
         let non_memcache = CacheOptions {
             base_dir: TempDir::new().unwrap().into_path(),

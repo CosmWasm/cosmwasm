@@ -204,7 +204,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
@@ -216,7 +216,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
@@ -227,6 +227,32 @@ mod tests {
         call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
+    }
+
+    #[test]
+    fn call_migrate_works() {
+        let mut instance = mock_instance(&CONTRACT, &[]);
+
+        // init
+        let info = mock_info("creator", &coins(1000, "earth"));
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
+        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+
+        // change the verifier via migrate
+        let msg = br#"{"verifier": "someone else"}"#;
+        let info = mock_info("creator", &[]);
+        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+
+        // query the new_verifier with verifier
+        let msg = br#"{"verifier":{}}"#;
+        let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
+        let query_response = contract_result.unwrap();
+        assert_eq!(
+            query_response.as_slice(),
+            b"{\"verifier\":\"someone else\"}"
+        );
     }
 
     #[test]
@@ -241,7 +267,7 @@ mod tests {
             .unwrap();
 
         // query
-        let msg = r#"{"verifier":{}}"#.as_bytes();
+        let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");

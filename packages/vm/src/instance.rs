@@ -40,7 +40,9 @@ pub struct InstanceOptions {
 pub struct Instance<A: Api, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
-    /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245
+    /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245.
+    ///
+    /// This instance should only be accessed via the Environment, which provides safe access.
     _inner: Box<WasmerInstance>,
     env: Environment<A, S, Q>,
     pub required_features: HashSet<String>,
@@ -203,6 +205,20 @@ where
     /// (https://github.com/WebAssembly/design/issues/1300#issuecomment-573867836).
     pub fn memory_pages(&self) -> usize {
         self.env.memory().size().0 as _
+    }
+
+    /// Returns true if and only if all IBC entry points
+    /// (`ibc_channel_open`, `ibc_channel_connect`, `ibc_channel_close`, `ibc_packet_receive`, `ibc_packet_receive`, `ibc_packet_ack` and `ibc_packet_timeout`)
+    /// exist as exported functions. This does not guarantee the entry points
+    /// are functional and for simplicity does not even check their signatures.
+    pub fn has_ibc_entry_points(&self) -> bool {
+        let entries = self.env.exported_functions();
+        entries.contains("ibc_channel_open")
+            && entries.contains("ibc_channel_connect")
+            && entries.contains("ibc_channel_close")
+            && entries.contains("ibc_packet_receive")
+            && entries.contains("ibc_packet_ack")
+            && entries.contains("ibc_packet_timeout")
     }
 
     /// Returns the currently remaining gas.
@@ -536,6 +552,77 @@ mod tests {
         // Deallocating does not shrink memory
         instance.deallocate(region_ptr).expect("error deallocating");
         assert_eq!(instance.memory_pages(), 19);
+    }
+
+    #[test]
+    fn has_ibc_entry_points_works() {
+        // Non-IBC contract
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.has_ibc_entry_points(), false);
+
+        // IBC contract
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+                (export "ibc_channel_open" (func 0))
+                (export "ibc_channel_connect" (func 0))
+                (export "ibc_channel_close" (func 0))
+                (export "ibc_packet_receive" (func 0))
+                (export "ibc_packet_ack" (func 0))
+                (export "ibc_packet_timeout" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.has_ibc_entry_points(), true);
+
+        // Missing packet ack
+        let wasm = wat::parse_str(
+            r#"(module
+                (memory 3)
+                (export "memory" (memory 0))
+
+                (type (func))
+                (func (type 0) nop)
+                (export "interface_version_5" (func 0))
+                (export "init" (func 0))
+                (export "handle" (func 0))
+                (export "allocate" (func 0))
+                (export "deallocate" (func 0))
+                (export "ibc_channel_open" (func 0))
+                (export "ibc_channel_connect" (func 0))
+                (export "ibc_channel_close" (func 0))
+                (export "ibc_packet_receive" (func 0))
+                (export "ibc_packet_timeout" (func 0))
+            )"#,
+        )
+        .unwrap();
+        let instance = mock_instance(&wasm, &[]);
+        assert_eq!(instance.has_ibc_entry_points(), false);
     }
 
     #[test]

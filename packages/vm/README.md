@@ -28,9 +28,9 @@ compatibility list:
 
 There are demo files in `testdata/*.wasm`. Those are compiled and optimized
 versions of
-[contracts/hackatom](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/hackatom)
+[contracts/hackatom](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/hackatom)
 and
-[contracts/staking](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
+[contracts/staking](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/staking)
 run through [rust-optimizer](https://github.com/CosmWasm/rust-optimizer).
 
 To rebuild the test contracts, go to the repo root and do
@@ -71,9 +71,22 @@ cd packages/vm
 cargo bench --no-default-features --features cranelift
 ```
 
+## Tools
+
+`module_size` and `module_size.sh`
+
+Memory profiling of compiled modules. `module_size.sh` executes `module_size`, and
+uses valgrind's memory profiling tool (massif) to compute the amount of heap memory
+used by a compiled module.
+
+```
+cd packages/vm
+RUSTFLAGS="-g" cargo build --release --example module_size
+./examples/module_size.sh ./testdata/hackatom.wasm
+```
+
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache
-License 2.0 (see
-[NOTICE](https://github.com/CosmWasm/cosmwasm/blob/master/NOTICE) and
-[LICENSE](https://github.com/CosmWasm/cosmwasm/blob/master/LICENSE)).
+License 2.0 (see [NOTICE](https://github.com/CosmWasm/cosmwasm/blob/main/NOTICE)
+and [LICENSE](https://github.com/CosmWasm/cosmwasm/blob/main/LICENSE)).

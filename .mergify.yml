@@ -1,10 +1,10 @@
 # See https://doc.mergify.io/configuration.html
 
 pull_request_rules:
-  - name: automerge to master with label automerge
+  - name: automerge to main with label automerge
     conditions:
       - "#approved-reviews-by>=1"
-      - base=master
+      - base=main
       - label=automerge
       - label!=WIP
       # We need to list them all individually. Here is why: https://doc.mergify.io/conditions.html#validating-all-status-check

@@ -4,7 +4,7 @@ name: Contract Development
 on:
   push:
     branches:
-      - master
+      - main
       - 0.[0-9]+
   pull_request:
 

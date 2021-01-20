@@ -4,12 +4,8 @@ version = "0.13.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "VM bindings to run cosmwams contracts"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/vm"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
-
-[badges]
-circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
-maintenance = { status = "actively-developed" }
 
 [features]
 default = ["staking"]
@@ -57,6 +53,7 @@ wasmer-middlewares = { version = "1.0.1" }
 criterion = "0.3"
 tempfile = "3.1.0"
 wat = "1.0"
+clap = "2.33.3"
 
 [[bench]]
 name = "main"

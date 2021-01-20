@@ -1,7 +1,6 @@
 # cosmwasm-storage
 
 [![cosmwasm-storage on crates.io](https://img.shields.io/crates/v/cosmwasm-storage.svg)](https://crates.io/crates/cosmwasm-storage)
-[![CircleCI](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master.svg?style=shield)](https://circleci.com/gh/CosmWasm/cosmwasm/tree/master)
 
 CosmWasm library with useful helpers for Storage patterns. You can use `Storage`
 implementations in `cosmwasm-std`, or rely on these to remove some common
@@ -191,6 +190,5 @@ let the `TypedStorage` APIs take care of all the boilerplate.
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache
-License 2.0 (see
-[NOTICE](https://github.com/CosmWasm/cosmwasm/blob/master/NOTICE) and
-[LICENSE](https://github.com/CosmWasm/cosmwasm/blob/master/LICENSE)).
+License 2.0 (see [NOTICE](https://github.com/CosmWasm/cosmwasm/blob/main/NOTICE)
+and [LICENSE](https://github.com/CosmWasm/cosmwasm/blob/main/LICENSE)).

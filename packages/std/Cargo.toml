@@ -4,13 +4,9 @@ version = "0.13.2"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
-repository = "https://github.com/CosmWasm/cosmwasm/tree/master/packages/std"
+repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/std"
 license = "Apache-2.0"
 readme = "README.md"
-
-[badges]
-circle-ci = { repository = "CosmWasm/cosmwasm", branch = "master" }
-maintenance = { status = "actively-developed" }
 
 [features]
 default = []
@@ -34,7 +30,7 @@ stargate = []
 [dependencies]
 base64 = "0.13.0"
 cosmwasm-derive = { path = "../derive", version = "0.13.2" }
-serde-json-wasm = { version = "0.3.0" }
+serde-json-wasm = { version = "0.3.1" }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 thiserror = "1.0"

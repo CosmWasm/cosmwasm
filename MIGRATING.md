@@ -291,7 +291,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
   You can also try a different error library than
   [thiserror](https://crates.io/crates/thiserror). The
-  [staking development contract](https://github.com/CosmWasm/cosmwasm/tree/master/contracts/staking)
+  [staking development contract](https://github.com/CosmWasm/cosmwasm/tree/main/contracts/staking)
   shows how this would look like using [snafu](https://crates.io/crates/snafu).
 
 - Change order of arguments such that `storage` is always first followed by
@@ -593,7 +593,7 @@ This has been re-written, but is generic boilerplate and should be (almost) the
 same in all contracts:
 
 - copy the new version from
-  [`contracts/queue`](https://github.com/CosmWasm/cosmwasm/blob/master/contracts/queue/src/lib.rs)
+  [`contracts/queue`](https://github.com/CosmWasm/cosmwasm/blob/main/contracts/queue/src/lib.rs)
 - Add `pub mod XYZ` directives for any modules you use besides `contract`
 
 Contract Code:
@@ -706,7 +706,7 @@ All helper functions have been moved into a new `cosmwasm-schema` package.
 - Remove `serde_json` `[dev-dependency]` if there, as cosmwasm-schema will
   handle JSON output internally.
 - Update `examples/schema.rs` to look
-  [more like queue](https://github.com/CosmWasm/cosmwasm/blob/master/contracts/queue/examples/schema.rs),
+  [more like queue](https://github.com/CosmWasm/cosmwasm/blob/main/contracts/queue/examples/schema.rs),
   but replacing all the imports and type names with those you currently have.
 - Regenerate schemas with `cargo schema`
 
