@@ -86,7 +86,7 @@ where
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
     let result: ContractResult<QueryResponse> = from_slice(&data)?;
-
+    println!("result : {:?}", result);
     // Ensure query response is valid JSON
     if let ContractResult::Ok(binary_response) = &result {
         serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
@@ -195,6 +195,7 @@ mod tests {
     use super::*;
     use crate::testing::{mock_env, mock_info, mock_instance};
     use cosmwasm_std::{coins, Empty};
+    use std::str;
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
@@ -242,13 +243,17 @@ mod tests {
 
         // change the verifier via migrate
         let msg = br#"{"verifier": "someone else"}"#;
-        let info = mock_info("creator", &[]);
-        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+        let _res = call_migrate::<_, _, _, Empty>(&mut instance, &mock_env(), msg);
 
         // query the new_verifier with verifier
         let msg = br#"{"verifier":{}}"#;
         let contract_result = call_query(&mut instance, &mock_env(), msg).unwrap();
         let query_response = contract_result.unwrap();
+        let s = match str::from_utf8(query_response.as_slice()) {
+            Ok(v) => v,
+            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+        };
+        println!("result: {}", s);
         assert_eq!(
             query_response.as_slice(),
             b"{\"verifier\":\"someone else\"}"
