@@ -219,11 +219,11 @@
                   "description": "exisiting channel to send the tokens over",
                   "type": "string"
                 },
-                "timeout_height": {
-                  "description": "block height after which the packet times out. at least one of timeout_height, timeout_timestamp is required",
+                "timeout_block": {
+                  "description": "block after which the packet times out. at least one of timeout_block, timeout_timestamp is required",
                   "anyOf": [
                     {
-                      "$ref": "#/definitions/IbcTimeoutHeight"
+                      "$ref": "#/definitions/IbcTimeoutBlock"
                     },
                     {
                       "type": "null"
@@ -231,7 +231,7 @@
                   ]
                 },
                 "timeout_timestamp": {
-                  "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out. See https://golang.org/pkg/time/#Time.UnixNano at least one of timeout_height, timeout_timestamp is required",
+                  "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out. See https://golang.org/pkg/time/#Time.UnixNano at least one of timeout_block, timeout_timestamp is required",
                   "type": [
                     "integer",
                     "null"
@@ -271,11 +271,11 @@
                 "data": {
                   "$ref": "#/definitions/Binary"
                 },
-                "timeout_height": {
-                  "description": "block height after which the packet times out. at least one of timeout_height, timeout_timestamp is required",
+                "timeout_block": {
+                  "description": "block height after which the packet times out. at least one of timeout_block, timeout_timestamp is required",
                   "anyOf": [
                     {
-                      "$ref": "#/definitions/IbcTimeoutHeight"
+                      "$ref": "#/definitions/IbcTimeoutBlock"
                     },
                     {
                       "type": "null"
@@ -283,7 +283,7 @@
                   ]
                 },
                 "timeout_timestamp": {
-                  "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out. See https://golang.org/pkg/time/#Time.UnixNano at least one of timeout_height, timeout_timestamp is required",
+                  "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out. See https://golang.org/pkg/time/#Time.UnixNano at least one of timeout_block, timeout_timestamp is required",
                   "type": [
                     "integer",
                     "null"
@@ -317,22 +317,22 @@
         }
       ]
     },
-    "IbcTimeoutHeight": {
+    "IbcTimeoutBlock": {
       "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",
       "type": "object",
       "required": [
-        "revision_number",
-        "timeout_height"
+        "height",
+        "revision"
       ],
       "properties": {
-        "revision_number": {
-          "description": "the version that the client is currently on (eg. after reseting the chain this could increment 1 as height drops to 0)",
+        "height": {
+          "description": "block height after which the packet times out. the height within the given revision",
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
         },
-        "timeout_height": {
-          "description": "block height after which the packet times out. the height within the given revision",
+        "revision": {
+          "description": "the version that the client is currently on (eg. after reseting the chain this could increment 1 as height drops to 0)",
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
