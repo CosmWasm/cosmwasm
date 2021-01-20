@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::{TryFrom, TryInto};
+use std::convert::TryFrom;
 use std::fmt::{self, Write};
 use std::iter::Sum;
 use std::ops;
@@ -82,9 +82,8 @@ impl FromStr for Decimal {
             let exp = (18usize.checked_sub(fractional_part.len())).ok_or_else(|| {
                 StdError::generic_err("Cannot parse more than 18 fractional digits")
             })?;
-            let fractional_factor = 10u128
-                .checked_pow(exp.try_into().unwrap())
-                .ok_or_else(|| StdError::generic_err("Cannot compute fractional factor"))?;
+            debug_assert!(exp <= 18);
+            let fractional_factor = 10u128.pow(exp as u32);
             atomics = atomics
                 .checked_add(fractional * fractional_factor)
                 .ok_or_else(|| StdError::generic_err("Value too big"))?;
