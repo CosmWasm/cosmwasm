@@ -9,7 +9,7 @@ use crate::coins::Coin;
 use crate::deps::OwnedDeps;
 use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "stargate")]
-use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutHeight};
+use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutBlock};
 use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     CustomQuery, DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator,
@@ -188,9 +188,9 @@ pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdR
             channel_id: my_channel_id.into(),
         },
         sequence: 27,
-        timeout_height: Some(IbcTimeoutHeight {
-            revision_number: 1,
-            timeout_height: 12345678,
+        timeout_block: Some(IbcTimeoutBlock {
+            revision: 1,
+            height: 12345678,
         }),
         timeout_timestamp: None,
     })
@@ -212,9 +212,9 @@ pub fn mock_ibc_packet_ack<T: Serialize>(my_channel_id: &str, data: &T) -> StdRe
             channel_id: "channel-1234".to_string(),
         },
         sequence: 29,
-        timeout_height: Some(IbcTimeoutHeight {
-            revision_number: 1,
-            timeout_height: 432332552,
+        timeout_block: Some(IbcTimeoutBlock {
+            revision: 1,
+            height: 432332552,
         }),
         timeout_timestamp: None,
     })

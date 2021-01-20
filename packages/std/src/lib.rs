@@ -28,7 +28,7 @@ pub use crate::errors::{StdError, StdResult, SystemError};
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
     ChannelResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg,
-    IbcOrder, IbcPacket, IbcQuery, IbcReceiveResponse, IbcTimeoutHeight, ListChannelsResponse,
+    IbcOrder, IbcPacket, IbcQuery, IbcReceiveResponse, IbcTimeoutBlock, ListChannelsResponse,
     PortIdResponse,
 };
 #[cfg(feature = "iterator")]
