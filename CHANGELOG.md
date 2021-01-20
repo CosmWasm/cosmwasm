@@ -9,8 +9,9 @@ and this project adheres to
 ### Added
 
 - cosmwasm-vm: Add PinnedMemoryCache. ([#696])
-- cosmwasm-vm: The new `Instance::has_ibc_entry_points` tells the caller if the
-  contract exposes IBC entry points.
+- cosmwasm-vm: The new `Cache::analyze` provides a static analyzis of the Wasm
+  bytecode. This is used to tell the caller if the contract exposes IBC entry
+  points. ([#736])
 
 ### Changed
 
@@ -31,6 +32,7 @@ and this project adheres to
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
+[#736]: https://github.com/CosmWasm/cosmwasm/pull/736
 
 ## [0.13.2] - 2021-01-14
 

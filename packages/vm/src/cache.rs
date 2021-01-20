@@ -11,6 +11,7 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
+use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
 use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
 
 const WASM_DIR: &str = "wasm";
@@ -48,6 +49,10 @@ pub struct Cache<A: Api, S: Storage, Q: Querier> {
     type_api: PhantomData<A>,
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
+}
+
+pub struct AnalysisReport {
+    pub has_ibc_entry_points: bool,
 }
 
 impl<A, S, Q> Cache<A, S, Q>
@@ -117,6 +122,19 @@ where
         } else {
             Ok(code)
         }
+    }
+
+    /// Performs static anlyzation on this Wasm without compiling or instantiating it.
+    ///
+    /// Once the contract was stored via [`save_wasm`], this can be called at any point in time.
+    /// It does not depend on any caching of the contract.
+    pub fn analyze(&self, checksum: &Checksum) -> VmResult<AnalysisReport> {
+        // Here we could use a streaming deserializer to slightly improve performance. However, this way it is DRYer.
+        let wasm = self.load_wasm(checksum)?;
+        let module = deserialize_wasm(&wasm)?;
+        Ok(AnalysisReport {
+            has_ibc_entry_points: has_ibc_entry_points(&module),
+        })
     }
 
     /// Pins a Module that was previously stored via save_wasm.

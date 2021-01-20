@@ -81,12 +81,6 @@ fn connect<T: Into<HumanAddr>>(
 }
 
 #[test]
-fn ibc_entry_points_are_detected() {
-    let deps = mock_instance(WASM, &[]);
-    assert_eq!(deps.has_ibc_entry_points(), true);
-}
-
-#[test]
 fn init_works() {
     let mut deps = mock_instance(WASM, &[]);
 
