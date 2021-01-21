@@ -33,6 +33,7 @@ workflows:
                 - metering-restart
                 - load-wasm-speed
                 - cache-analyze
+                - read_region-copy
   deploy:
     jobs:
       - build_and_upload_devcontracts:
