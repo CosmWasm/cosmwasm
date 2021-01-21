@@ -165,11 +165,10 @@ pub fn ibc_channel_close(
     // transfer current balance if any (steal the money)
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
     let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
-        let bank_msg: CosmosMsg<Empty> = BankMsg::Send {
-            to_address: env.contract.address.clone(),
+        let bank_msg = BankMsg::Send {
+            to_address: env.contract.address,
             amount,
-        }
-        .into();
+        };
         let reflect_msg = ReflectHandleMsg::ReflectMsg {
             msgs: vec![bank_msg.into()],
         };
