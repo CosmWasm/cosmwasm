@@ -1,5 +1,5 @@
-use wasmer::{Array, ValueType, WasmPtr};
 use std::ptr;
+use wasmer::{Array, ValueType, WasmPtr};
 
 use crate::conversion::to_u32;
 use crate::errors::{
@@ -41,7 +41,6 @@ pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmRe
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.length) {
         Some(cells) => {
             let raw_cells = cells as *const [_] as *const u8;
-            
             let len = region.length as usize;
             let mut result = vec![0u8; len];
             unsafe{
