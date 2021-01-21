@@ -4,8 +4,8 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
 use ibc_reflect_send::msg::{
-    AcknowledgementMsg, BalancesResponse, DispatchResponse, HandleMsg, InitMsg, PacketMsg,
-    QueryMsg, WhoAmIResponse,
+    AcknowledgementMsg, AdminResponse, GetChannelResponse, HandleMsg, InitMsg,
+    ListChannelsResponse, PacketMsg, QueryMsg,
 };
 
 fn main() {

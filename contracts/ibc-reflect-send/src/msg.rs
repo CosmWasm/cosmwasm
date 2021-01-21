@@ -6,59 +6,61 @@ use serde::{Deserialize, Serialize};
 
 /// InitMsg just needs to know the code_id of a reflect contract to spawn sub-accounts
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
-    pub reflect_code_id: u64,
-}
+pub struct InitMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
-    /// InitCallback is returned from reflect contract after a new contract is set up
-    InitCallback {
-        /// id was provided in the InitMsg
-        id: String,
-        /// contract_addr is the address of this contract
-        contract_addr: HumanAddr,
+    /// Changes the admin
+    UpdateAdmin {
+        admin: HumanAddr,
+    },
+    SendMsgs {
+        channel_id: String,
+        // Note: we don't handle custom messages on remote chains
+        msgs: Vec<CosmosMsg<Empty>>,
+    },
+    CheckRemoteBalance {
+        channel_id: String,
     },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    /// Returns (reflect) account that is attached to this channel,
-    /// or none.
-    Account { channel_id: String },
-    /// Returns all (channel, reflect_account) pairs.
-    /// No pagination - this is a test contract
-    ListAccounts {},
+    // Returns current admin
+    Admin {},
+    // Shows all open channels (incl. remote info)
+    ListChannels {},
+    // Get info for one channel
+    GetChannel { channel_id: string },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct AccountResponse {
-    pub account: Option<HumanAddr>,
+pub struct AdminResponse {
+    pub admin: HumanAddr,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ListAccountsResponse {
-    pub accounts: Vec<AccountInfo>,
+pub struct ListChannelsResponse {
+    pub channels: Vec<ChannelInfo>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AccountInfo {
-    pub account: HumanAddr,
     pub channel_id: String,
-}
-
-/// This is the message we send to the reflect contract to initialize it
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ReflectInitMsg {
-    pub callback_id: Option<String>,
+    /// in normal cases, it should be set, but there is a delay between binding
+    /// the channel and making a query and in that time it is empty
+    pub remote_addr: Option<HumanAddr>,
+    pub remote_balance: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
-pub enum ReflectHandleMsg {
-    ReflectMsg { msgs: Vec<CosmosMsg> },
+pub struct GetChannelResponse {
+    /// in normal cases, it should be set, but there is a delay between binding
+    /// the channel and making a query and in that time it is empty
+    pub remote_addr: Option<HumanAddr>,
+    pub remote_balance: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
