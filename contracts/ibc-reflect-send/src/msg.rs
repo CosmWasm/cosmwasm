@@ -4,7 +4,7 @@ use cosmwasm_std::{Coin, ContractResult, CosmosMsg, Empty, HumanAddr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::state::ChannelInfo;
+use crate::state::AccountData;
 
 /// InitMsg just needs to know the code_id of a reflect contract to spawn sub-accounts
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -32,10 +32,10 @@ pub enum HandleMsg {
 pub enum QueryMsg {
     // Returns current admin
     Admin {},
-    // Shows all open channels (incl. remote info)
-    ListChannels {},
-    // Get info for one channel
-    GetChannel { channel_id: String },
+    // Shows all open accounts (incl. remote info)
+    ListAccounts {},
+    // Get account for one channel
+    Account { channel_id: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -44,30 +44,46 @@ pub struct AdminResponse {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ListChannelsResponse {
-    pub channels: Vec<ChannelInfo>,
+pub struct ListAccountsResponse {
+    pub accounts: Vec<AccountInfo>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AccountInfo {
     pub channel_id: String,
+    /// last block balance was updated (0 is never)
+    pub last_update_height: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,
     pub remote_balance: Vec<Coin>,
+}
+
+impl AccountInfo {
+    pub fn convert(channel_id: String, input: AccountData) -> Self {
+        AccountInfo {
+            channel_id,
+            last_update_height: input.last_update_height,
+            remote_addr: input.remote_addr,
+            remote_balance: input.remote_balance,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct GetChannelResponse {
+pub struct AccountResponse {
+    /// last block balance was updated (0 is never)
+    pub last_update_height: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,
     pub remote_balance: Vec<Coin>,
 }
 
-impl From<ChannelInfo> for GetChannelResponse {
-    fn from(input: ChannelInfo) -> Self {
-        GetChannelResponse {
+impl From<AccountData> for AccountResponse {
+    fn from(input: AccountData) -> Self {
+        AccountResponse {
+            last_update_height: input.last_update_height,
             remote_addr: input.remote_addr,
             remote_balance: input.remote_balance,
         }

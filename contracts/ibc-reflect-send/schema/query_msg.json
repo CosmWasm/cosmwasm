@@ -3,7 +3,28 @@
   "title": "QueryMsg",
   "anyOf": [
     {
-      "description": "Returns (reflect) account that is attached to this channel, or none.",
+      "type": "object",
+      "required": [
+        "admin"
+      ],
+      "properties": {
+        "admin": {
+          "type": "object"
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
+        "list_accounts"
+      ],
+      "properties": {
+        "list_accounts": {
+          "type": "object"
+        }
+      }
+    },
+    {
       "type": "object",
       "required": [
         "account"
@@ -19,18 +40,6 @@
               "type": "string"
             }
           }
-        }
-      }
-    },
-    {
-      "description": "Returns all (channel, reflect_account) pairs. No pagination - this is a test contract",
-      "type": "object",
-      "required": [
-        "list_accounts"
-      ],
-      "properties": {
-        "list_accounts": {
-          "type": "object"
         }
       }
     }

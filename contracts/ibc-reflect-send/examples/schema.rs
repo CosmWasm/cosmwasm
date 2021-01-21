@@ -4,8 +4,8 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
 
 use ibc_reflect_send::msg::{
-    AcknowledgementMsg, AdminResponse, GetChannelResponse, HandleMsg, InitMsg,
-    ListChannelsResponse, PacketMsg, QueryMsg,
+    AccountResponse, AcknowledgementMsg, AdminResponse, HandleMsg, InitMsg, ListAccountsResponse,
+    PacketMsg, QueryMsg,
 };
 
 fn main() {
@@ -18,19 +18,7 @@ fn main() {
     export_schema(&schema_for!(InitMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(PacketMsg), &out_dir);
-    export_schema_with_title(
-        &mut schema_for!(AcknowledgementMsg<BalancesResponse>),
-        &out_dir,
-        "AcknowledgementMsgBalances",
-    );
-    export_schema_with_title(
-        &mut schema_for!(AcknowledgementMsg<DispatchResponse>),
-        &out_dir,
-        "AcknowledgementMsgDispatch",
-    );
-    export_schema_with_title(
-        &mut schema_for!(AcknowledgementMsg<WhoAmIResponse>),
-        &out_dir,
-        "AcknowledgementMsgWhoAmI",
-    );
+    export_schema(&schema_for!(AdminResponse), &out_dir);
+    export_schema(&schema_for!(AccountResponse), &out_dir);
+    export_schema(&schema_for!(ListAccountsResponse), &out_dir);
 }

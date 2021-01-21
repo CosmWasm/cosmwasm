@@ -10,7 +10,7 @@ use cosmwasm_storage::{
 };
 
 pub const KEY_CONFIG: &[u8] = b"config";
-pub const PREFIX_CHANNELS: &[u8] = b"channels";
+pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Config {
@@ -18,20 +18,22 @@ pub struct Config {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ChannelInfo {
+pub struct AccountData {
+    /// last block balance was updated (0 is never)
+    pub last_update_height: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,
     pub remote_balance: Vec<Coin>,
 }
 
-/// channels is lookup of channel_id to reflect contract
-pub fn channels(storage: &mut dyn Storage) -> Bucket<ChannelInfo> {
-    bucket(storage, PREFIX_CHANNELS)
+/// accounts is lookup of channel_id to reflect contract
+pub fn accounts(storage: &mut dyn Storage) -> Bucket<AccountData> {
+    bucket(storage, PREFIX_ACCOUNTS)
 }
 
-pub fn channels_read(storage: &dyn Storage) -> ReadonlyBucket<ChannelInfo> {
-    bucket_read(storage, PREFIX_CHANNELS)
+pub fn accounts_read(storage: &dyn Storage) -> ReadonlyBucket<AccountData> {
+    bucket_read(storage, PREFIX_ACCOUNTS)
 }
 
 pub fn config(storage: &mut dyn Storage) -> Singleton<Config> {
