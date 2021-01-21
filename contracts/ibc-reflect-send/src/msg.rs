@@ -10,7 +10,6 @@ use crate::state::AccountData;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
 
-// TODO: add SendFunds{channel_id}, which will use IbcMsg::Transfer (to test that)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
@@ -25,6 +24,17 @@ pub enum HandleMsg {
     },
     CheckRemoteBalance {
         channel_id: String,
+    },
+    /// If you sent funds to this contract, it will attempt to ibc transfer them
+    /// to the account on the remote side of this channel.
+    /// If we don't have the address yet, this fails.
+    SendFunds {
+        /// The channel id we use above to talk with the reflect contract
+        reflect_channel_id: String,
+        /// The channel to use for ibctransfer. This is bound to a different
+        /// port and handled by a different module.
+        /// It should connect to the same chain as the reflect_channel_id does
+        transfer_channel_id: String,
     },
 }
 

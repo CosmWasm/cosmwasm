@@ -44,6 +44,10 @@ pub fn handle(
         HandleMsg::CheckRemoteBalance { channel_id } => {
             handle_check_remote_balance(deps, env, info, channel_id)
         }
+        HandleMsg::SendFunds {
+            reflect_channel_id,
+            transfer_channel_id,
+        } => handle_send_funds(deps, env, info, reflect_channel_id, transfer_channel_id),
     }
 }
 
@@ -129,6 +133,53 @@ pub fn handle_check_remote_balance(
     Ok(HandleResponse {
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_check_remote_balance")],
+        data: None,
+    })
+}
+
+pub fn handle_send_funds(
+    deps: DepsMut,
+    env: Env,
+    mut info: MessageInfo,
+    reflect_channel_id: String,
+    transfer_channel_id: String,
+) -> StdResult<HandleResponse> {
+    // intentionally no auth check
+
+    // require some funds
+    if info.sent_funds.is_empty() {
+        return Err(StdError::generic_err(
+            "you must send the coins you with to ibc transfer",
+        ));
+    } else if info.sent_funds.len() > 1 {
+        return Err(StdError::generic_err("you can only ibc transfer one coin"));
+    }
+    let amount = info.sent_funds.swap_remove(0);
+
+    // load remote account
+    let data = accounts(deps.storage).load(reflect_channel_id.as_bytes())?;
+    let remote_addr = match data.remote_addr {
+        Some(addr) => addr,
+        None => {
+            return Err(StdError::generic_err(
+                "We don't have the remote address for this channel",
+            ))
+        }
+    };
+
+    // construct a packet to send
+    let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
+    let msg = IbcMsg::Transfer {
+        channel_id: transfer_channel_id,
+        to_address: remote_addr,
+        amount,
+        timeout_block: None,
+        timeout_timestamp,
+    };
+
+    Ok(HandleResponse {
+        messages: vec![msg.into()],
+        attributes: vec![attr("action", "handle_send_funds")],
         data: None,
     })
 }
@@ -393,22 +444,16 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
-        MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
+        MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
+    use cosmwasm_std::OwnedDeps;
 
     const CREATOR: &str = "creator";
-    // code id of the reflect contract
-    const REFLECT_ID: u64 = 101;
-    // address of first reflect contract instance that we created
-    const REFLECT_ADDR: &str = "reflect-acct-1";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
-        let msg = InitMsg {
-            reflect_code_id: REFLECT_ID,
-        };
+        let msg = InitMsg {};
         let info = mock_info(CREATOR, &[]);
         let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
@@ -417,11 +462,8 @@ mod tests {
 
     // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
-    fn connect<T: Into<HumanAddr>>(mut deps: DepsMut, channel_id: &str, account: T) {
-        let account = account.into();
-
-        // open packet has no counterparty versin, connect does
-        // TODO: validate this with alpe
+    fn connect(mut deps: DepsMut, channel_id: &str) {
+        // open packet has no counterparty version, connect does
         let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
         handshake_open.counterparty_version = None;
         // first we try to open with a valid handshake
@@ -429,27 +471,37 @@ mod tests {
 
         // then we connect (with counter-party version set)
         let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
+        let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
 
-        // which creates a reflect account. here we get the callback
-        let handle_msg = HandleMsg::InitCallback {
-            id: channel_id.into(),
-            contract_addr: account.clone(),
+        // this should send a WhoAmI request, which is received some blocks later
+        assert_eq!(1, res.messages.len());
+        match &res.messages[0] {
+            CosmosMsg::Ibc(IbcMsg::SendPacket {
+                channel_id: packet_channel,
+                ..
+            }) => assert_eq!(packet_channel.as_str(), channel_id),
+            o => panic!("Unexpected message: {:?}", o),
         };
-        let info = mock_info(account, &[]);
-        handle(deps.branch(), mock_env(), info, handle_msg).unwrap();
+    }
+
+    fn who_am_i_response<T: Into<HumanAddr>>(deps: DepsMut, channel_id: &str, account: T) {
+        let packet = PacketMsg::WhoAmI {};
+        let response = AcknowledgementMsg::Ok(WhoAmIResponse {
+            account: account.into(),
+        });
+        let ack = IbcAcknowledgement {
+            acknowledgement: to_binary(&response).unwrap(),
+            original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
+        };
+        let res = ibc_packet_ack(deps, mock_env(), ack).unwrap();
+        assert_eq!(0, res.messages.len());
     }
 
     #[test]
     fn init_works() {
-        let mut deps = mock_dependencies(&[]);
-
-        let msg = InitMsg {
-            reflect_code_id: 17,
-        };
-        let info = mock_info("creator", &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len())
+        let deps = setup();
+        let admin = query_admin(deps.as_ref()).unwrap();
+        assert_eq!(CREATOR, admin.admin.as_str());
     }
 
     #[test]
@@ -468,201 +520,99 @@ mod tests {
 
     #[test]
     fn proper_handshake_flow() {
+        // setup and connect handshake
         let mut deps = setup();
         let channel_id = "channel-1234";
+        connect(deps.as_mut(), channel_id);
 
-        // first we try to open with a valid handshake
-        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.counterparty_version = None;
-        ibc_channel_open(deps.as_mut(), mock_env(), handshake_open).unwrap();
+        // check for empty account
+        let acct = query_account(deps.as_ref(), channel_id.into()).unwrap();
+        assert!(acct.remote_addr.is_none());
+        assert!(acct.remote_balance.is_empty());
+        assert_eq!(0, acct.last_update_time);
 
-        // then we connect (with counter-party version set)
-        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
-        // and set up a reflect account
-        assert_eq!(1, res.messages.len());
-        if let CosmosMsg::Wasm(WasmMsg::Instantiate {
-            code_id,
-            msg,
-            send,
-            label,
-        }) = &res.messages[0]
-        {
-            assert_eq!(&REFLECT_ID, code_id);
-            assert_eq!(0, send.len());
-            assert!(label.as_ref().unwrap().contains(channel_id));
-            // parse the message - should callback with proper channel_id
-            let rmsg: ReflectInitMsg = from_slice(&msg).unwrap();
-            assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
-        } else {
-            panic!("invalid return message: {:?}", res.messages[0]);
-        }
+        // now get feedback from WhoAmI packet
+        let remote_addr = "account-789";
+        who_am_i_response(deps.as_mut(), channel_id, remote_addr);
 
-        // no accounts set yet
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_slice(&raw).unwrap();
-        assert_eq!(0, res.accounts.len());
-
-        // we get the callback from reflect
-        let handle_msg = HandleMsg::InitCallback {
-            id: channel_id.to_string(),
-            contract_addr: REFLECT_ADDR.into(),
-        };
-        let info = mock_info(REFLECT_ADDR, &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // ensure this is now registered
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_slice(&raw).unwrap();
-        assert_eq!(1, res.accounts.len());
-        assert_eq!(
-            &res.accounts[0],
-            &AccountInfo {
-                account: REFLECT_ADDR.into(),
-                channel_id: channel_id.to_string(),
-            }
-        );
-
-        // and the account query also works
-        let raw = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::Account {
-                channel_id: channel_id.to_string(),
-            },
-        )
-        .unwrap();
-        let res: AccountResponse = from_slice(&raw).unwrap();
-        assert_eq!(res.account.unwrap(), HumanAddr::from(REFLECT_ADDR));
+        // account should be set up
+        let acct = query_account(deps.as_ref(), channel_id.into()).unwrap();
+        assert_eq!(acct.remote_addr.unwrap(), HumanAddr::from(remote_addr));
+        assert!(acct.remote_balance.is_empty());
+        assert_eq!(0, acct.last_update_time);
     }
 
-    #[test]
-    fn handle_dispatch_packet() {
-        let mut deps = setup();
-
-        let channel_id = "channel-123";
-        let account = "acct-123";
-
-        // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-        let msgs_to_dispatch = vec![BankMsg::Send {
-            to_address: "my-friend".into(),
-            amount: coins(123456789, "uatom"),
-        }
-        .into()];
-        let ibc_msg = PacketMsg::Dispatch {
-            msgs: msgs_to_dispatch.clone(),
-        };
-        let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
-        // we didn't dispatch anything
-        assert_eq!(0, res.messages.len());
-        // acknowledgement is an error
-        let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
-        assert_eq!(
-            ack.unwrap_err(),
-            "invalid packet: cosmwasm_std::addresses::HumanAddr not found"
-        );
-
-        // register the channel
-        connect(deps.as_mut(), channel_id, account);
-
-        // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-        let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
-
-        // assert app-level success
-        let ack: AcknowledgementMsg<()> = from_slice(&res.acknowledgement).unwrap();
-        ack.unwrap();
-
-        // and we dispatch the BankMsg
-        assert_eq!(1, res.messages.len());
-        // parse the output, ensuring it matches
-        if let CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr,
-            msg,
-            send,
-        }) = &res.messages[0]
-        {
-            assert_eq!(account, contract_addr.as_str());
-            assert_eq!(0, send.len());
-            // parse the message - should callback with proper channel_id
-            let rmsg: ReflectHandleMsg = from_slice(&msg).unwrap();
-            assert_eq!(
-                rmsg,
-                ReflectHandleMsg::ReflectMsg {
-                    msgs: msgs_to_dispatch
-                }
-            );
-        } else {
-            panic!("invalid return message: {:?}", res.messages[0]);
-        }
-
-        // invalid packet format on registered channel also returns app-level error
-        let bad_data = InitMsg {
-            reflect_code_id: 12345,
-        };
-        let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
-        let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
-        // we didn't dispatch anything
-        assert_eq!(0, res.messages.len());
-        // acknowledgement is an error
-        let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
-        assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect_send::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
-    }
-
-    #[test]
-    fn check_close_channel() {
-        let mut deps = setup();
-
-        let channel_id = "channel-123";
-        let account = "acct-123";
-
-        // register the channel
-        connect(deps.as_mut(), channel_id, account);
-        // assign it some funds
-        let funds = vec![coin(123456, "uatom"), coin(7654321, "tgrd")];
-        deps.querier.update_balance(account, funds.clone());
-
-        // channel should be listed and have balance
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_slice(&raw).unwrap();
-        assert_eq!(1, res.accounts.len());
-        let balance = deps.as_ref().querier.query_all_balances(account).unwrap();
-        assert_eq!(funds, balance);
-
-        // close the channel
-        let channel = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
-
-        // it pulls out all money from the reflect contract
-        assert_eq!(1, res.messages.len());
-        if let CosmosMsg::Wasm(WasmMsg::Execute {
-            contract_addr, msg, ..
-        }) = &res.messages[0]
-        {
-            assert_eq!(contract_addr.as_str(), account);
-            let reflect: ReflectHandleMsg = from_slice(msg).unwrap();
-            match reflect {
-                ReflectHandleMsg::ReflectMsg { msgs } => {
-                    assert_eq!(1, msgs.len());
-                    assert_eq!(
-                        &msgs[0],
-                        &BankMsg::Send {
-                            to_address: MOCK_CONTRACT_ADDR.into(),
-                            amount: funds
-                        }
-                        .into()
-                    )
-                }
-            }
-        } else {
-            panic!("Unexpected message: {:?}", &res.messages[0]);
-        }
-
-        // and removes the account lookup
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
-        let res: ListAccountsResponse = from_slice(&raw).unwrap();
-        assert_eq!(0, res.accounts.len());
-    }
+    // #[test]
+    // fn handle_dispatch_packet() {
+    //     let mut deps = setup();
+    //
+    //     let channel_id = "channel-123";
+    //     let account = "acct-123";
+    //
+    //     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
+    //     let msgs_to_dispatch = vec![BankMsg::Send {
+    //         to_address: "my-friend".into(),
+    //         amount: coins(123456789, "uatom"),
+    //     }
+    //     .into()];
+    //     let ibc_msg = PacketMsg::Dispatch {
+    //         msgs: msgs_to_dispatch.clone(),
+    //     };
+    //     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+    //     let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
+    //     // we didn't dispatch anything
+    //     assert_eq!(0, res.messages.len());
+    //     // acknowledgement is an error
+    //     let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    //     assert_eq!(
+    //         ack.unwrap_err(),
+    //         "invalid packet: cosmwasm_std::addresses::HumanAddr not found"
+    //     );
+    //
+    //     // register the channel
+    //     connect(deps.as_mut(), channel_id, account);
+    //
+    //     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
+    //     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+    //     let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
+    //
+    //     // assert app-level success
+    //     let ack: AcknowledgementMsg<()> = from_slice(&res.acknowledgement).unwrap();
+    //     ack.unwrap();
+    //
+    //     // and we dispatch the BankMsg
+    //     assert_eq!(1, res.messages.len());
+    //     // parse the output, ensuring it matches
+    //     if let CosmosMsg::Wasm(WasmMsg::Execute {
+    //         contract_addr,
+    //         msg,
+    //         send,
+    //     }) = &res.messages[0]
+    //     {
+    //         assert_eq!(account, contract_addr.as_str());
+    //         assert_eq!(0, send.len());
+    //         // parse the message - should callback with proper channel_id
+    //         let rmsg: ReflectHandleMsg = from_slice(&msg).unwrap();
+    //         assert_eq!(
+    //             rmsg,
+    //             ReflectHandleMsg::ReflectMsg {
+    //                 msgs: msgs_to_dispatch
+    //             }
+    //         );
+    //     } else {
+    //         panic!("invalid return message: {:?}", res.messages[0]);
+    //     }
+    //
+    //     // invalid packet format on registered channel also returns app-level error
+    //     let bad_data = InitMsg {
+    //         reflect_code_id: 12345,
+    //     };
+    //     let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
+    //     let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet.clone()).unwrap();
+    //     // we didn't dispatch anything
+    //     assert_eq!(0, res.messages.len());
+    //     // acknowledgement is an error
+    //     let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    //     assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect_send::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
+    // }
 }
