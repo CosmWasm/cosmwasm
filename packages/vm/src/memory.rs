@@ -42,9 +42,13 @@ pub fn read_region(memory: &wasmer::Memory, ptr: u32, max_length: usize) -> VmRe
         Some(cells) => {
             let raw_cells = cells as *const [_] as *const u8;
             let len = region.length as usize;
-            let mut result = vec![0u8; len];
+            // Allocate vector for len elements
+            let mut result = Vec::with_capacity(len);
+
             unsafe{
                 ptr::copy(raw_cells, result.as_mut_ptr(), len);
+                // Mark the first len elements of the vector as initialized
+                result.set_len(len);
             }
             Ok(result)
         }
