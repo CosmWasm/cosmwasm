@@ -66,6 +66,32 @@
           }
         }
       }
+    },
+    {
+      "description": "If you sent funds to this contract, it will attempt to ibc transfer them to the account on the remote side of this channel. If we don't have the address yet, this fails.",
+      "type": "object",
+      "required": [
+        "send_funds"
+      ],
+      "properties": {
+        "send_funds": {
+          "type": "object",
+          "required": [
+            "reflect_channel_id",
+            "transfer_channel_id"
+          ],
+          "properties": {
+            "reflect_channel_id": {
+              "description": "The channel id we use above to talk with the reflect contract",
+              "type": "string"
+            },
+            "transfer_channel_id": {
+              "description": "The channel to use for ibctransfer. This is bound to a different port and handled by a different module. It should connect to the same chain as the reflect_channel_id does",
+              "type": "string"
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
