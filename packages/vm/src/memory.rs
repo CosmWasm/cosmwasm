@@ -87,12 +87,12 @@ pub fn write_region(memory: &wasmer::Memory, ptr: u32, data: &[u8]) -> VmResult<
     }
     match WasmPtr::<u8, Array>::new(region.offset).deref(memory, 0, region.capacity) {
         Some(cells) => {
-            // In case you want to do some premature optimization, this shows how to cast a `&'mut [Cell<u8>]` to `&mut [u8]`:
-            // https://github.com/wasmerio/wasmer/blob/0.13.1/lib/wasi/src/syscalls/mod.rs#L79-L81
-            for i in 0..data.len() {
-                cells[i].set(data[i])
+            let raw_cells = cells as *const [_] as *mut u8;
+            let len = data.len();
+            unsafe{
+                ptr::copy(data.as_ptr(), raw_cells, len);
             }
-            region.length = data.len() as u32;
+            region.length = len as u32;
             set_region(memory, ptr, region)?;
             Ok(())
         },
