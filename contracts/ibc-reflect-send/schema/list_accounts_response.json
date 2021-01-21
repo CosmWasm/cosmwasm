@@ -18,14 +18,14 @@
       "type": "object",
       "required": [
         "channel_id",
-        "last_update_height",
+        "last_update_time",
         "remote_balance"
       ],
       "properties": {
         "channel_id": {
           "type": "string"
         },
-        "last_update_height": {
+        "last_update_time": {
           "description": "last block balance was updated (0 is never)",
           "type": "integer",
           "format": "uint64",

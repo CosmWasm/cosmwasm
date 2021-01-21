@@ -3,11 +3,11 @@
   "title": "AccountResponse",
   "type": "object",
   "required": [
-    "last_update_height",
+    "last_update_time",
     "remote_balance"
   ],
   "properties": {
-    "last_update_height": {
+    "last_update_time": {
       "description": "last block balance was updated (0 is never)",
       "type": "integer",
       "format": "uint64",

@@ -1,8 +1,7 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
-    Deps, DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order,
-    QueryResponse, StdError, StdResult,
+    attr, entry_point, from_slice, to_binary, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
+    HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcMsg, IbcOrder, IbcPacket,
+    IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError, StdResult,
 };
 
 use crate::msg::{
@@ -83,6 +82,8 @@ pub fn handle_send_msgs(
     if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
+    // ensure the channel exists (not found if not registered)
+    accounts(deps.storage).load(channel_id.as_bytes())?;
 
     // construct a packet to send
     let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
@@ -112,6 +113,8 @@ pub fn handle_check_remote_balance(
     if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
+    // ensure the channel exists (not found if not registered)
+    accounts(deps.storage).load(channel_id.as_bytes())?;
 
     // construct a packet to send
     let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
@@ -163,201 +166,228 @@ pub fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
     Ok(AdminResponse { admin })
 }
 
-// #[entry_point]
-// /// enforces ordering and versioing constraints
-// pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
-//     if channel.order != IbcOrder::Ordered {
-//         return Err(StdError::generic_err("Only supports ordered channels"));
-//     }
-//     if channel.version.as_str() != IBC_VERSION {
-//         return Err(StdError::generic_err(format!(
-//             "Must set version to `{}`",
-//             IBC_VERSION
-//         )));
-//     }
-//     // TODO: do we need to check counterparty version as well?
-//     // This flow needs to be well documented
-//     if let Some(counter_version) = channel.counterparty_version {
-//         if counter_version.as_str() != IBC_VERSION {
-//             return Err(StdError::generic_err(format!(
-//                 "Counterparty version must be `{}`",
-//                 IBC_VERSION
-//             )));
-//         }
-//     }
-//
-//     Ok(())
-// }
-//
-// #[entry_point]
-// /// once it's established, we create the reflect contract
-// pub fn ibc_channel_connect(
-//     deps: DepsMut,
-//     _env: Env,
-//     channel: IbcChannel,
-// ) -> StdResult<IbcBasicResponse> {
-//     let cfg = config(deps.storage).load()?;
-//     let chan_id = channel.endpoint.channel_id;
-//
-//     let label = format!("ibc-reflect-{}", &chan_id);
-//     let payload = ReflectInitMsg {
-//         callback_id: Some(chan_id.clone()),
-//     };
-//     let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], Some(label))?;
-//     Ok(IbcBasicResponse {
-//         messages: vec![msg.into()],
-//         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
-//     })
-// }
-//
-// #[entry_point]
-// /// On closed channel, we take all tokens from reflect contract to this contract.
-// /// We also delete the channel entry from accounts.
-// pub fn ibc_channel_close(
-//     deps: DepsMut,
-//     env: Env,
-//     channel: IbcChannel,
-// ) -> StdResult<IbcBasicResponse> {
-//     // get contract address and remove lookup
-//     let channel_id = channel.endpoint.channel_id.as_str();
-//     let reflect_addr = accounts(deps.storage).load(channel_id.as_bytes())?;
-//     accounts(deps.storage).remove(channel_id.as_bytes());
-//
-//     // transfer current balance if any (steal the money)
-//     let amount = deps.querier.query_all_balances(&reflect_addr)?;
-//     let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
-//         let bank_msg = BankMsg::Send {
-//             to_address: env.contract.address,
-//             amount,
-//         };
-//         let reflect_msg = ReflectHandleMsg::ReflectMsg {
-//             msgs: vec![bank_msg.into()],
-//         };
-//         let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-//         vec![wasm_msg.into()]
-//     } else {
-//         vec![]
-//     };
-//     let steal_funds = !messages.is_empty();
-//
-//     Ok(IbcBasicResponse {
-//         messages,
-//         attributes: vec![
-//             attr("action", "ibc_close"),
-//             attr("channel_id", channel_id),
-//             attr("steal_funds", steal_funds),
-//         ],
-//     })
-// }
-//
-// #[entry_point]
-// /// we look for a the proper reflect contract to relay to and send the message
-// /// We cannot return any meaningful response value as we do not know the response value
-// /// of execution. We just return ok if we dispatched, error if we failed to dispatch
-// pub fn ibc_packet_receive(
-//     deps: DepsMut,
-//     _env: Env,
-//     packet: IbcPacket,
-// ) -> StdResult<IbcReceiveResponse> {
-//     // put this in a closure so we can convert all error responses into acknowledgements
-//     (|| {
-//         // which local channel did this packet come on
-//         let caller = packet.dest.channel_id;
-//         let msg: PacketMsg = from_slice(&packet.data)?;
-//         match msg {
-//             PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
-//             PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
-//             PacketMsg::Balances {} => receive_balances(deps, caller),
-//         }
-//     })()
-//     .or_else(|e| {
-//         // we try to capture all app-level errors and convert them into
-//         // acknowledgement packets that contain an error code.
-//         let msg = format!("invalid packet: {}", e);
-//         // we only use the error variant here, so we can use any T
-//         let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Err(msg))?;
-//         Ok(IbcReceiveResponse {
-//             acknowledgement,
-//             messages: vec![],
-//             attributes: vec![],
-//         })
-//     })
-// }
-//
-// // processes PacketMsg::Dispatch variant
-// fn receive_dispatch(
-//     deps: DepsMut,
-//     caller: String,
-//     msgs: Vec<CosmosMsg>,
-// ) -> StdResult<IbcReceiveResponse> {
-//     // what is the reflect contract here
-//     let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
-//
-//     // let them know we're fine
-//     let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
-//     // create the message to re-dispatch to the reflect contract
-//     let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
-//     let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-//     // and we are golden
-//     Ok(IbcReceiveResponse {
-//         acknowledgement,
-//         messages: vec![wasm_msg.into()],
-//         attributes: vec![attr("action", "receive_dispatch")],
-//     })
-// }
-//
-// // processes PacketMsg::WhoAmI variant
-// fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
-//     let account = accounts(deps.storage).load(caller.as_bytes())?;
-//     let response = WhoAmIResponse { account };
-//     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
-//     // and we are golden
-//     Ok(IbcReceiveResponse {
-//         acknowledgement,
-//         messages: vec![],
-//         attributes: vec![attr("action", "receive_who_am_i")],
-//     })
-// }
-//
-// // processes PacketMsg::Balances variant
-// fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
-//     let account = accounts(deps.storage).load(caller.as_bytes())?;
-//     let balances = deps.querier.query_all_balances(&account)?;
-//     let response = BalancesResponse { account, balances };
-//     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
-//     // and we are golden
-//     Ok(IbcReceiveResponse {
-//         acknowledgement,
-//         messages: vec![],
-//         attributes: vec![attr("action", "receive_balances")],
-//     })
-// }
-//
-// #[entry_point]
-// /// never should be called as we do not send packets
-// pub fn ibc_packet_ack(
-//     _deps: DepsMut,
-//     _env: Env,
-//     _ack: IbcAcknowledgement,
-// ) -> StdResult<IbcBasicResponse> {
-//     Ok(IbcBasicResponse {
-//         messages: vec![],
-//         attributes: vec![attr("action", "ibc_packet_ack")],
-//     })
-// }
-//
-// #[entry_point]
-// /// never should be called as we do not send packets
-// pub fn ibc_packet_timeout(
-//     _deps: DepsMut,
-//     _env: Env,
-//     _packet: IbcPacket,
-// ) -> StdResult<IbcBasicResponse> {
-//     Ok(IbcBasicResponse {
-//         messages: vec![],
-//         attributes: vec![attr("action", "ibc_packet_timeout")],
-//     })
-// }
+#[entry_point]
+/// enforces ordering and versioing constraints
+pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
+    if channel.order != IbcOrder::Ordered {
+        return Err(StdError::generic_err("Only supports ordered channels"));
+    }
+    if channel.version.as_str() != IBC_VERSION {
+        return Err(StdError::generic_err(format!(
+            "Must set version to `{}`",
+            IBC_VERSION
+        )));
+    }
+    // TODO: do we need to check counterparty version as well?
+    // This flow needs to be well documented
+    if let Some(counter_version) = channel.counterparty_version {
+        if counter_version.as_str() != IBC_VERSION {
+            return Err(StdError::generic_err(format!(
+                "Counterparty version must be `{}`",
+                IBC_VERSION
+            )));
+        }
+    }
+
+    Ok(())
+}
+
+#[entry_point]
+/// once it's established, we send a WhoAmI message
+pub fn ibc_channel_connect(
+    deps: DepsMut,
+    env: Env,
+    channel: IbcChannel,
+) -> StdResult<IbcBasicResponse> {
+    let channel_id = channel.endpoint.channel_id;
+
+    // create an account holder the channel exists (not found if not registered)
+    let data = AccountData::default();
+    accounts(deps.storage).save(channel_id.as_bytes(), &data)?;
+
+    // construct a packet to send
+    let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
+    let packet = PacketMsg::WhoAmI {};
+    let msg = IbcMsg::SendPacket {
+        channel_id: channel_id.clone(),
+        data: to_binary(&packet)?,
+        timeout_block: None,
+        timeout_timestamp,
+    };
+
+    Ok(IbcBasicResponse {
+        messages: vec![msg.into()],
+        attributes: vec![
+            attr("action", "ibc_connect"),
+            attr("channel_id", channel_id),
+        ],
+    })
+}
+
+#[entry_point]
+/// On closed channel, simply delete the account from our local store
+pub fn ibc_channel_close(
+    deps: DepsMut,
+    _env: Env,
+    channel: IbcChannel,
+) -> StdResult<IbcBasicResponse> {
+    // remove the channel
+    let channel_id = channel.endpoint.channel_id;
+    accounts(deps.storage).remove(channel_id.as_bytes());
+
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_close"), attr("channel_id", channel_id)],
+    })
+}
+
+#[entry_point]
+/// never should be called as the other side never sends packets
+pub fn ibc_packet_receive(
+    _deps: DepsMut,
+    _env: Env,
+    _packet: IbcPacket,
+) -> StdResult<IbcReceiveResponse> {
+    Ok(IbcReceiveResponse {
+        acknowledgement: b"{}".into(),
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_packet_ack")],
+    })
+}
+
+#[entry_point]
+pub fn ibc_packet_ack(
+    deps: DepsMut,
+    env: Env,
+    ack: IbcAcknowledgement,
+) -> StdResult<IbcBasicResponse> {
+    // which local channel was this packet send from
+    let caller = ack.original_packet.src.channel_id;
+    // we need to parse the ack based on our request
+    let msg: PacketMsg = from_slice(&ack.original_packet.data)?;
+    match msg {
+        PacketMsg::Dispatch { .. } => {
+            let res: AcknowledgementMsg<DispatchResponse> = from_slice(&ack.acknowledgement)?;
+            acknowledge_dispatch(deps, caller, res)
+        }
+        PacketMsg::WhoAmI {} => {
+            let res: AcknowledgementMsg<WhoAmIResponse> = from_slice(&ack.acknowledgement)?;
+            acknowledge_who_am_i(deps, caller, res)
+        }
+        PacketMsg::Balances {} => {
+            let res: AcknowledgementMsg<BalancesResponse> = from_slice(&ack.acknowledgement)?;
+            acknowledge_balances(deps, env, caller, res)
+        }
+    }
+}
+
+// receive PacketMsg::Dispatch response
+fn acknowledge_dispatch(
+    _deps: DepsMut,
+    _caller: String,
+    _ack: AcknowledgementMsg<DispatchResponse>,
+) -> StdResult<IbcBasicResponse> {
+    // TODO: actually handle success/error?
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "acknowledge_dispatch")],
+    })
+}
+
+// receive PacketMsg::WhoAmI response
+// store address info in accounts info
+fn acknowledge_who_am_i(
+    deps: DepsMut,
+    caller: String,
+    ack: AcknowledgementMsg<WhoAmIResponse>,
+) -> StdResult<IbcBasicResponse> {
+    // ignore errors (but mention in log)
+    let res: WhoAmIResponse = match ack {
+        AcknowledgementMsg::Ok(res) => res,
+        AcknowledgementMsg::Err(e) => {
+            return Ok(IbcBasicResponse {
+                messages: vec![],
+                attributes: vec![attr("action", "acknowledge_who_am_i"), attr("error", e)],
+            })
+        }
+    };
+
+    accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
+        match acct {
+            Some(mut acct) => {
+                // set the account the first time
+                if acct.remote_addr.is_none() {
+                    acct.remote_addr = Some(res.account);
+                }
+                Ok(acct)
+            }
+            None => Err(StdError::generic_err("no account to update")),
+        }
+    })?;
+
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "acknowledge_who_am_i")],
+    })
+}
+
+// receive PacketMsg::Balances response
+fn acknowledge_balances(
+    deps: DepsMut,
+    env: Env,
+    caller: String,
+    ack: AcknowledgementMsg<BalancesResponse>,
+) -> StdResult<IbcBasicResponse> {
+    // ignore errors (but mention in log)
+    let res: BalancesResponse = match ack {
+        AcknowledgementMsg::Ok(res) => res,
+        AcknowledgementMsg::Err(e) => {
+            return Ok(IbcBasicResponse {
+                messages: vec![],
+                attributes: vec![attr("action", "acknowledge_balances"), attr("error", e)],
+            })
+        }
+    };
+
+    accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
+        match acct {
+            Some(acct) => {
+                if let Some(old_addr) = &acct.remote_addr {
+                    if old_addr != &res.account {
+                        return Err(StdError::generic_err(format!(
+                            "remote account changed from {} to {}",
+                            old_addr, &res.account
+                        )));
+                    }
+                }
+                Ok(AccountData {
+                    last_update_time: env.block.time,
+                    remote_addr: Some(res.account),
+                    remote_balance: res.balances,
+                })
+            }
+            None => Err(StdError::generic_err("no account to update")),
+        }
+    })?;
+
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "acknowledge_balances")],
+    })
+}
+
+#[entry_point]
+/// we just ignore these now. shall we store some info?
+pub fn ibc_packet_timeout(
+    _deps: DepsMut,
+    _env: Env,
+    _packet: IbcPacket,
+) -> StdResult<IbcBasicResponse> {
+    Ok(IbcBasicResponse {
+        messages: vec![],
+        attributes: vec![attr("action", "ibc_packet_timeout")],
+    })
+}
 
 #[cfg(test)]
 mod tests {

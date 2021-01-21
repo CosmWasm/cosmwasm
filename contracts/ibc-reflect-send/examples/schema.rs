@@ -1,11 +1,10 @@
 use std::env::current_dir;
 use std::fs::create_dir_all;
 
-use cosmwasm_schema::{export_schema, export_schema_with_title, remove_schemas, schema_for};
+use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
 use ibc_reflect_send::msg::{
-    AccountResponse, AcknowledgementMsg, AdminResponse, HandleMsg, InitMsg, ListAccountsResponse,
-    PacketMsg, QueryMsg,
+    AccountResponse, AdminResponse, HandleMsg, InitMsg, ListAccountsResponse, PacketMsg, QueryMsg,
 };
 
 fn main() {

@@ -17,10 +17,10 @@ pub struct Config {
     pub admin: HumanAddr,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct AccountData {
     /// last block balance was updated (0 is never)
-    pub last_update_height: u64,
+    pub last_update_time: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,

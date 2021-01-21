@@ -10,6 +10,7 @@ use crate::state::AccountData;
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {}
 
+// TODO: add SendFunds{channel_id}, which will use IbcMsg::Transfer (to test that)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
@@ -52,7 +53,7 @@ pub struct ListAccountsResponse {
 pub struct AccountInfo {
     pub channel_id: String,
     /// last block balance was updated (0 is never)
-    pub last_update_height: u64,
+    pub last_update_time: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,
@@ -63,7 +64,7 @@ impl AccountInfo {
     pub fn convert(channel_id: String, input: AccountData) -> Self {
         AccountInfo {
             channel_id,
-            last_update_height: input.last_update_height,
+            last_update_time: input.last_update_time,
             remote_addr: input.remote_addr,
             remote_balance: input.remote_balance,
         }
@@ -73,7 +74,7 @@ impl AccountInfo {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AccountResponse {
     /// last block balance was updated (0 is never)
-    pub last_update_height: u64,
+    pub last_update_time: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,
@@ -83,7 +84,7 @@ pub struct AccountResponse {
 impl From<AccountData> for AccountResponse {
     fn from(input: AccountData) -> Self {
         AccountResponse {
-            last_update_height: input.last_update_height,
+            last_update_time: input.last_update_time,
             remote_addr: input.remote_addr,
             remote_balance: input.remote_balance,
         }
