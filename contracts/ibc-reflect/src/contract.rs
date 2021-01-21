@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
     Deps, DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order,
-    QueryResponse, StdError, StdResult,
+    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo,
+    MigrateResponse, Order, QueryResponse, StdError, StdResult,
 };
 
 use crate::msg::{
@@ -165,11 +165,10 @@ pub fn ibc_channel_close(
     // transfer current balance if any (steal the money)
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
     let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
-        let bank_msg: CosmosMsg<Empty> = BankMsg::Send {
-            to_address: env.contract.address.clone(),
+        let bank_msg = BankMsg::Send {
+            to_address: env.contract.address,
             amount,
-        }
-        .into();
+        };
         let reflect_msg = ReflectHandleMsg::ReflectMsg {
             msgs: vec![bank_msg.into()],
         };
@@ -188,6 +187,12 @@ pub fn ibc_channel_close(
             attr("steal_funds", steal_funds),
         ],
     })
+}
+
+/// this is a no-op just to test how this integrates with wasmd
+#[entry_point]
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<MigrateResponse> {
+    Ok(MigrateResponse::default())
 }
 
 #[entry_point]
