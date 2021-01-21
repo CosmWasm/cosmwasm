@@ -1,8 +1,10 @@
 #![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
-use cosmwasm_std::{Coin, ContractResult, CosmosMsg, HumanAddr};
+use cosmwasm_std::{Coin, ContractResult, CosmosMsg, Empty, HumanAddr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+
+use crate::state::ChannelInfo;
 
 /// InitMsg just needs to know the code_id of a reflect contract to spawn sub-accounts
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -33,7 +35,7 @@ pub enum QueryMsg {
     // Shows all open channels (incl. remote info)
     ListChannels {},
     // Get info for one channel
-    GetChannel { channel_id: string },
+    GetChannel { channel_id: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -61,6 +63,15 @@ pub struct GetChannelResponse {
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<HumanAddr>,
     pub remote_balance: Vec<Coin>,
+}
+
+impl From<ChannelInfo> for GetChannelResponse {
+    fn from(input: ChannelInfo) -> Self {
+        GetChannelResponse {
+            remote_addr: input.remote_addr,
+            remote_balance: input.remote_balance,
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
