@@ -12,7 +12,7 @@ use crate::msg::{
 };
 use crate::state::{accounts, accounts_read, config, config_read, AccountData, Config};
 
-pub const IBC_VERSION: &str = "ibc-reflect";
+pub const IBC_VERSION: &str = "ibc-reflect-v1";
 
 // TODO: make configurable?
 /// packets live one houe
