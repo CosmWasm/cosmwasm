@@ -1,7 +1,8 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcMsg, IbcOrder, IbcPacket,
-    IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError, StdResult,
+    attr, entry_point, from_slice, to_binary, BlockInfo, CosmosMsg, Deps, DepsMut, Env,
+    HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcMsg, IbcOrder,
+    IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo, Order, QueryResponse, StdError,
+    StdResult,
 };
 
 use crate::msg::{
@@ -16,6 +17,12 @@ pub const IBC_VERSION: &str = "ibc-reflect";
 // TODO: make configurable?
 /// packets live one houe
 const PACKET_LIFETIME: u64 = 60 * 60;
+
+fn build_timeout(block: &BlockInfo) -> Option<u64> {
+    let timeout = block.time + PACKET_LIFETIME;
+    let timeout_nanos = timeout * 1_000_000_000;
+    Some(timeout_nanos)
+}
 
 #[entry_point]
 pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdResult<InitResponse> {
@@ -90,13 +97,12 @@ pub fn handle_send_msgs(
     accounts(deps.storage).load(channel_id.as_bytes())?;
 
     // construct a packet to send
-    let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
     let packet = PacketMsg::Dispatch { msgs };
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp,
+        timeout_timestamp: build_timeout(&env.block),
     };
 
     Ok(HandleResponse {
@@ -121,13 +127,12 @@ pub fn handle_check_remote_balance(
     accounts(deps.storage).load(channel_id.as_bytes())?;
 
     // construct a packet to send
-    let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
     let packet = PacketMsg::Balances {};
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp,
+        timeout_timestamp: build_timeout(&env.block),
     };
 
     Ok(HandleResponse {
@@ -168,13 +173,12 @@ pub fn handle_send_funds(
     };
 
     // construct a packet to send
-    let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
     let msg = IbcMsg::Transfer {
         channel_id: transfer_channel_id,
         to_address: remote_addr,
         amount,
         timeout_block: None,
-        timeout_timestamp,
+        timeout_timestamp: build_timeout(&env.block),
     };
 
     Ok(HandleResponse {
@@ -257,13 +261,12 @@ pub fn ibc_channel_connect(
     accounts(deps.storage).save(channel_id.as_bytes(), &data)?;
 
     // construct a packet to send
-    let timeout_timestamp = Some(env.block.time + PACKET_LIFETIME);
     let packet = PacketMsg::WhoAmI {};
     let msg = IbcMsg::SendPacket {
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp,
+        timeout_timestamp: build_timeout(&env.block),
     };
 
     Ok(IbcBasicResponse {
