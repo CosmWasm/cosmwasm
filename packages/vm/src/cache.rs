@@ -12,7 +12,7 @@ use crate::instance::{Instance, InstanceOptions};
 use crate::modules::{FileSystemCache, InMemoryCache, PinnedMemoryCache};
 use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
-use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
+use crate::wasm_backend::{compile, make_runtime_store};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
@@ -104,7 +104,7 @@ where
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
         check_wasm(wasm, &self.supported_features)?;
         let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
-        let module = compile_only(wasm)?;
+        let module = compile(wasm, None)?;
         self.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
@@ -159,7 +159,7 @@ where
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm(checksum)?;
-        let module = compile_and_use(&code, Some(self.instance_memory_limit))?;
+        let module = compile(&code, Some(self.instance_memory_limit))?;
         // Store into the fs cache too
         self.fs_cache.store(checksum, &module)?;
         self.pinned_memory_cache.store(checksum, module)
@@ -214,7 +214,7 @@ where
         // stored the old module format.
         let wasm = self.load_wasm(checksum)?;
         self.stats.misses += 1;
-        let module = compile_and_use(&wasm, Some(self.instance_memory_limit))?;
+        let module = compile(&wasm, Some(self.instance_memory_limit))?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;

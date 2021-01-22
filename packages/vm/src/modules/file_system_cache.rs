@@ -106,7 +106,7 @@ impl FileSystemCache {
 mod tests {
     use super::*;
     use crate::size::Size;
-    use crate::wasm_backend::{compile_only, make_runtime_store};
+    use crate::wasm_backend::{compile, make_runtime_store};
     use tempfile::TempDir;
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
@@ -138,7 +138,7 @@ mod tests {
         assert!(cached.is_none());
 
         // Store module
-        let module = compile_only(&wasm).unwrap();
+        let module = compile(&wasm, None).unwrap();
         cache.store(&checksum, &module).unwrap();
 
         // Load module

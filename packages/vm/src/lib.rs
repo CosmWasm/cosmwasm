@@ -53,5 +53,5 @@ pub mod internals {
     //! Please don't use any of these types directly, as
     //! they might change frequently or be removed in the future.
 
-    pub use crate::wasm_backend::{compile_and_use, make_runtime_store};
+    pub use crate::wasm_backend::{compile, make_runtime_store};
 }

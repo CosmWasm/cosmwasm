@@ -320,7 +320,7 @@ mod tests {
     use crate::errors::VmError;
     use crate::size::Size;
     use crate::testing::{MockApi, MockQuerier, MockStorage};
-    use crate::wasm_backend::compile_and_use;
+    use crate::wasm_backend::compile;
     use cosmwasm_std::{
         coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
     };
@@ -348,7 +348,7 @@ mod tests {
     fn make_instance(gas_limit: u64) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let env = Environment::new(MockApi::default(), gas_limit, false);
 
-        let module = compile_and_use(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
+        let module = compile(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
         let store = module.store();
         // we need stubs for all required imports
         let import_obj = imports! {
