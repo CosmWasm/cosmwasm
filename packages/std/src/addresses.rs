@@ -44,6 +44,12 @@ impl From<String> for HumanAddr {
     }
 }
 
+impl From<HumanAddr> for String {
+    fn from(addr: HumanAddr) -> Self {
+        addr.0
+    }
+}
+
 /// Just like String, HumanAddr is a smart pointer to str.
 /// This implements `*human_address` for us, which is not very valuable directly
 /// because str has no known size and cannot be stored in variables. But it allows us to

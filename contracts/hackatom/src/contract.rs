@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
-    Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
-    MigrateResponse, MutResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr, Deps,
+    DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
+    MutResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -150,15 +150,15 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleRespon
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
-        let mut ctx = Context::new();
-        ctx.add_attribute("action", "release");
-        ctx.add_attribute("destination", &to_addr);
-        ctx.add_message(BankMsg::Send {
+        let mut resp = HandleResponse::new();
+        resp.add_attribute("action", "release");
+        resp.add_attribute("destination", to_addr.clone());
+        resp.add_message(BankMsg::Send {
             to_address: to_addr,
             amount: balance,
         });
-        ctx.set_data(&[0xF0, 0x0B, 0xAA]);
-        Ok(ctx.into())
+        resp.set_data(&[0xF0, 0x0B, 0xAA]);
+        Ok(resp)
     } else {
         Err(HackError::Unauthorized {})
     }
