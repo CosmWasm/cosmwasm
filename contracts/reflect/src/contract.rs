@@ -10,7 +10,6 @@ use crate::msg::{
     QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, State};
-use std::convert::TryInto;
 
 pub fn init(
     deps: DepsMut,
@@ -36,7 +35,7 @@ pub fn init(
         };
         ctx.add_message(msg);
     }
-    ctx.try_into()
+    Ok(ctx.into())
 }
 
 pub fn handle(
