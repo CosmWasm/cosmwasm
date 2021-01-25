@@ -55,6 +55,10 @@ mod tests {
         // So we get this value by trial and error. It can change over time and across platforms.
         let value_size = mem::size_of::<Module>();
         assert_eq!(value_size, 48);
+
+        // Just in case we want to go that route
+        let boxed_value_size = mem::size_of::<Box<Module>>();
+        assert_eq!(boxed_value_size, 8);
     }
 
     #[test]
