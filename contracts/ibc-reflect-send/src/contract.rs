@@ -31,6 +31,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdRe
     config(deps.storage).save(&cfg)?;
 
     Ok(InitResponse {
+        data: None,
         messages: vec![],
         attributes: vec![attr("action", "init")],
     })
