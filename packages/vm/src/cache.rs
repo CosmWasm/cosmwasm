@@ -156,7 +156,7 @@ where
 
         // Try to get module from file system cache
         let store = make_runtime_store(Some(self.instance_memory_limit));
-        if let Some(module) = self.fs_cache.load(checksum, &store)? {
+        if let Some((module, _)) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             return self.pinned_memory_cache.store(checksum, module);
         }
@@ -203,15 +203,11 @@ where
 
         // Get module from file system cache
         let store = make_runtime_store(Some(self.instance_memory_limit));
-        if let Some(module) = self.fs_cache.load(checksum, &store)? {
+        if let Some((module, module_size)) = self.fs_cache.load(checksum, &store)? {
             self.stats.hits_fs_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
-            // Serializes module to get the size
-            // FIXME? Use just an estimate (average) of the module size
-            // let size = ESTIMATED_MODULE_SIZE.0;
-            let size = module.serialize()?.len();
-            self.memory_cache.store(checksum, module, size)?;
+            self.memory_cache.store(checksum, module, module_size)?;
             return Ok(instance);
         }
 
@@ -226,8 +222,8 @@ where
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
         self.fs_cache.store(checksum, &module)?;
-        let size = wasm.len() * OPTIMIZED_WASM_SIZE_FACTOR;
-        self.memory_cache.store(checksum, module, size)?;
+        let module_size = wasm.len() * OPTIMIZED_WASM_SIZE_FACTOR;
+        self.memory_cache.store(checksum, module, module_size)?;
         Ok(instance)
     }
 }
