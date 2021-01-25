@@ -40,7 +40,7 @@ impl PinnedMemoryCache {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::wasm_backend::compile_only;
+    use crate::wasm_backend::compile;
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
@@ -68,7 +68,7 @@ mod tests {
         assert!(cache_entry.is_none());
 
         // Compile module
-        let original = compile_only(&wasm).unwrap();
+        let original = compile(&wasm, None).unwrap();
 
         // Ensure original module can be executed
         {

@@ -4,7 +4,7 @@ use std::mem;
 
 use clap::{App, Arg};
 
-use cosmwasm_vm::internals::compile_and_use;
+use cosmwasm_vm::internals::compile;
 use cosmwasm_vm::internals::make_runtime_store;
 use cosmwasm_vm::Size;
 use wasmer::Module;
@@ -61,7 +61,7 @@ pub fn main() {
 
 #[inline(never)]
 fn module_compile(wasm: &Vec<u8>, memory_limit: Option<Size>) -> Module {
-    compile_and_use(&wasm, memory_limit).unwrap()
+    compile(&wasm, memory_limit).unwrap()
 }
 
 #[inline(never)]
