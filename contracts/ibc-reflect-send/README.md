@@ -14,39 +14,38 @@ intention here.
 
 ## Workflow
 
-This is the contract from the sending chain which corresponds to
-the [`ibc-reflect`](../ibc-reflect) "factory" contract on the receiving chain.
+This is the contract from the sending chain which corresponds to the
+[`ibc-reflect`](../ibc-reflect) "factory" contract on the receiving chain.
 
-The `ibc-reflect-send` contract has one admin and binds a port
-on `init`. You can bind any number of channels to this contract,
-each one linked to a `ibc-reflect` contract on a remote chain.
-It does not accept any incoming packets over the channel, but rather
-sends packets (the opposite of `ibc-reflect`).
+The `ibc-reflect-send` contract has one admin and binds a port on `init`. You
+can bind any number of channels to this contract, each one linked to a
+`ibc-reflect` contract on a remote chain. It does not accept any incoming
+packets over the channel, but rather sends packets (the opposite of
+`ibc-reflect`).
 
-Upon a successful connection, it will send a `WhoAmI` packet
-to find the address on the remote chain and store it locally to
-answer all queries.
+Upon a successful connection, it will send a `WhoAmI` packet to find the address
+on the remote chain and store it locally to answer all queries.
 
 It contains 4 methods in `HandleMsg`:
 
-* `UpdateAdmin` - to change which account can send
-* `SendMsgs` - to send a packet full of `CosmosMsg` to the remote chain
-  over the given channel.
-* `CheckRemoteBalance` - this will send `Balances` packets to query remote chain
+- `UpdateAdmin` - to change which account can send
+- `SendMsgs` - to send a packet full of `CosmosMsg` to the remote chain over the
+  given channel.
+- `CheckRemoteBalance` - this will send `Balances` packets to query remote chain
   and store the info locally
-* `SendFunds` - this takes some Coins as `sent_funds` and sends over the given port to the
-  remote address controlled by the named channel. (Shortcut for querying the address and
-  sending ibc transfer directly, but allows us to test `IbcPacket::SendMsg`)
-  
+- `SendFunds` - this takes some Coins as `sent_funds` and sends over the given
+  port to the remote address controlled by the named channel. (Shortcut for
+  querying the address and sending ibc transfer directly, but allows us to test
+  `IbcPacket::SendMsg`)
+
 It contains 2 methods in `QueryMsg`:
 
-* `Admin` - to show current admin
-* `ListAccounts` - to list all accounts tied to open channels.
-  ChannelID, account address on the remote chain (if known) and
-  last updated balance.
-* `Account` - queries the above data for one channel  
+- `Admin` - to show current admin
+- `ListAccounts` - to list all accounts tied to open channels. ChannelID,
+  account address on the remote chain (if known) and last updated balance.
+- `Account` - queries the above data for one channel
 
 ## Protocol
 
-See [`ibc-reflect`](../ibc-reflect) for a full description of the
-IBC packet protocol
+See [`ibc-reflect`](../ibc-reflect) for a full description of the IBC packet
+protocol
