@@ -6,8 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use crate::state::AccountData;
 
-/// InitMsg just needs to know the code_id of a reflect contract to spawn sub-accounts
+/// InitMsg needs no info. Owner of the contract is whoever signed the InitMsg
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub struct InitMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

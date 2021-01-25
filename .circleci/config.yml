@@ -405,7 +405,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version
       - restore_cache:
           keys:
-            - cargocache-v2-contract_ibc_reflect-send-rust:1.47.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-contract_ibc_reflect_send-rust:1.47.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Add wasm32 target
           command: rustup target add wasm32-unknown-unknown && rustup target list --installed
@@ -442,7 +442,7 @@ jobs:
             - target/wasm32-unknown-unknown/release/.fingerprint
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
-          key: cargocache-v2-contract_ibc_reflect-send-rust:1.47.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-contract_ibc_reflect_send-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
   contract_queue:
     docker:

@@ -15,10 +15,10 @@ use crate::state::{accounts, accounts_read, config, config_read, AccountData, Co
 pub const IBC_VERSION: &str = "ibc-reflect-v1";
 
 // TODO: make configurable?
-/// packets live one houe
+/// packets live one hour
 const PACKET_LIFETIME: u64 = 60 * 60;
 
-fn build_timeout(block: &BlockInfo) -> Option<u64> {
+fn build_timeout_timestamp(block: &BlockInfo) -> Option<u64> {
     let timeout = block.time + PACKET_LIFETIME;
     let timeout_nanos = timeout * 1_000_000_000;
     Some(timeout_nanos)
@@ -103,7 +103,7 @@ pub fn handle_send_msgs(
         channel_id,
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp: build_timeout(&env.block),
+        timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
     Ok(HandleResponse {
@@ -133,7 +133,7 @@ pub fn handle_check_remote_balance(
         channel_id,
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp: build_timeout(&env.block),
+        timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
     Ok(HandleResponse {
@@ -153,14 +153,18 @@ pub fn handle_send_funds(
     // intentionally no auth check
 
     // require some funds
-    if info.sent_funds.is_empty() {
-        return Err(StdError::generic_err(
-            "you must send the coins you with to ibc transfer",
-        ));
-    } else if info.sent_funds.len() > 1 {
+    let amount = match info.sent_funds.pop() {
+        Some(coin) => coin,
+        None => {
+            return Err(StdError::generic_err(
+                "you must send the coins you wish to ibc transfer",
+            ))
+        }
+    };
+    // if there are any more coins, reject the message
+    if !info.sent_funds.is_empty() {
         return Err(StdError::generic_err("you can only ibc transfer one coin"));
     }
-    let amount = info.sent_funds.swap_remove(0);
 
     // load remote account
     let data = accounts(deps.storage).load(reflect_channel_id.as_bytes())?;
@@ -179,7 +183,7 @@ pub fn handle_send_funds(
         to_address: remote_addr,
         amount,
         timeout_block: None,
-        timeout_timestamp: build_timeout(&env.block),
+        timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
     Ok(HandleResponse {
@@ -198,12 +202,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     }
 }
 
-pub fn query_account(deps: Deps, channel_id: String) -> StdResult<AccountResponse> {
+fn query_account(deps: Deps, channel_id: String) -> StdResult<AccountResponse> {
     let account = accounts_read(deps.storage).load(channel_id.as_bytes())?;
     Ok(account.into())
 }
 
-pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
+fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
     let accounts: StdResult<Vec<_>> = accounts_read(deps.storage)
         .range(None, None, Order::Ascending)
         .map(|r| {
@@ -217,7 +221,7 @@ pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
     })
 }
 
-pub fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
+fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
     let Config { admin } = config_read(deps.storage).load()?;
     Ok(AdminResponse { admin })
 }
@@ -267,7 +271,7 @@ pub fn ibc_channel_connect(
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp: build_timeout(&env.block),
+        timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
     Ok(IbcBasicResponse {
