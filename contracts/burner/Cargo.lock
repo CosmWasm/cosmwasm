@@ -103,9 +103,11 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "clru"
-version = "0.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44e10ee132778350b0390b347b47e4bbb098e23f0ee34ded4a03b078cae19024"
+version = "0.4.0"
+source = "git+https://github.com/maurolacy/clru-rs?rev=d32f5b77#d32f5b77823bd99772da32fcb755ff7059377ed1"
+dependencies = [
+ "thiserror",
+]
 
 [[package]]
 name = "const_fn"

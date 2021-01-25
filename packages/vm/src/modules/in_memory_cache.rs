@@ -1,9 +1,16 @@
 use clru::CLruCache;
 use wasmer::Module;
 
-use crate::{Checksum, Size, VmResult};
+use crate::{Checksum, Size, VmError, VmResult};
 
-const ESTIMATED_MODULE_SIZE: Size = Size::mebi(10);
+// Minimum module size.
+// Based on `examples/module_size.sh`, and the cosmwasm-plus modules.
+// We use an estimated *minimum* module size in order to compute a cache capacity
+// big enough to handle a size-limited cache without hitting the capacity (number of entries) limit.
+// This will incurr an extra memory cost for the unused entries, but it's negligible:
+// Assuming the cost per entry is 48 bytes, 10000 entries will have an extra cost of just ~500 kB.
+// Which is a very small percentage (~0.03%) of our typical cache memory budget (2 GB).
+const MINIMUM_MODULE_SIZE: Size = Size::kibi(250);
 
 /// An in-memory module cache
 pub struct InMemoryCache {
@@ -12,15 +19,18 @@ pub struct InMemoryCache {
 
 impl InMemoryCache {
     /// Creates a new cache with the given size (in bytes)
+    /// and estimated number of entries
     pub fn new(size: Size) -> Self {
-        let max_entries = size.0 / ESTIMATED_MODULE_SIZE.0;
+        let max_entries = size.0 / MINIMUM_MODULE_SIZE.0;
         InMemoryCache {
-            modules: CLruCache::new(max_entries),
+            modules: CLruCache::with_weight(max_entries, size.0),
         }
     }
 
-    pub fn store(&mut self, checksum: &Checksum, module: Module) -> VmResult<()> {
-        self.modules.put(*checksum, module);
+    pub fn store(&mut self, checksum: &Checksum, module: Module, size: usize) -> VmResult<()> {
+        self.modules
+            .put_with_weight(*checksum, module, size)
+            .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
         Ok(())
     }
 
@@ -43,6 +53,8 @@ mod tests {
     use wasmer_middlewares::metering::set_remaining_points;
 
     const TESTING_GAS_LIMIT: u64 = 5_000;
+    // Based on `examples/module_size.sh`
+    const TESTING_WASM_SIZE_FACTOR: usize = 18;
 
     #[test]
     fn check_element_sizes() {
@@ -95,7 +107,8 @@ mod tests {
         }
 
         // Store module
-        cache.store(&checksum, original).unwrap();
+        let size = wasm.len() * TESTING_WASM_SIZE_FACTOR;
+        cache.store(&checksum, original, size).unwrap();
 
         // Load module
         let cached = cache.load(&checksum).unwrap().unwrap();

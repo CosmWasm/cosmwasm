@@ -30,7 +30,7 @@ cranelift = ["wasmer/cranelift"]
 bench = false
 
 [dependencies]
-clru = "0.2.0"
+clru = { git = "https://github.com/maurolacy/clru-rs", rev="d32f5b77" }
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.13.2" }
 hex = "0.4"
