@@ -62,8 +62,8 @@ impl FileSystemCache {
         }
     }
 
-    /// Loads an artifact from the file system and returns a module (i.e. artifact + store),
-    /// along with the artifact size.
+    /// Loads a serialized module from the file system and returns a module (i.e. artifact + store),
+    /// along with the size of the serialized module.
     pub fn load(&self, checksum: &Checksum, store: &Store) -> VmResult<Option<(Module, usize)>> {
         let filename = checksum.to_hex();
         let file_path = self.latest_modules_path().join(filename);
