@@ -1,0 +1,75 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ListAccountsResponse",
+  "type": "object",
+  "required": [
+    "accounts"
+  ],
+  "properties": {
+    "accounts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/AccountInfo"
+      }
+    }
+  },
+  "definitions": {
+    "AccountInfo": {
+      "type": "object",
+      "required": [
+        "channel_id",
+        "last_update_time",
+        "remote_balance"
+      ],
+      "properties": {
+        "channel_id": {
+          "type": "string"
+        },
+        "last_update_time": {
+          "description": "last block balance was updated (0 is never)",
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "remote_addr": {
+          "description": "in normal cases, it should be set, but there is a delay between binding the channel and making a query and in that time it is empty",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/HumanAddr"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "remote_balance": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Coin"
+          }
+        }
+      }
+    },
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}
