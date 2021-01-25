@@ -3,7 +3,7 @@ use wasmer::Module;
 
 use crate::{Checksum, Size, VmError, VmResult};
 
-// Minimum module size, in Megabytes.
+// Minimum module size.
 // Based on `examples/module_size.sh`, and the cosmwasm-plus modules.
 // We use an estimated *minimum* module size in order to compute a cache capacity
 // big enough to handle a size-limited cache without hitting the capacity (number of entries) limit.
