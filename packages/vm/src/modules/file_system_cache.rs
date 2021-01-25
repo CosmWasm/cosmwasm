@@ -163,7 +163,7 @@ mod tests {
         // This is not really testing the cache API but better safe than sorry.
         {
             let (cached_module, module_size) = cached.unwrap();
-            assert_eq!(module.serialize().unwrap().len(), module_size);
+            assert_eq!(module_size, module.serialize().unwrap().len());
             let import_object = imports! {};
             let instance = WasmerInstance::new(&cached_module, &import_object).unwrap();
             set_remaining_points(&instance, TESTING_GAS_LIMIT);
