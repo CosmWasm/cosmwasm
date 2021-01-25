@@ -3,7 +3,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
-use std::convert::TryInto;
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
@@ -108,7 +107,7 @@ pub fn init(
     // This adds some unrelated event attribute for testing purposes
     let mut ctx = Context::new();
     ctx.add_attribute("Let the", "hacking begin");
-    Ok(ctx.try_into()?)
+    Ok(ctx.into())
 }
 
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<MigrateResponse, HackError> {

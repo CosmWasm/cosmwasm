@@ -95,6 +95,27 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
+- Since `InitResponse` now contains a `data` field like `HandleResponse` and
+  `MigrateResponse`, converting `Context` into `InitResponse` always succeeds.
+
+  ```rust
+  // before
+  pub fn init(deps: DepsMut, env: Env, info: MessageInfo, msg: InitMsg) -> Result<InitResponse, HackError> {
+      // …
+      let mut ctx = Context::new();
+      ctx.add_attribute("Let the", "hacking begin");
+      Ok(ctx.try_into()?)
+  }
+
+  // after
+  pub fn init(deps: DepsMut, env: Env, info: MessageInfo, msg: InitMsg) -> Result<InitResponse, HackError> {
+      // …
+      let mut ctx = Context::new();
+      ctx.add_attribute("Let the", "hacking begin");
+      Ok(ctx.into())
+  }
+  ```
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0.

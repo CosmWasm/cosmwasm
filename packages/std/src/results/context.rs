@@ -1,10 +1,7 @@
 use schemars::JsonSchema;
-use std::convert::TryFrom;
 use std::fmt;
 
-use crate::binary::Binary;
-use crate::errors::StdError;
-use crate::types::Empty;
+use crate::{Binary, Empty};
 
 use super::attribute::{attr, Attribute};
 use super::cosmos_msg::CosmosMsg;
@@ -57,22 +54,15 @@ where
     }
 }
 
-impl<T> TryFrom<Context<T>> for InitResponse<T>
+impl<T> From<Context<T>> for InitResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    type Error = StdError;
-
-    fn try_from(ctx: Context<T>) -> Result<Self, Self::Error> {
-        if ctx.data.is_some() {
-            Err(StdError::generic_err(
-                "cannot convert Context with data to InitResponse",
-            ))
-        } else {
-            Ok(InitResponse {
-                messages: ctx.messages,
-                attributes: ctx.attributes,
-            })
+    fn from(ctx: Context<T>) -> Self {
+        InitResponse {
+            messages: ctx.messages,
+            attributes: ctx.attributes,
+            data: ctx.data,
         }
     }
 }
@@ -109,20 +99,18 @@ mod tests {
     use super::*;
     use crate::addresses::HumanAddr;
     use crate::coins;
-    use crate::errors::{StdError, StdResult};
-    use std::convert::TryInto;
 
     #[test]
     fn empty_context() {
         let ctx = Context::new();
 
-        let init: InitResponse = ctx.clone().try_into().unwrap();
+        let init: InitResponse = ctx.clone().into();
         assert_eq!(init, InitResponse::default());
 
-        let init: HandleResponse = ctx.clone().try_into().unwrap();
+        let init: HandleResponse = ctx.clone().into();
         assert_eq!(init, HandleResponse::default());
 
-        let init: MigrateResponse = ctx.clone().try_into().unwrap();
+        let init: MigrateResponse = ctx.clone().into();
         assert_eq!(init, MigrateResponse::default());
     }
 
@@ -137,6 +125,7 @@ mod tests {
             to_address: HumanAddr::from("foo"),
             amount: coins(128, "uint"),
         });
+        ctx.set_data(b"banana");
 
         // and this is what is should return
         let expected_msgs = vec![CosmosMsg::Bank(BankMsg::Send {
@@ -146,29 +135,20 @@ mod tests {
         let expected_attributes = vec![attr("sender", "john"), attr("action", "test")];
         let expected_data = Some(Binary::from(b"banana"));
 
-        // try InitResponse before setting data
-        let init: InitResponse = ctx.clone().try_into().unwrap();
+        // try InitResponse
+        let init: InitResponse = ctx.clone().into();
         assert_eq!(&init.messages, &expected_msgs);
         assert_eq!(&init.attributes, &expected_attributes);
-
-        ctx.set_data(b"banana");
-        // should fail with data set
-        let init_err: StdResult<InitResponse> = ctx.clone().try_into();
-        match init_err.unwrap_err() {
-            StdError::GenericErr { msg, .. } => {
-                assert_eq!(msg, "cannot convert Context with data to InitResponse")
-            }
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        assert_eq!(&init.data, &expected_data);
 
         // try Handle with everything set
-        let handle: HandleResponse = ctx.clone().try_into().unwrap();
+        let handle: HandleResponse = ctx.clone().into();
         assert_eq!(&handle.messages, &expected_msgs);
         assert_eq!(&handle.attributes, &expected_attributes);
         assert_eq!(&handle.data, &expected_data);
 
         // try Migrate with everything set
-        let migrate: MigrateResponse = ctx.clone().try_into().unwrap();
+        let migrate: MigrateResponse = ctx.clone().into();
         assert_eq!(&migrate.messages, &expected_msgs);
         assert_eq!(&migrate.attributes, &expected_attributes);
         assert_eq!(&migrate.data, &expected_data);

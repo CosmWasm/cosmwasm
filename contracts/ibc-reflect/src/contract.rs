@@ -25,6 +25,7 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
     Ok(InitResponse {
         messages: vec![],
         attributes: vec![attr("action", "init")],
+        data: None,
     })
 }
 

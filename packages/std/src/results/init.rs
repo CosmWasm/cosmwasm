@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::types::Empty;
+use crate::{Binary, Empty};
 
 use super::attribute::Attribute;
 use super::cosmos_msg::CosmosMsg;
@@ -15,6 +15,7 @@ where
     pub messages: Vec<CosmosMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
+    pub data: Option<Binary>,
 }
 
 impl<T> Default for InitResponse<T>
@@ -25,6 +26,7 @@ where
         InitResponse {
             messages: vec![],
             attributes: vec![],
+            data: None,
         }
     }
 }
@@ -48,6 +50,7 @@ mod tests {
                 key: "action".to_string(),
                 value: "release".to_string(),
             }],
+            data: Some(Binary::from([0xAA, 0xBB])),
         };
         let serialized = to_vec(&original).expect("encode contract result");
         let deserialized: InitResponse = from_slice(&serialized).expect("decode contract result");
