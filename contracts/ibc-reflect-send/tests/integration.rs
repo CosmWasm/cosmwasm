@@ -28,11 +28,9 @@ use cosmwasm_vm::testing::{
 };
 use cosmwasm_vm::{from_slice, Instance};
 
-use ibc_reflect_send::contract::IBC_VERSION;
-use ibc_reflect_send::msg::{
-    AccountResponse, AcknowledgementMsg, AdminResponse, HandleMsg, InitMsg, PacketMsg, QueryMsg,
-    WhoAmIResponse,
-};
+use ibc_reflect_send::ibc::IBC_VERSION;
+use ibc_reflect_send::ibc_msg::{AcknowledgementMsg, PacketMsg, WhoAmIResponse};
+use ibc_reflect_send::msg::{AccountResponse, AdminResponse, HandleMsg, InitMsg, QueryMsg};
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] =

@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "PacketMsg",
+  "description": "This is the message we send over the IBC channel",
   "anyOf": [
     {
       "type": "object",
