@@ -3,9 +3,14 @@ use wasmer::Module;
 
 use crate::{Checksum, Size, VmError, VmResult};
 
-// Rounded-up average of module sizes, in Megabytes.
-// Based on `examples/module_size.sh`, and the cosmwasm-plus modules
-const ESTIMATED_MODULE_SIZE: Size = Size::mebi(5);
+// Minimum module size, in Megabytes.
+// Based on `examples/module_size.sh`, and the cosmwasm-plus modules.
+// We use an estimated *minimum* module size in order to compute a cache capacity
+// big enough to handle a size-limited cache without hitting the capacity (number of entries) limit.
+// This will incurr an extra memory cost for the unused entries, but it's negligible:
+// Assuming the cost per entry is 48 bytes, 10000 entries will have an extra cost of just ~500 kB.
+// Which is a very small percentage (~0.03%) of our typical cache memory budget (2 GB).
+const MINIMUM_MODULE_SIZE: Size = Size::kibi(250);
 
 /// An in-memory module cache
 pub struct InMemoryCache {
@@ -16,7 +21,7 @@ impl InMemoryCache {
     /// Creates a new cache with the given size (in bytes)
     /// and estimated number of entries
     pub fn new(size: Size) -> Self {
-        let max_entries = size.0 / ESTIMATED_MODULE_SIZE.0;
+        let max_entries = size.0 / MINIMUM_MODULE_SIZE.0;
         InMemoryCache {
             modules: CLruCache::with_weight(max_entries, size.0),
         }
