@@ -73,7 +73,9 @@ impl FileSystemCache {
             Ok(module) => {
                 let module_size = file_path
                     .metadata()
-                    .map_err(|e| VmError::cache_err(format!("Error getting module size: {}", e)))?
+                    .map_err(|e| {
+                        VmError::cache_err(format!("Error getting module file size: {}", e))
+                    })?
                     .len();
                 Ok(Some((module, module_size as usize)))
             }
@@ -91,16 +93,20 @@ impl FileSystemCache {
         }
     }
 
-    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<()> {
+    pub fn store(&mut self, checksum: &Checksum, module: &Module) -> VmResult<usize> {
         let modules_dir = self.latest_modules_path();
         fs::create_dir_all(&modules_dir)
             .map_err(|e| VmError::cache_err(format!("Error creating directory: {}", e)))?;
         let filename = checksum.to_hex();
         let path = modules_dir.join(filename);
         module
-            .serialize_to_file(path)
+            .serialize_to_file(path.clone())
             .map_err(|e| VmError::cache_err(format!("Error writing module to disk: {}", e)))?;
-        Ok(())
+        let module_size = path
+            .metadata()
+            .map_err(|e| VmError::cache_err(format!("Error getting module file size: {}", e)))?
+            .len();
+        Ok(module_size as usize)
     }
 
     /// The path to the latest version of the modules.
