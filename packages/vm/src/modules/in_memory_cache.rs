@@ -38,10 +38,24 @@ mod tests {
     use super::*;
     use crate::size::Size;
     use crate::wasm_backend::compile;
+    use std::mem;
     use wasmer::{imports, Instance as WasmerInstance};
     use wasmer_middlewares::metering::set_remaining_points;
 
     const TESTING_GAS_LIMIT: u64 = 5_000;
+
+    #[test]
+    fn check_element_sizes() {
+        let key_size = mem::size_of::<Checksum>();
+        assert_eq!(key_size, 32);
+
+        // A Module consists of a Store (2 Arcs) and an Arc to the Engine.
+        // This is 3 * 64bit of data, but we don't get any guarantee how the Rust structs
+        // Module and Store are aligned (https://doc.rust-lang.org/reference/type-layout.html#the-default-representation).
+        // So we get this value by trial and error. It can change over time and across platforms.
+        let value_size = mem::size_of::<Module>();
+        assert_eq!(value_size, 48);
+    }
 
     #[test]
     fn in_memory_cache_run() {
