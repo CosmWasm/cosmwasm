@@ -16,9 +16,10 @@ use crate::wasm_backend::{compile_and_use, compile_only, make_runtime_store};
 
 const WASM_DIR: &str = "wasm";
 const MODULES_DIR: &str = "modules";
-// Rounded-up average of Module size to optimized wasm size ratio
-// Based on `examples/module_size.sh`, and the (optimized) cosmwasm-plus modules
-const OPTIMIZED_WASM_SIZE_FACTOR: usize = 18;
+// Upper bound of Module size to optimized wasm size ratio.
+// Based on `examples/module_size.sh`, and the (optimized) cosmwasm-plus modules,
+// where we observed up to 18.4597. Need to assume an attacker could find a higher factor.
+const OPTIMIZED_WASM_SIZE_FACTOR: usize = 20;
 
 #[derive(Debug, Default, Clone, Copy)]
 pub struct Stats {
