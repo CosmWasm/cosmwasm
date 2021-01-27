@@ -168,7 +168,7 @@ dependencies = [
 [[package]]
 name = "clru"
 version = "0.4.0"
-source = "git+https://github.com/maurolacy/clru-rs?rev=d32f5b77#d32f5b77823bd99772da32fcb755ff7059377ed1"
+source = "git+https://github.com/maurolacy/clru-rs?rev=88bb2300#88bb23002249c9b74cf99aaa858cfd0b15df6a36"
 dependencies = [
  "thiserror",
 ]
