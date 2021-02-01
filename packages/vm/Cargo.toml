@@ -43,7 +43,7 @@ sha2 = "0.9.1"
 thiserror = "1.0"
 wasmer = { version = "1.0.1", default-features = false, features = ["jit", "singlepass"] }
 wasmer-middlewares = { version = "1.0.1" }
-secp256k1 = { version = "0.20.1", default-features = false }
+secp256k1 = "0.20.1"
 
 # Wasmer git/local (used for quick local debugging or patching)
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.1", default-features = false, features = ["jit", "singlepass"] }
@@ -57,6 +57,7 @@ tempfile = "3.1.0"
 wat = "1.0"
 clap = "2.33.3"
 secp256k1 = { version = "0.20.1", features = ["bitcoin_hashes", "rand"] }
+base64 = "0.13.0"
 
 [[bench]]
 name = "main"
