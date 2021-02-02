@@ -15,6 +15,7 @@ mod iterator;
 mod math;
 mod query;
 mod results;
+mod sections;
 mod serde;
 mod storage;
 mod traits;
