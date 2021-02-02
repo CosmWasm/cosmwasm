@@ -5,6 +5,7 @@ use crate::binary::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
+use crate::sections::decode_sections2;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
 #[cfg(feature = "iterator")]
@@ -120,23 +121,13 @@ impl Iterator for ExternalIterator {
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };
         let kv_region_ptr = next_result as *mut Region;
-        let mut kv = unsafe { consume_region(kv_region_ptr) };
-
-        // The KV region uses the format value || key || keylen, where keylen is a fixed size big endian u32 value
-        let keylen = u32::from_be_bytes([
-            kv[kv.len() - 4],
-            kv[kv.len() - 3],
-            kv[kv.len() - 2],
-            kv[kv.len() - 1],
-        ]) as usize;
-        if keylen == 0 {
-            return None;
+        let kv = unsafe { consume_region(kv_region_ptr) };
+        let (key, value) = decode_sections2(kv);
+        if key.len() == 0 {
+            None
+        } else {
+            Some((key, value))
         }
-
-        kv.truncate(kv.len() - 4);
-        let key = kv.split_off(kv.len() - keylen);
-        let value = kv;
-        Some((key, value))
     }
 }
 
