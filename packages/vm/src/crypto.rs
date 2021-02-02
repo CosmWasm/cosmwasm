@@ -14,6 +14,12 @@ impl SignatureVerification {
     }
 }
 
+impl Default for SignatureVerification {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
