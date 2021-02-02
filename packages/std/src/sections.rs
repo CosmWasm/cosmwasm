@@ -1,7 +1,21 @@
 /// A sections decoder for the special case of two elements
 #[allow(dead_code)] // used in Wasm and tests only
 pub fn decode_sections2(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
-    let section2_len: usize = if data.len() >= 4 {
+    let (rest, second) = split_tail(data);
+    let (_, first) = split_tail(rest);
+    (first, second)
+}
+
+/// Splits data into the last section ("tail") and the rest.
+/// The tail's length information is cut off, such that it is ready to use.
+/// The rest is basically unparsed and contails the lengths of the remaining sections.
+///
+/// While the tail is copied into a new vector, the rest is only truncated such that
+/// no re-allocation is necessary.
+///
+/// If `data` contains one section only, `data` is moved into the tail entirely
+fn split_tail(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
+    let tail_len: usize = if data.len() >= 4 {
         u32::from_be_bytes([
             data[data.len() - 4],
             data[data.len() - 3],
@@ -9,35 +23,20 @@ pub fn decode_sections2(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
             data[data.len() - 1],
         ]) as usize
     } else {
-        panic!("Cannot read section2 length");
+        panic!("Cannot read section length");
     };
+    let rest_len_end = data.len() - 4 - tail_len;
 
-    let section1_len_end = data.len() - 4 - section2_len;
-    let section1_len: usize = if section1_len_end >= 4 {
-        u32::from_be_bytes([
-            data[section1_len_end - 4],
-            data[section1_len_end - 3],
-            data[section1_len_end - 2],
-            data[section1_len_end - 1],
-        ]) as usize
+    let (rest, mut tail) = if rest_len_end == 0 {
+        // i.e. all data is the tail
+        (Vec::new(), data)
     } else {
-        panic!("Cannot read section1 length");
+        let mut rest = data;
+        let tail = rest.split_off(rest_len_end);
+        (rest, tail)
     };
-
-    if data.len() != 4 + section1_len + 4 + section2_len {
-        panic!(
-            "Invalid data length: {}, {}, {}",
-            data.len(),
-            section1_len,
-            section2_len
-        );
-    }
-
-    let mut first = data;
-    let mut second = first.split_off(section1_len_end);
-    second.truncate(section2_len);
-    first.truncate(section1_len);
-    (first, second)
+    tail.truncate(tail_len); // cut off length
+    (rest, tail)
 }
 
 #[cfg(test)]
