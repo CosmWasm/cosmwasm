@@ -298,13 +298,7 @@ fn do_next<A: Api, S: Storage, Q: Querier>(
     // Empty key will later be treated as _no more element_.
     let (key, value) = result?.unwrap_or_else(|| (Vec::<u8>::new(), Vec::<u8>::new()));
 
-    // Build value || key || keylen
-    let keylen_bytes = to_u32(key.len())?.to_be_bytes();
-    let mut out_data = value;
-    out_data.reserve(key.len() + 4);
-    out_data.extend(key);
-    out_data.extend_from_slice(&keylen_bytes);
-
+    let out_data = encode_sections(&[key, value])?;
     write_to_contract::<A, S, Q>(env, &out_data)
 }
 
@@ -1158,19 +1152,19 @@ mod tests {
         let kv_region_ptr = do_next::<MA, MS, MQ>(&env, id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
-            [VALUE1, KEY1, b"\0\0\0\x03"].concat()
+            [KEY1, b"\0\0\0\x03", VALUE1, b"\0\0\0\x06"].concat()
         );
 
         // Entry 2
         let kv_region_ptr = do_next::<MA, MS, MQ>(&env, id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
-            [VALUE2, KEY2, b"\0\0\0\x04"].concat()
+            [KEY2, b"\0\0\0\x04", VALUE2, b"\0\0\0\x05"].concat()
         );
 
         // End
         let kv_region_ptr = do_next::<MA, MS, MQ>(&env, id).unwrap();
-        assert_eq!(force_read(&env, kv_region_ptr), b"\0\0\0\0");
+        assert_eq!(force_read(&env, kv_region_ptr), b"\0\0\0\0\0\0\0\0");
         // API makes no guarantees for value_ptr in this case
     }
 
