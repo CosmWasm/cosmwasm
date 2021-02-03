@@ -6,6 +6,7 @@ mod calls;
 mod checksum;
 mod compatibility;
 mod conversion;
+mod crypto;
 mod environment;
 mod errors;
 mod features;
