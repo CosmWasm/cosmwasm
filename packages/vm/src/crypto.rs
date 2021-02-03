@@ -45,7 +45,7 @@ mod tests {
     const COSMOS_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
-    // const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
+    const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
 
     #[test]
     fn secp256k1_verify() {
@@ -101,7 +101,6 @@ mod tests {
         }
     }
 
-    /*
     #[test]
     fn cosmos_extra_secp256k1_verify() {
         use std::fs::File;
@@ -124,33 +123,26 @@ mod tests {
 
         let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
 
-        // Create our verification-only context
-        let crypto = SignatureVerification::new();
-
         for (i, encoded) in (1..).zip(codes) {
-            let hash = hex::decode(&encoded.message_hash).unwrap();
-            let message_hash = sha256::Hash::hash(&hex::decode(&encoded.message).unwrap());
-            assert_eq!(hash.as_slice(), message_hash.into_inner());
+            let message = hex::decode(&encoded.message).unwrap();
 
-            let message = Message::from_slice(&message_hash).unwrap();
+            // let hash = hex::decode(&encoded.message_hash).unwrap();
+            // let message_hash = sha256::Hash::hash(&hex::decode(&encoded.message).unwrap());
+            // assert_eq!(hash.as_slice(), message_hash.into_inner());
 
             let public_key =
-                PublicKey::from_slice(&hex::decode(&encoded.public_key).unwrap()).unwrap();
+                VerifyingKey::from_sec1_bytes(&hex::decode(&encoded.public_key).unwrap()).unwrap();
 
-            let mut signature =
-                Signature::from_compact(&hex::decode(&encoded.signature).unwrap()).unwrap();
+            let signature = hex::decode(&encoded.signature).unwrap();
+            let mut signature = Signature::from_bytes(signature.as_slice()).unwrap();
             // Non low-S signatures require normalization
-            signature.normalize_s();
+            signature.normalize_s().unwrap();
 
             // Verify works
             assert!(
-                crypto
-                    .secp
-                    .verify(&message, &signature, &public_key)
-                    .is_ok(),
+                public_key.verify(message.as_slice(), &signature).is_ok(),
                 format!("verify() failed (test case {})", i)
             );
         }
     }
-    */
 }
