@@ -1,12 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use k256::{
-        ecdsa::signature::{Signature as _, Signer, Verifier}, // traits
-        ecdsa::{Signature, SigningKey, VerifyingKey},         // type aliases
-    };
-
     use elliptic_curve::rand_core::OsRng;
-    // use bitcoin_hashes::{sha256, Hash};
+    use k256::{
+        ecdsa::signature::{DigestVerifier, Signature as _, Signer, Verifier}, // traits
+        ecdsa::{Signature, SigningKey, VerifyingKey},                         // type aliases
+    };
+    use sha2::{Digest, Sha256};
 
     // Generic signature verification
     const MSG: &str = "Hello World!";
@@ -34,10 +33,7 @@ mod tests {
         // Note: the signature type must be annotated or otherwise inferrable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
-        let signature: Signature = secret_key.sign(MSG.as_bytes()); // Message is internally digested :-/
-
-        // let hash = sha256::Hash::hash(&MSG.as_bytes);
-        // let signature: Signature = secret_key.sign_prehashed(MSG.as_bytes());
+        let signature: Signature = secret_key.sign(MSG.as_bytes()); // Message is internally digested
 
         // Verification
         let public_key = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
@@ -72,9 +68,12 @@ mod tests {
             let signature = hex::decode(sig).unwrap();
             let signature = Signature::from_bytes(signature.as_slice()).unwrap();
 
+            // Manual hash
+            let hash = Sha256::new().chain(message.as_slice());
+
             // Verify works
             assert!(
-                public_key.verify(message.as_slice(), &signature).is_ok(),
+                public_key.verify_digest(hash, &signature).is_ok(),
                 format!("verify failed (test case {})", i)
             );
         }
@@ -105,9 +104,9 @@ mod tests {
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
 
-            // let hash = hex::decode(&encoded.message_hash).unwrap();
-            // let message_hash = sha256::Hash::hash(&hex::decode(&encoded.message).unwrap());
-            // assert_eq!(hash.as_slice(), message_hash.into_inner());
+            let hash = hex::decode(&encoded.message_hash).unwrap();
+            let message_hash = Sha256::new().chain(message.as_slice());
+            assert_eq!(hash.as_slice(), &*message_hash.clone().finalize());
 
             let public_key =
                 VerifyingKey::from_sec1_bytes(&hex::decode(&encoded.public_key).unwrap()).unwrap();
@@ -119,7 +118,7 @@ mod tests {
 
             // Verify works
             assert!(
-                public_key.verify(message.as_slice(), &signature).is_ok(),
+                public_key.verify_digest(message_hash, &signature).is_ok(),
                 format!("verify() failed (test case {})", i)
             );
         }
