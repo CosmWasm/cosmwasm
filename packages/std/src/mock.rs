@@ -144,12 +144,12 @@ pub fn mock_env() -> Env {
     }
 }
 
-/// Just set sender and sent funds for the message. The essential for
+/// Just set sender and funds for the message.
 /// This is intended for use in test code only.
-pub fn mock_info<U: Into<HumanAddr>>(sender: U, sent: &[Coin]) -> MessageInfo {
+pub fn mock_info<U: Into<HumanAddr>>(sender: U, funds: &[Coin]) -> MessageInfo {
     MessageInfo {
         sender: sender.into(),
-        sent_funds: sent.to_vec(),
+        funds: funds.to_vec(),
     }
 }
 

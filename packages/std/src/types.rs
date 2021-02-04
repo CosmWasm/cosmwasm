@@ -83,7 +83,10 @@ pub struct MessageInfo {
     /// Additional signers of the transaction that are either needed for other messages or contain unnecessary
     /// signatures are not propagated into the contract.
     pub sender: HumanAddr,
-    pub sent_funds: Vec<Coin>,
+    /// The funds that are sent to the contract as part of `MsgInstantiateContract`
+    /// or `MsgExecuteContract`. The transfer is processed in bank before the contract
+    /// is executed such that the new balance is visible during contract execution.
+    pub funds: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]

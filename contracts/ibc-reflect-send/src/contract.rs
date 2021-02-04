@@ -139,7 +139,7 @@ pub fn handle_send_funds(
     // intentionally no auth check
 
     // require some funds
-    let amount = match info.sent_funds.pop() {
+    let amount = match info.funds.pop() {
         Some(coin) => coin,
         None => {
             return Err(StdError::generic_err(
@@ -148,7 +148,7 @@ pub fn handle_send_funds(
         }
     };
     // if there are any more coins, reject the message
-    if !info.sent_funds.is_empty() {
+    if !info.funds.is_empty() {
         return Err(StdError::generic_err("you can only ibc transfer one coin"));
     }
 
