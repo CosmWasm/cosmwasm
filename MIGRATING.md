@@ -116,6 +116,34 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
+- Remove the `info: MessageInfo` field from the `migrate` entry point:
+
+  ```rust
+  // Before
+  pub fn migrate(
+      deps: DepsMut,
+      env: Env,
+      _info: MessageInfo,
+      msg: MigrateMsg,
+  ) -> StdResult<MigrateResponse> {
+    // ...
+  }
+
+  // After
+  pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<MigrateResponse> {
+    // ...
+  }
+  ```
+
+  `MessageInfo::sent_funds` was always empty since [MsgMigrateContract] does not
+  have a funds field. `MessageInfo::sender` should not be needed for
+  authentication because the chain checks permissions before calling `migrate`.
+  If the sender's address is needed for anything else, this should be expressed
+  as part of the migrate message.
+
+  [msgmigratecontract]:
+    https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L86-L96
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0.
