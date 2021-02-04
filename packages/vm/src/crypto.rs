@@ -1,32 +1,29 @@
-use secp256k1::{Secp256k1, VerifyOnly};
+use secp256k1::{Message, PublicKey, Secp256k1, Signature};
 
-#[derive(Debug)]
-pub struct SignatureVerification {
-    secp: Secp256k1<VerifyOnly>,
-}
+use crate::errors::{VmError, VmResult};
 
-impl SignatureVerification {
-    #[allow(dead_code)]
-    pub fn new() -> SignatureVerification {
-        SignatureVerification {
-            secp: Secp256k1::verification_only(),
-        }
-    }
-}
+pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
+    // Deserialize stuff
+    // TODO: VmError::CryptoErr
+    let message =
+        Message::from_slice(message_hash).map_err(|e| VmError::generic_err(e.to_string()))?;
+    let signature =
+        Signature::from_compact(signature).map_err(|e| VmError::generic_err(e.to_string()))?;
+    let public_key =
+        PublicKey::from_slice(public_key).map_err(|e| VmError::generic_err(e.to_string()))?;
 
-impl Default for SignatureVerification {
-    fn default() -> Self {
-        Self::new()
-    }
+    // Create a verification-only context
+    let verify_ctx = Secp256k1::verification_only();
+
+    verify_ctx
+        .verify(&message, &signature, &public_key)
+        .map_err(|e| VmError::generic_err(e.to_string()))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use secp256k1::bitcoin_hashes::{sha256, Hash};
-    use secp256k1::{Message, PublicKey, Signature};
-
     use secp256k1::rand::rngs::SmallRng;
     use secp256k1::rand::SeedableRng;
 
@@ -38,6 +35,7 @@ mod tests {
 
     // Cosmos signature verification
     // tendermint/PubKeySecp256k1 pubkey
+    /*
     const COSMOS_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
 
     const COSMOS_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
@@ -50,44 +48,50 @@ mod tests {
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
     const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
+     */
 
     #[test]
-    fn secp256k1_verify() {
+    fn test_secp256k1_verify() {
         let mut rng = SmallRng::from_seed(SEED);
 
-        // Create full-featured secp context (for testing)
+        let message_hash = sha256::Hash::hash(MSG.as_bytes());
+
+        // Create full-featured secp context (just for test helpers)
         let secp = Secp256k1::new();
         let (secret_key, public_key) = secp.generate_keypair(&mut rng);
-        let message = Message::from_hashed_data::<sha256::Hash>(MSG.as_bytes());
+        let message = Message::from_slice(message_hash.as_inner()).unwrap();
         let signature = secp.sign(&message, &secret_key);
 
-        // Create our verification-only context
-        let crypto = SignatureVerification::new();
-
-        // Verify works
-        assert!(crypto
-            .secp
-            .verify(&message, &signature, &public_key)
-            .is_ok());
+        // Our verify wrapper works
+        assert!(secp256k1_verify(
+            message_hash.as_inner(),
+            &signature.serialize_compact(),
+            &public_key.serialize()
+        )
+        .is_ok());
 
         // Wrong message fails
-        let message_bad =
-            Message::from_hashed_data::<sha256::Hash>([MSG, "\0"].concat().as_bytes());
-        assert!(crypto
-            .secp
-            .verify(&message_bad, &signature, &public_key)
-            .is_err());
+        let message_bad_hash = sha256::Hash::hash(&[MSG, "\0"].concat().as_bytes());
+        assert!(secp256k1_verify(
+            message_bad_hash.as_inner(),
+            &signature.serialize_compact(),
+            &public_key.serialize()
+        )
+        .is_err());
 
         // Wrong pubkey fails
         let (_, public_key_other) = secp.generate_keypair(&mut rng);
-        assert!(crypto
-            .secp
-            .verify(&message, &signature, &public_key_other)
-            .is_err());
+        assert!(secp256k1_verify(
+            message_hash.as_inner(),
+            &signature.serialize_compact(),
+            &public_key_other.serialize()
+        )
+        .is_err());
     }
 
+    /*
     #[test]
-    fn cosmos_secp256k1_verify() {
+    fn test_cosmos_secp256k1_verify() {
         let public_key =
             PublicKey::from_slice(&base64::decode(COSMOS_PUBKEY_BASE64).unwrap()).unwrap();
 
@@ -114,7 +118,7 @@ mod tests {
     }
 
     #[test]
-    fn cosmos_extra_secp256k1_verify() {
+    fn test_cosmos_extra_secp256k1_verify() {
         use std::fs::File;
         use std::io::BufReader;
 
@@ -163,4 +167,5 @@ mod tests {
             );
         }
     }
+     */
 }
