@@ -7,6 +7,7 @@ mod checksum;
 mod compatibility;
 mod conversion;
 mod crypto;
+mod dummy_sha2;
 mod environment;
 mod errors;
 mod features;
