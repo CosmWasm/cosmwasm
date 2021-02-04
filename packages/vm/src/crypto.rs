@@ -1,29 +1,8 @@
-// #[derive(Debug)]
-// pub struct SignatureVerification {
-//     secp: Verifier,
-// }
-//
-// impl SignatureVerification {
-//     #[allow(dead_code)]
-//     pub fn new() -> SignatureVerification {
-//         SignatureVerification {
-//             secp: Verifier::new(),
-//         }
-//     }
-// }
-//
-// impl Default for SignatureVerification {
-//     fn default() -> Self {
-//         Self::new()
-//     }
-// }
-
 #[cfg(test)]
 mod tests {
     use k256::{
-        ecdsa::signature::Signature as _,
-        ecdsa::{signature::Signer, Signature, SigningKey},
-        ecdsa::{signature::Verifier, VerifyingKey},
+        ecdsa::signature::{Signature as _, Signer, Verifier}, // traits
+        ecdsa::{Signature, SigningKey, VerifyingKey},         // type aliases
     };
 
     use elliptic_curve::rand_core::OsRng;
@@ -52,13 +31,13 @@ mod tests {
         // Signing
         let secret_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
 
-        // let hash = sha256::Hash::hash(&MSG.as_bytes);
-        // let signature: Signature = secret_key.sign_prehashed(MSG.as_bytes());
-
         // Note: the signature type must be annotated or otherwise inferrable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
         let signature: Signature = secret_key.sign(MSG.as_bytes()); // Message is internally digested :-/
+
+        // let hash = sha256::Hash::hash(&MSG.as_bytes);
+        // let signature: Signature = secret_key.sign_prehashed(MSG.as_bytes());
 
         // Verification
         let public_key = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
