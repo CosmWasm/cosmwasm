@@ -35,7 +35,6 @@ mod tests {
 
     // Cosmos signature verification
     // tendermint/PubKeySecp256k1 pubkey
-    /*
     const COSMOS_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
 
     const COSMOS_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
@@ -47,8 +46,7 @@ mod tests {
     const COSMOS_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
-    const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
-     */
+    // const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
 
     #[test]
     fn test_secp256k1_verify() {
@@ -89,14 +87,10 @@ mod tests {
         .is_err());
     }
 
-    /*
     #[test]
     fn test_cosmos_secp256k1_verify() {
         let public_key =
             PublicKey::from_slice(&base64::decode(COSMOS_PUBKEY_BASE64).unwrap()).unwrap();
-
-        // Create our verification-only context
-        let crypto = SignatureVerification::new();
 
         for (msg, sig) in [COSMOS_MSG_HEX1, COSMOS_MSG_HEX2, COSMOS_MSG_HEX3]
             .iter()
@@ -106,17 +100,20 @@ mod tests {
                 COSMOS_SIGNATURE_HEX3,
             ])
         {
-            let message = Message::from_hashed_data::<sha256::Hash>(&hex::decode(msg).unwrap());
+            let message_hash = sha256::Hash::hash(&hex::decode(msg).unwrap());
             let signature = Signature::from_compact(&hex::decode(sig).unwrap()).unwrap();
 
             // Verify works
-            assert!(crypto
-                .secp
-                .verify(&message, &signature, &public_key)
-                .is_ok());
+            assert!(secp256k1_verify(
+                message_hash.as_inner(),
+                &signature.serialize_compact(),
+                &public_key.serialize()
+            )
+            .is_ok());
         }
     }
 
+    /*
     #[test]
     fn test_cosmos_extra_secp256k1_verify() {
         use std::fs::File;
