@@ -177,6 +177,7 @@ dependencies = [
  "cosmwasm-crypto",
  "cosmwasm-std",
  "hex",
+ "k256",
  "parity-wasm",
  "schemars",
  "serde",
@@ -598,6 +599,7 @@ dependencies = [
  "cfg-if 1.0.0",
  "ecdsa",
  "elliptic-curve",
+ "sha2",
 ]
 
 [[package]]
