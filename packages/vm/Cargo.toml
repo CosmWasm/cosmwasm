@@ -57,7 +57,8 @@ tempfile = "3.1.0"
 wat = "1.0"
 clap = "2.33.3"
 base64 = "0.13.0"
-elliptic-curve = "0.8.4" # for proper `rand_core`
+#rand_core = { version = "0.6", features = ["getrandom"] }
+elliptic-curve = "0.8.4" # for "proper" `rand_core`
 
 [[bench]]
 name = "main"
