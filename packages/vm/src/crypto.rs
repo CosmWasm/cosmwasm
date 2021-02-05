@@ -8,23 +8,22 @@ use crate::dummy_sha2;
 use crate::errors::{VmError, VmResult};
 
 pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
-    // TODO: VmError::CryptoErr
     // Already hashed, just build Digest container
     let message_digest = dummy_sha2::Sha256::new().chain(message_hash);
 
     let mut signature =
-        Signature::from_bytes(signature).map_err(|e| VmError::generic_err(e.to_string()))?;
+        Signature::from_bytes(signature).map_err(|e| VmError::crypto_err(e.to_string()))?;
     // Non low-S signatures require normalization
     signature
         .normalize_s()
-        .map_err(|e| VmError::generic_err(e.to_string()))?;
+        .map_err(|e| VmError::crypto_err(e.to_string()))?;
 
     let public_key = VerifyingKey::from_sec1_bytes(public_key)
-        .map_err(|e| VmError::generic_err(e.to_string()))?;
+        .map_err(|e| VmError::crypto_err(e.to_string()))?;
 
     public_key
         .verify_digest(message_digest, &signature)
-        .map_err(|e| VmError::generic_err(e.to_string()))
+        .map_err(|e| VmError::crypto_err(e.to_string()))
 }
 
 #[cfg(test)]

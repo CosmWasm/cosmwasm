@@ -42,6 +42,12 @@ pub enum VmError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Crypto error: {msg}")]
+    CryptoErr {
+        msg: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Ran out of gas during contract execution")]
     GasDepletion {
         #[cfg(feature = "backtraces")]
@@ -133,6 +139,7 @@ impl VmError {
             backtrace: Backtrace::capture(),
         }
     }
+
     pub(crate) fn cache_err<S: Into<String>>(msg: S) -> Self {
         VmError::CacheErr {
             msg: msg.into(),
@@ -158,6 +165,14 @@ impl VmError {
             from_type: from_type.into(),
             to_type: to_type.into(),
             input: input.into(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub(crate) fn crypto_err<S: Into<String>>(msg: S) -> Self {
+        VmError::CryptoErr {
+            msg: msg.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
