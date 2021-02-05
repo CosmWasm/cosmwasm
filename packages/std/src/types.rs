@@ -64,21 +64,24 @@ pub struct BlockInfo {
     pub chain_id: String,
 }
 
-/// MessageInfo is sent with `init`, `handle`, and `migrate` calls, but not with queries.
-/// It contains the essential info for authorization - identity of the call, and payment
+/// Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed
+/// along with the contract execution message into the `init` and `handle` entry points.
+///
+/// It contains the essential info for authorization - identity of the call, and payment.
+///
+/// [MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61
+/// [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
 pub struct MessageInfo {
-    /// The `sender` field from the `wasm/MsgStoreCode`, `wasm/MsgInstantiateContract`, `wasm/MsgMigrateContract`
-    /// or `wasm/MsgExecuteContract` message.
+    /// The `sender` field from `MsgInstantiateContract` and `MsgExecuteContract`.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
     /// means exactly heavily depends on the application.
     ///
-    /// The x/wasm module ensures that the sender address signed the transaction.
+    /// The x/wasm module ensures that the sender address signed the transaction or
+    /// is otherwise authorized to send the message.
+    ///
     /// Additional signers of the transaction that are either needed for other messages or contain unnecessary
     /// signatures are not propagated into the contract.
-    ///
-    /// There is a discussion to open up this field to multiple initiators, which you're welcome to join
-    /// if you have a specific need for that feature: https://github.com/CosmWasm/cosmwasm/issues/293
     pub sender: HumanAddr,
     pub sent_funds: Vec<Coin>,
 }

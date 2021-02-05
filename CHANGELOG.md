@@ -45,6 +45,8 @@ and this project adheres to
 - all: Change the encoding of the key/value region of the `db_next` import to a
   more generic encoding that supports an arbitrary number of sections. This
   encoding can then be reused for other multi value regions.
+- all: Remove the `info: MessageInfo` argument from the `migrate` entry point
+  ([#690]).
 - cosmwasm-std: Remove `from_address` from `BankMsg::Send`, as it always sends
   from the contract address, and this is consistent with other `CosmosMsg`
   variants.
@@ -65,6 +67,7 @@ and this project adheres to
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
 [#736]: https://github.com/CosmWasm/cosmwasm/pull/736
+[#690]: https://github.com/CosmWasm/cosmwasm/issues/690
 
 ## [0.13.2] - 2021-01-14
 
