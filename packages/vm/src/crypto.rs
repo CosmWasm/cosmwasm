@@ -6,20 +6,21 @@ use k256::{
 };
 use sha2::Digest; // trait
 
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 
 use crate::errors::{VmError, VmResult};
 use crate::identity_digest::Identity256;
 
 pub fn ed25519_verify(
     message_hash: &[u8],
-    signature_bytes: &[u8; 64],
-    public_key_bytes: &[u8; 32],
+    signature_bytes: &[u8],
+    public_key_bytes: &[u8],
 ) -> VmResult<()> {
     // Deserialize
-    // let signature = signature_bytes.try_into().map_err(|err| VmError::crypto_err(err.to_string()))?;
-    let signature = (*signature_bytes).into();
-    VerificationKey::try_from(*public_key_bytes)
+    let res: Result<ed25519_zebra::Signature, ed25519_zebra::Error> = signature_bytes.try_into();
+    let signature = res.map_err(|err| VmError::crypto_err(err.to_string()))?;
+
+    VerificationKey::try_from(public_key_bytes)
         .and_then(|vk| vk.verify(&signature, &message_hash))
         .map_err(|err| VmError::crypto_err(err.to_string()))
 }
@@ -66,21 +67,23 @@ mod tests {
         let secret_key = SigningKey::new(&mut OsRng);
         let signature = secret_key.sign(&message_hash);
 
-        // Types can be converted to raw byte arrays with From/Into
         let public_key = VerificationKey::from(&secret_key);
 
+        // Serialization. Types can be converted to raw byte arrays with From/Into
+        let signature_bytes: [u8; 64] = signature.into();
+        let public_key_bytes: [u8; 32] = public_key.into();
+
         // Verification
-        assert!(ed25519_verify(&message_hash, &signature.into(), &public_key.into()).is_ok());
+        assert!(ed25519_verify(&message_hash, &signature_bytes, &public_key_bytes).is_ok());
 
         // Wrong message fails
         let bad_message_hash = Sha256::new().chain([MSG, "\0"].concat()).finalize();
-        assert!(ed25519_verify(&bad_message_hash, &signature.into(), &public_key.into()).is_err());
+        assert!(ed25519_verify(&bad_message_hash, &signature_bytes, &public_key_bytes).is_err());
 
         // Other pubkey fails
         let other_secret_key = SigningKey::new(&mut OsRng);
         let other_public_key = VerificationKey::from(&other_secret_key);
-        assert!(
-            ed25519_verify(&message_hash, &signature.into(), &other_public_key.into()).is_err()
-        );
+        let other_public_key_bytes: [u8; 32] = other_public_key.into();
+        assert!(ed25519_verify(&message_hash, &signature_bytes, &other_public_key_bytes).is_err());
     }
 }
