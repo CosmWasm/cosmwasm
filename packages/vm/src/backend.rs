@@ -127,6 +127,13 @@ pub trait Storage {
 pub trait BackendApi: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> BackendResult<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> BackendResult<HumanAddr>;
+
+    fn secp256k1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> BackendResult<()>;
 }
 
 pub trait Querier {
@@ -168,6 +175,8 @@ pub enum BackendError {
     // This is the only error case of BackendError that is reported back to the contract.
     #[error("User error during call into backend: {msg}")]
     UserErr { msg: String },
+    #[error("Crypto error: {msg}")]
+    CryptoErr { msg: String },
 }
 
 impl BackendError {
@@ -200,6 +209,12 @@ impl BackendError {
 
     pub fn user_err<S: ToString>(msg: S) -> Self {
         BackendError::UserErr {
+            msg: msg.to_string(),
+        }
+    }
+
+    pub fn crypto_err<S: ToString>(msg: S) -> Self {
+        BackendError::CryptoErr {
             msg: msg.to_string(),
         }
     }
