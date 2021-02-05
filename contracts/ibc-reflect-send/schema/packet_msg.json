@@ -538,6 +538,42 @@
               }
             }
           }
+        },
+        {
+          "description": "Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to customize behavior.\n\nOnly the contract admin (as defined in wasmd), if any, is able to make this call.\n\nThis is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96). `sender` is automatically filled with the current contract's address.",
+          "type": "object",
+          "required": [
+            "migrate"
+          ],
+          "properties": {
+            "migrate": {
+              "type": "object",
+              "required": [
+                "contract_addr",
+                "msg",
+                "new_code_id"
+              ],
+              "properties": {
+                "contract_addr": {
+                  "$ref": "#/definitions/HumanAddr"
+                },
+                "msg": {
+                  "description": "msg is the json-encoded MigrateMsg struct that will be passed to the new code",
+                  "allOf": [
+                    {
+                      "$ref": "#/definitions/Binary"
+                    }
+                  ]
+                },
+                "new_code_id": {
+                  "description": "the code_id of the new logic to place in the given contract",
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                }
+              }
+            }
+          }
         }
       ]
     }
