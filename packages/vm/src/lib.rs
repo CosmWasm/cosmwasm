@@ -34,7 +34,6 @@ pub use crate::calls::{
     call_query, call_query_raw,
 };
 pub use crate::checksum::Checksum;
-pub use crate::crypto::secp256k1_verify;
 
 pub use crate::errors::{
     CommunicationError, CommunicationResult, RegionValidationError, RegionValidationResult,
