@@ -1,4 +1,4 @@
-use ed25519_zebra::VerificationKey;
+use ed25519_zebra as ed25519;
 
 use k256::{
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
@@ -17,10 +17,10 @@ pub fn ed25519_verify(
     public_key_bytes: &[u8],
 ) -> VmResult<()> {
     // Deserialize
-    let res: Result<ed25519_zebra::Signature, ed25519_zebra::Error> = signature_bytes.try_into();
+    let res: Result<ed25519::Signature, ed25519::Error> = signature_bytes.try_into();
     let signature = res.map_err(|err| VmError::crypto_err(err.to_string()))?;
 
-    VerificationKey::try_from(public_key_bytes)
+    ed25519::VerificationKey::try_from(public_key_bytes)
         .and_then(|vk| vk.verify(&signature, &message_hash))
         .map_err(|err| VmError::crypto_err(err.to_string()))
 }
@@ -36,6 +36,9 @@ mod tests {
         ecdsa::signature::Signature as _,
         ecdsa::{signature::Signer, Signature, SigningKey},
         ecdsa::{signature::Verifier, VerifyingKey},
+    use k256::{
+        ecdsa::signature::DigestSigner, // trait
+        ecdsa::SigningKey,              // type alias
     };
 
     use elliptic_curve::rand_core::OsRng;
@@ -58,16 +61,14 @@ mod tests {
 
     #[test]
     fn test_ed25519_verify() {
-        use ed25519_zebra::SigningKey;
-
         // Explicit hash
         let message_hash = Sha256::new().chain(MSG).finalize();
 
         // Signing
-        let secret_key = SigningKey::new(&mut OsRng);
+        let secret_key = ed25519::SigningKey::new(&mut OsRng);
         let signature = secret_key.sign(&message_hash);
 
-        let public_key = VerificationKey::from(&secret_key);
+        let public_key = ed25519::VerificationKey::from(&secret_key);
 
         // Serialization. Types can be converted to raw byte arrays with From/Into
         let signature_bytes: [u8; 64] = signature.into();
@@ -81,8 +82,8 @@ mod tests {
         assert!(ed25519_verify(&bad_message_hash, &signature_bytes, &public_key_bytes).is_err());
 
         // Other pubkey fails
-        let other_secret_key = SigningKey::new(&mut OsRng);
-        let other_public_key = VerificationKey::from(&other_secret_key);
+        let other_secret_key = ed25519::SigningKey::new(&mut OsRng);
+        let other_public_key = ed25519::VerificationKey::from(&other_secret_key);
         let other_public_key_bytes: [u8; 32] = other_public_key.into();
         assert!(ed25519_verify(&message_hash, &signature_bytes, &other_public_key_bytes).is_err());
     }
