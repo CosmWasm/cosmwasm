@@ -3,12 +3,9 @@
 //! Just to comply with the Digest contract.
 //!
 //! Adapted from `sha2` [sha256.rs](https://github.com/RustCrypto/hashes/blob/master/sha2/src/sha256.rs)
-use sha2::digest::consts::{U28, U32, U64};
+use sha2::digest::consts::{U28, U32};
 use sha2::digest::generic_array::GenericArray;
-use sha2::digest::{BlockInput, FixedOutputDirty, Reset, Update};
-
-// FIXME?: Remove unneeded BlockInput / BlockSize
-type BlockSize = U64;
+use sha2::digest::{FixedOutputDirty, Reset, Update};
 
 use sha2::digest;
 
@@ -24,10 +21,6 @@ impl Default for Sha256 {
             array: GenericArray::default(),
         }
     }
-}
-
-impl BlockInput for Sha256 {
-    type BlockSize = BlockSize;
 }
 
 impl Update for Sha256 {
@@ -63,10 +56,6 @@ impl Default for Sha224 {
             array: GenericArray::default(),
         }
     }
-}
-
-impl BlockInput for Sha224 {
-    type BlockSize = BlockSize;
 }
 
 impl Update for Sha224 {
