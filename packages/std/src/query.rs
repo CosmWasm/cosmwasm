@@ -9,6 +9,7 @@ use crate::ibc::IbcQuery;
 use crate::math::Decimal;
 use crate::types::Empty;
 
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryRequest<C: CustomQuery> {
@@ -31,6 +32,7 @@ pub enum QueryRequest<C: CustomQuery> {
     Wasm(WasmQuery),
 }
 
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum BankQuery {
@@ -66,6 +68,7 @@ pub trait CustomQuery: Serialize {}
 
 impl CustomQuery for Empty {}
 
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum WasmQuery {
@@ -140,6 +143,7 @@ pub struct StargateResponse {
     pub response: Binary,
 }
 
+#[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum StakingQuery {
