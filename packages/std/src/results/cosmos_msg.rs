@@ -109,6 +109,20 @@ pub enum WasmMsg {
         /// optional human-readbale label for the contract
         label: Option<String>,
     },
+    /// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
+    /// customize behavior.
+    ///
+    /// Only the contract admin (as defined in wasmd), if any, is able to make this call.
+    ///
+    /// This is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96).
+    /// `sender` is automatically filled with the current contract's address.
+    Migrate {
+        contract_addr: HumanAddr,
+        /// the code_id of the new logic to place in the given contract
+        new_code_id: u64,
+        /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
+        msg: Binary,
+    },
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
