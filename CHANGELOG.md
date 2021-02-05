@@ -30,6 +30,8 @@ and this project adheres to
 - contracts: added new `ibc-reflect` contract that receives channels and assigns
   each an account to redispatch. Similar idea to ICS27/Interchain Accounts (but
   different implementation) ([#692], [#711], [#714])
+- cosmwasm-std: Added new `WasmMsg::Migrate` variant that allows one contract
+  (eg. multisig) be the admin and migrate another contract ([#768])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -37,6 +39,7 @@ and this project adheres to
 [#711]: https://github.com/CosmWasm/cosmwasm/pull/711
 [#714]: https://github.com/CosmWasm/cosmwasm/pull/714
 [#716]: https://github.com/CosmWasm/cosmwasm/pull/716
+[#768]: https://github.com/CosmWasm/cosmwasm/pull/768
 
 ### Changed
 
