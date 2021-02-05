@@ -2,7 +2,7 @@ use k256::{
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
     ecdsa::{Signature, VerifyingKey},                   // type aliases
 };
-use sha2::Digest;
+use sha2::Digest; // trait
 
 use crate::dummy_sha2;
 use crate::errors::{VmError, VmResult};
@@ -28,12 +28,14 @@ pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]
 
 #[cfg(test)]
 mod tests {
-    use crate::crypto::secp256k1_verify;
+    use super::*;
+
     use elliptic_curve::rand_core::OsRng;
     use elliptic_curve::sec1::ToEncodedPoint;
+
     use k256::{
-        ecdsa::signature::{Signature as _, Signer},   // traits
-        ecdsa::{Signature, SigningKey, VerifyingKey}, // type aliases
+        ecdsa::signature::Signer,          // traits
+        ecdsa::{SigningKey, VerifyingKey}, // type aliases
     };
     use sha2::{Digest, Sha256};
 
