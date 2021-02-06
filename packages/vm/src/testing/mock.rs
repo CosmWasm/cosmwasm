@@ -9,7 +9,6 @@ use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 const GAS_COST_HUMANIZE: u64 = 44;
 const GAS_COST_CANONICALIZE: u64 = 55;
-const GAS_COST_VERIFY_SIGNATURE: u64 = 100;
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -133,25 +132,6 @@ impl BackendApi for MockApi {
         let result = match String::from_utf8(trimmed) {
             Ok(human) => Ok(HumanAddr(human)),
             Err(err) => Err(err.into()),
-        };
-        (result, gas_info)
-    }
-
-    fn secp256k1_verify(
-        &self,
-        message_hash: &[u8],
-        signature: &[u8],
-        public_key: &[u8],
-    ) -> BackendResult<()> {
-        let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SIGNATURE);
-
-        if let Some(backend_error) = self.backend_error {
-            return (Err(BackendError::unknown(backend_error)), gas_info);
-        }
-
-        let result = match crypto::secp256k1_verify(message_hash, signature, public_key) {
-            Ok(_) => Ok(()),
-            Err(err) => Err(BackendError::crypto_err(err.to_string())),
         };
         (result, gas_info)
     }
