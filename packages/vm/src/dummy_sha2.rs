@@ -9,28 +9,28 @@ use sha2::digest::{FixedOutputDirty, Reset, Update};
 
 use sha2::digest;
 
-/// The SHA-256 container
+/// The SHA-256 identity container
 #[derive(Clone)]
-pub struct Sha256 {
+pub struct IdentitySha256 {
     array: GenericArray<u8, U32>,
 }
 
-impl Default for Sha256 {
+impl Default for IdentitySha256 {
     fn default() -> Self {
-        Sha256 {
+        IdentitySha256 {
             array: GenericArray::default(),
         }
     }
 }
 
-impl Update for Sha256 {
+impl Update for IdentitySha256 {
     fn update(&mut self, hash: impl AsRef<[u8]>) {
         assert_eq!(hash.as_ref().len(), 32);
         self.array = *GenericArray::from_slice(hash.as_ref());
     }
 }
 
-impl FixedOutputDirty for Sha256 {
+impl FixedOutputDirty for IdentitySha256 {
     type OutputSize = U32;
 
     fn finalize_into_dirty(&mut self, out: &mut digest::Output<Self>) {
@@ -38,34 +38,34 @@ impl FixedOutputDirty for Sha256 {
     }
 }
 
-impl Reset for Sha256 {
+impl Reset for IdentitySha256 {
     fn reset(&mut self) {
         *self = Self::default();
     }
 }
 
-/// The SHA-224 container.
+/// The SHA-224 identity container.
 #[derive(Clone)]
-pub struct Sha224 {
+pub struct IdentitySha224 {
     array: GenericArray<u8, U28>,
 }
 
-impl Default for Sha224 {
+impl Default for IdentitySha224 {
     fn default() -> Self {
-        Sha224 {
+        IdentitySha224 {
             array: GenericArray::default(),
         }
     }
 }
 
-impl Update for Sha224 {
+impl Update for IdentitySha224 {
     fn update(&mut self, hash: impl AsRef<[u8]>) {
         assert_eq!(hash.as_ref().len(), 28);
         self.array = *GenericArray::from_slice(hash.as_ref());
     }
 }
 
-impl FixedOutputDirty for Sha224 {
+impl FixedOutputDirty for IdentitySha224 {
     type OutputSize = U28;
 
     fn finalize_into_dirty(&mut self, out: &mut digest::Output<Self>) {
@@ -73,7 +73,7 @@ impl FixedOutputDirty for Sha224 {
     }
 }
 
-impl Reset for Sha224 {
+impl Reset for IdentitySha224 {
     fn reset(&mut self) {
         *self = Self::default();
     }
