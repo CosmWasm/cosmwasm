@@ -585,7 +585,6 @@ dependencies = [
  "cfg-if 1.0.0",
  "ecdsa",
  "elliptic-curve",
- "sha2",
 ]
 
 [[package]]
