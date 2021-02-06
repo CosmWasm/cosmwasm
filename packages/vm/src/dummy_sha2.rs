@@ -40,7 +40,7 @@ impl FixedOutputDirty for Sha256 {
 
 impl Reset for Sha256 {
     fn reset(&mut self) {
-        Self::default();
+        *self = Self::default();
     }
 }
 
@@ -75,6 +75,6 @@ impl FixedOutputDirty for Sha224 {
 
 impl Reset for Sha224 {
     fn reset(&mut self) {
-        Self::default();
+        *self = Self::default();
     }
 }
