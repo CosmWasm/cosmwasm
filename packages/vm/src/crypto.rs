@@ -34,10 +34,10 @@ mod tests {
     use elliptic_curve::sec1::ToEncodedPoint;
 
     use k256::{
-        ecdsa::signature::Signer,          // traits
-        ecdsa::{SigningKey, VerifyingKey}, // type aliases
+        ecdsa::signature::Signer, // traits
+        ecdsa::SigningKey,        // type aliases
     };
-    use sha2::{Digest, Sha256};
+    use sha2::Sha256;
 
     // Generic signature verification
     const MSG: &str = "Hello World!";
