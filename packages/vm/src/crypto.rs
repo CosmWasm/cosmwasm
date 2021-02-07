@@ -17,7 +17,7 @@ pub fn ed25519_verify(
     public_key_bytes: &[u8],
 ) -> VmResult<()> {
     // Deserialize
-    let res: Result<ed25519::Signature, ed25519::Error> = signature_bytes.try_into();
+    let res = ed25519::Signature::try_from(signature_bytes);
     let signature = res.map_err(|err| VmError::crypto_err(err.to_string()))?;
 
     ed25519::VerificationKey::try_from(public_key_bytes)
