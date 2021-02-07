@@ -30,8 +30,8 @@ pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]
 mod tests {
     use super::*;
 
-    use elliptic_curve::rand_core::OsRng;
     use elliptic_curve::sec1::ToEncodedPoint;
+    use rand_core::OsRng;
 
     use k256::{
         ecdsa::signature::Signer, // traits

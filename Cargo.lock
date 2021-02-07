@@ -247,6 +247,7 @@ dependencies = [
  "hex",
  "k256",
  "parity-wasm",
+ "rand_core",
  "schemars",
  "serde",
  "serde_json",
