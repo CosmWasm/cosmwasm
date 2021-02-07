@@ -5,6 +5,7 @@ use crate::binary::Binary;
 use crate::errors::{StdError, StdResult, SystemError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
+#[cfg(feature = "iterator")]
 use crate::sections::decode_sections2;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
