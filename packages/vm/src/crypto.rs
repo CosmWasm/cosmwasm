@@ -11,16 +11,12 @@ use std::convert::TryFrom;
 use crate::errors::{VmError, VmResult};
 use crate::identity_digest::Identity256;
 
-pub fn ed25519_verify(
-    message: &[u8],
-    signature_bytes: &[u8],
-    public_key_bytes: &[u8],
-) -> VmResult<()> {
+pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
     // Deserialize
-    let res = ed25519::Signature::try_from(signature_bytes);
-    let signature = res.map_err(|err| VmError::crypto_err(err.to_string()))?;
+    let signature = ed25519::Signature::try_from(signature)
+        .map_err(|err| VmError::crypto_err(err.to_string()))?;
 
-    ed25519::VerificationKey::try_from(public_key_bytes)
+    ed25519::VerificationKey::try_from(public_key)
         .and_then(|vk| vk.verify(&signature, &message))
         .map_err(|err| VmError::crypto_err(err.to_string()))
 }
