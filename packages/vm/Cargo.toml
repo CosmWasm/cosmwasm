@@ -57,6 +57,7 @@ tempfile = "3.1.0"
 wat = "1.0"
 clap = "2.33.3"
 base64 = "0.13.0"
+rand_core = { version = "0.5", features = ["getrandom"] }
 elliptic-curve = "0.8.4"
 k256 = { version = "0.7.2", features = ["sha256"] }
 
