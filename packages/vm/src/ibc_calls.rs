@@ -241,7 +241,7 @@ mod tests {
     use cosmwasm_std::{Empty, IbcOrder};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
-    const IBC_VERSION: &str = "ibc-reflect";
+    const IBC_VERSION: &str = "ibc-reflect-v1";
 
     fn setup(
         instance: &mut Instance<MockApi, MockStorage, MockQuerier>,
