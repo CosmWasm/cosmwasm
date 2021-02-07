@@ -148,7 +148,7 @@ mod tests {
             signature: String,
             #[serde(rename = "pubkey")]
             public_key: String,
-        };
+        }
 
         // Open the file in read-only mode with buffer.
         let file = File::open(COSMOS_TESTS_JSON).unwrap();
