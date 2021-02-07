@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr,
     Context, Deps, DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo,
-    MigrateResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    MigrateResponse, MutResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -105,9 +105,9 @@ pub fn init(
     );
 
     // This adds some unrelated event attribute for testing purposes
-    let mut ctx = Context::new();
-    ctx.add_attribute("Let the", "hacking begin");
-    Ok(ctx.into())
+    let mut resp = InitResponse::new();
+    resp.add_attribute("Let the", "hacking begin");
+    Ok(resp)
 }
 
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<MigrateResponse, HackError> {

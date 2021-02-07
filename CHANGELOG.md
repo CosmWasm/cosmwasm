@@ -27,6 +27,9 @@ and this project adheres to
 - cosmwasm-std: (requires `stargate`) Added new `CosmosMsg::Ibc(IbcMsg)` message
   type to use ibctransfer app or send raw ics packets (if contract has ibc entry
   points) ([#692], [#710])
+- cosmwasm-std: The new `MutResponse` trait adds mutable helper methods to
+  `InitResponse`, `MigrateResponse` and `HandleResponse` which make `Context`
+  obsolete.
 - contracts: added new `ibc-reflect` contract that receives channels and assigns
   each an account to redispatch. Similar idea to ICS27/Interchain Accounts (but
   different implementation) ([#692], [#711], [#714])

@@ -38,7 +38,7 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     pub fn new() -> Self {
-        Context::default()
+        Self::default()
     }
 
     pub fn add_attribute<K: ToString, V: ToString>(&mut self, key: K, value: V) {
