@@ -140,7 +140,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleRespo
     let invest = invest_info_read(deps.storage).load()?;
     // payment finds the proper coin (or throws an error)
     let payment = info
-        .sent_funds
+        .funds
         .iter()
         .find(|x| x.denom == invest.bond_denom)
         .ok_or_else(|| StdError::generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
