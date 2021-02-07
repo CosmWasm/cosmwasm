@@ -120,6 +120,15 @@ impl Api for MockApi {
         Ok(human.into())
     }
 
+    fn secp256k1_verify(
+        &self,
+        _message_hash: &[u8],
+        _signature: &[u8],
+        _public_key: &[u8],
+    ) -> StdResult<()> {
+        Ok(())
+    }
+
     fn debug(&self, message: &str) {
         println!("{}", message);
     }
