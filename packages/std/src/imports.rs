@@ -35,6 +35,9 @@ extern "C" {
 
     fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
+
+    fn verify_secp256k1(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
     fn debug(source_ptr: u32);
 
     /// Executes a query on the chain (import). Not to be confused with the
@@ -176,6 +179,30 @@ impl Api for ExternalApi {
 
         let address = unsafe { consume_string_region_written_by_vm(human) };
         Ok(address.into())
+    }
+
+    fn secp256k1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> StdResult<()> {
+        let hash_send = build_region(message_hash);
+        let hash_send_ptr = &*hash_send as *const Region as u32;
+        let sig_send = build_region(signature);
+        let sig_send_ptr = &*sig_send as *const Region as u32;
+        let pubkey_send = build_region(public_key);
+        let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
+
+        let result = unsafe { verify_secp256k1(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
+        if result != 0 {
+            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
+            return Err(StdError::generic_err(format!(
+                "secp256k1_verify error: {}",
+                error
+            )));
+        }
+        Ok(())
     }
 
     fn debug(&self, message: &str) {
