@@ -3,6 +3,7 @@
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
 
+use crate::crypto::secp256k1_verify;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
 use cosmwasm_std::{CanonicalAddr, HumanAddr};
@@ -15,6 +16,9 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
+use crate::GasInfo;
+
+const GAS_COST_VERIFY_SECP256K1_SIGNATURE: u64 = 100;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -29,6 +33,16 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
+
+/// Length of a (sha-256) hash in bytes
+const LENGTH_SHA256_HASH: usize = 32;
+
+/// Max length of a serialized signature
+const MAX_LENGTH_SIGNATURE: usize = 64;
+
+/// Max length of a serialized public key
+const MAX_LENGTH_PUBKEY: usize = 33;
+
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
@@ -73,6 +87,15 @@ pub fn native_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
     destination_ptr: u32,
 ) -> VmResult<u32> {
     do_humanize_address(&env, source_ptr, destination_ptr)
+}
+
+pub fn native_verify_secp256k1<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    pubkey_ptr: u32,
+) -> VmResult<u32> {
+    do_verify_secp256k1(&env, hash_ptr, signature_ptr, pubkey_ptr)
 }
 
 pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
@@ -229,6 +252,34 @@ fn do_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
             Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
         }
         Err(err) => Err(VmError::from(err)),
+    }
+}
+
+fn do_verify_secp256k1<A: Api, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    pubkey_ptr: u32,
+) -> VmResult<u32> {
+    let hash = Binary(read_region(&env.memory(), hash_ptr, LENGTH_SHA256_HASH)?);
+
+    let signature = Binary(read_region(
+        &env.memory(),
+        signature_ptr,
+        MAX_LENGTH_SIGNATURE,
+    )?);
+
+    let pubkey = Binary(read_region(&env.memory(), pubkey_ptr, MAX_LENGTH_PUBKEY)?);
+
+    let result = secp256k1_verify(&hash, &signature, &pubkey);
+    let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    match result {
+        Ok(()) => Ok(0),
+        Err(VmError::CryptoErr { msg, .. }) => {
+            Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
+        }
+        Err(err) => Err(err),
     }
 }
 
