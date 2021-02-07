@@ -7,8 +7,10 @@ use crate::types::Empty;
 
 use super::attribute::Attribute;
 use super::cosmos_msg::CosmosMsg;
-use super::mut_response::MutResponse;
 
+/// A response of the contract entry point `handle`.
+///
+/// See [InitResponse][crate::InitResponse] for how this is used.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct HandleResponse<T = Empty>
 where
@@ -18,15 +20,6 @@ where
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
     pub data: Option<Binary>,
-}
-
-impl<T> HandleResponse<T>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
-    pub fn new() -> Self {
-        Self::default()
-    }
 }
 
 impl<T> Default for HandleResponse<T>
@@ -42,22 +35,26 @@ where
     }
 }
 
-impl<T> MutResponse<T> for HandleResponse<T>
+impl<T> HandleResponse<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    fn add_attribute<K: Into<String>, V: Into<String>>(&mut self, key: K, value: V) {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn add_attribute<K: Into<String>, V: Into<String>>(&mut self, key: K, value: V) {
         self.attributes.push(Attribute {
             key: key.into(),
             value: value.into(),
         });
     }
 
-    fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
         self.messages.push(msg.into());
     }
 
-    fn set_data<U: Into<Binary>>(&mut self, data: U) {
+    pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
         self.data = Some(data.into());
     }
 }

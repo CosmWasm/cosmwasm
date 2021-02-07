@@ -13,7 +13,7 @@ use super::migrate::MigrateResponse;
 
 #[deprecated(
     since = "0.14.0",
-    note = "Import the trait cosmwasm_std::MutResponse in order to use mutating helpers on InitResponse/HandleResponse/MigrateResponse directly."
+    note = "Use mutating helpers on InitResponse/HandleResponse/MigrateResponse directly."
 )]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Context<T = Empty>

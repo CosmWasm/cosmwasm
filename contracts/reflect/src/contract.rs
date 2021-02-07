@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, MutResponse, QueryRequest, QueryResponse, StdError,
-    StdResult, SystemResult, WasmMsg,
+    HumanAddr, InitResponse, MessageInfo, QueryRequest, QueryResponse, StdError, StdResult,
+    SystemResult, WasmMsg,
 };
 
 use crate::errors::ReflectError;

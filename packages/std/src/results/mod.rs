@@ -7,7 +7,6 @@ mod cosmos_msg;
 mod handle;
 mod init;
 mod migrate;
-mod mut_response;
 mod query;
 mod system_result;
 
@@ -19,6 +18,5 @@ pub use cosmos_msg::{wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, Staking
 pub use handle::HandleResponse;
 pub use init::InitResponse;
 pub use migrate::MigrateResponse;
-pub use mut_response::MutResponse;
 pub use query::QueryResponse;
 pub use system_result::SystemResult;

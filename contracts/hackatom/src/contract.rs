@@ -7,7 +7,7 @@ use sha2::{Digest, Sha256};
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr, Deps,
     DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
-    MutResponse, QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
