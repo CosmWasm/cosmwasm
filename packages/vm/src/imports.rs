@@ -95,7 +95,7 @@ pub fn native_verify_secp256k1<A: BackendApi, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    do_verify_secp256k1(&env, hash_ptr, signature_ptr, pubkey_ptr)
+    do_verify_secp256k1(env, hash_ptr, signature_ptr, pubkey_ptr)
 }
 
 pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
