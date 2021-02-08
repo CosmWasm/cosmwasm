@@ -187,7 +187,7 @@ impl Api for ExternalApi {
         message_hash: &[u8],
         signature: &[u8],
         public_key: &[u8],
-    ) -> StdResult<()> {
+    ) -> StdResult<bool> {
         let hash_send = build_region(message_hash);
         let hash_send_ptr = &*hash_send as *const Region as u32;
         let sig_send = build_region(signature);
@@ -196,14 +196,17 @@ impl Api for ExternalApi {
         let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
 
         let result = unsafe { verify_secp256k1(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
-        if result != 0 {
-            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
-            return Err(StdError::generic_err(format!(
-                "secp256k1_verify error: {}",
-                error
-            )));
+        match result {
+            1 => Ok(true),
+            0 => Ok(false),
+            ptr => {
+                let error = unsafe { consume_string_region_written_by_vm(ptr as *mut Region) };
+                return Err(StdError::generic_err(format!(
+                    "verify_secp256k1 error: {}",
+                    error
+                )));
+            }
         }
-        Ok(())
     }
 
     fn debug(&self, message: &str) {

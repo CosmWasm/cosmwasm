@@ -72,7 +72,7 @@ pub trait Api {
         message_hash: &[u8],
         signature: &[u8],
         public_key: &[u8],
-    ) -> StdResult<()>;
+    ) -> StdResult<bool>;
 
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.
