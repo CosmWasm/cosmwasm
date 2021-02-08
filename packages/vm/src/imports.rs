@@ -89,13 +89,13 @@ pub fn native_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
     do_humanize_address(&env, source_ptr, destination_ptr)
 }
 
-pub fn native_verify_secp256k1<A: BackendApi, S: Storage, Q: Querier>(
+pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    do_verify_secp256k1(env, hash_ptr, signature_ptr, pubkey_ptr)
+    do_secp256k1_verify(env, hash_ptr, signature_ptr, pubkey_ptr)
 }
 
 pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
@@ -255,7 +255,7 @@ fn do_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_verify_secp256k1<A: Api, S: Storage, Q: Querier>(
+fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,

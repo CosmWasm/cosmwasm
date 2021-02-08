@@ -37,7 +37,7 @@ extern "C" {
     fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
 
-    fn verify_secp256k1(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+    fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
     fn debug(source_ptr: u32);
 
@@ -195,11 +195,11 @@ impl Api for ExternalApi {
         let pubkey_send = build_region(public_key);
         let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
 
-        let result = unsafe { verify_secp256k1(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
+        let result = unsafe { secp256k1_verify(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
         match result {
             1 => Ok(true),
             0 => Ok(false),
-            x => panic!(format!("unexpected verify_secp256k1 return value: {}", x)),
+            x => panic!(format!("unexpected secp256k1_verify return value: {}", x)),
         }
     }
 
