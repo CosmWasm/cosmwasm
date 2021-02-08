@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "HandleResponse_for_CustomMsg",
+  "description": "A response of the contract entry point `handle`.\n\nSee [InitResponse][crate::InitResponse] for how this is used.",
   "type": "object",
   "required": [
     "attributes",

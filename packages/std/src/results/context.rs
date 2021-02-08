@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use schemars::JsonSchema;
 use std::fmt;
 
@@ -9,6 +11,10 @@ use super::handle::HandleResponse;
 use super::init::InitResponse;
 use super::migrate::MigrateResponse;
 
+#[deprecated(
+    since = "0.14.0",
+    note = "Use mutating helpers on InitResponse/HandleResponse/MigrateResponse directly."
+)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Context<T = Empty>
 where
@@ -38,7 +44,7 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     pub fn new() -> Self {
-        Context::default()
+        Self::default()
     }
 
     pub fn add_attribute<K: ToString, V: ToString>(&mut self, key: K, value: V) {

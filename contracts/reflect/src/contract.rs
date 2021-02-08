@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, to_binary, to_vec, Binary, Context, ContractResult, CosmosMsg, Deps, DepsMut, Env,
-    HandleResponse, HumanAddr, InitResponse, MessageInfo, QueryRequest, QueryResponse, StdError,
-    StdResult, SystemResult, WasmMsg,
+    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
+    HumanAddr, InitResponse, MessageInfo, QueryRequest, QueryResponse, StdError, StdResult,
+    SystemResult, WasmMsg,
 };
 
 use crate::errors::ReflectError;
@@ -22,7 +22,7 @@ pub fn init(
     };
     config(deps.storage).save(&state)?;
 
-    let mut ctx = Context::new();
+    let mut resp = InitResponse::new();
     if let Some(id) = msg.callback_id {
         let data = CallbackMsg::InitCallback {
             id,
@@ -33,9 +33,9 @@ pub fn init(
             msg: to_binary(&data)?,
             send: vec![],
         };
-        ctx.add_message(msg);
+        resp.add_message(msg);
     }
-    Ok(ctx.into())
+    Ok(resp)
 }
 
 pub fn handle(

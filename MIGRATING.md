@@ -144,6 +144,59 @@ major releases of `cosmwasm`. Note that you can also view the
   [msgmigratecontract]:
     https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L86-L96
 
+- Add mutating helper methods to `InitResponse`, `HandleResponse` and
+  `MigrateResponse` that can be used instead of a creating a `Context` that is
+  later converted to a response:
+
+  ```rust
+  // before
+  pub fn handle_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, ContractError> {
+      // ...
+
+      // release counter_offer to creator
+      let mut ctx = Context::new();
+      ctx.add_message(BankMsg::Send {
+          to_address: state.creator,
+          amount: state.counter_offer,
+      });
+
+      // release collateral to sender
+      ctx.add_message(BankMsg::Send {
+          to_address: state.owner,
+          amount: state.collateral,
+      });
+
+      // ..
+
+      ctx.add_attribute("action", "execute");
+      Ok(ctx.into())
+  }
+
+
+  // after
+  pub fn handle_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, ContractError> {
+      // ...
+
+      // release counter_offer to creator
+      let mut resp = HandleResponse::new();
+      resp.add_message(BankMsg::Send {
+          to_address: state.creator,
+          amount: state.counter_offer,
+      });
+
+      // release collateral to sender
+      resp.add_message(BankMsg::Send {
+          to_address: state.owner,
+          amount: state.collateral,
+      });
+
+      // ..
+
+      resp.add_attribute("action", "execute");
+      Ok(resp)
+  }
+  ```
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0.

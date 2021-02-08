@@ -40,8 +40,10 @@ pub use crate::query::{
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
+#[allow(deprecated)]
+pub use crate::results::Context;
 pub use crate::results::{
-    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, Context, ContractResult, CosmosMsg,
+    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg,
     HandleResponse, InitResponse, MigrateResponse, QueryResponse, StakingMsg, SystemResult,
     WasmMsg,
 };
