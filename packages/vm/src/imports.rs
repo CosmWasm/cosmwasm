@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
-use cosmwasm_std::{Binary, CanonicalAddr, HumanAddr};
+use cosmwasm_std::{CanonicalAddr, HumanAddr};
 
 use crate::backend::{Api, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -215,13 +215,10 @@ fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let canonical = Binary(read_region(
-        &env.memory(),
-        source_ptr,
-        MAX_LENGTH_CANONICAL_ADDRESS,
-    )?);
+    let canonical: CanonicalAddr =
+        read_region(&env.memory(), source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?.into();
 
-    let (result, gas_info) = env.api.human_address(&CanonicalAddr(canonical));
+    let (result, gas_info) = env.api.human_address(&canonical);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(human) => {
@@ -333,7 +330,7 @@ fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
 mod tests {
     use super::*;
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
+        coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, HumanAddr, QueryRequest,
         SystemError, SystemResult, WasmQuery,
     };
     use std::ptr::NonNull;
