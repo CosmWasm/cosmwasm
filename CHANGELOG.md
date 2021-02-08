@@ -79,8 +79,10 @@ and this project adheres to
 
 ### Deprecated
 
+- cosmwasm-std: `InitResponse`, `MigrateResponse` and `HandleResponse` are
+  deprecated in favour of the new `Response`.
 - cosmwasm-std: `Context` is deprecated in favour of the new mutable helpers in
-  `InitResponse`, `MigrateResponse` and `HandleResponse`.
+  `Response`.
 
 ## [0.13.2] - 2021-01-14
 

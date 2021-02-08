@@ -4,8 +4,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, HandleResponse,
-    InitResponse, MessageInfo, MigrateResponse, Order, QueryResponse, StdResult, Storage,
+    entry_point, from_slice, to_binary, to_vec, Binary, Deps, DepsMut, Env, MessageInfo, Order,
+    QueryResponse, Response, StdResult, Storage,
 };
 
 use crate::msg::{InitMsg, MigrateMsg};
@@ -65,21 +65,11 @@ pub struct ListResponse {
 }
 
 // init is a no-op, just empty data
-pub fn init(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: InitMsg,
-) -> StdResult<InitResponse> {
-    Ok(InitResponse::default())
+pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
+    Ok(Response::default())
 }
 
-pub fn handle(
-    deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+pub fn handle(deps: DepsMut, _env: Env, _info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
     match msg {
         HandleMsg::Enqueue { value } => handle_enqueue(deps, value),
         HandleMsg::Dequeue {} => handle_dequeue(deps),
@@ -88,9 +78,9 @@ pub fn handle(
 
 const FIRST_KEY: u8 = 0;
 
-fn handle_enqueue(deps: DepsMut, value: i32) -> StdResult<HandleResponse> {
+fn handle_enqueue(deps: DepsMut, value: i32) -> StdResult<Response> {
     enqueue(deps.storage, value)?;
-    Ok(HandleResponse::default())
+    Ok(Response::default())
 }
 
 fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
@@ -109,11 +99,11 @@ fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
     Ok(())
 }
 
-fn handle_dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
+fn handle_dequeue(deps: DepsMut) -> StdResult<Response> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
 
-    let mut res = HandleResponse::default();
+    let mut res = Response::default();
     if let Some((key, value)) = first {
         // remove from storage and return old value
         deps.storage.remove(&key);
@@ -125,7 +115,7 @@ fn handle_dequeue(deps: DepsMut) -> StdResult<HandleResponse> {
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
-pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<MigrateResponse> {
+pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response> {
     // clear all
     let keys: Vec<_> = deps
         .storage
@@ -140,7 +130,7 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<MigrateR
     enqueue(deps.storage, 100)?;
     enqueue(deps.storage, 101)?;
     enqueue(deps.storage, 102)?;
-    Ok(MigrateResponse::default())
+    Ok(Response::default())
 }
 
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {

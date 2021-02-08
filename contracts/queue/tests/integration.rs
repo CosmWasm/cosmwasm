@@ -17,9 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{
-    from_binary, from_slice, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
-};
+use cosmwasm_std::{from_binary, from_slice, HumanAddr, InitResponse, MessageInfo, Response};
 use cosmwasm_vm::{
     testing::{
         handle, init, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi,
@@ -67,7 +65,7 @@ fn init_and_query() {
 #[test]
 fn push_and_query() {
     let (mut deps, info) = create_contract();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
@@ -81,21 +79,21 @@ fn push_and_query() {
 #[test]
 fn multiple_push() {
     let (mut deps, info) = create_contract();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 25 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 35 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
@@ -109,22 +107,21 @@ fn multiple_push() {
 #[test]
 fn push_and_pop() {
     let (mut deps, info) = create_contract();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 25 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 17 },
     )
     .unwrap();
-    let res: HandleResponse =
-        handle(&mut deps, mock_env(), info.clone(), HandleMsg::Dequeue {}).unwrap();
+    let res: Response = handle(&mut deps, mock_env(), info.clone(), HandleMsg::Dequeue {}).unwrap();
     // ensure we popped properly
     assert!(res.data.is_some());
     let data = res.data.unwrap();
@@ -138,28 +135,28 @@ fn push_and_pop() {
 #[test]
 fn push_and_reduce() {
     let (mut deps, info) = create_contract();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 40 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 15 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 85 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
@@ -177,14 +174,14 @@ fn push_and_reduce() {
 fn migrate_works() {
     let (mut deps, info) = create_contract();
 
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
         HandleMsg::Enqueue { value: 25 },
     )
     .unwrap();
-    let _: HandleResponse = handle(
+    let _: Response = handle(
         &mut deps,
         mock_env(),
         info.clone(),
@@ -195,7 +192,7 @@ fn migrate_works() {
     assert_eq!(get_sum(&mut deps), 25 + 17);
 
     let msg = MigrateMsg {};
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), msg).unwrap();
+    let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
     assert_eq!(res.messages.len(), 0);
 
     assert_eq!(get_count(&mut deps), 3);
@@ -207,7 +204,7 @@ fn query_list() {
     let (mut deps, info) = create_contract();
 
     for _ in 0..0x25 {
-        let _: HandleResponse = handle(
+        let _: Response = handle(
             &mut deps,
             mock_env(),
             info.clone(),
@@ -216,7 +213,7 @@ fn query_list() {
         .unwrap();
     }
     for _ in 0..0x19 {
-        let _: HandleResponse =
+        let _: Response =
             handle(&mut deps, mock_env(), info.clone(), HandleMsg::Dequeue {}).unwrap();
     }
     // we add 0x25 items and then remove the first 0x19, leaving [0x19, 0x1a, 0x1b, ..., 0x24]

@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, QuerierWrapper, QueryResponse, StakingMsg, StdError,
-    StdResult, Uint128, WasmMsg,
+    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HumanAddr,
+    MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128,
+    WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -17,7 +17,7 @@ use crate::state::{
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
 #[entry_point]
-pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
+pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<Response> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
     if !vals.iter().any(|v| v.address == msg.validator) {
@@ -48,7 +48,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdRes
     let supply = Supply::default();
     total_supply(deps.storage).save(&supply)?;
 
-    Ok(InitResponse::default())
+    Ok(Response::default())
 }
 
 #[entry_point]
@@ -57,7 +57,7 @@ pub fn handle(
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
-) -> Result<HandleResponse, StakingError> {
+) -> Result<Response, StakingError> {
     match msg {
         HandleMsg::Transfer { recipient, amount } => {
             Ok(transfer(deps, env, info, recipient, amount)?)
@@ -76,7 +76,7 @@ pub fn transfer(
     info: MessageInfo,
     recipient: HumanAddr,
     send: Uint128,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     let rcpt_raw = deps.api.canonical_address(&recipient)?;
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
@@ -88,7 +88,7 @@ pub fn transfer(
         Ok(balance.unwrap_or_default() + send)
     })?;
 
-    let res = HandleResponse {
+    let res = Response {
         messages: vec![],
         attributes: vec![
             attr("action", "transfer"),
@@ -133,7 +133,7 @@ fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
     }
 }
 
-pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     // ensure we have the proper denom
@@ -168,7 +168,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleRespo
     })?;
 
     // bond them to the validator
-    let res = HandleResponse {
+    let res = Response {
         messages: vec![StakingMsg::Delegate {
             validator: invest.validator,
             amount: payment.clone(),
@@ -185,12 +185,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleRespo
     Ok(res)
 }
 
-pub fn unbond(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    amount: Uint128,
-) -> StdResult<HandleResponse> {
+pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> StdResult<Response> {
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     let invest = invest_info_read(deps.storage).load()?;
@@ -238,7 +233,7 @@ pub fn unbond(
     })?;
 
     // unbond them
-    let res = HandleResponse {
+    let res = Response {
         messages: vec![StakingMsg::Undelegate {
             validator: invest.validator,
             amount: coin(unbond.u128(), &invest.bond_denom),
@@ -255,7 +250,7 @@ pub fn unbond(
     Ok(res)
 }
 
-pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     // find how many tokens the contract has
     let invest = invest_info_read(deps.storage).load()?;
     let mut balance = deps
@@ -284,7 +279,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
 
     // transfer tokens to the sender
     balance.amount = to_send;
-    let res = HandleResponse {
+    let res = Response {
         messages: vec![BankMsg::Send {
             to_address: info.sender.clone(),
             amount: vec![balance],
@@ -303,13 +298,13 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<HandleResp
 /// reinvest will withdraw all pending rewards,
 /// then issue a callback to itself via _bond_all_tokens
 /// to reinvest the new earnings (and anything else that accumulated)
-pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<HandleResponse> {
+pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Response> {
     let contract_addr = env.contract.address;
     let invest = invest_info_read(deps.storage).load()?;
     let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
-    let res = HandleResponse {
+    let res = Response {
         messages: vec![
             StakingMsg::Withdraw {
                 validator: invest.validator,
@@ -333,7 +328,7 @@ pub fn _bond_all_tokens(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-) -> Result<HandleResponse, StakingError> {
+) -> Result<Response, StakingError> {
     // this is just meant as a call-back to ourself
     if info.sender != env.contract.address {
         return Err(Unauthorized {}.build());
@@ -356,12 +351,12 @@ pub fn _bond_all_tokens(
     }) {
         Ok(_) => {}
         // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
-        Err(StdError::Underflow { .. }) => return Ok(HandleResponse::default()),
+        Err(StdError::Underflow { .. }) => return Ok(Response::default()),
         Err(e) => return Err(e.into()),
     }
 
     // and bond them to the validator
-    let res = HandleResponse {
+    let res = Response {
         messages: vec![StakingMsg::Delegate {
             validator: invest.validator,
             amount: balance.clone(),

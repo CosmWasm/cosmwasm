@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, HandleResponse, HumanAddr, IbcMsg,
-    InitResponse, MessageInfo, Order, QueryResponse, StdError, StdResult,
+    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, HumanAddr, IbcMsg, MessageInfo,
+    Order, QueryResponse, Response, StdError, StdResult,
 };
 
 use crate::ibc::build_timeout_timestamp;
@@ -11,12 +11,12 @@ use crate::msg::{
 use crate::state::{accounts, accounts_read, config, config_read, Config};
 
 #[entry_point]
-pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdResult<InitResponse> {
+pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     let cfg = Config { admin: info.sender };
     config(deps.storage).save(&cfg)?;
 
-    Ok(InitResponse {
+    Ok(Response {
         data: None,
         messages: vec![],
         attributes: vec![attr("action", "init")],
@@ -24,12 +24,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdRe
 }
 
 #[entry_point]
-pub fn handle(
-    deps: DepsMut,
-    env: Env,
-    info: MessageInfo,
-    msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+pub fn handle(deps: DepsMut, env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
     match msg {
         HandleMsg::UpdateAdmin { admin } => handle_update_admin(deps, info, admin),
         HandleMsg::SendMsgs { channel_id, msgs } => {
@@ -49,7 +44,7 @@ pub fn handle_update_admin(
     deps: DepsMut,
     info: MessageInfo,
     new_admin: HumanAddr,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     // auth check
     let mut cfg = config(deps.storage).load()?;
     if info.sender != cfg.admin {
@@ -58,7 +53,7 @@ pub fn handle_update_admin(
     cfg.admin = new_admin;
     config(deps.storage).save(&cfg)?;
 
-    Ok(HandleResponse {
+    Ok(Response {
         messages: vec![],
         attributes: vec![
             attr("action", "handle_update_admin"),
@@ -74,7 +69,7 @@ pub fn handle_send_msgs(
     info: MessageInfo,
     channel_id: String,
     msgs: Vec<CosmosMsg>,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     // auth check
     let cfg = config(deps.storage).load()?;
     if info.sender != cfg.admin {
@@ -92,7 +87,7 @@ pub fn handle_send_msgs(
         timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
-    Ok(HandleResponse {
+    Ok(Response {
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_send_msgs")],
         data: None,
@@ -104,7 +99,7 @@ pub fn handle_check_remote_balance(
     env: Env,
     info: MessageInfo,
     channel_id: String,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     // auth check
     let cfg = config(deps.storage).load()?;
     if info.sender != cfg.admin {
@@ -122,7 +117,7 @@ pub fn handle_check_remote_balance(
         timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
-    Ok(HandleResponse {
+    Ok(Response {
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_check_remote_balance")],
         data: None,
@@ -135,7 +130,7 @@ pub fn handle_send_funds(
     mut info: MessageInfo,
     reflect_channel_id: String,
     transfer_channel_id: String,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     // intentionally no auth check
 
     // require some funds
@@ -172,7 +167,7 @@ pub fn handle_send_funds(
         timeout_timestamp: build_timeout_timestamp(&env.block),
     };
 
-    Ok(HandleResponse {
+    Ok(Response {
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_send_funds")],
         data: None,

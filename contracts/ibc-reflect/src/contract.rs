@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
-    Deps, DepsMut, Empty, Env, HandleResponse, HumanAddr, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, InitResponse, MessageInfo,
-    MigrateResponse, Order, QueryResponse, StdError, StdResult,
+    Deps, DepsMut, Empty, Env, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
+    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Response, StdError,
+    StdResult,
 };
 
 use crate::msg::{
@@ -15,14 +15,14 @@ use crate::state::{accounts, accounts_read, config, Config};
 pub const IBC_VERSION: &str = "ibc-reflect-v1";
 
 #[entry_point]
-pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdResult<InitResponse> {
+pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     let cfg = Config {
         reflect_code_id: msg.reflect_code_id,
     };
     config(deps.storage).save(&cfg)?;
 
-    Ok(InitResponse {
+    Ok(Response {
         messages: vec![],
         attributes: vec![attr("action", "init")],
         data: None,
@@ -30,12 +30,7 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
 }
 
 #[entry_point]
-pub fn handle(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+pub fn handle(deps: DepsMut, _env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
     match msg {
         HandleMsg::InitCallback { id, contract_addr } => {
             handle_init_callback(deps, info, id, contract_addr)
@@ -48,7 +43,7 @@ pub fn handle_init_callback(
     info: MessageInfo,
     id: String,
     contract_addr: HumanAddr,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     // sanity check - the caller is registering itself
     if info.sender != contract_addr {
         return Err(StdError::generic_err("Must register self on callback"));
@@ -65,7 +60,7 @@ pub fn handle_init_callback(
         }
     })?;
 
-    Ok(HandleResponse {
+    Ok(Response {
         messages: vec![],
         attributes: vec![attr("action", "handle_init_callback")],
         data: None,
@@ -192,8 +187,8 @@ pub fn ibc_channel_close(
 
 /// this is a no-op just to test how this integrates with wasmd
 #[entry_point]
-pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<MigrateResponse> {
-    Ok(MigrateResponse::default())
+pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
+    Ok(Response::default())
 }
 
 #[entry_point]

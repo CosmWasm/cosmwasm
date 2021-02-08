@@ -19,6 +19,11 @@ pub use query::QueryResponse;
 pub use response::Response;
 pub use system_result::SystemResult;
 
+#[deprecated(since = "0.14.0", note = "Renamed to Response.")]
 pub type InitResponse<T = Empty> = Response<T>;
+
+#[deprecated(since = "0.14.0", note = "Renamed to Response.")]
 pub type HandleResponse<T = Empty> = Response<T>;
+
+#[deprecated(since = "0.14.0", note = "Renamed to Response.")]
 pub type MigrateResponse<T = Empty> = Response<T>;

@@ -15,18 +15,18 @@ use std::fmt;
 /// Success:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, ContractResult, HandleResponse};
-/// let response: HandleResponse = HandleResponse::default();
-/// let result: ContractResult<HandleResponse> = ContractResult::Ok(response);
+/// # use cosmwasm_std::{to_vec, ContractResult, Response};
+/// let response: Response = Response::default();
+/// let result: ContractResult<Response> = ContractResult::Ok(response);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec());
 /// ```
 ///
 /// Failure:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, ContractResult, HandleResponse};
+/// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let error_msg = String::from("Something went wrong");
-/// let result: ContractResult<HandleResponse> = ContractResult::Err(error_msg);
+/// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#.to_vec());
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

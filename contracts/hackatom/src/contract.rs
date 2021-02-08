@@ -6,8 +6,8 @@ use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
     from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr, Deps,
-    DepsMut, Env, HandleResponse, HumanAddr, InitResponse, MessageInfo, MigrateResponse,
-    QueryRequest, QueryResponse, StdError, StdResult, WasmQuery,
+    DepsMut, Env, HumanAddr, MessageInfo, QueryRequest, QueryResponse, Response, StdError,
+    StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -92,7 +92,7 @@ pub fn init(
     _env: Env,
     info: MessageInfo,
     msg: InitMsg,
-) -> Result<InitResponse, HackError> {
+) -> Result<Response, HackError> {
     deps.api.debug("here we go 🚀");
 
     deps.storage.set(
@@ -105,12 +105,12 @@ pub fn init(
     );
 
     // This adds some unrelated event attribute for testing purposes
-    let mut resp = InitResponse::new();
+    let mut resp = Response::new();
     resp.add_attribute("Let the", "hacking begin");
     Ok(resp)
 }
 
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<MigrateResponse, HackError> {
+pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -119,7 +119,7 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<MigrateRespo
     config.verifier = deps.api.canonical_address(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
-    Ok(MigrateResponse::default())
+    Ok(Response::default())
 }
 
 pub fn handle(
@@ -127,7 +127,7 @@ pub fn handle(
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
-) -> Result<HandleResponse, HackError> {
+) -> Result<Response, HackError> {
     match msg {
         HandleMsg::Release {} => do_release(deps, env, info),
         HandleMsg::CpuLoop {} => do_cpu_loop(),
@@ -139,7 +139,7 @@ pub fn handle(
     }
 }
 
-fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, HackError> {
+fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -150,7 +150,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleRespon
         let to_addr = deps.api.human_address(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
-        let mut resp = HandleResponse::new();
+        let mut resp = Response::new();
         resp.add_attribute("action", "release");
         resp.add_attribute("destination", to_addr.clone());
         resp.add_message(BankMsg::Send {
@@ -164,7 +164,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleRespon
     }
 }
 
-fn do_cpu_loop() -> Result<HandleResponse, HackError> {
+fn do_cpu_loop() -> Result<Response, HackError> {
     let mut counter = 0u64;
     loop {
         counter += 1;
@@ -174,7 +174,7 @@ fn do_cpu_loop() -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_storage_loop(deps: DepsMut) -> Result<HandleResponse, HackError> {
+fn do_storage_loop(deps: DepsMut) -> Result<Response, HackError> {
     let mut test_case = 0u64;
     loop {
         deps.storage
@@ -183,7 +183,7 @@ fn do_storage_loop(deps: DepsMut) -> Result<HandleResponse, HackError> {
     }
 }
 
-fn do_memory_loop() -> Result<HandleResponse, HackError> {
+fn do_memory_loop() -> Result<Response, HackError> {
     let mut data = vec![1usize];
     loop {
         // add one element
@@ -192,7 +192,7 @@ fn do_memory_loop() -> Result<HandleResponse, HackError> {
 }
 
 #[allow(unused_variables)]
-fn do_allocate_large_memory(pages: u32) -> Result<HandleResponse, HackError> {
+fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
     // We create memory pages explicitely since Rust's default allocator seems to be clever enough
     // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
     // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
@@ -204,9 +204,9 @@ fn do_allocate_large_memory(pages: u32) -> Result<HandleResponse, HackError> {
         if old_size == usize::max_value() {
             return Err(StdError::generic_err("memory.grow failed").into());
         }
-        Ok(HandleResponse {
+        Ok(Response {
             data: Some((old_size as u32).to_be_bytes().into()),
-            ..HandleResponse::default()
+            ..Response::default()
         })
     }
 
@@ -214,11 +214,11 @@ fn do_allocate_large_memory(pages: u32) -> Result<HandleResponse, HackError> {
     Err(StdError::generic_err("Unsupported architecture").into())
 }
 
-fn do_panic() -> Result<HandleResponse, HackError> {
+fn do_panic() -> Result<Response, HackError> {
     panic!("This page intentionally faulted");
 }
 
-fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<HandleResponse, HackError> {
+fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     // Canonicalize
 
     let empty = HumanAddr::from("");
@@ -283,7 +283,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<HandleResponse, HackErro
         }
     }
 
-    Ok(HandleResponse::default())
+    Ok(Response::default())
 }
 
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {

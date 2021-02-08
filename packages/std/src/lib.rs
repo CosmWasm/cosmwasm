@@ -40,13 +40,12 @@ pub use crate::query::{
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
-#[allow(deprecated)]
-pub use crate::results::Context;
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
-    HandleResponse, InitResponse, MigrateResponse, QueryResponse, Response, StakingMsg,
-    SystemResult, WasmMsg,
+    QueryResponse, Response, StakingMsg, SystemResult, WasmMsg,
 };
+#[allow(deprecated)]
+pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
