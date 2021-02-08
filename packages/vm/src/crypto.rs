@@ -11,6 +11,30 @@ use std::convert::TryFrom;
 use crate::errors::{VmError, VmResult};
 use crate::identity_digest::Identity256;
 
+pub fn secp256k1_verify(
+    message_hash: &[u8],
+    signature: &[u8],
+    public_key: &[u8],
+) -> VmResult<bool> {
+    // Already hashed, just build Digest container
+    let message_digest = Identity256::new().chain(message_hash);
+
+    let mut signature =
+        Signature::from_bytes(signature).map_err(|e| VmError::crypto_err(e.to_string()))?;
+    // Non low-S signatures require normalization
+    signature
+        .normalize_s()
+        .map_err(|e| VmError::crypto_err(e.to_string()))?;
+
+    let public_key = VerifyingKey::from_sec1_bytes(public_key)
+        .map_err(|e| VmError::crypto_err(e.to_string()))?;
+
+    match public_key.verify_digest(message_digest, &signature) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}
+
 pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
     // Deserialize
     let signature = ed25519::Signature::try_from(signature)
