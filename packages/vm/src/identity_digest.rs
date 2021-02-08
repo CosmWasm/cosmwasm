@@ -5,9 +5,7 @@
 //! Adapted from `sha2` [sha256.rs](https://github.com/RustCrypto/hashes/blob/master/sha2/src/sha256.rs)
 use sha2::digest::consts::U32;
 use sha2::digest::generic_array::GenericArray;
-use sha2::digest::{FixedOutputDirty, Reset, Update};
-
-use sha2::digest;
+use sha2::digest::{FixedOutputDirty, Output, Reset, Update};
 
 /// The 256-bits identity container
 #[derive(Clone)]
@@ -33,7 +31,7 @@ impl Update for Identity256 {
 impl FixedOutputDirty for Identity256 {
     type OutputSize = U32;
 
-    fn finalize_into_dirty(&mut self, out: &mut digest::Output<Self>) {
+    fn finalize_into_dirty(&mut self, out: &mut Output<Self>) {
         *out = self.array;
     }
 }
