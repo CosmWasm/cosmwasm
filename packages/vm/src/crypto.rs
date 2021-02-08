@@ -4,12 +4,12 @@ use k256::{
 };
 use sha2::Digest; // trait
 
-use crate::dummy_sha2;
 use crate::errors::{VmError, VmResult};
+use crate::identity_digest;
 
 pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
     // Already hashed, just build Digest container
-    let message_digest = dummy_sha2::IdentitySha256::new().chain(message_hash);
+    let message_digest = identity_digest::Identity256::new().chain(message_hash);
 
     let mut signature =
         Signature::from_bytes(signature).map_err(|e| VmError::crypto_err(e.to_string()))?;
