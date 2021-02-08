@@ -10,8 +10,7 @@ use std::fmt;
 use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::results::{Attribute, CosmosMsg};
-use crate::types::Empty;
+use crate::results::{Attribute, CosmosMsg, Empty};
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)

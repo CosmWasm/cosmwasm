@@ -43,14 +43,14 @@ pub use crate::query::{
 #[allow(deprecated)]
 pub use crate::results::Context;
 pub use crate::results::{
-    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg,
-    HandleResponse, InitResponse, MigrateResponse, QueryResponse, StakingMsg, SystemResult,
-    WasmMsg,
+    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
+    HandleResponse, InitResponse, MigrateResponse, QueryResponse, Response, StakingMsg,
+    SystemResult, WasmMsg,
 };
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
-pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
+pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
 
 // Exposed in wasm build only
 

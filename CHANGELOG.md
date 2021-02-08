@@ -61,6 +61,8 @@ and this project adheres to
 - cosmwasm-std: Add a `data` field to `InitResponse` the same way as in
   `MigrateResponse` and `HandleResponse`.
 - cosmwasm-std: Rename `MessageInfo::sent_funds` to `MessageInfo::funds`.
+- cosmwasm-std: Merge response types `InitResponse`, `HandleResponse` and
+  `MigrateResponse` into the new `Response`.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).

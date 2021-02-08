@@ -3,17 +3,13 @@
 use schemars::JsonSchema;
 use std::fmt;
 
-use crate::{Binary, Empty};
+use crate::Binary;
 
-use super::attribute::{attr, Attribute};
-use super::cosmos_msg::CosmosMsg;
-use super::handle::HandleResponse;
-use super::init::InitResponse;
-use super::migrate::MigrateResponse;
+use super::{attr, Attribute, CosmosMsg, Empty, Response};
 
 #[deprecated(
     since = "0.14.0",
-    note = "Use mutating helpers on InitResponse/HandleResponse/MigrateResponse directly."
+    note = "Use mutating helpers on Response/InitResponse/HandleResponse/MigrateResponse directly."
 )]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Context<T = Empty>
@@ -60,38 +56,12 @@ where
     }
 }
 
-impl<T> From<Context<T>> for InitResponse<T>
+impl<T> From<Context<T>> for Response<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     fn from(ctx: Context<T>) -> Self {
-        InitResponse {
-            messages: ctx.messages,
-            attributes: ctx.attributes,
-            data: ctx.data,
-        }
-    }
-}
-
-impl<T> From<Context<T>> for HandleResponse<T>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
-    fn from(ctx: Context<T>) -> Self {
-        HandleResponse {
-            messages: ctx.messages,
-            attributes: ctx.attributes,
-            data: ctx.data,
-        }
-    }
-}
-
-impl<T> From<Context<T>> for MigrateResponse<T>
-where
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
-    fn from(ctx: Context<T>) -> Self {
-        MigrateResponse {
+        Response {
             messages: ctx.messages,
             attributes: ctx.attributes,
             data: ctx.data,
@@ -101,23 +71,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::super::{BankMsg, HandleResponse, InitResponse, MigrateResponse};
     use super::*;
-    use crate::addresses::HumanAddr;
-    use crate::coins;
+    use crate::{coins, BankMsg, HumanAddr, Response};
 
     #[test]
     fn empty_context() {
         let ctx = Context::new();
 
-        let init: InitResponse = ctx.clone().into();
-        assert_eq!(init, InitResponse::default());
-
-        let init: HandleResponse = ctx.clone().into();
-        assert_eq!(init, HandleResponse::default());
-
-        let init: MigrateResponse = ctx.clone().into();
-        assert_eq!(init, MigrateResponse::default());
+        let init: Response = ctx.clone().into();
+        assert_eq!(init, Response::default());
     }
 
     #[test]
@@ -141,22 +103,9 @@ mod tests {
         let expected_attributes = vec![attr("sender", "john"), attr("action", "test")];
         let expected_data = Some(Binary::from(b"banana"));
 
-        // try InitResponse
-        let init: InitResponse = ctx.clone().into();
-        assert_eq!(&init.messages, &expected_msgs);
-        assert_eq!(&init.attributes, &expected_attributes);
-        assert_eq!(&init.data, &expected_data);
-
-        // try Handle with everything set
-        let handle: HandleResponse = ctx.clone().into();
-        assert_eq!(&handle.messages, &expected_msgs);
-        assert_eq!(&handle.attributes, &expected_attributes);
-        assert_eq!(&handle.data, &expected_data);
-
-        // try Migrate with everything set
-        let migrate: MigrateResponse = ctx.clone().into();
-        assert_eq!(&migrate.messages, &expected_msgs);
-        assert_eq!(&migrate.attributes, &expected_attributes);
-        assert_eq!(&migrate.data, &expected_data);
+        let response: Response = ctx.clone().into();
+        assert_eq!(&response.messages, &expected_msgs);
+        assert_eq!(&response.attributes, &expected_attributes);
+        assert_eq!(&response.data, &expected_data);
     }
 }
