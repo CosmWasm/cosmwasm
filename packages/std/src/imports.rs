@@ -220,7 +220,7 @@ impl Api for ExternalApi {
         if result != 0 {
             let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
-                "ed25519_verify error: {}",
+                "verify_ed25519 error: {}",
                 error
             )));
         }
