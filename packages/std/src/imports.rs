@@ -199,13 +199,7 @@ impl Api for ExternalApi {
         match result {
             1 => Ok(true),
             0 => Ok(false),
-            ptr => {
-                let error = unsafe { consume_string_region_written_by_vm(ptr as *mut Region) };
-                return Err(StdError::generic_err(format!(
-                    "verify_secp256k1 error: {}",
-                    error
-                )));
-            }
+            x => panic!(format!("unexpected verify_secp256k1 return value: {}", x)),
         }
     }
 
