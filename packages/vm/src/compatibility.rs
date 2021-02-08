@@ -320,7 +320,7 @@ mod tests {
             (import "env" "db_remove" (func (param i32) (result i32)))
             (import "env" "canonicalize_address" (func (param i32 i32) (result i32)))
             (import "env" "humanize_address" (func (param i32 i32) (result i32)))
-            (import "env" "verify_secp256k1" (func (param i32 i32 i32) (result i32)))
+            (import "env" "secp256k1_verify" (func (param i32 i32 i32) (result i32)))
         )"#,
         )
         .unwrap();
