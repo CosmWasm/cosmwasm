@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HandleResponse, HumanAddr,
-    InitResponse, StakingMsg, SystemResult,
+    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HumanAddr, Response,
+    StakingMsg, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -64,7 +64,7 @@ fn proper_initialization() {
     let info = mock_info("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
-    let res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
@@ -79,7 +79,7 @@ fn reflect() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
     let payload = vec![
         BankMsg::Send {
@@ -100,7 +100,7 @@ fn reflect() {
         msgs: payload.clone(),
     };
     let info = mock_info("creator", &[]);
-    let res: HandleResponse<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
     assert_eq!(payload, res.messages);
@@ -112,7 +112,7 @@ fn reflect_requires_owner() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
@@ -125,7 +125,7 @@ fn reflect_requires_owner() {
     };
 
     let info = mock_info("someone", &[]);
-    let res: ContractResult<HandleResponse<CustomMsg>> = handle(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response<CustomMsg>> = handle(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -136,14 +136,14 @@ fn transfer() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner {
         owner: new_owner.clone(),
     };
-    let res: HandleResponse<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
@@ -158,7 +158,7 @@ fn transfer_requires_owner() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: InitResponse<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("random", &[]);
     let new_owner = HumanAddr::from("friend");
@@ -166,7 +166,7 @@ fn transfer_requires_owner() {
         owner: new_owner.clone(),
     };
 
-    let res: ContractResult<HandleResponse> = handle(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = handle(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }

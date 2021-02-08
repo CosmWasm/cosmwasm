@@ -61,6 +61,8 @@ and this project adheres to
 - cosmwasm-std: Add a `data` field to `InitResponse` the same way as in
   `MigrateResponse` and `HandleResponse`.
 - cosmwasm-std: Rename `MessageInfo::sent_funds` to `MessageInfo::funds`.
+- cosmwasm-std: Merge response types `InitResponse`, `HandleResponse` and
+  `MigrateResponse` into the new `Response`.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
@@ -77,8 +79,10 @@ and this project adheres to
 
 ### Deprecated
 
+- cosmwasm-std: `InitResponse`, `MigrateResponse` and `HandleResponse` are
+  deprecated in favour of the new `Response`.
 - cosmwasm-std: `Context` is deprecated in favour of the new mutable helpers in
-  `InitResponse`, `MigrateResponse` and `HandleResponse`.
+  `Response`.
 
 ## [0.13.2] - 2021-01-14
 

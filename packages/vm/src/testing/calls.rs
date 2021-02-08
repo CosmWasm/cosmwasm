@@ -5,9 +5,7 @@ use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
-use cosmwasm_std::{
-    ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
-};
+use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response};
 
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
 use crate::instance::Instance;
@@ -22,7 +20,7 @@ pub fn init<A, S, Q, M, U>(
     env: Env,
     info: MessageInfo,
     msg: M,
-) -> ContractResult<InitResponse<U>>
+) -> ContractResult<Response<U>>
 where
     A: Api + 'static,
     S: Storage + 'static,
@@ -42,7 +40,7 @@ pub fn handle<A, S, Q, M, U>(
     env: Env,
     info: MessageInfo,
     msg: M,
-) -> ContractResult<HandleResponse<U>>
+) -> ContractResult<Response<U>>
 where
     A: Api + 'static,
     S: Storage + 'static,
@@ -61,7 +59,7 @@ pub fn migrate<A, S, Q, M, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: M,
-) -> ContractResult<MigrateResponse<U>>
+) -> ContractResult<Response<U>>
 where
     A: Api + 'static,
     S: Storage + 'static,

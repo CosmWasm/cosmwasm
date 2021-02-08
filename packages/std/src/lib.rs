@@ -40,17 +40,16 @@ pub use crate::query::{
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
-#[allow(deprecated)]
-pub use crate::results::Context;
 pub use crate::results::{
-    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg,
-    HandleResponse, InitResponse, MigrateResponse, QueryResponse, StakingMsg, SystemResult,
-    WasmMsg,
+    attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
+    QueryResponse, Response, StakingMsg, SystemResult, WasmMsg,
 };
+#[allow(deprecated)]
+pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
-pub use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
+pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
 
 // Exposed in wasm build only
 

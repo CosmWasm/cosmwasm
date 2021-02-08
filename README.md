@@ -185,27 +185,27 @@ pub fn init<S: Storage, A: Api, Q: Querier>(
     env: Env,
     info: MessageInfo,
     msg: InitMsg,
-) -> StdResult<InitResponse> {}
+) -> StdResult<Response> {}
 
 pub fn handle<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
-) -> Result<HandleResponse, ContractError> { }
-
-pub fn query<S: Storage, A: Api, Q: Querier>(
-    deps: &Deps<S, A, Q>,
-    env: Env,
-    msg: QueryMsg,
-) -> StdResult<Binary> { }
+) -> Result<Response, ContractError> { }
 
 pub fn migrate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
-) -> Result<HandleResponse, MigrateError> { }
+) -> Result<Response, MigrateError> { }
+
+pub fn query<S: Storage, A: Api, Q: Querier>(
+    deps: &Deps<S, A, Q>,
+    env: Env,
+    msg: QueryMsg,
+) -> StdResult<Binary> { }
 ```
 
 The low-level `c_read` and `c_write` imports are nicely wrapped for you by a

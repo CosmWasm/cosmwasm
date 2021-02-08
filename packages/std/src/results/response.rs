@@ -2,12 +2,11 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::{Binary, Empty};
+use crate::Binary;
 
-use super::attribute::Attribute;
-use super::cosmos_msg::CosmosMsg;
+use super::{Attribute, CosmosMsg, Empty};
 
-/// A response of the contract entry point `init`.
+/// A response of a contract entry point, such as `init`, `handle` or `migrate`.
 ///
 /// This type can be constructed directly at the end of the call. Alternatively a
 /// mutable response instance can be created early in the contract's logic and
@@ -21,17 +20,17 @@ use super::cosmos_msg::CosmosMsg;
 /// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo, MigrateResponse};
 /// # type InitMsg = ();
 /// #
-/// use cosmwasm_std::{attr, InitResponse, StdResult};
+/// use cosmwasm_std::{attr, Response, StdResult};
 ///
 /// pub fn init(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     _info: MessageInfo,
 ///     msg: InitMsg,
-/// ) -> StdResult<InitResponse> {
+/// ) -> StdResult<Response> {
 ///     // ...
 ///
-///     Ok(InitResponse {
+///     Ok(Response {
 ///         messages: vec![],
 ///         attributes: vec![attr("action", "init")],
 ///         data: None,
@@ -46,15 +45,15 @@ use super::cosmos_msg::CosmosMsg;
 /// # type InitMsg = ();
 /// # type MyError = ();
 /// #
-/// use cosmwasm_std::InitResponse;
+/// use cosmwasm_std::Response;
 ///
 /// pub fn init(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     info: MessageInfo,
 ///     msg: InitMsg,
-/// ) -> Result<InitResponse, MyError> {
-///     let mut response = InitResponse::new();
+/// ) -> Result<Response, MyError> {
+///     let mut response = Response::new();
 ///     // ...
 ///     response.add_attribute("Let the", "hacking begin");
 ///     // ...
@@ -69,7 +68,7 @@ use super::cosmos_msg::CosmosMsg;
 /// }
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitResponse<T = Empty>
+pub struct Response<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -79,12 +78,12 @@ where
     pub data: Option<Binary>,
 }
 
-impl<T> Default for InitResponse<T>
+impl<T> Default for Response<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     fn default() -> Self {
-        InitResponse {
+        Response {
             messages: vec![],
             attributes: vec![],
             data: None,
@@ -92,7 +91,7 @@ where
     }
 }
 
-impl<T> InitResponse<T>
+impl<T> Response<T>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
@@ -125,7 +124,7 @@ mod tests {
 
     #[test]
     fn can_serialize_and_deserialize_init_response() {
-        let original = InitResponse {
+        let original = Response {
             messages: vec![BankMsg::Send {
                 to_address: HumanAddr::from("you"),
                 amount: coins(1015, "earth"),
@@ -138,7 +137,7 @@ mod tests {
             data: Some(Binary::from([0xAA, 0xBB])),
         };
         let serialized = to_vec(&original).expect("encode contract result");
-        let deserialized: InitResponse = from_slice(&serialized).expect("decode contract result");
+        let deserialized: Response = from_slice(&serialized).expect("decode contract result");
         assert_eq!(deserialized, original);
     }
 }

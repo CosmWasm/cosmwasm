@@ -15,18 +15,18 @@ use std::fmt;
 /// Success:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, ContractResult, HandleResponse};
-/// let response: HandleResponse = HandleResponse::default();
-/// let result: ContractResult<HandleResponse> = ContractResult::Ok(response);
+/// # use cosmwasm_std::{to_vec, ContractResult, Response};
+/// let response: Response = Response::default();
+/// let result: ContractResult<Response> = ContractResult::Ok(response);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec());
 /// ```
 ///
 /// Failure:
 ///
 /// ```
-/// # use cosmwasm_std::{to_vec, ContractResult, HandleResponse};
+/// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let error_msg = String::from("Something went wrong");
-/// let result: ContractResult<HandleResponse> = ContractResult::Err(error_msg);
+/// let result: ContractResult<Response> = ContractResult::Err(error_msg);
 /// assert_eq!(to_vec(&result).unwrap(), br#"{"error":"Something went wrong"}"#.to_vec());
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -80,7 +80,7 @@ impl<S> From<ContractResult<S>> for Result<S, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{from_slice, to_vec, HandleResponse, StdError, StdResult};
+    use crate::{from_slice, to_vec, Response, StdError, StdResult};
 
     #[test]
     fn contract_result_serialization_works() {
@@ -90,13 +90,13 @@ mod tests {
         let result = ContractResult::Ok("foo");
         assert_eq!(&to_vec(&result).unwrap(), b"{\"ok\":\"foo\"}");
 
-        let result: ContractResult<HandleResponse> = ContractResult::Ok(HandleResponse::default());
+        let result: ContractResult<Response> = ContractResult::Ok(Response::default());
         assert_eq!(
             to_vec(&result).unwrap(),
             br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec()
         );
 
-        let result: ContractResult<HandleResponse> = ContractResult::Err("broken".to_string());
+        let result: ContractResult<Response> = ContractResult::Err("broken".to_string());
         assert_eq!(&to_vec(&result).unwrap(), b"{\"error\":\"broken\"}");
     }
 
@@ -108,11 +108,11 @@ mod tests {
         let result: ContractResult<String> = from_slice(br#"{"ok":"foo"}"#).unwrap();
         assert_eq!(result, ContractResult::Ok("foo".to_string()));
 
-        let result: ContractResult<HandleResponse> =
+        let result: ContractResult<Response> =
             from_slice(br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#).unwrap();
-        assert_eq!(result, ContractResult::Ok(HandleResponse::default()));
+        assert_eq!(result, ContractResult::Ok(Response::default()));
 
-        let result: ContractResult<HandleResponse> = from_slice(br#"{"error":"broken"}"#).unwrap();
+        let result: ContractResult<Response> = from_slice(br#"{"error":"broken"}"#).unwrap();
         assert_eq!(result, ContractResult::Err("broken".to_string()));
 
         // ignores whitespace
@@ -140,12 +140,12 @@ mod tests {
 
     #[test]
     fn can_convert_from_core_result() {
-        let original: Result<HandleResponse, StdError> = Ok(HandleResponse::default());
-        let converted: ContractResult<HandleResponse> = original.into();
-        assert_eq!(converted, ContractResult::Ok(HandleResponse::default()));
+        let original: Result<Response, StdError> = Ok(Response::default());
+        let converted: ContractResult<Response> = original.into();
+        assert_eq!(converted, ContractResult::Ok(Response::default()));
 
-        let original: Result<HandleResponse, StdError> = Err(StdError::generic_err("broken"));
-        let converted: ContractResult<HandleResponse> = original.into();
+        let original: Result<Response, StdError> = Err(StdError::generic_err("broken"));
+        let converted: ContractResult<Response> = original.into();
         assert_eq!(
             converted,
             ContractResult::Err("Generic error: broken".to_string())
@@ -154,12 +154,12 @@ mod tests {
 
     #[test]
     fn can_convert_to_core_result() {
-        let original = ContractResult::Ok(HandleResponse::default());
-        let converted: Result<HandleResponse, String> = original.into();
-        assert_eq!(converted, Ok(HandleResponse::default()));
+        let original = ContractResult::Ok(Response::default());
+        let converted: Result<Response, String> = original.into();
+        assert_eq!(converted, Ok(Response::default()));
 
         let original = ContractResult::Err("went wrong".to_string());
-        let converted: Result<HandleResponse, String> = original.into();
+        let converted: Result<Response, String> = original.into();
         assert_eq!(converted, Err("went wrong".to_string()));
     }
 }

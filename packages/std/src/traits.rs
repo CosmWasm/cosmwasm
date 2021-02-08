@@ -15,9 +15,8 @@ use crate::query::{
     AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
     StakingQuery, Validator, ValidatorsResponse,
 };
-use crate::results::{ContractResult, SystemResult};
+use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_binary, to_binary, to_vec};
-use crate::types::Empty;
 
 /// Storage provides read and write access to a persistent storage.
 /// If you only want to provide read access, provide `&Storage`

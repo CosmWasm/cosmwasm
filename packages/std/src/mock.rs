@@ -15,11 +15,11 @@ use crate::query::{
     CustomQuery, DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
-use crate::results::{ContractResult, SystemResult};
+use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
 use crate::traits::{Api, Querier, QuerierResult};
-use crate::types::{BlockInfo, ContractInfo, Empty, Env, MessageInfo};
+use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 

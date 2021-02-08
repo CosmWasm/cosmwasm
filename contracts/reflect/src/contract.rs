@@ -1,7 +1,6 @@
 use cosmwasm_std::{
-    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HandleResponse,
-    HumanAddr, InitResponse, MessageInfo, QueryRequest, QueryResponse, StdError, StdResult,
-    SystemResult, WasmMsg,
+    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HumanAddr,
+    MessageInfo, QueryRequest, QueryResponse, Response, StdError, StdResult, SystemResult, WasmMsg,
 };
 
 use crate::errors::ReflectError;
@@ -16,13 +15,13 @@ pub fn init(
     env: Env,
     info: MessageInfo,
     msg: InitMsg,
-) -> StdResult<InitResponse<CustomMsg>> {
+) -> StdResult<Response<CustomMsg>> {
     let state = State {
         owner: deps.api.canonical_address(&info.sender)?,
     };
     config(deps.storage).save(&state)?;
 
-    let mut resp = InitResponse::new();
+    let mut resp = Response::new();
     if let Some(id) = msg.callback_id {
         let data = CallbackMsg::InitCallback {
             id,
@@ -43,7 +42,7 @@ pub fn handle(
     env: Env,
     info: MessageInfo,
     msg: HandleMsg,
-) -> Result<HandleResponse<CustomMsg>, ReflectError> {
+) -> Result<Response<CustomMsg>, ReflectError> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, info, owner),
@@ -55,7 +54,7 @@ pub fn try_reflect(
     _env: Env,
     info: MessageInfo,
     msgs: Vec<CosmosMsg<CustomMsg>>,
-) -> Result<HandleResponse<CustomMsg>, ReflectError> {
+) -> Result<Response<CustomMsg>, ReflectError> {
     let state = config(deps.storage).load()?;
 
     let sender = deps.api.canonical_address(&info.sender)?;
@@ -69,7 +68,7 @@ pub fn try_reflect(
     if msgs.is_empty() {
         return Err(ReflectError::MessagesEmpty);
     }
-    let res = HandleResponse {
+    let res = Response {
         messages: msgs,
         attributes: vec![attr("action", "reflect")],
         data: None,
@@ -82,7 +81,7 @@ pub fn try_change_owner(
     _env: Env,
     info: MessageInfo,
     owner: HumanAddr,
-) -> Result<HandleResponse<CustomMsg>, ReflectError> {
+) -> Result<Response<CustomMsg>, ReflectError> {
     let api = deps.api;
     config(deps.storage).update(|mut state| {
         let sender = api.canonical_address(&info.sender)?;
@@ -95,9 +94,9 @@ pub fn try_change_owner(
         state.owner = api.canonical_address(&owner)?;
         Ok(state)
     })?;
-    Ok(HandleResponse {
+    Ok(Response {
         attributes: vec![attr("action", "change_owner"), attr("owner", owner)],
-        ..HandleResponse::default()
+        ..Response::default()
     })
 }
 

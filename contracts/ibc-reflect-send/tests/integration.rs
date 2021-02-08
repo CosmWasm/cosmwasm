@@ -19,8 +19,8 @@
 
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
 use cosmwasm_std::{
-    attr, coin, coins, to_binary, BankMsg, CosmosMsg, Empty, HandleResponse, HumanAddr,
-    IbcAcknowledgement, IbcBasicResponse, IbcMsg, IbcOrder, InitResponse,
+    attr, coin, coins, to_binary, BankMsg, CosmosMsg, Empty, HumanAddr, IbcAcknowledgement,
+    IbcBasicResponse, IbcMsg, IbcOrder, Response,
 };
 use cosmwasm_vm::testing::{
     handle, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, init, mock_env, mock_info,
@@ -42,7 +42,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
     let msg = InitMsg {};
     let info = mock_info(CREATOR, &[]);
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
@@ -168,7 +168,7 @@ fn dispatch_message_send_and_ack() {
         msgs: msgs_to_dispatch.clone(),
     };
     let info = mock_info(CREATOR, &[]);
-    let mut res: HandleResponse = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
+    let mut res: Response = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
     assert_eq!(1, res.messages.len());
     let packet = match res.messages.swap_remove(0) {
         CosmosMsg::Ibc(IbcMsg::SendPacket {
@@ -227,7 +227,7 @@ fn send_remote_funds() {
         transfer_channel_id: transfer_channel_id.into(),
     };
     let info = mock_info(CREATOR, &coins(12344, "utrgd"));
-    let res: HandleResponse = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = handle(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(1, res.messages.len());
     match &res.messages[0] {
         CosmosMsg::Ibc(IbcMsg::Transfer {

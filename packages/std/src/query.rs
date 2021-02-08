@@ -7,7 +7,7 @@ use crate::coins::Coin;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcQuery;
 use crate::math::Decimal;
-use crate::types::Empty;
+use crate::results::Empty;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

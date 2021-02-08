@@ -1,17 +1,11 @@
 use cosmwasm_std::{
-    attr, entry_point, BankMsg, DepsMut, Env, HandleResponse, InitResponse, MessageInfo,
-    MigrateResponse, Order, StdError, StdResult,
+    attr, entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
 };
 
 use crate::msg::{HandleMsg, InitMsg, MigrateMsg};
 
 #[entry_point]
-pub fn init(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: InitMsg,
-) -> StdResult<InitResponse> {
+pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
     ))
@@ -23,14 +17,14 @@ pub fn handle(
     _env: Env,
     _info: MessageInfo,
     _msg: HandleMsg,
-) -> StdResult<HandleResponse> {
+) -> StdResult<Response> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
     ))
 }
 
 #[entry_point]
-pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<MigrateResponse> {
+pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
     // delete all state
     let keys: Vec<_> = deps
         .storage
@@ -51,7 +45,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<MigrateRes
 
     let data_msg = format!("burnt {} keys", count).into_bytes();
 
-    Ok(MigrateResponse {
+    Ok(Response {
         messages: vec![send.into()],
         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
         data: Some(data_msg.into()),

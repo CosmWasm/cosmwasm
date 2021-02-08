@@ -19,8 +19,8 @@
 
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_recv};
 use cosmwasm_std::{
-    coins, BankMsg, ContractResult, CosmosMsg, HandleResponse, HumanAddr, IbcBasicResponse,
-    IbcOrder, IbcReceiveResponse, InitResponse, WasmMsg,
+    coins, BankMsg, ContractResult, CosmosMsg, HumanAddr, IbcBasicResponse, IbcOrder,
+    IbcReceiveResponse, Response, WasmMsg,
 };
 use cosmwasm_vm::testing::{
     handle, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, init, mock_env, mock_info,
@@ -49,7 +49,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
         reflect_code_id: REFLECT_ID,
     };
     let info = mock_info(CREATOR, &[]);
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
@@ -77,7 +77,7 @@ fn connect<T: Into<HumanAddr>>(
         contract_addr: account.clone(),
     };
     let info = mock_info(account, &[]);
-    let _: HandleResponse = handle(deps, mock_env(), info, handle_msg).unwrap();
+    let _: Response = handle(deps, mock_env(), info, handle_msg).unwrap();
 }
 
 #[test]
@@ -88,7 +88,7 @@ fn init_works() {
         reflect_code_id: 17,
     };
     let info = mock_info("creator", &[]);
-    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, msg);
     let msgs = res.unwrap().messages;
     assert_eq!(0, msgs.len());
 }
@@ -151,7 +151,7 @@ fn proper_handshake_flow() {
         contract_addr: REFLECT_ADDR.into(),
     };
     let info = mock_info(REFLECT_ADDR, &[]);
-    let res: HandleResponse = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
+    let res: Response = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // ensure this is now registered

@@ -9,7 +9,8 @@ use crate::errors::StdResult;
 #[cfg(feature = "stargate")]
 use crate::ibc::IbcMsg;
 use crate::serde::to_binary;
-use crate::types::Empty;
+
+use super::Empty;
 
 #[non_exhaustive]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

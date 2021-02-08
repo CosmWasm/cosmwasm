@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{
     attr, coins, from_binary, to_vec, AllBalanceResponse, BankMsg, Binary, ContractResult, Empty,
-    HandleResponse, HumanAddr, InitResponse, MigrateResponse,
+    HumanAddr, Response,
 };
 use cosmwasm_vm::{
     call_handle, from_slice,
@@ -66,7 +66,7 @@ fn proper_initialization() {
         beneficiary,
     };
     let info = mock_info("creator", &coins(1000, "earth"));
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(res.messages.len(), 0);
     assert_eq!(res.attributes.len(), 1);
     assert_eq!(res.attributes[0].key, "Let the");
@@ -98,7 +98,7 @@ fn init_and_query() {
         beneficiary,
     };
     let info = mock_info(creator.as_str(), &coins(1000, "earth"));
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // now let's query
@@ -123,7 +123,7 @@ fn migrate_verifier() {
         beneficiary,
     };
     let info = mock_info(creator.as_str(), &[]);
-    let res: InitResponse = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'verifies'
@@ -134,7 +134,7 @@ fn migrate_verifier() {
     let msg = MigrateMsg {
         verifier: HumanAddr::from("someone else"),
     };
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), msg).unwrap();
+    let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // check it is 'someone else'
@@ -171,8 +171,7 @@ fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
     let info = mock_info("creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res: ContractResult<InitResponse> =
-        init(&mut deps, mock_env(), info, HandleMsg::Release {});
+    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, HandleMsg::Release {});
     let msg = res.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -192,7 +191,7 @@ fn handle_release_works() {
     };
     let init_amount = coins(1000, "earth");
     let init_info = mock_info(creator.as_str(), &init_amount);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
     // balance changed in init
@@ -204,7 +203,7 @@ fn handle_release_works() {
 
     // beneficiary can release it
     let handle_info = mock_info(verifier.as_str(), &[]);
-    let handle_res: HandleResponse =
+    let handle_res: Response =
         handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {}).unwrap();
     assert_eq!(handle_res.messages.len(), 1);
     let msg = handle_res.messages.get(0).expect("no message");
@@ -238,7 +237,7 @@ fn handle_release_fails_for_wrong_sender() {
     };
     let init_amount = coins(1000, "earth");
     let init_info = mock_info(creator.as_str(), &init_amount);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(init_res.messages.len(), 0);
 
     // balance changed in init
@@ -250,7 +249,7 @@ fn handle_release_fails_for_wrong_sender() {
 
     // beneficiary cannot release it
     let handle_info = mock_info(beneficiary.as_str(), &[]);
-    let handle_res: ContractResult<HandleResponse> =
+    let handle_res: ContractResult<Response> =
         handle(&mut deps, mock_env(), handle_info, HandleMsg::Release {});
     let msg = handle_res.unwrap_err();
     assert!(msg.contains("Unauthorized"));
@@ -282,7 +281,7 @@ fn handle_cpu_loop() {
 
     let (init_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let handle_info = mock_info(creator.as_str(), &[]);
@@ -303,7 +302,7 @@ fn handle_storage_loop() {
 
     let (init_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let handle_info = mock_info(creator.as_str(), &[]);
@@ -324,7 +323,7 @@ fn handle_memory_loop() {
 
     let (init_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let handle_info = mock_info(creator.as_str(), &[]);
@@ -348,7 +347,7 @@ fn handle_allocate_large_memory() {
 
     let (init_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
     let mut pages_before = deps.memory_pages();
     assert_eq!(pages_before, 18);
@@ -356,7 +355,7 @@ fn handle_allocate_large_memory() {
     // Grow by 48 pages (3 MiB)
     let handle_info = mock_info(creator.as_str(), &[]);
     let gas_before = deps.get_gas_left();
-    let handle_res: HandleResponse = handle(
+    let handle_res: Response = handle(
         &mut deps,
         mock_env(),
         handle_info,
@@ -381,7 +380,7 @@ fn handle_allocate_large_memory() {
     // Grow by 1600 pages (100 MiB)
     let handle_info = mock_info(creator.as_str(), &[]);
     let gas_before = deps.get_gas_left();
-    let result: ContractResult<HandleResponse> = handle(
+    let result: ContractResult<Response> = handle(
         &mut deps,
         mock_env(),
         handle_info,
@@ -405,7 +404,7 @@ fn handle_panic() {
 
     let (init_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
-    let init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
     assert_eq!(0, init_res.messages.len());
 
     let handle_info = mock_info(creator.as_str(), &[]);
@@ -429,10 +428,10 @@ fn handle_user_errors_in_api_calls() {
 
     let (init_msg, creator) = make_init_msg();
     let init_info = mock_info(creator.as_str(), &[]);
-    let _init_res: InitResponse = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
+    let _init_res: Response = init(&mut deps, mock_env(), init_info, init_msg).unwrap();
 
     let handle_info = mock_info(creator.as_str(), &[]);
-    let _handle_res: HandleResponse = handle(
+    let _handle_res: Response = handle(
         &mut deps,
         mock_env(),
         handle_info,
