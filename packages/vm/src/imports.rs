@@ -271,10 +271,7 @@ fn do_verify_secp256k1<A: Api, S: Storage, Q: Querier>(
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
-        Ok(()) => Ok(0),
-        Err(VmError::CryptoErr { msg, .. }) => {
-            Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
-        }
+        Ok(b) => Ok(b as u32),
         Err(err) => Err(err),
     }
 }

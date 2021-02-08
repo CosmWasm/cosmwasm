@@ -7,7 +7,11 @@ use sha2::Digest; // trait
 use crate::errors::{VmError, VmResult};
 use crate::identity_digest::Identity256;
 
-pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
+pub fn secp256k1_verify(
+    message_hash: &[u8],
+    signature: &[u8],
+    public_key: &[u8],
+) -> VmResult<bool> {
     // Already hashed, just build Digest container
     let message_digest = Identity256::new().chain(message_hash);
 
@@ -21,9 +25,10 @@ pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]
     let public_key = VerifyingKey::from_sec1_bytes(public_key)
         .map_err(|e| VmError::crypto_err(e.to_string()))?;
 
-    public_key
-        .verify_digest(message_digest, &signature)
-        .map_err(|e| VmError::crypto_err(e.to_string()))
+    match public_key.verify_digest(message_digest, &signature) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
 }
 
 #[cfg(test)]
@@ -79,7 +84,7 @@ mod tests {
             signature.as_bytes(),
             public_key.to_encoded_point(false).as_bytes()
         )
-        .is_ok());
+        .unwrap());
 
         // Verification (compressed public key)
         assert!(secp256k1_verify(
@@ -87,26 +92,26 @@ mod tests {
             signature.as_bytes(),
             public_key.to_encoded_point(true).as_bytes()
         )
-        .is_ok());
+        .unwrap());
 
         // Wrong message fails
         let bad_message_hash = Sha256::new().chain([MSG, "\0"].concat()).finalize();
-        assert!(secp256k1_verify(
+        assert!(!secp256k1_verify(
             &bad_message_hash,
             signature.as_bytes(),
             public_key.to_encoded_point(false).as_bytes()
         )
-        .is_err());
+        .unwrap());
 
         // Other pubkey fails
         let other_secret_key = SigningKey::random(&mut OsRng);
         let other_public_key = VerifyingKey::from(&other_secret_key);
-        assert!(secp256k1_verify(
+        assert!(!secp256k1_verify(
             &message_hash,
             signature.as_bytes(),
             other_public_key.to_encoded_point(false).as_bytes()
         )
-        .is_err());
+        .unwrap());
     }
 
     #[test]
@@ -129,7 +134,7 @@ mod tests {
 
             // secp256k1_verify works
             assert!(
-                secp256k1_verify(&message_hash, &signature, &public_key).is_ok(),
+                secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
                 format!("secp256k1_verify() failed (test case {})", i)
             );
         }
@@ -170,7 +175,7 @@ mod tests {
 
             // secp256k1_verify() works
             assert!(
-                secp256k1_verify(&message_hash, &signature, &public_key).is_ok(),
+                secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
                 format!("verify() failed (test case {})", i)
             );
         }
