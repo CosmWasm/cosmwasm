@@ -156,14 +156,12 @@ major releases of `cosmwasm`. Note that you can also view the
       // release counter_offer to creator
       let mut ctx = Context::new();
       ctx.add_message(BankMsg::Send {
-          from_address: env.contract.address.clone(),
           to_address: state.creator,
           amount: state.counter_offer,
       });
 
       // release collateral to sender
       ctx.add_message(BankMsg::Send {
-          from_address: env.contract.address,
           to_address: state.owner,
           amount: state.collateral,
       });
@@ -182,14 +180,12 @@ major releases of `cosmwasm`. Note that you can also view the
       // release counter_offer to creator
       let mut resp = HandleResponse::new();
       resp.add_message(BankMsg::Send {
-          from_address: env.contract.address.clone(),
           to_address: state.creator,
           amount: state.counter_offer,
       });
 
       // release collateral to sender
       resp.add_message(BankMsg::Send {
-          from_address: env.contract.address,
           to_address: state.owner,
           amount: state.collateral,
       });
