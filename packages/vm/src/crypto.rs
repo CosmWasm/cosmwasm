@@ -5,11 +5,11 @@ use k256::{
 use sha2::Digest; // trait
 
 use crate::errors::{VmError, VmResult};
-use crate::identity_digest;
+use crate::identity_digest::Identity256;
 
 pub fn secp256k1_verify(message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> VmResult<()> {
     // Already hashed, just build Digest container
-    let message_digest = identity_digest::Identity256::new().chain(message_hash);
+    let message_digest = Identity256::new().chain(message_hash);
 
     let mut signature =
         Signature::from_bytes(signature).map_err(|e| VmError::crypto_err(e.to_string()))?;
@@ -34,8 +34,8 @@ mod tests {
     use rand_core::OsRng;
 
     use k256::{
-        ecdsa::signature::Signer, // traits
-        ecdsa::SigningKey,        // type aliases
+        ecdsa::signature::DigestSigner, // trait
+        ecdsa::SigningKey,              // type alias
     };
     use sha2::Sha256;
 
@@ -59,8 +59,9 @@ mod tests {
 
     #[test]
     fn test_secp256k1_verify() {
-        // Explicit hash
-        let message_hash = Sha256::new().chain(MSG).finalize();
+        // Explicit / external hashing
+        let message_digest = Sha256::new().chain(MSG);
+        let message_hash = message_digest.clone().finalize();
 
         // Signing
         let secret_key = SigningKey::random(&mut OsRng); // Serialize with `::to_bytes()`
@@ -68,7 +69,7 @@ mod tests {
         // Note: the signature type must be annotated or otherwise inferrable as
         // `Signer` has many impls of the `Signer` trait (for both regular and
         // recoverable signature types).
-        let signature: Signature = secret_key.sign(MSG.as_bytes()); // Message is internally digested
+        let signature: Signature = secret_key.sign_digest(message_digest);
 
         let public_key = VerifyingKey::from(&secret_key); // Serialize with `::to_encoded_point()`
 
