@@ -7,7 +7,7 @@
 /// ```
 /// # use cosmwasm_std::{
 /// #     Storage, Api, Querier, DepsMut, Deps, Env, StdError, MessageInfo,
-/// #     InitResponse, HandleResponse, QueryResponse,
+/// #     Response, QueryResponse,
 /// # };
 /// #
 /// # type InitMsg = ();
@@ -16,7 +16,7 @@
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: InitMsg,
-/// ) -> Result<InitResponse, StdError> {
+/// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
 ///
@@ -26,7 +26,7 @@
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: HandleMsg,
-/// ) -> Result<HandleResponse, StdError> {
+/// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
 ///

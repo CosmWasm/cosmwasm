@@ -14,9 +14,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::deps::OwnedDeps;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
-use crate::results::{
-    ContractResult, HandleResponse, InitResponse, MigrateResponse, QueryResponse,
-};
+use crate::results::{ContractResult, QueryResponse, Response};
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{Deps, DepsMut, MessageInfo};
@@ -72,7 +70,7 @@ macro_rules! r#try_into_contract_result {
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -98,7 +96,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -124,7 +122,7 @@ where
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
 pub fn do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -157,11 +155,11 @@ where
 }
 
 fn _do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<InitResponse<C>, E>,
+    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<InitResponse<C>>
+) -> ContractResult<Response<C>>
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -180,11 +178,11 @@ where
 }
 
 fn _do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<HandleResponse<C>, E>,
+    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<HandleResponse<C>>
+) -> ContractResult<Response<C>>
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -203,10 +201,10 @@ where
 }
 
 fn _do_migrate<M, C, E>(
-    migrate_fn: &dyn Fn(DepsMut, Env, M) -> Result<MigrateResponse<C>, E>,
+    migrate_fn: &dyn Fn(DepsMut, Env, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
-) -> ContractResult<MigrateResponse<C>>
+) -> ContractResult<Response<C>>
 where
     M: DeserializeOwned + JsonSchema,
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,

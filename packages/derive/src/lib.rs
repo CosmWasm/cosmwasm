@@ -12,7 +12,7 @@ use std::str::FromStr;
 /// ```
 /// # use cosmwasm_std::{
 /// #     Storage, Api, Querier, DepsMut, Deps, entry_point, Env, StdError, MessageInfo,
-/// #     InitResponse, HandleResponse, QueryResponse,
+/// #     Response, QueryResponse,
 /// # };
 /// #
 /// # type InitMsg = ();
@@ -25,7 +25,7 @@ use std::str::FromStr;
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: InitMsg,
-/// ) -> Result<InitResponse, StdError> {
+/// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
 ///
@@ -35,7 +35,7 @@ use std::str::FromStr;
 ///     env: Env,
 ///     info: MessageInfo,
 ///     msg: HandleMsg,
-/// ) -> Result<HandleResponse, StdError> {
+/// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
 ///

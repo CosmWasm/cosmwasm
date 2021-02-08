@@ -3,9 +3,7 @@ use serde::de::DeserializeOwned;
 use std::fmt;
 use wasmer::Val;
 
-use cosmwasm_std::{
-    ContractResult, Env, HandleResponse, InitResponse, MessageInfo, MigrateResponse, QueryResponse,
-};
+use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response};
 
 use crate::backend::{Api, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -23,7 +21,7 @@ pub fn call_init<A, S, Q, U>(
     env: &Env,
     info: &MessageInfo,
     msg: &[u8],
-) -> VmResult<ContractResult<InitResponse<U>>>
+) -> VmResult<ContractResult<Response<U>>>
 where
     A: Api + 'static,
     S: Storage + 'static,
@@ -33,7 +31,7 @@ where
     let env = to_vec(env)?;
     let info = to_vec(info)?;
     let data = call_init_raw(instance, &env, &info, msg)?;
-    let result: ContractResult<InitResponse<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> = from_slice(&data)?;
     Ok(result)
 }
 
@@ -42,7 +40,7 @@ pub fn call_handle<A, S, Q, U>(
     env: &Env,
     info: &MessageInfo,
     msg: &[u8],
-) -> VmResult<ContractResult<HandleResponse<U>>>
+) -> VmResult<ContractResult<Response<U>>>
 where
     A: Api + 'static,
     S: Storage + 'static,
@@ -52,7 +50,7 @@ where
     let env = to_vec(env)?;
     let info = to_vec(info)?;
     let data = call_handle_raw(instance, &env, &info, msg)?;
-    let result: ContractResult<HandleResponse<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> = from_slice(&data)?;
     Ok(result)
 }
 
@@ -60,7 +58,7 @@ pub fn call_migrate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     msg: &[u8],
-) -> VmResult<ContractResult<MigrateResponse<U>>>
+) -> VmResult<ContractResult<Response<U>>>
 where
     A: Api + 'static,
     S: Storage + 'static,
@@ -69,7 +67,7 @@ where
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
-    let result: ContractResult<MigrateResponse<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> = from_slice(&data)?;
     Ok(result)
 }
 
