@@ -37,7 +37,7 @@ extern "C" {
     fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
 
-    fn verify_secp256k1(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+    fn verify_secp256k1(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
     fn debug(source_ptr: u32);
 
