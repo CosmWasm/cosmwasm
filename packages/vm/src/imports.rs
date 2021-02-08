@@ -261,15 +261,11 @@ fn do_verify_secp256k1<A: Api, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = Binary(read_region(&env.memory(), hash_ptr, LENGTH_SHA256_HASH)?);
+    let hash = read_region(&env.memory(), hash_ptr, LENGTH_SHA256_HASH)?;
 
-    let signature = Binary(read_region(
-        &env.memory(),
-        signature_ptr,
-        MAX_LENGTH_SIGNATURE,
-    )?);
+    let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_SIGNATURE)?;
 
-    let pubkey = Binary(read_region(&env.memory(), pubkey_ptr, MAX_LENGTH_PUBKEY)?);
+    let pubkey = read_region(&env.memory(), pubkey_ptr, MAX_LENGTH_PUBKEY)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
