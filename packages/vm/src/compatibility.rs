@@ -15,7 +15,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.db_remove",
     "env.canonicalize_address",
     "env.humanize_address",
-    "env.verify_secp256k1",
+    "env.secp256k1_verify",
     "env.debug",
     "env.query_chain",
     #[cfg(feature = "iterator")]
