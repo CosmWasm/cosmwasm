@@ -14,10 +14,6 @@ default = []
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
 
-[lib]
-# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
-bench = false
-
 [dependencies]
 k256 = { version = "0.7.2", features = ["ecdsa"] }
 digest = "0.9"
