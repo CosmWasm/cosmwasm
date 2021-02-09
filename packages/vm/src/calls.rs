@@ -257,7 +257,7 @@ mod tests {
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
-        let msg = r#"{"verifier": "verifies", "beneficiary": "benefits"}"#.as_bytes();
+        let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
