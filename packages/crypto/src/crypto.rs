@@ -2,7 +2,7 @@ use k256::{
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
     ecdsa::{Signature, VerifyingKey},                   // type aliases
 };
-use sha2::Digest; // trait
+use digest::Digest; // trait
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
