@@ -125,8 +125,8 @@ impl Api for MockApi {
         _message_hash: &[u8],
         _signature: &[u8],
         _public_key: &[u8],
-    ) -> StdResult<bool> {
-        Ok(true)
+    ) -> bool {
+        true
     }
 
     fn debug(&self, message: &str) {
