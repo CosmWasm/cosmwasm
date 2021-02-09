@@ -3,7 +3,7 @@ use std::ptr::NonNull;
 
 use wasmer::{Exports, Function, ImportObject, Instance as WasmerInstance, Module, Val};
 
-use crate::backend::{Api, Backend, Querier, Storage};
+use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -37,7 +37,7 @@ pub struct InstanceOptions {
     pub print_debug: bool,
 }
 
-pub struct Instance<A: Api, S: Storage, Q: Querier> {
+pub struct Instance<A: BackendApi, S: Storage, Q: Querier> {
     /// We put this instance in a box to maintain a constant memory address for the entire
     /// lifetime of the instance in the cache. This is needed e.g. when linking the wasmer
     /// instance to a context. See also https://github.com/CosmWasm/cosmwasm/pull/245.
@@ -50,7 +50,7 @@ pub struct Instance<A: Api, S: Storage, Q: Querier> {
 
 impl<A, S, Q> Instance<A, S, Q>
 where
-    A: Api + 'static, // 'static is needed here to allow copying API instances into closures
+    A: BackendApi + 'static, // 'static is needed here to allow copying API instances into closures
     S: Storage + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
     Q: Querier + 'static, // 'static is needed here to allow using this in an Environment that is cloned into closures
 {

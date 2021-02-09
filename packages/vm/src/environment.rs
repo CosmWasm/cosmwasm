@@ -6,7 +6,7 @@ use std::sync::{Arc, RwLock};
 use wasmer::{HostEnvInitError, Instance as WasmerInstance, Memory, Val, WasmerEnv};
 use wasmer_middlewares::metering::{get_remaining_points, set_remaining_points, MeteringPoints};
 
-use crate::backend::{Api, GasInfo, Querier, Storage};
+use crate::backend::{BackendApi, GasInfo, Querier, Storage};
 use crate::errors::{VmError, VmResult};
 
 /// Never can never be instantiated.
@@ -36,17 +36,17 @@ impl GasState {
 
 /// A environment that provides access to the ContextData.
 /// The environment is clonable but clones access the same underlying data.
-pub struct Environment<A: Api, S: Storage, Q: Querier> {
+pub struct Environment<A: BackendApi, S: Storage, Q: Querier> {
     pub api: A,
     pub print_debug: bool,
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
-unsafe impl<A: Api, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}
+unsafe impl<A: BackendApi, S: Storage, Q: Querier> Send for Environment<A, S, Q> {}
 
-unsafe impl<A: Api, S: Storage, Q: Querier> Sync for Environment<A, S, Q> {}
+unsafe impl<A: BackendApi, S: Storage, Q: Querier> Sync for Environment<A, S, Q> {}
 
-impl<A: Api, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
+impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     fn clone(&self) -> Self {
         Environment {
             api: self.api,
@@ -56,13 +56,13 @@ impl<A: Api, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
     }
 }
 
-impl<A: Api, S: Storage, Q: Querier> WasmerEnv for Environment<A, S, Q> {
+impl<A: BackendApi, S: Storage, Q: Querier> WasmerEnv for Environment<A, S, Q> {
     fn init_with_instance(&mut self, _instance: &WasmerInstance) -> Result<(), HostEnvInitError> {
         Ok(())
     }
 }
 
-impl<A: Api, S: Storage, Q: Querier> Environment<A, S, Q> {
+impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
     pub fn new(api: A, gas_limit: u64, print_debug: bool) -> Self {
         Environment {
             api,
@@ -287,7 +287,7 @@ impl<S: Storage, Q: Querier> ContextData<S, Q> {
     }
 }
 
-pub fn process_gas_info<A: Api, S: Storage, Q: Querier>(
+pub fn process_gas_info<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     info: GasInfo,
 ) -> VmResult<()> {

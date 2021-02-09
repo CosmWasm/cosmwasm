@@ -7,7 +7,7 @@ use std::convert::TryInto;
 use cosmwasm_std::Order;
 use cosmwasm_std::{CanonicalAddr, HumanAddr};
 
-use crate::backend::{Api, BackendError, Querier, Storage};
+use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
 use crate::environment::{process_gas_info, Environment};
 use crate::errors::{CommunicationError, VmError, VmResult};
@@ -36,7 +36,7 @@ const MAX_LENGTH_DEBUG: usize = 2 * MI;
 // Function::new_native_with_env interface. Those require an env in the first
 // argument and cannot capiture other variables such as the Api.
 
-pub fn native_db_read<A: Api, S: Storage, Q: Querier>(
+pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<u32> {
@@ -44,7 +44,7 @@ pub fn native_db_read<A: Api, S: Storage, Q: Querier>(
     Ok(ptr)
 }
 
-pub fn native_db_write<A: Api, S: Storage, Q: Querier>(
+pub fn native_db_write<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
     value_ptr: u32,
@@ -52,14 +52,14 @@ pub fn native_db_write<A: Api, S: Storage, Q: Querier>(
     do_write(env, key_ptr, value_ptr)
 }
 
-pub fn native_db_remove<A: Api, S: Storage, Q: Querier>(
+pub fn native_db_remove<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<()> {
     do_remove(env, key_ptr)
 }
 
-pub fn native_canonicalize_address<A: Api, S: Storage, Q: Querier>(
+pub fn native_canonicalize_address<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -67,7 +67,7 @@ pub fn native_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     do_canonicalize_address(&env, source_ptr, destination_ptr)
 }
 
-pub fn native_humanize_address<A: Api, S: Storage, Q: Querier>(
+pub fn native_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -75,7 +75,7 @@ pub fn native_humanize_address<A: Api, S: Storage, Q: Querier>(
     do_humanize_address(&env, source_ptr, destination_ptr)
 }
 
-pub fn native_query_chain<A: Api, S: Storage, Q: Querier>(
+pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
@@ -83,7 +83,7 @@ pub fn native_query_chain<A: Api, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn native_db_scan<A: Api, S: Storage, Q: Querier>(
+pub fn native_db_scan<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     start_ptr: u32,
     end_ptr: u32,
@@ -93,7 +93,7 @@ pub fn native_db_scan<A: Api, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn native_db_next<A: Api, S: Storage, Q: Querier>(
+pub fn native_db_next<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     iterator_id: u32,
 ) -> VmResult<u32> {
@@ -102,7 +102,7 @@ pub fn native_db_next<A: Api, S: Storage, Q: Querier>(
 
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
-pub fn native_debug<A: Api, S: Storage, Q: Querier>(
+pub fn native_debug<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
@@ -119,7 +119,7 @@ pub fn native_debug<A: Api, S: Storage, Q: Querier>(
 //
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-fn do_read<A: Api, S: Storage, Q: Querier>(
+fn do_read<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<u32> {
@@ -137,7 +137,7 @@ fn do_read<A: Api, S: Storage, Q: Querier>(
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-fn do_write<A: Api, S: Storage, Q: Querier>(
+fn do_write<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
     value_ptr: u32,
@@ -157,7 +157,7 @@ fn do_write<A: Api, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_remove<A: Api, S: Storage, Q: Querier>(
+fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<()> {
@@ -175,7 +175,7 @@ fn do_remove<A: Api, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
+fn do_canonicalize_address<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -210,7 +210,7 @@ fn do_canonicalize_address<A: Api, S: Storage, Q: Querier>(
     }
 }
 
-fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
+fn do_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -233,7 +233,7 @@ fn do_humanize_address<A: Api, S: Storage, Q: Querier>(
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
-fn write_to_contract<A: Api, S: Storage, Q: Querier>(
+fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     input: &[u8],
 ) -> VmResult<u32> {
@@ -247,7 +247,7 @@ fn write_to_contract<A: Api, S: Storage, Q: Querier>(
     Ok(target_ptr)
 }
 
-fn do_query_chain<A: Api, S: Storage, Q: Querier>(
+fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
@@ -263,7 +263,7 @@ fn do_query_chain<A: Api, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_scan<A: Api, S: Storage, Q: Querier>(
+fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     start_ptr: u32,
     end_ptr: u32,
@@ -284,7 +284,7 @@ fn do_scan<A: Api, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_next<A: Api, S: Storage, Q: Querier>(
+fn do_next<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     iterator_id: u32,
 ) -> VmResult<u32> {

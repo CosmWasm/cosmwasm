@@ -8,7 +8,7 @@ use crate::compatibility::check_wasm;
 use crate::features::features_from_csv;
 use crate::instance::{Instance, InstanceOptions};
 use crate::size::Size;
-use crate::{Api, Backend, Querier, Storage};
+use crate::{Backend, BackendApi, Querier, Storage};
 
 use super::mock::{MockApi, MOCK_CONTRACT_ADDR};
 use super::querier::MockQuerier;
@@ -172,7 +172,7 @@ pub fn mock_instance_options() -> (InstanceOptions, Option<Size>) {
 /// This could be especially useful when run with some kind of leak detector.
 pub fn test_io<A, S, Q>(instance: &mut Instance<A, S, Q>)
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {

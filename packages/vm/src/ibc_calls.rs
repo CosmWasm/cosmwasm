@@ -8,7 +8,7 @@ use schemars::JsonSchema;
 use serde::de::DeserializeOwned;
 use std::fmt;
 
-use crate::backend::{Api, Querier, Storage};
+use crate::backend::{BackendApi, Querier, Storage};
 use crate::calls::call_raw;
 use crate::errors::VmResult;
 use crate::instance::Instance;
@@ -22,7 +22,7 @@ pub fn call_ibc_channel_open<A, S, Q>(
     channel: &IbcChannel,
 ) -> VmResult<ContractResult<()>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -39,7 +39,7 @@ pub fn call_ibc_channel_connect<A, S, Q, U>(
     channel: &IbcChannel,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -57,7 +57,7 @@ pub fn call_ibc_channel_close<A, S, Q, U>(
     channel: &IbcChannel,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -75,7 +75,7 @@ pub fn call_ibc_packet_receive<A, S, Q, U>(
     packet: &IbcPacket,
 ) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -93,7 +93,7 @@ pub fn call_ibc_packet_ack<A, S, Q, U>(
     ack: &IbcAcknowledgement,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -111,7 +111,7 @@ pub fn call_ibc_packet_timeout<A, S, Q, U>(
     packet: &IbcPacket,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -129,7 +129,7 @@ pub fn call_ibc_channel_open_raw<A, S, Q>(
     channel: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -148,7 +148,7 @@ pub fn call_ibc_channel_connect_raw<A, S, Q>(
     channel: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -167,7 +167,7 @@ pub fn call_ibc_channel_close_raw<A, S, Q>(
     channel: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -186,7 +186,7 @@ pub fn call_ibc_packet_receive_raw<A, S, Q>(
     packet: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -205,7 +205,7 @@ pub fn call_ibc_packet_ack_raw<A, S, Q>(
     ack: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -219,7 +219,7 @@ pub fn call_ibc_packet_timeout_raw<A, S, Q>(
     packet: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
