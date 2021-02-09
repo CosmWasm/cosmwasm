@@ -1,8 +1,8 @@
+use digest::Digest; // trait
 use k256::{
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
     ecdsa::{Signature, VerifyingKey},                   // type aliases
 };
-use digest::Digest; // trait
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
