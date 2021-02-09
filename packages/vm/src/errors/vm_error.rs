@@ -3,6 +3,8 @@ use std::backtrace::Backtrace;
 use std::fmt::{Debug, Display};
 use thiserror::Error;
 
+use cosmwasm_crypto::CryptoError;
+
 use super::communication_error::CommunicationError;
 use crate::backend::BackendError;
 
@@ -42,9 +44,9 @@ pub enum VmError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Crypto error: {msg}")]
+    #[error("Crypto error: {}", source)]
     CryptoErr {
-        msg: String,
+        source: CryptoError,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -170,9 +172,9 @@ impl VmError {
         }
     }
 
-    pub(crate) fn crypto_err<S: Into<String>>(msg: S) -> Self {
+    pub(crate) fn crypto_err(original: CryptoError) -> Self {
         VmError::CryptoErr {
-            msg: msg.into(),
+            source: original,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -289,6 +291,12 @@ impl From<BackendError> for VmError {
     }
 }
 
+impl From<CryptoError> for VmError {
+    fn from(original: CryptoError) -> Self {
+        VmError::crypto_err(original)
+    }
+}
+
 impl From<wasmer::ExportError> for VmError {
     fn from(original: wasmer::ExportError) -> Self {
         VmError::resolve_err(format!("Could not get export: {}", original))
@@ -388,9 +396,12 @@ mod tests {
 
     #[test]
     fn cyrpto_err_works() {
-        let error = VmError::crypto_err("something went wrong");
+        let error = VmError::crypto_err(CryptoError::generic_err("something went wrong"));
         match error {
-            VmError::CryptoErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            VmError::CryptoErr {
+                source: CryptoError::GenericErr { msg, .. },
+                ..
+            } => assert_eq!(msg, "something went wrong"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }

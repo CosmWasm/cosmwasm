@@ -17,7 +17,7 @@ pub enum CryptoError {
 }
 
 impl CryptoError {
-    pub(crate) fn generic_err<S: Into<String>>(msg: S) -> Self {
+    pub fn generic_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::GenericErr {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]

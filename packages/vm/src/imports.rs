@@ -272,7 +272,7 @@ fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(b) => Ok(b.into()),
-        Err(err) => Err(VmError::crypto_err(err.to_string())),
+        Err(err) => Err(VmError::crypto_err(err)),
     }
 }
 
