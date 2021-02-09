@@ -125,8 +125,8 @@ checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 name = "cosmwasm-crypto"
 version = "0.13.2"
 dependencies = [
+ "digest",
  "k256",
- "sha2",
  "thiserror",
 ]
 
