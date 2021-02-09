@@ -40,8 +40,8 @@ const LENGTH_SHA256_HASH: usize = 32;
 /// Max length of a serialized signature
 const MAX_LENGTH_SIGNATURE: usize = 64;
 
-/// Max length of a serialized public key
-const MAX_LENGTH_PUBKEY: usize = 33;
+/// Max length of a (uncompressed) serialized public key
+const MAX_LENGTH_PUBKEY: usize = 65;
 
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
