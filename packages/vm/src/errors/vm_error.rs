@@ -387,6 +387,15 @@ mod tests {
     }
 
     #[test]
+    fn cyrpto_err_works() {
+        let error = VmError::crypto_err("something went wrong");
+        match error {
+            VmError::CryptoErr { msg, .. } => assert_eq!(msg, "something went wrong"),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
     fn gas_depletion_works() {
         let error = VmError::gas_depletion();
         match error {
