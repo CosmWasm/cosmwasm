@@ -120,13 +120,12 @@ impl Api for MockApi {
         Ok(human.into())
     }
 
-    fn secp256k1_verify(
-        &self,
-        _message_hash: &[u8],
-        _signature: &[u8],
-        _public_key: &[u8],
-    ) -> bool {
-        true
+    fn secp256k1_verify(&self, message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
+        let result = cosmwasm_crypto::secp256k1_verify(message_hash, signature, public_key);
+        match result {
+            Ok(v) => v,
+            Err(err) => panic!("secp256k1_verify error: {:?}", err),
+        }
     }
 
     fn debug(&self, message: &str) {

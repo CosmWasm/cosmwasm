@@ -233,6 +233,7 @@ version = "0.13.2"
 dependencies = [
  "base64",
  "chrono",
+ "cosmwasm-crypto",
  "cosmwasm-derive",
  "cosmwasm-schema",
  "schemars",
