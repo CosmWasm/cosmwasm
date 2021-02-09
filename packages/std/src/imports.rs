@@ -199,7 +199,7 @@ impl Api for ExternalApi {
         match result {
             1 => Ok(true),
             0 => Ok(false),
-            x => panic!(format!("unexpected secp256k1_verify return value: {}", x)),
+            _ => unreachable!(),
         }
     }
 
