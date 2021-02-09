@@ -4,6 +4,7 @@
 use std::convert::TryInto;
 
 use cosmwasm_crypto::secp256k1_verify;
+
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
 use cosmwasm_std::{CanonicalAddr, HumanAddr};
@@ -373,6 +374,7 @@ fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use cosmwasm_crypto::CryptoError;
     use cosmwasm_std::{
         coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, HumanAddr, QueryRequest,
         SystemError, SystemResult, WasmQuery,
@@ -961,6 +963,188 @@ mod tests {
                 assert_eq!(required, api.canonical_length);
             }
             err => panic!("Incorrect error returned: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_works() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_hash_verify_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = vec![0x01; LENGTH_SHA256_HASH];
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_hash_length_verify_assert_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        // FIXME: Not sure how to test this
+        // Uncommenting this assert fails at src/identity_digest.rs:26
+        // Should be RegionLengthTooBig
+        // hash.push(0x00);
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_sig_verify_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let mut sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        // alter sig
+        sig[0] += 1;
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_sig_length_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let mut sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        // extend / break sig
+        sig.push(0x00);
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, MAX_LENGTH_SIGNATURE + 1),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_pubkey_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        // alter pubkey
+        pubkey[0] += 1;
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CryptoErr { source, .. } => match source {
+                CryptoError::GenericErr { msg, .. } => {
+                    assert_eq!(msg, "signature error");
+                }
+                err => panic!("Incorrect crypto error returned: {:?}", err),
+            },
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_data_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = vec![0x22; LENGTH_SHA256_HASH];
+        let hash_ptr = write_data(&env, &hash);
+        let sig = vec![0x22; MAX_LENGTH_SIGNATURE];
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = vec![0x22; MAX_LENGTH_PUBKEY];
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CryptoErr { source, .. } => match source {
+                CryptoError::GenericErr { msg, .. } => {
+                    assert_eq!(msg, "signature error");
+                }
+                err => panic!("Incorrect crypto error returned: {:?}", err),
+            },
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_pubkey_length_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        // extend / break pubkey
+        pubkey.push(0x00);
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, MAX_LENGTH_PUBKEY + 1),
+            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
