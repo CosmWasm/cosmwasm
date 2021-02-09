@@ -3,9 +3,9 @@
 //! To be used for / with already hashed values, just to comply with the Digest contract.
 //!
 //! Adapted from `sha2` [sha256.rs](https://github.com/RustCrypto/hashes/blob/master/sha2/src/sha256.rs)
-use sha2::digest::consts::U32;
-use sha2::digest::generic_array::GenericArray;
-use sha2::digest::{FixedOutputDirty, Output, Reset, Update};
+use digest::consts::U32;
+use digest::generic_array::GenericArray;
+use digest::{FixedOutputDirty, Output, Reset, Update};
 
 /// The 256-bits identity container
 #[derive(Clone)]
