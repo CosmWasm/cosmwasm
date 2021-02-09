@@ -33,7 +33,7 @@ mod tests {
     // constructors
 
     #[test]
-    fn crypto_err_works() {
+    fn generic_err_works() {
         let error = CryptoError::generic_err("something went wrong");
         match error {
             CryptoError::GenericErr { msg, .. } => assert_eq!(msg, "something went wrong"),
