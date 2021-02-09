@@ -34,6 +34,7 @@ bench = false
 clru = { git = "https://github.com/maurolacy/clru-rs", rev="88bb2300" }
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.13.2" }
+cosmwasm-crypto = { path = "../crypto", version = "0.13.2" }
 hex = "0.4"
 parity-wasm = "0.42"
 schemars = "0.7"
@@ -43,7 +44,6 @@ sha2 = "0.9.1"
 thiserror = "1.0"
 wasmer = { version = "1.0.2", default-features = false, features = ["jit", "singlepass"] }
 wasmer-middlewares = { version = "1.0.2" }
-k256 = { version = "0.7.2", features = ["ecdsa"] }
 
 # Wasmer git/local (used for quick local debugging or patching)
 # wasmer = { git = "https://github.com/wasmerio/wasmer", rev = "1.0.2", default-features = false, features = ["jit", "singlepass"] }
@@ -56,9 +56,6 @@ criterion = "0.3"
 tempfile = "3.1.0"
 wat = "1.0"
 clap = "2.33.3"
-base64 = "0.13.0"
-rand_core = { version = "0.5", features = ["getrandom"] }
-elliptic-curve = "0.8.4"
 
 [[bench]]
 name = "main"

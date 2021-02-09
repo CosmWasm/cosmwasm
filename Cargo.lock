@@ -197,6 +197,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cd51eab21ab4fd6a3bf889e2d0958c0a6e3a61ad04260325e919e652a2a62826"
 
 [[package]]
+name = "cosmwasm-crypto"
+version = "0.13.2"
+dependencies = [
+ "base64",
+ "elliptic-curve",
+ "hex",
+ "k256",
+ "rand_core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "thiserror",
+]
+
+[[package]]
 name = "cosmwasm-derive"
 version = "0.13.2"
 dependencies = [
@@ -238,16 +253,13 @@ dependencies = [
 name = "cosmwasm-vm"
 version = "0.13.2"
 dependencies = [
- "base64",
  "clap",
  "clru",
+ "cosmwasm-crypto",
  "cosmwasm-std",
  "criterion",
- "elliptic-curve",
  "hex",
- "k256",
  "parity-wasm",
- "rand_core",
  "schemars",
  "serde",
  "serde_json",

@@ -3,7 +3,7 @@
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
 
-use crate::crypto::secp256k1_verify;
+use cosmwasm_crypto::secp256k1_verify;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
 use cosmwasm_std::{CanonicalAddr, HumanAddr};
@@ -272,7 +272,7 @@ fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(b) => Ok(b.into()),
-        Err(err) => Err(err),
+        Err(err) => Err(VmError::crypto_err(err.to_string())),
     }
 }
 
