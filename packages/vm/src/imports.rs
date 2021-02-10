@@ -1007,7 +1007,7 @@ mod tests {
     }
 
     #[test]
-    fn do_secp256k1_verify_wrong_hash_length_fails() {
+    fn do_secp256k1_verify_larger_hash_fails() {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
@@ -1027,6 +1027,34 @@ mod tests {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
             } => assert_eq!(length, MAX_LENGTH_MESSAGE_HASH + 1),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_shorter_hash_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let mut hash =
+            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+                .unwrap();
+        hash.pop();
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CryptoErr {
+                source: CryptoError::GenericErr { msg, .. },
+                ..
+            } => assert_eq!(
+                msg,
+                format!("Wrong hash length: {}", MAX_LENGTH_MESSAGE_HASH - 1)
+            ),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
