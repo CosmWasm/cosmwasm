@@ -1041,11 +1041,11 @@ mod tests {
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
+                source: CryptoError::HashErr { msg, .. },
                 ..
             } => assert_eq!(
                 msg,
-                format!("Wrong hash length: {}", MESSAGE_HASH_MAX_LENGTH - 1)
+                format!("wrong length: {}", MESSAGE_HASH_MAX_LENGTH - 1)
             ),
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -1115,14 +1115,11 @@ mod tests {
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
+                source: CryptoError::SignatureErr { msg, .. },
                 ..
             } => assert_eq!(
                 msg,
-                format!(
-                    "Wrong / unsupported signature length: {}",
-                    SIGNATURE_MAX_LENGTH - 1
-                )
+                format!("wrong / unsupported length: {}", SIGNATURE_MAX_LENGTH - 1)
             ),
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -1146,14 +1143,11 @@ mod tests {
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
+                source: CryptoError::PublicKeyErr { msg, .. },
                 ..
             } => assert_eq!(
                 msg,
-                format!(
-                    "Wrong / unsupported public key length/format: {}/5",
-                    PUBKEY_MAX_LENGTH
-                )
+                format!("wrong / unsupported length/format: {}/5", PUBKEY_MAX_LENGTH)
             ),
             err => panic!("Incorrect error returned: {:?}", err),
         }
@@ -1227,12 +1221,12 @@ mod tests {
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
+                source: CryptoError::PublicKeyErr { msg, .. },
                 ..
             } => assert_eq!(
                 msg,
                 format!(
-                    "Wrong / unsupported public key length/format: {}/4",
+                    "wrong / unsupported length/format: {}/4",
                     PUBKEY_MAX_LENGTH - 1
                 )
             ),
@@ -1256,9 +1250,9 @@ mod tests {
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
         match result.unwrap_err() {
             VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
+                source: CryptoError::PublicKeyErr { msg, .. },
                 ..
-            } => assert_eq!(msg, "Empty public key"),
+            } => assert_eq!(msg, "empty"),
             err => panic!("Incorrect error returned: {:?}", err),
         }
     }
