@@ -36,20 +36,20 @@ pub fn secp256k1_verify(
     public_key: &[u8],
 ) -> CryptoResult<bool> {
     if message_hash.len() != MESSAGE_HASH_MAX_LENGTH {
-        return Err(CryptoError::generic_err(format!(
-            "Wrong hash length: {}",
+        return Err(CryptoError::hash_err(format!(
+            "wrong length: {}",
             message_hash.len()
         )));
     }
     if signature.len() != SIGNATURE_LENGTH {
-        return Err(CryptoError::generic_err(format!(
-            "Wrong / unsupported signature length: {}",
+        return Err(CryptoError::sig_err(format!(
+            "wrong / unsupported length: {}",
             signature.len()
         )));
     }
     let pubkey_len = public_key.len();
     if pubkey_len == 0 {
-        return Err(CryptoError::generic_err("Empty public key"));
+        return Err(CryptoError::pubkey_err("empty"));
     }
     let pubkey_fmt = public_key[0];
     if !(pubkey_len == UNCOMPRESSED_PUBKEY_LENGTH && pubkey_fmt == UNCOMPRESSED_PUBKEY_PREFIX
@@ -57,8 +57,8 @@ pub fn secp256k1_verify(
             && (pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_1
                 || pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_2))
     {
-        return Err(CryptoError::generic_err(format!(
-            "Wrong / unsupported public key length/format: {}/{}",
+        return Err(CryptoError::pubkey_err(format!(
+            "wrong / unsupported length/format: {}/{}",
             pubkey_len, pubkey_fmt,
         )));
     }
