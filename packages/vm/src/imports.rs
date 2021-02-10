@@ -989,7 +989,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = vec![0x01; MAX_LENGTH_MESSAGE_HASH];
+        let mut hash =
+            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+                .unwrap();
+        // alter hash
+        hash[0] ^= 0x01;
         let hash_ptr = write_data(&env, &hash);
         let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
         let sig_ptr = write_data(&env, &sig);
@@ -1003,26 +1007,28 @@ mod tests {
     }
 
     #[test]
-    fn do_secp256k1_verify_wrong_hash_length_verify_assert_fails() {
+    fn do_secp256k1_verify_wrong_hash_length_fails() {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
-        // FIXME: Not sure how to test this
-        // Uncommenting this assert fails at src/identity_digest.rs:26
-        // Should be RegionLengthTooBig
-        // hash.push(0x00);
+        let mut hash =
+            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+                .unwrap();
+        hash.push(0x00);
         let hash_ptr = write_data(&env, &hash);
         let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
         let sig_ptr = write_data(&env, &sig);
         let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        assert_eq!(
-            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            1
-        );
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, MAX_LENGTH_MESSAGE_HASH + 1),
+            e => panic!("Unexpected error: {:?}", e),
+        }
     }
 
     #[test]
@@ -1035,7 +1041,7 @@ mod tests {
         let hash_ptr = write_data(&env, &hash);
         let mut sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
         // alter sig
-        sig[0] += 1;
+        sig[0] ^= 0x01;
         let sig_ptr = write_data(&env, &sig);
         let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
@@ -1083,7 +1089,7 @@ mod tests {
         let sig_ptr = write_data(&env, &sig);
         let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
         // alter pubkey
-        pubkey[0] += 1;
+        pubkey[0] ^= 0x01;
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
