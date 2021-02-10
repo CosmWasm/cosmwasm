@@ -248,7 +248,7 @@ fn do_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
+fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,
