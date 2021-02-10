@@ -271,10 +271,7 @@ fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    match result {
-        Ok(b) => Ok(b.into()),
-        Err(err) => Err(VmError::crypto_err(err)),
-    }
+    Ok(result?.into())
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
