@@ -4,6 +4,7 @@
 use std::convert::TryInto;
 
 use cosmwasm_crypto::secp256k1_verify;
+use cosmwasm_crypto::{MESSAGE_HASH_MAX_LENGTH, PUBKEY_MAX_LENGTH, SIGNATURE_MAX_LENGTH};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -34,17 +35,6 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
-
-/// Max length of a message hash for secp256k1 verification in bytes.
-/// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
-/// are possible but currently not supported by the implementation. Let us know when you need them.
-const MAX_LENGTH_MESSAGE_HASH: usize = 32;
-
-/// Max length of a serialized signature
-const MAX_LENGTH_SIGNATURE: usize = 64;
-
-/// Max length of a (uncompressed) serialized public key
-const MAX_LENGTH_PUBKEY: usize = 65;
 
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
@@ -264,11 +254,11 @@ fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = read_region(&env.memory(), hash_ptr, MAX_LENGTH_MESSAGE_HASH)?;
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LENGTH)?;
 
-    let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_SIGNATURE)?;
+    let signature = read_region(&env.memory(), signature_ptr, SIGNATURE_MAX_LENGTH)?;
 
-    let pubkey = read_region(&env.memory(), pubkey_ptr, MAX_LENGTH_PUBKEY)?;
+    let pubkey = read_region(&env.memory(), pubkey_ptr, PUBKEY_MAX_LENGTH)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
@@ -1027,7 +1017,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, MAX_LENGTH_MESSAGE_HASH + 1),
+            } => assert_eq!(length, MESSAGE_HASH_MAX_LENGTH + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1055,7 +1045,7 @@ mod tests {
                 ..
             } => assert_eq!(
                 msg,
-                format!("Wrong hash length: {}", MAX_LENGTH_MESSAGE_HASH - 1)
+                format!("Wrong hash length: {}", MESSAGE_HASH_MAX_LENGTH - 1)
             ),
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -1102,7 +1092,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, MAX_LENGTH_SIGNATURE + 1),
+            } => assert_eq!(length, SIGNATURE_MAX_LENGTH + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1127,8 +1117,45 @@ mod tests {
             VmError::CryptoErr {
                 source: CryptoError::GenericErr { msg, .. },
                 ..
-            } => assert_eq!(msg, "signature error"),
+            } => assert_eq!(
+                msg,
+                format!(
+                    "Wrong / unsupported signature length: {}",
+                    SIGNATURE_MAX_LENGTH - 1
+                )
+            ),
             e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_wrong_pubkey_format_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        // alter pubkey format
+        pubkey[0] ^= 0x01;
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CryptoErr {
+                source: CryptoError::GenericErr { msg, .. },
+                ..
+            } => assert_eq!(
+                msg,
+                format!(
+                    "Wrong / unsupported public key length/format: {}/5",
+                    PUBKEY_MAX_LENGTH
+                )
+            ),
+            err => panic!("Incorrect error returned: {:?}", err),
         }
     }
 
@@ -1144,7 +1171,7 @@ mod tests {
         let sig_ptr = write_data(&env, &sig);
         let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
         // alter pubkey
-        pubkey[0] ^= 0x01;
+        pubkey[1] ^= 0x01;
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1177,7 +1204,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, MAX_LENGTH_PUBKEY + 1),
+            } => assert_eq!(length, PUBKEY_MAX_LENGTH + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1202,7 +1229,36 @@ mod tests {
             VmError::CryptoErr {
                 source: CryptoError::GenericErr { msg, .. },
                 ..
-            } => assert_eq!(msg, "signature error"),
+            } => assert_eq!(
+                msg,
+                format!(
+                    "Wrong / unsupported public key length/format: {}/4",
+                    PUBKEY_MAX_LENGTH - 1
+                )
+            ),
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn do_secp256k1_verify_empty_pubkey_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let hash_ptr = write_data(&env, &hash);
+        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = vec![];
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CryptoErr {
+                source: CryptoError::GenericErr { msg, .. },
+                ..
+            } => assert_eq!(msg, "Empty public key"),
             err => panic!("Incorrect error returned: {:?}", err),
         }
     }
@@ -1212,11 +1268,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = vec![0x22; MAX_LENGTH_MESSAGE_HASH];
+        let hash = vec![0x22; MESSAGE_HASH_MAX_LENGTH];
         let hash_ptr = write_data(&env, &hash);
-        let sig = vec![0x22; MAX_LENGTH_SIGNATURE];
+        let sig = vec![0x22; SIGNATURE_MAX_LENGTH];
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = vec![0x22; MAX_LENGTH_PUBKEY];
+        let pubkey = vec![0x04; PUBKEY_MAX_LENGTH];
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
