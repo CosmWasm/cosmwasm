@@ -35,8 +35,10 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
-/// Length of a (sha-256) hash in bytes
-const LENGTH_SHA256_HASH: usize = 32;
+/// Max length of a message hash for secp256k1 verification in bytes.
+/// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
+/// are possible but currently not supported by the implementation. Let us know when you need them.
+const MAX_LENGTH_MESSAGE_HASH: usize = 32;
 
 /// Max length of a serialized signature
 const MAX_LENGTH_SIGNATURE: usize = 64;
@@ -262,7 +264,7 @@ fn do_secp256k1_verify<A: Api, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = read_region(&env.memory(), hash_ptr, LENGTH_SHA256_HASH)?;
+    let hash = read_region(&env.memory(), hash_ptr, MAX_LENGTH_MESSAGE_HASH)?;
 
     let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_SIGNATURE)?;
 
@@ -987,7 +989,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = vec![0x01; LENGTH_SHA256_HASH];
+        let hash = vec![0x01; MAX_LENGTH_MESSAGE_HASH];
         let hash_ptr = write_data(&env, &hash);
         let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
         let sig_ptr = write_data(&env, &sig);
@@ -1101,7 +1103,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = vec![0x22; LENGTH_SHA256_HASH];
+        let hash = vec![0x22; MAX_LENGTH_MESSAGE_HASH];
         let hash_ptr = write_data(&env, &hash);
         let sig = vec![0x22; MAX_LENGTH_SIGNATURE];
         let sig_ptr = write_data(&env, &sig);
