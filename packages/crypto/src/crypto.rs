@@ -13,7 +13,10 @@ pub fn secp256k1_verify(
     public_key: &[u8],
 ) -> CryptoResult<bool> {
     if message_hash.len() != 32 {
-        return Err(CryptoError::generic_err(format!("Wrong hash length: {}", message_hash.len())));
+        return Err(CryptoError::generic_err(format!(
+            "Wrong hash length: {}",
+            message_hash.len()
+        )));
     }
     // Already hashed, just build Digest container
     let message_digest = Identity256::new().chain(message_hash);
