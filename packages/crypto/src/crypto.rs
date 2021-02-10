@@ -18,6 +18,12 @@ pub fn secp256k1_verify(
             message_hash.len()
         )));
     }
+    if signature.len() != 64 {
+        return Err(CryptoError::generic_err(format!(
+            "Wrong signature length: {}",
+            signature.len()
+        )));
+    }
     // Already hashed, just build Digest container
     let message_digest = Identity256::new().chain(message_hash);
 
