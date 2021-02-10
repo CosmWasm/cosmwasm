@@ -4,7 +4,7 @@ use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
 
-use crate::backend::{Api, Backend, Querier, Storage};
+use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::checksum::Checksum;
 use crate::compatibility::check_wasm;
 use crate::errors::{VmError, VmResult};
@@ -35,7 +35,7 @@ pub struct CacheOptions {
     pub instance_memory_limit: Size,
 }
 
-pub struct Cache<A: Api, S: Storage, Q: Querier> {
+pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
@@ -57,9 +57,9 @@ pub struct AnalysisReport {
 
 impl<A, S, Q> Cache<A, S, Q>
 where
-    A: Api + 'static,     // 'static is needed by `impl<…> Instance`
-    S: Storage + 'static, // 'static is needed by `impl<…> Instance`
-    Q: Querier + 'static, // 'static is needed by `impl<…> Instance`
+    A: BackendApi + 'static, // 'static is needed by `impl<…> Instance`
+    S: Storage + 'static,    // 'static is needed by `impl<…> Instance`
+    Q: Querier + 'static,    // 'static is needed by `impl<…> Instance`
 {
     /// new stores the data for cache under base_dir
     ///

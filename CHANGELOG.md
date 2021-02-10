@@ -69,6 +69,8 @@ and this project adheres to
   ([#697])
 - cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
   `interface_version_5`.
+- cosmwasm-vm: Rename trait `Api` to `BackendApi` to better express this is the
+  API provided by the VM's backend (i.e. the blockchain).
 - contracts: `reflect` contract requires `stargate` feature and supports
   redispatching `Stargate` and `IbcMsg::Transfer` messages ([#692])
 

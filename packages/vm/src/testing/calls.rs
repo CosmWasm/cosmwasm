@@ -10,7 +10,7 @@ use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response};
 use crate::calls::{call_handle, call_init, call_migrate, call_query};
 use crate::instance::Instance;
 use crate::serde::to_vec;
-use crate::{Api, Querier, Storage};
+use crate::{BackendApi, Querier, Storage};
 
 // init mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
@@ -22,7 +22,7 @@ pub fn init<A, S, Q, M, U>(
     msg: M,
 ) -> ContractResult<Response<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
@@ -42,7 +42,7 @@ pub fn handle<A, S, Q, M, U>(
     msg: M,
 ) -> ContractResult<Response<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
@@ -61,7 +61,7 @@ pub fn migrate<A, S, Q, M, U>(
     msg: M,
 ) -> ContractResult<Response<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,
@@ -80,7 +80,7 @@ pub fn query<A, S, Q, M>(
     msg: M,
 ) -> ContractResult<QueryResponse>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     M: Serialize + JsonSchema,

@@ -5,7 +5,7 @@ use wasmer::Val;
 
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response};
 
-use crate::backend::{Api, Querier, Storage};
+use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
 use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
@@ -23,7 +23,7 @@ pub fn call_init<A, S, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<Response<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -42,7 +42,7 @@ pub fn call_handle<A, S, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<Response<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -60,7 +60,7 @@ pub fn call_migrate<A, S, Q, U>(
     msg: &[u8],
 ) -> VmResult<ContractResult<Response<U>>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
@@ -77,7 +77,7 @@ pub fn call_query<A, S, Q>(
     msg: &[u8],
 ) -> VmResult<ContractResult<QueryResponse>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -103,7 +103,7 @@ pub fn call_init_raw<A, S, Q>(
     msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -120,7 +120,7 @@ pub fn call_handle_raw<A, S, Q>(
     msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -136,7 +136,7 @@ pub fn call_migrate_raw<A, S, Q>(
     msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -152,7 +152,7 @@ pub fn call_query_raw<A, S, Q>(
     msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -169,7 +169,7 @@ pub(crate) fn call_raw<A, S, Q>(
     result_max_length: usize,
 ) -> VmResult<Vec<u8>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {

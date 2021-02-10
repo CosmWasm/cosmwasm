@@ -62,7 +62,7 @@ impl AddAssign for GasInfo {
 /// Designed to allow easy dependency injection at runtime.
 /// This cannot be copied or cloned since it would behave differently
 /// for mock storages and a bridge storage in the VM.
-pub struct Backend<A: Api, S: Storage, Q: Querier> {
+pub struct Backend<A: BackendApi, S: Storage, Q: Querier> {
     pub api: A,
     pub storage: S,
     pub querier: Q,
@@ -115,7 +115,7 @@ pub trait Storage {
     fn remove(&mut self, key: &[u8]) -> BackendResult<()>;
 }
 
-/// Api are callbacks to system functions defined outside of the wasm modules.
+/// Callbacks to system functions defined outside of the wasm modules.
 /// This is a trait to allow Mocks in the test code.
 ///
 /// Currently it just supports address conversion, we could add eg. crypto functions here.
@@ -124,7 +124,7 @@ pub trait Storage {
 ///
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
-pub trait Api: Copy + Clone + Send {
+pub trait BackendApi: Copy + Clone + Send {
     fn canonical_address(&self, human: &HumanAddr) -> BackendResult<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> BackendResult<HumanAddr>;
 }

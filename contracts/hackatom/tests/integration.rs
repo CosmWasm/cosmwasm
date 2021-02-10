@@ -27,7 +27,7 @@ use cosmwasm_vm::{
         handle, init, migrate, mock_env, mock_info, mock_instance, mock_instance_with_balances,
         query, test_io, MOCK_CONTRACT_ADDR,
     },
-    Api, Storage, VmError,
+    BackendApi, Storage, VmError,
 };
 
 use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, CONFIG_KEY};

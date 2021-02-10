@@ -13,7 +13,7 @@ use crate::ibc_calls::{
     call_ibc_packet_receive, call_ibc_packet_timeout,
 };
 use crate::instance::Instance;
-use crate::{Api, Querier, Storage};
+use crate::{BackendApi, Querier, Storage};
 
 // ibc_channel_open mimicks the call signature of the smart contracts.
 // thus it moves env and channel rather than take them as reference.
@@ -24,7 +24,7 @@ pub fn ibc_channel_open<A, S, Q>(
     channel: IbcChannel,
 ) -> ContractResult<()>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
@@ -40,7 +40,7 @@ pub fn ibc_channel_connect<A, S, Q, U>(
     channel: IbcChannel,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -57,7 +57,7 @@ pub fn ibc_channel_close<A, S, Q, U>(
     channel: IbcChannel,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -74,7 +74,7 @@ pub fn ibc_packet_receive<A, S, Q, U>(
     packet: IbcPacket,
 ) -> ContractResult<IbcReceiveResponse<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -91,7 +91,7 @@ pub fn ibc_packet_ack<A, S, Q, U>(
     ack: IbcAcknowledgement,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
@@ -108,7 +108,7 @@ pub fn ibc_packet_timeout<A, S, Q, U>(
     packet: IbcPacket,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
-    A: Api + 'static,
+    A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,

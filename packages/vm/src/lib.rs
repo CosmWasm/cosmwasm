@@ -23,7 +23,9 @@ mod static_analysis;
 pub mod testing;
 mod wasm_backend;
 
-pub use crate::backend::{Api, Backend, BackendError, BackendResult, GasInfo, Querier, Storage};
+pub use crate::backend::{
+    Backend, BackendApi, BackendError, BackendResult, GasInfo, Querier, Storage,
+};
 pub use crate::cache::{AnalysisReport, Cache, CacheOptions, Stats};
 pub use crate::calls::{
     call_handle, call_handle_raw, call_init, call_init_raw, call_migrate, call_migrate_raw,
