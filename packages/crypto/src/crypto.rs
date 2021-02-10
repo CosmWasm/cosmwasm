@@ -7,23 +7,62 @@ use k256::{
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
 
+/// Max length of a message hash for secp256k1 verification in bytes.
+/// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
+/// are possible but currently not supported by the implementation. Let us know when you need them.
+pub const MESSAGE_HASH_MAX_LENGTH: usize = 32;
+
+/// Length of a serialized signature
+const SIGNATURE_LENGTH: usize = 64;
+/// Max length of a serialized signature
+pub const SIGNATURE_MAX_LENGTH: usize = SIGNATURE_LENGTH;
+
+/// Compressed public key prefix (variant 1)
+const COMPRESSED_PUBKEY_PREFIX_1: u8 = 0x02;
+/// Compressed public key prefix (variant 2)
+const COMPRESSED_PUBKEY_PREFIX_2: u8 = 0x03;
+/// Length of a serialized compressed public key
+const COMPRESSED_PUBKEY_LENGTH: usize = 33;
+/// Uncompressed public key prefix
+const UNCOMPRESSED_PUBKEY_PREFIX: u8 = 0x04;
+/// Length of a serialized uncompressed public key
+const UNCOMPRESSED_PUBKEY_LENGTH: usize = 65;
+/// Max length of a serialized public key
+pub const PUBKEY_MAX_LENGTH: usize = UNCOMPRESSED_PUBKEY_LENGTH;
+
 pub fn secp256k1_verify(
     message_hash: &[u8],
     signature: &[u8],
     public_key: &[u8],
 ) -> CryptoResult<bool> {
-    if message_hash.len() != 32 {
+    if message_hash.len() != MESSAGE_HASH_MAX_LENGTH {
         return Err(CryptoError::generic_err(format!(
             "Wrong hash length: {}",
             message_hash.len()
         )));
     }
-    if signature.len() != 64 {
+    if signature.len() != SIGNATURE_LENGTH {
         return Err(CryptoError::generic_err(format!(
-            "Wrong signature length: {}",
+            "Wrong / unsupported signature length: {}",
             signature.len()
         )));
     }
+    let pubkey_len = public_key.len();
+    if pubkey_len == 0 {
+        return Err(CryptoError::generic_err("Empty public key"));
+    }
+    let pubkey_fmt = public_key[0];
+    if !(pubkey_len == UNCOMPRESSED_PUBKEY_LENGTH && pubkey_fmt == UNCOMPRESSED_PUBKEY_PREFIX
+        || pubkey_len == COMPRESSED_PUBKEY_LENGTH
+            && (pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_1
+                || pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_2))
+    {
+        return Err(CryptoError::generic_err(format!(
+            "Wrong / unsupported public key length/format: {}/{}",
+            pubkey_len, pubkey_fmt,
+        )));
+    }
+
     // Already hashed, just build Digest container
     let message_digest = Identity256::new().chain(message_hash);
 
