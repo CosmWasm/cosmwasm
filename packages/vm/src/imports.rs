@@ -37,15 +37,6 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 
-/// Length of a (sha-256) hash in bytes
-const LENGTH_SHA256_HASH: usize = 32;
-
-/// Max length of a serialized signature
-const MAX_LENGTH_SIGNATURE: usize = 64;
-
-/// Max length of a serialized public key
-const MAX_LENGTH_PUBKEY: usize = 33;
-
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
