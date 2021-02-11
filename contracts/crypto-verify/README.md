@@ -6,12 +6,13 @@ ECDSA Secp256k1 parameters are currently supported. Ed25519 support is upcoming.
 
 ## Formats
 
-Input formats are serialized byte slices for Message / Message Hash, Signature, and Public Key.
+Input formats are serialized byte slices for Message, Signature, and Public Key.
 
 ### secp256k1:
 
-- Hash: SHA-256 hashed value (32 bytes).
-- Signature:  Serialized signature, in Cosmos format (64 bytes). Ethereum DER needs to to be converted.
+- Message: A serialized message. It will be hashed by the contract using SHA-256, and the hashed value will be fed to the
+  verification function.
+- Signature:  Serialized signature, in Cosmos format (64 bytes). Ethereum DER needs to be converted.
 - Public Key:  Compressed (33 bytes) or uncompressed (65 bytes) serialized public key.
 
 Output is a boolean value indicating if verification succeeded or not.

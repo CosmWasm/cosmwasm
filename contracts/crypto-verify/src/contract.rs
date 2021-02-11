@@ -1,3 +1,5 @@
+use sha2::{Digest, Sha256};
+
 use cosmwasm_std::{
     attr, entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response,
     StdResult,
@@ -17,21 +19,24 @@ pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> Std
 pub fn handle(deps: DepsMut, _env: Env, _info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
     match msg {
         HandleMsg::VerifySignature {
-            message_hash,
+            message,
             signature,
             public_key,
-        } => handle_verify(deps, &message_hash.0, &signature.0, &public_key.0),
+        } => handle_verify(deps, &message.0, &signature.0, &public_key.0),
     }
 }
 
 pub fn handle_verify(
     deps: DepsMut,
-    hash: &[u8],
+    message: &[u8],
     signature: &[u8],
     public_key: &[u8],
 ) -> StdResult<Response> {
+    // Hashing
+    let hash = Sha256::new().chain(message).finalize();
+
     // Verification
-    let verify = deps.api.secp256k1_verify(hash, signature, public_key);
+    let verify = deps.api.secp256k1_verify(&*hash, signature, public_key);
 
     Ok(Response {
         messages: vec![],
@@ -65,7 +70,7 @@ mod tests {
     const CREATOR: &str = "creator";
     const SENDER: &str = "sender";
 
-    const HASH_HEX: &str = "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
+    const MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7";
     const SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
     const PUBLIC_KEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
 
@@ -87,12 +92,12 @@ mod tests {
     fn verify_works() {
         let mut deps = setup();
 
-        let hash = hex::decode(HASH_HEX).unwrap();
+        let message = hex::decode(MESSAGE_HEX).unwrap();
         let signature = hex::decode(SIGNATURE_HEX).unwrap();
         let public_key = hex::decode(PUBLIC_KEY_HEX).unwrap();
 
         let verify_msg = HandleMsg::VerifySignature {
-            message_hash: Binary(hash),
+            message: Binary(message),
             signature: Binary(signature),
             public_key: Binary(public_key),
         };
@@ -117,14 +122,14 @@ mod tests {
     fn verify_fails() {
         let mut deps = setup();
 
-        let mut hash = hex::decode(HASH_HEX).unwrap();
-        // alter hash
-        hash[0] ^= 0x01;
+        let mut message = hex::decode(MESSAGE_HEX).unwrap();
+        // alter message
+        message[0] ^= 0x01;
         let signature = hex::decode(SIGNATURE_HEX).unwrap();
         let public_key = hex::decode(PUBLIC_KEY_HEX).unwrap();
 
         let verify_msg = HandleMsg::VerifySignature {
-            message_hash: Binary(hash),
+            message: Binary(message),
             signature: Binary(signature),
             public_key: Binary(public_key),
         };
@@ -150,12 +155,12 @@ mod tests {
     fn verify_panics() {
         let mut deps = setup();
 
-        let hash = hex::decode(HASH_HEX).unwrap();
+        let message = hex::decode(MESSAGE_HEX).unwrap();
         let signature = hex::decode(SIGNATURE_HEX).unwrap();
         let public_key = vec![];
 
         let verify_msg = HandleMsg::VerifySignature {
-            message_hash: Binary(hash),
+            message: Binary(message),
             signature: Binary(signature),
             public_key: Binary(public_key),
         };
