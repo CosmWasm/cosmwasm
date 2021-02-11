@@ -10,6 +10,7 @@ workflows:
       - package_vm
       - package_vm_cranelift
       - contract_burner
+      - contract_crypto_verify
       - contract_hackatom
       - contract_ibc_reflect
       - contract_ibc_reflect_send
@@ -283,6 +284,59 @@ jobs:
             - target/wasm32-unknown-unknown/release/build
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_burner-rust:1.47.0-{{ checksum "Cargo.lock" }}
+
+  contract_crypto_verify:
+    docker:
+      - image: rust:1.47.0
+    environment:
+      RUST_BACKTRACE: 1
+    working_directory: ~/cosmwasm/contracts/crypto-verify
+    steps:
+      - checkout:
+          path: ~/cosmwasm
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version
+      - restore_cache:
+          keys:
+            - cargocache-v2-contract_crypto_verify-rust:1.47.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Add wasm32 target
+          command: rustup target add wasm32-unknown-unknown && rustup target list --installed
+      - run:
+          name: Build wasm binary
+          command: cargo wasm --locked
+      - run:
+          name: Unit tests
+          command: cargo unit-test --locked
+      - run:
+          name: Integration tests (cranelift backend)
+          command: cargo integration-test --locked
+      - run:
+          name: Integration tests (singlepass backend)
+          command: cargo integration-test --locked --no-default-features
+      - run:
+          name: Build and run schema generator
+          command: cargo schema --locked
+      - run:
+          name: Ensure schemas are up-to-date
+          command: |
+            CHANGES_IN_REPO=$(git status --porcelain)
+            if [[ -n "$CHANGES_IN_REPO" ]]; then
+              echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+              git status && git --no-pager diff
+              exit 1
+            fi
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+            - target/wasm32-unknown-unknown/release/.fingerprint
+            - target/wasm32-unknown-unknown/release/build
+            - target/wasm32-unknown-unknown/release/deps
+          key: cargocache-v2-contract_crypto_verify-rust:1.47.0-{{ checksum "Cargo.lock" }}
 
   contract_hackatom:
     docker:
@@ -625,6 +679,10 @@ jobs:
           working_directory: ~/project/contracts/burner
           command: cargo fmt -- --check
       - run:
+          name: Check formatting of contract crypto-verify
+          working_directory: ~/project/contracts/crypto-verify
+          command: cargo fmt -- --check
+      - run:
           name: Check formatting of contract hackatom
           working_directory: ~/project/contracts/hackatom
           command: cargo fmt -- --check
@@ -703,6 +761,10 @@ jobs:
           working_directory: ~/project/contracts/burner
           command: cargo clippy -- -D warnings
       - run:
+          name: Clippy linting on crypto-verify
+          working_directory: ~/project/contracts/crypto-verify
+          command: cargo clippy -- -D warnings
+      - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
           command: cargo clippy -- -D warnings
@@ -735,6 +797,9 @@ jobs:
             - contracts/burner/target/debug/.fingerprint
             - contracts/burner/target/debug/build
             - contracts/burner/target/debug/deps
+            - contracts/crypto_verify/target/debug/.fingerprint
+            - contracts/crypto_verify/target/debug/build
+            - contracts/crypto_verify/target/debug/deps
             - contracts/hackatom/target/debug/.fingerprint
             - contracts/hackatom/target/debug/build
             - contracts/hackatom/target/debug/deps
