@@ -520,6 +520,49 @@ mod tests {
         let _ = api.canonical_address(&human).unwrap();
     }
 
+    // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn secp256k1_verify_works() {
+        let api = MockApi::default();
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let signature = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let public_key = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+
+        assert!(api.secp256k1_verify(&hash, &signature, &public_key));
+    }
+
+    // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn secp256k1_verify_fails() {
+        let api = MockApi::default();
+
+        let mut hash =
+            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+                .unwrap();
+        // alter hash
+        hash[0] ^= 0x01;
+        let signature = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let public_key = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+
+        assert!(!api.secp256k1_verify(&hash, &signature, &public_key));
+    }
+
+    // Basic "panics" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    #[should_panic(expected = "empty")]
+    fn secp256k1_verify_panics() {
+        let api = MockApi::default();
+
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let signature = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let public_key = vec![];
+
+        assert!(!api.secp256k1_verify(&hash, &signature, &public_key));
+    }
+
     #[test]
     fn bank_querier_all_balances() {
         let addr = HumanAddr::from("foobar");
