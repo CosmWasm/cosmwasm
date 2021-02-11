@@ -331,6 +331,7 @@ dependencies = [
  "hex",
  "schemars",
  "serde",
+ "sha2",
 ]
 
 [[package]]

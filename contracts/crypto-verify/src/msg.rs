@@ -11,8 +11,8 @@ pub struct InitMsg {}
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     VerifySignature {
-        /// Sha-256 hash of the message to verify (32 bytes).
-        message_hash: Binary,
+        /// Message to verify.
+        message: Binary,
         /// Serialized signature. Cosmos format (64 bytes).
         signature: Binary,
         /// Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.
