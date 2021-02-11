@@ -328,6 +328,7 @@ dependencies = [
  "cosmwasm-std",
  "cosmwasm-storage",
  "cosmwasm-vm",
+ "hex",
  "schemars",
  "serde",
 ]
