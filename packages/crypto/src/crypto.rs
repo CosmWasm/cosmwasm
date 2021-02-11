@@ -1,3 +1,7 @@
+use std::convert::TryFrom;
+
+use ed25519_zebra as ed25519;
+
 use digest::Digest; // trait
 use k256::{
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
@@ -91,6 +95,16 @@ pub fn secp256k1_verify(
     }
 }
 
+pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<()> {
+    // Deserialize
+    let signature = ed25519::Signature::try_from(signature)
+        .map_err(|err| CryptoError::generic_err(err.to_string()))?;
+
+    ed25519::VerificationKey::try_from(public_key)
+        .and_then(|vk| vk.verify(&signature, &message))
+        .map_err(|err| CryptoError::generic_err(err.to_string()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -98,6 +112,7 @@ mod tests {
     use elliptic_curve::sec1::ToEncodedPoint;
     use rand_core::OsRng;
 
+    use crate::crypto::ed25519_verify;
     use k256::{
         ecdsa::signature::DigestSigner, // trait
         ecdsa::SigningKey,              // type alias
@@ -107,20 +122,32 @@ mod tests {
     // Generic signature verification
     const MSG: &str = "Hello World!";
 
-    // Cosmos signature verification
+    // Cosmos secp256k1 signature verification
     // tendermint/PubKeySecp256k1 pubkey
-    const COSMOS_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
+    const COSMOS_SECP256K1_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
 
-    const COSMOS_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
-    const COSMOS_MSG_HEX2: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
-    const COSMOS_MSG_HEX3: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180212130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
+    const COSMOS_SECP256K1_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
+    const COSMOS_SECP256K1_MSG_HEX2: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
+    const COSMOS_SECP256K1_MSG_HEX3: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180212130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
 
-    const COSMOS_SIGNATURE_HEX1: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
-    const COSMOS_SIGNATURE_HEX2: &str = "525adc7e61565a509c60497b798c549fbf217bb5cd31b24cc9b419d098cc95330c99ecc4bc72448f85c365a4e3f91299a3d40412fb3751bab82f1940a83a0a4c";
-    const COSMOS_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
+    const COSMOS_SECP256K1_SIGNATURE_HEX1: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
+    const COSMOS_SECP256K1_SIGNATURE_HEX2: &str = "525adc7e61565a509c60497b798c549fbf217bb5cd31b24cc9b419d098cc95330c99ecc4bc72448f85c365a4e3f91299a3d40412fb3751bab82f1940a83a0a4c";
+    const COSMOS_SECP256K1_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
-    const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
+    const COSMOS_SECP256K1_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
+
+    // Cosmos ed25519 signature verification
+    // TEST 1 from https://tools.ietf.org/html/rfc8032#section-7.1
+    const COSMOS_ED25519_MSG: &str = "";
+    const COSMOS_ED25519_PRIVATE_KEY_HEX: &str =
+        "9d61b19deffd5a60ba844af492ec2cc44449c5697b326919703bac031cae7f60";
+    const COSMOS_ED25519_PUBLIC_KEY_HEX: &str =
+        "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
+    const COSMOS_ED25519_SIGNATURE_HEX: &str = "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
+
+    // Test data from https://tools.ietf.org/html/rfc8032#section-7.1
+    const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
 
     #[test]
     fn test_secp256k1_verify() {
@@ -176,14 +203,18 @@ mod tests {
 
     #[test]
     fn test_cosmos_secp256k1_verify() {
-        let public_key = base64::decode(COSMOS_PUBKEY_BASE64).unwrap();
+        let public_key = base64::decode(COSMOS_SECP256K1_PUBKEY_BASE64).unwrap();
 
         for ((i, msg), sig) in (1..)
-            .zip(&[COSMOS_MSG_HEX1, COSMOS_MSG_HEX2, COSMOS_MSG_HEX3])
             .zip(&[
-                COSMOS_SIGNATURE_HEX1,
-                COSMOS_SIGNATURE_HEX2,
-                COSMOS_SIGNATURE_HEX3,
+                COSMOS_SECP256K1_MSG_HEX1,
+                COSMOS_SECP256K1_MSG_HEX2,
+                COSMOS_SECP256K1_MSG_HEX3,
+            ])
+            .zip(&[
+                COSMOS_SECP256K1_SIGNATURE_HEX1,
+                COSMOS_SECP256K1_SIGNATURE_HEX2,
+                COSMOS_SECP256K1_SIGNATURE_HEX3,
             ])
         {
             let message = hex::decode(msg).unwrap();
@@ -217,7 +248,7 @@ mod tests {
         }
 
         // Open the file in read-only mode with buffer.
-        let file = File::open(COSMOS_TESTS_JSON).unwrap();
+        let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
 
         let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
@@ -236,6 +267,105 @@ mod tests {
             // secp256k1_verify() works
             assert!(
                 secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
+                format!("verify() failed (test case {})", i)
+            );
+        }
+    }
+
+    #[test]
+    fn test_ed25519_verify() {
+        let message = MSG.as_bytes();
+        // Signing
+        let secret_key = ed25519::SigningKey::new(&mut OsRng);
+        let signature = secret_key.sign(&message);
+
+        let public_key = ed25519::VerificationKey::from(&secret_key);
+
+        // Serialization. Types can be converted to raw byte arrays with From/Into
+        let signature_bytes: [u8; 64] = signature.into();
+        let public_key_bytes: [u8; 32] = public_key.into();
+
+        // Verification
+        assert!(ed25519_verify(&message, &signature_bytes, &public_key_bytes).is_ok());
+
+        // Wrong message fails
+        let bad_message = [message, b"\0"].concat();
+        assert!(ed25519_verify(&bad_message, &signature_bytes, &public_key_bytes).is_err());
+
+        // Other pubkey fails
+        let other_secret_key = ed25519::SigningKey::new(&mut OsRng);
+        let other_public_key = ed25519::VerificationKey::from(&other_secret_key);
+        let other_public_key_bytes: [u8; 32] = other_public_key.into();
+        assert!(ed25519_verify(&message, &signature_bytes, &other_public_key_bytes).is_err());
+    }
+
+    #[test]
+    fn test_cosmos_ed25519_verify() {
+        let secret_key = ed25519::SigningKey::try_from(
+            hex::decode(COSMOS_ED25519_PRIVATE_KEY_HEX)
+                .unwrap()
+                .as_slice(),
+        )
+        .unwrap();
+        let public_key = ed25519::VerificationKey::try_from(
+            hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX)
+                .unwrap()
+                .as_slice(),
+        )
+        .unwrap();
+        let signature = secret_key.sign(&COSMOS_ED25519_MSG.as_bytes());
+
+        let signature_bytes: [u8; 64] = signature.into();
+        let public_key_bytes: [u8; 32] = public_key.into();
+
+        assert_eq!(
+            signature_bytes,
+            hex::decode(&COSMOS_ED25519_SIGNATURE_HEX)
+                .unwrap()
+                .as_slice()
+        );
+
+        assert!(ed25519_verify(
+            &COSMOS_ED25519_MSG.as_bytes(),
+            &signature_bytes,
+            &public_key_bytes
+        )
+        .is_ok());
+    }
+
+    #[test]
+    fn test_cosmos_extra_ed25519_verify() {
+        use std::fs::File;
+        use std::io::BufReader;
+
+        use serde::Deserialize;
+
+        #[derive(Deserialize, Debug)]
+        struct Encoded {
+            #[serde(rename = "privkey")]
+            private_key: String,
+            #[serde(rename = "pubkey")]
+            public_key: String,
+            message: String,
+            signature: String,
+        }
+
+        // Open the file in read-only mode with buffer.
+        let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
+        let reader = BufReader::new(file);
+
+        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+
+        for (i, encoded) in (1..).zip(codes) {
+            let message = hex::decode(&encoded.message).unwrap();
+
+            let signature = hex::decode(&encoded.signature).unwrap();
+
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+
+            // ed25519_verify() works
+            assert!(
+                ed25519_verify(&message, &signature, &public_key).is_ok(),
                 format!("verify() failed (test case {})", i)
             );
         }

@@ -126,6 +126,7 @@ name = "cosmwasm-crypto"
 version = "0.13.2"
 dependencies = [
  "digest",
+ "ed25519-zebra",
  "k256",
  "thiserror",
 ]
