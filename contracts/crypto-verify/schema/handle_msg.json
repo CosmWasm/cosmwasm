@@ -11,13 +11,13 @@
         "verify_signature": {
           "type": "object",
           "required": [
-            "message_hash",
+            "message",
             "public_key",
             "signature"
           ],
           "properties": {
-            "message_hash": {
-              "description": "Sha-256 hash of the message to verify (32 bytes).",
+            "message": {
+              "description": "Message to verify.",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
