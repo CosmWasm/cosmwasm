@@ -10,12 +10,7 @@ pub const VERSION: &str = "crypto-verify-v1";
 
 #[entry_point]
 pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
-    // Does nothing
-    Ok(Response {
-        messages: vec![],
-        attributes: vec![attr("action", "init")],
-        data: None,
-    })
+    Ok(Response::default())
 }
 
 #[entry_point]
