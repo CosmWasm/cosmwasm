@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "QueryMsg",
+  "anyOf": [
+    {
+      "description": "Returns a list of supported verification schemes. No pagination - this is a short list.",
+      "type": "object",
+      "required": [
+        "list_verification_schemes"
+      ],
+      "properties": {
+        "list_verification_schemes": {
+          "type": "object"
+        }
+      }
+    }
+  ]
+}
