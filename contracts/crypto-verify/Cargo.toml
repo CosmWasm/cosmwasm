@@ -40,3 +40,4 @@ serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
 cosmwasm-schema = { path = "../../packages/schema" }
+hex = "0.4"
