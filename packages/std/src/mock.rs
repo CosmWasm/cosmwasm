@@ -133,8 +133,12 @@ impl Api for MockApi {
         )?)
     }
 
-    fn ed25519_verify(&self, _message: &[u8], _signature: &[u8], _public_key: &[u8]) -> bool {
-        true
+    fn ed25519_verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
+        let result = cosmwasm_crypto::ed25519_verify(message, signature, public_key);
+        match result {
+            Ok(v) => v,
+            Err(err) => panic!("ed25519_verify error: {:?}", err),
+        }
     }
 
     fn debug(&self, message: &str) {
