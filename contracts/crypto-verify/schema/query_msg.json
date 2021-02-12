@@ -3,6 +3,48 @@
   "title": "QueryMsg",
   "anyOf": [
     {
+      "type": "object",
+      "required": [
+        "verify_signature"
+      ],
+      "properties": {
+        "verify_signature": {
+          "type": "object",
+          "required": [
+            "message",
+            "public_key",
+            "signature"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "public_key": {
+              "description": "Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signature": {
+              "description": "Serialized signature. Cosmos format (64 bytes).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
       "description": "Returns a list of supported verification schemes. No pagination - this is a short list.",
       "type": "object",
       "required": [
@@ -14,5 +56,11 @@
         }
       }
     }
-  ]
+  ],
+  "definitions": {
+    "Binary": {
+      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    }
+  }
 }
