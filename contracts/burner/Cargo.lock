@@ -137,6 +137,7 @@ name = "cosmwasm-crypto"
 version = "0.13.2"
 dependencies = [
  "digest",
+ "ed25519-zebra",
  "k256",
  "thiserror",
 ]
@@ -176,9 +177,7 @@ dependencies = [
  "clru",
  "cosmwasm-crypto",
  "cosmwasm-std",
- "ed25519-zebra",
  "hex",
- "k256",
  "parity-wasm",
  "schemars",
  "serde",
