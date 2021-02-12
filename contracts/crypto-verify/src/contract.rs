@@ -33,7 +33,7 @@ pub fn handle_verify(
     public_key: &[u8],
 ) -> StdResult<Response> {
     // Hashing
-    let hash = Sha256::new().chain(message).finalize();
+    let hash = Sha256::digest(message);
 
     // Verification
     let verify = deps.api.secp256k1_verify(&*hash, signature, public_key);
