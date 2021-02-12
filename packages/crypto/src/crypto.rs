@@ -14,25 +14,36 @@ use crate::identity_digest::Identity256;
 /// Max length of a message hash for secp256k1 verification in bytes.
 /// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
 /// are possible but currently not supported by the implementation. Let us know when you need them.
-pub const MESSAGE_HASH_MAX_LENGTH: usize = 32;
+pub const MESSAGE_HASH_MAX_LEN: usize = 32;
 
+/// Max length of a message for ed25519 verification in bytes.
+/// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
+/// messages, let us know.
+pub const MESSAGE_MAX_LEN: usize = 4096;
+
+/// ECDSA (secp256k1) parameters
 /// Length of a serialized signature
-const SIGNATURE_LENGTH: usize = 64;
-/// Max length of a serialized signature
-pub const SIGNATURE_MAX_LENGTH: usize = SIGNATURE_LENGTH;
+pub const ECDSA_SIGNATURE_LEN: usize = 64;
 
 /// Compressed public key prefix (variant 1)
-const COMPRESSED_PUBKEY_PREFIX_1: u8 = 0x02;
+const ECDSA_COMPRESSED_PUBKEY_PREFIX_1: u8 = 0x02;
 /// Compressed public key prefix (variant 2)
-const COMPRESSED_PUBKEY_PREFIX_2: u8 = 0x03;
+const ECDSA_COMPRESSED_PUBKEY_PREFIX_2: u8 = 0x03;
 /// Length of a serialized compressed public key
-const COMPRESSED_PUBKEY_LENGTH: usize = 33;
+const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
 /// Uncompressed public key prefix
-const UNCOMPRESSED_PUBKEY_PREFIX: u8 = 0x04;
+const ECDSA_UNCOMPRESSED_PUBKEY_PREFIX: u8 = 0x04;
 /// Length of a serialized uncompressed public key
-const UNCOMPRESSED_PUBKEY_LENGTH: usize = 65;
+const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 /// Max length of a serialized public key
-pub const PUBKEY_MAX_LENGTH: usize = UNCOMPRESSED_PUBKEY_LENGTH;
+pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
+
+/// EdDSA (ed25519) parameters
+/// Length of a serialized signature
+pub const EDDSA_SIGNATURE_LEN: usize = 64;
+
+/// Length of a serialized public key
+pub const EDDSA_PUBKEY_LEN: usize = 32;
 
 /// ECDSA secp256k1 implementation.
 ///
@@ -48,13 +59,13 @@ pub fn secp256k1_verify(
     signature: &[u8],
     public_key: &[u8],
 ) -> CryptoResult<bool> {
-    if message_hash.len() != MESSAGE_HASH_MAX_LENGTH {
+    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
         return Err(CryptoError::hash_err(format!(
             "wrong length: {}",
             message_hash.len()
         )));
     }
-    if signature.len() != SIGNATURE_LENGTH {
+    if signature.len() != ECDSA_SIGNATURE_LEN {
         return Err(CryptoError::sig_err(format!(
             "wrong / unsupported length: {}",
             signature.len()
@@ -65,10 +76,11 @@ pub fn secp256k1_verify(
         return Err(CryptoError::pubkey_err("empty"));
     }
     let pubkey_fmt = public_key[0];
-    if !(pubkey_len == UNCOMPRESSED_PUBKEY_LENGTH && pubkey_fmt == UNCOMPRESSED_PUBKEY_PREFIX
-        || pubkey_len == COMPRESSED_PUBKEY_LENGTH
-            && (pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_1
-                || pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_2))
+    if !(pubkey_len == ECDSA_UNCOMPRESSED_PUBKEY_LEN
+        && pubkey_fmt == ECDSA_UNCOMPRESSED_PUBKEY_PREFIX
+        || pubkey_len == ECDSA_COMPRESSED_PUBKEY_LEN
+            && (pubkey_fmt == ECDSA_COMPRESSED_PUBKEY_PREFIX_1
+                || pubkey_fmt == ECDSA_COMPRESSED_PUBKEY_PREFIX_2))
     {
         return Err(CryptoError::pubkey_err(format!(
             "wrong / unsupported length/format: {}/{}",
@@ -96,6 +108,28 @@ pub fn secp256k1_verify(
 }
 
 pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
+    if message.len() > MESSAGE_MAX_LEN {
+        return Err(CryptoError::msg_err(format!(
+            "too large: {}",
+            message.len()
+        )));
+    }
+    if signature.len() != EDDSA_SIGNATURE_LEN {
+        return Err(CryptoError::sig_err(format!(
+            "wrong / unsupported length: {}",
+            signature.len()
+        )));
+    }
+    let pubkey_len = public_key.len();
+    if pubkey_len == 0 {
+        return Err(CryptoError::pubkey_err("empty"));
+    }
+    if pubkey_len != EDDSA_PUBKEY_LEN {
+        return Err(CryptoError::pubkey_err(format!(
+            "wrong / unsupported length: {}",
+            pubkey_len,
+        )));
+    }
     // Deserialize
     let signature = ed25519::Signature::try_from(signature)
         .map_err(|err| CryptoError::generic_err(err.to_string()))?;

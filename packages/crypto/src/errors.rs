@@ -21,6 +21,12 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Message error: {msg}")]
+    MsgErr {
+        msg: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Signature error: {msg}")]
     SignatureErr {
         msg: String,
@@ -51,6 +57,14 @@ impl CryptoError {
         CryptoError::HashErr {
             msg: msg.into(),
             error_code: 3,
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
+        CryptoError::MsgErr {
+            msg: msg.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }

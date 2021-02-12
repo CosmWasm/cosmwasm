@@ -5,7 +5,7 @@ use std::convert::TryInto;
 
 use cosmwasm_crypto::secp256k1_verify;
 use cosmwasm_crypto::CryptoError;
-use cosmwasm_crypto::{MESSAGE_HASH_MAX_LENGTH, PUBKEY_MAX_LENGTH, SIGNATURE_MAX_LENGTH};
+use cosmwasm_crypto::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -255,11 +255,11 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LENGTH)?;
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
 
-    let signature = read_region(&env.memory(), signature_ptr, SIGNATURE_MAX_LENGTH)?;
+    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
 
-    let pubkey = read_region(&env.memory(), pubkey_ptr, PUBKEY_MAX_LENGTH)?;
+    let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
@@ -1024,7 +1024,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, MESSAGE_HASH_MAX_LENGTH + 1),
+            } => assert_eq!(length, MESSAGE_HASH_MAX_LEN + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1088,7 +1088,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, SIGNATURE_MAX_LENGTH + 1),
+            } => assert_eq!(length, ECDSA_SIGNATURE_LEN + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1172,7 +1172,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, PUBKEY_MAX_LENGTH + 1),
+            } => assert_eq!(length, ECDSA_PUBKEY_MAX_LEN + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1219,11 +1219,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = vec![0x22; MESSAGE_HASH_MAX_LENGTH];
+        let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let hash_ptr = write_data(&env, &hash);
-        let sig = vec![0x22; SIGNATURE_MAX_LENGTH];
+        let sig = vec![0x22; ECDSA_SIGNATURE_LEN];
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = vec![0x04; PUBKEY_MAX_LENGTH];
+        let pubkey = vec![0x04; ECDSA_PUBKEY_MAX_LEN];
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(

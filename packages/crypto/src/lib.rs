@@ -9,8 +9,10 @@ mod errors;
 mod identity_digest;
 
 #[doc(hidden)]
-pub use crate::crypto::secp256k1_verify;
+pub use crate::crypto::{ed25519_verify, secp256k1_verify};
 #[doc(hidden)]
-pub use crate::crypto::{MESSAGE_HASH_MAX_LENGTH, PUBKEY_MAX_LENGTH, SIGNATURE_MAX_LENGTH};
+pub use crate::crypto::{ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN};
+#[doc(hidden)]
+pub use crate::crypto::{EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN, MESSAGE_MAX_LEN};
 #[doc(hidden)]
 pub use crate::errors::{CryptoError, CryptoResult};
