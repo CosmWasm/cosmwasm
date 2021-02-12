@@ -38,7 +38,7 @@ extern "C" {
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
 
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
-    fn verify_ed25519(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+    fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
     fn debug(source_ptr: u32);
 
@@ -208,7 +208,7 @@ impl Api for ExternalApi {
         }
     }
 
-    fn ed25519_verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> StdResult<()> {
+    fn ed25519_verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
         let msg_send = build_region(message);
         let msg_send_ptr = &*msg_send as *const Region as u32;
         let sig_send = build_region(signature);
@@ -216,15 +216,12 @@ impl Api for ExternalApi {
         let pubkey_send = build_region(public_key);
         let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
 
-        let result = unsafe { verify_ed25519(msg_send_ptr, sig_send_ptr, pubkey_send_ptr) };
-        if result != 0 {
-            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
-            return Err(StdError::generic_err(format!(
-                "verify_ed25519 error: {}",
-                error
-            )));
+        let result = unsafe { ed25519_verify(msg_send_ptr, sig_send_ptr, pubkey_send_ptr) };
+        match result {
+            0 => false,
+            1 => true,
+            _ => unreachable!(),
         }
-        Ok(())
     }
 
     fn debug(&self, message: &str) {

@@ -133,13 +133,8 @@ impl Api for MockApi {
         )?)
     }
 
-    fn ed25519_verify(
-        &self,
-        _message: &[u8],
-        _signature: &[u8],
-        _public_key: &[u8],
-    ) -> StdResult<()> {
-        Ok(())
+    fn ed25519_verify(&self, _message: &[u8], _signature: &[u8], _public_key: &[u8]) -> bool {
+        true
     }
 
     fn debug(&self, message: &str) {
