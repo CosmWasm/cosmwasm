@@ -20,19 +20,18 @@
 //! (Use cosmwasm_vm::testing::{init, handle, query}, instead of the contract variants).
 
 use cosmwasm_vm::testing::{
-    handle, init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
+    init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 
-use cosmwasm_std::{attr, Binary, Response};
+use cosmwasm_std::{Binary, Response};
 
-use crypto_verify::msg::{HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg};
+use crypto_verify::msg::{InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
 
 // Output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/crypto_verify.wasm");
 
 const CREATOR: &str = "creator";
-const SENDER: &str = "sender";
 
 const MESSAGE_HEX: &str = "5c868fedb8026979ebd26f1ba07c27eedf4ff6d10443505a96ecaf21ba8c4f0937b3cd23ffdc3dd429d4cd1905fb8dbcceeff1350020e18b58d2ba70887baa3a9b783ad30d3fbf210331cdd7df8d77defa398cdacdfc2e359c7ba4cae46bb74401deb417f8b912a1aa966aeeba9c39c7dd22479ae2b30719dca2f2206c5eb4b7";
 const SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
@@ -60,21 +59,16 @@ fn verify_works() {
     let signature = hex::decode(SIGNATURE_HEX).unwrap();
     let public_key = hex::decode(PUBLIC_KEY_HEX).unwrap();
 
-    let verify_msg = HandleMsg::VerifySignature {
+    let verify_msg = QueryMsg::VerifySignature {
         message: Binary(message),
         signature: Binary(signature),
         public_key: Binary(public_key),
     };
-    let res: Response = handle(&mut deps, mock_env(), mock_info(SENDER, &[]), verify_msg).unwrap();
 
-    assert_eq!(
-        res,
-        Response {
-            messages: vec![],
-            attributes: vec![attr("action", "handle_verify")],
-            data: Some(Binary(vec![1]))
-        }
-    );
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: true });
 }
 
 #[test]
@@ -87,21 +81,16 @@ fn verify_fails() {
     let signature = hex::decode(SIGNATURE_HEX).unwrap();
     let public_key = hex::decode(PUBLIC_KEY_HEX).unwrap();
 
-    let verify_msg = HandleMsg::VerifySignature {
+    let verify_msg = QueryMsg::VerifySignature {
         message: Binary(message),
         signature: Binary(signature),
         public_key: Binary(public_key),
     };
-    let res: Response = handle(&mut deps, mock_env(), mock_info(SENDER, &[]), verify_msg).unwrap();
 
-    assert_eq!(
-        res,
-        Response {
-            messages: vec![],
-            attributes: vec![attr("action", "handle_verify")],
-            data: Some(Binary(vec![0]))
-        }
-    );
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: false });
 }
 
 #[test]
@@ -113,12 +102,12 @@ fn verify_panics() {
     let signature = hex::decode(SIGNATURE_HEX).unwrap();
     let public_key = vec![];
 
-    let verify_msg = HandleMsg::VerifySignature {
+    let verify_msg = QueryMsg::VerifySignature {
         message: Binary(message),
         signature: Binary(signature),
         public_key: Binary(public_key),
     };
-    let _: Response = handle(&mut deps, mock_env(), mock_info(SENDER, &[]), verify_msg).unwrap();
+    let _ = query(&mut deps, mock_env(), verify_msg).unwrap();
 }
 
 #[test]
