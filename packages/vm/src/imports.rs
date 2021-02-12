@@ -397,6 +397,10 @@ mod tests {
     const TESTING_GAS_LIMIT: u64 = 500_000;
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
+    const ECDSA_HASH_HEX: &str = "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
+    const ECDSA_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
+    const ECDSA_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let gas_limit = TESTING_GAS_LIMIT;
         let env = Environment::new(api, gas_limit, false);
@@ -960,12 +964,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
@@ -979,15 +982,13 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let mut hash =
-            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-                .unwrap();
+        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // alter hash
         hash[0] ^= 0x01;
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
@@ -1001,15 +1002,13 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let mut hash =
-            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-                .unwrap();
+        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // extend / break hash
         hash.push(0x00);
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1027,15 +1026,13 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let mut hash =
-            hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-                .unwrap();
+        let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // reduce / break hash
         hash.pop();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1056,14 +1053,13 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let mut sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         // alter sig
         sig[0] ^= 0x01;
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
@@ -1077,14 +1073,13 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let mut sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         // extend / break sig
         sig.push(0x00);
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1102,14 +1097,13 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let mut sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let mut sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         // reduce / break sig
         sig.pop();
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
         let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
@@ -1130,12 +1124,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // alter pubkey format
         pubkey[0] ^= 0x01;
         let pubkey_ptr = write_data(&env, &pubkey);
@@ -1158,12 +1151,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // alter pubkey
         pubkey[1] ^= 0x01;
         let pubkey_ptr = write_data(&env, &pubkey);
@@ -1183,12 +1175,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // extend / break pubkey
         pubkey.push(0x00);
         let pubkey_ptr = write_data(&env, &pubkey);
@@ -1208,12 +1199,11 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
-        let mut pubkey = hex::decode("04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73").unwrap();
+        let mut pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         // reduce / break pubkey
         pubkey.pop();
         let pubkey_ptr = write_data(&env, &pubkey);
@@ -1239,10 +1229,9 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
+        let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
-        let sig = hex::decode("207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4").unwrap();
+        let sig = hex::decode(ECDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);
         let pubkey = vec![];
         let pubkey_ptr = write_data(&env, &pubkey);
