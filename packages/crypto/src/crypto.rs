@@ -95,14 +95,18 @@ pub fn secp256k1_verify(
     }
 }
 
-pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<()> {
+pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
     // Deserialize
     let signature = ed25519::Signature::try_from(signature)
         .map_err(|err| CryptoError::generic_err(err.to_string()))?;
 
-    ed25519::VerificationKey::try_from(public_key)
-        .and_then(|vk| vk.verify(&signature, &message))
-        .map_err(|err| CryptoError::generic_err(err.to_string()))
+    let public_key = ed25519::VerificationKey::try_from(public_key)
+        .map_err(|err| CryptoError::generic_err(err.to_string()))?;
+
+    match public_key.verify(&signature, &message) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
 }
 
 #[cfg(test)]
@@ -286,17 +290,17 @@ mod tests {
         let public_key_bytes: [u8; 32] = public_key.into();
 
         // Verification
-        assert!(ed25519_verify(&message, &signature_bytes, &public_key_bytes).is_ok());
+        assert!(ed25519_verify(&message, &signature_bytes, &public_key_bytes).unwrap());
 
         // Wrong message fails
         let bad_message = [message, b"\0"].concat();
-        assert!(ed25519_verify(&bad_message, &signature_bytes, &public_key_bytes).is_err());
+        assert!(!ed25519_verify(&bad_message, &signature_bytes, &public_key_bytes).unwrap());
 
         // Other pubkey fails
         let other_secret_key = ed25519::SigningKey::new(&mut OsRng);
         let other_public_key = ed25519::VerificationKey::from(&other_secret_key);
         let other_public_key_bytes: [u8; 32] = other_public_key.into();
-        assert!(ed25519_verify(&message, &signature_bytes, &other_public_key_bytes).is_err());
+        assert!(!ed25519_verify(&message, &signature_bytes, &other_public_key_bytes).unwrap());
     }
 
     #[test]
@@ -330,7 +334,7 @@ mod tests {
             &signature_bytes,
             &public_key_bytes
         )
-        .is_ok());
+        .unwrap());
     }
 
     #[test]
@@ -365,7 +369,7 @@ mod tests {
 
             // ed25519_verify() works
             assert!(
-                ed25519_verify(&message, &signature, &public_key).is_ok(),
+                ed25519_verify(&message, &signature, &public_key).unwrap(),
                 format!("verify() failed (test case {})", i)
             );
         }
