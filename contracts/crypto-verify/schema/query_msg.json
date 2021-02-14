@@ -3,12 +3,13 @@
   "title": "QueryMsg",
   "anyOf": [
     {
+      "description": "Cosmos format (secp256k1 verification scheme).",
       "type": "object",
       "required": [
-        "verify_signature"
+        "verify_cosmos_signature"
       ],
       "properties": {
-        "verify_signature": {
+        "verify_cosmos_signature": {
           "type": "object",
           "required": [
             "message",
@@ -34,6 +35,49 @@
             },
             "signature": {
               "description": "Serialized signature. Cosmos format (64 bytes).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "description": "Tendermint format (ed25519 verification scheme).",
+      "type": "object",
+      "required": [
+        "verify_tendermint_signature"
+      ],
+      "properties": {
+        "verify_tendermint_signature": {
+          "type": "object",
+          "required": [
+            "message",
+            "public_key",
+            "signature"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "public_key": {
+              "description": "Serialized public key. Tendermint format (32 bytes).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signature": {
+              "description": "Serialized signature. Tendermint format (64 bytes).",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
