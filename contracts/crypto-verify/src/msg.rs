@@ -14,12 +14,22 @@ pub enum HandleMsg {}
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
-    VerifySignature {
+    /// Cosmos format (secp256k1 verification scheme).
+    VerifyCosmosSignature {
         /// Message to verify.
         message: Binary,
         /// Serialized signature. Cosmos format (64 bytes).
         signature: Binary,
         /// Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.
+        public_key: Binary,
+    },
+    /// Tendermint format (ed25519 verification scheme).
+    VerifyTendermintSignature {
+        /// Message to verify.
+        message: Binary,
+        /// Serialized signature. Tendermint format (64 bytes).
+        signature: Binary,
+        /// Serialized public key. Tendermint format (32 bytes).
         public_key: Binary,
     },
     /// Returns a list of supported verification schemes.
@@ -38,5 +48,5 @@ pub struct ListVerificationsResponse {
 }
 
 pub(crate) fn list_verifications(_deps: Deps) -> StdResult<Vec<String>> {
-    Ok(vec!["secp256k1".into()])
+    Ok(vec!["secp256k1".into(), "ed25519".into()])
 }
