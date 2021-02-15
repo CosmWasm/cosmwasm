@@ -123,7 +123,7 @@ where
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.
-        // Returns 1 on verification success and 0 on failure.
+        // Returns 0 on verification success, 1 on verification failure, and values greater than 1 in case of error.
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "secp256k1_verify",
