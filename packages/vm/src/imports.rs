@@ -4,6 +4,7 @@
 use std::convert::TryInto;
 
 use cosmwasm_crypto::secp256k1_verify;
+use cosmwasm_crypto::CryptoError;
 use cosmwasm_crypto::{MESSAGE_HASH_MAX_LENGTH, PUBKEY_MAX_LENGTH, SIGNATURE_MAX_LENGTH};
 
 #[cfg(feature = "iterator")]
@@ -263,7 +264,16 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result?.into())
+    // Ok((!(result?)).into())
+    match result {
+        Ok(true) => Ok(0),
+        Ok(false) => Ok(1),
+        Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::GenericErr { error_code, .. }) => Ok(error_code),
+        Err(err) => panic!("unknown crypto error: {:?}", err),
+    }
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -363,7 +373,6 @@ fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use cosmwasm_crypto::CryptoError;
     use cosmwasm_std::{
         coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, HumanAddr, QueryRequest,
         SystemError, SystemResult, WasmQuery,
@@ -973,7 +982,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            1
+            0
         );
     }
 
@@ -993,7 +1002,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            0
+            1
         );
     }
 
@@ -1035,17 +1044,10 @@ mod tests {
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::HashErr { msg, .. },
-                ..
-            } => assert_eq!(
-                msg,
-                format!("wrong length: {}", MESSAGE_HASH_MAX_LENGTH - 1)
-            ),
-            e => panic!("Unexpected error: {:?}", e),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            3 // mapped HashErr
+        );
     }
 
     #[test]
@@ -1064,7 +1066,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            0
+            1
         );
     }
 
@@ -1106,17 +1108,10 @@ mod tests {
         let pubkey = hex::decode(ECDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::SignatureErr { msg, .. },
-                ..
-            } => assert_eq!(
-                msg,
-                format!("wrong / unsupported length: {}", SIGNATURE_MAX_LENGTH - 1)
-            ),
-            e => panic!("Unexpected error: {:?}", e),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            4 // mapped SignatureErr
+        )
     }
 
     #[test]
@@ -1133,17 +1128,10 @@ mod tests {
         pubkey[0] ^= 0x01;
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::PublicKeyErr { msg, .. },
-                ..
-            } => assert_eq!(
-                msg,
-                format!("wrong / unsupported length/format: {}/5", PUBKEY_MAX_LENGTH)
-            ),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyError
+        )
     }
 
     #[test]
@@ -1160,14 +1148,10 @@ mod tests {
         pubkey[1] ^= 0x01;
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
-                ..
-            } => assert_eq!(msg, "signature error"),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            10 // mapped GenericErr
+        )
     }
 
     #[test]
@@ -1207,21 +1191,10 @@ mod tests {
         // reduce / break pubkey
         pubkey.pop();
         let pubkey_ptr = write_data(&env, &pubkey);
-
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::PublicKeyErr { msg, .. },
-                ..
-            } => assert_eq!(
-                msg,
-                format!(
-                    "wrong / unsupported length/format: {}/4",
-                    PUBKEY_MAX_LENGTH - 1
-                )
-            ),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyErr
+        )
     }
 
     #[test]
@@ -1236,14 +1209,10 @@ mod tests {
         let pubkey = vec![];
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::PublicKeyErr { msg, .. },
-                ..
-            } => assert_eq!(msg, "empty"),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyError
+        )
     }
 
     #[test]
@@ -1258,14 +1227,10 @@ mod tests {
         let pubkey = vec![0x04; PUBKEY_MAX_LENGTH];
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
-                ..
-            } => assert_eq!(msg, "signature error"),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            10 // mapped GenericErr
+        )
     }
 
     #[test]
