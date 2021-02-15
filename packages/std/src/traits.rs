@@ -67,7 +67,12 @@ pub trait Api {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
 
-    fn secp256k1_verify(&self, message_hash: &[u8], signature: &[u8], public_key: &[u8]) -> bool;
+    fn secp256k1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> StdResult<bool>;
 
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.
