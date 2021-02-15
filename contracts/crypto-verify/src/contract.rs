@@ -52,9 +52,11 @@ pub fn query_verify(
     let hash = Sha256::digest(message);
 
     // Verification
-    let verifies = deps.api.secp256k1_verify(&*hash, signature, public_key);
-
-    Ok(VerifyResponse { verifies })
+    let result = deps.api.secp256k1_verify(&*hash, signature, public_key);
+    match result {
+        Ok(verifies) => Ok(VerifyResponse { verifies }),
+        Err(err) => Err(err),
+    }
 }
 
 pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsResponse> {
@@ -70,7 +72,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_slice, Binary, OwnedDeps};
+    use cosmwasm_std::{from_slice, Binary, OwnedDeps, StdError};
 
     const CREATOR: &str = "creator";
 
@@ -135,8 +137,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "empty")]
-    fn verify_panics() {
+    fn verify_errors() {
         let deps = setup();
 
         let message = hex::decode(MESSAGE_HEX).unwrap();
@@ -148,7 +149,15 @@ mod tests {
             signature: Binary(signature),
             public_key: Binary(public_key),
         };
-        query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res = query(deps.as_ref(), mock_env(), verify_msg);
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err(),
+            StdError::GenericErr {
+                msg: "secp256k1_verify error: PublicKeyErr { msg: \"empty\", error_code: 5 }"
+                    .to_string(),
+            }
+        )
     }
 
     #[test]

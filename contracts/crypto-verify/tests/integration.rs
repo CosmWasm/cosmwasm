@@ -94,8 +94,7 @@ fn verify_fails() {
 }
 
 #[test]
-#[should_panic(expected = "empty")]
-fn verify_panics() {
+fn verify_errors() {
     let mut deps = setup();
 
     let message = hex::decode(MESSAGE_HEX).unwrap();
@@ -107,7 +106,8 @@ fn verify_panics() {
         signature: Binary(signature),
         public_key: Binary(public_key),
     };
-    let _ = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res = query(&mut deps, mock_env(), verify_msg);
+    assert_eq!(res.unwrap_err(), "Generic error: secp256k1_verify error: 5")
 }
 
 #[test]
