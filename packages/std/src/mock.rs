@@ -127,7 +127,7 @@ impl Api for MockApi {
         public_key: &[u8],
     ) -> StdResult<bool> {
         cosmwasm_crypto::secp256k1_verify(message_hash, signature, public_key)
-            .map_err(|err| StdError::generic_err(format!("secp256k1_verify error: {:?}", err)))
+            .map_err(|err| StdError::crypto_err(format!("secp256k1_verify error: {:?}", err)))
     }
 
     fn debug(&self, message: &str) {
@@ -570,7 +570,7 @@ mod tests {
 
         assert_eq!(
             res.unwrap_err(),
-            StdError::GenericErr {
+            StdError::CryptoErr {
                 msg: "secp256k1_verify error: PublicKeyErr { msg: \"empty\", error_code: 5 }"
                     .into(),
             }
