@@ -199,8 +199,8 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            error_code => Err(StdError::generic_err(format!(
-                "secp256k1_verify error: {}",
+            error_code => Err(StdError::crypto_err(format!(
+                "secp256k1_verify: error {}",
                 error_code
             ))),
         }

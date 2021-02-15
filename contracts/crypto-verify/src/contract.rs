@@ -153,7 +153,7 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            StdError::GenericErr {
+            StdError::CryptoErr {
                 msg: "secp256k1_verify error: PublicKeyErr { msg: \"empty\", error_code: 5 }"
                     .to_string(),
             }
