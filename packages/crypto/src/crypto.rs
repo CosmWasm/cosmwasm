@@ -30,6 +30,15 @@ const UNCOMPRESSED_PUBKEY_LENGTH: usize = 65;
 /// Max length of a serialized public key
 pub const PUBKEY_MAX_LENGTH: usize = UNCOMPRESSED_PUBKEY_LENGTH;
 
+/// ECDSA secp256k1 implementation.
+///
+/// This function verifies message hashes (typically, hashed unsing SHA-256) against a signature,
+/// with the public key of the signer.
+///
+/// The signature and public key are in "Cosmos" format:
+/// - signature:  Serialized "compact" signature (64 bytes).
+/// - public key: [Serialized according to SEC 2](https://www.oreilly.com/library/view/programming-bitcoin/9781492031482/ch04.html)
+/// (33 or 65 bytes).
 pub fn secp256k1_verify(
     message_hash: &[u8],
     signature: &[u8],
