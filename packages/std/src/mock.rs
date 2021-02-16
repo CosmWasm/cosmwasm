@@ -7,7 +7,7 @@ use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
-use crate::errors::{StdError, StdResult, SystemError};
+use crate::errors::{StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutBlock};
 use crate::query::{
@@ -125,9 +125,8 @@ impl Api for MockApi {
         message_hash: &[u8],
         signature: &[u8],
         public_key: &[u8],
-    ) -> StdResult<bool> {
-        cosmwasm_crypto::secp256k1_verify(message_hash, signature, public_key)
-            .map_err(|err| StdError::crypto_err(format!("secp256k1_verify error: {:?}", err)))
+    ) -> Result<bool, VerificationError> {
+        Ok(cosmwasm_crypto::secp256k1_verify(message_hash, signature, public_key)?.into())
     }
 
     fn debug(&self, message: &str) {
@@ -568,13 +567,7 @@ mod tests {
 
         let res = api.secp256k1_verify(&hash, &signature, &public_key);
 
-        assert_eq!(
-            res.unwrap_err(),
-            StdError::CryptoErr {
-                msg: "secp256k1_verify error: PublicKeyErr { msg: \"empty\", error_code: 5 }"
-                    .into(),
-            }
-        );
+        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 
     #[test]
