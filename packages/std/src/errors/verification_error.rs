@@ -37,34 +37,10 @@ impl VerificationError {
 impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {
         match self {
-            VerificationError::GenericErr => {
-                if let VerificationError::GenericErr = rhs {
-                    true
-                } else {
-                    false
-                }
-            }
-            VerificationError::HashErr => {
-                if let VerificationError::HashErr = rhs {
-                    true
-                } else {
-                    false
-                }
-            }
-            VerificationError::SignatureErr => {
-                if let VerificationError::SignatureErr = rhs {
-                    true
-                } else {
-                    false
-                }
-            }
-            VerificationError::PublicKeyErr => {
-                if let VerificationError::PublicKeyErr = rhs {
-                    true
-                } else {
-                    false
-                }
-            }
+            VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
+            VerificationError::HashErr => matches!(rhs, VerificationError::HashErr),
+            VerificationError::SignatureErr => matches!(rhs, VerificationError::SignatureErr),
+            VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
             VerificationError::UnknownErr { error_code, .. } => {
                 if let VerificationError::UnknownErr {
                     error_code: rhs_error_code,
