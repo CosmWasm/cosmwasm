@@ -136,7 +136,8 @@ extern "C" {
 
     /// Verifies message hashes against a signature with a public key, using the
     /// secp256k1 ECDSA parametrization.
-    /// Returns 1 on verification success and 0 on failure.
+    /// Returns 0 on verification success, 1 on verification failure, and values
+    /// greater than 1 in case of error.
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
     /// Executes a query on the chain (import). Not to be confused with the
