@@ -2,6 +2,8 @@
 use std::backtrace::Backtrace;
 use thiserror::Error;
 
+use crate::errors::VerificationError;
+
 /// Structured error type for init, handle and query.
 ///
 /// This can be serialized and passed over the Wasm/VM boundary, which allows us to use structured
@@ -19,9 +21,9 @@ use thiserror::Error;
 /// - Add creator function in std_error_helpers.rs
 #[derive(Error, Debug)]
 pub enum StdError {
-    #[error("Crypto error: {msg}")]
-    CryptoErr {
-        msg: String,
+    #[error("Verification error: {source}")]
+    VerificationErr {
+        source: VerificationError,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -84,9 +86,9 @@ pub enum StdError {
 }
 
 impl StdError {
-    pub fn crypto_err<S: Into<String>>(msg: S) -> Self {
-        StdError::CryptoErr {
-            msg: msg.into(),
+    pub fn verification_err(source: VerificationError) -> Self {
+        StdError::VerificationErr {
+            source: source,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -165,18 +167,18 @@ impl StdError {
 impl PartialEq<StdError> for StdError {
     fn eq(&self, rhs: &StdError) -> bool {
         match self {
-            StdError::CryptoErr {
-                msg,
+            StdError::VerificationErr {
+                source,
                 #[cfg(feature = "backtraces")]
                     backtrace: _,
             } => {
-                if let StdError::CryptoErr {
-                    msg: rhs_msg,
+                if let StdError::VerificationErr {
+                    source: rhs_source,
                     #[cfg(feature = "backtraces")]
                         backtrace: _,
                 } = rhs
                 {
-                    msg == rhs_msg
+                    source == rhs_source
                 } else {
                     false
                 }
@@ -330,6 +332,12 @@ impl From<std::str::Utf8Error> for StdError {
 impl From<std::string::FromUtf8Error> for StdError {
     fn from(source: std::string::FromUtf8Error) -> Self {
         Self::invalid_utf8(source)
+    }
+}
+
+impl From<VerificationError> for StdError {
+    fn from(source: VerificationError) -> Self {
+        Self::verification_err(source)
     }
 }
 
