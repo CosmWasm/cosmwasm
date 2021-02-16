@@ -141,6 +141,11 @@ extern "C" {
     /// greater than 1 in case of error.
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
+    /// verifies a message against a signature with a public key, using the
+    /// ed25519 EdDSA scheme.
+    /// Returns 1 on verification success and 0 on failure.
+    fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
     fn query_chain(request: u32) -> u32;
