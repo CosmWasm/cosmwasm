@@ -48,7 +48,8 @@ pub const EDDSA_PUBKEY_LEN: usize = 32;
 /// ECDSA secp256k1 implementation.
 ///
 /// This function verifies message hashes (typically, hashed unsing SHA-256) against a signature,
-/// with the public key of the signer.
+/// with the public key of the signer, using the secp256k1 elliptic curve digital signature
+/// parametrization / algorithm.
 ///
 /// The signature and public key are in "Cosmos" format:
 /// - signature:  Serialized "compact" signature (64 bytes).
@@ -107,6 +108,16 @@ pub fn secp256k1_verify(
     }
 }
 
+/// EdDSA ed25519 implementation.
+///
+/// This function verifies messages against a signature, with the public key of the signer,
+/// using the ed25519 elliptic curve digital signature parametrization / algorithm.
+///
+/// The maximum currently supported message length is 4096 bytes.
+/// The signature and public key are in [Tendermint](https://docs.tendermint.com/v0.32/spec/blockchain/encoding.html#public-key-cryptography)
+/// format:
+/// - signature: raw ED25519 signature (64 bytes).
+/// - public key: raw ED25519 public key (32 bytes).
 pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
     if message.len() > MESSAGE_MAX_LEN {
         return Err(CryptoError::msg_err(format!(
