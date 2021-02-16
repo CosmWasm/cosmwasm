@@ -134,6 +134,11 @@ extern "C" {
     fn canonicalize_address(source: u32, destination: u32) -> u32;
     fn humanize_address(source: u32, destination: u32) -> u32;
 
+    /// Verifies message hashes against a signature with a public key, using the
+    /// secp256k1 ECDSA parametrization.
+    /// Returns 1 on verification success and 0 on failure.
+    fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
     /// Executes a query on the chain (import). Not to be confused with the
     /// query export, which queries the state of the contract.
     fn query_chain(request: u32) -> u32;
