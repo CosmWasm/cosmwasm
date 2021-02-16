@@ -6,7 +6,6 @@ use thiserror::Error;
 pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
 #[derive(Error, Debug)]
-#[non_exhaustive]
 pub enum CryptoError {
     #[error("Crypto error: {msg}")]
     GenericErr {

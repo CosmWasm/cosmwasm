@@ -272,7 +272,6 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
         Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
         Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
         Err(CryptoError::GenericErr { error_code, .. }) => Ok(error_code),
-        Err(err) => panic!("unknown crypto error: {:?}", err),
     }
 }
 
