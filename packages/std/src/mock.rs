@@ -126,7 +126,11 @@ impl Api for MockApi {
         signature: &[u8],
         public_key: &[u8],
     ) -> Result<bool, VerificationError> {
-        Ok(cosmwasm_crypto::secp256k1_verify(message_hash, signature, public_key)?.into())
+        Ok(cosmwasm_crypto::secp256k1_verify(
+            message_hash,
+            signature,
+            public_key,
+        )?)
     }
 
     fn debug(&self, message: &str) {

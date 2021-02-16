@@ -88,7 +88,7 @@ pub enum StdError {
 impl StdError {
     pub fn verification_err(source: VerificationError) -> Self {
         StdError::VerificationErr {
-            source: source,
+            source,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
