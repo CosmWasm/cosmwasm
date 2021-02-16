@@ -2,7 +2,7 @@ use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
-use crate::errors::{StdError, StdResult, SystemError};
+use crate::errors::{StdError, StdResult, SystemError, VerificationError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
@@ -187,7 +187,7 @@ impl Api for ExternalApi {
         message_hash: &[u8],
         signature: &[u8],
         public_key: &[u8],
-    ) -> StdResult<bool> {
+    ) -> Result<bool, VerificationError> {
         let hash_send = build_region(message_hash);
         let hash_send_ptr = &*hash_send as *const Region as u32;
         let sig_send = build_region(signature);
@@ -199,10 +199,11 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            error_code => Err(StdError::crypto_err(format!(
-                "secp256k1_verify: error {}",
-                error_code
-            ))),
+            3 => Err(VerificationError::HashErr),
+            4 => Err(VerificationError::SignatureErr),
+            5 => Err(VerificationError::PublicKeyErr),
+            10 => Err(VerificationError::GenericErr),
+            error_code => Err(VerificationError::unknown_err(error_code)),
         }
     }
 
