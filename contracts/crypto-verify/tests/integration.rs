@@ -107,7 +107,7 @@ fn verify_errors() {
         public_key: Binary(public_key),
     };
     let res = query(&mut deps, mock_env(), verify_msg);
-    assert_eq!(res.unwrap_err(), "Crypto error: secp256k1_verify: error 5")
+    assert_eq!(res.unwrap_err(), "Verification error: Public key error")
 }
 
 #[test]

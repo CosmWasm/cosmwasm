@@ -55,7 +55,7 @@ pub fn query_verify(
     let result = deps.api.secp256k1_verify(&*hash, signature, public_key);
     match result {
         Ok(verifies) => Ok(VerifyResponse { verifies }),
-        Err(err) => Err(err),
+        Err(err) => Err(err.into()),
     }
 }
 
@@ -72,7 +72,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_slice, Binary, OwnedDeps, StdError};
+    use cosmwasm_std::{from_slice, Binary, OwnedDeps, StdError, VerificationError};
 
     const CREATOR: &str = "creator";
 
@@ -153,9 +153,8 @@ mod tests {
         assert!(res.is_err());
         assert_eq!(
             res.unwrap_err(),
-            StdError::CryptoErr {
-                msg: "secp256k1_verify error: PublicKeyErr { msg: \"empty\", error_code: 5 }"
-                    .to_string(),
+            StdError::VerificationErr {
+                source: VerificationError::PublicKeyErr
             }
         )
     }
