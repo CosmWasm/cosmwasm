@@ -4,7 +4,6 @@ use k256::{
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
     ecdsa::{Signature, VerifyingKey},                   // type aliases
 };
-use std::convert::TryFrom;
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
@@ -123,10 +122,12 @@ pub fn secp256k1_recover_pubkey(
         )));
     }
 
+    let id =
+        recoverable::Id::new(recovery_param).map_err(|_| CryptoError::invalid_recovery_param())?;
+
     // Compose extended signature
     let signature =
         Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
-    let id = recoverable::Id::try_from(recovery_param).unwrap();
     let extended_signature = recoverable::Signature::new(&signature, id).unwrap();
 
     // Recover
@@ -335,6 +336,36 @@ mod tests {
                 hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
             let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
             assert_eq!(pubkey.as_ref(), expected.to_bytes());
+        }
+    }
+
+    #[test]
+    fn secp256k1_recover_pubkey_fails_for_invalid_recovery_param() {
+        let r_s = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
+        let message_hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+
+        // 2 and 3 are explicitly unsupported
+        let recovery_param: u8 = 2;
+        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {}", err),
+        }
+        let recovery_param: u8 = 3;
+        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {}", err),
+        }
+
+        // Other values are garbage
+        let recovery_param: u8 = 4;
+        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {}", err),
+        }
+        let recovery_param: u8 = 255;
+        match secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap_err() {
+            CryptoError::InvalidRecoveryParam { .. } => {}
+            err => panic!("Unexpected error: {}", err),
         }
     }
 }

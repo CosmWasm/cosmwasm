@@ -18,6 +18,8 @@ pub enum VerificationError {
     SignatureErr,
     #[error("Public key error")]
     PublicKeyErr,
+    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
+    InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
     UnknownErr {
         error_code: u32,
@@ -44,6 +46,9 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::HashErr => matches!(rhs, VerificationError::HashErr),
             VerificationError::SignatureErr => matches!(rhs, VerificationError::SignatureErr),
             VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
+            VerificationError::InvalidRecoveryParam => {
+                matches!(rhs, VerificationError::InvalidRecoveryParam)
+            }
             VerificationError::UnknownErr { error_code, .. } => {
                 if let VerificationError::UnknownErr {
                     error_code: rhs_error_code,
@@ -68,6 +73,7 @@ impl From<CryptoError> for VerificationError {
             CryptoError::SignatureErr { .. } => VerificationError::SignatureErr,
             CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
+            CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
         }
     }
 }
