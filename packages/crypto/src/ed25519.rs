@@ -290,11 +290,11 @@ mod tests {
             public_keys.push(public_key);
         }
 
-        let message_slices: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
-        let signature_slices: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
-        let pubkey_slices: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let pubkeys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // ed25519_batch_verify() works
-        assert!(ed25519_batch_verify(&message_slices, &signature_slices, &pubkey_slices).unwrap());
+        assert!(ed25519_batch_verify(&messages, &signatures, &pubkeys).unwrap());
     }
 }
