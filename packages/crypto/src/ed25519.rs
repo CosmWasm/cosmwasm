@@ -124,7 +124,7 @@ pub fn ed25519_batch_verify(
         })?;
 
         // Enqueing
-        batch.queue((public_key.into(), signature.into(), message));
+        batch.queue((public_key.into(), signature, message));
     }
 
     // Batch Verification
