@@ -3,7 +3,6 @@
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
 
-use cosmwasm_crypto::CryptoError;
 use cosmwasm_crypto::{ed25519_verify, secp256k1_verify};
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN,
@@ -277,16 +276,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    // Ok((!(result?)).into())
-    match result {
-        Ok(true) => Ok(0),
-        Ok(false) => Ok(1),
-        Err(CryptoError::MessageError { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::GenericErr { error_code, .. }) => Ok(error_code),
-    }
+    Ok(result.map_or_else(|err| err.code(), |valid| valid.into()))
 }
 
 fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -304,16 +294,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let result = ed25519_verify(&message, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_ED25519_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    // Ok((!(result?)).into())
-    match result {
-        Ok(true) => Ok(0),
-        Ok(false) => Ok(1),
-        Err(CryptoError::MessageError { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
-        Err(CryptoError::GenericErr { error_code, .. }) => Ok(error_code),
-    }
+    Ok(result.map_or_else(|err| err.code(), |valid| valid.into()))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
