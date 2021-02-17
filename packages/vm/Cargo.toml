@@ -34,6 +34,7 @@ bench = false
 clru = { git = "https://github.com/maurolacy/clru-rs", rev="88bb2300" }
 # Uses the path when built locally; uses the given version from crates.io when published
 cosmwasm-std = { path = "../std", version = "0.13.2" }
+cosmwasm-crypto = { path = "../crypto", version = "0.13.2" }
 hex = "0.4"
 parity-wasm = "0.42"
 schemars = "0.7"

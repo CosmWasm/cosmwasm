@@ -8,6 +8,8 @@ and this project adheres to
 
 ### Added
 
+- cosmwasm-crypto: Add new crypto-related crate. Add `secp256k1_verify`, ECDSA
+  secp256k1 signature verification scheme for Cosmos signature formats. ([#780])
 - cosmwasm-vm: Add PinnedMemoryCache. ([#696])
 - cosmwasm-vm: The new `Cache::analyze` provides a static analyzis of the Wasm
   bytecode. This is used to tell the caller if the contract exposes IBC entry

@@ -4,7 +4,7 @@ use std::ops::Deref;
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::errors::{StdError, StdResult};
+use crate::errors::{StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::{
@@ -66,6 +66,14 @@ pub trait Storage {
 pub trait Api {
     fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
     fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
+
+    fn secp256k1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError>;
+
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.
     fn debug(&self, message: &str);

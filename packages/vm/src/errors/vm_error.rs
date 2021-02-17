@@ -3,6 +3,8 @@ use std::backtrace::Backtrace;
 use std::fmt::{Debug, Display};
 use thiserror::Error;
 
+use cosmwasm_crypto::CryptoError;
+
 use super::communication_error::CommunicationError;
 use crate::backend::BackendError;
 
@@ -39,6 +41,12 @@ pub enum VmError {
         from_type: String,
         to_type: String,
         input: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
+    #[error("Crypto error: {}", source)]
+    CryptoErr {
+        source: CryptoError,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -133,6 +141,7 @@ impl VmError {
             backtrace: Backtrace::capture(),
         }
     }
+
     pub(crate) fn cache_err<S: Into<String>>(msg: S) -> Self {
         VmError::CacheErr {
             msg: msg.into(),
@@ -158,6 +167,14 @@ impl VmError {
             from_type: from_type.into(),
             to_type: to_type.into(),
             input: input.into(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub(crate) fn crypto_err(original: CryptoError) -> Self {
+        VmError::CryptoErr {
+            source: original,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -274,6 +291,12 @@ impl From<BackendError> for VmError {
     }
 }
 
+impl From<CryptoError> for VmError {
+    fn from(original: CryptoError) -> Self {
+        VmError::crypto_err(original)
+    }
+}
+
 impl From<wasmer::ExportError> for VmError {
     fn from(original: wasmer::ExportError) -> Self {
         VmError::resolve_err(format!("Could not get export: {}", original))
@@ -367,6 +390,18 @@ mod tests {
                 assert_eq!(to_type, "u32");
                 assert_eq!(input, "-9");
             }
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn cyrpto_err_works() {
+        let error = VmError::crypto_err(CryptoError::generic_err("something went wrong"));
+        match error {
+            VmError::CryptoErr {
+                source: CryptoError::GenericErr { msg, .. },
+                ..
+            } => assert_eq!(msg, "something went wrong"),
             e => panic!("Unexpected error: {:?}", e),
         }
     }

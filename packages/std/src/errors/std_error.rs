@@ -2,6 +2,8 @@
 use std::backtrace::Backtrace;
 use thiserror::Error;
 
+use crate::errors::VerificationError;
+
 /// Structured error type for init, handle and query.
 ///
 /// This can be serialized and passed over the Wasm/VM boundary, which allows us to use structured
@@ -19,6 +21,12 @@ use thiserror::Error;
 /// - Add creator function in std_error_helpers.rs
 #[derive(Error, Debug)]
 pub enum StdError {
+    #[error("Verification error: {source}")]
+    VerificationErr {
+        source: VerificationError,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     /// Whenever there is no specific error type available
     #[error("Generic error: {msg}")]
     GenericErr {
@@ -78,6 +86,14 @@ pub enum StdError {
 }
 
 impl StdError {
+    pub fn verification_err(source: VerificationError) -> Self {
+        StdError::VerificationErr {
+            source,
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     pub fn generic_err<S: Into<String>>(msg: S) -> Self {
         StdError::GenericErr {
             msg: msg.into(),
@@ -151,6 +167,22 @@ impl StdError {
 impl PartialEq<StdError> for StdError {
     fn eq(&self, rhs: &StdError) -> bool {
         match self {
+            StdError::VerificationErr {
+                source,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::VerificationErr {
+                    source: rhs_source,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
             StdError::GenericErr {
                 msg,
                 #[cfg(feature = "backtraces")]
@@ -300,6 +332,12 @@ impl From<std::str::Utf8Error> for StdError {
 impl From<std::string::FromUtf8Error> for StdError {
     fn from(source: std::string::FromUtf8Error) -> Self {
         Self::invalid_utf8(source)
+    }
+}
+
+impl From<VerificationError> for StdError {
+    fn from(source: VerificationError) -> Self {
+        Self::verification_err(source)
     }
 }
 

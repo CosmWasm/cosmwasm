@@ -35,7 +35,11 @@ schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 thiserror = "1.0"
 
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+cosmwasm-crypto = { path = "../crypto", version = "0.13.2" }
+
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }
 # The chrono dependency is only used in an example, which Rust compiles for us. If this causes trouble, remove it.
 chrono = "0.4"
+hex = "0.4"

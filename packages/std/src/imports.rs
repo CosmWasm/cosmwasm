@@ -2,9 +2,10 @@ use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
-use crate::errors::{StdError, StdResult, SystemError};
+use crate::errors::{StdError, StdResult, SystemError, VerificationError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
+#[cfg(feature = "iterator")]
 use crate::sections::decode_sections2;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
@@ -35,6 +36,9 @@ extern "C" {
 
     fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
+
+    fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+
     fn debug(source_ptr: u32);
 
     /// Executes a query on the chain (import). Not to be confused with the
@@ -176,6 +180,31 @@ impl Api for ExternalApi {
 
         let address = unsafe { consume_string_region_written_by_vm(human) };
         Ok(address.into())
+    }
+
+    fn secp256k1_verify(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError> {
+        let hash_send = build_region(message_hash);
+        let hash_send_ptr = &*hash_send as *const Region as u32;
+        let sig_send = build_region(signature);
+        let sig_send_ptr = &*sig_send as *const Region as u32;
+        let pubkey_send = build_region(public_key);
+        let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
+
+        let result = unsafe { secp256k1_verify(hash_send_ptr, sig_send_ptr, pubkey_send_ptr) };
+        match result {
+            0 => Ok(true),
+            1 => Ok(false),
+            3 => Err(VerificationError::HashErr),
+            4 => Err(VerificationError::SignatureErr),
+            5 => Err(VerificationError::PublicKeyErr),
+            10 => Err(VerificationError::GenericErr),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
     }
 
     fn debug(&self, message: &str) {
