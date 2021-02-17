@@ -76,11 +76,8 @@ pub fn query_verify_tendermint(
     public_key: &[u8],
 ) -> StdResult<VerifyResponse> {
     // Verification
-    let result = deps.api.ed25519_verify(message, signature, public_key);
-    match result {
-        Ok(verifies) => Ok(VerifyResponse { verifies }),
-        Err(err) => Err(err.into()),
-    }
+    let verifies = deps.api.ed25519_verify(message, signature, public_key)?;
+    Ok(VerifyResponse { verifies })
 }
 
 pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsResponse> {
@@ -104,6 +101,7 @@ mod tests {
     const SECP256K1_SIGNATURE_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
     const SECP256K1_PUBLIC_KEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
 
+    // TEST 3 test vector from https://tools.ietf.org/html/rfc8032#section-7.1
     const ED25519_MESSAGE_HEX: &str = "af82";
     const ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
     const ED25519_PUBLIC_KEY_HEX: &str =
