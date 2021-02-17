@@ -1,8 +1,10 @@
 use digest::Digest; // trait
 use k256::{
+    ecdsa::recoverable,
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
     ecdsa::{Signature, VerifyingKey},                   // type aliases
 };
+use std::convert::TryFrom;
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
@@ -92,6 +94,49 @@ pub fn secp256k1_verify(
     }
 }
 
+/// Recovers a public key from a message hash and a signature.
+///
+/// This is required when working with Ethereum where public keys
+/// are not stored on chain directly.
+///
+/// `recovery_param` must be 0 or 1. The values 2 and 3 are unsupported by this implementation,
+/// which is the same restriction as Ethereum has (https://github.com/ethereum/go-ethereum/blob/v1.9.25/internal/ethapi/api.go#L466-L469).
+/// All other values are invalid.
+///
+/// Returns the recovered pubkey in compressed form, which can be used
+/// in secp256k1_verify directly.
+pub fn secp256k1_recover_pubkey(
+    message_hash: &[u8],
+    signature: &[u8],
+    recovery_param: u8,
+) -> Result<[u8; 33], CryptoError> {
+    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
+        return Err(CryptoError::hash_err(format!(
+            "wrong length: {}",
+            message_hash.len()
+        )));
+    }
+    if signature.len() != ECDSA_SIGNATURE_LEN {
+        return Err(CryptoError::sig_err(format!(
+            "wrong / unsupported length: {}",
+            signature.len()
+        )));
+    }
+
+    // Compose extended signature
+    let signature =
+        Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
+    let id = recoverable::Id::try_from(recovery_param).unwrap();
+    let extended_signature = recoverable::Signature::new(&signature, id).unwrap();
+
+    // Recover
+    let message_digest = Identity256::new().chain(message_hash);
+    let pubkey = extended_signature
+        .recover_verify_key_from_digest(message_digest)
+        .unwrap();
+    Ok(pubkey.to_bytes())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -99,6 +144,7 @@ mod tests {
     use elliptic_curve::sec1::ToEncodedPoint;
     use rand_core::OsRng;
 
+    use hex_literal::hex;
     use k256::{
         ecdsa::signature::DigestSigner, // trait
         ecdsa::SigningKey,              // type alias
@@ -243,6 +289,38 @@ mod tests {
                 secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
                 format!("verify() failed (test case {})", i)
             );
+        }
+    }
+
+    #[test]
+    fn secp256k1_recover_pubkey_works() {
+        // Test data from https://github.com/ethereumjs/ethereumjs-util/blob/v6.1.0/test/index.js#L496
+        {
+            let private_key =
+                hex!("3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1");
+            let expected = SigningKey::from_bytes(&private_key).unwrap().verify_key();
+            let r_s = hex!("99e71a99cb2270b8cac5254f9e99b6210c6c10224a1579cf389ef88b20a1abe9129ff05af364204442bdb53ab6f18a99ab48acc9326fa689f228040429e3ca66");
+            let recovery_param: u8 = 0;
+            let message_hash =
+                hex!("82ff40c0a986c6a5cfad4ddf4c3aa6996f1a7837f9c398e17e5de5cbd5a12b28");
+            let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
+            assert_eq!(pubkey.as_ref(), expected.to_bytes());
+        }
+
+        // Test data from https://github.com/randombit/botan/blob/2.9.0/src/tests/data/pubkey/ecdsa_key_recovery.vec
+        {
+            let expected_x = "F3F8BB913AA68589A2C8C607A877AB05252ADBD963E1BE846DDEB8456942AEDC";
+            let expected_y = "A2ED51F08CA3EF3DAC0A7504613D54CD539FC1B3CBC92453CD704B6A2D012B2C";
+            let expected = VerifyingKey::from_sec1_bytes(
+                &hex::decode(format!("04{}{}", expected_x, expected_y)).unwrap(),
+            )
+            .unwrap();
+            let r_s = hex!("E30F2E6A0F705F4FB5F8501BA79C7C0D3FAC847F1AD70B873E9797B17B89B39081F1A4457589F30D76AB9F89E748A68C8A94C30FE0BAC8FB5C0B54EA70BF6D2F");
+            let recovery_param: u8 = 0;
+            let message_hash =
+                hex!("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
+            let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
+            assert_eq!(pubkey.as_ref(), expected.to_bytes());
         }
     }
 }
