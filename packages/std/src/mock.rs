@@ -133,6 +133,17 @@ impl Api for MockApi {
         )?)
     }
 
+    fn ed25519_verify(
+        &self,
+        message: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError> {
+        Ok(cosmwasm_crypto::ed25519_verify(
+            message, signature, public_key,
+        )?)
+    }
+
     fn debug(&self, message: &str) {
         println!("{}", message);
     }
@@ -482,6 +493,11 @@ mod tests {
     const SECP256K1_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
     const SECP256K1_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
 
+    const ED25519_MSG_HEX: &str = "72";
+    const ED25519_SIG_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
+    const ED25519_PUBKEY_HEX: &str =
+        "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
+
     #[test]
     fn mock_info_arguments() {
         let name = HumanAddr("my name".to_string());
@@ -570,7 +586,45 @@ mod tests {
         let public_key = vec![];
 
         let res = api.secp256k1_verify(&hash, &signature, &public_key);
+        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
+    }
 
+    // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn ed25519_verify_works() {
+        let api = MockApi::default();
+
+        let hash = hex::decode(ED25519_MSG_HEX).unwrap();
+        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
+        let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
+
+        assert!(api.ed25519_verify(&hash, &signature, &public_key).unwrap());
+    }
+
+    // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn ed25519_verify_fails() {
+        let api = MockApi::default();
+
+        let mut msg = hex::decode(ED25519_MSG_HEX).unwrap();
+        // alter msg
+        msg[0] ^= 0x01;
+        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
+        let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
+
+        assert!(!api.ed25519_verify(&msg, &signature, &public_key).unwrap());
+    }
+
+    // Basic "errors" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn ed25519_verify_errs() {
+        let api = MockApi::default();
+
+        let msg = hex::decode(ED25519_MSG_HEX).unwrap();
+        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
+        let public_key = vec![];
+
+        let res = api.ed25519_verify(&msg, &signature, &public_key);
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 

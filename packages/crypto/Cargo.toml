@@ -16,6 +16,7 @@ backtraces = []
 
 [dependencies]
 k256 = { version = "0.7.2", features = ["ecdsa"] }
+ed25519-zebra = "2"
 digest = "0.9"
 thiserror = "1.0"
 

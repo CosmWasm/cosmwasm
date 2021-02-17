@@ -10,30 +10,30 @@ use crate::identity_digest::Identity256;
 /// Max length of a message hash for secp256k1 verification in bytes.
 /// This is typically a 32 byte output of e.g. SHA-256 or Keccak256. In theory shorter values
 /// are possible but currently not supported by the implementation. Let us know when you need them.
-pub const MESSAGE_HASH_MAX_LENGTH: usize = 32;
+pub const MESSAGE_HASH_MAX_LEN: usize = 32;
 
+/// ECDSA (secp256k1) parameters
 /// Length of a serialized signature
-const SIGNATURE_LENGTH: usize = 64;
-/// Max length of a serialized signature
-pub const SIGNATURE_MAX_LENGTH: usize = SIGNATURE_LENGTH;
+pub const ECDSA_SIGNATURE_LEN: usize = 64;
 
 /// Compressed public key prefix (variant 1)
-const COMPRESSED_PUBKEY_PREFIX_1: u8 = 0x02;
+const ECDSA_COMPRESSED_PUBKEY_PREFIX_1: u8 = 0x02;
 /// Compressed public key prefix (variant 2)
-const COMPRESSED_PUBKEY_PREFIX_2: u8 = 0x03;
+const ECDSA_COMPRESSED_PUBKEY_PREFIX_2: u8 = 0x03;
 /// Length of a serialized compressed public key
-const COMPRESSED_PUBKEY_LENGTH: usize = 33;
+const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
 /// Uncompressed public key prefix
-const UNCOMPRESSED_PUBKEY_PREFIX: u8 = 0x04;
+const ECDSA_UNCOMPRESSED_PUBKEY_PREFIX: u8 = 0x04;
 /// Length of a serialized uncompressed public key
-const UNCOMPRESSED_PUBKEY_LENGTH: usize = 65;
+const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 /// Max length of a serialized public key
-pub const PUBKEY_MAX_LENGTH: usize = UNCOMPRESSED_PUBKEY_LENGTH;
+pub const ECDSA_PUBKEY_MAX_LEN: usize = ECDSA_UNCOMPRESSED_PUBKEY_LEN;
 
 /// ECDSA secp256k1 implementation.
 ///
 /// This function verifies message hashes (typically, hashed unsing SHA-256) against a signature,
-/// with the public key of the signer.
+/// with the public key of the signer, using the secp256k1 elliptic curve digital signature
+/// parametrization / algorithm.
 ///
 /// The signature and public key are in "Cosmos" format:
 /// - signature:  Serialized "compact" signature (64 bytes).
@@ -44,13 +44,13 @@ pub fn secp256k1_verify(
     signature: &[u8],
     public_key: &[u8],
 ) -> CryptoResult<bool> {
-    if message_hash.len() != MESSAGE_HASH_MAX_LENGTH {
+    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
         return Err(CryptoError::hash_err(format!(
             "wrong length: {}",
             message_hash.len()
         )));
     }
-    if signature.len() != SIGNATURE_LENGTH {
+    if signature.len() != ECDSA_SIGNATURE_LEN {
         return Err(CryptoError::sig_err(format!(
             "wrong / unsupported length: {}",
             signature.len()
@@ -61,10 +61,11 @@ pub fn secp256k1_verify(
         return Err(CryptoError::pubkey_err("empty"));
     }
     let pubkey_fmt = public_key[0];
-    if !(pubkey_len == UNCOMPRESSED_PUBKEY_LENGTH && pubkey_fmt == UNCOMPRESSED_PUBKEY_PREFIX
-        || pubkey_len == COMPRESSED_PUBKEY_LENGTH
-            && (pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_1
-                || pubkey_fmt == COMPRESSED_PUBKEY_PREFIX_2))
+    if !(pubkey_len == ECDSA_UNCOMPRESSED_PUBKEY_LEN
+        && pubkey_fmt == ECDSA_UNCOMPRESSED_PUBKEY_PREFIX
+        || pubkey_len == ECDSA_COMPRESSED_PUBKEY_LEN
+            && (pubkey_fmt == ECDSA_COMPRESSED_PUBKEY_PREFIX_1
+                || pubkey_fmt == ECDSA_COMPRESSED_PUBKEY_PREFIX_2))
     {
         return Err(CryptoError::pubkey_err(format!(
             "wrong / unsupported length/format: {}/{}",
@@ -104,23 +105,23 @@ mod tests {
     };
     use sha2::Sha256;
 
-    // Generic signature verification
+    // For generic signature verification
     const MSG: &str = "Hello World!";
 
-    // Cosmos signature verification
+    // Cosmos secp256k1 signature verification
     // tendermint/PubKeySecp256k1 pubkey
-    const COSMOS_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
+    const COSMOS_SECP256K1_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
 
-    const COSMOS_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
-    const COSMOS_MSG_HEX2: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
-    const COSMOS_MSG_HEX3: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180212130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
+    const COSMOS_SECP256K1_MSG_HEX1: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712650a4e0a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a02080112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
+    const COSMOS_SECP256K1_MSG_HEX2: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180112130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
+    const COSMOS_SECP256K1_MSG_HEX3: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b2e763162657461312e4d736753656e6412700a2d636f736d6f7331706b707472653766646b6c366766727a6c65736a6a766878686c63337234676d6d6b38727336122d636f736d6f7331717970717870713971637273737a673270767871367273307a716733797963356c7a763778751a100a0575636f736d12073132333435363712670a500a460a1f2f636f736d6f732e63727970746f2e736563703235366b312e5075624b657912230a21034f04181eeba35391b858633a765c4a0c189697b40d216354d50890d350c7029012040a020801180212130a0d0a0575636f736d12043230303010c09a0c1a0c73696d642d74657374696e672001";
 
-    const COSMOS_SIGNATURE_HEX1: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
-    const COSMOS_SIGNATURE_HEX2: &str = "525adc7e61565a509c60497b798c549fbf217bb5cd31b24cc9b419d098cc95330c99ecc4bc72448f85c365a4e3f91299a3d40412fb3751bab82f1940a83a0a4c";
-    const COSMOS_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
+    const COSMOS_SECP256K1_SIGNATURE_HEX1: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
+    const COSMOS_SECP256K1_SIGNATURE_HEX2: &str = "525adc7e61565a509c60497b798c549fbf217bb5cd31b24cc9b419d098cc95330c99ecc4bc72448f85c365a4e3f91299a3d40412fb3751bab82f1940a83a0a4c";
+    const COSMOS_SECP256K1_SIGNATURE_HEX3: &str = "f3f2ca73806f2abbf6e0fe85f9b8af66f0e9f7f79051fdb8abe5bb8633b17da132e82d577b9d5f7a6dae57a144efc9ccc6eef15167b44b3b22a57240109762af";
 
     // Test data originally from https://github.com/cosmos/cosmjs/blob/v0.24.0-alpha.22/packages/crypto/src/secp256k1.spec.ts#L195-L394
-    const COSMOS_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
+    const COSMOS_SECP256K1_TESTS_JSON: &str = "./testdata/secp256k1_tests.json";
 
     #[test]
     fn test_secp256k1_verify() {
@@ -176,14 +177,18 @@ mod tests {
 
     #[test]
     fn test_cosmos_secp256k1_verify() {
-        let public_key = base64::decode(COSMOS_PUBKEY_BASE64).unwrap();
+        let public_key = base64::decode(COSMOS_SECP256K1_PUBKEY_BASE64).unwrap();
 
         for ((i, msg), sig) in (1..)
-            .zip(&[COSMOS_MSG_HEX1, COSMOS_MSG_HEX2, COSMOS_MSG_HEX3])
             .zip(&[
-                COSMOS_SIGNATURE_HEX1,
-                COSMOS_SIGNATURE_HEX2,
-                COSMOS_SIGNATURE_HEX3,
+                COSMOS_SECP256K1_MSG_HEX1,
+                COSMOS_SECP256K1_MSG_HEX2,
+                COSMOS_SECP256K1_MSG_HEX3,
+            ])
+            .zip(&[
+                COSMOS_SECP256K1_SIGNATURE_HEX1,
+                COSMOS_SECP256K1_SIGNATURE_HEX2,
+                COSMOS_SECP256K1_SIGNATURE_HEX3,
             ])
         {
             let message = hex::decode(msg).unwrap();
@@ -217,7 +222,7 @@ mod tests {
         }
 
         // Open the file in read-only mode with buffer.
-        let file = File::open(COSMOS_TESTS_JSON).unwrap();
+        let file = File::open(COSMOS_SECP256K1_TESTS_JSON).unwrap();
         let reader = BufReader::new(file);
 
         let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();

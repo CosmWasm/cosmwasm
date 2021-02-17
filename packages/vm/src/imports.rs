@@ -3,9 +3,12 @@
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
 
-use cosmwasm_crypto::secp256k1_verify;
 use cosmwasm_crypto::CryptoError;
-use cosmwasm_crypto::{MESSAGE_HASH_MAX_LENGTH, PUBKEY_MAX_LENGTH, SIGNATURE_MAX_LENGTH};
+use cosmwasm_crypto::{ed25519_verify, secp256k1_verify};
+use cosmwasm_crypto::{
+    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN,
+    MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
+};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -22,6 +25,7 @@ use crate::serde::to_vec;
 use crate::GasInfo;
 
 const GAS_COST_VERIFY_SECP256K1_SIGNATURE: u64 = 100;
+const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -90,6 +94,15 @@ pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     do_secp256k1_verify(env, hash_ptr, signature_ptr, pubkey_ptr)
+}
+
+pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+    signature_ptr: u32,
+    pubkey_ptr: u32,
+) -> VmResult<u32> {
+    do_ed25519_verify(env, message_ptr, signature_ptr, pubkey_ptr)
 }
 
 pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
@@ -255,11 +268,11 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LENGTH)?;
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
 
-    let signature = read_region(&env.memory(), signature_ptr, SIGNATURE_MAX_LENGTH)?;
+    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
 
-    let pubkey = read_region(&env.memory(), pubkey_ptr, PUBKEY_MAX_LENGTH)?;
+    let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
@@ -268,6 +281,34 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     match result {
         Ok(true) => Ok(0),
         Ok(false) => Ok(1),
+        Err(CryptoError::MessageError { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::GenericErr { error_code, .. }) => Ok(error_code),
+    }
+}
+
+fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+    signature_ptr: u32,
+    pubkey_ptr: u32,
+) -> VmResult<u32> {
+    let message = read_region(&env.memory(), message_ptr, MESSAGE_MAX_LEN)?;
+
+    let signature = read_region(&env.memory(), signature_ptr, EDDSA_SIGNATURE_LEN)?;
+
+    let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
+
+    let result = ed25519_verify(&message, &signature, &pubkey);
+    let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_ED25519_SIGNATURE);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    // Ok((!(result?)).into())
+    match result {
+        Ok(true) => Ok(0),
+        Ok(false) => Ok(1),
+        Err(CryptoError::MessageError { error_code, .. }) => Ok(error_code),
         Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
         Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
         Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
@@ -408,6 +449,11 @@ mod tests {
     const ECDSA_HASH_HEX: &str = "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
     const ECDSA_SIG_HEX: &str = "207082eb2c3dfa0b454e0906051270ba4074ac93760ba9e7110cd9471475111151eb0dbbc9920e72146fb564f99d039802bf6ef2561446eb126ef364d21ee9c4";
     const ECDSA_PUBKEY_HEX: &str = "04051c1ee2190ecfb174bfe4f90763f2b4ff7517b70a2aec1876ebcfd644c4633fb03f3cfbd94b1f376e34592d9d41ccaf640bb751b00a1fadeb0c01157769eb73";
+
+    const EDDSA_MSG_HEX: &str = "";
+    const EDDSA_SIG_HEX: &str = "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
+    const EDDSA_PUBKEY_HEX: &str =
+        "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
 
     fn make_instance(api: MA) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
         let gas_limit = TESTING_GAS_LIMIT;
@@ -1024,7 +1070,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, MESSAGE_HASH_MAX_LENGTH + 1),
+            } => assert_eq!(length, MESSAGE_HASH_MAX_LEN + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1088,7 +1134,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, SIGNATURE_MAX_LENGTH + 1),
+            } => assert_eq!(length, ECDSA_SIGNATURE_LEN + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1172,7 +1218,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, PUBKEY_MAX_LENGTH + 1),
+            } => assert_eq!(length, ECDSA_PUBKEY_MAX_LEN + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1190,6 +1236,7 @@ mod tests {
         // reduce / break pubkey
         pubkey.pop();
         let pubkey_ptr = write_data(&env, &pubkey);
+
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             5 // mapped PublicKeyErr
@@ -1219,15 +1266,241 @@ mod tests {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
 
-        let hash = vec![0x22; MESSAGE_HASH_MAX_LENGTH];
+        let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let hash_ptr = write_data(&env, &hash);
-        let sig = vec![0x22; SIGNATURE_MAX_LENGTH];
+        let sig = vec![0x22; ECDSA_SIGNATURE_LEN];
         let sig_ptr = write_data(&env, &sig);
-        let pubkey = vec![0x04; PUBKEY_MAX_LENGTH];
+        let pubkey = vec![0x04; ECDSA_PUBKEY_MAX_LEN];
         let pubkey_ptr = write_data(&env, &pubkey);
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            10 // mapped GenericErr
+        )
+    }
+
+    #[test]
+    fn do_ed25519_verify_works() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn do_ed25519_verify_wrong_msg_verify_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        // alter msg
+        msg.push(0x01);
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_ed25519_verify_larger_msg_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        // extend / break msg
+        msg.extend_from_slice(&[0x00; MESSAGE_MAX_LEN + 1]);
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, msg.len()),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_ed25519_verify_wrong_sig_verify_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let mut sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        // alter sig
+        sig[0] ^= 0x01;
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_ed25519_verify_larger_sig_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let mut sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        // extend / break sig
+        sig.push(0x00);
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, EDDSA_SIGNATURE_LEN + 1),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_ed25519_verify_shorter_sig_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let mut sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        // reduce / break sig
+        sig.pop();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            4 // mapped SignatureErr
+        )
+    }
+
+    #[test]
+    fn do_ed25519_verify_wrong_pubkey_verify_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let mut pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        // alter pubkey
+        pubkey[1] ^= 0x01;
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn do_ed25519_verify_larger_pubkey_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let mut pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        // extend / break pubkey
+        pubkey.push(0x00);
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source: CommunicationError::RegionLengthTooBig { length, .. },
+                ..
+            } => assert_eq!(length, EDDSA_PUBKEY_LEN + 1),
+            e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_ed25519_verify_shorter_pubkey_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let mut pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
+        // reduce / break pubkey
+        pubkey.pop();
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyErr
+        )
+    }
+
+    #[test]
+    fn do_ed25519_verify_empty_pubkey_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
+        let msg_ptr = write_data(&env, &msg);
+        let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = vec![];
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyError
+        )
+    }
+
+    #[test]
+    fn do_ed25519_verify_wrong_data_fails() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
+        let msg_ptr = write_data(&env, &msg);
+        let sig = vec![0x22; EDDSA_SIGNATURE_LEN];
+        let sig_ptr = write_data(&env, &sig);
+        let pubkey = vec![0x04; EDDSA_PUBKEY_LEN];
+        let pubkey_ptr = write_data(&env, &pubkey);
+
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
             10 // mapped GenericErr
         )
     }

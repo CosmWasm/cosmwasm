@@ -38,6 +38,7 @@ extern "C" {
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
 
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+    fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
     fn debug(source_ptr: u32);
 
@@ -199,7 +200,34 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
+            2 => Err(VerificationError::MessageErr), // shouldn't happen
             3 => Err(VerificationError::HashErr),
+            4 => Err(VerificationError::SignatureErr),
+            5 => Err(VerificationError::PublicKeyErr),
+            10 => Err(VerificationError::GenericErr),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    fn ed25519_verify(
+        &self,
+        message: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError> {
+        let msg_send = build_region(message);
+        let msg_send_ptr = &*msg_send as *const Region as u32;
+        let sig_send = build_region(signature);
+        let sig_send_ptr = &*sig_send as *const Region as u32;
+        let pubkey_send = build_region(public_key);
+        let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
+
+        let result = unsafe { ed25519_verify(msg_send_ptr, sig_send_ptr, pubkey_send_ptr) };
+        match result {
+            0 => Ok(true),
+            1 => Ok(false),
+            2 => Err(VerificationError::MessageErr),
+            3 => Err(VerificationError::HashErr), // shouldn't happen
             4 => Err(VerificationError::SignatureErr),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),

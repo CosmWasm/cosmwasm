@@ -16,6 +16,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.canonicalize_address",
     "env.humanize_address",
     "env.secp256k1_verify",
+    "env.ed25519_verify",
     "env.debug",
     "env.query_chain",
     #[cfg(feature = "iterator")]
@@ -321,6 +322,7 @@ mod tests {
             (import "env" "canonicalize_address" (func (param i32 i32) (result i32)))
             (import "env" "humanize_address" (func (param i32 i32) (result i32)))
             (import "env" "secp256k1_verify" (func (param i32 i32 i32) (result i32)))
+            (import "env" "ed25519_verify" (func (param i32 i32 i32) (result i32)))
         )"#,
         )
         .unwrap();

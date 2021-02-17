@@ -10,6 +10,8 @@ use cosmwasm_crypto::CryptoError;
 pub enum VerificationError {
     #[error("Generic error")]
     GenericErr,
+    #[error("Message error")]
+    MessageErr,
     #[error("Hash error")]
     HashErr,
     #[error("Signature error")]
@@ -38,6 +40,7 @@ impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {
         match self {
             VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
+            VerificationError::MessageErr => matches!(rhs, VerificationError::MessageErr),
             VerificationError::HashErr => matches!(rhs, VerificationError::HashErr),
             VerificationError::SignatureErr => matches!(rhs, VerificationError::SignatureErr),
             VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
@@ -60,6 +63,7 @@ impl PartialEq<VerificationError> for VerificationError {
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
+            CryptoError::MessageError { .. } => VerificationError::MessageErr,
             CryptoError::HashErr { .. } => VerificationError::HashErr,
             CryptoError::SignatureErr { .. } => VerificationError::SignatureErr,
             CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
