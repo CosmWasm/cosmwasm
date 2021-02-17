@@ -628,45 +628,6 @@ mod tests {
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 
-    // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
-    #[test]
-    fn ed25519_verify_works() {
-        let api = MockApi::default();
-
-        let hash = hex::decode(ED25519_MSG_HEX).unwrap();
-        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
-        let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
-
-        assert!(api.ed25519_verify(&hash, &signature, &public_key));
-    }
-
-    // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
-    #[test]
-    fn ed25519_verify_fails() {
-        let api = MockApi::default();
-
-        let mut msg = hex::decode(ED25519_MSG_HEX).unwrap();
-        // alter msg
-        msg[0] ^= 0x01;
-        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
-        let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
-
-        assert!(!api.ed25519_verify(&msg, &signature, &public_key));
-    }
-
-    // Basic "panics" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
-    #[test]
-    #[should_panic(expected = "empty")]
-    fn ed25519_verify_panics() {
-        let api = MockApi::default();
-
-        let msg = hex::decode(ED25519_MSG_HEX).unwrap();
-        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
-        let public_key = vec![];
-
-        assert!(!api.ed25519_verify(&msg, &signature, &public_key));
-    }
-
     #[test]
     fn bank_querier_all_balances() {
         let addr = HumanAddr::from("foobar");
