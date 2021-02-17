@@ -316,6 +316,7 @@ nightly toolchain installed as well.
 
 ```sh
 cargo fmt \
+  && (cd packages/crypto && cargo build && cargo test && cargo clippy -- -D warnings) \
   && (cd packages/std && cargo wasm-debug --features iterator && cargo test --features iterator && cargo clippy --features iterator -- -D warnings && cargo schema) \
   && (cd packages/storage && cargo build && cargo test --features iterator && cargo clippy --features iterator -- -D warnings) \
   && (cd packages/schema && cargo build && cargo test && cargo clippy -- -D warnings) \
