@@ -19,7 +19,7 @@ pub const MESSAGE_HASH_MAX_LEN: usize = 32;
 /// Max length of a message for ed25519 verification in bytes.
 /// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
 /// messages, let us know.
-pub const MESSAGE_MAX_LEN: usize = 4096;
+pub const MESSAGE_MAX_LEN: usize = 131072;
 
 /// ECDSA (secp256k1) parameters
 /// Length of a serialized signature
