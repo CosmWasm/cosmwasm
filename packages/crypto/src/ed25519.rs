@@ -1,4 +1,5 @@
 use ed25519_zebra as ed25519;
+use rand_core::OsRng;
 use std::convert::TryFrom;
 
 use crate::errors::{CryptoError, CryptoResult};
@@ -26,6 +27,7 @@ pub const EDDSA_PUBKEY_LEN: usize = 32;
 /// - signature: raw ED25519 signature (64 bytes).
 /// - public key: raw ED25519 public key (32 bytes).
 pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
+    // Validation
     if message.len() > MESSAGE_MAX_LEN {
         return Err(CryptoError::msg_err(format!(
             "too large: {}",
@@ -48,14 +50,85 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
             pubkey_len,
         )));
     }
-    // Deserialize
+    // Deserialization
     let signature = ed25519::Signature::try_from(signature)
         .map_err(|err| CryptoError::generic_err(err.to_string()))?;
 
     let public_key = ed25519::VerificationKey::try_from(public_key)
         .map_err(|err| CryptoError::generic_err(err.to_string()))?;
 
+    // Verification
     match public_key.verify(&signature, &message) {
+        Ok(_) => Ok(true),
+        Err(_) => Ok(false),
+    }
+}
+
+/// Performs batch Ed25519 signature verification.
+///
+/// Batch verification asks whether all signatures in some set are valid, rather than asking whether
+/// each of them is valid. This allows sharing computations among all signature verifications,
+/// performing less work overall, at the cost of higher latency (the entire batch must complete),
+/// complexity of caller code (which must assemble a batch of signatures across work-items),
+/// and loss of the ability to easily pinpoint failing signatures.
+///
+/// This batch verification implementation is adaptive, in the sense that it detects multiple
+/// signatures created with the same verification key, and automatically coalesces terms
+/// in the final verification equation.
+///
+/// In the limiting case where all signatures in the batch are made with the same verification key,
+/// coalesced batch verification runs twice as fast as ordinary batch verification.
+pub fn ed25519_batch_verify(
+    messages: &[&[u8]],
+    signatures: &[&[u8]],
+    pubkeys: &[&[u8]],
+) -> CryptoResult<bool> {
+    let mut batch = ed25519::batch::Verifier::new();
+
+    for (((i, &message), &signature), &public_key) in
+        (1..).zip(messages).zip(signatures).zip(pubkeys)
+    {
+        // Validation
+        if message.len() > MESSAGE_MAX_LEN {
+            return Err(CryptoError::msg_err(format!(
+                "message {}: too large: {}",
+                i,
+                message.len()
+            )));
+        }
+        if signature.len() != EDDSA_SIGNATURE_LEN {
+            return Err(CryptoError::sig_err(format!(
+                "signature {}: wrong / unsupported length: {}",
+                i,
+                signature.len()
+            )));
+        }
+        let pubkey_len = public_key.len();
+        if pubkey_len == 0 {
+            return Err(CryptoError::pubkey_err(format!("public key {}: empty", i)));
+        }
+        if pubkey_len != EDDSA_PUBKEY_LEN {
+            return Err(CryptoError::pubkey_err(format!(
+                "public key {}: wrong / unsupported length: {}",
+                i, pubkey_len,
+            )));
+        }
+
+        // Deserialization
+        let signature = ed25519::Signature::try_from(signature).map_err(|err| {
+            CryptoError::generic_err(format!("signature {}: {}", i, err.to_string()))
+        })?;
+
+        let public_key = ed25519::VerificationKey::try_from(public_key).map_err(|err| {
+            CryptoError::generic_err(format!("public key {}: {}", i, err.to_string()))
+        })?;
+
+        // Enqueing
+        batch.queue((public_key.into(), signature.into(), message));
+    }
+
+    // Batch Verification
+    match batch.verify(&mut OsRng) {
         Ok(_) => Ok(true),
         Err(_) => Ok(false),
     }
@@ -64,7 +137,6 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand_core::OsRng;
 
     // For generic signature verification
     const MSG: &str = "Hello World!";
@@ -178,5 +250,51 @@ mod tests {
                 format!("verify() failed (test case {})", i)
             );
         }
+    }
+
+    #[test]
+    fn test_cosmos_ed25519_batch_verify() {
+        use std::fs::File;
+        use std::io::BufReader;
+
+        use serde::Deserialize;
+
+        #[derive(Deserialize, Debug)]
+        struct Encoded {
+            #[serde(rename = "privkey")]
+            private_key: String,
+            #[serde(rename = "pubkey")]
+            public_key: String,
+            message: String,
+            signature: String,
+        }
+
+        // Open the file in read-only mode with buffer.
+        let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
+        let reader = BufReader::new(file);
+
+        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+
+        let mut messages: Vec<Vec<u8>> = vec![];
+        let mut signatures: Vec<Vec<u8>> = vec![];
+        let mut public_keys: Vec<Vec<u8>> = vec![];
+
+        for encoded in codes {
+            let message = hex::decode(&encoded.message).unwrap();
+            messages.push(message);
+
+            let signature = hex::decode(&encoded.signature).unwrap();
+            signatures.push(signature);
+
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+            public_keys.push(public_key);
+        }
+
+        let message_slices: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let signature_slices: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let pubkey_slices: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
+        // ed25519_batch_verify() works
+        assert!(ed25519_batch_verify(&message_slices, &signature_slices, &pubkey_slices).unwrap());
     }
 }
