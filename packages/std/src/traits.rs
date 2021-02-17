@@ -74,7 +74,12 @@ pub trait Api {
         public_key: &[u8],
     ) -> Result<bool, VerificationError>;
 
-    fn ed25519_verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool;
+    fn ed25519_verify(
+        &self,
+        message: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError>;
 
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).
     /// Those messages are not persisted to chain.

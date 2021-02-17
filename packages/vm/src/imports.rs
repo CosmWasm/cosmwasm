@@ -281,6 +281,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     match result {
         Ok(true) => Ok(0),
         Ok(false) => Ok(1),
+        Err(CryptoError::MessageError { error_code, .. }) => Ok(error_code),
         Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
         Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
         Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
@@ -303,7 +304,16 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let result = ed25519_verify(&message, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_ED25519_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result?.into())
+    // Ok((!(result?)).into())
+    match result {
+        Ok(true) => Ok(0),
+        Ok(false) => Ok(1),
+        Err(CryptoError::MessageError { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::HashErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::SignatureErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::PublicKeyErr { error_code, .. }) => Ok(error_code),
+        Err(CryptoError::GenericErr { error_code, .. }) => Ok(error_code),
+    }
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -1226,6 +1236,7 @@ mod tests {
         // reduce / break pubkey
         pubkey.pop();
         let pubkey_ptr = write_data(&env, &pubkey);
+
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             5 // mapped PublicKeyErr
@@ -1282,7 +1293,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            1
+            0
         );
     }
 
@@ -1302,7 +1313,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            0
+            1
         );
     }
 
@@ -1346,7 +1357,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            0
+            1
         );
     }
 
@@ -1388,17 +1399,10 @@ mod tests {
         let pubkey = hex::decode(EDDSA_PUBKEY_HEX).unwrap();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::SignatureErr { msg, .. },
-                ..
-            } => assert_eq!(
-                msg,
-                format!("wrong / unsupported length: {}", EDDSA_SIGNATURE_LEN - 1)
-            ),
-            e => panic!("Unexpected error: {:?}", e),
-        }
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            4 // mapped SignatureErr
+        )
     }
 
     #[test]
@@ -1417,7 +1421,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            0
+            1
         );
     }
 
@@ -1459,17 +1463,10 @@ mod tests {
         pubkey.pop();
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::PublicKeyErr { msg, .. },
-                ..
-            } => assert_eq!(
-                msg,
-                format!("wrong / unsupported length: {}", EDDSA_PUBKEY_LEN - 1)
-            ),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyErr
+        )
     }
 
     #[test]
@@ -1484,14 +1481,10 @@ mod tests {
         let pubkey = vec![];
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::PublicKeyErr { msg, .. },
-                ..
-            } => assert_eq!(msg, "empty"),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            5 // mapped PublicKeyError
+        )
     }
 
     #[test]
@@ -1506,14 +1499,10 @@ mod tests {
         let pubkey = vec![0x04; EDDSA_PUBKEY_LEN];
         let pubkey_ptr = write_data(&env, &pubkey);
 
-        let result = do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr);
-        match result.unwrap_err() {
-            VmError::CryptoErr {
-                source: CryptoError::GenericErr { msg, .. },
-                ..
-            } => assert_eq!(msg, "Malformed public key encoding."),
-            err => panic!("Incorrect error returned: {:?}", err),
-        }
+        assert_eq!(
+            do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
+            10 // mapped GenericErr
+        )
     }
 
     #[test]

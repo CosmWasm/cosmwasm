@@ -14,16 +14,17 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Hash error: {msg}")]
-    HashErr {
+    #[error("Message error: {msg}")]
+    MessageError {
         msg: String,
         error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Message error: {msg}")]
-    MsgErr {
+    #[error("Hash error: {msg}")]
+    HashErr {
         msg: String,
+        error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -53,18 +54,19 @@ impl CryptoError {
         }
     }
 
-    pub fn hash_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::HashErr {
+    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
+        CryptoError::MessageError {
             msg: msg.into(),
-            error_code: 3,
+            error_code: 2,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
     }
 
-    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::MsgErr {
+    pub fn hash_err<S: Into<String>>(msg: S) -> Self {
+        CryptoError::HashErr {
             msg: msg.into(),
+            error_code: 3,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -100,6 +102,17 @@ mod tests {
         match error {
             CryptoError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "something went wrong in a general way")
+            }
+            _ => panic!("wrong error type!"),
+        }
+    }
+
+    #[test]
+    fn msg_err_works() {
+        let error = CryptoError::msg_err("something went wrong with the msg");
+        match error {
+            CryptoError::MessageError { msg, .. } => {
+                assert_eq!(msg, "something went wrong with the msg")
             }
             _ => panic!("wrong error type!"),
         }

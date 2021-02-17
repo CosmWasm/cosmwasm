@@ -133,12 +133,15 @@ impl Api for MockApi {
         )?)
     }
 
-    fn ed25519_verify(&self, message: &[u8], signature: &[u8], public_key: &[u8]) -> bool {
-        let result = cosmwasm_crypto::ed25519_verify(message, signature, public_key);
-        match result {
-            Ok(v) => v,
-            Err(err) => panic!("ed25519_verify error: {:?}", err),
-        }
+    fn ed25519_verify(
+        &self,
+        message: &[u8],
+        signature: &[u8],
+        public_key: &[u8],
+    ) -> Result<bool, VerificationError> {
+        Ok(cosmwasm_crypto::ed25519_verify(
+            message, signature, public_key,
+        )?)
     }
 
     fn debug(&self, message: &str) {
@@ -583,7 +586,6 @@ mod tests {
         let public_key = vec![];
 
         let res = api.secp256k1_verify(&hash, &signature, &public_key);
-
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 
@@ -596,7 +598,7 @@ mod tests {
         let signature = hex::decode(ED25519_SIG_HEX).unwrap();
         let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
 
-        assert!(api.ed25519_verify(&hash, &signature, &public_key));
+        assert!(api.ed25519_verify(&hash, &signature, &public_key).unwrap());
     }
 
     // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
@@ -610,20 +612,20 @@ mod tests {
         let signature = hex::decode(ED25519_SIG_HEX).unwrap();
         let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
 
-        assert!(!api.ed25519_verify(&msg, &signature, &public_key));
+        assert!(!api.ed25519_verify(&msg, &signature, &public_key).unwrap());
     }
 
-    // Basic "panics" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    // Basic "errors" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
     #[test]
-    #[should_panic(expected = "empty")]
-    fn ed25519_verify_panics() {
+    fn ed25519_verify_errs() {
         let api = MockApi::default();
 
         let msg = hex::decode(ED25519_MSG_HEX).unwrap();
         let signature = hex::decode(ED25519_SIG_HEX).unwrap();
         let public_key = vec![];
 
-        assert!(!api.ed25519_verify(&msg, &signature, &public_key));
+        let res = api.ed25519_verify(&msg, &signature, &public_key);
+        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 
     #[test]
