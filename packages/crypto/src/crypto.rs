@@ -161,7 +161,6 @@ mod tests {
     use elliptic_curve::sec1::ToEncodedPoint;
     use rand_core::OsRng;
 
-    use crate::crypto::ed25519_verify;
     use k256::{
         ecdsa::signature::DigestSigner, // trait
         ecdsa::SigningKey,              // type alias
