@@ -276,7 +276,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let result = secp256k1_verify(&hash, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result.map_or_else(|err| err.code(), |valid| valid.into()))
+    Ok(result.map_or_else(|err| err.code(), |valid| if valid { 0 } else { 1 }))
 }
 
 fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -294,7 +294,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let result = ed25519_verify(&message, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_ED25519_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result.map_or_else(|err| err.code(), |valid| valid.into()))
+    Ok(result.map_or_else(|err| err.code(), |valid| if valid { 0 } else { 1 }))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
