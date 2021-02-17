@@ -99,8 +99,7 @@ fn cosmos_signature_verify_fails() {
 }
 
 #[test]
-#[should_panic(expected = "empty")]
-fn cosmos_signature_verify_panics() {
+fn cosmos_signature_verify_errors() {
     let mut deps = setup();
 
     let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
@@ -112,7 +111,8 @@ fn cosmos_signature_verify_panics() {
         signature: Binary(signature),
         public_key: Binary(public_key),
     };
-    let _ = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res = query(&mut deps, mock_env(), verify_msg);
+    assert_eq!(res.unwrap_err(), "Verification error: Public key error")
 }
 
 #[test]
@@ -158,7 +158,7 @@ fn tendermint_signature_verify_fails() {
 }
 
 #[test]
-fn tendermint_signature_verify_errs() {
+fn tendermint_signature_verify_errors() {
     let mut deps = setup();
 
     let message = hex::decode(ED25519_MESSAGE_HEX).unwrap();

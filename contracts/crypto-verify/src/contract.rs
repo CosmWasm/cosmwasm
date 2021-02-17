@@ -76,9 +76,11 @@ pub fn query_verify_tendermint(
     public_key: &[u8],
 ) -> StdResult<VerifyResponse> {
     // Verification
-    let verifies = deps.api.ed25519_verify(message, signature, public_key);
-
-    Ok(VerifyResponse { verifies })
+    let result = deps.api.ed25519_verify(message, signature, public_key);
+    match result {
+        Ok(verifies) => Ok(VerifyResponse { verifies }),
+        Err(err) => Err(err.into()),
+    }
 }
 
 pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsResponse> {
@@ -164,8 +166,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "empty")]
-    fn cosmos_signature_verify_panics() {
+    fn cosmos_signature_verify_errors() {
         let deps = setup();
 
         let message = hex::decode(SECP256K1_MESSAGE_HEX).unwrap();
@@ -177,7 +178,15 @@ mod tests {
             signature: Binary(signature),
             public_key: Binary(public_key),
         };
-        query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+
+        let res = query(deps.as_ref(), mock_env(), verify_msg);
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err(),
+            StdError::VerificationErr {
+                source: VerificationError::PublicKeyErr
+            }
+        )
     }
 
     #[test]
