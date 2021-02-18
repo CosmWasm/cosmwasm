@@ -639,6 +639,32 @@ mod tests {
         }
     }
 
+    #[test]
+    fn secp256k1_recover_pubkey_fails_for_wrong_hash() {
+        let api = MockApi::default();
+
+        // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
+        let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+        let signature = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
+        let recovery_param = 1;
+        let expected = hex!("034a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5");
+
+        // Wrong hash
+        let mut corrupted_hash = hash.clone();
+        corrupted_hash[0] ^= 0x01;
+        let result = api.secp256k1_recover_pubkey(&corrupted_hash, &signature, recovery_param);
+        assert_ne!(result.unwrap(), expected);
+
+        // Malformed hash
+        let mut malformed_hash = hash.to_vec();
+        malformed_hash.push(0x8a);
+        let result = api.secp256k1_recover_pubkey(&malformed_hash, &signature, recovery_param);
+        match result.unwrap_err() {
+            RecoverPubkeyError::HashErr => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
     #[test]
     fn ed25519_verify_works() {
