@@ -325,9 +325,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => out ^= (err.code() as u64) << 32,
-            CryptoError::PublicKeyErr { .. } => {
-                panic!("Error must not happen for this call")
-            }
+            CryptoError::PublicKeyErr { .. } => panic!("Error must not happen for this call"),
         },
     }
     Ok(out)
