@@ -2,7 +2,7 @@
 use std::backtrace::Backtrace;
 use thiserror::Error;
 
-use crate::errors::VerificationError;
+use crate::errors::{RecoverPubkeyError, VerificationError};
 
 /// Structured error type for init, handle and query.
 ///
@@ -24,6 +24,12 @@ pub enum StdError {
     #[error("Verification error: {source}")]
     VerificationErr {
         source: VerificationError,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
+    #[error("Recover pubkey error: {source}")]
+    RecoverPubkeyErr {
+        source: RecoverPubkeyError,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -88,6 +94,14 @@ pub enum StdError {
 impl StdError {
     pub fn verification_err(source: VerificationError) -> Self {
         StdError::VerificationErr {
+            source,
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub fn recover_pubkey_err(source: RecoverPubkeyError) -> Self {
+        StdError::RecoverPubkeyErr {
             source,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
@@ -173,6 +187,22 @@ impl PartialEq<StdError> for StdError {
                     backtrace: _,
             } => {
                 if let StdError::VerificationErr {
+                    source: rhs_source,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
+                } else {
+                    false
+                }
+            }
+            StdError::RecoverPubkeyErr {
+                source,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::RecoverPubkeyErr {
                     source: rhs_source,
                     #[cfg(feature = "backtraces")]
                         backtrace: _,
@@ -338,6 +368,12 @@ impl From<std::string::FromUtf8Error> for StdError {
 impl From<VerificationError> for StdError {
     fn from(source: VerificationError) -> Self {
         Self::verification_err(source)
+    }
+}
+
+impl From<RecoverPubkeyError> for StdError {
+    fn from(source: RecoverPubkeyError) -> Self {
+        Self::recover_pubkey_err(source)
     }
 }
 
