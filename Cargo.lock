@@ -240,6 +240,7 @@ dependencies = [
  "cosmwasm-derive",
  "cosmwasm-schema",
  "hex",
+ "hex-literal",
  "schemars",
  "serde",
  "serde-json-wasm",

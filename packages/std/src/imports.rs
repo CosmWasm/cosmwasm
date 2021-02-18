@@ -1,8 +1,9 @@
+use std::convert::TryInto;
 use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
-use crate::errors::{StdError, StdResult, SystemError, VerificationError};
+use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
@@ -38,6 +39,11 @@ extern "C" {
     fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
 
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+    fn secp256k1_recover_pubkey(
+        message_hash_ptr: u32,
+        signature_ptr: u32,
+        recovery_param: u32,
+    ) -> u64;
     fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
 
     fn debug(source_ptr: u32);
@@ -206,6 +212,35 @@ impl Api for ExternalApi {
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    fn secp256k1_recover_pubkey(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        recover_param: u8,
+    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+        let hash_send = build_region(message_hash);
+        let hash_send_ptr = &*hash_send as *const Region as u32;
+        let sig_send = build_region(signature);
+        let sig_send_ptr = &*sig_send as *const Region as u32;
+
+        let result =
+            unsafe { secp256k1_recover_pubkey(hash_send_ptr, sig_send_ptr, recover_param.into()) };
+        let error_code: u32 = (result >> 32).try_into().unwrap();
+        let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        match error_code {
+            0 => {
+                let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
+                Ok(pubkey)
+            }
+            2 => Err(RecoverPubkeyError::MessageErr), // shouldn't happen
+            3 => Err(RecoverPubkeyError::HashErr),
+            4 => Err(RecoverPubkeyError::SignatureErr),
+            6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
+            10 => Err(RecoverPubkeyError::GenericErr),
+            error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
         }
     }
 
