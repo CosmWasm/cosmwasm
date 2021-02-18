@@ -23,7 +23,7 @@ use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
 use crate::GasInfo;
 
-const GAS_COST_VERIFY_SECP256K1_SIGNATURE: u64 = 100;
+const GAS_COST_SECP256K1_VERIFY_SIGNATURE: u64 = 100;
 const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
 
 /// A kibi (kilo binary)
@@ -272,7 +272,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
+    let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_VERIFY_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
