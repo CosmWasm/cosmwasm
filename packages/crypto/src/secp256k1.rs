@@ -88,7 +88,7 @@ pub fn secp256k1_verify(
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     match public_key.verify_digest(message_digest, &signature) {
-        Ok(_) => Ok(true),
+        Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
 }
