@@ -46,6 +46,49 @@
       }
     },
     {
+      "description": "Ethereum format (secp256k1 verification scheme).",
+      "type": "object",
+      "required": [
+        "verify_ethereum_signature"
+      ],
+      "properties": {
+        "verify_ethereum_signature": {
+          "type": "object",
+          "required": [
+            "message",
+            "public_key",
+            "signature"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify. This is the encoded payload before the prehashing step (e.g. RLP encoded)",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "public_key": {
+              "description": "Serialized compressed (33 bytes) public key. TODO: update to address check",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signature": {
+              "description": "Serialized signature. Ethereum format (DER plus recovery parameter `v`).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
       "description": "Tendermint format (ed25519 verification scheme).",
       "type": "object",
       "required": [

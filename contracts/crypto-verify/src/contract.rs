@@ -1,8 +1,9 @@
-use sha2::{Digest, Sha256};
-
 use cosmwasm_std::{
-    entry_point, to_binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response, StdResult,
+    entry_point, to_binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response, StdError,
+    StdResult,
 };
+use sha2::{Digest, Sha256};
+use sha3::Keccak256;
 
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
@@ -38,6 +39,16 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &signature.0,
             &public_key.0,
         )?),
+        QueryMsg::VerifyEthereumSignature {
+            message,
+            signature,
+            public_key,
+        } => to_binary(&query_verify_ethereum(
+            deps,
+            &message,
+            &signature,
+            &public_key,
+        )?),
         QueryMsg::VerifyTendermintSignature {
             message,
             signature,
@@ -62,7 +73,37 @@ pub fn query_verify_cosmos(
     let hash = Sha256::digest(message);
 
     // Verification
-    let result = deps.api.secp256k1_verify(&*hash, signature, public_key);
+    let result = deps
+        .api
+        .secp256k1_verify(hash.as_ref(), signature, public_key);
+    match result {
+        Ok(verifies) => Ok(VerifyResponse { verifies }),
+        Err(err) => Err(err.into()),
+    }
+}
+
+pub fn query_verify_ethereum(
+    deps: Deps,
+    message: &[u8],
+    signature: &[u8],
+    public_key: &[u8],
+) -> StdResult<VerifyResponse> {
+    // Hashing
+    let hash = Keccak256::digest(message);
+
+    // Decompose signature
+    let (v, rs) = match signature.split_last() {
+        Some(pair) => pair,
+        None => return Err(StdError::generic_err("Signature must not be empty")),
+    };
+    let recovery = v - 27;
+
+    // Verification
+    let calculated_pubkey = deps.api.secp256k1_recover_pubkey(&hash, rs, recovery)?;
+    if public_key != calculated_pubkey {
+        return Ok(VerifyResponse { verifies: false });
+    }
+    let result = deps.api.secp256k1_verify(&hash, rs, &public_key);
     match result {
         Ok(verifies) => Ok(VerifyResponse { verifies }),
         Err(err) => Err(err.into()),
@@ -106,6 +147,12 @@ mod tests {
     const ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
     const ED25519_PUBLIC_KEY_HEX: &str =
         "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
+
+    // Signed text "connect all the things" using MyEtherWallet with private key b5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7
+    const ETHEREUM_MESSAGE: &[u8] = b"\x19Ethereum Signed Message:\nconnect all the things";
+    const ETHEREUM_SIGNATURE_HEX: &str = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b";
+    const ETHEREUM_PUBLIC_KEY_HEX: &str =
+        "023dcf27afb6cc68e002331a5da859baff4afa66c5b7398dc1142b3af9dab47a62";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
@@ -185,6 +232,74 @@ mod tests {
                 source: VerificationError::PublicKeyErr
             }
         )
+    }
+
+    #[test]
+    fn ethereum_signature_verify_works() {
+        let deps = setup();
+
+        let message = ETHEREUM_MESSAGE;
+        let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+        let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+
+        let verify_msg = QueryMsg::VerifyEthereumSignature {
+            message: message.into(),
+            signature: signature.into(),
+            public_key: pubkey.into(),
+        };
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+
+        assert_eq!(res, VerifyResponse { verifies: true });
+    }
+
+    #[test]
+    fn ethereum_signature_verify_fails_for_corrupted_message() {
+        let deps = setup();
+
+        let mut message = Vec::<u8>::from(ETHEREUM_MESSAGE);
+        message.push(0x67);
+        let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+        let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+
+        let verify_msg = QueryMsg::VerifyEthereumSignature {
+            message: message.into(),
+            signature: signature.into(),
+            public_key: pubkey.into(),
+        };
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+
+        assert_eq!(res, VerifyResponse { verifies: false });
+    }
+
+    #[test]
+    fn ethereum_signature_verify_fails_for_corrupted_signature() {
+        let deps = setup();
+
+        let message = ETHEREUM_MESSAGE;
+        let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+
+        // Wrong signature
+        let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+        signature[5] ^= 0x01;
+        let verify_msg = QueryMsg::VerifyEthereumSignature {
+            message: message.into(),
+            signature: signature.into(),
+            public_key: pubkey.into(),
+        };
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+        assert_eq!(res, VerifyResponse { verifies: false });
+
+        // Broken signature
+        // let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+        // signature[3] ^= 0x01;
+        // let verify_msg = QueryMsg::VerifyEthereumSignature {
+        //     message: message.into(),
+        //     signature: signature.into(),
+        //     public_key: pubkey.into(),
+        // };
     }
 
     #[test]

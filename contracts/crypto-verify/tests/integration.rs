@@ -42,6 +42,12 @@ const ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a2847
 const ED25519_PUBLIC_KEY_HEX: &str =
     "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
 
+// Signed text "connect all the things" using MyEtherWallet with private key b5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7
+const ETHEREUM_MESSAGE: &[u8] = b"\x19Ethereum Signed Message:\nconnect all the things";
+const ETHEREUM_SIGNATURE_HEX: &str = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b";
+const ETHEREUM_PUBLIC_KEY_HEX: &str =
+    "023dcf27afb6cc68e002331a5da859baff4afa66c5b7398dc1142b3af9dab47a62";
+
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
     let msg = InitMsg {};
@@ -113,6 +119,45 @@ fn cosmos_signature_verify_errors() {
     };
     let res = query(&mut deps, mock_env(), verify_msg);
     assert_eq!(res.unwrap_err(), "Verification error: Public key error")
+}
+
+#[test]
+fn ethereum_signature_verify_works() {
+    let mut deps = setup();
+
+    let message = ETHEREUM_MESSAGE;
+    let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+    let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+
+    let verify_msg = QueryMsg::VerifyEthereumSignature {
+        message: message.into(),
+        signature: signature.into(),
+        public_key: pubkey.into(),
+    };
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: true });
+}
+
+#[test]
+fn ethereum_signature_verify_fails_for_corrupted_message() {
+    let mut deps = setup();
+
+    let mut message = Vec::<u8>::from(ETHEREUM_MESSAGE);
+    message.push(0x67);
+    let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+    let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+
+    let verify_msg = QueryMsg::VerifyEthereumSignature {
+        message: message.into(),
+        signature: signature.into(),
+        public_key: pubkey.into(),
+    };
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw).unwrap();
+
+    assert_eq!(res, VerifyResponse { verifies: false });
 }
 
 #[test]

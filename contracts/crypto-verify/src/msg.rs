@@ -23,6 +23,16 @@ pub enum QueryMsg {
         /// Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.
         public_key: Binary,
     },
+    /// Ethereum format (secp256k1 verification scheme).
+    VerifyEthereumSignature {
+        /// Message to verify. This is the encoded payload before the prehashing step (e.g. RLP encoded)
+        message: Binary,
+        /// Serialized signature. Ethereum format (DER plus recovery parameter `v`).
+        signature: Binary,
+        /// Serialized compressed (33 bytes) public key.
+        /// TODO: update to address check
+        public_key: Binary,
+    },
     /// Tendermint format (ed25519 verification scheme).
     VerifyTendermintSignature {
         /// Message to verify.

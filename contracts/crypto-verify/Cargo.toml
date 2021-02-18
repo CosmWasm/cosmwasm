@@ -37,6 +37,7 @@ cosmwasm-storage = { path = "../../packages/storage", features = ["iterator"] }
 schemars = "0.7"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.9"
+sha3 = "0.9"
 
 [dev-dependencies]
 cosmwasm-vm = { path = "../../packages/vm", default-features = false, features = ["iterator"] }
