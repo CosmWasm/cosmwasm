@@ -1,13 +1,11 @@
 //! Import implementations
 
-#[cfg(feature = "iterator")]
-use std::convert::TryInto;
-
-use cosmwasm_crypto::{ed25519_verify, secp256k1_verify, CryptoError};
+use cosmwasm_crypto::{ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError};
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN,
     MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
 };
+use std::convert::TryInto;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -24,6 +22,7 @@ use crate::serde::to_vec;
 use crate::GasInfo;
 
 const GAS_COST_SECP256K1_VERIFY_SIGNATURE: u64 = 100;
+const GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE: u64 = 100;
 const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
 
 /// A kibi (kilo binary)
@@ -93,6 +92,15 @@ pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     do_secp256k1_verify(env, hash_ptr, signature_ptr, pubkey_ptr)
+}
+
+pub fn native_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    recovery_param: u32,
+) -> VmResult<u64> {
+    do_secp256k1_recover_pubkey(env, hash_ptr, signature_ptr, recovery_param)
 }
 
 pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -287,6 +295,42 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
         },
         |valid| if valid { 0 } else { 1 },
     ))
+}
+
+fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    recover_param: u32,
+) -> VmResult<u64> {
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let recover_param: u8 = match recover_param.try_into() {
+        Ok(rp) => rp,
+        Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
+    };
+
+    let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
+    let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    let mut out: u64 = 0;
+    match result {
+        Ok(pubkey) => {
+            let pubkey_ptr = write_to_contract::<A, S, Q>(env, pubkey.as_ref())?;
+            out ^= pubkey_ptr as u64;
+        }
+        Err(err) => match err {
+            CryptoError::MessageError { .. }
+            | CryptoError::HashErr { .. }
+            | CryptoError::SignatureErr { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::GenericErr { .. } => out ^= (err.code() as u64) << 32,
+            CryptoError::PublicKeyErr { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+    }
+    Ok(out)
 }
 
 fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -1278,6 +1322,31 @@ mod tests {
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
             10 // mapped GenericErr
         )
+    }
+
+    #[test]
+    fn do_secp256k1_recover_pubkey_works() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
+        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
+            .unwrap();
+        let sig = hex::decode("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788").unwrap();
+        let recovery_param = 1;
+        let expected_pubkey =
+            hex::decode("034a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5")
+                .unwrap();
+
+        let hash_ptr = write_data(&env, &hash);
+        let sig_ptr = write_data(&env, &sig);
+        let result =
+            do_secp256k1_recover_pubkey::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, recovery_param)
+                .unwrap();
+        let error = result >> 32;
+        let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&env, pubkey_ptr), expected_pubkey);
     }
 
     #[test]
