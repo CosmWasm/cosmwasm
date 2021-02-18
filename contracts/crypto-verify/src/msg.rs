@@ -29,7 +29,7 @@ pub enum QueryMsg {
         message: Binary,
         /// Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).
         signature: Binary,
-        /// Serialized compressed (33 bytes) public key.
+        /// Serialized uncompressed (65 bytes) public key.
         /// TODO: update to address check
         public_key: Binary,
     },

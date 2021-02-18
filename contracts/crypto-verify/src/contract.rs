@@ -89,7 +89,10 @@ pub fn query_verify_ethereum(
     public_key: &[u8],
 ) -> StdResult<VerifyResponse> {
     // Hashing
-    let hash = Keccak256::digest(message);
+    let mut hasher = Keccak256::new();
+    hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
+    hasher.update(message);
+    let hash = hasher.finalize();
 
     // Decompose signature
     let (v, rs) = match signature.split_last() {
@@ -151,10 +154,9 @@ mod tests {
         "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
 
     // Signed text "connect all the things" using MyEtherWallet with private key b5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7
-    const ETHEREUM_MESSAGE: &[u8] = b"\x19Ethereum Signed Message:\nconnect all the things";
+    const ETHEREUM_MESSAGE: &[u8] = b"connect all the things";
     const ETHEREUM_SIGNATURE_HEX: &str = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b";
-    const ETHEREUM_PUBLIC_KEY_HEX: &str =
-        "023dcf27afb6cc68e002331a5da859baff4afa66c5b7398dc1142b3af9dab47a62";
+    const ETHEREUM_PUBLIC_KEY_HEX: &str = "0487977ddf1e8e4c3f0a4619601fc08ac5c1dcf78ee64e826a63818394754cef52457a10a599cb88afb7c5a6473b7534b8b150d38d48a11c9b515dd01434cceb08";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);

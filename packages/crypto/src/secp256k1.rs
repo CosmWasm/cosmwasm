@@ -3,6 +3,7 @@ use k256::{
     ecdsa::recoverable,
     ecdsa::signature::{DigestVerifier, Signature as _}, // traits
     ecdsa::{Signature, VerifyingKey},                   // type aliases
+    elliptic_curve::sec1::ToEncodedPoint,
 };
 
 use crate::errors::{CryptoError, CryptoResult};
@@ -108,7 +109,7 @@ pub fn secp256k1_recover_pubkey(
     message_hash: &[u8],
     signature: &[u8],
     recovery_param: u8,
-) -> Result<[u8; 33], CryptoError> {
+) -> Result<Vec<u8>, CryptoError> {
     if message_hash.len() != MESSAGE_HASH_MAX_LEN {
         return Err(CryptoError::hash_err(format!(
             "wrong length: {}",
@@ -136,7 +137,8 @@ pub fn secp256k1_recover_pubkey(
     let pubkey = extended_signature
         .recover_verify_key_from_digest(message_digest)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
-    Ok(pubkey.to_bytes())
+    let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
+    Ok(encoded)
 }
 
 #[cfg(test)]
@@ -300,43 +302,42 @@ mod tests {
         {
             let private_key =
                 hex!("3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1");
-            let expected = SigningKey::from_bytes(&private_key).unwrap().verify_key();
+            let expected = SigningKey::from_bytes(&private_key)
+                .unwrap()
+                .verify_key()
+                .to_encoded_point(false)
+                .as_bytes()
+                .to_vec();
             let r_s = hex!("99e71a99cb2270b8cac5254f9e99b6210c6c10224a1579cf389ef88b20a1abe9129ff05af364204442bdb53ab6f18a99ab48acc9326fa689f228040429e3ca66");
             let recovery_param: u8 = 0;
             let message_hash =
                 hex!("82ff40c0a986c6a5cfad4ddf4c3aa6996f1a7837f9c398e17e5de5cbd5a12b28");
             let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
-            assert_eq!(pubkey.as_ref(), expected.to_bytes());
+            assert_eq!(pubkey, expected);
         }
 
         // Test data from https://github.com/randombit/botan/blob/2.9.0/src/tests/data/pubkey/ecdsa_key_recovery.vec
         {
             let expected_x = "F3F8BB913AA68589A2C8C607A877AB05252ADBD963E1BE846DDEB8456942AEDC";
             let expected_y = "A2ED51F08CA3EF3DAC0A7504613D54CD539FC1B3CBC92453CD704B6A2D012B2C";
-            let expected = VerifyingKey::from_sec1_bytes(
-                &hex::decode(format!("04{}{}", expected_x, expected_y)).unwrap(),
-            )
-            .unwrap();
+            let expected = hex::decode(format!("04{}{}", expected_x, expected_y)).unwrap();
             let r_s = hex!("E30F2E6A0F705F4FB5F8501BA79C7C0D3FAC847F1AD70B873E9797B17B89B39081F1A4457589F30D76AB9F89E748A68C8A94C30FE0BAC8FB5C0B54EA70BF6D2F");
             let recovery_param: u8 = 0;
             let message_hash =
                 hex!("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
             let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
-            assert_eq!(pubkey.as_ref(), expected.to_bytes());
+            assert_eq!(pubkey, expected);
         }
 
         // Test data calculated via Secp256k1.createSignature from @cosmjs/crypto
         {
-            let expected = VerifyingKey::from_sec1_bytes(
-                &hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595"),
-            )
-            .unwrap();
+            let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
             let r_s = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
             let recovery_param: u8 = 1;
             let message_hash =
                 hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
             let pubkey = secp256k1_recover_pubkey(&message_hash, &r_s, recovery_param).unwrap();
-            assert_eq!(pubkey.as_ref(), expected.to_bytes());
+            assert_eq!(pubkey, expected);
         }
     }
 

@@ -69,7 +69,7 @@
               ]
             },
             "public_key": {
-              "description": "Serialized compressed (33 bytes) public key. TODO: update to address check",
+              "description": "Serialized uncompressed (65 bytes) public key. TODO: update to address check",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
