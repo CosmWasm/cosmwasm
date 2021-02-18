@@ -295,8 +295,7 @@ mod tests {
         assert_eq!(res, VerifyResponse { verifies: false });
 
         // Broken signature
-        let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
-        signature[3] ^= 0x01;
+        let signature = vec![0x1c; 65];
         let verify_msg = QueryMsg::VerifyEthereumSignature {
             message: message.into(),
             signature: signature.into(),

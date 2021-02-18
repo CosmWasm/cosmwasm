@@ -161,6 +161,37 @@ fn ethereum_signature_verify_fails_for_corrupted_message() {
 }
 
 #[test]
+fn ethereum_signature_verify_fails_for_corrupted_signature() {
+    let mut deps = setup();
+
+    let message = ETHEREUM_MESSAGE;
+    let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+
+    // Wrong signature
+    let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+    signature[5] ^= 0x01;
+    let verify_msg = QueryMsg::VerifyEthereumSignature {
+        message: message.into(),
+        signature: signature.into(),
+        public_key: pubkey.clone().into(),
+    };
+    let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw).unwrap();
+    assert_eq!(res, VerifyResponse { verifies: false });
+
+    // Broken signature
+    let signature = vec![0x1c; 65];
+    let verify_msg = QueryMsg::VerifyEthereumSignature {
+        message: message.into(),
+        signature: signature.into(),
+        public_key: pubkey.into(),
+    };
+    let result = query(&mut deps, mock_env(), verify_msg);
+    let msg = result.unwrap_err();
+    assert_eq!(msg, "Recover pubkey error: Unknown error: 10");
+}
+
+#[test]
 fn tendermint_signature_verify_works() {
     let mut deps = setup();
 
