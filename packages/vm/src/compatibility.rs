@@ -16,6 +16,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.canonicalize_address",
     "env.humanize_address",
     "env.secp256k1_verify",
+    "env.secp256k1_recover_pubkey",
     "env.ed25519_verify",
     "env.debug",
     "env.query_chain",
