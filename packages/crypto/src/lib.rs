@@ -12,7 +12,7 @@ mod secp256k1;
 #[doc(hidden)]
 pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
 #[doc(hidden)]
-pub use crate::ed25519::{EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN, MESSAGE_MAX_LEN};
+pub use crate::ed25519::{BATCH_MAX_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN, MESSAGE_MAX_LEN};
 #[doc(hidden)]
 pub use crate::errors::{CryptoError, CryptoResult};
 #[doc(hidden)]
