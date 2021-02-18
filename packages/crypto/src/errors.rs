@@ -10,35 +10,30 @@ pub enum CryptoError {
     #[error("Crypto error: {msg}")]
     GenericErr {
         msg: String,
-        error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
     #[error("Message error: {msg}")]
     MessageError {
         msg: String,
-        error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
     #[error("Hash error: {msg}")]
     HashErr {
         msg: String,
-        error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
     #[error("Signature error: {msg}")]
     SignatureErr {
         msg: String,
-        error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
     #[error("Public key error: {msg}")]
     PublicKeyErr {
         msg: String,
-        error_code: u32,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -48,7 +43,6 @@ impl CryptoError {
     pub fn generic_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::GenericErr {
             msg: msg.into(),
-            error_code: 10,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -57,7 +51,6 @@ impl CryptoError {
     pub fn msg_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::MessageError {
             msg: msg.into(),
-            error_code: 2,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -66,7 +59,6 @@ impl CryptoError {
     pub fn hash_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::HashErr {
             msg: msg.into(),
-            error_code: 3,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -75,7 +67,6 @@ impl CryptoError {
     pub fn sig_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::SignatureErr {
             msg: msg.into(),
-            error_code: 4,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -84,9 +75,20 @@ impl CryptoError {
     pub fn pubkey_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::PublicKeyErr {
             msg: msg.into(),
-            error_code: 5,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
+        }
+    }
+
+    /// Numeric error code that can easily be passed over the
+    /// contract VM boundary.
+    pub fn code(&self) -> u32 {
+        match self {
+            CryptoError::MessageError { .. } => 2,
+            CryptoError::HashErr { .. } => 3,
+            CryptoError::SignatureErr { .. } => 4,
+            CryptoError::PublicKeyErr { .. } => 5,
+            CryptoError::GenericErr { .. } => 10,
         }
     }
 }
