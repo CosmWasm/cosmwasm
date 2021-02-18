@@ -27,7 +27,7 @@ pub enum QueryMsg {
     VerifyEthereumSignature {
         /// Message to verify. This is the encoded payload before the prehashing step (e.g. RLP encoded)
         message: Binary,
-        /// Serialized signature. Ethereum format (DER plus recovery parameter `v`).
+        /// Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).
         signature: Binary,
         /// Serialized compressed (33 bytes) public key.
         /// TODO: update to address check

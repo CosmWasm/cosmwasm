@@ -77,7 +77,7 @@
               ]
             },
             "signature": {
-              "description": "Serialized signature. Ethereum format (DER plus recovery parameter `v`).",
+              "description": "Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
