@@ -7,10 +7,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum RecoverPubkeyError {
-    #[error("Generic error")]
-    GenericErr,
-    #[error("Message error")]
-    MessageErr,
     #[error("Hash error")]
     HashErr,
     #[error("Signature error")]
@@ -38,8 +34,6 @@ impl RecoverPubkeyError {
 impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
     fn eq(&self, rhs: &RecoverPubkeyError) -> bool {
         match self {
-            RecoverPubkeyError::GenericErr => matches!(rhs, RecoverPubkeyError::GenericErr),
-            RecoverPubkeyError::MessageErr => matches!(rhs, RecoverPubkeyError::MessageErr),
             RecoverPubkeyError::HashErr => matches!(rhs, RecoverPubkeyError::HashErr),
             RecoverPubkeyError::SignatureErr => matches!(rhs, RecoverPubkeyError::SignatureErr),
             RecoverPubkeyError::InvalidRecoveryParam => {
@@ -64,11 +58,11 @@ impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
 impl From<CryptoError> for RecoverPubkeyError {
     fn from(original: CryptoError) -> Self {
         match original {
-            CryptoError::MessageError { .. } => RecoverPubkeyError::MessageErr,
+            CryptoError::MessageError { .. } => panic!("Conversion not supported"),
             CryptoError::HashErr { .. } => RecoverPubkeyError::HashErr,
             CryptoError::SignatureErr { .. } => RecoverPubkeyError::SignatureErr,
             CryptoError::PublicKeyErr { .. } => panic!("Conversion not supported"),
-            CryptoError::GenericErr { .. } => RecoverPubkeyError::GenericErr,
+            CryptoError::GenericErr { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
         }
     }

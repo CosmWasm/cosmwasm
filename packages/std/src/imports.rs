@@ -235,11 +235,9 @@ impl Api for ExternalApi {
                 let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
                 Ok(pubkey)
             }
-            2 => Err(RecoverPubkeyError::MessageErr), // shouldn't happen
             3 => Err(RecoverPubkeyError::HashErr),
             4 => Err(RecoverPubkeyError::SignatureErr),
             6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
-            10 => Err(RecoverPubkeyError::GenericErr),
             error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
         }
     }
