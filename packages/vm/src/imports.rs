@@ -268,9 +268,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-
     let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-
     let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
@@ -298,9 +296,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     let message = read_region(&env.memory(), message_ptr, MESSAGE_MAX_LEN)?;
-
     let signature = read_region(&env.memory(), signature_ptr, EDDSA_SIGNATURE_LEN)?;
-
     let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let result = ed25519_verify(&message, &signature, &pubkey);
