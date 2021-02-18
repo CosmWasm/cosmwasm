@@ -264,6 +264,7 @@ dependencies = [
  "cosmwasm-std",
  "criterion",
  "hex",
+ "hex-literal",
  "parity-wasm",
  "schemars",
  "serde",

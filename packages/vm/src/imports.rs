@@ -462,6 +462,7 @@ mod tests {
         coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, HumanAddr, QueryRequest,
         SystemError, SystemResult, WasmQuery,
     };
+    use hex_literal::hex;
     use std::ptr::NonNull;
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
@@ -1330,13 +1331,10 @@ mod tests {
         let (env, mut _instance) = make_instance(api.clone());
 
         // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
-        let hash = hex::decode("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0")
-            .unwrap();
-        let sig = hex::decode("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788").unwrap();
+        let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+        let sig = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
         let recovery_param = 1;
-        let expected_pubkey =
-            hex::decode("034a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5")
-                .unwrap();
+        let expected = hex!("034a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5");
 
         let hash_ptr = write_data(&env, &hash);
         let sig_ptr = write_data(&env, &sig);
@@ -1346,7 +1344,7 @@ mod tests {
         let error = result >> 32;
         let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
         assert_eq!(error, 0);
-        assert_eq!(force_read(&env, pubkey_ptr), expected_pubkey);
+        assert_eq!(force_read(&env, pubkey_ptr), expected);
     }
 
     #[test]
