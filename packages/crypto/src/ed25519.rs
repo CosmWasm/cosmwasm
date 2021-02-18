@@ -84,14 +84,14 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 /// In the limiting case where all signatures in the batch are made with the same verification key,
 /// coalesced batch verification runs twice as fast as ordinary batch verification.
 pub fn ed25519_batch_verify(
-    messages: &[Vec<u8>],
-    signatures: &[Vec<u8>],
-    public_keys: &[Vec<u8>],
+    messages: &[&[u8]],
+    signatures: &[&[u8]],
+    pubkeys: &[&[u8]],
 ) -> CryptoResult<bool> {
     let mut batch = ed25519::batch::Verifier::new();
 
-    for (((i, message), signature), public_key) in
-        (1..).zip(messages).zip(signatures).zip(public_keys)
+    for (((i, &message), &signature), &public_key) in
+        (1..).zip(messages).zip(signatures).zip(pubkeys)
     {
         // Validation
         if message.len() > MESSAGE_MAX_LEN {
@@ -120,14 +120,13 @@ pub fn ed25519_batch_verify(
         }
 
         // Deserialization
-        let signature = ed25519::Signature::try_from(signature.as_slice()).map_err(|err| {
+        let signature = ed25519::Signature::try_from(signature).map_err(|err| {
             CryptoError::generic_err(format!("signature {}: {}", i, err.to_string()))
         })?;
 
-        let public_key =
-            ed25519::VerificationKey::try_from(public_key.as_slice()).map_err(|err| {
-                CryptoError::generic_err(format!("public key {}: {}", i, err.to_string()))
-            })?;
+        let public_key = ed25519::VerificationKey::try_from(public_key).map_err(|err| {
+            CryptoError::generic_err(format!("public key {}: {}", i, err.to_string()))
+        })?;
 
         // Enqueing
         batch.queue((public_key.into(), signature, message));
@@ -296,7 +295,11 @@ mod tests {
             public_keys.push(public_key);
         }
 
+        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let pubkeys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
         // ed25519_batch_verify() works
-        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+        assert!(ed25519_batch_verify(&messages, &signatures, &pubkeys).unwrap());
     }
 }
