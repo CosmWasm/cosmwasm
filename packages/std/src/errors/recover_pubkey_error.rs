@@ -62,7 +62,7 @@ impl From<CryptoError> for RecoverPubkeyError {
             CryptoError::HashErr { .. } => RecoverPubkeyError::HashErr,
             CryptoError::SignatureErr { .. } => RecoverPubkeyError::SignatureErr,
             CryptoError::PublicKeyErr { .. } => panic!("Conversion not supported"),
-            CryptoError::GenericErr { .. } => panic!("Conversion not supported"),
+            CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
         }
     }

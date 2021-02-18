@@ -134,7 +134,9 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockApi, MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{from_slice, Binary, OwnedDeps, StdError, VerificationError};
+    use cosmwasm_std::{
+        from_slice, Binary, OwnedDeps, RecoverPubkeyError, StdError, VerificationError,
+    };
 
     const CREATOR: &str = "creator";
 
@@ -286,20 +288,28 @@ mod tests {
         let verify_msg = QueryMsg::VerifyEthereumSignature {
             message: message.into(),
             signature: signature.into(),
-            public_key: pubkey.into(),
+            public_key: pubkey.clone().into(),
         };
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
         assert_eq!(res, VerifyResponse { verifies: false });
 
         // Broken signature
-        // let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
-        // signature[3] ^= 0x01;
-        // let verify_msg = QueryMsg::VerifyEthereumSignature {
-        //     message: message.into(),
-        //     signature: signature.into(),
-        //     public_key: pubkey.into(),
-        // };
+        let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
+        signature[3] ^= 0x01;
+        let verify_msg = QueryMsg::VerifyEthereumSignature {
+            message: message.into(),
+            signature: signature.into(),
+            public_key: pubkey.into(),
+        };
+        let result = query(deps.as_ref(), mock_env(), verify_msg);
+        match result.unwrap_err() {
+            StdError::RecoverPubkeyErr {
+                source: RecoverPubkeyError::UnknownErr { .. },
+                ..
+            } => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     #[test]

@@ -128,13 +128,14 @@ pub fn secp256k1_recover_pubkey(
     // Compose extended signature
     let signature =
         Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
-    let extended_signature = recoverable::Signature::new(&signature, id).unwrap();
+    let extended_signature = recoverable::Signature::new(&signature, id)
+        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
     // Recover
     let message_digest = Identity256::new().chain(message_hash);
     let pubkey = extended_signature
         .recover_verify_key_from_digest(message_digest)
-        .unwrap();
+        .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     Ok(pubkey.to_bytes())
 }
 

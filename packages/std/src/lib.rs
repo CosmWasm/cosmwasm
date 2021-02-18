@@ -25,7 +25,7 @@ pub use crate::addresses::{CanonicalAddr, HumanAddr};
 pub use crate::binary::{Binary, ByteArray};
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
-pub use crate::errors::{StdError, StdResult, SystemError, VerificationError};
+pub use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
     ChannelResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg,
