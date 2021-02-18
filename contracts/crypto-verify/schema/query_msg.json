@@ -56,20 +56,12 @@
           "type": "object",
           "required": [
             "message",
-            "public_key",
-            "signature"
+            "signature",
+            "signer_address"
           ],
           "properties": {
             "message": {
               "description": "Message to verify. This is the encoded payload before the prehashing step (e.g. RLP encoded)",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/Binary"
-                }
-              ]
-            },
-            "public_key": {
-              "description": "Serialized uncompressed (65 bytes) public key. TODO: update to address check",
               "allOf": [
                 {
                   "$ref": "#/definitions/Binary"
@@ -83,6 +75,10 @@
                   "$ref": "#/definitions/Binary"
                 }
               ]
+            },
+            "signer_address": {
+              "description": "Signer address. This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.",
+              "type": "string"
             }
           }
         }

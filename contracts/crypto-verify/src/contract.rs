@@ -42,12 +42,12 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
         QueryMsg::VerifyEthereumSignature {
             message,
             signature,
-            public_key,
+            signer_address,
         } => to_binary(&query_verify_ethereum(
             deps,
             &message,
             &signature,
-            &public_key,
+            &signer_address,
         )?),
         QueryMsg::VerifyTendermintSignature {
             message,
@@ -86,7 +86,7 @@ pub fn query_verify_ethereum(
     deps: Deps,
     message: &[u8],
     signature: &[u8],
-    public_key: &[u8],
+    signer_address: &str,
 ) -> StdResult<VerifyResponse> {
     // Hashing
     let mut hasher = Keccak256::new();
@@ -103,10 +103,11 @@ pub fn query_verify_ethereum(
 
     // Verification
     let calculated_pubkey = deps.api.secp256k1_recover_pubkey(&hash, rs, recovery)?;
-    if public_key != calculated_pubkey {
+    let calculated_address = ethereum_address(&calculated_pubkey)?;
+    if signer_address.to_ascii_lowercase() != calculated_address {
         return Ok(VerifyResponse { verifies: false });
     }
-    let result = deps.api.secp256k1_verify(&hash, rs, &public_key);
+    let result = deps.api.secp256k1_verify(&hash, rs, &calculated_pubkey);
     match result {
         Ok(verifies) => Ok(VerifyResponse { verifies }),
         Err(err) => Err(err.into()),
@@ -129,6 +130,25 @@ pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsRespon
     Ok(ListVerificationsResponse {
         verification_schemes,
     })
+}
+
+fn ethereum_address(pubkey: &[u8]) -> StdResult<String> {
+    let (tag, data) = match pubkey.split_first() {
+        Some(pair) => pair,
+        None => return Err(StdError::generic_err("Public key must not be empty")),
+    };
+    if *tag != 0x04 {
+        return Err(StdError::generic_err("Public key start with 0x04"));
+    }
+    if data.len() != 64 {
+        return Err(StdError::generic_err("Public key must be 65 bytes long"));
+    }
+
+    let hash = Keccak256::digest(data);
+    let mut out = String::with_capacity(42);
+    out.push_str("0x");
+    out.push_str(&hex::encode(&hash[hash.len() - 20..]));
+    Ok(out)
 }
 
 #[cfg(test)]
@@ -156,7 +176,7 @@ mod tests {
     // Signed text "connect all the things" using MyEtherWallet with private key b5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7
     const ETHEREUM_MESSAGE: &[u8] = b"connect all the things";
     const ETHEREUM_SIGNATURE_HEX: &str = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b";
-    const ETHEREUM_PUBLIC_KEY_HEX: &str = "0487977ddf1e8e4c3f0a4619601fc08ac5c1dcf78ee64e826a63818394754cef52457a10a599cb88afb7c5a6473b7534b8b150d38d48a11c9b515dd01434cceb08";
+    const ETHEREUM_SIGNER_ADDRESS: &str = "0x12890D2cce102216644c59daE5baed380d84830c";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
@@ -244,12 +264,12 @@ mod tests {
 
         let message = ETHEREUM_MESSAGE;
         let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
-        let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+        let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
         let verify_msg = QueryMsg::VerifyEthereumSignature {
             message: message.into(),
             signature: signature.into(),
-            public_key: pubkey.into(),
+            signer_address: signer_address.into(),
         };
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
@@ -264,12 +284,12 @@ mod tests {
         let mut message = Vec::<u8>::from(ETHEREUM_MESSAGE);
         message.push(0x67);
         let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
-        let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+        let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
         let verify_msg = QueryMsg::VerifyEthereumSignature {
             message: message.into(),
             signature: signature.into(),
-            public_key: pubkey.into(),
+            signer_address: signer_address.into(),
         };
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
@@ -282,7 +302,7 @@ mod tests {
         let deps = setup();
 
         let message = ETHEREUM_MESSAGE;
-        let pubkey = hex::decode(ETHEREUM_PUBLIC_KEY_HEX).unwrap();
+        let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
         // Wrong signature
         let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
@@ -290,7 +310,7 @@ mod tests {
         let verify_msg = QueryMsg::VerifyEthereumSignature {
             message: message.into(),
             signature: signature.into(),
-            public_key: pubkey.clone().into(),
+            signer_address: signer_address.into(),
         };
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
@@ -301,7 +321,7 @@ mod tests {
         let verify_msg = QueryMsg::VerifyEthereumSignature {
             message: message.into(),
             signature: signature.into(),
-            public_key: pubkey.into(),
+            signer_address: signer_address.into(),
         };
         let result = query(deps.as_ref(), mock_env(), verify_msg);
         match result.unwrap_err() {

@@ -29,9 +29,9 @@ pub enum QueryMsg {
         message: Binary,
         /// Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).
         signature: Binary,
-        /// Serialized uncompressed (65 bytes) public key.
-        /// TODO: update to address check
-        public_key: Binary,
+        /// Signer address.
+        /// This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.
+        signer_address: String,
     },
     /// Tendermint format (ed25519 verification scheme).
     VerifyTendermintSignature {
