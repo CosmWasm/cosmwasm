@@ -9,6 +9,11 @@ use crate::errors::{CryptoError, CryptoResult};
 /// messages, let us know.
 pub const MESSAGE_MAX_LEN: usize = 131072;
 
+/// Max number of batch messages / signatures / public_keys.
+/// This is an arbitrary value, for performance / memory contraints. If you need to batch-verify a
+/// larger number of signatures, let us know.
+pub const BATCH_MAX_LEN: usize = 128;
+
 /// EdDSA (ed25519) parameters
 /// Length of a serialized signature
 pub const EDDSA_SIGNATURE_LEN: usize = 64;
