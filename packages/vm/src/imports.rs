@@ -18,6 +18,8 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
+#[cfg(target_arch = "wasm32")]
+use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
 
@@ -422,53 +424,6 @@ fn do_next<A: BackendApi, S: Storage, Q: Querier>(
 
     let out_data = encode_sections(&[key, value])?;
     write_to_contract::<A, S, Q>(env, &out_data)
-}
-
-/// Encodes multiple sections of data into one vector.
-///
-/// Each section is suffixed by a section length encoded as big endian uint32.
-/// Using suffixes instead of prefixes allows reading sections in reverse order,
-/// such that the first element does not need to be re-allocated if the contract's
-/// data structure supports truncation (such as a Rust vector).
-///
-/// The resulting data looks like this:
-///
-/// ```ignore
-/// section1 || section1_len || section2 || section2_len || section3 || section3_len || …
-/// ```
-#[allow(dead_code)]
-fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
-    let mut out_len: usize = sections.iter().map(|section| section.len()).sum();
-    out_len += 4 * sections.len();
-    let mut out_data = Vec::with_capacity(out_len);
-    for section in sections {
-        let section_len = to_u32(section.len())?.to_be_bytes();
-        out_data.extend(section);
-        out_data.extend_from_slice(&section_len);
-    }
-    debug_assert_eq!(out_data.len(), out_len);
-    debug_assert_eq!(out_data.capacity(), out_len);
-    Ok(out_data)
-}
-
-/// Returns the data shifted by 32 bits towards the most significant bit.
-///
-/// This is independent of endianness. But to get the idea, it would be
-/// `data || 0x00000000` in big endian representation.
-#[inline]
-fn to_high_half(data: u32) -> u64 {
-    // See https://stackoverflow.com/a/58956419/2013738 to understand
-    // why this is endianness agnostic.
-    (data as u64) << 32
-}
-
-/// Returns the data copied to the 4 least significant bytes.
-///
-/// This is independent of endianness. But to get the idea, it would be
-/// `0x00000000 || data` in big endian representation.
-#[inline]
-fn to_low_half(data: u32) -> u64 {
-    data.into()
 }
 
 #[cfg(test)]
@@ -1853,73 +1808,5 @@ mod tests {
             } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),
         }
-    }
-
-    #[test]
-    fn encode_sections_works_for_empty_sections() {
-        let enc = encode_sections(&[]).unwrap();
-        assert_eq!(enc, b"" as &[u8]);
-        let enc = encode_sections(&[vec![]]).unwrap();
-        assert_eq!(enc, b"\0\0\0\0" as &[u8]);
-        let enc = encode_sections(&[vec![], vec![]]).unwrap();
-        assert_eq!(enc, b"\0\0\0\0\0\0\0\0" as &[u8]);
-        let enc = encode_sections(&[vec![], vec![], vec![]]).unwrap();
-        assert_eq!(enc, b"\0\0\0\0\0\0\0\0\0\0\0\0" as &[u8]);
-    }
-
-    #[test]
-    fn encode_sections_works_for_one_element() {
-        let enc = encode_sections(&[]).unwrap();
-        assert_eq!(enc, b"" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA, 0xBB]]).unwrap();
-        assert_eq!(enc, b"\xAA\xBB\0\0\0\x02" as &[u8]);
-        let enc = encode_sections(&[vec![0x9D; 277]]).unwrap();
-        assert_eq!(enc, b"\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\0\0\x01\x15" as &[u8]);
-    }
-
-    #[test]
-    fn encode_sections_works_for_multiple_elements() {
-        let enc = encode_sections(&[vec![0xAA]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE], vec![]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE], vec![], vec![0xFF; 19]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\x13" as &[u8]);
-    }
-
-    #[test]
-    fn to_high_half_works() {
-        assert_eq!(
-            to_high_half(0),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            to_high_half(1),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            to_high_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
-            u64::from_be_bytes([0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x00])
-        );
-    }
-
-    #[test]
-    fn to_low_half_works() {
-        assert_eq!(
-            to_low_half(0),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            to_low_half(1),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01])
-        );
-        assert_eq!(
-            to_low_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78])
-        );
     }
 }
