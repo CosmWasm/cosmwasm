@@ -8,6 +8,7 @@ use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
 use crate::sections::decode_sections2;
+use crate::sections::encode_sections;
 use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
 #[cfg(feature = "iterator")]
@@ -45,6 +46,7 @@ extern "C" {
         recovery_param: u32,
     ) -> u64;
     fn ed25519_verify(message_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
+    fn ed25519_batch_verify(messages_ptr: u32, signatures_ptr: u32, public_keys_ptr: u32) -> u32;
 
     fn debug(source_ptr: u32);
 
@@ -256,6 +258,38 @@ impl Api for ExternalApi {
         let pubkey_send_ptr = &*pubkey_send as *const Region as u32;
 
         let result = unsafe { ed25519_verify(msg_send_ptr, sig_send_ptr, pubkey_send_ptr) };
+        match result {
+            0 => Ok(true),
+            1 => Ok(false),
+            2 => Err(VerificationError::MessageErr),
+            3 => Err(VerificationError::HashErr), // shouldn't happen
+            4 => Err(VerificationError::SignatureErr),
+            5 => Err(VerificationError::PublicKeyErr),
+            10 => Err(VerificationError::GenericErr),
+            error_code => Err(VerificationError::unknown_err(error_code)),
+        }
+    }
+
+    fn ed25519_batch_verify(
+        &self,
+        messages: &[Vec<u8>],
+        signatures: &[Vec<u8>],
+        public_keys: &[Vec<u8>],
+    ) -> Result<bool, VerificationError> {
+        let msgs_encoded = encode_sections(messages)?;
+        let msgs_send = build_region(&msgs_encoded);
+        let msgs_send_ptr = &*msgs_send as *const Region as u32;
+
+        let sigs_encoded = encode_sections(signatures)?;
+        let sig_sends = build_region(&sigs_encoded);
+        let sigs_send_ptr = &*sig_sends as *const Region as u32;
+
+        let pubkeys_encoded = encode_sections(public_keys)?;
+        let pubkeys_send = build_region(&pubkeys_encoded);
+        let pubkeys_send_ptr = &*pubkeys_send as *const Region as u32;
+
+        let result =
+            unsafe { ed25519_batch_verify(msgs_send_ptr, sigs_send_ptr, pubkeys_send_ptr) };
         match result {
             0 => Ok(true),
             1 => Ok(false),
