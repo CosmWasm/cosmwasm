@@ -6,6 +6,7 @@ use crate::errors::VmResult;
 /// Each encoded section is suffixed by a section length, encoded as big endian uint32.
 ///
 /// See also: `encode_section`.
+#[allow(dead_code)]
 pub fn decode_sections(data: &[u8]) -> Vec<&[u8]> {
     let mut result: Vec<&[u8]> = vec![];
     let lengths = extract_lengths(data);
