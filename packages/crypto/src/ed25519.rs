@@ -86,12 +86,12 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 pub fn ed25519_batch_verify(
     messages: &[&[u8]],
     signatures: &[&[u8]],
-    pubkeys: &[&[u8]],
+    public_keys: &[&[u8]],
 ) -> CryptoResult<bool> {
     let mut batch = ed25519::batch::Verifier::new();
 
     for (((i, &message), &signature), &public_key) in
-        (1..).zip(messages).zip(signatures).zip(pubkeys)
+        (1..).zip(messages).zip(signatures).zip(public_keys)
     {
         // Validation
         if message.len() > MESSAGE_MAX_LEN {
@@ -297,9 +297,9 @@ mod tests {
 
         let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
         let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
-        let pubkeys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
         // ed25519_batch_verify() works
-        assert!(ed25519_batch_verify(&messages, &signatures, &pubkeys).unwrap());
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
     }
 }
