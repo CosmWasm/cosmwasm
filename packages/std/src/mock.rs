@@ -155,6 +155,22 @@ impl Api for MockApi {
         )?)
     }
 
+    fn ed25519_batch_verify(
+        &self,
+        messages: &[Vec<u8>],
+        signatures: &[Vec<u8>],
+        public_keys: &[Vec<u8>],
+    ) -> Result<bool, VerificationError> {
+        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+        Ok(cosmwasm_crypto::ed25519_batch_verify(
+            &messages,
+            &signatures,
+            &public_keys,
+        )?)
+    }
+
     fn debug(&self, message: &str) {
         println!("{}", message);
     }
@@ -674,11 +690,11 @@ mod tests {
     fn ed25519_verify_works() {
         let api = MockApi::default();
 
-        let hash = hex::decode(ED25519_MSG_HEX).unwrap();
+        let msg = hex::decode(ED25519_MSG_HEX).unwrap();
         let signature = hex::decode(ED25519_SIG_HEX).unwrap();
         let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
 
-        assert!(api.ed25519_verify(&hash, &signature, &public_key).unwrap());
+        assert!(api.ed25519_verify(&msg, &signature, &public_key).unwrap());
     }
 
     // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
@@ -705,6 +721,49 @@ mod tests {
         let public_key = vec![];
 
         let res = api.ed25519_verify(&msg, &signature, &public_key);
+        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
+    }
+
+    // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn ed25519_batch_verify_works() {
+        let api = MockApi::default();
+
+        let msgs = [hex::decode(ED25519_MSG_HEX).unwrap()];
+        let signatures = [hex::decode(ED25519_SIG_HEX).unwrap()];
+        let public_keys = [hex::decode(ED25519_PUBKEY_HEX).unwrap()];
+
+        assert!(api
+            .ed25519_batch_verify(&msgs, &signatures, &public_keys)
+            .unwrap());
+    }
+
+    // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn ed25519_batch_verify_fails() {
+        let api = MockApi::default();
+
+        let mut msgs = [hex::decode(ED25519_MSG_HEX).unwrap()];
+        // alter first msg
+        msgs[0][0] ^= 0x01;
+        let signatures = [hex::decode(ED25519_SIG_HEX).unwrap()];
+        let public_keys = [hex::decode(ED25519_PUBKEY_HEX).unwrap()];
+
+        assert!(!api
+            .ed25519_batch_verify(&msgs, &signatures, &public_keys)
+            .unwrap());
+    }
+
+    // Basic "errors" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    #[test]
+    fn ed25519_batch_verify_errs() {
+        let api = MockApi::default();
+
+        let msgs = [hex::decode(ED25519_MSG_HEX).unwrap()];
+        let signatures = [hex::decode(ED25519_SIG_HEX).unwrap()];
+        let public_keys = [vec![]];
+
+        let res = api.ed25519_batch_verify(&msgs, &signatures, &public_keys);
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 
