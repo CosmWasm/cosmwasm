@@ -1,9 +1,12 @@
 //! Import implementations
 
-use cosmwasm_crypto::{ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError};
+#[cfg(feature = "iterator")]
+use std::convert::TryInto;
+
+use cosmwasm_crypto::{ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError};
 use cosmwasm_crypto::{
-    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN,
-    MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
+    BATCH_MAX_LEN, ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN,
+    EDDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
 };
 use std::convert::TryInto;
 
@@ -19,6 +22,7 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
 #[cfg(feature = "iterator")]
+use crate::sections::decode_sections;
 use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
@@ -26,6 +30,7 @@ use crate::GasInfo;
 const GAS_COST_SECP256K1_VERIFY_SIGNATURE: u64 = 100;
 const GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE: u64 = 100;
 const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
+const GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE: u64 = 80;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -112,6 +117,15 @@ pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     do_ed25519_verify(env, message_ptr, signature_ptr, pubkey_ptr)
+}
+
+pub fn native_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    messages_ptr: u32,
+    signatures_ptr: u32,
+    pubkeys_ptr: u32,
+) -> VmResult<u32> {
+    do_ed25519_batch_verify(env, messages_ptr, signatures_ptr, pubkeys_ptr)
 }
 
 pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
@@ -357,6 +371,38 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
         },
         |valid| if valid { 0 } else { 1 },
     ))
+}
+
+fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    messages_ptr: u32,
+    signatures_ptr: u32,
+    public_keys_ptr: u32,
+) -> VmResult<u32> {
+    let messages = read_region(
+        &env.memory(),
+        messages_ptr,
+        (MESSAGE_MAX_LEN + 4) * BATCH_MAX_LEN,
+    )?;
+    let signatures = read_region(
+        &env.memory(),
+        signatures_ptr,
+        (EDDSA_SIGNATURE_LEN + 4) * BATCH_MAX_LEN,
+    )?;
+    let public_keys = read_region(
+        &env.memory(),
+        public_keys_ptr,
+        (EDDSA_PUBKEY_LEN + 4) * BATCH_MAX_LEN,
+    )?;
+
+    let messages = decode_sections(&messages);
+    let signatures = decode_sections(&signatures);
+    let public_keys = decode_sections(&public_keys);
+
+    let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
+    let gas_info = GasInfo::with_cost(GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    Ok(result.map_or_else(|err| err.code(), |valid| (!valid).into()))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location

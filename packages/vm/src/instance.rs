@@ -10,8 +10,8 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
     native_canonicalize_address, native_db_read, native_db_remove, native_db_write, native_debug,
-    native_ed25519_verify, native_humanize_address, native_query_chain,
-    native_secp256k1_recover_pubkey, native_secp256k1_verify,
+    native_ed25519_batch_verify, native_ed25519_verify, native_humanize_address,
+    native_query_chain, native_secp256k1_recover_pubkey, native_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
@@ -137,11 +137,21 @@ where
         );
 
         // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
-        // Returns 1 on verification success and 0 on failure.
+        // Returns 0 on verification success, 1 on verification failure, and values greater than 1 in case of error.
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "ed25519_verify",
             Function::new_native_with_env(store, env.clone(), native_ed25519_verify),
+        );
+
+        // Verifies a batch of messages against a batch of signatures with a batch of public keys,
+        // using the ed25519 EdDSA scheme.
+        // Returns 0 on verification success (all batches verify correctly), 1 on verification failure, and values
+        // greater than 1 in case of error.
+        // Ownership of input pointers is not transferred to the host.
+        env_imports.insert(
+            "ed25519_batch_verify",
+            Function::new_native_with_env(store, env.clone(), native_ed25519_batch_verify),
         );
 
         // Allows the contract to emit debug logs that the host can either process or ignore.
