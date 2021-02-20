@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    entry_point, to_binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response, StdError,
-    StdResult,
+    entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response,
+    StdError, StdResult,
 };
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
@@ -58,6 +58,16 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &message.0,
             &signature.0,
             &public_key.0,
+        )?),
+        QueryMsg::VerifyTendermintBatch {
+            messages,
+            signatures,
+            public_keys,
+        } => to_binary(&query_verify_tendermint_batch(
+            deps,
+            &messages,
+            &signatures,
+            &public_keys,
         )?),
         QueryMsg::ListVerificationSchemes {} => to_binary(&query_list_verifications(deps)?),
     }
@@ -125,6 +135,24 @@ pub fn query_verify_tendermint(
     Ok(VerifyResponse { verifies })
 }
 
+pub fn query_verify_tendermint_batch(
+    deps: Deps,
+    messages: &[Binary],
+    signatures: &[Binary],
+    public_keys: &[Binary],
+) -> StdResult<VerifyResponse> {
+    // Deserialization
+    let messages: Vec<Vec<u8>> = messages.iter().map(|b| b.0.clone()).collect();
+    let signatures: Vec<Vec<u8>> = signatures.iter().map(|b| b.0.clone()).collect();
+    let public_keys: Vec<Vec<u8>> = public_keys.iter().map(|b| b.0.clone()).collect();
+
+    // Verification
+    let verifies = deps
+        .api
+        .ed25519_batch_verify(&messages, &signatures, &public_keys)?;
+    Ok(VerifyResponse { verifies })
+}
+
 pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsResponse> {
     let verification_schemes: Vec<_> = list_verifications(deps)?;
     Ok(ListVerificationsResponse {
@@ -187,6 +215,12 @@ mod tests {
     const ETHEREUM_MESSAGE: &str = "connect all the things";
     const ETHEREUM_SIGNATURE_HEX: &str = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b";
     const ETHEREUM_SIGNER_ADDRESS: &str = "0x12890D2cce102216644c59daE5baed380d84830c";
+
+    // TEST 2 test vector from https://tools.ietf.org/html/rfc8032#section-7.1
+    const ED25519_MESSAGE2_HEX: &str = "72";
+    const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416503f8fb3762223ebdb69da085ac1e43e15996e458f3613d0f11d8c387b2eaeb4302aeeb00d291612bb0c00";
+    const ED25519_PUBLIC_KEY2_HEX: &str =
+        "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
@@ -301,6 +335,7 @@ mod tests {
             signature: signature.into(),
             signer_address: signer_address.into(),
         };
+
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
 
@@ -341,6 +376,96 @@ mod tests {
             } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
+    }
+
+    fn tendermint_signatures_batch_verify_works() {
+        let deps = setup();
+
+        let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+
+        let verify_msg = QueryMsg::VerifyTendermintBatch {
+            messages,
+            signatures,
+            public_keys,
+        };
+
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+
+        assert_eq!(res, VerifyResponse { verifies: true });
+    }
+
+    fn tendermint_signatures_batch_verify_fails() {
+        let deps = setup();
+
+        let mut messages: Vec<Binary> = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        // Alter one of the messages
+        messages[0].0[0] ^= 0x01;
+        let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+
+        let verify_msg = QueryMsg::VerifyTendermintBatch {
+            messages: (messages),
+            signatures: (signatures),
+            public_keys: (public_keys),
+        };
+
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+
+        assert_eq!(res, VerifyResponse { verifies: false });
+    }
+
+    fn tendermint_signatures_batch_verify_errors() {
+        let deps = setup();
+
+        let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE2_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        // One of the public keys is empty
+        let public_keys = ["", ED25519_PUBLIC_KEY_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+
+        let verify_msg = QueryMsg::VerifyTendermintBatch {
+            messages,
+            signatures,
+            public_keys,
+        };
+        let res = query(deps.as_ref(), mock_env(), verify_msg);
+        assert!(res.is_err());
+        assert_eq!(
+            res.unwrap_err(),
+            StdError::VerificationErr {
+                source: VerificationError::PublicKeyErr,
+            }
+        )
     }
 
     #[test]
@@ -420,7 +545,11 @@ mod tests {
         assert_eq!(
             res,
             ListVerificationsResponse {
-                verification_schemes: vec!["secp256k1".into(), "ed25519".into()]
+                verification_schemes: vec![
+                    "secp256k1".into(),
+                    "ed25519".into(),
+                    "ed25519_batch".into()
+                ]
             }
         );
     }

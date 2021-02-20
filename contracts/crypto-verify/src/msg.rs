@@ -46,6 +46,15 @@ pub enum QueryMsg {
         /// Serialized public key. Tendermint format (32 bytes).
         public_key: Binary,
     },
+    /// Tendermint format (batch ed25519 verification scheme).
+    VerifyTendermintBatch {
+        /// Messages to verify.
+        messages: Vec<Binary>,
+        /// Serialized signatures. Tendermint format (64 bytes).
+        signatures: Vec<Binary>,
+        /// Serialized public keys. Tendermint format (32 bytes).
+        public_keys: Vec<Binary>,
+    },
     /// Returns a list of supported verification schemes.
     /// No pagination - this is a short list.
     ListVerificationSchemes {},
@@ -62,5 +71,9 @@ pub struct ListVerificationsResponse {
 }
 
 pub(crate) fn list_verifications(_deps: Deps) -> StdResult<Vec<String>> {
-    Ok(vec!["secp256k1".into(), "ed25519".into()])
+    Ok(vec![
+        "secp256k1".into(),
+        "ed25519".into(),
+        "ed25519_batch".into(),
+    ])
 }
