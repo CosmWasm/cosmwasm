@@ -67,6 +67,7 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
             VerificationError::InvalidRecoveryParam => {
                 matches!(rhs, VerificationError::InvalidRecoveryParam)
+            }
             VerificationError::StandardErr { msg, .. } => {
                 if let VerificationError::StandardErr { msg: rhs_msg, .. } = rhs {
                     msg == rhs_msg

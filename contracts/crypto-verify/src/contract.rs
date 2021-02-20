@@ -338,6 +338,37 @@ mod tests {
 
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
+        assert_eq!(res, VerifyResponse { verifies: false });
+    }
+
+    #[test]
+    fn tendermint_signatures_batch_verify_message_multisig_works() {
+        let deps = setup();
+
+        // One message
+        let messages = [ED25519_MESSAGE_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        // Multiple signatures
+        //FIXME: Use different signatures
+        let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+
+        let verify_msg = QueryMsg::VerifyTendermintBatch {
+            messages,
+            signatures,
+            public_keys,
+        };
+
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
 
         assert_eq!(res, VerifyResponse { verifies: false });
     }
@@ -378,6 +409,7 @@ mod tests {
         }
     }
 
+    #[test]
     fn tendermint_signatures_batch_verify_works() {
         let deps = setup();
 
