@@ -10,6 +10,8 @@ use crate::errors::StdError;
 
 #[derive(Error, Debug)]
 pub enum VerificationError {
+    #[error("Batch error")]
+    BatchErr,
     #[error("Generic error")]
     GenericErr,
     #[error("Message error")]
@@ -57,6 +59,7 @@ impl VerificationError {
 impl PartialEq<VerificationError> for VerificationError {
     fn eq(&self, rhs: &VerificationError) -> bool {
         match self {
+            VerificationError::BatchErr => matches!(rhs, VerificationError::BatchErr),
             VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
             VerificationError::MessageErr => matches!(rhs, VerificationError::MessageErr),
             VerificationError::HashErr => matches!(rhs, VerificationError::HashErr),
@@ -96,6 +99,7 @@ impl From<CryptoError> for VerificationError {
             CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
+            CryptoError::BatchErr { .. } => VerificationError::BatchErr,
         }
     }
 }

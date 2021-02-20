@@ -88,10 +88,37 @@ pub fn ed25519_batch_verify(
     signatures: &[&[u8]],
     public_keys: &[&[u8]],
 ) -> CryptoResult<bool> {
+    // Structural checks
+    let messages_len = messages.len();
+    let signatures_len = signatures.len();
+    let public_keys_len = public_keys.len();
+
+    let mut messages = messages.to_vec();
+    if messages_len == signatures_len && messages_len == public_keys_len {
+        if messages_len == 0 {
+            // Verifying nothing equals false
+            return Ok(false);
+        }
+    } else if messages_len == 1 && signatures_len == public_keys_len {
+        if signatures_len == 0 {
+            return Err(CryptoError::batch_err(
+                "No signatures / public keys provided",
+            ));
+        }
+        // Replicate message, for multisig
+        messages = messages.repeat(signatures_len);
+    } else {
+        return Err(CryptoError::batch_err(
+            "Mismatched / erroneous number of messages / signatures / public keys",
+        ));
+    }
+    debug_assert_eq!(messages.len(), signatures_len);
+    debug_assert_eq!(messages.len(), public_keys_len);
+
     let mut batch = ed25519::batch::Verifier::new();
 
     for (((i, &message), &signature), &public_key) in
-        (1..).zip(messages).zip(signatures).zip(public_keys)
+        (1..).zip(&messages).zip(signatures).zip(public_keys)
     {
         // Validation
         if message.len() > MESSAGE_MAX_LEN {
@@ -132,7 +159,7 @@ pub fn ed25519_batch_verify(
         batch.queue((public_key.into(), signature, message));
     }
 
-    // Batch Verification
+    // Batch verification
     match batch.verify(&mut OsRng) {
         Ok(_) => Ok(true),
         Err(_) => Ok(false),
