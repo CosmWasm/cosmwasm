@@ -124,6 +124,46 @@
       }
     },
     {
+      "description": "Tendermint format (batch ed25519 verification scheme).",
+      "type": "object",
+      "required": [
+        "verify_tendermint_batch"
+      ],
+      "properties": {
+        "verify_tendermint_batch": {
+          "type": "object",
+          "required": [
+            "messages",
+            "public_keys",
+            "signatures"
+          ],
+          "properties": {
+            "messages": {
+              "description": "Messages to verify.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Binary"
+              }
+            },
+            "public_keys": {
+              "description": "Serialized public keys. Tendermint format (32 bytes).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Binary"
+              }
+            },
+            "signatures": {
+              "description": "Serialized signatures. Tendermint format (64 bytes).",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Binary"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "description": "Returns a list of supported verification schemes. No pagination - this is a short list.",
       "type": "object",
       "required": [
