@@ -276,15 +276,15 @@ impl Api for ExternalApi {
         signatures: &[Vec<u8>],
         public_keys: &[Vec<u8>],
     ) -> Result<bool, VerificationError> {
-        let msgs_encoded = encode_sections(messages)?;
+        let msgs_encoded = encode_sections(messages);
         let msgs_send = build_region(&msgs_encoded);
         let msgs_send_ptr = &*msgs_send as *const Region as u32;
 
-        let sigs_encoded = encode_sections(signatures)?;
+        let sigs_encoded = encode_sections(signatures);
         let sig_sends = build_region(&sigs_encoded);
         let sigs_send_ptr = &*sig_sends as *const Region as u32;
 
-        let pubkeys_encoded = encode_sections(public_keys)?;
+        let pubkeys_encoded = encode_sections(public_keys);
         let pubkeys_send = build_region(&pubkeys_encoded);
         let pubkeys_send_ptr = &*pubkeys_send as *const Region as u32;
 
