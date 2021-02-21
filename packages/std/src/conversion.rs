@@ -1,7 +1,7 @@
 /// Converts an input of type usize to u32.
 ///
 /// On 32 bit platforms such as wasm32 this is just a safe cast.
-/// On other plaftforms the conversion panic for values larger than
+/// On other platforms the conversion panics for values larger than
 /// `u32::MAX`.
 #[inline]
 pub fn force_to_u32(input: usize) -> u32 {
