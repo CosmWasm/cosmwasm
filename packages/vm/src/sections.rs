@@ -9,12 +9,18 @@ use crate::errors::VmResult;
 #[allow(dead_code)]
 pub fn decode_sections(data: &[u8]) -> Vec<&[u8]> {
     let mut result: Vec<&[u8]> = vec![];
-    let lengths = extract_lengths(data);
-    let mut start = 0;
-    for length in lengths.iter().rev() {
-        result.push(&data[start..start + length]);
-        start += length + 4;
+    let mut remaining_len = data.len();
+    while remaining_len >= 4 {
+        let tail_len = u32::from_be_bytes([
+            data[remaining_len - 4],
+            data[remaining_len - 3],
+            data[remaining_len - 2],
+            data[remaining_len - 1],
+        ]) as usize;
+        result.push(&data[remaining_len - 4 - tail_len..remaining_len - 4]);
+        remaining_len -= 4 + tail_len;
     }
+    result.reverse();
     result
 }
 
@@ -43,25 +49,6 @@ pub fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
     debug_assert_eq!(out_data.len(), out_len);
     debug_assert_eq!(out_data.capacity(), out_len);
     Ok(out_data)
-}
-
-/// Extracts the lengths of encoded vectors.
-///
-/// Starts from the end of `data`, and computes a (reverse) list of lengths.
-fn extract_lengths(data: &[u8]) -> Vec<usize> {
-    let mut lengths = vec![];
-    let mut remaining_len = data.len();
-    while remaining_len >= 4 {
-        let tail_len = u32::from_be_bytes([
-            data[remaining_len - 4],
-            data[remaining_len - 3],
-            data[remaining_len - 2],
-            data[remaining_len - 1],
-        ]) as usize;
-        lengths.push(tail_len);
-        remaining_len -= 4 + tail_len;
-    }
-    lengths
 }
 
 #[cfg(test)]
