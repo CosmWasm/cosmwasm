@@ -21,8 +21,8 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
-#[cfg(feature = "iterator")]
 use crate::sections::decode_sections;
+#[allow(unused_imports)]
 use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
