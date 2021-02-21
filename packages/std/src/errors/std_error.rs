@@ -33,14 +33,6 @@ pub enum StdError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Couldn't convert from {} to {}. Input: {}", from_type, to_type, input)]
-    ConversionErr {
-        from_type: String,
-        to_type: String,
-        input: String,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
     /// Whenever there is no specific error type available
     #[error("Generic error: {msg}")]
     GenericErr {
@@ -111,20 +103,6 @@ impl StdError {
     pub fn recover_pubkey_err(source: RecoverPubkeyError) -> Self {
         StdError::RecoverPubkeyErr {
             source,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
-        }
-    }
-
-    pub fn conversion_err<S: Into<String>, T: Into<String>, U: Into<String>>(
-        from_type: S,
-        to_type: T,
-        input: U,
-    ) -> Self {
-        StdError::ConversionErr {
-            from_type: from_type.into(),
-            to_type: to_type.into(),
-            input: input.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -231,26 +209,6 @@ impl PartialEq<StdError> for StdError {
                 } = rhs
                 {
                     source == rhs_source
-                } else {
-                    false
-                }
-            }
-            StdError::ConversionErr {
-                from_type,
-                to_type,
-                input,
-                #[cfg(feature = "backtraces")]
-                    backtrace: _,
-            } => {
-                if let StdError::ConversionErr {
-                    from_type: rhs_from_type,
-                    to_type: rhs_to_type,
-                    input: rhs_input,
-                    #[cfg(feature = "backtraces")]
-                        backtrace: _,
-                } = rhs
-                {
-                    from_type == rhs_from_type && to_type == rhs_to_type && input == rhs_input
                 } else {
                     false
                 }
@@ -453,24 +411,6 @@ mod tests {
         match error {
             StdError::GenericErr { msg, .. } => assert_eq!(msg, "not implemented"),
             e => panic!("unexpected error, {:?}", e),
-        }
-    }
-
-    #[test]
-    fn conversion_err_works() {
-        let error = StdError::conversion_err("i32", "u32", "-9");
-        match error {
-            StdError::ConversionErr {
-                from_type,
-                to_type,
-                input,
-                ..
-            } => {
-                assert_eq!(from_type, "i32");
-                assert_eq!(to_type, "u32");
-                assert_eq!(input, "-9");
-            }
-            e => panic!("Unexpected error: {:?}", e),
         }
     }
 
