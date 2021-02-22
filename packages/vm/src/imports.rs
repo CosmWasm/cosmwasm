@@ -10,7 +10,6 @@ use cosmwasm_crypto::{
     BATCH_MAX_LEN, ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN,
     EDDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
 };
-use std::convert::TryInto;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -472,6 +471,26 @@ fn do_next<A: BackendApi, S: Storage, Q: Querier>(
 
     let out_data = encode_sections(&[key, value])?;
     write_to_contract::<A, S, Q>(env, &out_data)
+}
+
+/// Returns the data shifted by 32 bits towards the most significant bit.
+///
+/// This is independent of endianness. But to get the idea, it would be
+/// `data || 0x00000000` in big endian representation.
+#[inline]
+fn to_high_half(data: u32) -> u64 {
+    // See https://stackoverflow.com/a/58956419/2013738 to understand
+    // why this is endianness agnostic.
+    (data as u64) << 32
+}
+
+/// Returns the data copied to the 4 least significant bytes.
+///
+/// This is independent of endianness. But to get the idea, it would be
+/// `0x00000000 || data` in big endian representation.
+#[inline]
+fn to_low_half(data: u32) -> u64 {
+    data.into()
 }
 
 #[cfg(test)]
