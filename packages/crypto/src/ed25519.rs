@@ -94,6 +94,7 @@ pub fn ed25519_batch_verify(
     let public_keys_len = public_keys.len();
 
     let mut messages = messages.to_vec();
+    let mut public_keys = public_keys.to_vec();
     if messages_len == signatures_len && messages_len == public_keys_len {
         if messages_len == 0 {
             // Verifying nothing equals false
@@ -107,18 +108,24 @@ pub fn ed25519_batch_verify(
         }
         // Replicate message, for multisig
         messages = messages.repeat(signatures_len);
+    } else if public_keys_len == 1 && messages_len == signatures_len {
+        if messages_len == 0 {
+            return Err(CryptoError::batch_err("No messages / signatures provided"));
+        }
+        // Replicate pubkey
+        public_keys = public_keys.repeat(messages_len);
     } else {
         return Err(CryptoError::batch_err(
             "Mismatched / erroneous number of messages / signatures / public keys",
         ));
     }
     debug_assert_eq!(messages.len(), signatures_len);
-    debug_assert_eq!(messages.len(), public_keys_len);
+    debug_assert_eq!(messages.len(), public_keys.len());
 
     let mut batch = ed25519::batch::Verifier::new();
 
     for (((i, &message), &signature), &public_key) in
-        (1..).zip(&messages).zip(signatures).zip(public_keys)
+        (1..).zip(&messages).zip(signatures).zip(&public_keys)
     {
         // Validation
         if message.len() > MESSAGE_MAX_LEN {
