@@ -99,7 +99,7 @@ pub fn query_verify_ethereum(
         Some(pair) => pair,
         None => return Err(StdError::generic_err("Signature must not be empty")),
     };
-    let recovery = v - 27;
+    let recovery = get_recovery_param(*v)?;
 
     // Verification
     let calculated_pubkey = deps.api.secp256k1_recover_pubkey(&hash, rs, recovery)?;
@@ -149,6 +149,16 @@ fn ethereum_address(pubkey: &[u8]) -> StdResult<String> {
     out.push_str("0x");
     out.push_str(&hex::encode(&hash[hash.len() - 20..]));
     Ok(out)
+}
+
+fn get_recovery_param(v: u8) -> StdResult<u8> {
+    // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+    // for how `v` is composed.
+    match v {
+        27 => Ok(0),
+        28 => Ok(1),
+        _ => Err(StdError::generic_err("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here."))
+    }
 }
 
 #[cfg(test)]
