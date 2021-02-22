@@ -3,7 +3,9 @@
 #[cfg(feature = "iterator")]
 use std::convert::TryInto;
 
-use cosmwasm_crypto::{ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError};
+use cosmwasm_crypto::{
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
+};
 use cosmwasm_crypto::{
     BATCH_MAX_LEN, ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN,
     EDDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
