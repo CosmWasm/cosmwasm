@@ -306,7 +306,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -341,7 +341,9 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::PublicKeyErr { .. } => panic!("Error must not happen for this call"),
+            CryptoError::BatchErr { .. } | CryptoError::PublicKeyErr { .. } => {
+                panic!("Error must not happen for this call")
+            }
         },
     }
 }
@@ -366,7 +368,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
