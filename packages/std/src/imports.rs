@@ -1,9 +1,9 @@
-use std::convert::TryInto;
 use std::vec::Vec;
 
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
+use crate::import_helpers::{from_high_half, from_low_half};
 use crate::memory::{alloc, build_region, consume_region, Region};
 use crate::results::SystemResult;
 #[cfg(feature = "iterator")]
@@ -228,8 +228,8 @@ impl Api for ExternalApi {
 
         let result =
             unsafe { secp256k1_recover_pubkey(hash_send_ptr, sig_send_ptr, recover_param.into()) };
-        let error_code: u32 = (result >> 32).try_into().unwrap();
-        let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        let error_code = from_high_half(result);
+        let pubkey_ptr = from_low_half(result);
         match error_code {
             0 => {
                 let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };

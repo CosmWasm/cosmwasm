@@ -313,22 +313,20 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
     let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    let mut out: u64 = 0;
     match result {
         Ok(pubkey) => {
             let pubkey_ptr = write_to_contract::<A, S, Q>(env, pubkey.as_ref())?;
-            out ^= pubkey_ptr as u64;
+            Ok(to_low_half(pubkey_ptr))
         }
         Err(err) => match err {
             CryptoError::MessageError { .. }
             | CryptoError::HashErr { .. }
             | CryptoError::SignatureErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
-            | CryptoError::GenericErr { .. } => out ^= (err.code() as u64) << 32,
+            | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
             CryptoError::PublicKeyErr { .. } => panic!("Error must not happen for this call"),
         },
     }
-    Ok(out)
 }
 
 fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -451,6 +449,26 @@ fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
     debug_assert_eq!(out_data.len(), out_len);
     debug_assert_eq!(out_data.capacity(), out_len);
     Ok(out_data)
+}
+
+/// Returns the data shifted by 32 bits towards the most significant bit.
+///
+/// This is independent of endianness. But to get the idea, it would be
+/// `data || 0x00000000` in big endian representation.
+#[inline]
+fn to_high_half(data: u32) -> u64 {
+    // See https://stackoverflow.com/a/58956419/2013738 to understand
+    // why this is endianness agnostic.
+    (data as u64) << 32
+}
+
+/// Returns the data copied to the 4 least significant bytes.
+///
+/// This is independent of endianness. But to get the idea, it would be
+/// `0x00000000 || data` in big endian representation.
+#[inline]
+fn to_low_half(data: u32) -> u64 {
+    data.into()
 }
 
 #[cfg(test)]
@@ -1868,5 +1886,37 @@ mod tests {
         assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0" as &[u8]);
         let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE], vec![], vec![0xFF; 19]]).unwrap();
         assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\x13" as &[u8]);
+    }
+
+    #[test]
+    fn to_high_half_works() {
+        assert_eq!(
+            to_high_half(0),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        );
+        assert_eq!(
+            to_high_half(1),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00])
+        );
+        assert_eq!(
+            to_high_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
+            u64::from_be_bytes([0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x00])
+        );
+    }
+
+    #[test]
+    fn to_low_half_works() {
+        assert_eq!(
+            to_low_half(0),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        );
+        assert_eq!(
+            to_low_half(1),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01])
+        );
+        assert_eq!(
+            to_low_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78])
+        );
     }
 }
