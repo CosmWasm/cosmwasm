@@ -370,7 +370,7 @@ mod tests {
         let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
         let res: VerifyResponse = from_slice(&raw).unwrap();
 
-        assert_eq!(res, VerifyResponse { verifies: false });
+        assert_eq!(res, VerifyResponse { verifies: true });
     }
 
     #[test]
