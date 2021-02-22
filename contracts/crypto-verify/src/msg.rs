@@ -23,10 +23,14 @@ pub enum QueryMsg {
         /// Serialized compressed (33 bytes) or uncompressed (65 bytes) public key.
         public_key: Binary,
     },
-    /// Ethereum format (secp256k1 verification scheme).
-    VerifyEthereumSignature {
-        /// Message to verify. This is the encoded payload before the prehashing step (e.g. RLP encoded)
-        message: Binary,
+    /// Ethereum text verification (compatible to the eth_sign RPC/web3 enpoint).
+    /// This cannot be used to verify transaction.
+    ///
+    /// See https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign
+    VerifyEthereumText {
+        /// Message to verify. This will be wrapped in the standard container
+        /// `"\x19Ethereum Signed Message:\n" + len(message) + message` before verification.
+        message: String,
         /// Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).
         signature: Binary,
         /// Signer address.

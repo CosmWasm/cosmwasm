@@ -39,11 +39,11 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &signature.0,
             &public_key.0,
         )?),
-        QueryMsg::VerifyEthereumSignature {
+        QueryMsg::VerifyEthereumText {
             message,
             signature,
             signer_address,
-        } => to_binary(&query_verify_ethereum(
+        } => to_binary(&query_verify_ethereum_text(
             deps,
             &message,
             &signature,
@@ -82,9 +82,9 @@ pub fn query_verify_cosmos(
     }
 }
 
-pub fn query_verify_ethereum(
+pub fn query_verify_ethereum_text(
     deps: Deps,
-    message: &[u8],
+    message: &str,
     signature: &[u8],
     signer_address: &str,
 ) -> StdResult<VerifyResponse> {
@@ -184,7 +184,7 @@ mod tests {
         "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
 
     // Signed text "connect all the things" using MyEtherWallet with private key b5b1870957d373ef0eeffecc6e4812c0fd08f554b37b233526acc331bf1544f7
-    const ETHEREUM_MESSAGE: &[u8] = b"connect all the things";
+    const ETHEREUM_MESSAGE: &str = "connect all the things";
     const ETHEREUM_SIGNATURE_HEX: &str = "dada130255a447ecf434a2df9193e6fbba663e4546c35c075cd6eea21d8c7cb1714b9b65a4f7f604ff6aad55fba73f8c36514a512bbbba03709b37069194f8a41b";
     const ETHEREUM_SIGNER_ADDRESS: &str = "0x12890D2cce102216644c59daE5baed380d84830c";
 
@@ -276,7 +276,7 @@ mod tests {
         let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
         let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
-        let verify_msg = QueryMsg::VerifyEthereumSignature {
+        let verify_msg = QueryMsg::VerifyEthereumText {
             message: message.into(),
             signature: signature.into(),
             signer_address: signer_address.into(),
@@ -291,12 +291,12 @@ mod tests {
     fn ethereum_signature_verify_fails_for_corrupted_message() {
         let deps = setup();
 
-        let mut message = Vec::<u8>::from(ETHEREUM_MESSAGE);
-        message.push(0x67);
+        let mut message = String::from(ETHEREUM_MESSAGE);
+        message.push('!');
         let signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
         let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
-        let verify_msg = QueryMsg::VerifyEthereumSignature {
+        let verify_msg = QueryMsg::VerifyEthereumText {
             message: message.into(),
             signature: signature.into(),
             signer_address: signer_address.into(),
@@ -317,7 +317,7 @@ mod tests {
         // Wrong signature
         let mut signature = hex::decode(ETHEREUM_SIGNATURE_HEX).unwrap();
         signature[5] ^= 0x01;
-        let verify_msg = QueryMsg::VerifyEthereumSignature {
+        let verify_msg = QueryMsg::VerifyEthereumText {
             message: message.into(),
             signature: signature.into(),
             signer_address: signer_address.into(),
@@ -328,7 +328,7 @@ mod tests {
 
         // Broken signature
         let signature = vec![0x1c; 65];
-        let verify_msg = QueryMsg::VerifyEthereumSignature {
+        let verify_msg = QueryMsg::VerifyEthereumText {
             message: message.into(),
             signature: signature.into(),
             signer_address: signer_address.into(),
