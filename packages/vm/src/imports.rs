@@ -1,6 +1,5 @@
 //! Import implementations
 
-#[cfg(feature = "iterator")]
 use std::convert::TryInto;
 
 use cosmwasm_crypto::{
