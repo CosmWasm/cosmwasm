@@ -7,7 +7,7 @@ use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
-use crate::errors::{StdError, StdResult, SystemError, VerificationError};
+use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutBlock};
 use crate::query::{
@@ -131,6 +131,17 @@ impl Api for MockApi {
             signature,
             public_key,
         )?)
+    }
+
+    fn secp256k1_recover_pubkey(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        recovery_param: u8,
+    ) -> Result<Vec<u8>, RecoverPubkeyError> {
+        let pubkey =
+            cosmwasm_crypto::secp256k1_recover_pubkey(message_hash, signature, recovery_param)?;
+        Ok(pubkey.to_vec())
     }
 
     fn ed25519_verify(
@@ -487,6 +498,7 @@ mod tests {
     use super::*;
     use crate::query::Delegation;
     use crate::{coin, coins, from_binary, Decimal, HumanAddr};
+    use hex_literal::hex;
 
     const SECP256K1_MSG_HASH_HEX: &str =
         "5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0";
@@ -587,6 +599,74 @@ mod tests {
 
         let res = api.secp256k1_verify(&hash, &signature, &public_key);
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
+    }
+
+    #[test]
+    fn secp256k1_recover_pubkey_works() {
+        let api = MockApi::default();
+
+        // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
+        let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+        let signature = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
+        let recovery_param = 1;
+        let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
+
+        let pubkey = api
+            .secp256k1_recover_pubkey(&hash, &signature, recovery_param)
+            .unwrap();
+        assert_eq!(pubkey, expected);
+    }
+
+    #[test]
+    fn secp256k1_recover_pubkey_fails_for_wrong_recovery_param() {
+        let api = MockApi::default();
+
+        // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
+        let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+        let signature = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
+        let _recovery_param = 1;
+        let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
+
+        // Wrong recovery param leads to different pubkey
+        let pubkey = api.secp256k1_recover_pubkey(&hash, &signature, 0).unwrap();
+        assert_eq!(pubkey.len(), 65);
+        assert_ne!(pubkey, expected);
+
+        // Invalid recovery param leads to error
+        let result = api.secp256k1_recover_pubkey(&hash, &signature, 42);
+        match result.unwrap_err() {
+            RecoverPubkeyError::InvalidRecoveryParam => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn secp256k1_recover_pubkey_fails_for_wrong_hash() {
+        let api = MockApi::default();
+
+        // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
+        let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+        let signature = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
+        let recovery_param = 1;
+        let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
+
+        // Wrong hash
+        let mut corrupted_hash = hash.clone();
+        corrupted_hash[0] ^= 0x01;
+        let pubkey = api
+            .secp256k1_recover_pubkey(&corrupted_hash, &signature, recovery_param)
+            .unwrap();
+        assert_eq!(pubkey.len(), 65);
+        assert_ne!(pubkey, expected);
+
+        // Malformed hash
+        let mut malformed_hash = hash.to_vec();
+        malformed_hash.push(0x8a);
+        let result = api.secp256k1_recover_pubkey(&malformed_hash, &signature, recovery_param);
+        match result.unwrap_err() {
+            RecoverPubkeyError::HashErr => {}
+            err => panic!("Unexpected error: {:?}", err),
+        }
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)

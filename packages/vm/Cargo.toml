@@ -53,6 +53,7 @@ wasmer-middlewares = { version = "1.0.2" }
 
 [dev-dependencies]
 criterion = "0.3"
+hex-literal = "0.3.1"
 tempfile = "3.1.0"
 wat = "1.0"
 clap = "2.33.3"

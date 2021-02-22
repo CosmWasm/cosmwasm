@@ -1,13 +1,11 @@
 //! Import implementations
 
-#[cfg(feature = "iterator")]
-use std::convert::TryInto;
-
-use cosmwasm_crypto::{ed25519_verify, secp256k1_verify};
+use cosmwasm_crypto::{ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError};
 use cosmwasm_crypto::{
     ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN,
     MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
 };
+use std::convert::TryInto;
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -23,7 +21,8 @@ use crate::memory::{read_region, write_region};
 use crate::serde::to_vec;
 use crate::GasInfo;
 
-const GAS_COST_VERIFY_SECP256K1_SIGNATURE: u64 = 100;
+const GAS_COST_SECP256K1_VERIFY_SIGNATURE: u64 = 100;
+const GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE: u64 = 100;
 const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
 
 /// A kibi (kilo binary)
@@ -93,6 +92,15 @@ pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     do_secp256k1_verify(env, hash_ptr, signature_ptr, pubkey_ptr)
+}
+
+pub fn native_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    recovery_param: u32,
+) -> VmResult<u64> {
+    do_secp256k1_recover_pubkey(env, hash_ptr, signature_ptr, recovery_param)
 }
 
 pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -268,15 +276,57 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
-
     let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
-
     let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_SECP256K1_SIGNATURE);
+    let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_VERIFY_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result.map_or_else(|err| err.code(), |valid| if valid { 0 } else { 1 }))
+    Ok(result.map_or_else(
+        |err| match err {
+            CryptoError::MessageError { .. }
+            | CryptoError::HashErr { .. }
+            | CryptoError::SignatureErr { .. }
+            | CryptoError::PublicKeyErr { .. }
+            | CryptoError::GenericErr { .. } => err.code(),
+            CryptoError::InvalidRecoveryParam { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+        |valid| if valid { 0 } else { 1 },
+    ))
+}
+
+fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    hash_ptr: u32,
+    signature_ptr: u32,
+    recover_param: u32,
+) -> VmResult<u64> {
+    let hash = read_region(&env.memory(), hash_ptr, MESSAGE_HASH_MAX_LEN)?;
+    let signature = read_region(&env.memory(), signature_ptr, ECDSA_SIGNATURE_LEN)?;
+    let recover_param: u8 = match recover_param.try_into() {
+        Ok(rp) => rp,
+        Err(_) => return Ok((CryptoError::invalid_recovery_param().code() as u64) << 32),
+    };
+
+    let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
+    let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    match result {
+        Ok(pubkey) => {
+            let pubkey_ptr = write_to_contract::<A, S, Q>(env, pubkey.as_ref())?;
+            Ok(to_low_half(pubkey_ptr))
+        }
+        Err(err) => match err {
+            CryptoError::MessageError { .. }
+            | CryptoError::HashErr { .. }
+            | CryptoError::SignatureErr { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
+            CryptoError::PublicKeyErr { .. } => panic!("Error must not happen for this call"),
+        },
+    }
 }
 
 fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -286,15 +336,25 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     let message = read_region(&env.memory(), message_ptr, MESSAGE_MAX_LEN)?;
-
     let signature = read_region(&env.memory(), signature_ptr, EDDSA_SIGNATURE_LEN)?;
-
     let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let result = ed25519_verify(&message, &signature, &pubkey);
     let gas_info = GasInfo::with_cost(GAS_COST_VERIFY_ED25519_SIGNATURE);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result.map_or_else(|err| err.code(), |valid| if valid { 0 } else { 1 }))
+    Ok(result.map_or_else(
+        |err| match err {
+            CryptoError::MessageError { .. }
+            | CryptoError::HashErr { .. }
+            | CryptoError::SignatureErr { .. }
+            | CryptoError::PublicKeyErr { .. }
+            | CryptoError::GenericErr { .. } => err.code(),
+            CryptoError::InvalidRecoveryParam { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+        |valid| if valid { 0 } else { 1 },
+    ))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -391,6 +451,26 @@ fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
     Ok(out_data)
 }
 
+/// Returns the data shifted by 32 bits towards the most significant bit.
+///
+/// This is independent of endianness. But to get the idea, it would be
+/// `data || 0x00000000` in big endian representation.
+#[inline]
+fn to_high_half(data: u32) -> u64 {
+    // See https://stackoverflow.com/a/58956419/2013738 to understand
+    // why this is endianness agnostic.
+    (data as u64) << 32
+}
+
+/// Returns the data copied to the 4 least significant bytes.
+///
+/// This is independent of endianness. But to get the idea, it would be
+/// `0x00000000 || data` in big endian representation.
+#[inline]
+fn to_low_half(data: u32) -> u64 {
+    data.into()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -398,6 +478,7 @@ mod tests {
         coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, HumanAddr, QueryRequest,
         SystemError, SystemResult, WasmQuery,
     };
+    use hex_literal::hex;
     use std::ptr::NonNull;
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
@@ -1261,6 +1342,28 @@ mod tests {
     }
 
     #[test]
+    fn do_secp256k1_recover_pubkey_works() {
+        let api = MockApi::default();
+        let (env, mut _instance) = make_instance(api.clone());
+
+        // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
+        let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
+        let sig = hex!("45c0b7f8c09a9e1f1cea0c25785594427b6bf8f9f878a8af0b1abbb48e16d0920d8becd0c220f67c51217eecfd7184ef0732481c843857e6bc7fc095c4f6b788");
+        let recovery_param = 1;
+        let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
+
+        let hash_ptr = write_data(&env, &hash);
+        let sig_ptr = write_data(&env, &sig);
+        let result =
+            do_secp256k1_recover_pubkey::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, recovery_param)
+                .unwrap();
+        let error = result >> 32;
+        let pubkey_ptr: u32 = (result & 0xFFFFFFFF).try_into().unwrap();
+        assert_eq!(error, 0);
+        assert_eq!(force_read(&env, pubkey_ptr), expected);
+    }
+
+    #[test]
     fn do_ed25519_verify_works() {
         let api = MockApi::default();
         let (env, mut _instance) = make_instance(api.clone());
@@ -1783,5 +1886,37 @@ mod tests {
         assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0" as &[u8]);
         let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE], vec![], vec![0xFF; 19]]).unwrap();
         assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\x13" as &[u8]);
+    }
+
+    #[test]
+    fn to_high_half_works() {
+        assert_eq!(
+            to_high_half(0),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        );
+        assert_eq!(
+            to_high_half(1),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00])
+        );
+        assert_eq!(
+            to_high_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
+            u64::from_be_bytes([0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x00])
+        );
+    }
+
+    #[test]
+    fn to_low_half_works() {
+        assert_eq!(
+            to_low_half(0),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
+        );
+        assert_eq!(
+            to_low_half(1),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01])
+        );
+        assert_eq!(
+            to_low_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
+            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78])
+        );
     }
 }

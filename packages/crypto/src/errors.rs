@@ -37,6 +37,11 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
+    InvalidRecoveryParam {
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
 }
 
 impl CryptoError {
@@ -80,6 +85,13 @@ impl CryptoError {
         }
     }
 
+    pub fn invalid_recovery_param() -> Self {
+        CryptoError::InvalidRecoveryParam {
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     /// Numeric error code that can easily be passed over the
     /// contract VM boundary.
     pub fn code(&self) -> u32 {
@@ -88,6 +100,7 @@ impl CryptoError {
             CryptoError::HashErr { .. } => 3,
             CryptoError::SignatureErr { .. } => 4,
             CryptoError::PublicKeyErr { .. } => 5,
+            CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::GenericErr { .. } => 10,
         }
     }

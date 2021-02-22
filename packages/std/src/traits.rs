@@ -4,7 +4,7 @@ use std::ops::Deref;
 use crate::addresses::{CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::errors::{StdError, StdResult, VerificationError};
+use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
 #[cfg(feature = "iterator")]
 use crate::iterator::{Order, KV};
 use crate::query::{
@@ -73,6 +73,13 @@ pub trait Api {
         signature: &[u8],
         public_key: &[u8],
     ) -> Result<bool, VerificationError>;
+
+    fn secp256k1_recover_pubkey(
+        &self,
+        message_hash: &[u8],
+        signature: &[u8],
+        recovery_param: u8,
+    ) -> Result<Vec<u8>, RecoverPubkeyError>;
 
     fn ed25519_verify(
         &self,

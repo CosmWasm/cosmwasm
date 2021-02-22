@@ -46,6 +46,41 @@
       }
     },
     {
+      "description": "Ethereum text verification (compatible to the eth_sign RPC/web3 enpoint). This cannot be used to verify transaction.\n\nSee https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign",
+      "type": "object",
+      "required": [
+        "verify_ethereum_text"
+      ],
+      "properties": {
+        "verify_ethereum_text": {
+          "type": "object",
+          "required": [
+            "message",
+            "signature",
+            "signer_address"
+          ],
+          "properties": {
+            "message": {
+              "description": "Message to verify. This will be wrapped in the standard container `\"\\x19Ethereum Signed Message:\\n\" + len(message) + message` before verification.",
+              "type": "string"
+            },
+            "signature": {
+              "description": "Serialized signature. Fixed length format (64 bytes `r` and `s` plus the one byte `v`).",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Binary"
+                }
+              ]
+            },
+            "signer_address": {
+              "description": "Signer address. This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.",
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    {
       "description": "Tendermint format (ed25519 verification scheme).",
       "type": "object",
       "required": [
