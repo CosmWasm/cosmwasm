@@ -721,7 +721,7 @@ mod tests {
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
     }
 
-    // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    // Basic "works" test.
     #[test]
     fn ed25519_batch_verify_works() {
         let api = MockApi::default();
@@ -739,7 +739,7 @@ mod tests {
             .unwrap());
     }
 
-    // Basic "fails" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    // Basic "fails" test.
     #[test]
     fn ed25519_batch_verify_fails() {
         let api = MockApi::default();
@@ -759,7 +759,7 @@ mod tests {
             .unwrap());
     }
 
-    // Basic "errors" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
+    // Basic "errors" test.
     #[test]
     fn ed25519_batch_verify_errs() {
         let api = MockApi::default();
