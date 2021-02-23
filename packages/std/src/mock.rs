@@ -157,17 +157,14 @@ impl Api for MockApi {
 
     fn ed25519_batch_verify(
         &self,
-        messages: &[Vec<u8>],
-        signatures: &[Vec<u8>],
-        public_keys: &[Vec<u8>],
+        messages: &[&[u8]],
+        signatures: &[&[u8]],
+        public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError> {
-        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
-        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
-        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
         Ok(cosmwasm_crypto::ed25519_batch_verify(
-            &messages,
-            &signatures,
-            &public_keys,
+            messages,
+            signatures,
+            public_keys,
         )?)
     }
 
@@ -729,9 +726,13 @@ mod tests {
     fn ed25519_batch_verify_works() {
         let api = MockApi::default();
 
-        let msgs = [hex::decode(ED25519_MSG_HEX).unwrap()];
-        let signatures = [hex::decode(ED25519_SIG_HEX).unwrap()];
-        let public_keys = [hex::decode(ED25519_PUBKEY_HEX).unwrap()];
+        let msg = hex::decode(ED25519_MSG_HEX).unwrap();
+        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
+        let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
+
+        let msgs: Vec<&[u8]> = vec![&msg];
+        let signatures: Vec<&[u8]> = vec![&signature];
+        let public_keys: Vec<&[u8]> = vec![&public_key];
 
         assert!(api
             .ed25519_batch_verify(&msgs, &signatures, &public_keys)
@@ -743,11 +744,15 @@ mod tests {
     fn ed25519_batch_verify_fails() {
         let api = MockApi::default();
 
-        let mut msgs = [hex::decode(ED25519_MSG_HEX).unwrap()];
-        // alter first msg
-        msgs[0][0] ^= 0x01;
-        let signatures = [hex::decode(ED25519_SIG_HEX).unwrap()];
-        let public_keys = [hex::decode(ED25519_PUBKEY_HEX).unwrap()];
+        let mut msg = hex::decode(ED25519_MSG_HEX).unwrap();
+        // alter msg
+        msg[0] ^= 0x01;
+        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
+        let public_key = hex::decode(ED25519_PUBKEY_HEX).unwrap();
+
+        let msgs: Vec<&[u8]> = vec![&msg];
+        let signatures: Vec<&[u8]> = vec![&signature];
+        let public_keys: Vec<&[u8]> = vec![&public_key];
 
         assert!(!api
             .ed25519_batch_verify(&msgs, &signatures, &public_keys)
@@ -759,9 +764,13 @@ mod tests {
     fn ed25519_batch_verify_errs() {
         let api = MockApi::default();
 
-        let msgs = [hex::decode(ED25519_MSG_HEX).unwrap()];
-        let signatures = [hex::decode(ED25519_SIG_HEX).unwrap()];
-        let public_keys = [vec![]];
+        let msg = hex::decode(ED25519_MSG_HEX).unwrap();
+        let signature = hex::decode(ED25519_SIG_HEX).unwrap();
+        let public_key: Vec<u8> = vec![0u8; 0];
+
+        let msgs: Vec<&[u8]> = vec![&msg.as_slice()];
+        let signatures: Vec<&[u8]> = vec![&signature.as_slice()];
+        let public_keys: Vec<&[u8]> = vec![&public_key];
 
         let res = api.ed25519_batch_verify(&msgs, &signatures, &public_keys);
         assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);

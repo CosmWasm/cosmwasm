@@ -90,9 +90,9 @@ pub trait Api {
 
     fn ed25519_batch_verify(
         &self,
-        messages: &[Vec<u8>],
-        signatures: &[Vec<u8>],
-        public_keys: &[Vec<u8>],
+        messages: &[&[u8]],
+        signatures: &[&[u8]],
+        public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError>;
 
     /// Emits a debugging message that is handled depending on the environment (typically printed to console or ignored).

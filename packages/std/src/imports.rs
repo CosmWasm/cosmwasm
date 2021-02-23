@@ -272,9 +272,9 @@ impl Api for ExternalApi {
 
     fn ed25519_batch_verify(
         &self,
-        messages: &[Vec<u8>],
-        signatures: &[Vec<u8>],
-        public_keys: &[Vec<u8>],
+        messages: &[&[u8]],
+        signatures: &[&[u8]],
+        public_keys: &[&[u8]],
     ) -> Result<bool, VerificationError> {
         let msgs_encoded = encode_sections(messages);
         let msgs_send = build_region(&msgs_encoded);
