@@ -64,7 +64,7 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 
     // Verification
     match public_key.verify(&signature, &message) {
-        Ok(_) => Ok(true),
+        Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
 }
@@ -168,7 +168,7 @@ pub fn ed25519_batch_verify(
 
     // Batch verification
     match batch.verify(&mut OsRng) {
-        Ok(_) => Ok(true),
+        Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
 }
