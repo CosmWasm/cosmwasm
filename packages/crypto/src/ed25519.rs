@@ -12,7 +12,7 @@ pub const MESSAGE_MAX_LEN: usize = 131072;
 /// Max number of batch messages / signatures / public_keys.
 /// This is an arbitrary value, for performance / memory contraints. If you need to batch-verify a
 /// larger number of signatures, let us know.
-pub const BATCH_MAX_LEN: usize = 128;
+pub const BATCH_MAX_LEN: usize = 256;
 
 /// EdDSA (ed25519) parameters
 /// Length of a serialized signature
