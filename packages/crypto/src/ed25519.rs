@@ -172,6 +172,7 @@ pub fn ed25519_batch_verify(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use serde::Deserialize;
 
     // For generic signature verification
     const MSG: &str = "Hello World!";
@@ -187,6 +188,27 @@ mod tests {
 
     // Test data from https://tools.ietf.org/html/rfc8032#section-7.1
     const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
+
+    #[derive(Deserialize, Debug)]
+    struct Encoded {
+        #[serde(rename = "privkey")]
+        private_key: String,
+        #[serde(rename = "pubkey")]
+        public_key: String,
+        message: String,
+        signature: String,
+    }
+
+    fn read_cosmos_sigs() -> Vec<Encoded> {
+        use std::fs::File;
+        use std::io::BufReader;
+
+        // Open the file in read-only mode with buffer.
+        let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
+        let reader = BufReader::new(file);
+
+        serde_json::from_reader(reader).unwrap()
+    }
 
     #[test]
     fn test_ed25519_verify() {
@@ -251,26 +273,7 @@ mod tests {
 
     #[test]
     fn test_cosmos_extra_ed25519_verify() {
-        use std::fs::File;
-        use std::io::BufReader;
-
-        use serde::Deserialize;
-
-        #[derive(Deserialize, Debug)]
-        struct Encoded {
-            #[serde(rename = "privkey")]
-            private_key: String,
-            #[serde(rename = "pubkey")]
-            public_key: String,
-            message: String,
-            signature: String,
-        }
-
-        // Open the file in read-only mode with buffer.
-        let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
-        let reader = BufReader::new(file);
-
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes = read_cosmos_sigs();
 
         for (i, encoded) in (1..).zip(codes) {
             let message = hex::decode(&encoded.message).unwrap();
@@ -289,26 +292,7 @@ mod tests {
 
     #[test]
     fn test_cosmos_ed25519_batch_verify() {
-        use std::fs::File;
-        use std::io::BufReader;
-
-        use serde::Deserialize;
-
-        #[derive(Deserialize, Debug)]
-        struct Encoded {
-            #[serde(rename = "privkey")]
-            private_key: String,
-            #[serde(rename = "pubkey")]
-            public_key: String,
-            message: String,
-            signature: String,
-        }
-
-        // Open the file in read-only mode with buffer.
-        let file = File::open(COSMOS_ED25519_TESTS_JSON).unwrap();
-        let reader = BufReader::new(file);
-
-        let codes: Vec<Encoded> = serde_json::from_reader(reader).unwrap();
+        let codes = read_cosmos_sigs();
 
         let mut messages: Vec<Vec<u8>> = vec![];
         let mut signatures: Vec<Vec<u8>> = vec![];
@@ -331,5 +315,254 @@ mod tests {
 
         // ed25519_batch_verify() works
         assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+    }
+
+    // structural tests
+    #[test]
+    fn test_cosmos_ed25519_batch_verify_empty_works() {
+        let messages: Vec<&[u8]> = vec![];
+        let signatures: Vec<&[u8]> = vec![];
+        let public_keys: Vec<&[u8]> = vec![];
+
+        // ed25519_batch_verify() works for empty msgs / sigs / pubkeys
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+    }
+
+    #[test]
+    fn test_cosmos_ed25519_batch_verify_wrong_number_of_items_errors() {
+        let codes = read_cosmos_sigs();
+
+        let mut messages: Vec<Vec<u8>> = vec![];
+        let mut signatures: Vec<Vec<u8>> = vec![];
+        let mut public_keys: Vec<Vec<u8>> = vec![];
+
+        for encoded in codes {
+            let message = hex::decode(&encoded.message).unwrap();
+            messages.push(message);
+
+            let signature = hex::decode(&encoded.signature).unwrap();
+            signatures.push(signature);
+
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+            public_keys.push(public_key);
+        }
+
+        let mut messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
+        // Check the whole set passes
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+
+        // Remove one message
+        let msg = messages.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore messages
+        messages.push(msg);
+
+        // Remove one signature
+        let sig = signatures.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore signatures
+        signatures.push(sig);
+
+        // Remove one public key
+        let pubkey = public_keys.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore public keys
+        public_keys.push(pubkey);
+
+        // Add one message
+        messages.push(messages[0]);
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore messages
+        messages.pop();
+
+        // Add one signature
+        signatures.push(signatures[0]);
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore signatures
+        signatures.pop();
+
+        // Add one public keys
+        public_keys.push(public_keys[0]);
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+    }
+
+    #[test]
+    fn test_cosmos_ed25519_batch_verify_one_msg_different_number_of_sigs_pubkeys_errors() {
+        let codes = read_cosmos_sigs();
+
+        let mut messages: Vec<Vec<u8>> = vec![];
+        let mut signatures: Vec<Vec<u8>> = vec![];
+        let mut public_keys: Vec<Vec<u8>> = vec![];
+
+        for encoded in codes {
+            let message = hex::decode(&encoded.message).unwrap();
+            messages.push(message);
+
+            let signature = hex::decode(&encoded.signature).unwrap();
+            signatures.push(signature);
+
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+            public_keys.push(public_key);
+        }
+
+        let mut messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
+        // Check the whole set passes
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+
+        // Just one message
+        messages.truncate(1);
+
+        // Check (in passing) this fails verification
+        assert!(!ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+
+        // Remove one sig
+        let sig = signatures.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore signatures
+        signatures.push(sig);
+
+        // Remove one public key
+        let pubkey = public_keys.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore public keys
+        public_keys.push(pubkey);
+    }
+
+    #[test]
+    fn test_cosmos_ed25519_batch_verify_one_pubkey_different_number_of_msgs_sigs_errors() {
+        let codes = read_cosmos_sigs();
+
+        let mut messages: Vec<Vec<u8>> = vec![];
+        let mut signatures: Vec<Vec<u8>> = vec![];
+        let mut public_keys: Vec<Vec<u8>> = vec![];
+
+        for encoded in codes {
+            let message = hex::decode(&encoded.message).unwrap();
+            messages.push(message);
+
+            let signature = hex::decode(&encoded.signature).unwrap();
+            signatures.push(signature);
+
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+            public_keys.push(public_key);
+        }
+
+        let mut messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
+        // Check the whole set passes
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+
+        // Just one public key
+        public_keys.truncate(1);
+
+        // Check (in passing) this fails verification
+        assert!(!ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
+
+        // Remove one sig
+        let sig = signatures.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore signatures
+        signatures.push(sig);
+
+        // Remove one msg
+        let msg = messages.pop().unwrap();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => assert_eq!(
+                msg,
+                "Mismatched / erroneous number of messages / signatures / public keys"
+            ),
+            _ => panic!("Wrong error message"),
+        }
+
+        // Restore messages
+        messages.push(msg);
     }
 }
