@@ -30,7 +30,7 @@ use crate::GasInfo;
 const GAS_COST_SECP256K1_VERIFY_SIGNATURE: u64 = 100;
 const GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE: u64 = 100;
 const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
-const GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE: u64 = 80;
+const GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE: u64 = GAS_COST_VERIFY_ED25519_SIGNATURE / 3;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -402,7 +402,8 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     let public_keys = decode_sections(&public_keys);
 
     let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
-    let gas_info = GasInfo::with_cost(GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE);
+    let gas_info =
+        GasInfo::with_cost(GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE * signatures.len() as u64);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(|err| err.code(), |valid| (!valid).into()))
 }
