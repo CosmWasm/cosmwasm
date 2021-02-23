@@ -83,6 +83,22 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 ///
 /// In the limiting case where all signatures in the batch are made with the same verification key,
 /// coalesced batch verification runs twice as fast as ordinary batch verification.
+///
+/// Three Variants are suppported in the input for convenience:
+///  - Equal number of messages, signatures, and public keys: Standard, generic functionality.
+///  - One message, and an equal number of signatures and public keys: Multiple digital signature
+/// (multisig) verification of a single message.
+///  - One public key, and an equal number of messages and signatures: Verification of multiple
+/// messages, all signed with the same private key.
+///
+/// Any other variants of input vectors result in an error.
+///
+/// Notes:
+///  - The "one-message, with zero signatures and zero public keys" case, is considered the empty
+/// case.
+///  - The "one-public key, with zero messages and zero signatures" case, is considered the empty
+/// case.
+///  - The empty case (no messages, no signatures and no public keys) returns true.
 pub fn ed25519_batch_verify(
     messages: &[&[u8]],
     signatures: &[&[u8]],
