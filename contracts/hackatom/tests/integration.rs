@@ -25,12 +25,12 @@ use cosmwasm_vm::{
     call_handle, from_slice,
     testing::{
         handle, init, migrate, mock_env, mock_info, mock_instance, mock_instance_with_balances,
-        query, test_io, MOCK_CONTRACT_ADDR,
+        query, system, test_io, MOCK_CONTRACT_ADDR,
     },
     BackendApi, Storage, VmError,
 };
 
-use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, CONFIG_KEY};
+use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, SystemMsg, CONFIG_KEY};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
@@ -142,6 +142,39 @@ fn migrate_verifier() {
     assert_eq!(
         query_response.as_slice(),
         b"{\"verifier\":\"someone else\"}"
+    );
+}
+
+#[test]
+fn system_can_steal_tokens() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let verifier = HumanAddr::from("verifies");
+    let beneficiary = HumanAddr::from("benefits");
+    let creator = HumanAddr::from("creator");
+    let msg = InitMsg {
+        verifier: verifier.clone(),
+        beneficiary,
+    };
+    let info = mock_info(creator.as_str(), &[]);
+    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+    assert_eq!(0, res.messages.len());
+
+    // system takes any tax it wants
+    let sys_msg = SystemMsg {
+        recipient: "community-pool".into(),
+        amount: coins(700, "gold"),
+    };
+    let res: Response = system(&mut deps, mock_env(), sys_msg.clone()).unwrap();
+    assert_eq!(1, res.messages.len());
+    let msg = res.messages.get(0).expect("no message");
+    assert_eq!(
+        msg,
+        &BankMsg::Send {
+            to_address: sys_msg.recipient,
+            amount: sys_msg.amount,
+        }
+        .into(),
     );
 }
 
