@@ -454,6 +454,39 @@ mod tests {
     }
 
     #[test]
+    fn system_can_steal_tokens() {
+        let mut deps = mock_dependencies(&[]);
+
+        let verifier = HumanAddr::from("verifies");
+        let beneficiary = HumanAddr::from("benefits");
+        let creator = HumanAddr::from("creator");
+        let msg = InitMsg {
+            verifier: verifier.clone(),
+            beneficiary,
+        };
+        let info = mock_info(creator.as_str(), &[]);
+        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // system takes any tax it wants
+        let sys_msg = SystemMsg {
+            recipient: "community-pool".into(),
+            amount: coins(700, "gold"),
+        };
+        let res = system(deps.as_mut(), mock_env(), sys_msg.clone()).unwrap();
+        assert_eq!(1, res.messages.len());
+        let msg = res.messages.get(0).expect("no message");
+        assert_eq!(
+            msg,
+            &BankMsg::Send {
+                to_address: sys_msg.recipient,
+                amount: sys_msg.amount,
+            }
+            .into(),
+        );
+    }
+
+    #[test]
     fn querier_callbacks_work() {
         let rich_addr = HumanAddr::from("foobar");
         let rich_balance = coins(10000, "gold");
