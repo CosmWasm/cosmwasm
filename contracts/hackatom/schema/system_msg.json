@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SystemMsg",
+  "description": "SystemMsg is only expose for internal sdk modules to call. This is showing how we can expose \"admin\" functionality than can not be called by external users or contracts, but only trusted (native/Go) code in the blockchain",
+  "type": "object",
+  "required": [
+    "amount",
+    "recipient"
+  ],
+  "properties": {
+    "amount": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Coin"
+      }
+    },
+    "recipient": {
+      "$ref": "#/definitions/HumanAddr"
+    }
+  },
+  "definitions": {
+    "Coin": {
+      "type": "object",
+      "required": [
+        "amount",
+        "denom"
+      ],
+      "properties": {
+        "amount": {
+          "$ref": "#/definitions/Uint128"
+        },
+        "denom": {
+          "type": "string"
+        }
+      }
+    },
+    "HumanAddr": {
+      "type": "string"
+    },
+    "Uint128": {
+      "type": "string"
+    }
+  }
+}

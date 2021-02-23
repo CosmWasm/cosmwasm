@@ -5,9 +5,9 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
-    from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary, CanonicalAddr, Deps,
-    DepsMut, Env, HumanAddr, MessageInfo, QueryRequest, QueryResponse, Response, StdError,
-    StdResult, WasmQuery,
+    entry_point, from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, Binary,
+    CanonicalAddr, Coin, Deps, DepsMut, Env, HumanAddr, MessageInfo, QueryRequest, QueryResponse,
+    Response, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -28,6 +28,15 @@ pub struct InitMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateMsg {
     pub verifier: HumanAddr,
+}
+
+/// SystemMsg is only expose for internal sdk modules to call.
+/// This is showing how we can expose "admin" functionality than can not be called by
+/// external users or contracts, but only trusted (native/Go) code in the blockchain
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct SystemMsg {
+    pub recipient: HumanAddr,
+    pub amount: Vec<Coin>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -120,6 +129,17 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Ha
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
     Ok(Response::default())
+}
+
+#[entry_point]
+pub fn system(_deps: DepsMut, _env: Env, msg: SystemMsg) -> Result<Response, HackError> {
+    let msg = BankMsg::Send {
+        to_address: msg.recipient,
+        amount: msg.amount,
+    };
+    let mut response = Response::default();
+    response.add_message(msg);
+    Ok(response)
 }
 
 pub fn handle(
