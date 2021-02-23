@@ -97,17 +97,9 @@ pub fn ed25519_batch_verify(
     let mut public_keys = public_keys.to_vec();
     if messages_len == signatures_len && messages_len == public_keys_len { // We're good to go
     } else if messages_len == 1 && signatures_len == public_keys_len {
-        if signatures_len == 0 {
-            return Err(CryptoError::batch_err(
-                "No signatures / public keys provided",
-            ));
-        }
         // Replicate message, for multisig
         messages = messages.repeat(signatures_len);
     } else if public_keys_len == 1 && messages_len == signatures_len {
-        if messages_len == 0 {
-            return Err(CryptoError::batch_err("No messages / signatures provided"));
-        }
         // Replicate pubkey
         public_keys = public_keys.repeat(messages_len);
     } else {
@@ -526,7 +518,7 @@ mod tests {
         let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
         let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
-        // Check the whole set passes
+        // Check the whole set passe        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();s
         assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
 
         // Just one public key
@@ -567,7 +559,7 @@ mod tests {
     }
 
     #[test]
-    fn test_cosmos_ed25519_batch_verify_one_msg_zero_sigs_pubkeys_errors() {
+    fn test_cosmos_ed25519_batch_verify_one_msg_zero_sigs_pubkeys_works() {
         let codes = read_cosmos_sigs();
 
         let mut messages: Vec<Vec<u8>> = vec![];
@@ -582,17 +574,12 @@ mod tests {
         }
         let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
-        match res.unwrap_err() {
-            CryptoError::BatchErr { msg, .. } => {
-                assert_eq!(msg, "No signatures / public keys provided")
-            }
-            _ => panic!("Wrong error message"),
-        }
+        // ed25519_batch_verify() works for empty sigs / pubkeys
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
     }
 
     #[test]
-    fn test_cosmos_ed25519_batch_verify_one_pubkey_zero_msgs_sigs_errors() {
+    fn test_cosmos_ed25519_batch_verify_one_pubkey_zero_msgs_sigs_works() {
         let codes = read_cosmos_sigs();
 
         // Zero msgs / sigs
@@ -607,12 +594,7 @@ mod tests {
         }
         let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
-        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
-        match res.unwrap_err() {
-            CryptoError::BatchErr { msg, .. } => {
-                assert_eq!(msg, "No messages / signatures provided")
-            }
-            _ => panic!("Wrong error message"),
-        }
+        // ed25519_batch_verify() works for empty msgs / sigs
+        assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
     }
 }
