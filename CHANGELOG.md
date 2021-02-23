@@ -39,6 +39,8 @@ and this project adheres to
   different implementation) ([#692], [#711], [#714])
 - cosmwasm-std: Added new `WasmMsg::Migrate` variant that allows one contract
   (eg. multisig) be the admin and migrate another contract ([#768])
+- cosmwasm-std: Added optional `system` entry point that can only be called by
+  native (blockchain) modules to expose admin functionality if desired. ([#793])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -47,6 +49,7 @@ and this project adheres to
 [#714]: https://github.com/CosmWasm/cosmwasm/pull/714
 [#716]: https://github.com/CosmWasm/cosmwasm/pull/716
 [#768]: https://github.com/CosmWasm/cosmwasm/pull/768
+[#793]: https://github.com/CosmWasm/cosmwasm/pull/793
 
 ### Changed
 
