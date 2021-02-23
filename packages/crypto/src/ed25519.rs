@@ -565,4 +565,54 @@ mod tests {
         // Restore messages
         messages.push(msg);
     }
+
+    #[test]
+    fn test_cosmos_ed25519_batch_verify_one_msg_zero_sigs_pubkeys_errors() {
+        let codes = read_cosmos_sigs();
+
+        let mut messages: Vec<Vec<u8>> = vec![];
+        // Zero sigs / pubkeys
+        let signatures: Vec<&[u8]> = vec![];
+        let public_keys: Vec<&[u8]> = vec![];
+
+        // Just one message
+        for encoded in codes[..1].iter() {
+            let message = hex::decode(&encoded.message).unwrap();
+            messages.push(message);
+        }
+        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => {
+                assert_eq!(msg, "No signatures / public keys provided")
+            }
+            _ => panic!("Wrong error message"),
+        }
+    }
+
+    #[test]
+    fn test_cosmos_ed25519_batch_verify_one_pubkey_zero_msgs_sigs_errors() {
+        let codes = read_cosmos_sigs();
+
+        // Zero msgs / sigs
+        let messages: Vec<&[u8]> = vec![];
+        let signatures: Vec<&[u8]> = vec![];
+        let mut public_keys: Vec<Vec<u8>> = vec![];
+
+        // Just one public key
+        for encoded in codes[..1].iter() {
+            let public_key = hex::decode(&encoded.public_key).unwrap();
+            public_keys.push(public_key);
+        }
+        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
+        let res = ed25519_batch_verify(&messages, &signatures, &public_keys);
+        match res.unwrap_err() {
+            CryptoError::BatchErr { msg, .. } => {
+                assert_eq!(msg, "No messages / signatures provided")
+            }
+            _ => panic!("Wrong error message"),
+        }
+    }
 }
