@@ -518,7 +518,7 @@ mod tests {
         let mut signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
         let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
 
-        // Check the whole set passe        let mut public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();s
+        // Check the whole set passes
         assert!(ed25519_batch_verify(&messages, &signatures, &public_keys).unwrap());
 
         // Just one public key
