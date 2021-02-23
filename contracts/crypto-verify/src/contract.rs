@@ -8,6 +8,7 @@ use sha3::Keccak256;
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
+use std::ops::Deref;
 
 pub const VERSION: &str = "crypto-verify-v2";
 
@@ -142,9 +143,9 @@ pub fn query_verify_tendermint_batch(
     public_keys: &[Binary],
 ) -> StdResult<VerifyResponse> {
     // Deserialization
-    let messages: Vec<Vec<u8>> = messages.iter().map(|b| b.0.clone()).collect();
-    let signatures: Vec<Vec<u8>> = signatures.iter().map(|b| b.0.clone()).collect();
-    let public_keys: Vec<Vec<u8>> = public_keys.iter().map(|b| b.0.clone()).collect();
+    let messages: Vec<&[u8]> = messages.iter().map(|b| b.deref()).collect();
+    let signatures: Vec<&[u8]> = signatures.iter().map(|b| b.deref()).collect();
+    let public_keys: Vec<&[u8]> = public_keys.iter().map(|b| b.deref()).collect();
 
     // Verification
     let verifies = deps
