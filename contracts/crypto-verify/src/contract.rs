@@ -417,11 +417,12 @@ mod tests {
             .map(|m| Binary(hex::decode(m).unwrap()))
             .collect();
         // Multiple signatures
-        //FIXME: Use different signatures
+        //FIXME: Use different signatures / pubkeys
         let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
             .iter()
             .map(|m| Binary(hex::decode(m).unwrap()))
             .collect();
+        // Multiple pubkeys
         let public_keys = [ED25519_PUBLIC_KEY_HEX, ED25519_PUBLIC_KEY_HEX]
             .iter()
             .map(|m| Binary(hex::decode(m).unwrap()))
@@ -439,6 +440,41 @@ mod tests {
         assert_eq!(res, VerifyResponse { verifies: true });
     }
 
+    #[test]
+    fn tendermint_signatures_batch_verify_single_public_key_works() {
+        let deps = setup();
+
+        // Multiple messages
+        //FIXME: Use different messages
+        let messages = [ED25519_MESSAGE_HEX, ED25519_MESSAGE_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        // Multiple signatures
+        //FIXME: Use different signatures
+        let signatures = [ED25519_SIGNATURE_HEX, ED25519_SIGNATURE_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+        // One pubkey
+        let public_keys = [ED25519_PUBLIC_KEY_HEX]
+            .iter()
+            .map(|m| Binary(hex::decode(m).unwrap()))
+            .collect();
+
+        let verify_msg = QueryMsg::VerifyTendermintBatch {
+            messages,
+            signatures,
+            public_keys,
+        };
+
+        let raw = query(deps.as_ref(), mock_env(), verify_msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+
+        assert_eq!(res, VerifyResponse { verifies: true });
+    }
+
+    #[test]
     fn tendermint_signatures_batch_verify_fails() {
         let deps = setup();
 
@@ -469,6 +505,7 @@ mod tests {
         assert_eq!(res, VerifyResponse { verifies: false });
     }
 
+    #[test]
     fn tendermint_signatures_batch_verify_errors() {
         let deps = setup();
 
