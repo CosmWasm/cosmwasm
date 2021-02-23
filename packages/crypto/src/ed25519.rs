@@ -95,11 +95,7 @@ pub fn ed25519_batch_verify(
 
     let mut messages = messages.to_vec();
     let mut public_keys = public_keys.to_vec();
-    if messages_len == signatures_len && messages_len == public_keys_len {
-        if messages_len == 0 {
-            // Verifying nothing equals false
-            return Ok(false);
-        }
+    if messages_len == signatures_len && messages_len == public_keys_len { // We're good to go
     } else if messages_len == 1 && signatures_len == public_keys_len {
         if signatures_len == 0 {
             return Err(CryptoError::batch_err(
