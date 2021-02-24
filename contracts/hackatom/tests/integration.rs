@@ -161,21 +161,16 @@ fn system_can_steal_tokens() {
     assert_eq!(0, res.messages.len());
 
     // system takes any tax it wants
-    let sys_msg = SystemMsg {
-        recipient: "community-pool".into(),
-        amount: coins(700, "gold"),
+    let to_address = HumanAddr::from("community-pool");
+    let amount = coins(700, "gold");
+    let sys_msg = SystemMsg::StealFunds {
+        recipient: to_address.clone(),
+        amount: amount.clone(),
     };
     let res: Response = system(&mut deps, mock_env(), sys_msg.clone()).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");
-    assert_eq!(
-        msg,
-        &BankMsg::Send {
-            to_address: sys_msg.recipient,
-            amount: sys_msg.amount,
-        }
-        .into(),
-    );
+    assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
 }
 
 #[test]

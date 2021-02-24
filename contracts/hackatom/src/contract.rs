@@ -34,9 +34,11 @@ pub struct MigrateMsg {
 /// This is showing how we can expose "admin" functionality than can not be called by
 /// external users or contracts, but only trusted (native/Go) code in the blockchain
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SystemMsg {
-    pub recipient: HumanAddr,
-    pub amount: Vec<Coin>,
+pub enum SystemMsg {
+    StealFunds {
+        recipient: HumanAddr,
+        amount: Vec<Coin>,
+    },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -133,13 +135,17 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Ha
 
 #[entry_point]
 pub fn system(_deps: DepsMut, _env: Env, msg: SystemMsg) -> Result<Response, HackError> {
-    let msg = BankMsg::Send {
-        to_address: msg.recipient,
-        amount: msg.amount,
-    };
-    let mut response = Response::default();
-    response.add_message(msg);
-    Ok(response)
+    match msg {
+        SystemMsg::StealFunds { recipient, amount } => {
+            let msg = BankMsg::Send {
+                to_address: recipient,
+                amount,
+            };
+            let mut response = Response::default();
+            response.add_message(msg);
+            Ok(response)
+        }
+    }
 }
 
 pub fn handle(
@@ -469,21 +475,16 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // system takes any tax it wants
-        let sys_msg = SystemMsg {
-            recipient: "community-pool".into(),
-            amount: coins(700, "gold"),
+        let to_address = HumanAddr::from("community-pool");
+        let amount = coins(700, "gold");
+        let sys_msg = SystemMsg::StealFunds {
+            recipient: to_address.clone(),
+            amount: amount.clone(),
         };
         let res = system(deps.as_mut(), mock_env(), sys_msg.clone()).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
-        assert_eq!(
-            msg,
-            &BankMsg::Send {
-                to_address: sys_msg.recipient,
-                amount: sys_msg.amount,
-            }
-            .into(),
-        );
+        assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
     }
 
     #[test]
