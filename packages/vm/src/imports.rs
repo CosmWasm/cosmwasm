@@ -534,6 +534,9 @@ mod tests {
                 "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "canonicalize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "humanize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "secp256k1_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "secp256k1_recover_pubkey" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
+                "ed25519_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_native(&store, |_a: u32| {}),
             },
         };
