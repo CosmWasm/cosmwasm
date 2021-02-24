@@ -759,35 +759,35 @@ jobs:
       - run:
           name: Clippy linting on burner
           working_directory: ~/project/contracts/burner
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on crypto-verify
           working_directory: ~/project/contracts/crypto-verify
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on ibc-reflect
           working_directory: ~/project/contracts/ibc-reflect
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on ibc-reflect-send
           working_directory: ~/project/contracts/ibc-reflect-send
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on queue
           working_directory: ~/project/contracts/queue
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on reflect
           working_directory: ~/project/contracts/reflect
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on staking
           working_directory: ~/project/contracts/staking
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - save_cache:
           paths:
             - /usr/local/cargo/registry
