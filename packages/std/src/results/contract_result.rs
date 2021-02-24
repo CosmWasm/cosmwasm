@@ -53,14 +53,11 @@ impl<S> ContractResult<S> {
     }
 
     pub fn is_ok(&self) -> bool {
-        match self {
-            ContractResult::Ok(_) => true,
-            _ => false,
-        }
+        matches!(self, ContractResult::Ok(_))
     }
 
     pub fn is_err(&self) -> bool {
-        !self.is_ok()
+        matches!(self, ContractResult::Err(_))
     }
 }
 
