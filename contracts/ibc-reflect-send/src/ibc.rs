@@ -369,7 +369,7 @@ mod tests {
         .into()];
         let handle_msg = HandleMsg::SendMsgs {
             channel_id: channel_id.into(),
-            msgs: msgs_to_dispatch.clone(),
+            msgs: msgs_to_dispatch,
         };
         let info = mock_info(CREATOR, &[]);
         let mut res = handle(deps.as_mut(), mock_env(), info, handle_msg).unwrap();

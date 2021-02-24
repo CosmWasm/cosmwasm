@@ -297,7 +297,7 @@ mod tests {
         let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
         let verify_msg = QueryMsg::VerifyEthereumText {
-            message: message.into(),
+            message,
             signature: signature.into(),
             signer_address: signer_address.into(),
         };

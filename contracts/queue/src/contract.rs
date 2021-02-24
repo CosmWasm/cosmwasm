@@ -270,7 +270,7 @@ mod tests {
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            info,
             HandleMsg::Enqueue { value: 45 },
         )
         .unwrap();
@@ -295,13 +295,7 @@ mod tests {
             HandleMsg::Enqueue { value: 17 },
         )
         .unwrap();
-        let res = handle(
-            deps.as_mut(),
-            mock_env(),
-            info.clone(),
-            HandleMsg::Dequeue {},
-        )
-        .unwrap();
+        let res = handle(deps.as_mut(), mock_env(), info, HandleMsg::Dequeue {}).unwrap();
         // ensure we popped properly
         assert!(res.data.is_some());
         let data = res.data.unwrap();
@@ -339,7 +333,7 @@ mod tests {
         handle(
             deps.as_mut(),
             mock_env(),
-            info.clone(),
+            info,
             HandleMsg::Enqueue { value: -10 },
         )
         .unwrap();

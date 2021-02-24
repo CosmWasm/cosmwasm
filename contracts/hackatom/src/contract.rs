@@ -409,7 +409,7 @@ mod tests {
         let beneficiary = HumanAddr::from("benefits");
         let creator = HumanAddr::from("creator");
         let msg = InitMsg {
-            verifier: verifier.clone(),
+            verifier,
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
@@ -550,7 +550,7 @@ mod tests {
         let creator = HumanAddr(String::from("creator"));
 
         let init_msg = InitMsg {
-            verifier: verifier.clone(),
+            verifier,
             beneficiary: beneficiary.clone(),
         };
         let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));

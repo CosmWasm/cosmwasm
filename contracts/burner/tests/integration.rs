@@ -17,9 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{
-    coins, BankMsg, ContractResult, HumanAddr, InitResponse, MigrateResponse, Order,
-};
+use cosmwasm_std::{coins, BankMsg, ContractResult, HumanAddr, Order, Response};
 use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance};
 
 use burner::msg::{InitMsg, MigrateMsg};
@@ -37,7 +35,7 @@ fn init_fails() {
     let msg = InitMsg {};
     let info = mock_info("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
-    let res: ContractResult<InitResponse> = init(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -66,7 +64,7 @@ fn migrate_cleans_up_data() {
     let msg = MigrateMsg {
         payout: payout.clone(),
     };
-    let res: MigrateResponse = migrate(&mut deps, mock_env(), msg).unwrap();
+    let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
     // check payout
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");

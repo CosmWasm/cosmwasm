@@ -248,9 +248,7 @@ mod tests {
             amount: coins(1, "token"),
         }
         .into()];
-        let msg = HandleMsg::ReflectMsg {
-            msgs: payload.clone(),
-        };
+        let msg = HandleMsg::ReflectMsg { msgs: payload };
 
         let info = mock_info("random", &[]);
         let res = handle(deps.as_mut(), mock_env(), info, msg);
@@ -271,9 +269,7 @@ mod tests {
         let info = mock_info("creator", &[]);
         let payload = vec![];
 
-        let msg = HandleMsg::ReflectMsg {
-            msgs: payload.clone(),
-        };
+        let msg = HandleMsg::ReflectMsg { msgs: payload };
         let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err, ReflectError::MessagesEmpty);
     }
@@ -320,9 +316,7 @@ mod tests {
 
         let info = mock_info("creator", &[]);
         let new_owner = HumanAddr::from("friend");
-        let msg = HandleMsg::ChangeOwner {
-            owner: new_owner.clone(),
-        };
+        let msg = HandleMsg::ChangeOwner { owner: new_owner };
         let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // should change state
@@ -343,9 +337,7 @@ mod tests {
         let random = HumanAddr::from("random");
         let info = mock_info(&random, &[]);
         let new_owner = HumanAddr::from("friend");
-        let msg = HandleMsg::ChangeOwner {
-            owner: new_owner.clone(),
-        };
+        let msg = HandleMsg::ChangeOwner { owner: new_owner };
 
         let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         let expected = deps.api.canonical_address(&creator).unwrap();

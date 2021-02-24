@@ -498,7 +498,7 @@ mod tests {
         let info = mock_info(&creator, &[]);
 
         // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, msg.clone());
+        let res = init(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "my-validator is not in the current validator set")

@@ -149,7 +149,7 @@ fn ethereum_signature_verify_fails_for_corrupted_message() {
     let signer_address = ETHEREUM_SIGNER_ADDRESS;
 
     let verify_msg = QueryMsg::VerifyEthereumText {
-        message: message.into(),
+        message,
         signature: signature.into(),
         signer_address: signer_address.into(),
     };
@@ -172,7 +172,7 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
     let verify_msg = QueryMsg::VerifyEthereumText {
         message: message.into(),
         signature: signature.into(),
-        signer_address: signer_address.clone().into(),
+        signer_address: signer_address.into(),
     };
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
     let res: VerifyResponse = from_slice(&raw).unwrap();
