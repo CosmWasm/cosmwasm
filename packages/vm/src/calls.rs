@@ -3,7 +3,7 @@ use serde::de::DeserializeOwned;
 use std::fmt;
 use wasmer::Val;
 
-use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response};
+use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response, SubCallResult};
 
 use crate::backend::{BackendApi, Querier, Storage};
 use crate::conversion::ref_to_u32;
@@ -15,6 +15,7 @@ const MAX_LENGTH_INIT: usize = 100_000;
 const MAX_LENGTH_HANDLE: usize = 100_000;
 const MAX_LENGTH_MIGRATE: usize = 100_000;
 const MAX_LENGTH_SYSTEM: usize = 100_000;
+const MAX_LENGTH_SUBCALL_RESPONSE: usize = 100_000;
 const MAX_LENGTH_QUERY: usize = 100_000;
 
 pub fn call_init<A, S, Q, U>(
@@ -85,6 +86,24 @@ where
 {
     let env = to_vec(env)?;
     let data = call_system_raw(instance, &env, msg)?;
+    let result: ContractResult<Response<U>> = from_slice(&data)?;
+    Ok(result)
+}
+
+pub fn call_subcall_response<A, S, Q, U>(
+    instance: &mut Instance<A, S, Q>,
+    env: &Env,
+    msg: &SubCallResult,
+) -> VmResult<ContractResult<Response<U>>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+    U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
+{
+    let env = to_vec(env)?;
+    let msg = to_vec(msg)?;
+    let data = call_subcall_response_raw(instance, &env, &msg)?;
     let result: ContractResult<Response<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -176,6 +195,27 @@ where
 {
     instance.set_storage_readonly(false);
     call_raw(instance, "system", &[env, msg], MAX_LENGTH_SYSTEM)
+}
+
+/// Calls Wasm export "subcall_response" and returns raw data from the contract.
+/// The result is length limited to prevent abuse but otherwise unchecked.
+pub fn call_subcall_response_raw<A, S, Q>(
+    instance: &mut Instance<A, S, Q>,
+    env: &[u8],
+    msg: &[u8],
+) -> VmResult<Vec<u8>>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+    instance.set_storage_readonly(false);
+    call_raw(
+        instance,
+        "subcall_response",
+        &[env, msg],
+        MAX_LENGTH_SUBCALL_RESPONSE,
+    )
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.

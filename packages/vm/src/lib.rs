@@ -30,7 +30,8 @@ pub use crate::backend::{
 pub use crate::cache::{AnalysisReport, Cache, CacheOptions, Stats};
 pub use crate::calls::{
     call_handle, call_handle_raw, call_init, call_init_raw, call_migrate, call_migrate_raw,
-    call_query, call_query_raw, call_system, call_system_raw,
+    call_query, call_query_raw, call_subcall_response, call_subcall_response_raw, call_system,
+    call_system_raw,
 };
 pub use crate::checksum::Checksum;
 
