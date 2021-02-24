@@ -355,73 +355,6 @@ mod tests {
     }
 
     #[test]
-    fn reflect_subcall() {
-        let mut deps = mock_dependencies_with_custom_querier(&[]);
-
-        let msg = InitMsg { callback_id: None };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        let id = 123u64;
-        let payload = SubMsg {
-            id,
-            gas_limit: None,
-            msg: BankMsg::Send {
-                to_address: HumanAddr::from("friend"),
-                amount: coins(1, "token"),
-            }
-            .into(),
-        };
-
-        let msg = HandleMsg::ReflectSubCall {
-            msgs: vec![payload.clone()],
-        };
-        let info = mock_info("creator", &[]);
-        let mut res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-        assert_eq!(1, res.submessages.len());
-        let submsg = res.submessages.pop().expect("must have a submessage");
-        assert_eq!(payload, submsg);
-    }
-
-    // this mocks out what happens after reflect_subcall
-    #[test]
-    fn subcall_response_and_query() {
-        let mut deps = mock_dependencies_with_custom_querier(&[]);
-
-        let msg = InitMsg { callback_id: None };
-        let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
-
-        let id = 123u64;
-        let data = Binary::from(b"foobar");
-        let events = vec![Event::new("message", vec![attr("signer", "caller-addr")])];
-        let result = ContractResult::Ok(SubCallResponse {
-            events: events.clone(),
-            data: Some(data.clone()),
-        });
-        let subcall = SubCallResult { id, result };
-        let res = subcall_response(deps.as_mut(), mock_env(), subcall).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // query for a non-existant id
-        let qres = query(
-            deps.as_ref(),
-            mock_env(),
-            QueryMsg::SubCallResult { id: 65432 },
-        );
-        assert!(qres.is_err());
-
-        // query for the real id
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubCallResult { id }).unwrap();
-        let qres: SubCallResult = from_binary(&raw).unwrap();
-        assert_eq!(qres.id, id);
-        let result = qres.result.unwrap();
-        assert_eq!(result.data, Some(data));
-        assert_eq!(result.events, events);
-    }
-
-    #[test]
     fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
@@ -518,5 +451,72 @@ mod tests {
         let outer: ChainResponse = from_binary(&response).unwrap();
         let inner: SpecialResponse = from_binary(&outer.data).unwrap();
         assert_eq!(inner.msg, "pong");
+    }
+
+    #[test]
+    fn reflect_subcall() {
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
+
+        let msg = InitMsg { callback_id: None };
+        let info = mock_info("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let id = 123u64;
+        let payload = SubMsg {
+            id,
+            gas_limit: None,
+            msg: BankMsg::Send {
+                to_address: HumanAddr::from("friend"),
+                amount: coins(1, "token"),
+            }
+            .into(),
+        };
+
+        let msg = HandleMsg::ReflectSubCall {
+            msgs: vec![payload.clone()],
+        };
+        let info = mock_info("creator", &[]);
+        let mut res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        assert_eq!(0, res.messages.len());
+        assert_eq!(1, res.submessages.len());
+        let submsg = res.submessages.pop().expect("must have a submessage");
+        assert_eq!(payload, submsg);
+    }
+
+    // this mocks out what happens after reflect_subcall
+    #[test]
+    fn subcall_response_and_query() {
+        let mut deps = mock_dependencies_with_custom_querier(&[]);
+
+        let msg = InitMsg { callback_id: None };
+        let info = mock_info("creator", &coins(2, "token"));
+        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+
+        let id = 123u64;
+        let data = Binary::from(b"foobar");
+        let events = vec![Event::new("message", vec![attr("signer", "caller-addr")])];
+        let result = ContractResult::Ok(SubCallResponse {
+            events: events.clone(),
+            data: Some(data.clone()),
+        });
+        let subcall = SubCallResult { id, result };
+        let res = subcall_response(deps.as_mut(), mock_env(), subcall).unwrap();
+        assert_eq!(0, res.messages.len());
+
+        // query for a non-existant id
+        let qres = query(
+            deps.as_ref(),
+            mock_env(),
+            QueryMsg::SubCallResult { id: 65432 },
+        );
+        assert!(qres.is_err());
+
+        // query for the real id
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubCallResult { id }).unwrap();
+        let qres: SubCallResult = from_binary(&raw).unwrap();
+        assert_eq!(qres.id, id);
+        let result = qres.result.unwrap();
+        assert_eq!(result.data, Some(data));
+        assert_eq!(result.events, events);
     }
 }

@@ -51,6 +51,17 @@ impl<S> ContractResult<S> {
     pub fn unwrap(self) -> S {
         self.into_result().unwrap()
     }
+
+    pub fn is_ok(&self) -> bool {
+        match self {
+            ContractResult::Ok(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_err(&self) -> bool {
+        !self.is_ok()
+    }
 }
 
 impl<S: fmt::Debug> ContractResult<S> {
