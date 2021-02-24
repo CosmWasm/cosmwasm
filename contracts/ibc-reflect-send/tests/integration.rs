@@ -129,7 +129,7 @@ fn proper_handshake_flow() {
     connect(&mut deps, channel_id);
 
     // check for empty account
-    let acct = get_account(&mut deps, channel_id.into());
+    let acct = get_account(&mut deps, channel_id);
     assert!(acct.remote_addr.is_none());
     assert!(acct.remote_balance.is_empty());
     assert_eq!(0, acct.last_update_time);
@@ -139,7 +139,7 @@ fn proper_handshake_flow() {
     who_am_i_response(&mut deps, channel_id, remote_addr);
 
     // account should be set up
-    let acct = get_account(&mut deps, channel_id.into());
+    let acct = get_account(&mut deps, channel_id);
     assert_eq!(acct.remote_addr.unwrap(), HumanAddr::from(remote_addr));
     assert!(acct.remote_balance.is_empty());
     assert_eq!(0, acct.last_update_time);
@@ -165,7 +165,7 @@ fn dispatch_message_send_and_ack() {
     .into()];
     let handle_msg = HandleMsg::SendMsgs {
         channel_id: channel_id.into(),
-        msgs: msgs_to_dispatch.clone(),
+        msgs: msgs_to_dispatch,
     };
     let info = mock_info(CREATOR, &[]);
     let mut res: Response = handle(&mut deps, mock_env(), info, handle_msg).unwrap();

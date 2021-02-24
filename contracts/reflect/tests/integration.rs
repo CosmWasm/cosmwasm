@@ -120,9 +120,7 @@ fn reflect_requires_owner() {
         amount: coins(1, "token"),
     }
     .into()];
-    let msg = HandleMsg::ReflectMsg {
-        msgs: payload.clone(),
-    };
+    let msg = HandleMsg::ReflectMsg { msgs: payload };
 
     let info = mock_info("someone", &[]);
     let res: ContractResult<Response<CustomMsg>> = handle(&mut deps, mock_env(), info, msg);
@@ -140,9 +138,7 @@ fn transfer() {
 
     let info = mock_info("creator", &[]);
     let new_owner = HumanAddr::from("friend");
-    let msg = HandleMsg::ChangeOwner {
-        owner: new_owner.clone(),
-    };
+    let msg = HandleMsg::ChangeOwner { owner: new_owner };
     let res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
@@ -162,9 +158,7 @@ fn transfer_requires_owner() {
 
     let info = mock_info("random", &[]);
     let new_owner = HumanAddr::from("friend");
-    let msg = HandleMsg::ChangeOwner {
-        owner: new_owner.clone(),
-    };
+    let msg = HandleMsg::ChangeOwner { owner: new_owner };
 
     let res: ContractResult<Response> = handle(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();

@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{from_binary, from_slice, HumanAddr, InitResponse, MessageInfo, Response};
+use cosmwasm_std::{from_binary, from_slice, HumanAddr, MessageInfo, Response};
 use cosmwasm_vm::{
     testing::{
         handle, init, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi,
@@ -38,7 +38,7 @@ fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInf
     let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
     let creator = HumanAddr(String::from("creator"));
     let info = mock_info(creator.as_str(), &[]);
-    let res: InitResponse = init(&mut deps, mock_env(), info.clone(), InitMsg {}).unwrap();
+    let res: Response = init(&mut deps, mock_env(), info.clone(), InitMsg {}).unwrap();
     assert_eq!(0, res.messages.len());
     (deps, info)
 }
@@ -68,7 +68,7 @@ fn push_and_query() {
     let _: Response = handle(
         &mut deps,
         mock_env(),
-        info.clone(),
+        info,
         HandleMsg::Enqueue { value: 25 },
     )
     .unwrap();
@@ -96,7 +96,7 @@ fn multiple_push() {
     let _: Response = handle(
         &mut deps,
         mock_env(),
-        info.clone(),
+        info,
         HandleMsg::Enqueue { value: 45 },
     )
     .unwrap();
@@ -121,7 +121,7 @@ fn push_and_pop() {
         HandleMsg::Enqueue { value: 17 },
     )
     .unwrap();
-    let res: Response = handle(&mut deps, mock_env(), info.clone(), HandleMsg::Dequeue {}).unwrap();
+    let res: Response = handle(&mut deps, mock_env(), info, HandleMsg::Dequeue {}).unwrap();
     // ensure we popped properly
     assert!(res.data.is_some());
     let data = res.data.unwrap();
@@ -159,7 +159,7 @@ fn push_and_reduce() {
     let _: Response = handle(
         &mut deps,
         mock_env(),
-        info.clone(),
+        info,
         HandleMsg::Enqueue { value: -10 },
     )
     .unwrap();
@@ -184,7 +184,7 @@ fn migrate_works() {
     let _: Response = handle(
         &mut deps,
         mock_env(),
-        info.clone(),
+        info,
         HandleMsg::Enqueue { value: 17 },
     )
     .unwrap();

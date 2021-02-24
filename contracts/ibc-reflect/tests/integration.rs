@@ -196,8 +196,7 @@ fn handle_dispatch_packet() {
         msgs: msgs_to_dispatch.clone(),
     };
     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse =
-        ibc_packet_receive(&mut deps, mock_env(), packet.clone()).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error
@@ -212,8 +211,7 @@ fn handle_dispatch_packet() {
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse =
-        ibc_packet_receive(&mut deps, mock_env(), packet.clone()).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
     println!(
         "{}",
         String::from_utf8(res.acknowledgement.0.clone()).unwrap()
@@ -251,8 +249,7 @@ fn handle_dispatch_packet() {
         reflect_code_id: 12345,
     };
     let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
-    let res: IbcReceiveResponse =
-        ibc_packet_receive(&mut deps, mock_env(), packet.clone()).unwrap();
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error

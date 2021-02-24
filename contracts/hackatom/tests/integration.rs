@@ -40,8 +40,8 @@ fn make_init_msg() -> (InitMsg, HumanAddr) {
     let creator = HumanAddr::from("creator");
     (
         InitMsg {
-            verifier: verifier.clone(),
-            beneficiary: beneficiary.clone(),
+            verifier,
+            beneficiary,
         },
         creator,
     )
@@ -94,7 +94,7 @@ fn init_and_query() {
     let beneficiary = HumanAddr(String::from("benefits"));
     let creator = HumanAddr(String::from("creator"));
     let msg = InitMsg {
-        verifier: verifier.clone(),
+        verifier,
         beneficiary,
     };
     let info = mock_info(creator.as_str(), &coins(1000, "earth"));
@@ -119,7 +119,7 @@ fn migrate_verifier() {
     let beneficiary = HumanAddr::from("benefits");
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
-        verifier: verifier.clone(),
+        verifier,
         beneficiary,
     };
     let info = mock_info(creator.as_str(), &[]);
