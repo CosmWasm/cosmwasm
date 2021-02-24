@@ -4,11 +4,12 @@ use cosmwasm_std::{
 };
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
+use std::ops::Deref;
 
+use crate::ethereum::ethereum_address;
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
-use std::ops::Deref;
 
 pub const VERSION: &str = "crypto-verify-v2";
 
@@ -159,25 +160,6 @@ pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsRespon
     Ok(ListVerificationsResponse {
         verification_schemes,
     })
-}
-
-fn ethereum_address(pubkey: &[u8]) -> StdResult<String> {
-    let (tag, data) = match pubkey.split_first() {
-        Some(pair) => pair,
-        None => return Err(StdError::generic_err("Public key must not be empty")),
-    };
-    if *tag != 0x04 {
-        return Err(StdError::generic_err("Public key start with 0x04"));
-    }
-    if data.len() != 64 {
-        return Err(StdError::generic_err("Public key must be 65 bytes long"));
-    }
-
-    let hash = Keccak256::digest(data);
-    let mut out = String::with_capacity(42);
-    out.push_str("0x");
-    out.push_str(&hex::encode(&hash[hash.len() - 20..]));
-    Ok(out)
 }
 
 fn get_recovery_param(v: u8) -> StdResult<u8> {

@@ -31,7 +31,7 @@ pub fn verify_transaction<A: Api>(
     let recovery = get_recovery_param(v, chain_id)?;
     let calculated_pubkey = api.secp256k1_recover_pubkey(&hash, &rs, recovery)?;
     let calculated_address = ethereum_address_raw(&calculated_pubkey)?;
-    if from.as_ref() != calculated_address {
+    if from != calculated_address {
         return Ok(false);
     }
     let valid = api.secp256k1_verify(&hash, &rs, &calculated_pubkey)?;
@@ -81,7 +81,17 @@ pub fn get_recovery_param(v: u64, chain_id: u64) -> StdResult<u8> {
     }
 }
 
-fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<Vec<u8>> {
+/// Returns a hex-encoded Ethereum address (lower case hex)
+pub fn ethereum_address(pubkey: &[u8]) -> StdResult<String> {
+    let data = ethereum_address_raw(pubkey)?;
+    let mut out = String::with_capacity(42);
+    out.push_str("0x");
+    out.push_str(&hex::encode(data));
+    Ok(out)
+}
+
+/// Returns a raw 20 byte Ethereum address
+fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
     let (tag, data) = match pubkey.split_first() {
         Some(pair) => pair,
         None => return Err(StdError::generic_err("Public key must not be empty")),
@@ -94,7 +104,9 @@ fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<Vec<u8>> {
     }
 
     let hash = Keccak256::digest(data);
-    Ok(hash[hash.len() - 20..].into())
+    let mut out = [0u8; 20];
+    out[..].clone_from_slice(&hash[hash.len() - 20..]);
+    Ok(out)
 }
 
 #[cfg(test)]
