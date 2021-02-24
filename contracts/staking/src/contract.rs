@@ -89,6 +89,7 @@ pub fn transfer(
     })?;
 
     let res = Response {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![
             attr("action", "transfer"),
@@ -169,6 +170,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
 
     // bond them to the validator
     let res = Response {
+        submessages: vec![],
         messages: vec![StakingMsg::Delegate {
             validator: invest.validator,
             amount: payment.clone(),
@@ -234,6 +236,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
 
     // unbond them
     let res = Response {
+        submessages: vec![],
         messages: vec![StakingMsg::Undelegate {
             validator: invest.validator,
             amount: coin(unbond.u128(), &invest.bond_denom),
@@ -280,6 +283,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     // transfer tokens to the sender
     balance.amount = to_send;
     let res = Response {
+        submessages: vec![],
         messages: vec![BankMsg::Send {
             to_address: info.sender.clone(),
             amount: vec![balance],
@@ -305,6 +309,7 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
 
     // and bond them to the validator
     let res = Response {
+        submessages: vec![],
         messages: vec![
             StakingMsg::Withdraw {
                 validator: invest.validator,
@@ -357,6 +362,7 @@ pub fn _bond_all_tokens(
 
     // and bond them to the validator
     let res = Response {
+        submessages: vec![],
         messages: vec![StakingMsg::Delegate {
             validator: invest.validator,
             amount: balance.clone(),

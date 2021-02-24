@@ -69,6 +69,7 @@ pub fn try_reflect(
         return Err(ReflectError::MessagesEmpty);
     }
     let res = Response {
+        submessages: vec![],
         messages: msgs,
         attributes: vec![attr("action", "reflect")],
         data: None,

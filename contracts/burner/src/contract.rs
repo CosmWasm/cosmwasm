@@ -46,6 +46,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     let data_msg = format!("burnt {} keys", count).into_bytes();
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![send.into()],
         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
         data: Some(data_msg.into()),

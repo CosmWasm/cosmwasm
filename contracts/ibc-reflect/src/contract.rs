@@ -23,6 +23,7 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "init")],
         data: None,
@@ -61,6 +62,7 @@ pub fn handle_init_callback(
     })?;
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "handle_init_callback")],
         data: None,
