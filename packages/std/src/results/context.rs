@@ -62,6 +62,8 @@ where
 {
     fn from(ctx: Context<T>) -> Self {
         Response {
+            /// we do not support submessages here, as it was already deprecated when submessages were added
+            submessages: vec![],
             messages: ctx.messages,
             attributes: ctx.attributes,
             data: ctx.data,

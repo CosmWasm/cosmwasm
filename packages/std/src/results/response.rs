@@ -5,6 +5,7 @@ use std::fmt;
 use crate::Binary;
 
 use super::{Attribute, CosmosMsg, Empty};
+use crate::results::SubMsg;
 
 /// A response of a contract entry point, such as `init`, `handle` or `migrate`.
 ///
@@ -17,7 +18,7 @@ use super::{Attribute, CosmosMsg, Empty};
 /// Direct:
 ///
 /// ```
-/// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo, MigrateResponse};
+/// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo};
 /// # type InitMsg = ();
 /// #
 /// use cosmwasm_std::{attr, Response, StdResult};
@@ -31,6 +32,7 @@ use super::{Attribute, CosmosMsg, Empty};
 ///     // ...
 ///
 ///     Ok(Response {
+///         submessages: vec![],
 ///         messages: vec![],
 ///         attributes: vec![attr("action", "init")],
 ///         data: None,
@@ -41,7 +43,7 @@ use super::{Attribute, CosmosMsg, Empty};
 /// Mutating:
 ///
 /// ```
-/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo, MigrateResponse};
+/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo};
 /// # type InitMsg = ();
 /// # type MyError = ();
 /// #
@@ -72,6 +74,13 @@ pub struct Response<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
+    /// Optional list of "subcalls" to make. These will be executed in order
+    /// (and this contract's subcall_response entry point invoked)
+    /// *before* any of the "fire and forget" messages get executed.
+    pub submessages: Vec<SubMsg<T>>,
+    /// After any submessages are processed, these are all dispatched in the host blockchain.
+    /// If they all succeed, then the transaction is committed. If any fail, then the transaction
+    /// and any local contract state changes are reverted.
     pub messages: Vec<CosmosMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
@@ -84,6 +93,7 @@ where
 {
     fn default() -> Self {
         Response {
+            submessages: vec![],
             messages: vec![],
             attributes: vec![],
             data: None,
@@ -110,6 +120,20 @@ where
         self.messages.push(msg.into());
     }
 
+    pub fn add_submessage<U: Into<CosmosMsg<T>>>(
+        &mut self,
+        id: u64,
+        msg: U,
+        gas_limit: Option<u64>,
+    ) {
+        let sub = SubMsg {
+            id,
+            msg: msg.into(),
+            gas_limit,
+        };
+        self.submessages.push(sub);
+    }
+
     pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
         self.data = Some(data.into());
     }
@@ -125,6 +149,15 @@ mod tests {
     #[test]
     fn can_serialize_and_deserialize_init_response() {
         let original = Response {
+            submessages: vec![SubMsg {
+                id: 12,
+                msg: BankMsg::Send {
+                    to_address: HumanAddr::from("checker"),
+                    amount: coins(888, "moon"),
+                }
+                .into(),
+                gas_limit: Some(12345u64),
+            }],
             messages: vec![BankMsg::Send {
                 to_address: HumanAddr::from("you"),
                 amount: coins(1015, "earth"),

@@ -18,7 +18,7 @@ use std::fmt;
 /// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let response: Response = Response::default();
 /// let result: ContractResult<Response> = ContractResult::Ok(response);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec());
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"submessages":[],"messages":[],"attributes":[],"data":null}}"#.to_vec());
 /// ```
 ///
 /// Failure:
@@ -93,7 +93,7 @@ mod tests {
         let result: ContractResult<Response> = ContractResult::Ok(Response::default());
         assert_eq!(
             to_vec(&result).unwrap(),
-            br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec()
+            br#"{"ok":{"submessages":[],"messages":[],"attributes":[],"data":null}}"#.to_vec()
         );
 
         let result: ContractResult<Response> = ContractResult::Err("broken".to_string());
@@ -109,7 +109,8 @@ mod tests {
         assert_eq!(result, ContractResult::Ok("foo".to_string()));
 
         let result: ContractResult<Response> =
-            from_slice(br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#).unwrap();
+            from_slice(br#"{"ok":{"submessages":[],"messages":[],"attributes":[],"data":null}}"#)
+                .unwrap();
         assert_eq!(result, ContractResult::Ok(Response::default()));
 
         let result: ContractResult<Response> = from_slice(br#"{"error":"broken"}"#).unwrap();

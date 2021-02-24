@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 use crate::{Binary, ContractResult};
 
@@ -10,10 +11,13 @@ use super::{Attribute, CosmosMsg, Empty};
 /// but not revert any state changes in the calling contract (that must be done in the
 /// subcall_response entry point)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SubMsg<T = Empty> {
-    id: u64,
-    msg: CosmosMsg<T>,
-    gas_limit: Option<u64>,
+pub struct SubMsg<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub id: u64,
+    pub msg: CosmosMsg<T>,
+    pub gas_limit: Option<u64>,
 }
 
 /// The Result object returned to subcall_response. We always get the same id back
