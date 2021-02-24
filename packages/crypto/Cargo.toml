@@ -18,6 +18,7 @@ backtraces = []
 k256 = { version = "0.7.2", features = ["ecdsa"] }
 ed25519-zebra = "2"
 digest = "0.9"
+rand_core = { version = "0.5", features = ["getrandom"] }
 thiserror = "1.0"
 
 [dev-dependencies]
@@ -27,5 +28,4 @@ sha2 = "0.9"
 base64 = "0.13.0"
 hex = "0.4"
 hex-literal = "0.3.1"
-rand_core = { version = "0.5", features = ["getrandom"] }
 elliptic-curve = "0.8.4"

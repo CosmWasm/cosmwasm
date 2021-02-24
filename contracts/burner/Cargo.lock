@@ -139,6 +139,7 @@ dependencies = [
  "digest",
  "ed25519-zebra",
  "k256",
+ "rand_core",
  "thiserror",
 ]
 

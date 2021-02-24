@@ -1,9 +1,38 @@
+use crate::conversion::force_to_u32;
+
 /// A sections decoder for the special case of two elements
 #[allow(dead_code)] // used in Wasm and tests only
 pub fn decode_sections2(data: Vec<u8>) -> (Vec<u8>, Vec<u8>) {
     let (rest, second) = split_tail(data);
     let (_, first) = split_tail(rest);
     (first, second)
+}
+
+/// Encodes multiple sections of data into one vector.
+///
+/// Each section is suffixed by a section length encoded as big endian uint32.
+/// Using suffixes instead of prefixes allows reading sections in reverse order,
+/// such that the first element does not need to be re-allocated if the contract's
+/// data structure supports truncation (such as a Rust vector).
+///
+/// The resulting data looks like this:
+///
+/// ```ignore
+/// section1 || section1_len || section2 || section2_len || section3 || section3_len || …
+/// ```
+#[allow(dead_code)] // used in Wasm and tests only
+pub fn encode_sections(sections: &[&[u8]]) -> Vec<u8> {
+    let mut out_len: usize = sections.iter().map(|section| section.len()).sum();
+    out_len += 4 * sections.len();
+    let mut out_data = Vec::with_capacity(out_len);
+    for &section in sections {
+        let section_len = force_to_u32(section.len()).to_be_bytes();
+        out_data.extend(section);
+        out_data.extend_from_slice(&section_len);
+    }
+    debug_assert_eq!(out_data.len(), out_len);
+    debug_assert_eq!(out_data.capacity(), out_len);
+    out_data
 }
 
 /// Splits data into the last section ("tail") and the rest.
@@ -75,5 +104,41 @@ mod tests {
         // This is a copy
         assert_ne!(second.capacity(), original_capacity);
         assert_ne!(second.as_ptr(), original_ptr);
+    }
+
+    #[test]
+    fn encode_sections_works_for_empty_sections() {
+        let enc = encode_sections(&[]);
+        assert_eq!(enc, b"" as &[u8]);
+        let enc = encode_sections(&[&[]]);
+        assert_eq!(enc, b"\0\0\0\0" as &[u8]);
+        let enc = encode_sections(&[&[], &[]]);
+        assert_eq!(enc, b"\0\0\0\0\0\0\0\0" as &[u8]);
+        let enc = encode_sections(&[&[], &[], &[]]);
+        assert_eq!(enc, b"\0\0\0\0\0\0\0\0\0\0\0\0" as &[u8]);
+    }
+
+    #[test]
+    fn encode_sections_works_for_one_element() {
+        let enc = encode_sections(&[]);
+        assert_eq!(enc, b"" as &[u8]);
+        let enc = encode_sections(&[&[0xAA]]);
+        assert_eq!(enc, b"\xAA\0\0\0\x01" as &[u8]);
+        let enc = encode_sections(&[&[0xAA, 0xBB]]);
+        assert_eq!(enc, b"\xAA\xBB\0\0\0\x02" as &[u8]);
+        let enc = encode_sections(&[&[0x9D; 277]]);
+        assert_eq!(enc, b"\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\0\0\x01\x15" as &[u8]);
+    }
+
+    #[test]
+    fn encode_sections_works_for_multiple_elements() {
+        let enc = encode_sections(&[&[0xAA]]);
+        assert_eq!(enc, b"\xAA\0\0\0\x01" as &[u8]);
+        let enc = encode_sections(&[&[0xAA], &[0xDE, 0xDE]]);
+        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02" as &[u8]);
+        let enc = encode_sections(&[&[0xAA], &[0xDE, 0xDE], &[]]);
+        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0" as &[u8]);
+        let enc = encode_sections(&[&[0xAA], &[0xDE, 0xDE], &[], &[0xFF; 19]]);
+        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\x13" as &[u8]);
     }
 }

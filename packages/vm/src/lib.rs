@@ -17,6 +17,7 @@ mod limited;
 mod memory;
 mod middleware;
 mod modules;
+mod sections;
 mod serde;
 mod size;
 mod static_analysis;

@@ -7,6 +7,12 @@ pub type CryptoResult<T> = core::result::Result<T, CryptoError>;
 
 #[derive(Error, Debug)]
 pub enum CryptoError {
+    #[error("Batch verify error: {msg}")]
+    BatchErr {
+        msg: String,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Crypto error: {msg}")]
     GenericErr {
         msg: String,
@@ -45,6 +51,14 @@ pub enum CryptoError {
 }
 
 impl CryptoError {
+    pub fn batch_err<S: Into<String>>(msg: S) -> Self {
+        CryptoError::BatchErr {
+            msg: msg.into(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     pub fn generic_err<S: Into<String>>(msg: S) -> Self {
         CryptoError::GenericErr {
             msg: msg.into(),
@@ -101,6 +115,7 @@ impl CryptoError {
             CryptoError::SignatureErr { .. } => 4,
             CryptoError::PublicKeyErr { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
+            CryptoError::BatchErr { .. } => 7,
             CryptoError::GenericErr { .. } => 10,
         }
     }
@@ -111,6 +126,17 @@ mod tests {
     use super::*;
 
     // constructors
+    #[test]
+    fn batch_err_works() {
+        let error = CryptoError::batch_err("something went wrong in a batch way");
+        match error {
+            CryptoError::BatchErr { msg, .. } => {
+                assert_eq!(msg, "something went wrong in a batch way")
+            }
+            _ => panic!("wrong error type!"),
+        }
+    }
+
     #[test]
     fn generic_err_works() {
         let error = CryptoError::generic_err("something went wrong in a general way");

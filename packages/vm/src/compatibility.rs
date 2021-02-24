@@ -18,6 +18,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.secp256k1_verify",
     "env.secp256k1_recover_pubkey",
     "env.ed25519_verify",
+    "env.ed25519_batch_verify",
     "env.debug",
     "env.query_chain",
     #[cfg(feature = "iterator")]
@@ -325,6 +326,7 @@ mod tests {
             (import "env" "secp256k1_verify" (func (param i32 i32 i32) (result i32)))
             (import "env" "secp256k1_recover_pubkey" (func (param i32 i32 i32) (result i64)))
             (import "env" "ed25519_verify" (func (param i32 i32 i32) (result i32)))
+            (import "env" "ed25519_batch_verify" (func (param i32 i32 i32) (result i32)))
         )"#,
         )
         .unwrap();

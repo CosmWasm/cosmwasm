@@ -1,11 +1,14 @@
 //! Import implementations
 
-use cosmwasm_crypto::{ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError};
-use cosmwasm_crypto::{
-    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, EDDSA_SIGNATURE_LEN,
-    MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
-};
 use std::convert::TryInto;
+
+use cosmwasm_crypto::{
+    ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
+};
+use cosmwasm_crypto::{
+    BATCH_MAX_LEN, ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN,
+    EDDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
+};
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
@@ -18,12 +21,16 @@ use crate::errors::{CommunicationError, VmError, VmResult};
 #[cfg(feature = "iterator")]
 use crate::memory::maybe_read_region;
 use crate::memory::{read_region, write_region};
+use crate::sections::decode_sections;
+#[allow(unused_imports)]
+use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
 
 const GAS_COST_SECP256K1_VERIFY_SIGNATURE: u64 = 100;
 const GAS_COST_SECP256K1_RECOVER_PUBKEY_SIGNATURE: u64 = 100;
 const GAS_COST_VERIFY_ED25519_SIGNATURE: u64 = 100;
+const GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE: u64 = GAS_COST_VERIFY_ED25519_SIGNATURE / 3;
 
 /// A kibi (kilo binary)
 const KI: usize = 1024;
@@ -110,6 +117,15 @@ pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     do_ed25519_verify(env, message_ptr, signature_ptr, pubkey_ptr)
+}
+
+pub fn native_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    messages_ptr: u32,
+    signatures_ptr: u32,
+    pubkeys_ptr: u32,
+) -> VmResult<u32> {
+    do_ed25519_batch_verify(env, messages_ptr, signatures_ptr, pubkeys_ptr)
 }
 
 pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
@@ -289,7 +305,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -324,7 +340,9 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::PublicKeyErr { .. } => panic!("Error must not happen for this call"),
+            CryptoError::BatchErr { .. } | CryptoError::PublicKeyErr { .. } => {
+                panic!("Error must not happen for this call")
+            }
         },
     }
 }
@@ -349,12 +367,45 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::SignatureErr { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
         |valid| if valid { 0 } else { 1 },
     ))
+}
+
+fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    messages_ptr: u32,
+    signatures_ptr: u32,
+    public_keys_ptr: u32,
+) -> VmResult<u32> {
+    let messages = read_region(
+        &env.memory(),
+        messages_ptr,
+        (MESSAGE_MAX_LEN + 4) * BATCH_MAX_LEN,
+    )?;
+    let signatures = read_region(
+        &env.memory(),
+        signatures_ptr,
+        (EDDSA_SIGNATURE_LEN + 4) * BATCH_MAX_LEN,
+    )?;
+    let public_keys = read_region(
+        &env.memory(),
+        public_keys_ptr,
+        (EDDSA_PUBKEY_LEN + 4) * BATCH_MAX_LEN,
+    )?;
+
+    let messages = decode_sections(&messages);
+    let signatures = decode_sections(&signatures);
+    let public_keys = decode_sections(&public_keys);
+
+    let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
+    let gas_info =
+        GasInfo::with_cost(GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE * signatures.len() as u64);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    Ok(result.map_or_else(|err| err.code(), |valid| (!valid).into()))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
@@ -422,33 +473,6 @@ fn do_next<A: BackendApi, S: Storage, Q: Querier>(
 
     let out_data = encode_sections(&[key, value])?;
     write_to_contract::<A, S, Q>(env, &out_data)
-}
-
-/// Encodes multiple sections of data into one vector.
-///
-/// Each section is suffixed by a section length encoded as big endian uint32.
-/// Using suffixes instead of prefixes allows reading sections in reverse order,
-/// such that the first element does not need to be re-allocated if the contract's
-/// data structure supports truncation (such as a Rust vector).
-///
-/// The resulting data looks like this:
-///
-/// ```ignore
-/// section1 || section1_len || section2 || section2_len || section3 || section3_len || …
-/// ```
-#[allow(dead_code)]
-fn encode_sections(sections: &[Vec<u8>]) -> VmResult<Vec<u8>> {
-    let mut out_len: usize = sections.iter().map(|section| section.len()).sum();
-    out_len += 4 * sections.len();
-    let mut out_data = Vec::with_capacity(out_len);
-    for section in sections {
-        let section_len = to_u32(section.len())?.to_be_bytes();
-        out_data.extend(section);
-        out_data.extend_from_slice(&section_len);
-    }
-    debug_assert_eq!(out_data.len(), out_len);
-    debug_assert_eq!(out_data.capacity(), out_len);
-    Ok(out_data)
 }
 
 /// Returns the data shifted by 32 bits towards the most significant bit.
@@ -537,6 +561,7 @@ mod tests {
                 "secp256k1_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
+                "ed25519_batch_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "debug" => Function::new_native(&store, |_a: u32| {}),
             },
         };
@@ -1853,73 +1878,5 @@ mod tests {
             } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),
         }
-    }
-
-    #[test]
-    fn encode_sections_works_for_empty_sections() {
-        let enc = encode_sections(&[]).unwrap();
-        assert_eq!(enc, b"" as &[u8]);
-        let enc = encode_sections(&[vec![]]).unwrap();
-        assert_eq!(enc, b"\0\0\0\0" as &[u8]);
-        let enc = encode_sections(&[vec![], vec![]]).unwrap();
-        assert_eq!(enc, b"\0\0\0\0\0\0\0\0" as &[u8]);
-        let enc = encode_sections(&[vec![], vec![], vec![]]).unwrap();
-        assert_eq!(enc, b"\0\0\0\0\0\0\0\0\0\0\0\0" as &[u8]);
-    }
-
-    #[test]
-    fn encode_sections_works_for_one_element() {
-        let enc = encode_sections(&[]).unwrap();
-        assert_eq!(enc, b"" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA, 0xBB]]).unwrap();
-        assert_eq!(enc, b"\xAA\xBB\0\0\0\x02" as &[u8]);
-        let enc = encode_sections(&[vec![0x9D; 277]]).unwrap();
-        assert_eq!(enc, b"\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\x9D\0\0\x01\x15" as &[u8]);
-    }
-
-    #[test]
-    fn encode_sections_works_for_multiple_elements() {
-        let enc = encode_sections(&[vec![0xAA]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE], vec![]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0" as &[u8]);
-        let enc = encode_sections(&[vec![0xAA], vec![0xDE, 0xDE], vec![], vec![0xFF; 19]]).unwrap();
-        assert_eq!(enc, b"\xAA\0\0\0\x01\xDE\xDE\0\0\0\x02\0\0\0\0\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF\0\0\0\x13" as &[u8]);
-    }
-
-    #[test]
-    fn to_high_half_works() {
-        assert_eq!(
-            to_high_half(0),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            to_high_half(1),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            to_high_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
-            u64::from_be_bytes([0x12, 0x34, 0x56, 0x78, 0x00, 0x00, 0x00, 0x00])
-        );
-    }
-
-    #[test]
-    fn to_low_half_works() {
-        assert_eq!(
-            to_low_half(0),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00])
-        );
-        assert_eq!(
-            to_low_half(1),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01])
-        );
-        assert_eq!(
-            to_low_half(u32::from_be_bytes([0x12, 0x34, 0x56, 0x78])),
-            u64::from_be_bytes([0x00, 0x00, 0x00, 0x00, 0x12, 0x34, 0x56, 0x78])
-        );
     }
 }
