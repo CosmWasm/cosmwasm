@@ -1,11 +1,30 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::Binary;
+use crate::{Binary, ContractResult};
 
-use super::Attribute;
+use super::{Attribute, CosmosMsg, Empty};
 
-/// The information we get back from the sub-call, with full sdk events
+/// A sub-message that will guarantee a subcall_response callback on success or error
+/// Note on error the subcall will revert any partial state changes due to this message,
+/// but not revert any state changes in the calling contract (that must be done in the
+/// subcall_response entry point)
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct SubMsg<T = Empty> {
+    id: u64,
+    msg: CosmosMsg<T>,
+    gas_limit: Option<u64>,
+}
+
+/// The Result object returned to subcall_response. We always get the same id back
+/// and then must handle success and error cases ourselves
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct SubcallResult {
+    id: u64,
+    result: ContractResult<SubcallResponse>,
+}
+
+/// The information we get back from a successful sub-call, with full sdk events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SubcallResponse {
     pub events: Vec<Event>,

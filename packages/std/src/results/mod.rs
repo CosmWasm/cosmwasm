@@ -18,7 +18,7 @@ pub use cosmos_msg::{wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, Staking
 pub use empty::Empty;
 pub use query::QueryResponse;
 pub use response::Response;
-pub use subcall::{Event, SubcallResponse};
+pub use subcall::{Event, SubMsg, SubcallResponse, SubcallResult};
 pub use system_result::SystemResult;
 
 #[deprecated(since = "0.14.0", note = "Renamed to Response.")]
