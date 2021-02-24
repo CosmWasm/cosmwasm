@@ -73,7 +73,7 @@ mod tests {
                         false
                     }
                 });
-        assert_eq!(exported_functions.count(), 7); // 6 required export plus "migrate"
+        assert_eq!(exported_functions.count(), 8); // 6 required export plus "migrate" and "system"
 
         let exported_memories = module
             .export_section()
