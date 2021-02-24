@@ -42,3 +42,12 @@ pub struct Event {
     pub kind: String,
     pub attributes: Vec<Attribute>,
 }
+
+impl Event {
+    pub fn new(kind: &str, attributes: Vec<Attribute>) -> Self {
+        Event {
+            kind: kind.to_string(),
+            attributes,
+        }
+    }
+}
