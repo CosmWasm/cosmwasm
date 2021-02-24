@@ -153,7 +153,7 @@ fn system_can_steal_tokens() {
     let beneficiary = HumanAddr::from("benefits");
     let creator = HumanAddr::from("creator");
     let msg = InitMsg {
-        verifier: verifier.clone(),
+        verifier,
         beneficiary,
     };
     let info = mock_info(creator.as_str(), &[]);
@@ -167,7 +167,7 @@ fn system_can_steal_tokens() {
         recipient: to_address.clone(),
         amount: amount.clone(),
     };
-    let res: Response = system(&mut deps, mock_env(), sys_msg.clone()).unwrap();
+    let res: Response = system(&mut deps, mock_env(), sys_msg).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");
     assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);

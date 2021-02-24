@@ -467,7 +467,7 @@ mod tests {
         let beneficiary = HumanAddr::from("benefits");
         let creator = HumanAddr::from("creator");
         let msg = InitMsg {
-            verifier: verifier.clone(),
+            verifier,
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
@@ -481,7 +481,7 @@ mod tests {
             recipient: to_address.clone(),
             amount: amount.clone(),
         };
-        let res = system(deps.as_mut(), mock_env(), sys_msg.clone()).unwrap();
+        let res = system(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
         assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
