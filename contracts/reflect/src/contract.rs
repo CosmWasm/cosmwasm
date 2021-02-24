@@ -1,6 +1,7 @@
 use cosmwasm_std::{
-    attr, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env, HumanAddr,
-    MessageInfo, QueryRequest, QueryResponse, Response, StdError, StdResult, SystemResult, WasmMsg,
+    attr, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
+    HumanAddr, MessageInfo, QueryRequest, QueryResponse, Response, StdError, StdResult,
+    SubCallResult, SubMsg, SystemResult, WasmMsg,
 };
 
 use crate::errors::ReflectError;
@@ -8,7 +9,7 @@ use crate::msg::{
     CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse,
     QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
-use crate::state::{config, config_read, State};
+use crate::state::{config, config_read, subcalls, subcalls_read, State};
 
 pub fn init(
     deps: DepsMut,
@@ -45,6 +46,7 @@ pub fn handle(
 ) -> Result<Response<CustomMsg>, ReflectError> {
     match msg {
         HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
+        HandleMsg::ReflectSubCall { msgs } => try_reflect_subcall(deps, env, info, msgs),
         HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, info, owner),
     }
 }
@@ -77,6 +79,33 @@ pub fn try_reflect(
     Ok(res)
 }
 
+pub fn try_reflect_subcall(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msgs: Vec<SubMsg<CustomMsg>>,
+) -> Result<Response<CustomMsg>, ReflectError> {
+    let state = config(deps.storage).load()?;
+    let sender = deps.api.canonical_address(&info.sender)?;
+    if sender != state.owner {
+        return Err(ReflectError::NotCurrentOwner {
+            expected: state.owner,
+            actual: sender,
+        });
+    }
+
+    if msgs.is_empty() {
+        return Err(ReflectError::MessagesEmpty);
+    }
+    let res = Response {
+        submessages: msgs,
+        messages: vec![],
+        attributes: vec![attr("action", "reflect_subcall")],
+        data: None,
+    };
+    Ok(res)
+}
+
 pub fn try_change_owner(
     deps: DepsMut,
     _env: Env,
@@ -101,12 +130,25 @@ pub fn try_change_owner(
     })
 }
 
+/// This just stores the result for future query
+#[entry_point]
+pub fn subcall_response(
+    deps: DepsMut,
+    _env: Env,
+    msg: SubCallResult,
+) -> Result<Response, ReflectError> {
+    let key = msg.id.to_be_bytes();
+    subcalls(deps.storage).save(&key, &msg)?;
+    Ok(Response::default())
+}
+
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Owner {} => to_binary(&query_owner(deps)?),
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
         QueryMsg::Chain { request } => to_binary(&query_chain(deps, &request)?),
         QueryMsg::Raw { contract, key } => to_binary(&query_raw(deps, contract, key)?),
+        QueryMsg::SubCallResult { id } => to_binary(&query_subcall(deps, id)?),
     }
 }
 
@@ -116,6 +158,11 @@ fn query_owner(deps: Deps) -> StdResult<OwnerResponse> {
         owner: deps.api.human_address(&state.owner)?,
     };
     Ok(resp)
+}
+
+fn query_subcall(deps: Deps, id: u64) -> StdResult<SubCallResult> {
+    let key = id.to_be_bytes();
+    subcalls_read(deps.storage).load(&key)
 }
 
 fn query_capitalized(deps: Deps, text: String) -> StdResult<CapitalizedResponse> {

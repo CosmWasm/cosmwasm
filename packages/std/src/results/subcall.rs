@@ -23,14 +23,14 @@ where
 /// The Result object returned to subcall_response. We always get the same id back
 /// and then must handle success and error cases ourselves
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SubcallResult {
-    id: u64,
-    result: ContractResult<SubcallResponse>,
+pub struct SubCallResult {
+    pub id: u64,
+    pub result: ContractResult<SubCallResponse>,
 }
 
 /// The information we get back from a successful sub-call, with full sdk events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SubcallResponse {
+pub struct SubCallResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
 }

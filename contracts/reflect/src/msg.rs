@@ -3,7 +3,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, HumanAddr, QueryRequest};
+use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, HumanAddr, QueryRequest, SubMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InitMsg {
@@ -28,6 +28,7 @@ pub enum CallbackMsg {
 #[serde(rename_all = "snake_case")]
 pub enum HandleMsg {
     ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
+    ReflectSubCall { msgs: Vec<SubMsg<CustomMsg>> },
     ChangeOwner { owner: HumanAddr },
 }
 
@@ -47,6 +48,10 @@ pub enum QueryMsg {
     Raw {
         contract: HumanAddr,
         key: Binary,
+    },
+    /// If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::SubcallResult
+    SubCallResult {
+        id: u64,
     },
 }
 
