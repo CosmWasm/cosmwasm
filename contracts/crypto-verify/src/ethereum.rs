@@ -3,8 +3,8 @@ use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
 #[allow(clippy::too_many_arguments)]
-pub fn verify_transaction<A: Api>(
-    api: A,
+pub fn verify_transaction(
+    api: &dyn Api,
     from: [u8; 20],
     to: [u8; 20],
     nonce: u64,
@@ -139,7 +139,7 @@ mod tests {
 
         let api = MockApi::default();
         let valid = verify_transaction(
-            api, from, to, nonce, gas_limit, gas_price, value, &data, chain_id, &r, &s, v,
+            &api, from, to, nonce, gas_limit, gas_price, value, &data, chain_id, &r, &s, v,
         )
         .unwrap();
         assert_eq!(valid, true);
