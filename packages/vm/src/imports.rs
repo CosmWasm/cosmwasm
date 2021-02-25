@@ -365,11 +365,12 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::MessageError { .. }
-            | CryptoError::InvalidHashFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidRecoveryParam { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -407,7 +408,19 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     let gas_info =
         GasInfo::with_cost(GAS_COST_BATCH_VERIFY_ED25519_SIGNATURE * signatures.len() as u64);
     process_gas_info::<A, S, Q>(env, gas_info)?;
-    Ok(result.map_or_else(|err| err.code(), |valid| (!valid).into()))
+    Ok(result.map_or_else(
+        |err| match err {
+            CryptoError::BatchErr { .. }
+            | CryptoError::MessageError { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
+            | CryptoError::PublicKeyErr { .. }
+            | CryptoError::GenericErr { .. } => err.code(),
+            CryptoError::InvalidHashFormat { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+                panic!("Error must not happen for this call")
+            }
+        },
+        |valid| (!valid).into(),
+    ))
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
