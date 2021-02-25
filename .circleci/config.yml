@@ -821,18 +821,18 @@ jobs:
             - contracts/burner/target/debug/.fingerprint
             - contracts/burner/target/debug/build
             - contracts/burner/target/debug/deps
-            - contracts/crypto_verify/target/debug/.fingerprint
-            - contracts/crypto_verify/target/debug/build
-            - contracts/crypto_verify/target/debug/deps
+            - contracts/crypto-verify/target/debug/.fingerprint
+            - contracts/crypto-verify/target/debug/build
+            - contracts/crypto-verify/target/debug/deps
             - contracts/hackatom/target/debug/.fingerprint
             - contracts/hackatom/target/debug/build
             - contracts/hackatom/target/debug/deps
-            - contracts/ibc_reflect/target/debug/.fingerprint
-            - contracts/ibc_reflect/target/debug/build
-            - contracts/ibc_reflect/target/debug/deps
-            - contracts/ibc_reflect_send/target/debug/.fingerprint
-            - contracts/ibc_reflect_send/target/debug/build
-            - contracts/ibc_reflect_send/target/debug/deps
+            - contracts/ibc-reflect/target/debug/.fingerprint
+            - contracts/ibc-reflect/target/debug/build
+            - contracts/ibc-reflect/target/debug/deps
+            - contracts/ibc-reflect-send/target/debug/.fingerprint
+            - contracts/ibc-reflect-send/target/debug/build
+            - contracts/ibc-reflect-send/target/debug/deps
             - contracts/queue/target/debug/.fingerprint
             - contracts/queue/target/debug/build
             - contracts/queue/target/debug/deps
