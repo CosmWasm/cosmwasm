@@ -677,7 +677,7 @@ mod tests {
         malformed_hash.push(0x8a);
         let result = api.secp256k1_recover_pubkey(&malformed_hash, &signature, recovery_param);
         match result.unwrap_err() {
-            RecoverPubkeyError::HashErr => {}
+            RecoverPubkeyError::InvalidHashFormat => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }

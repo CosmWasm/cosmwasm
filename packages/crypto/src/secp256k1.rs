@@ -46,12 +46,7 @@ pub fn secp256k1_verify(
     signature: &[u8],
     public_key: &[u8],
 ) -> CryptoResult<bool> {
-    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
-        return Err(CryptoError::hash_err(format!(
-            "wrong length: {}",
-            message_hash.len()
-        )));
-    }
+    let message_hash = read_hash(message_hash)?;
     if signature.len() != ECDSA_SIGNATURE_LEN {
         return Err(CryptoError::sig_err(format!(
             "wrong / unsupported length: {}",
@@ -110,12 +105,7 @@ pub fn secp256k1_recover_pubkey(
     signature: &[u8],
     recovery_param: u8,
 ) -> Result<Vec<u8>, CryptoError> {
-    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
-        return Err(CryptoError::hash_err(format!(
-            "wrong length: {}",
-            message_hash.len()
-        )));
-    }
+    let message_hash = read_hash(message_hash)?;
     if signature.len() != ECDSA_SIGNATURE_LEN {
         return Err(CryptoError::sig_err(format!(
             "wrong / unsupported length: {}",
@@ -139,6 +129,24 @@ pub fn secp256k1_recover_pubkey(
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
     Ok(encoded)
+}
+
+/// Error raised when hash is not 32 bytes long
+struct InvalidSecp256k1HashFormat;
+
+impl From<InvalidSecp256k1HashFormat> for CryptoError {
+    fn from(_original: InvalidSecp256k1HashFormat) -> Self {
+        CryptoError::invalid_hash_format()
+    }
+}
+
+fn read_hash(data: &[u8]) -> Result<[u8; 32], InvalidSecp256k1HashFormat> {
+    if data.len() != 32 {
+        return Err(InvalidSecp256k1HashFormat);
+    }
+    let mut out = [0u8; 32];
+    out[..].copy_from_slice(&data[..]);
+    Ok(out)
 }
 
 #[cfg(test)]

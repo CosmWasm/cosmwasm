@@ -209,7 +209,7 @@ impl Api for ExternalApi {
             0 => Ok(true),
             1 => Ok(false),
             2 => Err(VerificationError::MessageErr), // shouldn't happen
-            3 => Err(VerificationError::HashErr),
+            3 => Err(VerificationError::InvalidHashFormat),
             4 => Err(VerificationError::SignatureErr),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),
@@ -237,7 +237,7 @@ impl Api for ExternalApi {
                 let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
                 Ok(pubkey)
             }
-            3 => Err(RecoverPubkeyError::HashErr),
+            3 => Err(RecoverPubkeyError::InvalidHashFormat),
             4 => Err(RecoverPubkeyError::SignatureErr),
             6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
             error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
@@ -262,7 +262,7 @@ impl Api for ExternalApi {
             0 => Ok(true),
             1 => Ok(false),
             2 => Err(VerificationError::MessageErr),
-            3 => Err(VerificationError::HashErr), // shouldn't happen
+            3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
             4 => Err(VerificationError::SignatureErr),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),
@@ -294,7 +294,7 @@ impl Api for ExternalApi {
             0 => Ok(true),
             1 => Ok(false),
             2 => Err(VerificationError::MessageErr),
-            3 => Err(VerificationError::HashErr), // shouldn't happen
+            3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
             4 => Err(VerificationError::SignatureErr),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),

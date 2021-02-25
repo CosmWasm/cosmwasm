@@ -301,7 +301,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::MessageError { .. }
-            | CryptoError::HashErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
             | CryptoError::SignatureErr { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
@@ -336,7 +336,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
         }
         Err(err) => match err {
             CryptoError::MessageError { .. }
-            | CryptoError::HashErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
             | CryptoError::SignatureErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
@@ -363,7 +363,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::MessageError { .. }
-            | CryptoError::HashErr { .. }
+            | CryptoError::InvalidHashFormat { .. }
             | CryptoError::SignatureErr { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
@@ -1181,7 +1181,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            3 // mapped HashErr
+            3 // mapped InvalidHashFormat
         );
     }
 

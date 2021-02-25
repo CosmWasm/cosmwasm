@@ -14,8 +14,8 @@ pub enum VerificationError {
     GenericErr,
     #[error("Message error")]
     MessageErr,
-    #[error("Hash error")]
-    HashErr,
+    #[error("Invalid hash format")]
+    InvalidHashFormat,
     #[error("Signature error")]
     SignatureErr,
     #[error("Public key error")]
@@ -46,7 +46,9 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::BatchErr => matches!(rhs, VerificationError::BatchErr),
             VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
             VerificationError::MessageErr => matches!(rhs, VerificationError::MessageErr),
-            VerificationError::HashErr => matches!(rhs, VerificationError::HashErr),
+            VerificationError::InvalidHashFormat => {
+                matches!(rhs, VerificationError::InvalidHashFormat)
+            }
             VerificationError::SignatureErr => matches!(rhs, VerificationError::SignatureErr),
             VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
             VerificationError::InvalidRecoveryParam => {
@@ -72,7 +74,7 @@ impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
             CryptoError::MessageError { .. } => VerificationError::MessageErr,
-            CryptoError::HashErr { .. } => VerificationError::HashErr,
+            CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
             CryptoError::SignatureErr { .. } => VerificationError::SignatureErr,
             CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,

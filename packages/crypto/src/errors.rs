@@ -19,14 +19,13 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Message error: {msg}")]
-    MessageError {
-        msg: String,
+    #[error("Invalid hash format")]
+    InvalidHashFormat {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Hash error: {msg}")]
-    HashErr {
+    #[error("Message error: {msg}")]
+    MessageError {
         msg: String,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
@@ -67,16 +66,15 @@ impl CryptoError {
         }
     }
 
-    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::MessageError {
-            msg: msg.into(),
+    pub fn invalid_hash_format() -> Self {
+        CryptoError::InvalidHashFormat {
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
     }
 
-    pub fn hash_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::HashErr {
+    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
+        CryptoError::MessageError {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
@@ -111,7 +109,7 @@ impl CryptoError {
     pub fn code(&self) -> u32 {
         match self {
             CryptoError::MessageError { .. } => 2,
-            CryptoError::HashErr { .. } => 3,
+            CryptoError::InvalidHashFormat { .. } => 3,
             CryptoError::SignatureErr { .. } => 4,
             CryptoError::PublicKeyErr { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
@@ -161,11 +159,9 @@ mod tests {
 
     #[test]
     fn hash_err_works() {
-        let error = CryptoError::hash_err("something went wrong with the hash");
+        let error = CryptoError::invalid_hash_format();
         match error {
-            CryptoError::HashErr { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the hash")
-            }
+            CryptoError::InvalidHashFormat { .. } => {}
             _ => panic!("wrong error type!"),
         }
     }
