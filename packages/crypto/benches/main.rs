@@ -1,6 +1,7 @@
 use criterion::{criterion_group, criterion_main, Criterion, PlottingBackend};
 use std::time::Duration;
 
+use english_numbers::convert_no_fmt;
 use hex_literal::hex;
 use serde::Deserialize;
 
@@ -121,10 +122,7 @@ fn bench_crypto(c: &mut Criterion) {
 
         for n in (1..=min(messages.len(), 10)).step_by(2) {
             group.bench_function(
-                format!(
-                    "ed25519_batch_verify_{}",
-                    n
-                ),
+                format!("ed25519_batch_verify_{}", convert_no_fmt(n as i64)),
                 |b| {
                     b.iter(|| {
                         assert!(ed25519_batch_verify(

@@ -205,6 +205,7 @@ dependencies = [
  "digest",
  "ed25519-zebra",
  "elliptic-curve",
+ "english-numbers",
  "hex",
  "hex-literal",
  "k256",
@@ -612,6 +613,12 @@ dependencies = [
  "subtle",
  "zeroize",
 ]
+
+[[package]]
+name = "english-numbers"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e4f5d6e192964d498b45abee72ca445e91909094bc8e8791259e82c2a0d1aa6"
 
 [[package]]
 name = "enumset"
