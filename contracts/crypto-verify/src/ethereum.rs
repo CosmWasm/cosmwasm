@@ -26,7 +26,7 @@ pub fn verify_transaction(
     rs.resize(32 + (32 - s.len()), 0); // Left pad s to 32 bytes
     rs.extend_from_slice(s);
 
-    let recovery = get_recovery_param(v, chain_id)?;
+    let recovery = get_recovery_param_with_chain_id(v, chain_id)?;
     let calculated_pubkey = api.secp256k1_recover_pubkey(&hash, &rs, recovery)?;
     let calculated_address = ethereum_address_raw(&calculated_pubkey)?;
     if from != calculated_address {
@@ -59,9 +59,29 @@ fn serialize_unsigned_transaction(
     stream.out().to_vec()
 }
 
-pub fn get_recovery_param(v: u64, chain_id: u64) -> StdResult<u8> {
-    // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-    // for how `v` is composed.
+/// Get the recovery param from the value `v` when no chain ID for replay protection is used.
+///
+/// This is needed for chain-agnostig aignatures like signed text.
+///
+/// See [EIP-155] for how `v` is composed.
+///
+/// [EIP-155]: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+pub fn get_recovery_param(v: u8) -> StdResult<u8> {
+    match v {
+        27 => Ok(0),
+        28 => Ok(1),
+        _ => Err(StdError::generic_err("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here."))
+    }
+}
+
+/// Get the recovery param from the value `v` when a chain ID for replay protection is used.
+///
+/// This is needed for chain-agnostig aignatures like signed text.
+///
+/// See [EIP-155] for how `v` is composed.
+///
+/// [EIP-155]: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
+pub fn get_recovery_param_with_chain_id(v: u64, chain_id: u64) -> StdResult<u8> {
     let recovery = v - chain_id * 2 - 35;
     match recovery {
         0 | 1 => Ok(recovery as u8),

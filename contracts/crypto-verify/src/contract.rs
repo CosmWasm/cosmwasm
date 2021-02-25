@@ -6,7 +6,9 @@ use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 use std::ops::Deref;
 
-use crate::ethereum::{decode_address, ethereum_address_raw, verify_transaction};
+use crate::ethereum::{
+    decode_address, ethereum_address_raw, get_recovery_param, verify_transaction,
+};
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
@@ -212,16 +214,6 @@ pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsRespon
     Ok(ListVerificationsResponse {
         verification_schemes,
     })
-}
-
-fn get_recovery_param(v: u8) -> StdResult<u8> {
-    // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-    // for how `v` is composed.
-    match v {
-        27 => Ok(0),
-        28 => Ok(1),
-        _ => Err(StdError::generic_err("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here."))
-    }
 }
 
 #[cfg(test)]
