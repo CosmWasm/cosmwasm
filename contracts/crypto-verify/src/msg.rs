@@ -1,6 +1,6 @@
 #![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
-use cosmwasm_std::{Binary, Deps, StdResult};
+use cosmwasm_std::{Binary, Deps, StdResult, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -36,6 +36,19 @@ pub enum QueryMsg {
         /// Signer address.
         /// This is matched case insensitive, so you can provide checksummed and non-checksummed addresses. Checksums are not validated.
         signer_address: String,
+    },
+    VerifyEthereumTransaction {
+        from: Binary,
+        to: Binary,
+        nonce: u64,
+        gas_limit: Uint128,
+        gas_price: Uint128,
+        value: Uint128,
+        data: Binary,
+        chain_id: u64,
+        r: Binary,
+        s: Binary,
+        v: u64,
     },
     /// Tendermint format (ed25519 verification scheme).
     VerifyTendermintSignature {

@@ -100,6 +100,15 @@ fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
     Ok(out)
 }
 
+pub fn to_20bytes(input: &[u8]) -> StdResult<[u8; 20]> {
+    if input.len() != 20 {
+        return Err(StdError::generic_err("Input not 20 bytes"));
+    }
+    let mut out = [0u8; 20];
+    out[..].clone_from_slice(input);
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,12 +1,12 @@
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response,
-    StdError, StdResult,
+    StdError, StdResult, Uint128,
 };
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 use std::ops::Deref;
 
-use crate::ethereum::ethereum_address;
+use crate::ethereum::{ethereum_address, to_20bytes, verify_transaction};
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
@@ -50,6 +50,21 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &message,
             &signature,
             &signer_address,
+        )?),
+        QueryMsg::VerifyEthereumTransaction {
+            from,
+            to,
+            nonce,
+            gas_limit,
+            gas_price,
+            value,
+            data,
+            chain_id,
+            r,
+            s,
+            v,
+        } => to_binary(&query_verify_ethereum_transaction(
+            deps, from, to, nonce, gas_limit, gas_price, value, data, chain_id, r, s, v,
         )?),
         QueryMsg::VerifyTendermintSignature {
             message,
@@ -126,6 +141,40 @@ pub fn query_verify_ethereum_text(
     }
 }
 
+pub fn query_verify_ethereum_transaction(
+    deps: Deps,
+    from: Binary,
+    to: Binary,
+    nonce: u64,
+    gas_limit: Uint128,
+    gas_price: Uint128,
+    value: Uint128,
+    data: Binary,
+    chain_id: u64,
+    r: Binary,
+    s: Binary,
+    v: u64,
+) -> StdResult<VerifyResponse> {
+    let from = to_20bytes(&from)?;
+    let to = to_20bytes(&to)?;
+
+    let verifies = verify_transaction(
+        deps.api,
+        from,
+        to,
+        nonce,
+        gas_limit.into(),
+        gas_price.into(),
+        value.into(),
+        &data,
+        chain_id,
+        &r,
+        &s,
+        v,
+    )?;
+    Ok(VerifyResponse { verifies })
+}
+
 pub fn query_verify_tendermint(
     deps: Deps,
     message: &[u8],
@@ -181,6 +230,7 @@ mod tests {
     use cosmwasm_std::{
         from_slice, Binary, OwnedDeps, RecoverPubkeyError, StdError, VerificationError,
     };
+    use hex_literal::hex;
 
     const CREATOR: &str = "creator";
 
@@ -358,6 +408,57 @@ mod tests {
             } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
+    }
+
+    #[test]
+    fn verify_ethereum_transaction_works() {
+        let deps = setup();
+
+        // curl -sS -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce"],"id":1}' -H "Content-type: application/json" https://rinkeby-light.eth.linkpool.io | jq .result
+        // {
+        //   "blockHash": "0x05ebd1bd99956537f49cfa1104682b3b3f9ff9249fa41a09931ce93368606c21",
+        //   "blockNumber": "0x37ef3e",
+        //   "from": "0x0a65766695a712af41b5cfecaad217b1a11cb22a",
+        //   "gas": "0x226c8",
+        //   "gasPrice": "0x3b9aca00",
+        //   "hash": "0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce",
+        //   "input": "0x536561726368207478207465737420302e36353930383639313733393634333335",
+        //   "nonce": "0xe1",
+        //   "to": "0xe137f5264b6b528244e1643a2d570b37660b7f14",
+        //   "transactionIndex": "0xb",
+        //   "value": "0x53177c",
+        //   "v": "0x2b",
+        //   "r": "0xb9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6",
+        //   "s": "0x573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac"
+        // }
+        let nonce = 0xe1;
+        let chain_id = 4; // Rinkeby, see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md#list-of-chain-ids
+        let from = hex!("0a65766695a712af41b5cfecaad217b1a11cb22a");
+        let to = hex!("e137f5264b6b528244e1643a2d570b37660b7f14");
+        let gas_limit = Uint128(0x226c8);
+        let gas_price = Uint128(0x3b9aca00);
+        let value = Uint128(0x53177c);
+        let data = hex!("536561726368207478207465737420302e36353930383639313733393634333335");
+        let r = hex!("b9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6");
+        let s = hex!("573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac");
+        let v = 0x2b;
+
+        let msg = QueryMsg::VerifyEthereumTransaction {
+            from: from.into(),
+            to: to.into(),
+            nonce,
+            gas_limit,
+            gas_price,
+            value,
+            data: data.into(),
+            chain_id,
+            r: r.into(),
+            s: s.into(),
+            v,
+        };
+        let raw = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+        assert_eq!(res, VerifyResponse { verifies: true });
     }
 
     #[test]
