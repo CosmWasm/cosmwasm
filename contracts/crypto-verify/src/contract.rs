@@ -1,14 +1,17 @@
 use cosmwasm_std::{
     entry_point, to_binary, Binary, Deps, DepsMut, Env, MessageInfo, QueryResponse, Response,
-    StdError, StdResult,
+    StdError, StdResult, Uint128,
 };
 use sha2::{Digest, Sha256};
 use sha3::Keccak256;
+use std::ops::Deref;
 
+use crate::ethereum::{
+    decode_address, ethereum_address_raw, get_recovery_param, verify_transaction,
+};
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
-use std::ops::Deref;
 
 pub const VERSION: &str = "crypto-verify-v2";
 
@@ -49,6 +52,21 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
             &message,
             &signature,
             &signer_address,
+        )?),
+        QueryMsg::VerifyEthereumTransaction {
+            from,
+            to,
+            nonce,
+            gas_limit,
+            gas_price,
+            value,
+            data,
+            chain_id,
+            r,
+            s,
+            v,
+        } => to_binary(&query_verify_ethereum_transaction(
+            deps, from, to, nonce, gas_limit, gas_price, value, data, chain_id, r, s, v,
         )?),
         QueryMsg::VerifyTendermintSignature {
             message,
@@ -99,6 +117,8 @@ pub fn query_verify_ethereum_text(
     signature: &[u8],
     signer_address: &str,
 ) -> StdResult<VerifyResponse> {
+    let signer_address = decode_address(signer_address)?;
+
     // Hashing
     let mut hasher = Keccak256::new();
     hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
@@ -114,8 +134,8 @@ pub fn query_verify_ethereum_text(
 
     // Verification
     let calculated_pubkey = deps.api.secp256k1_recover_pubkey(&hash, rs, recovery)?;
-    let calculated_address = ethereum_address(&calculated_pubkey)?;
-    if signer_address.to_ascii_lowercase() != calculated_address {
+    let calculated_address = ethereum_address_raw(&calculated_pubkey)?;
+    if signer_address != calculated_address {
         return Ok(VerifyResponse { verifies: false });
     }
     let result = deps.api.secp256k1_verify(&hash, rs, &calculated_pubkey);
@@ -123,6 +143,41 @@ pub fn query_verify_ethereum_text(
         Ok(verifies) => Ok(VerifyResponse { verifies }),
         Err(err) => Err(err.into()),
     }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn query_verify_ethereum_transaction(
+    deps: Deps,
+    from: String,
+    to: String,
+    nonce: u64,
+    gas_limit: Uint128,
+    gas_price: Uint128,
+    value: Uint128,
+    data: Binary,
+    chain_id: u64,
+    r: Binary,
+    s: Binary,
+    v: u64,
+) -> StdResult<VerifyResponse> {
+    let from = decode_address(&from)?;
+    let to = decode_address(&to)?;
+
+    let verifies = verify_transaction(
+        deps.api,
+        from,
+        to,
+        nonce,
+        gas_limit.into(),
+        gas_price.into(),
+        value.into(),
+        &data,
+        chain_id,
+        &r,
+        &s,
+        v,
+    )?;
+    Ok(VerifyResponse { verifies })
 }
 
 pub fn query_verify_tendermint(
@@ -161,35 +216,6 @@ pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsRespon
     })
 }
 
-fn ethereum_address(pubkey: &[u8]) -> StdResult<String> {
-    let (tag, data) = match pubkey.split_first() {
-        Some(pair) => pair,
-        None => return Err(StdError::generic_err("Public key must not be empty")),
-    };
-    if *tag != 0x04 {
-        return Err(StdError::generic_err("Public key start with 0x04"));
-    }
-    if data.len() != 64 {
-        return Err(StdError::generic_err("Public key must be 65 bytes long"));
-    }
-
-    let hash = Keccak256::digest(data);
-    let mut out = String::with_capacity(42);
-    out.push_str("0x");
-    out.push_str(&hex::encode(&hash[hash.len() - 20..]));
-    Ok(out)
-}
-
-fn get_recovery_param(v: u8) -> StdResult<u8> {
-    // See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md
-    // for how `v` is composed.
-    match v {
-        27 => Ok(0),
-        28 => Ok(1),
-        _ => Err(StdError::generic_err("Values of v other than 27 and 28 not supported. Replay protection (EIP-155) cannot be used here."))
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -199,6 +225,7 @@ mod tests {
     use cosmwasm_std::{
         from_slice, Binary, OwnedDeps, RecoverPubkeyError, StdError, VerificationError,
     };
+    use hex_literal::hex;
 
     const CREATOR: &str = "creator";
 
@@ -376,6 +403,57 @@ mod tests {
             } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
+    }
+
+    #[test]
+    fn verify_ethereum_transaction_works() {
+        let deps = setup();
+
+        // curl -sS -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce"],"id":1}' -H "Content-type: application/json" https://rinkeby-light.eth.linkpool.io | jq .result
+        // {
+        //   "blockHash": "0x05ebd1bd99956537f49cfa1104682b3b3f9ff9249fa41a09931ce93368606c21",
+        //   "blockNumber": "0x37ef3e",
+        //   "from": "0x0a65766695a712af41b5cfecaad217b1a11cb22a",
+        //   "gas": "0x226c8",
+        //   "gasPrice": "0x3b9aca00",
+        //   "hash": "0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce",
+        //   "input": "0x536561726368207478207465737420302e36353930383639313733393634333335",
+        //   "nonce": "0xe1",
+        //   "to": "0xe137f5264b6b528244e1643a2d570b37660b7f14",
+        //   "transactionIndex": "0xb",
+        //   "value": "0x53177c",
+        //   "v": "0x2b",
+        //   "r": "0xb9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6",
+        //   "s": "0x573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac"
+        // }
+        let nonce = 0xe1;
+        let chain_id = 4; // Rinkeby, see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md#list-of-chain-ids
+        let from = "0x0a65766695a712af41b5cfecaad217b1a11cb22a";
+        let to = "0xe137f5264b6b528244e1643a2d570b37660b7f14";
+        let gas_limit = Uint128(0x226c8);
+        let gas_price = Uint128(0x3b9aca00);
+        let value = Uint128(0x53177c);
+        let data = hex!("536561726368207478207465737420302e36353930383639313733393634333335");
+        let r = hex!("b9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6");
+        let s = hex!("573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac");
+        let v = 0x2b;
+
+        let msg = QueryMsg::VerifyEthereumTransaction {
+            from: from.into(),
+            to: to.into(),
+            nonce,
+            gas_limit,
+            gas_price,
+            value,
+            data: data.into(),
+            chain_id,
+            r: r.into(),
+            s: s.into(),
+            v,
+        };
+        let raw = query(deps.as_ref(), mock_env(), msg).unwrap();
+        let res: VerifyResponse = from_slice(&raw).unwrap();
+        assert_eq!(res, VerifyResponse { verifies: true });
     }
 
     #[test]

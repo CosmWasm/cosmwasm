@@ -9,7 +9,8 @@ and this project adheres to
 ### Added
 
 - cosmwasm-crypto: Add `ed25519_batch_verify`, EdDSA ed25519 batch signature
-  verification scheme for Tendermint signatures and public keys formats. ([#788])
+  verification scheme for Tendermint signatures and public keys formats.
+  ([#788])
 - cosmwasm-crypto: Add `ed25519_verify`, EdDSA ed25519 signature verification
   scheme for Tendermint signature and public key formats. ([#771])
 - cosmwasm-crypto: New crypto-related crate. Add `secp256k1_verify`, ECDSA
@@ -55,6 +56,7 @@ and this project adheres to
 
 ### Changed
 
+- all: Drop support for Rust versions lower than 1.49.0.
 - all: The `query` enpoint is now optional. It is still highly recommended to
   expose it an almost any use case though.
 - all: Change the encoding of the key/value region of the `db_next` import to a

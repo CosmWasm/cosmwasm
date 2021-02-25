@@ -81,6 +81,73 @@
       }
     },
     {
+      "type": "object",
+      "required": [
+        "verify_ethereum_transaction"
+      ],
+      "properties": {
+        "verify_ethereum_transaction": {
+          "type": "object",
+          "required": [
+            "chain_id",
+            "data",
+            "from",
+            "gas_limit",
+            "gas_price",
+            "nonce",
+            "r",
+            "s",
+            "to",
+            "v",
+            "value"
+          ],
+          "properties": {
+            "chain_id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "data": {
+              "$ref": "#/definitions/Binary"
+            },
+            "from": {
+              "description": "Ethereum address in hex format (42 characters, starting with 0x)",
+              "type": "string"
+            },
+            "gas_limit": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "gas_price": {
+              "$ref": "#/definitions/Uint128"
+            },
+            "nonce": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "r": {
+              "$ref": "#/definitions/Binary"
+            },
+            "s": {
+              "$ref": "#/definitions/Binary"
+            },
+            "to": {
+              "description": "Ethereum address in hex format (42 characters, starting with 0x)",
+              "type": "string"
+            },
+            "v": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            },
+            "value": {
+              "$ref": "#/definitions/Uint128"
+            }
+          }
+        }
+      }
+    },
+    {
       "description": "Tendermint format (ed25519 verification scheme).",
       "type": "object",
       "required": [
@@ -179,6 +246,9 @@
   "definitions": {
     "Binary": {
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+      "type": "string"
+    },
+    "Uint128": {
       "type": "string"
     }
   }

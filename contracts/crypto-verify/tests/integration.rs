@@ -19,12 +19,12 @@
 //! 5. Anywhere you see query(deps.as_ref(), ...) you must replace it with query(&mut deps, ...)
 //! (Use cosmwasm_vm::testing::{init, handle, query}, instead of the contract variants).
 
+use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{
     init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
-
-use cosmwasm_std::{Binary, Response};
+use hex_literal::hex;
 
 use crypto_verify::msg::{InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
 
@@ -195,6 +195,57 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
     let result = query(&mut deps, mock_env(), verify_msg);
     let msg = result.unwrap_err();
     assert_eq!(msg, "Recover pubkey error: Unknown error: 10");
+}
+
+#[test]
+fn verify_ethereum_transaction_works() {
+    let mut deps = setup();
+
+    // curl -sS -X POST --data '{"jsonrpc":"2.0","method":"eth_getTransactionByHash","params":["0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce"],"id":1}' -H "Content-type: application/json" https://rinkeby-light.eth.linkpool.io | jq .result
+    // {
+    //   "blockHash": "0x05ebd1bd99956537f49cfa1104682b3b3f9ff9249fa41a09931ce93368606c21",
+    //   "blockNumber": "0x37ef3e",
+    //   "from": "0x0a65766695a712af41b5cfecaad217b1a11cb22a",
+    //   "gas": "0x226c8",
+    //   "gasPrice": "0x3b9aca00",
+    //   "hash": "0x3b87faa3410f33284124a6898fac1001673f0f7c3682d18f55bdff0031cce9ce",
+    //   "input": "0x536561726368207478207465737420302e36353930383639313733393634333335",
+    //   "nonce": "0xe1",
+    //   "to": "0xe137f5264b6b528244e1643a2d570b37660b7f14",
+    //   "transactionIndex": "0xb",
+    //   "value": "0x53177c",
+    //   "v": "0x2b",
+    //   "r": "0xb9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6",
+    //   "s": "0x573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac"
+    // }
+    let nonce = 0xe1;
+    let chain_id = 4; // Rinkeby, see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md#list-of-chain-ids
+    let from = "0x0a65766695a712af41b5cfecaad217b1a11cb22a";
+    let to = "0xe137f5264b6b528244e1643a2d570b37660b7f14";
+    let gas_limit = Uint128(0x226c8);
+    let gas_price = Uint128(0x3b9aca00);
+    let value = Uint128(0x53177c);
+    let data = hex!("536561726368207478207465737420302e36353930383639313733393634333335");
+    let r = hex!("b9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6");
+    let s = hex!("573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac");
+    let v = 0x2b;
+
+    let msg = QueryMsg::VerifyEthereumTransaction {
+        from: from.into(),
+        to: to.into(),
+        nonce,
+        gas_limit,
+        gas_price,
+        value,
+        data: data.into(),
+        chain_id,
+        r: r.into(),
+        s: s.into(),
+        v,
+    };
+    let raw = query(&mut deps, mock_env(), msg).unwrap();
+    let res: VerifyResponse = from_slice(&raw).unwrap();
+    assert_eq!(res, VerifyResponse { verifies: true });
 }
 
 #[test]
