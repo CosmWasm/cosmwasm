@@ -220,8 +220,8 @@ fn verify_ethereum_transaction_works() {
     // }
     let nonce = 0xe1;
     let chain_id = 4; // Rinkeby, see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md#list-of-chain-ids
-    let from = hex!("0a65766695a712af41b5cfecaad217b1a11cb22a");
-    let to = hex!("e137f5264b6b528244e1643a2d570b37660b7f14");
+    let from = "0x0a65766695a712af41b5cfecaad217b1a11cb22a";
+    let to = "0xe137f5264b6b528244e1643a2d570b37660b7f14";
     let gas_limit = Uint128(0x226c8);
     let gas_price = Uint128(0x3b9aca00);
     let value = Uint128(0x53177c);

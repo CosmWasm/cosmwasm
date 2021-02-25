@@ -100,12 +100,19 @@ fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
     Ok(out)
 }
 
-pub fn to_20bytes(input: &[u8]) -> StdResult<[u8; 20]> {
-    if input.len() != 20 {
-        return Err(StdError::generic_err("Input not 20 bytes"));
+pub fn decode_address(input: &str) -> StdResult<[u8; 20]> {
+    if input.len() != 42 {
+        return Err(StdError::generic_err(
+            "Ethereum adddress must be 42 characters long",
+        ));
     }
+    if !input.starts_with("0x") {
+        return Err(StdError::generic_err("Ethereum adddress must start wit 0x"));
+    }
+    let data = hex::decode(&input[2..]).map_err(|_| StdError::generic_err("hex decoding error"))?;
+    debug_assert_eq!(data.len(), 20);
     let mut out = [0u8; 20];
-    out[..].clone_from_slice(input);
+    out[..].copy_from_slice(&data);
     Ok(out)
 }
 

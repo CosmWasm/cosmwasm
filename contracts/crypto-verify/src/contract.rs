@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 use std::ops::Deref;
 
-use crate::ethereum::{ethereum_address, to_20bytes, verify_transaction};
+use crate::ethereum::{decode_address, ethereum_address, verify_transaction};
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
@@ -143,8 +143,8 @@ pub fn query_verify_ethereum_text(
 
 pub fn query_verify_ethereum_transaction(
     deps: Deps,
-    from: Binary,
-    to: Binary,
+    from: String,
+    to: String,
     nonce: u64,
     gas_limit: Uint128,
     gas_price: Uint128,
@@ -155,8 +155,8 @@ pub fn query_verify_ethereum_transaction(
     s: Binary,
     v: u64,
 ) -> StdResult<VerifyResponse> {
-    let from = to_20bytes(&from)?;
-    let to = to_20bytes(&to)?;
+    let from = decode_address(&from)?;
+    let to = decode_address(&to)?;
 
     let verifies = verify_transaction(
         deps.api,
@@ -433,8 +433,8 @@ mod tests {
         // }
         let nonce = 0xe1;
         let chain_id = 4; // Rinkeby, see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md#list-of-chain-ids
-        let from = hex!("0a65766695a712af41b5cfecaad217b1a11cb22a");
-        let to = hex!("e137f5264b6b528244e1643a2d570b37660b7f14");
+        let from = "0x0a65766695a712af41b5cfecaad217b1a11cb22a";
+        let to = "0xe137f5264b6b528244e1643a2d570b37660b7f14";
         let gas_limit = Uint128(0x226c8);
         let gas_price = Uint128(0x3b9aca00);
         let value = Uint128(0x53177c);

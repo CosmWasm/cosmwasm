@@ -38,8 +38,10 @@ pub enum QueryMsg {
         signer_address: String,
     },
     VerifyEthereumTransaction {
-        from: Binary,
-        to: Binary,
+        /// Ethereum address in hex format (42 characters, starting with 0x)
+        from: String,
+        /// Ethereum address in hex format (42 characters, starting with 0x)
+        to: String,
         nonce: u64,
         gas_limit: Uint128,
         gas_price: Uint128,
