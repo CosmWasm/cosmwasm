@@ -1,7 +1,5 @@
-use std::borrow::Cow;
-
 use cosmwasm_std::{Api, StdError, StdResult};
-use ethereum_transaction::{SignedTransaction, Transaction};
+use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
 
 #[allow(clippy::too_many_arguments)]
@@ -13,14 +11,14 @@ pub fn verify_transaction<A: Api>(
     gas: u128,
     gas_price: u128,
     value: u128,
-    data: Vec<u8>,
+    data: &[u8],
     chain_id: u64,
     r: &[u8],
     s: &[u8],
     v: u64,
 ) -> StdResult<bool> {
     let sign_bytes =
-        serialize_unsigned_transaction(from, to, nonce, gas, gas_price, value, data, chain_id);
+        serialize_unsigned_transaction(to, nonce, gas, gas_price, value, data, chain_id);
     let hash = Keccak256::digest(&sign_bytes);
     let mut rs: Vec<u8> = Vec::with_capacity(64);
     rs.resize(32 - r.len(), 0); // Left pad r to 32 bytes
@@ -38,34 +36,27 @@ pub fn verify_transaction<A: Api>(
     Ok(valid)
 }
 
-#[allow(clippy::too_many_arguments)]
 fn serialize_unsigned_transaction(
-    from: [u8; 20],
     to: [u8; 20],
     nonce: u128,
-    gas: u128,
+    gas_limit: u128,
     gas_price: u128,
     value: u128,
-    data: Vec<u8>,
+    data: &[u8],
     chain_id: u64,
 ) -> Vec<u8> {
-    let unsigned = Transaction {
-        from: from.into(),
-        to: Some(to.into()),
-        nonce: nonce.into(),
-        gas: gas.into(),
-        gas_price: gas_price.into(),
-        value: value.into(),
-        data: data.into(),
-    };
-
-    SignedTransaction {
-        transaction: Cow::Owned(unsigned),
-        v: chain_id,
-        r: 0.into(),
-        s: 0.into(),
-    }
-    .to_rlp()
+    let mut stream = RlpStream::new();
+    stream.begin_list(9);
+    stream.append(&nonce);
+    stream.append(&gas_price);
+    stream.append(&gas_limit);
+    stream.append(&to.as_ref());
+    stream.append(&value);
+    stream.append(&data);
+    stream.append(&chain_id);
+    stream.append(&Vec::<u8>::new()); // empty r
+    stream.append(&Vec::<u8>::new()); // empty s
+    stream.out().to_vec()
 }
 
 pub fn get_recovery_param(v: u64, chain_id: u64) -> StdResult<u8> {
@@ -148,18 +139,7 @@ mod tests {
 
         let api = MockApi::default();
         let valid = verify_transaction(
-            api,
-            from,
-            to,
-            nonce,
-            gas_limit,
-            gas_price,
-            value,
-            data.to_vec(),
-            chain_id,
-            &r,
-            &s,
-            v,
+            api, from, to, nonce, gas_limit, gas_price, value, &data, chain_id, &r, &s, v,
         )
         .unwrap();
         assert_eq!(valid, true);
@@ -170,15 +150,14 @@ mod tests {
         // Test data from https://github.com/iov-one/iov-core/blob/v2.5.0/packages/iov-ethereum/src/serialization.spec.ts#L78-L93
         let nonce = 26;
         let chain_id = 5777;
-        let from = hex!("9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f");
+        let _from = hex!("9d8a62f656a8d1615c1294fd71e9cfb3e4855a4f");
         let to = hex!("43aa18faae961c23715735682dc75662d90f4dde");
         let gas_limit = 21000;
         let gas_price = 20000000000;
         let value = 20000000000000000000;
         let data = Vec::default();
-        let bytes_to_sign = serialize_unsigned_transaction(
-            from, to, nonce, gas_limit, gas_price, value, data, chain_id,
-        );
+        let bytes_to_sign =
+            serialize_unsigned_transaction(to, nonce, gas_limit, gas_price, value, &data, chain_id);
         assert_eq!(hex::encode(bytes_to_sign), "ef1a8504a817c8008252089443aa18faae961c23715735682dc75662d90f4dde8901158e460913d00000808216918080");
     }
 }
