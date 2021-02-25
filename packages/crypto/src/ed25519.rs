@@ -145,7 +145,7 @@ pub fn ed25519_batch_verify(
     }
 }
 
-/// Error raised when signature is not 64 bytes long (32 bytes r, 32 bytes s)
+/// Error raised when signature is not 64 bytes long
 struct InvalidEd25519SignatureFormat;
 
 impl From<InvalidEd25519SignatureFormat> for CryptoError {
