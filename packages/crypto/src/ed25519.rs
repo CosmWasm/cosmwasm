@@ -1,6 +1,7 @@
 use ed25519_zebra as ed25519;
 use rand_core::OsRng;
 use std::convert::TryFrom;
+use std::convert::TryInto;
 
 use crate::errors::{CryptoError, CryptoResult};
 
@@ -154,12 +155,7 @@ impl From<InvalidEd25519SignatureFormat> for CryptoError {
 }
 
 fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidEd25519SignatureFormat> {
-    if data.len() != 64 {
-        return Err(InvalidEd25519SignatureFormat);
-    }
-    let mut out = [0u8; 64];
-    out[..].copy_from_slice(&data[..]);
-    Ok(out)
+    data.try_into().map_err(|_| InvalidEd25519SignatureFormat)
 }
 
 struct MessageTooLong {

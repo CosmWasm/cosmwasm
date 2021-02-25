@@ -5,6 +5,7 @@ use k256::{
     ecdsa::{Signature, VerifyingKey},                   // type aliases
     elliptic_curve::sec1::ToEncodedPoint,
 };
+use std::convert::TryInto;
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
@@ -131,12 +132,7 @@ impl From<InvalidSecp256k1HashFormat> for CryptoError {
 }
 
 fn read_hash(data: &[u8]) -> Result<[u8; 32], InvalidSecp256k1HashFormat> {
-    if data.len() != 32 {
-        return Err(InvalidSecp256k1HashFormat);
-    }
-    let mut out = [0u8; 32];
-    out[..].copy_from_slice(&data[..]);
-    Ok(out)
+    data.try_into().map_err(|_| InvalidSecp256k1HashFormat)
 }
 
 /// Error raised when signature is not 64 bytes long (32 bytes r, 32 bytes s)
@@ -149,12 +145,7 @@ impl From<InvalidSecp256k1SignatureFormat> for CryptoError {
 }
 
 fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidSecp256k1SignatureFormat> {
-    if data.len() != 64 {
-        return Err(InvalidSecp256k1SignatureFormat);
-    }
-    let mut out = [0u8; 64];
-    out[..].copy_from_slice(&data[..]);
-    Ok(out)
+    data.try_into().map_err(|_| InvalidSecp256k1SignatureFormat)
 }
 
 #[cfg(test)]
