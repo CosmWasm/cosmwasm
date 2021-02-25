@@ -23,7 +23,7 @@ workflows:
           requires:
             - package_vm
             - package_vm_cranelift
-            - package_crypto
+            - package_crypto_verify
           filters:
             branches:
               only:
