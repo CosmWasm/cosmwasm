@@ -1,6 +1,7 @@
 use cosmwasm_std::{Api, StdError, StdResult};
 use rlp::RlpStream;
 use sha3::{Digest, Keccak256};
+use std::convert::TryInto;
 
 #[allow(clippy::too_many_arguments)]
 pub fn verify_transaction(
@@ -108,9 +109,7 @@ pub fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
     }
 
     let hash = Keccak256::digest(data);
-    let mut out = [0u8; 20];
-    out[..].copy_from_slice(&hash[hash.len() - 20..]);
-    Ok(out)
+    Ok(hash[hash.len() - 20..].try_into().unwrap())
 }
 
 pub fn decode_address(input: &str) -> StdResult<[u8; 20]> {
@@ -123,10 +122,7 @@ pub fn decode_address(input: &str) -> StdResult<[u8; 20]> {
         return Err(StdError::generic_err("Ethereum address must start wit 0x"));
     }
     let data = hex::decode(&input[2..]).map_err(|_| StdError::generic_err("hex decoding error"))?;
-    debug_assert_eq!(data.len(), 20);
-    let mut out = [0u8; 20];
-    out[..].copy_from_slice(&data);
-    Ok(out)
+    Ok(data.try_into().unwrap())
 }
 
 #[cfg(test)]
