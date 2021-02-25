@@ -4,6 +4,7 @@ workflows:
   test:
     # Keep those job names in sync with .mergify.yml
     jobs:
+      - package_crypto
       - package_schema
       - package_std
       - package_storage
@@ -23,7 +24,7 @@ workflows:
           requires:
             - package_vm
             - package_vm_cranelift
-            - package_crypto_verify
+            - package_crypto
           filters:
             branches:
               only:
@@ -47,6 +48,33 @@ workflows:
               ignore: /.*/
 
 jobs:
+  package_crypto:
+    docker:
+      - image: rust:1.47.0
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_crypto-rust:1.47.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/crypto
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/crypto
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_crypto-rust:1.47.0-{{ checksum "Cargo.lock" }}
+
   package_schema:
     docker:
       - image: rust:1.49.0
