@@ -211,7 +211,7 @@ impl Api for ExternalApi {
             2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
             3 => Err(VerificationError::InvalidHashFormat),
             4 => Err(VerificationError::InvalidSignatureFormat),
-            5 => Err(VerificationError::PublicKeyErr),
+            5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
@@ -265,7 +265,7 @@ impl Api for ExternalApi {
             2 => Err(VerificationError::MessageTooLong),
             3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
             4 => Err(VerificationError::InvalidSignatureFormat),
-            5 => Err(VerificationError::PublicKeyErr),
+            5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
@@ -297,7 +297,7 @@ impl Api for ExternalApi {
             2 => Err(VerificationError::MessageTooLong),
             3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
             4 => Err(VerificationError::InvalidSignatureFormat),
-            5 => Err(VerificationError::PublicKeyErr),
+            5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }

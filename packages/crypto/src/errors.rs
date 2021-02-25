@@ -24,6 +24,11 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Invalid public key format")]
+    InvalidPubkeyFormat {
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Invalid signature format")]
     InvalidSignatureFormat {
         #[cfg(feature = "backtraces")]
@@ -33,12 +38,6 @@ pub enum CryptoError {
     MessageTooLong {
         limit: usize,
         actual: usize,
-        #[cfg(feature = "backtraces")]
-        backtrace: Backtrace,
-    },
-    #[error("Public key error: {msg}")]
-    PublicKeyErr {
-        msg: String,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -73,6 +72,13 @@ impl CryptoError {
         }
     }
 
+    pub fn invalid_pubkey_format() -> Self {
+        CryptoError::InvalidPubkeyFormat {
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
     pub fn invalid_signature_format() -> Self {
         CryptoError::InvalidSignatureFormat {
             #[cfg(feature = "backtraces")]
@@ -84,14 +90,6 @@ impl CryptoError {
         CryptoError::MessageTooLong {
             limit,
             actual,
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
-        }
-    }
-
-    pub fn pubkey_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::PublicKeyErr {
-            msg: msg.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -111,7 +109,7 @@ impl CryptoError {
             CryptoError::MessageTooLong { .. } => 2,
             CryptoError::InvalidHashFormat { .. } => 3,
             CryptoError::InvalidSignatureFormat { .. } => 4,
-            CryptoError::PublicKeyErr { .. } => 5,
+            CryptoError::InvalidPubkeyFormat { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::BatchErr { .. } => 7,
             CryptoError::GenericErr { .. } => 10,
@@ -177,12 +175,10 @@ mod tests {
     }
 
     #[test]
-    fn pubkey_err_works() {
-        let error = CryptoError::pubkey_err("something went wrong with the pubkey");
+    fn invalid_pubkey_format_works() {
+        let error = CryptoError::invalid_pubkey_format();
         match error {
-            CryptoError::PublicKeyErr { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the pubkey")
-            }
+            CryptoError::InvalidPubkeyFormat { .. } => {}
             _ => panic!("wrong error type!"),
         }
     }

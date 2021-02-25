@@ -32,18 +32,10 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
     // Validation
     check_message_length(message)?;
     let signature = read_signature(signature)?;
-    let pubkey_len = public_key.len();
-    if pubkey_len == 0 {
-        return Err(CryptoError::pubkey_err("empty"));
-    }
-    if pubkey_len != EDDSA_PUBKEY_LEN {
-        return Err(CryptoError::pubkey_err(format!(
-            "wrong / unsupported length: {}",
-            pubkey_len,
-        )));
-    }
+    let pubkey = read_pubkey(public_key)?;
+
     // Deserialization
-    let public_key = ed25519::VerificationKey::try_from(public_key)
+    let public_key = ed25519::VerificationKey::try_from(pubkey)
         .map_err(|err| CryptoError::generic_err(err.to_string()))?;
 
     // Verification
@@ -112,30 +104,16 @@ pub fn ed25519_batch_verify(
 
     let mut batch = ed25519::batch::Verifier::new();
 
-    for (((i, &message), &signature), &public_key) in
+    for (((_i, &message), &signature), &public_key) in
         (1..).zip(&messages).zip(signatures).zip(&public_keys)
     {
         // Validation
         check_message_length(message)?;
         let signature = read_signature(signature)?;
-        let pubkey_len = public_key.len();
-        if pubkey_len == 0 {
-            return Err(CryptoError::pubkey_err(format!("public key {}: empty", i)));
-        }
-        if pubkey_len != EDDSA_PUBKEY_LEN {
-            return Err(CryptoError::pubkey_err(format!(
-                "public key {}: wrong / unsupported length: {}",
-                i, pubkey_len,
-            )));
-        }
-
-        // Deserialization
-        let public_key = ed25519::VerificationKey::try_from(public_key).map_err(|err| {
-            CryptoError::generic_err(format!("public key {}: {}", i, err.to_string()))
-        })?;
+        let pubkey = read_pubkey(public_key)?;
 
         // Enqueing
-        batch.queue((public_key.into(), signature.into(), message));
+        batch.queue((pubkey.into(), signature.into(), message));
     }
 
     // Batch verification
@@ -156,6 +134,19 @@ impl From<InvalidEd25519SignatureFormat> for CryptoError {
 
 fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidEd25519SignatureFormat> {
     data.try_into().map_err(|_| InvalidEd25519SignatureFormat)
+}
+
+/// Error raised when pubkey is not 32 bytes long
+struct InvalidEd25519PubkeyFormat;
+
+impl From<InvalidEd25519PubkeyFormat> for CryptoError {
+    fn from(_original: InvalidEd25519PubkeyFormat) -> Self {
+        CryptoError::invalid_pubkey_format()
+    }
+}
+
+fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
+    data.try_into().map_err(|_| InvalidEd25519PubkeyFormat)
 }
 
 struct MessageTooLong {

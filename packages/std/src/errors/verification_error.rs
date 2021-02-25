@@ -18,8 +18,8 @@ pub enum VerificationError {
     InvalidHashFormat,
     #[error("Invalid signature format")]
     InvalidSignatureFormat,
-    #[error("Public key error")]
-    PublicKeyErr,
+    #[error("Invalid pubkic key format")]
+    InvalidPubkeyFormat,
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
@@ -49,10 +49,12 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::InvalidHashFormat => {
                 matches!(rhs, VerificationError::InvalidHashFormat)
             }
+            VerificationError::InvalidPubkeyFormat => {
+                matches!(rhs, VerificationError::InvalidPubkeyFormat)
+            }
             VerificationError::InvalidSignatureFormat => {
                 matches!(rhs, VerificationError::InvalidSignatureFormat)
             }
-            VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
             VerificationError::InvalidRecoveryParam => {
                 matches!(rhs, VerificationError::InvalidRecoveryParam)
             }
@@ -77,8 +79,8 @@ impl From<CryptoError> for VerificationError {
         match original {
             CryptoError::MessageTooLong { .. } => VerificationError::MessageTooLong,
             CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
+            CryptoError::InvalidPubkeyFormat { .. } => VerificationError::InvalidPubkeyFormat,
             CryptoError::InvalidSignatureFormat { .. } => VerificationError::InvalidSignatureFormat,
-            CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => VerificationError::BatchErr,

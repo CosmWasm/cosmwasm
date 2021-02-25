@@ -303,8 +303,8 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::InvalidHashFormat { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
-            | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
@@ -343,8 +343,8 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
             CryptoError::BatchErr { .. }
-            | CryptoError::MessageTooLong { .. }
-            | CryptoError::PublicKeyErr { .. } => {
+            | CryptoError::InvalidPubkeyFormat { .. }
+            | CryptoError::MessageTooLong { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -367,8 +367,8 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::MessageTooLong { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
-            | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. }
             | CryptoError::InvalidHashFormat { .. }
@@ -414,8 +414,8 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
         |err| match err {
             CryptoError::BatchErr { .. }
             | CryptoError::MessageTooLong { .. }
+            | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
-            | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::InvalidHashFormat { .. } | CryptoError::InvalidRecoveryParam { .. } => {
                 panic!("Error must not happen for this call")
@@ -1282,7 +1282,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            5 // mapped PublicKeyError
+            5 // mapped InvalidPubkeyFormat
         )
     }
 
@@ -1346,7 +1346,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            5 // mapped PublicKeyErr
+            5 // mapped InvalidPubkeyFormat
         )
     }
 
@@ -1364,7 +1364,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            5 // mapped PublicKeyError
+            5 // mapped InvalidPubkeyFormat
         )
     }
 
@@ -1594,7 +1594,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            5 // mapped PublicKeyErr
+            5 // mapped InvalidPubkeyFormat
         )
     }
 
@@ -1612,7 +1612,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            5 // mapped PublicKeyError
+            5 // mapped InvalidPubkeyFormat
         )
     }
 

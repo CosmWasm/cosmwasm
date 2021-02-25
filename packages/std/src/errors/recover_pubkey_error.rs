@@ -64,10 +64,10 @@ impl From<CryptoError> for RecoverPubkeyError {
         match original {
             CryptoError::MessageTooLong { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidHashFormat { .. } => RecoverPubkeyError::InvalidHashFormat,
+            CryptoError::InvalidPubkeyFormat { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidSignatureFormat { .. } => {
                 RecoverPubkeyError::InvalidSignatureFormat
             }
-            CryptoError::PublicKeyErr { .. } => panic!("Conversion not supported"),
             CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => panic!("Conversion not supported"),
