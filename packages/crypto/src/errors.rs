@@ -24,14 +24,13 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Message error: {msg}")]
-    MessageError {
-        msg: String,
+    #[error("Invalid signature format")]
+    InvalidSignatureFormat {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Signature error: {msg}")]
-    SignatureErr {
+    #[error("Message error: {msg}")]
+    MessageError {
         msg: String,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
@@ -73,16 +72,15 @@ impl CryptoError {
         }
     }
 
-    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::MessageError {
-            msg: msg.into(),
+    pub fn invalid_signature_format() -> Self {
+        CryptoError::InvalidSignatureFormat {
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
     }
 
-    pub fn sig_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::SignatureErr {
+    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
+        CryptoError::MessageError {
             msg: msg.into(),
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
@@ -110,7 +108,7 @@ impl CryptoError {
         match self {
             CryptoError::MessageError { .. } => 2,
             CryptoError::InvalidHashFormat { .. } => 3,
-            CryptoError::SignatureErr { .. } => 4,
+            CryptoError::InvalidSignatureFormat { .. } => 4,
             CryptoError::PublicKeyErr { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::BatchErr { .. } => 7,
@@ -158,7 +156,7 @@ mod tests {
     }
 
     #[test]
-    fn hash_err_works() {
+    fn invalid_hash_format_works() {
         let error = CryptoError::invalid_hash_format();
         match error {
             CryptoError::InvalidHashFormat { .. } => {}
@@ -167,12 +165,10 @@ mod tests {
     }
 
     #[test]
-    fn sig_err_works() {
-        let error = CryptoError::sig_err("something went wrong with the sig");
+    fn invalid_signature_format_works() {
+        let error = CryptoError::invalid_signature_format();
         match error {
-            CryptoError::SignatureErr { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the sig")
-            }
+            CryptoError::InvalidSignatureFormat { .. } => {}
             _ => panic!("wrong error type!"),
         }
     }

@@ -210,7 +210,7 @@ impl Api for ExternalApi {
             1 => Ok(false),
             2 => Err(VerificationError::MessageErr), // shouldn't happen
             3 => Err(VerificationError::InvalidHashFormat),
-            4 => Err(VerificationError::SignatureErr),
+            4 => Err(VerificationError::InvalidSignatureFormat),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
@@ -238,7 +238,7 @@ impl Api for ExternalApi {
                 Ok(pubkey)
             }
             3 => Err(RecoverPubkeyError::InvalidHashFormat),
-            4 => Err(RecoverPubkeyError::SignatureErr),
+            4 => Err(RecoverPubkeyError::InvalidSignatureFormat),
             6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
             error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
         }
@@ -263,7 +263,7 @@ impl Api for ExternalApi {
             1 => Ok(false),
             2 => Err(VerificationError::MessageErr),
             3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
-            4 => Err(VerificationError::SignatureErr),
+            4 => Err(VerificationError::InvalidSignatureFormat),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
@@ -295,7 +295,7 @@ impl Api for ExternalApi {
             1 => Ok(false),
             2 => Err(VerificationError::MessageErr),
             3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
-            4 => Err(VerificationError::SignatureErr),
+            4 => Err(VerificationError::InvalidSignatureFormat),
             5 => Err(VerificationError::PublicKeyErr),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),

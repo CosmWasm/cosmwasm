@@ -7,7 +7,7 @@ use cosmwasm_crypto::{
 };
 use cosmwasm_crypto::{
     BATCH_MAX_LEN, ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN,
-    EDDSA_SIGNATURE_LEN, MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
+    MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
 };
 
 #[cfg(feature = "iterator")]
@@ -45,6 +45,8 @@ const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
+/// Length of a serialized Ed25519  signature
+const MAX_LENGTH_ED25519_SIGNATURE: usize = 64;
 
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
@@ -302,7 +304,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
         |err| match err {
             CryptoError::MessageError { .. }
             | CryptoError::InvalidHashFormat { .. }
-            | CryptoError::SignatureErr { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
@@ -337,7 +339,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
         Err(err) => match err {
             CryptoError::MessageError { .. }
             | CryptoError::InvalidHashFormat { .. }
-            | CryptoError::SignatureErr { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
             CryptoError::BatchErr { .. } | CryptoError::PublicKeyErr { .. } => {
@@ -354,7 +356,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
     let message = read_region(&env.memory(), message_ptr, MESSAGE_MAX_LEN)?;
-    let signature = read_region(&env.memory(), signature_ptr, EDDSA_SIGNATURE_LEN)?;
+    let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_ED25519_SIGNATURE)?;
     let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let result = ed25519_verify(&message, &signature, &pubkey);
@@ -364,7 +366,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
         |err| match err {
             CryptoError::MessageError { .. }
             | CryptoError::InvalidHashFormat { .. }
-            | CryptoError::SignatureErr { .. }
+            | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
@@ -389,7 +391,7 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     let signatures = read_region(
         &env.memory(),
         signatures_ptr,
-        (EDDSA_SIGNATURE_LEN + 4) * BATCH_MAX_LEN,
+        (MAX_LENGTH_ED25519_SIGNATURE + 4) * BATCH_MAX_LEN,
     )?;
     let public_keys = read_region(
         &env.memory(),
@@ -1245,7 +1247,7 @@ mod tests {
 
         assert_eq!(
             do_secp256k1_verify::<MA, MS, MQ>(&env, hash_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            4 // mapped SignatureErr
+            4 // mapped InvalidSignatureFormat
         )
     }
 
@@ -1492,7 +1494,7 @@ mod tests {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
                 ..
-            } => assert_eq!(length, EDDSA_SIGNATURE_LEN + 1),
+            } => assert_eq!(length, MAX_LENGTH_ED25519_SIGNATURE + 1),
             e => panic!("Unexpected error: {:?}", e),
         }
     }
@@ -1513,7 +1515,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            4 // mapped SignatureErr
+            4 // mapped InvalidSignatureFormat
         )
     }
 
@@ -1606,7 +1608,7 @@ mod tests {
 
         let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let msg_ptr = write_data(&env, &msg);
-        let sig = vec![0x22; EDDSA_SIGNATURE_LEN];
+        let sig = vec![0x22; MAX_LENGTH_ED25519_SIGNATURE];
         let sig_ptr = write_data(&env, &sig);
         let pubkey = vec![0x04; EDDSA_PUBKEY_LEN];
         let pubkey_ptr = write_data(&env, &pubkey);

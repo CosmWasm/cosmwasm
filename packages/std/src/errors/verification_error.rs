@@ -16,8 +16,8 @@ pub enum VerificationError {
     MessageErr,
     #[error("Invalid hash format")]
     InvalidHashFormat,
-    #[error("Signature error")]
-    SignatureErr,
+    #[error("Invalid signature format")]
+    InvalidSignatureFormat,
     #[error("Public key error")]
     PublicKeyErr,
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
@@ -49,7 +49,9 @@ impl PartialEq<VerificationError> for VerificationError {
             VerificationError::InvalidHashFormat => {
                 matches!(rhs, VerificationError::InvalidHashFormat)
             }
-            VerificationError::SignatureErr => matches!(rhs, VerificationError::SignatureErr),
+            VerificationError::InvalidSignatureFormat => {
+                matches!(rhs, VerificationError::InvalidSignatureFormat)
+            }
             VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
             VerificationError::InvalidRecoveryParam => {
                 matches!(rhs, VerificationError::InvalidRecoveryParam)
@@ -75,7 +77,7 @@ impl From<CryptoError> for VerificationError {
         match original {
             CryptoError::MessageError { .. } => VerificationError::MessageErr,
             CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
-            CryptoError::SignatureErr { .. } => VerificationError::SignatureErr,
+            CryptoError::InvalidSignatureFormat { .. } => VerificationError::InvalidSignatureFormat,
             CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,

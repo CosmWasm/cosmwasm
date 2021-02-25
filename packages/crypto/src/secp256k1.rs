@@ -47,12 +47,7 @@ pub fn secp256k1_verify(
     public_key: &[u8],
 ) -> CryptoResult<bool> {
     let message_hash = read_hash(message_hash)?;
-    if signature.len() != ECDSA_SIGNATURE_LEN {
-        return Err(CryptoError::sig_err(format!(
-            "wrong / unsupported length: {}",
-            signature.len()
-        )));
-    }
+    let signature = read_signature(signature)?;
     let pubkey_len = public_key.len();
     if pubkey_len == 0 {
         return Err(CryptoError::pubkey_err("empty"));
@@ -74,7 +69,7 @@ pub fn secp256k1_verify(
     let message_digest = Identity256::new().chain(message_hash);
 
     let mut signature =
-        Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
+        Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
     // Non low-S signatures require normalization
     signature
         .normalize_s()
@@ -106,19 +101,14 @@ pub fn secp256k1_recover_pubkey(
     recovery_param: u8,
 ) -> Result<Vec<u8>, CryptoError> {
     let message_hash = read_hash(message_hash)?;
-    if signature.len() != ECDSA_SIGNATURE_LEN {
-        return Err(CryptoError::sig_err(format!(
-            "wrong / unsupported length: {}",
-            signature.len()
-        )));
-    }
+    let signature = read_signature(signature)?;
 
     let id =
         recoverable::Id::new(recovery_param).map_err(|_| CryptoError::invalid_recovery_param())?;
 
     // Compose extended signature
     let signature =
-        Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
+        Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let extended_signature = recoverable::Signature::new(&signature, id)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
@@ -145,6 +135,24 @@ fn read_hash(data: &[u8]) -> Result<[u8; 32], InvalidSecp256k1HashFormat> {
         return Err(InvalidSecp256k1HashFormat);
     }
     let mut out = [0u8; 32];
+    out[..].copy_from_slice(&data[..]);
+    Ok(out)
+}
+
+/// Error raised when signature is not 64 bytes long (32 bytes r, 32 bytes s)
+struct InvalidSecp256k1SignatureFormat;
+
+impl From<InvalidSecp256k1SignatureFormat> for CryptoError {
+    fn from(_original: InvalidSecp256k1SignatureFormat) -> Self {
+        CryptoError::invalid_signature_format()
+    }
+}
+
+fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidSecp256k1SignatureFormat> {
+    if data.len() != 64 {
+        return Err(InvalidSecp256k1SignatureFormat);
+    }
+    let mut out = [0u8; 64];
     out[..].copy_from_slice(&data[..]);
     Ok(out)
 }

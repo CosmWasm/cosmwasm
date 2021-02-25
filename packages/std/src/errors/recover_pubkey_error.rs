@@ -9,8 +9,8 @@ use thiserror::Error;
 pub enum RecoverPubkeyError {
     #[error("Invalid hash format")]
     InvalidHashFormat,
-    #[error("Signature error")]
-    SignatureErr,
+    #[error("Invalid signature format")]
+    InvalidSignatureFormat,
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
@@ -37,7 +37,9 @@ impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
             RecoverPubkeyError::InvalidHashFormat => {
                 matches!(rhs, RecoverPubkeyError::InvalidHashFormat)
             }
-            RecoverPubkeyError::SignatureErr => matches!(rhs, RecoverPubkeyError::SignatureErr),
+            RecoverPubkeyError::InvalidSignatureFormat => {
+                matches!(rhs, RecoverPubkeyError::InvalidSignatureFormat)
+            }
             RecoverPubkeyError::InvalidRecoveryParam => {
                 matches!(rhs, RecoverPubkeyError::InvalidRecoveryParam)
             }
@@ -62,7 +64,9 @@ impl From<CryptoError> for RecoverPubkeyError {
         match original {
             CryptoError::MessageError { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidHashFormat { .. } => RecoverPubkeyError::InvalidHashFormat,
-            CryptoError::SignatureErr { .. } => RecoverPubkeyError::SignatureErr,
+            CryptoError::InvalidSignatureFormat { .. } => {
+                RecoverPubkeyError::InvalidSignatureFormat
+            }
             CryptoError::PublicKeyErr { .. } => panic!("Conversion not supported"),
             CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,

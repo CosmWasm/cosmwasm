@@ -14,10 +14,6 @@ pub const MESSAGE_MAX_LEN: usize = 131072;
 /// larger number of signatures, let us know.
 pub const BATCH_MAX_LEN: usize = 256;
 
-/// EdDSA (ed25519) parameters
-/// Length of a serialized signature
-pub const EDDSA_SIGNATURE_LEN: usize = 64;
-
 /// Length of a serialized public key
 pub const EDDSA_PUBKEY_LEN: usize = 32;
 
@@ -39,12 +35,7 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
             message.len()
         )));
     }
-    if signature.len() != EDDSA_SIGNATURE_LEN {
-        return Err(CryptoError::sig_err(format!(
-            "wrong / unsupported length: {}",
-            signature.len()
-        )));
-    }
+    let signature = read_signature(signature)?;
     let pubkey_len = public_key.len();
     if pubkey_len == 0 {
         return Err(CryptoError::pubkey_err("empty"));
@@ -56,14 +47,11 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
         )));
     }
     // Deserialization
-    let signature = ed25519::Signature::try_from(signature)
-        .map_err(|err| CryptoError::generic_err(err.to_string()))?;
-
     let public_key = ed25519::VerificationKey::try_from(public_key)
         .map_err(|err| CryptoError::generic_err(err.to_string()))?;
 
     // Verification
-    match public_key.verify(&signature, &message) {
+    match public_key.verify(&ed25519::Signature::from(signature), &message) {
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
@@ -139,13 +127,7 @@ pub fn ed25519_batch_verify(
                 message.len()
             )));
         }
-        if signature.len() != EDDSA_SIGNATURE_LEN {
-            return Err(CryptoError::sig_err(format!(
-                "signature {}: wrong / unsupported length: {}",
-                i,
-                signature.len()
-            )));
-        }
+        let signature = read_signature(signature)?;
         let pubkey_len = public_key.len();
         if pubkey_len == 0 {
             return Err(CryptoError::pubkey_err(format!("public key {}: empty", i)));
@@ -158,16 +140,12 @@ pub fn ed25519_batch_verify(
         }
 
         // Deserialization
-        let signature = ed25519::Signature::try_from(signature).map_err(|err| {
-            CryptoError::generic_err(format!("signature {}: {}", i, err.to_string()))
-        })?;
-
         let public_key = ed25519::VerificationKey::try_from(public_key).map_err(|err| {
             CryptoError::generic_err(format!("public key {}: {}", i, err.to_string()))
         })?;
 
         // Enqueing
-        batch.queue((public_key.into(), signature, message));
+        batch.queue((public_key.into(), signature.into(), message));
     }
 
     // Batch verification
@@ -175,6 +153,24 @@ pub fn ed25519_batch_verify(
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
+}
+
+/// Error raised when signature is not 64 bytes long (32 bytes r, 32 bytes s)
+struct InvalidEd25519SignatureFormat;
+
+impl From<InvalidEd25519SignatureFormat> for CryptoError {
+    fn from(_original: InvalidEd25519SignatureFormat) -> Self {
+        CryptoError::invalid_signature_format()
+    }
+}
+
+fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidEd25519SignatureFormat> {
+    if data.len() != 64 {
+        return Err(InvalidEd25519SignatureFormat);
+    }
+    let mut out = [0u8; 64];
+    out[..].copy_from_slice(&data[..]);
+    Ok(out)
 }
 
 #[cfg(test)]
