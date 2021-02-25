@@ -23,13 +23,14 @@ workflows:
           requires:
             - package_vm
             - package_vm_cranelift
+            - package_crypto
           filters:
             branches:
               only:
                 # Long living branches
                 - main
                 - /^[0-9]+\.[0-9]+$/
-                # 👇 Add your branch here if benchmarking matters to your work
+                # 👇Add your branch here if benchmarking matters to your work
                 - benchmarking
                 - update-wasmer
                 - metering-restart
@@ -858,13 +859,17 @@ jobs:
           keys:
             - cargocache-v2-benchmarking-rust:1.49.0-{{ checksum "Cargo.lock" }}
       - run:
-          name: Run benchmarks (Singlepass)
+          name: Run vm benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
           command: cargo bench --no-default-features -- --color never --save-baseline singlepass
       - run:
-          name: Run benchmarks (Cranelift)
+          name: Run vm benchmarks (Cranelift)
           working_directory: ~/project/packages/vm
           command: cargo bench --no-default-features --features cranelift -- --color never --save-baseline cranelift
+      - run:
+          name: Run crypto benchmarks
+          working_directory: ~/project/packages/crypto
+          command: cargo bench -- --color never --save-baseline crypto
       - save_cache:
           paths:
             - /usr/local/cargo/registry
