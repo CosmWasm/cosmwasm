@@ -143,6 +143,7 @@ pub fn query_verify_ethereum_text(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn query_verify_ethereum_transaction(
     deps: Deps,
     from: String,
