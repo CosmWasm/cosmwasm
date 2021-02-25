@@ -7,7 +7,7 @@ use crate::errors::{CryptoError, CryptoResult};
 /// Max length of a message for ed25519 verification in bytes.
 /// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
 /// messages, let us know.
-pub const MESSAGE_MAX_LEN: usize = 131072;
+pub const MESSAGE_MAX_LEN: usize = 128 * 1024;
 
 /// Max number of batch messages / signatures / public_keys.
 /// This is an arbitrary value, for performance / memory contraints. If you need to batch-verify a
@@ -29,12 +29,7 @@ pub const EDDSA_PUBKEY_LEN: usize = 32;
 /// - public key: raw ED25519 public key (32 bytes).
 pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
     // Validation
-    if message.len() > MESSAGE_MAX_LEN {
-        return Err(CryptoError::msg_err(format!(
-            "too large: {}",
-            message.len()
-        )));
-    }
+    check_message_length(message)?;
     let signature = read_signature(signature)?;
     let pubkey_len = public_key.len();
     if pubkey_len == 0 {
@@ -120,13 +115,7 @@ pub fn ed25519_batch_verify(
         (1..).zip(&messages).zip(signatures).zip(&public_keys)
     {
         // Validation
-        if message.len() > MESSAGE_MAX_LEN {
-            return Err(CryptoError::msg_err(format!(
-                "message {}: too large: {}",
-                i,
-                message.len()
-            )));
-        }
+        check_message_length(message)?;
         let signature = read_signature(signature)?;
         let pubkey_len = public_key.len();
         if pubkey_len == 0 {
@@ -171,6 +160,28 @@ fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidEd25519SignatureFormat
     let mut out = [0u8; 64];
     out[..].copy_from_slice(&data[..]);
     Ok(out)
+}
+
+struct MessageTooLong {
+    limit: usize,
+    actual: usize,
+}
+
+impl From<MessageTooLong> for CryptoError {
+    fn from(original: MessageTooLong) -> Self {
+        CryptoError::message_too_long(original.limit, original.actual)
+    }
+}
+
+fn check_message_length(message: &[u8]) -> Result<(), MessageTooLong> {
+    if message.len() > MESSAGE_MAX_LEN {
+        Err(MessageTooLong {
+            limit: MESSAGE_MAX_LEN,
+            actual: message.len(),
+        })
+    } else {
+        Ok(())
+    }
 }
 
 #[cfg(test)]

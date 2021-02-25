@@ -302,12 +302,13 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
-            CryptoError::MessageError { .. }
-            | CryptoError::InvalidHashFormat { .. }
+            CryptoError::InvalidHashFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+            CryptoError::BatchErr { .. }
+            | CryptoError::InvalidRecoveryParam { .. }
+            | CryptoError::MessageTooLong { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -337,12 +338,13 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             Ok(to_low_half(pubkey_ptr))
         }
         Err(err) => match err {
-            CryptoError::MessageError { .. }
-            | CryptoError::InvalidHashFormat { .. }
+            CryptoError::InvalidHashFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::BatchErr { .. } | CryptoError::PublicKeyErr { .. } => {
+            CryptoError::BatchErr { .. }
+            | CryptoError::MessageTooLong { .. }
+            | CryptoError::PublicKeyErr { .. } => {
                 panic!("Error must not happen for this call")
             }
         },
@@ -364,7 +366,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
-            CryptoError::MessageError { .. }
+            CryptoError::MessageTooLong { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
@@ -411,7 +413,7 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::BatchErr { .. }
-            | CryptoError::MessageError { .. }
+            | CryptoError::MessageTooLong { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::PublicKeyErr { .. }
             | CryptoError::GenericErr { .. } => err.code(),
