@@ -7,7 +7,7 @@ pub fn verify_transaction<A: Api>(
     api: A,
     from: [u8; 20],
     to: [u8; 20],
-    nonce: u128,
+    nonce: u64,
     gas: u128,
     gas_price: u128,
     value: u128,
@@ -38,7 +38,7 @@ pub fn verify_transaction<A: Api>(
 
 fn serialize_unsigned_transaction(
     to: [u8; 20],
-    nonce: u128,
+    nonce: u64,
     gas_limit: u128,
     gas_price: u128,
     value: u128,
