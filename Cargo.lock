@@ -201,6 +201,7 @@ name = "cosmwasm-crypto"
 version = "0.13.2"
 dependencies = [
  "base64",
+ "criterion",
  "digest",
  "ed25519-zebra",
  "elliptic-curve",
