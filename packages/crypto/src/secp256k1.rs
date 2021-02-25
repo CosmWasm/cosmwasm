@@ -206,7 +206,7 @@ mod tests {
         .unwrap());
 
         // Wrong message fails
-        let bad_message_hash = Sha256::digest([MSG, "\0"].concat().as_bytes());
+        let bad_message_hash = Sha256::new().chain(MSG).chain("\0").finalize();
         assert!(!secp256k1_verify(
             &bad_message_hash,
             signature.as_bytes(),
