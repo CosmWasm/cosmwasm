@@ -1630,7 +1630,7 @@ mod tests {
 
         assert_eq!(
             do_ed25519_verify::<MA, MS, MQ>(&env, msg_ptr, sig_ptr, pubkey_ptr).unwrap(),
-            10 // mapped GenericErr
+            1 // verification failure
         )
     }
 

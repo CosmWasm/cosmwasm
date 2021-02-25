@@ -1,4 +1,4 @@
-use ed25519_zebra as ed25519;
+use ed25519_zebra::{batch, Signature, VerificationKey};
 use rand_core::OsRng;
 use std::convert::TryFrom;
 use std::convert::TryInto;
@@ -34,12 +34,10 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
     let signature = read_signature(signature)?;
     let pubkey = read_pubkey(public_key)?;
 
-    // Deserialization
-    let public_key = ed25519::VerificationKey::try_from(pubkey)
-        .map_err(|err| CryptoError::generic_err(err.to_string()))?;
-
     // Verification
-    match public_key.verify(&ed25519::Signature::from(signature), &message) {
+    match VerificationKey::try_from(pubkey)
+        .and_then(|vk| vk.verify(&Signature::from(signature), &message))
+    {
         Ok(()) => Ok(true),
         Err(_) => Ok(false),
     }
@@ -102,7 +100,7 @@ pub fn ed25519_batch_verify(
     debug_assert_eq!(messages.len(), signatures_len);
     debug_assert_eq!(messages.len(), public_keys.len());
 
-    let mut batch = ed25519::batch::Verifier::new();
+    let mut batch = batch::Verifier::new();
 
     for (((_i, &message), &signature), &public_key) in
         (1..).zip(&messages).zip(signatures).zip(&public_keys)
@@ -174,6 +172,7 @@ fn check_message_length(message: &[u8]) -> Result<(), MessageTooLong> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use ed25519_zebra::SigningKey;
     use serde::Deserialize;
 
     // For generic signature verification
@@ -216,10 +215,10 @@ mod tests {
     fn test_ed25519_verify() {
         let message = MSG.as_bytes();
         // Signing
-        let secret_key = ed25519::SigningKey::new(&mut OsRng);
+        let secret_key = SigningKey::new(&mut OsRng);
         let signature = secret_key.sign(&message);
 
-        let public_key = ed25519::VerificationKey::from(&secret_key);
+        let public_key = VerificationKey::from(&secret_key);
 
         // Serialization. Types can be converted to raw byte arrays with From/Into
         let signature_bytes: [u8; 64] = signature.into();
@@ -233,21 +232,21 @@ mod tests {
         assert!(!ed25519_verify(&bad_message, &signature_bytes, &public_key_bytes).unwrap());
 
         // Other pubkey fails
-        let other_secret_key = ed25519::SigningKey::new(&mut OsRng);
-        let other_public_key = ed25519::VerificationKey::from(&other_secret_key);
+        let other_secret_key = SigningKey::new(&mut OsRng);
+        let other_public_key = VerificationKey::from(&other_secret_key);
         let other_public_key_bytes: [u8; 32] = other_public_key.into();
         assert!(!ed25519_verify(&message, &signature_bytes, &other_public_key_bytes).unwrap());
     }
 
     #[test]
     fn test_cosmos_ed25519_verify() {
-        let secret_key = ed25519::SigningKey::try_from(
+        let secret_key = SigningKey::try_from(
             hex::decode(COSMOS_ED25519_PRIVATE_KEY_HEX)
                 .unwrap()
                 .as_slice(),
         )
         .unwrap();
-        let public_key = ed25519::VerificationKey::try_from(
+        let public_key = VerificationKey::try_from(
             hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX)
                 .unwrap()
                 .as_slice(),
