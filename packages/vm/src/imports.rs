@@ -308,9 +308,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. }
             | CryptoError::InvalidRecoveryParam { .. }
-            | CryptoError::MessageTooLong { .. } => {
-                panic!("Error must not happen for this call")
-            }
+            | CryptoError::MessageTooLong { .. } => panic!("Error must not happen for this call"),
         },
         |valid| if valid { 0 } else { 1 },
     ))
@@ -344,9 +342,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
             CryptoError::BatchErr { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
-            | CryptoError::MessageTooLong { .. } => {
-                panic!("Error must not happen for this call")
-            }
+            | CryptoError::MessageTooLong { .. } => panic!("Error must not happen for this call"),
         },
     }
 }
