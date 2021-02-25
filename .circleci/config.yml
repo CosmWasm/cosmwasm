@@ -50,7 +50,7 @@ workflows:
 jobs:
   package_crypto:
     docker:
-      - image: rust:1.47.0
+      - image: rust:1.49.0
     steps:
       - checkout
       - run:
@@ -58,7 +58,7 @@ jobs:
           command: rustc --version; cargo --version; rustup --version; rustup target list --installed
       - restore_cache:
           keys:
-            - cargocache-v2-package_crypto-rust:1.47.0-{{ checksum "Cargo.lock" }}
+            - cargocache-v2-package_crypto-rust:1.49.0-{{ checksum "Cargo.lock" }}
       - run:
           name: Build
           working_directory: ~/project/packages/crypto
@@ -73,7 +73,7 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: cargocache-v2-package_crypto-rust:1.47.0-{{ checksum "Cargo.lock" }}
+          key: cargocache-v2-package_crypto-rust:1.49.0-{{ checksum "Cargo.lock" }}
 
   package_schema:
     docker:
