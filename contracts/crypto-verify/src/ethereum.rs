@@ -45,6 +45,8 @@ fn serialize_unsigned_transaction(
     data: &[u8],
     chain_id: u64,
 ) -> Vec<u8> {
+    // See https://ethereum.stackexchange.com/a/2097/54581 and
+    // https://github.com/tomusdrw/jsonrpc-proxy/blob/7855dec/ethereum-proxy/plugins/accounts/transaction/src/lib.rs#L132-L144.
     let mut stream = RlpStream::new();
     stream.begin_list(9);
     stream.append(&nonce);
