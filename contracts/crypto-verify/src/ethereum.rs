@@ -96,7 +96,7 @@ fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
 
     let hash = Keccak256::digest(data);
     let mut out = [0u8; 20];
-    out[..].clone_from_slice(&hash[hash.len() - 20..]);
+    out[..].copy_from_slice(&hash[hash.len() - 20..]);
     Ok(out)
 }
 
