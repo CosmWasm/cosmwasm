@@ -20,10 +20,11 @@ const COSMOS_SECP256K1_MSG_HEX: &str = "0a93010a90010a1c2f636f736d6f732e62616e6b
 const COSMOS_SECP256K1_SIGNATURE_HEX: &str = "c9dd20e07464d3a688ff4b710b1fbc027e495e797cfa0b4804da2ed117959227772de059808f765aa29b8f92edf30f4c2c5a438e30d3fe6897daa7141e3ce6f9";
 const COSMOS_SECP256K1_PUBKEY_BASE64: &str = "A08EGB7ro1ORuFhjOnZcSgwYlpe0DSFjVNUIkNNQxwKQ";
 
-const COSMOS_ED25519_MSG: &str = "";
-const COSMOS_ED25519_SIGNATURE_HEX: &str = "e5564300c360ac729086e2cc806e828a84877f1eb8e5d974d873e065224901555fb8821590a33bacc61e39701cf9b46bd25bf5f0595bbe24655141438e7a100b";
+// TEST 3 test vector from https://tools.ietf.org/html/rfc8032#section-7.1
+const COSMOS_ED25519_MSG_HEX: &str = "af82";
+const COSMOS_ED25519_SIGNATURE_HEX: &str = "6291d657deec24024827e69c3abe01a30ce548a284743a445e3680d7db5ac3ac18ff9b538d16f290ae67f760984dc6594a7c15e9716ed28dc027beceea1ec40a";
 const COSMOS_ED25519_PUBLIC_KEY_HEX: &str =
-    "d75a980182b10ab7d54bfed3c964073a0ee172f3daa62325af021a68f707511a";
+    "fc51cd8e6218a1a38da47ed00230f0580816ed13ba3303ac5deb911548908025";
 
 // Test data from https://tools.ietf.org/html/rfc8032#section-7.1
 const COSMOS_ED25519_TESTS_JSON: &str = "./testdata/ed25519_tests.json";
@@ -105,7 +106,7 @@ fn bench_crypto(c: &mut Criterion) {
     });
 
     group.bench_function("ed25519_verify", |b| {
-        let message = COSMOS_ED25519_MSG.as_bytes();
+        let message = hex::decode(COSMOS_ED25519_MSG_HEX).unwrap();
         let signature = hex::decode(COSMOS_ED25519_SIGNATURE_HEX).unwrap();
         let public_key = hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX).unwrap();
         b.iter(|| {
@@ -129,6 +130,37 @@ fn bench_crypto(c: &mut Criterion) {
                             &messages[..n],
                             &signatures[..n],
                             &public_keys[..n]
+                        )
+                        .unwrap());
+                    });
+                },
+            );
+        }
+    }
+
+    // Ed25519 batch verification of different batch lengths, with the same pubkey
+    {
+        //FIXME: Use different messages / signatures
+        let messages = [hex::decode(COSMOS_ED25519_MSG_HEX).unwrap()];
+        let signatures = [hex::decode(COSMOS_ED25519_SIGNATURE_HEX).unwrap()];
+        let public_keys = [hex::decode(COSMOS_ED25519_PUBLIC_KEY_HEX).unwrap()];
+
+        let messages: Vec<&[u8]> = messages.iter().map(|m| m.as_slice()).collect();
+        let signatures: Vec<&[u8]> = signatures.iter().map(|m| m.as_slice()).collect();
+        let public_keys: Vec<&[u8]> = public_keys.iter().map(|m| m.as_slice()).collect();
+
+        for n in (1..10).step_by(2) {
+            group.bench_function(
+                format!(
+                    "ed25519_batch_verify_one_pubkey_{}",
+                    convert_no_fmt(n as i64)
+                ),
+                |b| {
+                    b.iter(|| {
+                        assert!(ed25519_batch_verify(
+                            &messages.repeat(n),
+                            &signatures.repeat(n),
+                            &public_keys
                         )
                         .unwrap());
                     });
