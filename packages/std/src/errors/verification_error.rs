@@ -18,7 +18,7 @@ pub enum VerificationError {
     InvalidHashFormat,
     #[error("Invalid signature format")]
     InvalidSignatureFormat,
-    #[error("Invalid pubkic key format")]
+    #[error("Invalid public key format")]
     InvalidPubkeyFormat,
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
