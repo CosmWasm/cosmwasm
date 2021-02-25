@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use sha3::Keccak256;
 use std::ops::Deref;
 
-use crate::ethereum::{decode_address, ethereum_address, verify_transaction};
+use crate::ethereum::{decode_address, ethereum_address_raw, verify_transaction};
 use crate::msg::{
     list_verifications, HandleMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
@@ -115,6 +115,8 @@ pub fn query_verify_ethereum_text(
     signature: &[u8],
     signer_address: &str,
 ) -> StdResult<VerifyResponse> {
+    let signer_address = decode_address(signer_address)?;
+
     // Hashing
     let mut hasher = Keccak256::new();
     hasher.update(format!("\x19Ethereum Signed Message:\n{}", message.len()));
@@ -130,8 +132,8 @@ pub fn query_verify_ethereum_text(
 
     // Verification
     let calculated_pubkey = deps.api.secp256k1_recover_pubkey(&hash, rs, recovery)?;
-    let calculated_address = ethereum_address(&calculated_pubkey)?;
-    if signer_address.to_ascii_lowercase() != calculated_address {
+    let calculated_address = ethereum_address_raw(&calculated_pubkey)?;
+    if signer_address != calculated_address {
         return Ok(VerifyResponse { verifies: false });
     }
     let result = deps.api.secp256k1_verify(&hash, rs, &calculated_pubkey);

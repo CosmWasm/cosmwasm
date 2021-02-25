@@ -72,17 +72,8 @@ pub fn get_recovery_param(v: u64, chain_id: u64) -> StdResult<u8> {
     }
 }
 
-/// Returns a hex-encoded Ethereum address (lower case hex)
-pub fn ethereum_address(pubkey: &[u8]) -> StdResult<String> {
-    let data = ethereum_address_raw(pubkey)?;
-    let mut out = String::with_capacity(42);
-    out.push_str("0x");
-    out.push_str(&hex::encode(data));
-    Ok(out)
-}
-
 /// Returns a raw 20 byte Ethereum address
-fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
+pub fn ethereum_address_raw(pubkey: &[u8]) -> StdResult<[u8; 20]> {
     let (tag, data) = match pubkey.split_first() {
         Some(pair) => pair,
         None => return Err(StdError::generic_err("Public key must not be empty")),
