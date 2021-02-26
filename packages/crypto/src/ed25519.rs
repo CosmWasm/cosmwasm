@@ -102,8 +102,10 @@ pub fn ed25519_batch_verify(
 
     let mut batch = batch::Verifier::new();
 
-    for (((_i, &message), &signature), &public_key) in
-        (1..).zip(&messages).zip(signatures).zip(&public_keys)
+    for ((&message, &signature), &public_key) in messages
+        .iter()
+        .zip(signatures.iter())
+        .zip(public_keys.iter())
     {
         // Validation
         check_message_length(message)?;
