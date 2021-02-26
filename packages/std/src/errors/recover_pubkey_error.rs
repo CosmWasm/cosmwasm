@@ -7,10 +7,10 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum RecoverPubkeyError {
-    #[error("Hash error")]
-    HashErr,
-    #[error("Signature error")]
-    SignatureErr,
+    #[error("Invalid hash format")]
+    InvalidHashFormat,
+    #[error("Invalid signature format")]
+    InvalidSignatureFormat,
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
@@ -34,8 +34,12 @@ impl RecoverPubkeyError {
 impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
     fn eq(&self, rhs: &RecoverPubkeyError) -> bool {
         match self {
-            RecoverPubkeyError::HashErr => matches!(rhs, RecoverPubkeyError::HashErr),
-            RecoverPubkeyError::SignatureErr => matches!(rhs, RecoverPubkeyError::SignatureErr),
+            RecoverPubkeyError::InvalidHashFormat => {
+                matches!(rhs, RecoverPubkeyError::InvalidHashFormat)
+            }
+            RecoverPubkeyError::InvalidSignatureFormat => {
+                matches!(rhs, RecoverPubkeyError::InvalidSignatureFormat)
+            }
             RecoverPubkeyError::InvalidRecoveryParam => {
                 matches!(rhs, RecoverPubkeyError::InvalidRecoveryParam)
             }
@@ -58,10 +62,12 @@ impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
 impl From<CryptoError> for RecoverPubkeyError {
     fn from(original: CryptoError) -> Self {
         match original {
-            CryptoError::MessageError { .. } => panic!("Conversion not supported"),
-            CryptoError::HashErr { .. } => RecoverPubkeyError::HashErr,
-            CryptoError::SignatureErr { .. } => RecoverPubkeyError::SignatureErr,
-            CryptoError::PublicKeyErr { .. } => panic!("Conversion not supported"),
+            CryptoError::MessageTooLong { .. } => panic!("Conversion not supported"),
+            CryptoError::InvalidHashFormat { .. } => RecoverPubkeyError::InvalidHashFormat,
+            CryptoError::InvalidPubkeyFormat { .. } => panic!("Conversion not supported"),
+            CryptoError::InvalidSignatureFormat { .. } => {
+                RecoverPubkeyError::InvalidSignatureFormat
+            }
             CryptoError::GenericErr { .. } => RecoverPubkeyError::unknown_err(original.code()),
             CryptoError::InvalidRecoveryParam { .. } => RecoverPubkeyError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => panic!("Conversion not supported"),

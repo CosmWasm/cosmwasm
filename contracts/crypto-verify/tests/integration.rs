@@ -124,7 +124,10 @@ fn cosmos_signature_verify_errors() {
         public_key: Binary(public_key),
     };
     let res = query(&mut deps, mock_env(), verify_msg);
-    assert_eq!(res.unwrap_err(), "Verification error: Public key error")
+    assert_eq!(
+        res.unwrap_err(),
+        "Verification error: Invalid public key format"
+    )
 }
 
 #[test]
@@ -304,7 +307,10 @@ fn tendermint_signature_verify_errors() {
         public_key: Binary(public_key),
     };
     let res = query(&mut deps, mock_env(), verify_msg);
-    assert_eq!(res.unwrap_err(), "Verification error: Public key error")
+    assert_eq!(
+        res.unwrap_err(),
+        "Verification error: Invalid public key format"
+    )
 }
 
 #[test]
@@ -457,7 +463,10 @@ fn tendermint_signatures_batch_verify_errors() {
         public_keys,
     };
     let res = query(&mut deps, mock_env(), verify_msg);
-    assert_eq!(res.unwrap_err(), "Verification error: Public key error")
+    assert_eq!(
+        res.unwrap_err(),
+        "Verification error: Invalid public key format"
+    )
 }
 
 #[test]

@@ -208,10 +208,10 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            2 => Err(VerificationError::MessageErr), // shouldn't happen
-            3 => Err(VerificationError::HashErr),
-            4 => Err(VerificationError::SignatureErr),
-            5 => Err(VerificationError::PublicKeyErr),
+            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
+            3 => Err(VerificationError::InvalidHashFormat),
+            4 => Err(VerificationError::InvalidSignatureFormat),
+            5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
@@ -237,8 +237,9 @@ impl Api for ExternalApi {
                 let pubkey = unsafe { consume_region(pubkey_ptr as *mut Region) };
                 Ok(pubkey)
             }
-            3 => Err(RecoverPubkeyError::HashErr),
-            4 => Err(RecoverPubkeyError::SignatureErr),
+            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
+            3 => Err(RecoverPubkeyError::InvalidHashFormat),
+            4 => Err(RecoverPubkeyError::InvalidSignatureFormat),
             6 => Err(RecoverPubkeyError::InvalidRecoveryParam),
             error_code => Err(RecoverPubkeyError::unknown_err(error_code)),
         }
@@ -261,10 +262,10 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            2 => Err(VerificationError::MessageErr),
-            3 => Err(VerificationError::HashErr), // shouldn't happen
-            4 => Err(VerificationError::SignatureErr),
-            5 => Err(VerificationError::PublicKeyErr),
+            2 => Err(VerificationError::MessageTooLong),
+            3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
+            4 => Err(VerificationError::InvalidSignatureFormat),
+            5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }
@@ -293,10 +294,10 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            2 => Err(VerificationError::MessageErr),
-            3 => Err(VerificationError::HashErr), // shouldn't happen
-            4 => Err(VerificationError::SignatureErr),
-            5 => Err(VerificationError::PublicKeyErr),
+            2 => Err(VerificationError::MessageTooLong),
+            3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
+            4 => Err(VerificationError::InvalidSignatureFormat),
+            5 => Err(VerificationError::InvalidPubkeyFormat),
             10 => Err(VerificationError::GenericErr),
             error_code => Err(VerificationError::unknown_err(error_code)),
         }

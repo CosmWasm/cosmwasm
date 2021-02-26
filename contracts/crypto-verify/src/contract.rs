@@ -325,7 +325,7 @@ mod tests {
         assert_eq!(
             res.unwrap_err(),
             StdError::VerificationErr {
-                source: VerificationError::PublicKeyErr
+                source: VerificationError::InvalidPubkeyFormat
             }
         )
     }
@@ -611,7 +611,7 @@ mod tests {
         assert_eq!(
             res.unwrap_err(),
             StdError::VerificationErr {
-                source: VerificationError::PublicKeyErr,
+                source: VerificationError::InvalidPubkeyFormat,
             }
         )
     }
@@ -676,7 +676,7 @@ mod tests {
         assert_eq!(
             res.unwrap_err(),
             StdError::VerificationErr {
-                source: VerificationError::PublicKeyErr
+                source: VerificationError::InvalidPubkeyFormat
             }
         )
     }

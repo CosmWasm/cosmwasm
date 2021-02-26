@@ -12,14 +12,14 @@ pub enum VerificationError {
     BatchErr,
     #[error("Generic error")]
     GenericErr,
-    #[error("Message error")]
-    MessageErr,
-    #[error("Hash error")]
-    HashErr,
-    #[error("Signature error")]
-    SignatureErr,
-    #[error("Public key error")]
-    PublicKeyErr,
+    #[error("Message is longer than supported")]
+    MessageTooLong,
+    #[error("Invalid hash format")]
+    InvalidHashFormat,
+    #[error("Invalid signature format")]
+    InvalidSignatureFormat,
+    #[error("Invalid public key format")]
+    InvalidPubkeyFormat,
     #[error("Invalid recovery parameter. Supported values: 0 and 1.")]
     InvalidRecoveryParam,
     #[error("Unknown error: {error_code}")]
@@ -45,10 +45,16 @@ impl PartialEq<VerificationError> for VerificationError {
         match self {
             VerificationError::BatchErr => matches!(rhs, VerificationError::BatchErr),
             VerificationError::GenericErr => matches!(rhs, VerificationError::GenericErr),
-            VerificationError::MessageErr => matches!(rhs, VerificationError::MessageErr),
-            VerificationError::HashErr => matches!(rhs, VerificationError::HashErr),
-            VerificationError::SignatureErr => matches!(rhs, VerificationError::SignatureErr),
-            VerificationError::PublicKeyErr => matches!(rhs, VerificationError::PublicKeyErr),
+            VerificationError::MessageTooLong => matches!(rhs, VerificationError::MessageTooLong),
+            VerificationError::InvalidHashFormat => {
+                matches!(rhs, VerificationError::InvalidHashFormat)
+            }
+            VerificationError::InvalidPubkeyFormat => {
+                matches!(rhs, VerificationError::InvalidPubkeyFormat)
+            }
+            VerificationError::InvalidSignatureFormat => {
+                matches!(rhs, VerificationError::InvalidSignatureFormat)
+            }
             VerificationError::InvalidRecoveryParam => {
                 matches!(rhs, VerificationError::InvalidRecoveryParam)
             }
@@ -71,10 +77,10 @@ impl PartialEq<VerificationError> for VerificationError {
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
-            CryptoError::MessageError { .. } => VerificationError::MessageErr,
-            CryptoError::HashErr { .. } => VerificationError::HashErr,
-            CryptoError::SignatureErr { .. } => VerificationError::SignatureErr,
-            CryptoError::PublicKeyErr { .. } => VerificationError::PublicKeyErr,
+            CryptoError::MessageTooLong { .. } => VerificationError::MessageTooLong,
+            CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
+            CryptoError::InvalidPubkeyFormat { .. } => VerificationError::InvalidPubkeyFormat,
+            CryptoError::InvalidSignatureFormat { .. } => VerificationError::InvalidSignatureFormat,
             CryptoError::GenericErr { .. } => VerificationError::GenericErr,
             CryptoError::InvalidRecoveryParam { .. } => VerificationError::InvalidRecoveryParam,
             CryptoError::BatchErr { .. } => VerificationError::BatchErr,

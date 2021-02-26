@@ -611,7 +611,7 @@ mod tests {
         let public_key = vec![];
 
         let res = api.secp256k1_verify(&hash, &signature, &public_key);
-        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
+        assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
     }
 
     #[test]
@@ -677,7 +677,7 @@ mod tests {
         malformed_hash.push(0x8a);
         let result = api.secp256k1_recover_pubkey(&malformed_hash, &signature, recovery_param);
         match result.unwrap_err() {
-            RecoverPubkeyError::HashErr => {}
+            RecoverPubkeyError::InvalidHashFormat => {}
             err => panic!("Unexpected error: {:?}", err),
         }
     }
@@ -718,7 +718,7 @@ mod tests {
         let public_key = vec![];
 
         let res = api.ed25519_verify(&msg, &signature, &public_key);
-        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
+        assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
     }
 
     // Basic "works" test.
@@ -773,7 +773,7 @@ mod tests {
         let public_keys: Vec<&[u8]> = vec![&public_key];
 
         let res = api.ed25519_batch_verify(&msgs, &signatures, &public_keys);
-        assert_eq!(res.unwrap_err(), VerificationError::PublicKeyErr);
+        assert_eq!(res.unwrap_err(), VerificationError::InvalidPubkeyFormat);
     }
 
     #[test]

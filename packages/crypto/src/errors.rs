@@ -19,27 +19,25 @@ pub enum CryptoError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Message error: {msg}")]
-    MessageError {
-        msg: String,
+    #[error("Invalid hash format")]
+    InvalidHashFormat {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Hash error: {msg}")]
-    HashErr {
-        msg: String,
+    #[error("Invalid public key format")]
+    InvalidPubkeyFormat {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Signature error: {msg}")]
-    SignatureErr {
-        msg: String,
+    #[error("Invalid signature format")]
+    InvalidSignatureFormat {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error("Public key error: {msg}")]
-    PublicKeyErr {
-        msg: String,
+    #[error("Message is longer than supported by this implementation (Limit: {limit}, actual length: {actual})")]
+    MessageTooLong {
+        limit: usize,
+        actual: usize,
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
@@ -67,33 +65,31 @@ impl CryptoError {
         }
     }
 
-    pub fn msg_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::MessageError {
-            msg: msg.into(),
+    pub fn invalid_hash_format() -> Self {
+        CryptoError::InvalidHashFormat {
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
     }
 
-    pub fn hash_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::HashErr {
-            msg: msg.into(),
+    pub fn invalid_pubkey_format() -> Self {
+        CryptoError::InvalidPubkeyFormat {
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
     }
 
-    pub fn sig_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::SignatureErr {
-            msg: msg.into(),
+    pub fn invalid_signature_format() -> Self {
+        CryptoError::InvalidSignatureFormat {
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
     }
 
-    pub fn pubkey_err<S: Into<String>>(msg: S) -> Self {
-        CryptoError::PublicKeyErr {
-            msg: msg.into(),
+    pub fn message_too_long(limit: usize, actual: usize) -> Self {
+        CryptoError::MessageTooLong {
+            limit,
+            actual,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -110,10 +106,10 @@ impl CryptoError {
     /// contract VM boundary.
     pub fn code(&self) -> u32 {
         match self {
-            CryptoError::MessageError { .. } => 2,
-            CryptoError::HashErr { .. } => 3,
-            CryptoError::SignatureErr { .. } => 4,
-            CryptoError::PublicKeyErr { .. } => 5,
+            CryptoError::MessageTooLong { .. } => 2,
+            CryptoError::InvalidHashFormat { .. } => 3,
+            CryptoError::InvalidSignatureFormat { .. } => 4,
+            CryptoError::InvalidPubkeyFormat { .. } => 5,
             CryptoError::InvalidRecoveryParam { .. } => 6,
             CryptoError::BatchErr { .. } => 7,
             CryptoError::GenericErr { .. } => 10,
@@ -149,45 +145,40 @@ mod tests {
     }
 
     #[test]
-    fn msg_err_works() {
-        let error = CryptoError::msg_err("something went wrong with the msg");
+    fn invalid_hash_format_works() {
+        let error = CryptoError::invalid_hash_format();
         match error {
-            CryptoError::MessageError { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the msg")
+            CryptoError::InvalidHashFormat { .. } => {}
+            _ => panic!("wrong error type!"),
+        }
+    }
+
+    #[test]
+    fn invalid_signature_format_works() {
+        let error = CryptoError::invalid_signature_format();
+        match error {
+            CryptoError::InvalidSignatureFormat { .. } => {}
+            _ => panic!("wrong error type!"),
+        }
+    }
+
+    #[test]
+    fn message_too_long_works() {
+        let error = CryptoError::message_too_long(5, 7);
+        match error {
+            CryptoError::MessageTooLong { limit, actual, .. } => {
+                assert_eq!(limit, 5);
+                assert_eq!(actual, 7);
             }
             _ => panic!("wrong error type!"),
         }
     }
 
     #[test]
-    fn hash_err_works() {
-        let error = CryptoError::hash_err("something went wrong with the hash");
+    fn invalid_pubkey_format_works() {
+        let error = CryptoError::invalid_pubkey_format();
         match error {
-            CryptoError::HashErr { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the hash")
-            }
-            _ => panic!("wrong error type!"),
-        }
-    }
-
-    #[test]
-    fn sig_err_works() {
-        let error = CryptoError::sig_err("something went wrong with the sig");
-        match error {
-            CryptoError::SignatureErr { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the sig")
-            }
-            _ => panic!("wrong error type!"),
-        }
-    }
-
-    #[test]
-    fn pubkey_err_works() {
-        let error = CryptoError::pubkey_err("something went wrong with the pubkey");
-        match error {
-            CryptoError::PublicKeyErr { msg, .. } => {
-                assert_eq!(msg, "something went wrong with the pubkey")
-            }
+            CryptoError::InvalidPubkeyFormat { .. } => {}
             _ => panic!("wrong error type!"),
         }
     }

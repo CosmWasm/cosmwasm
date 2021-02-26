@@ -5,6 +5,7 @@ use k256::{
     ecdsa::{Signature, VerifyingKey},                   // type aliases
     elliptic_curve::sec1::ToEncodedPoint,
 };
+use std::convert::TryInto;
 
 use crate::errors::{CryptoError, CryptoResult};
 use crate::identity_digest::Identity256;
@@ -18,14 +19,8 @@ pub const MESSAGE_HASH_MAX_LEN: usize = 32;
 /// Length of a serialized signature
 pub const ECDSA_SIGNATURE_LEN: usize = 64;
 
-/// Compressed public key prefix (variant 1)
-const ECDSA_COMPRESSED_PUBKEY_PREFIX_1: u8 = 0x02;
-/// Compressed public key prefix (variant 2)
-const ECDSA_COMPRESSED_PUBKEY_PREFIX_2: u8 = 0x03;
 /// Length of a serialized compressed public key
 const ECDSA_COMPRESSED_PUBKEY_LEN: usize = 33;
-/// Uncompressed public key prefix
-const ECDSA_UNCOMPRESSED_PUBKEY_PREFIX: u8 = 0x04;
 /// Length of a serialized uncompressed public key
 const ECDSA_UNCOMPRESSED_PUBKEY_LEN: usize = 65;
 /// Max length of a serialized public key
@@ -46,40 +41,15 @@ pub fn secp256k1_verify(
     signature: &[u8],
     public_key: &[u8],
 ) -> CryptoResult<bool> {
-    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
-        return Err(CryptoError::hash_err(format!(
-            "wrong length: {}",
-            message_hash.len()
-        )));
-    }
-    if signature.len() != ECDSA_SIGNATURE_LEN {
-        return Err(CryptoError::sig_err(format!(
-            "wrong / unsupported length: {}",
-            signature.len()
-        )));
-    }
-    let pubkey_len = public_key.len();
-    if pubkey_len == 0 {
-        return Err(CryptoError::pubkey_err("empty"));
-    }
-    let pubkey_fmt = public_key[0];
-    if !(pubkey_len == ECDSA_UNCOMPRESSED_PUBKEY_LEN
-        && pubkey_fmt == ECDSA_UNCOMPRESSED_PUBKEY_PREFIX
-        || pubkey_len == ECDSA_COMPRESSED_PUBKEY_LEN
-            && (pubkey_fmt == ECDSA_COMPRESSED_PUBKEY_PREFIX_1
-                || pubkey_fmt == ECDSA_COMPRESSED_PUBKEY_PREFIX_2))
-    {
-        return Err(CryptoError::pubkey_err(format!(
-            "wrong / unsupported length/format: {}/{}",
-            pubkey_len, pubkey_fmt,
-        )));
-    }
+    let message_hash = read_hash(message_hash)?;
+    let signature = read_signature(signature)?;
+    check_pubkey(public_key)?;
 
     // Already hashed, just build Digest container
     let message_digest = Identity256::new().chain(message_hash);
 
     let mut signature =
-        Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
+        Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
     // Non low-S signatures require normalization
     signature
         .normalize_s()
@@ -110,25 +80,15 @@ pub fn secp256k1_recover_pubkey(
     signature: &[u8],
     recovery_param: u8,
 ) -> Result<Vec<u8>, CryptoError> {
-    if message_hash.len() != MESSAGE_HASH_MAX_LEN {
-        return Err(CryptoError::hash_err(format!(
-            "wrong length: {}",
-            message_hash.len()
-        )));
-    }
-    if signature.len() != ECDSA_SIGNATURE_LEN {
-        return Err(CryptoError::sig_err(format!(
-            "wrong / unsupported length: {}",
-            signature.len()
-        )));
-    }
+    let message_hash = read_hash(message_hash)?;
+    let signature = read_signature(signature)?;
 
     let id =
         recoverable::Id::new(recovery_param).map_err(|_| CryptoError::invalid_recovery_param())?;
 
     // Compose extended signature
     let signature =
-        Signature::from_bytes(signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
+        Signature::from_bytes(&signature).map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let extended_signature = recoverable::Signature::new(&signature, id)
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
 
@@ -139,6 +99,56 @@ pub fn secp256k1_recover_pubkey(
         .map_err(|e| CryptoError::generic_err(e.to_string()))?;
     let encoded: Vec<u8> = pubkey.to_encoded_point(false).as_bytes().into();
     Ok(encoded)
+}
+
+/// Error raised when hash is not 32 bytes long
+struct InvalidSecp256k1HashFormat;
+
+impl From<InvalidSecp256k1HashFormat> for CryptoError {
+    fn from(_original: InvalidSecp256k1HashFormat) -> Self {
+        CryptoError::invalid_hash_format()
+    }
+}
+
+fn read_hash(data: &[u8]) -> Result<[u8; 32], InvalidSecp256k1HashFormat> {
+    data.try_into().map_err(|_| InvalidSecp256k1HashFormat)
+}
+
+/// Error raised when signature is not 64 bytes long (32 bytes r, 32 bytes s)
+struct InvalidSecp256k1SignatureFormat;
+
+impl From<InvalidSecp256k1SignatureFormat> for CryptoError {
+    fn from(_original: InvalidSecp256k1SignatureFormat) -> Self {
+        CryptoError::invalid_signature_format()
+    }
+}
+
+fn read_signature(data: &[u8]) -> Result<[u8; 64], InvalidSecp256k1SignatureFormat> {
+    data.try_into().map_err(|_| InvalidSecp256k1SignatureFormat)
+}
+
+/// Error raised when public key is not in one of the two supported formats:
+/// 1. Uncompressed: 65 bytes starting with 0x04
+/// 2. Compressed: 33 bytes starting with 0x02 or 0x03
+struct InvalidSecp256k1PubkeyFormat;
+
+impl From<InvalidSecp256k1PubkeyFormat> for CryptoError {
+    fn from(_original: InvalidSecp256k1PubkeyFormat) -> Self {
+        CryptoError::invalid_pubkey_format()
+    }
+}
+
+fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
+    let ok = match data.first() {
+        Some(0x02) | Some(0x03) => data.len() == ECDSA_COMPRESSED_PUBKEY_LEN,
+        Some(0x04) => data.len() == ECDSA_UNCOMPRESSED_PUBKEY_LEN,
+        _ => false,
+    };
+    if ok {
+        Ok(())
+    } else {
+        Err(InvalidSecp256k1PubkeyFormat)
+    }
 }
 
 #[cfg(test)]
