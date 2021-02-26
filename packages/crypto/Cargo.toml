@@ -14,6 +14,10 @@ default = []
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
 backtraces = []
 
+[lib]
+# See https://bheisler.github.io/criterion.rs/book/faq.html#cargo-bench-gives-unrecognized-option-errors-for-valid-command-line-options
+bench = false
+
 [dependencies]
 k256 = { version = "0.7.2", features = ["ecdsa"] }
 ed25519-zebra = "2"
@@ -22,10 +26,16 @@ rand_core = { version = "0.5", features = ["getrandom"] }
 thiserror = "1.0"
 
 [dev-dependencies]
+criterion = "0.3"
 serde = { version = "1.0.103", default-features = false, features = ["derive", "alloc"] }
 serde_json = "1.0"
 sha2 = "0.9"
 base64 = "0.13.0"
 hex = "0.4"
 hex-literal = "0.3.1"
+english-numbers = "0.3"
 elliptic-curve = "0.8.4"
+
+[[bench]]
+name = "main"
+harness = false

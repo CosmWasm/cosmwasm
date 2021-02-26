@@ -4,6 +4,7 @@ workflows:
   test:
     # Keep those job names in sync with .mergify.yml
     jobs:
+      - package_crypto
       - package_schema
       - package_std
       - package_storage
@@ -23,18 +24,20 @@ workflows:
           requires:
             - package_vm
             - package_vm_cranelift
+            - package_crypto
           filters:
             branches:
               only:
                 # Long living branches
                 - main
                 - /^[0-9]+\.[0-9]+$/
-                # 👇 Add your branch here if benchmarking matters to your work
+                # 👇Add your branch here if benchmarking matters to your work
                 - benchmarking
                 - update-wasmer
                 - metering-restart
                 - load-wasm-speed
                 - cache-analyze
+                - crypto-verify-benchmarks
   deploy:
     jobs:
       - build_and_upload_devcontracts:
@@ -45,6 +48,33 @@ workflows:
               ignore: /.*/
 
 jobs:
+  package_crypto:
+    docker:
+      - image: rust:1.49.0
+    steps:
+      - checkout
+      - run:
+          name: Version information
+          command: rustc --version; cargo --version; rustup --version; rustup target list --installed
+      - restore_cache:
+          keys:
+            - cargocache-v2-package_crypto-rust:1.49.0-{{ checksum "Cargo.lock" }}
+      - run:
+          name: Build
+          working_directory: ~/project/packages/crypto
+          command: cargo build --locked
+      - run:
+          name: Run tests
+          working_directory: ~/project/packages/crypto
+          command: cargo test --locked
+      - save_cache:
+          paths:
+            - /usr/local/cargo/registry
+            - target/debug/.fingerprint
+            - target/debug/build
+            - target/debug/deps
+          key: cargocache-v2-package_crypto-rust:1.49.0-{{ checksum "Cargo.lock" }}
+
   package_schema:
     docker:
       - image: rust:1.49.0
@@ -858,13 +888,17 @@ jobs:
           keys:
             - cargocache-v2-benchmarking-rust:1.49.0-{{ checksum "Cargo.lock" }}
       - run:
-          name: Run benchmarks (Singlepass)
+          name: Run vm benchmarks (Singlepass)
           working_directory: ~/project/packages/vm
           command: cargo bench --no-default-features -- --color never --save-baseline singlepass
       - run:
-          name: Run benchmarks (Cranelift)
+          name: Run vm benchmarks (Cranelift)
           working_directory: ~/project/packages/vm
           command: cargo bench --no-default-features --features cranelift -- --color never --save-baseline cranelift
+      - run:
+          name: Run crypto benchmarks
+          working_directory: ~/project/packages/crypto
+          command: cargo bench -- --color never --save-baseline crypto
       - save_cache:
           paths:
             - /usr/local/cargo/registry

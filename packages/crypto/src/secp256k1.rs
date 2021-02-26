@@ -206,7 +206,7 @@ mod tests {
         .unwrap());
 
         // Wrong message fails
-        let bad_message_hash = Sha256::new().chain([MSG, "\0"].concat()).finalize();
+        let bad_message_hash = Sha256::new().chain(MSG).chain("\0").finalize();
         assert!(!secp256k1_verify(
             &bad_message_hash,
             signature.as_bytes(),
@@ -245,7 +245,7 @@ mod tests {
             let signature = hex::decode(sig).unwrap();
 
             // Explicit hash
-            let message_hash = Sha256::new().chain(&message).finalize();
+            let message_hash = Sha256::digest(&message);
 
             // secp256k1_verify works
             assert!(
@@ -281,7 +281,7 @@ mod tests {
             let message = hex::decode(&encoded.message).unwrap();
 
             let hash = hex::decode(&encoded.message_hash).unwrap();
-            let message_hash = Sha256::new().chain(&message).finalize();
+            let message_hash = Sha256::digest(&message);
             assert_eq!(hash.as_slice(), message_hash.as_slice());
 
             let signature = hex::decode(&encoded.signature).unwrap();

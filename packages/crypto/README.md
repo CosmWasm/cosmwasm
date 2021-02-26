@@ -15,6 +15,13 @@ and [cosmwasm-std](`https://crates.io/crates/cosmwasm-std`) crates.
 - `ed25519_batch_verify()`: Batch digital signature verification using the EdDSA
   ed25519 scheme, for Tendemint signature / public key formats.
 
+## Benchmarking
+
+```
+cd packages/crypto
+cargo bench
+```
+
 ## License
 
 This package is part of the cosmwasm repository, licensed under the Apache
