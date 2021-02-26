@@ -5,7 +5,7 @@ use std::ops::Deref;
 
 use crate::binary::Binary;
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);
 
 impl HumanAddr {
@@ -94,7 +94,7 @@ impl PartialEq<HumanAddr> for &str {
     }
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct CanonicalAddr(pub Binary);
 
 impl From<&[u8]> for CanonicalAddr {

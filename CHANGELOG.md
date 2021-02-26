@@ -75,6 +75,9 @@ and this project adheres to
 - cosmwasm-std: Rename `MessageInfo::sent_funds` to `MessageInfo::funds`.
 - cosmwasm-std: Merge response types `InitResponse`, `HandleResponse` and
   `MigrateResponse` into the new `Response`.
+- cosmwasm-std: Remove `Default` implementation from `HumanAddr`,
+  `CanonicalAddr`, `ContractInfo`, `MessageInfo`, `BlockInfo` and `Env`. If you
+  need one of those, you're probably doing something wrong.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
