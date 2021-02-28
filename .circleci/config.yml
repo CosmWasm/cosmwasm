@@ -37,7 +37,7 @@ workflows:
                 - metering-restart
                 - load-wasm-speed
                 - cache-analyze
-                - crypto-verify-benchmarks
+                - clru-rs-upstream
   deploy:
     jobs:
       - build_and_upload_devcontracts:
