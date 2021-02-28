@@ -32,7 +32,7 @@ impl WeightScale<Checksum, SizedModule> for SizeScale {
 
 /// An in-memory module cache
 pub struct InMemoryCache {
-    modules: CLruCache<Checksum, SizedModule, RandomState, SizeScale>,
+    modules: Option<CLruCache<Checksum, SizedModule, RandomState, SizeScale>>,
 }
 
 impl InMemoryCache {
@@ -42,26 +42,38 @@ impl InMemoryCache {
         let preallocated_entries = size.0 / MINIMUM_MODULE_SIZE.0;
 
         InMemoryCache {
-            modules: CLruCache::with_config(
-                CLruCacheConfig::new(NonZeroUsize::new(size.0).unwrap())
-                    .with_memory(preallocated_entries)
-                    .with_scale(SizeScale),
-            ),
+            modules: if size.0 > 0 {
+                Some(CLruCache::with_config(
+                    CLruCacheConfig::new(NonZeroUsize::new(size.0).unwrap())
+                        .with_memory(preallocated_entries)
+                        .with_scale(SizeScale),
+                ))
+            } else {
+                None
+            },
         }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module, size: usize) -> VmResult<()> {
-        self.modules
-            .put_with_weight(*checksum, SizedModule { module, size })
-            .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
+        if self.modules.is_some() {
+            self.modules
+                .as_mut()
+                .unwrap()
+                .put_with_weight(*checksum, SizedModule { module, size })
+                .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
+        }
         Ok(())
     }
 
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
-        match self.modules.get(checksum) {
-            Some(sized_module) => Ok(Some(sized_module.module.clone())),
-            None => Ok(None),
+        if self.modules.is_some() {
+            match self.modules.as_mut().unwrap().get(checksum) {
+                Some(sized_module) => Ok(Some(sized_module.module.clone())),
+                None => Ok(None),
+            }
+        } else {
+            Ok(None)
         }
     }
 }
