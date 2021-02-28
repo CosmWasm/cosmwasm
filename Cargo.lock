@@ -178,11 +178,8 @@ dependencies = [
 
 [[package]]
 name = "clru"
-version = "0.4.0"
-source = "git+https://github.com/maurolacy/clru-rs?rev=88bb2300#88bb23002249c9b74cf99aaa858cfd0b15df6a36"
-dependencies = [
- "thiserror",
-]
+version = "0.3.0"
+source = "git+https://github.com/marmeladema/clru-rs?rev=a1d41d92#a1d41d926cdc9a6e195cde52543ea38e73dffbdc"
 
 [[package]]
 name = "const-oid"
