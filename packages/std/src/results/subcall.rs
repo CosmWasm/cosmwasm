@@ -25,12 +25,12 @@ where
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Reply {
     pub id: u64,
-    pub result: ContractResult<SubCallResponse>,
+    pub result: ContractResult<SubcallResponse>,
 }
 
 /// The information we get back from a successful sub-call, with full sdk events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SubCallResponse {
+pub struct SubcallResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
 }

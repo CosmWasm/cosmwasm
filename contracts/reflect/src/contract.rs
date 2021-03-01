@@ -198,7 +198,7 @@ mod tests {
     use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, Api, BankMsg, BankQuery, Binary,
-        ContractResult, Event, StakingMsg, StdError, SubCallResponse,
+        ContractResult, Event, StakingMsg, StdError, SubcallResponse,
     };
 
     #[test]
@@ -491,7 +491,7 @@ mod tests {
         let id = 123u64;
         let data = Binary::from(b"foobar");
         let events = vec![Event::new("message", vec![attr("signer", "caller-addr")])];
-        let result = ContractResult::Ok(SubCallResponse {
+        let result = ContractResult::Ok(SubcallResponse {
             events: events.clone(),
             data: Some(data.clone()),
         });
