@@ -14,7 +14,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::deps::OwnedDeps;
 use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 use crate::memory::{alloc, consume_region, release_buffer, Region};
-use crate::results::{ContractResult, QueryResponse, Response, SubCallResult};
+use crate::results::{ContractResult, QueryResponse, Reply, Response};
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
 use crate::{Deps, DepsMut, MessageInfo};
@@ -156,12 +156,12 @@ where
     release_buffer(v) as u32
 }
 
-/// do_subcall_response should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// do_reply should be wrapped in an external "C" export, containing a contract-specific function as arg
 /// message body is always `SubcallResult`
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_subcall_response<C, E>(
-    subcall_fn: &dyn Fn(DepsMut, Env, SubCallResult) -> Result<Response<C>, E>,
+pub fn do_reply<C, E>(
+    reply_fn: &dyn Fn(DepsMut, Env, Reply) -> Result<Response<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -169,7 +169,7 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_subcall_response(subcall_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_reply(reply_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -278,8 +278,8 @@ where
     system_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_subcall_response<C, E>(
-    subcall_fn: &dyn Fn(DepsMut, Env, SubCallResult) -> Result<Response<C>, E>,
+fn _do_reply<C, E>(
+    reply_fn: &dyn Fn(DepsMut, Env, Reply) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<Response<C>>
@@ -291,10 +291,10 @@ where
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let msg: SubCallResult = try_into_contract_result!(from_slice(&msg));
+    let msg: Reply = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    subcall_fn(deps.as_mut(), env, msg).into()
+    reply_fn(deps.as_mut(), env, msg).into()
 }
 
 fn _do_query<M, E>(

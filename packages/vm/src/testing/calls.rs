@@ -5,11 +5,9 @@ use schemars::JsonSchema;
 use serde::{de::DeserializeOwned, Serialize};
 use std::fmt;
 
-use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Response, SubCallResult};
+use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 
-use crate::calls::{
-    call_handle, call_init, call_migrate, call_query, call_subcall_response, call_system,
-};
+use crate::calls::{call_handle, call_init, call_migrate, call_query, call_reply, call_system};
 use crate::instance::Instance;
 use crate::serde::to_vec;
 use crate::{BackendApi, Querier, Storage};
@@ -92,13 +90,13 @@ where
     call_system(instance, &env, &serialized_msg).expect("VM error")
 }
 
-// subcall_response mimicks the call signature of the smart contracts.
+// reply mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn subcall_response<A, S, Q, U>(
+pub fn reply<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    msg: SubCallResult,
+    msg: Reply,
 ) -> ContractResult<Response<U>>
 where
     A: BackendApi + 'static,
@@ -106,7 +104,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_subcall_response(instance, &env, &msg).expect("VM error")
+    call_reply(instance, &env, &msg).expect("VM error")
 }
 
 // query mimicks the call signature of the smart contracts.
