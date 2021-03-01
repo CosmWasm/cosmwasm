@@ -55,10 +55,8 @@ impl InMemoryCache {
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module, size: usize) -> VmResult<()> {
-        if self.modules.is_some() {
-            self.modules
-                .as_mut()
-                .unwrap()
+        if let Some(modules) = &mut self.modules {
+            modules
                 .put_with_weight(*checksum, SizedModule { module, size })
                 .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
         }
@@ -67,8 +65,8 @@ impl InMemoryCache {
 
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
-        if self.modules.is_some() {
-            match self.modules.as_mut().unwrap().get(checksum) {
+        if let Some(modules) = &mut self.modules {
+            match modules.get(checksum) {
                 Some(sized_module) => Ok(Some(sized_module.module.clone())),
                 None => Ok(None),
             }
