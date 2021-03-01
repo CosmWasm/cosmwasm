@@ -33,22 +33,28 @@ pub struct GasConfig {
 
 impl GasConfig {
     // Base crypto-verify gas cost: 1000 Cosmos SDK * 100 CosmWasm factor
-    const BASE_CRYPTO_COST: f32 = 100_000.0;
+    const BASE_CRYPTO_COST: u64 = 100_000;
 
     // secp256k1 cost factor (reference)
-    const SECP256K1_VERIFY_FACTOR: f32 = 1.; // ~154 us in crypto benchmarks
+    const SECP256K1_VERIFY_FACTOR: (u64, u64) = (154, 154); // ~154 us in crypto benchmarks
 
     // Gas cost factors, relative to secp256k1_verify cost
-    const SECP256K1_RECOVER_PUBKEY_FACTOR: f32 = 162. / 154.; // 162 us / 154 us ~ 1.05
-    const ED25519_VERIFY_FACTOR: f32 = 63. / 154.; // 63 us / 154 us ~ 0.41
+    const SECP256K1_RECOVER_PUBKEY_FACTOR: (u64, u64) = (162, 154); // 162 us / 154 us ~ 1.05
+    const ED25519_VERIFY_FACTOR: (u64, u64) = (63, 154); // 63 us / 154 us ~ 0.41
 
     // Gas cost factors, relative to ed25519_verify cost
     // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
-    const ED255219_BATCH_VERIFY_FACTOR: f32 = GasConfig::ED25519_VERIFY_FACTOR / 2.; // 0.41 / 2. ~ 0.21
-    const ED255219_BATCH_VERIFY_ONE_PUBKEY_FACTOR: f32 = GasConfig::ED25519_VERIFY_FACTOR / 4.; // 0.41 / 4. ~ 0.1
+    const ED255219_BATCH_VERIFY_FACTOR: (u64, u64) = (
+        GasConfig::ED25519_VERIFY_FACTOR.0,
+        GasConfig::ED25519_VERIFY_FACTOR.1 * 2,
+    ); // 0.41 / 2. ~ 0.21
+    const ED255219_BATCH_VERIFY_ONE_PUBKEY_FACTOR: (u64, u64) = (
+        GasConfig::ED25519_VERIFY_FACTOR.0,
+        GasConfig::ED25519_VERIFY_FACTOR.1 * 4,
+    ); // 0.41 / 4. ~ 0.1
 
-    fn calc_crypto_cost(factor: f32) -> u64 {
-        (GasConfig::BASE_CRYPTO_COST * factor).round() as u64
+    fn calc_crypto_cost(factor: (u64, u64)) -> u64 {
+        (GasConfig::BASE_CRYPTO_COST * factor.0) / factor.1
     }
 }
 
