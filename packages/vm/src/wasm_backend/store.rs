@@ -1,13 +1,13 @@
 use std::convert::TryInto;
 use std::sync::Arc;
-#[cfg(feature = "cranelift")]
-use wasmer::Cranelift;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
 use wasmer::{
     wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Store, Target, JIT,
     WASM_PAGE_SIZE,
 };
+#[cfg(feature = "cranelift")]
+use wasmer::{Cranelift, CraneliftOptLevel};
 use wasmer_middlewares::Metering;
 
 use crate::middleware::Deterministic;
@@ -38,6 +38,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
     #[cfg(feature = "cranelift")]
     {
         let mut config = Cranelift::default();
+        config.opt_level(CraneliftOptLevel::None);
         config.push_middleware(deterministic);
         config.push_middleware(metering);
         let engine = JIT::new(config).engine();
