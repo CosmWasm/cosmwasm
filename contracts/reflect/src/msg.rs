@@ -49,7 +49,7 @@ pub enum QueryMsg {
         contract: HumanAddr,
         key: Binary,
     },
-    /// If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::SubcallResult
+    /// If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::Reply
     SubCallResult {
         id: u64,
     },

@@ -3,7 +3,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Storage, SubCallResult};
+use cosmwasm_std::{CanonicalAddr, Reply, Storage};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -25,10 +25,10 @@ pub fn config_read(storage: &dyn Storage) -> ReadonlySingleton<State> {
     singleton_read(storage, CONFIG_KEY)
 }
 
-pub fn subcalls(storage: &mut dyn Storage) -> Bucket<SubCallResult> {
+pub fn replies(storage: &mut dyn Storage) -> Bucket<Reply> {
     bucket(storage, RESULT_PREFIX)
 }
 
-pub fn subcalls_read(storage: &dyn Storage) -> ReadonlyBucket<SubCallResult> {
+pub fn replies_read(storage: &dyn Storage) -> ReadonlyBucket<Reply> {
     bucket_read(storage, RESULT_PREFIX)
 }

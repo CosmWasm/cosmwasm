@@ -18,13 +18,13 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, HumanAddr,
-    Response, StakingMsg, SubCallResponse, SubCallResult, SubMsg, SystemResult,
+    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, HumanAddr, Reply,
+    Response, StakingMsg, SubCallResponse, SubMsg, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query,
-        subcall_response, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query, reply,
+        MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Backend, Instance,
 };
@@ -218,7 +218,7 @@ fn reflect_subcall() {
 
 // this mocks out what happens after reflect_subcall
 #[test]
-fn subcall_response_and_query() {
+fn reply_and_query() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg { callback_id: None };
@@ -232,8 +232,8 @@ fn subcall_response_and_query() {
         events: events.clone(),
         data: Some(data.clone()),
     });
-    let subcall = SubCallResult { id, result };
-    let res: Response = subcall_response(&mut deps, mock_env(), subcall).unwrap();
+    let subcall = Reply { id, result };
+    let res: Response = reply(&mut deps, mock_env(), subcall).unwrap();
     assert_eq!(0, res.messages.len());
 
     // query for a non-existant id
@@ -242,7 +242,7 @@ fn subcall_response_and_query() {
 
     // query for the real id
     let raw = query(&mut deps, mock_env(), QueryMsg::SubCallResult { id }).unwrap();
-    let qres: SubCallResult = from_binary(&raw).unwrap();
+    let qres: Reply = from_binary(&raw).unwrap();
     assert_eq!(qres.id, id);
     let result = qres.result.unwrap();
     assert_eq!(result.data, Some(data));

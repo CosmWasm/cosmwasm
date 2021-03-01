@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     attr, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
-    HumanAddr, MessageInfo, QueryRequest, QueryResponse, Response, StdError, StdResult,
-    SubCallResult, SubMsg, SystemResult, WasmMsg,
+    HumanAddr, MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult,
+    SubMsg, SystemResult, WasmMsg,
 };
 
 use crate::errors::ReflectError;
@@ -9,7 +9,7 @@ use crate::msg::{
     CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse,
     QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
-use crate::state::{config, config_read, subcalls, subcalls_read, State};
+use crate::state::{config, config_read, replies, replies_read, State};
 
 pub fn init(
     deps: DepsMut,
@@ -132,13 +132,9 @@ pub fn try_change_owner(
 
 /// This just stores the result for future query
 #[entry_point]
-pub fn subcall_response(
-    deps: DepsMut,
-    _env: Env,
-    msg: SubCallResult,
-) -> Result<Response, ReflectError> {
+pub fn reply(deps: DepsMut, _env: Env, msg: Reply) -> Result<Response, ReflectError> {
     let key = msg.id.to_be_bytes();
-    subcalls(deps.storage).save(&key, &msg)?;
+    replies(deps.storage).save(&key, &msg)?;
     Ok(Response::default())
 }
 
@@ -160,9 +156,9 @@ fn query_owner(deps: Deps) -> StdResult<OwnerResponse> {
     Ok(resp)
 }
 
-fn query_subcall(deps: Deps, id: u64) -> StdResult<SubCallResult> {
+fn query_subcall(deps: Deps, id: u64) -> StdResult<Reply> {
     let key = id.to_be_bytes();
-    subcalls_read(deps.storage).load(&key)
+    replies_read(deps.storage).load(&key)
 }
 
 fn query_capitalized(deps: Deps, text: String) -> StdResult<CapitalizedResponse> {
@@ -485,7 +481,7 @@ mod tests {
 
     // this mocks out what happens after reflect_subcall
     #[test]
-    fn subcall_response_and_query() {
+    fn reply_and_query() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg { callback_id: None };
@@ -499,8 +495,8 @@ mod tests {
             events: events.clone(),
             data: Some(data.clone()),
         });
-        let subcall = SubCallResult { id, result };
-        let res = subcall_response(deps.as_mut(), mock_env(), subcall).unwrap();
+        let subcall = Reply { id, result };
+        let res = reply(deps.as_mut(), mock_env(), subcall).unwrap();
         assert_eq!(0, res.messages.len());
 
         // query for a non-existant id
@@ -513,7 +509,7 @@ mod tests {
 
         // query for the real id
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubCallResult { id }).unwrap();
-        let qres: SubCallResult = from_binary(&raw).unwrap();
+        let qres: Reply = from_binary(&raw).unwrap();
         assert_eq!(qres.id, id);
         let result = qres.result.unwrap();
         assert_eq!(result.data, Some(data));

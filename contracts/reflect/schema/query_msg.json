@@ -78,7 +78,7 @@
       }
     },
     {
-      "description": "If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::SubcallResult",
+      "description": "If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::Reply",
       "type": "object",
       "required": [
         "sub_call_result"
