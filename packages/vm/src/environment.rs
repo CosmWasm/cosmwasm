@@ -14,6 +14,68 @@ use crate::errors::{VmError, VmResult};
 #[derive(Debug)]
 pub enum Never {}
 
+/** gas config data */
+
+#[derive(Clone, PartialEq, Debug)]
+pub struct GasConfig {
+    /// Gas costs of VM (not Backend) provided functionality
+    /// secp256k1 signature verification cost
+    pub secp256k1_verify_cost: u64,
+    /// secp256k1 public key recovery cost
+    pub secp256k1_recover_pubkey_cost: u64,
+    /// ed25519 signature verification cost
+    pub ed25519_verify_cost: u64,
+    /// ed25519 batch signature verification cost
+    pub ed25519_batch_verify_cost: u64,
+    /// ed25519 batch signature verification cost (single public key)
+    pub ed25519_batch_verify_one_pubkey_cost: u64,
+}
+
+impl GasConfig {
+    // Base crypto-verify gas cost: 1000 Cosmos SDK * 100 CosmWasm factor
+    const BASE_CRYPTO_COST: u64 = 100_000;
+
+    // secp256k1 cost factor (reference)
+    const SECP256K1_VERIFY_FACTOR: (u64, u64) = (154, 154); // ~154 us in crypto benchmarks
+
+    // Gas cost factors, relative to secp256k1_verify cost
+    const SECP256K1_RECOVER_PUBKEY_FACTOR: (u64, u64) = (162, 154); // 162 us / 154 us ~ 1.05
+    const ED25519_VERIFY_FACTOR: (u64, u64) = (63, 154); // 63 us / 154 us ~ 0.41
+
+    // Gas cost factors, relative to ed25519_verify cost
+    // From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
+    const ED255219_BATCH_VERIFY_FACTOR: (u64, u64) = (
+        GasConfig::ED25519_VERIFY_FACTOR.0,
+        GasConfig::ED25519_VERIFY_FACTOR.1 * 2,
+    ); // 0.41 / 2. ~ 0.21
+    const ED255219_BATCH_VERIFY_ONE_PUBKEY_FACTOR: (u64, u64) = (
+        GasConfig::ED25519_VERIFY_FACTOR.0,
+        GasConfig::ED25519_VERIFY_FACTOR.1 * 4,
+    ); // 0.41 / 4. ~ 0.1
+
+    fn calc_crypto_cost(factor: (u64, u64)) -> u64 {
+        (GasConfig::BASE_CRYPTO_COST * factor.0) / factor.1
+    }
+}
+
+impl Default for GasConfig {
+    fn default() -> Self {
+        Self {
+            secp256k1_verify_cost: GasConfig::calc_crypto_cost(GasConfig::SECP256K1_VERIFY_FACTOR),
+            secp256k1_recover_pubkey_cost: GasConfig::calc_crypto_cost(
+                GasConfig::SECP256K1_RECOVER_PUBKEY_FACTOR,
+            ),
+            ed25519_verify_cost: GasConfig::calc_crypto_cost(GasConfig::ED25519_VERIFY_FACTOR),
+            ed25519_batch_verify_cost: GasConfig::calc_crypto_cost(
+                GasConfig::ED255219_BATCH_VERIFY_FACTOR,
+            ),
+            ed25519_batch_verify_one_pubkey_cost: GasConfig::calc_crypto_cost(
+                GasConfig::ED255219_BATCH_VERIFY_ONE_PUBKEY_FACTOR,
+            ),
+        }
+    }
+}
+
 /** context data **/
 
 #[derive(Clone, PartialEq, Debug, Default)]
@@ -39,6 +101,7 @@ impl GasState {
 pub struct Environment<A: BackendApi, S: Storage, Q: Querier> {
     pub api: A,
     pub print_debug: bool,
+    pub gas_config: GasConfig,
     data: Arc<RwLock<ContextData<S, Q>>>,
 }
 
@@ -51,6 +114,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Clone for Environment<A, S, Q> {
         Environment {
             api: self.api,
             print_debug: self.print_debug,
+            gas_config: self.gas_config.clone(),
             data: self.data.clone(),
         }
     }
@@ -67,6 +131,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
         Environment {
             api,
             print_debug,
+            gas_config: GasConfig::default(),
             data: Arc::new(RwLock::new(ContextData::new(gas_limit))),
         }
     }
