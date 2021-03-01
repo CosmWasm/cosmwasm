@@ -44,7 +44,8 @@ pub use crate::query::{
 };
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
-    QueryResponse, Response, StakingMsg, SystemResult, WasmMsg,
+    Event, QueryResponse, Reply, Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    WasmMsg,
 };
 #[allow(deprecated)]
 pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse};
@@ -63,7 +64,7 @@ mod imports;
 mod memory; // Used by exports and imports only. This assumes pointers are 32 bit long, which makes it untestable on dev machines.
 
 #[cfg(target_arch = "wasm32")]
-pub use crate::exports::{do_handle, do_init, do_migrate, do_query, do_system};
+pub use crate::exports::{do_handle, do_init, do_migrate, do_query, do_reply, do_system};
 #[cfg(target_arch = "wasm32")]
 pub use crate::imports::{ExternalApi, ExternalQuerier, ExternalStorage};
 

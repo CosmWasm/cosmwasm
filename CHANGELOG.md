@@ -44,6 +44,12 @@ and this project adheres to
   (eg. multisig) be the admin and migrate another contract ([#768])
 - cosmwasm-std: Added optional `system` entry point that can only be called by
   native (blockchain) modules to expose admin functionality if desired. ([#793])
+- cosmwasm-std: Add extra field `submessages` to `Response`, such that you can
+  get a callback from these messages after their execution (success or failure).
+  ([#796])
+- cosmwasm-std: Added `reply` entry point that will receive all
+  callbacks from submessages dispatched by this contract. This is only required
+  if contract returns "submessages" (above). ([#796])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -53,6 +59,7 @@ and this project adheres to
 [#716]: https://github.com/CosmWasm/cosmwasm/pull/716
 [#768]: https://github.com/CosmWasm/cosmwasm/pull/768
 [#793]: https://github.com/CosmWasm/cosmwasm/pull/793
+[#796]: https://github.com/CosmWasm/cosmwasm/pull/796
 
 ### Changed
 

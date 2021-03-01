@@ -18,6 +18,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdRe
 
     Ok(Response {
         data: None,
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "init")],
     })
@@ -54,6 +55,7 @@ pub fn handle_update_admin(
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![
             attr("action", "handle_update_admin"),
@@ -88,6 +90,7 @@ pub fn handle_send_msgs(
     };
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_send_msgs")],
         data: None,
@@ -118,6 +121,7 @@ pub fn handle_check_remote_balance(
     };
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_check_remote_balance")],
         data: None,
@@ -168,6 +172,7 @@ pub fn handle_send_funds(
     };
 
     Ok(Response {
+        submessages: vec![],
         messages: vec![msg.into()],
         attributes: vec![attr("action", "handle_send_funds")],
         data: None,

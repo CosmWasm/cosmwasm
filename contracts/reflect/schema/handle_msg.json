@@ -27,6 +27,28 @@
     {
       "type": "object",
       "required": [
+        "reflect_sub_call"
+      ],
+      "properties": {
+        "reflect_sub_call": {
+          "type": "object",
+          "required": [
+            "msgs"
+          ],
+          "properties": {
+            "msgs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SubMsg_for_CustomMsg"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "required": [
         "change_owner"
       ],
       "properties": {
@@ -470,6 +492,32 @@
           }
         }
       ]
+    },
+    "SubMsg_for_CustomMsg": {
+      "description": "A sub-message that will guarantee a subcall_response callback on success or error Note on error the subcall will revert any partial state changes due to this message, but not revert any state changes in the calling contract (that must be done in the subcall_response entry point)",
+      "type": "object",
+      "required": [
+        "id",
+        "msg"
+      ],
+      "properties": {
+        "gas_limit": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "id": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0.0
+        },
+        "msg": {
+          "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
+        }
+      }
     },
     "Uint128": {
       "type": "string"

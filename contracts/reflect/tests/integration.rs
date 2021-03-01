@@ -18,13 +18,13 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, HumanAddr, Response,
-    StakingMsg, SystemResult,
+    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, HumanAddr, Reply,
+    Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query, MockApi,
-        MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query, reply,
+        MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Backend, Instance,
 };
@@ -184,4 +184,67 @@ fn dispatch_custom_query() {
     .unwrap();
     let value: CapitalizedResponse = from_binary(&res).unwrap();
     assert_eq!(value.text, "DEMO ONE");
+}
+
+#[test]
+fn reflect_subcall() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let msg = InitMsg { callback_id: None };
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+
+    let id = 123u64;
+    let payload = SubMsg {
+        id,
+        gas_limit: None,
+        msg: BankMsg::Send {
+            to_address: HumanAddr::from("friend"),
+            amount: coins(1, "token"),
+        }
+        .into(),
+    };
+
+    let msg = HandleMsg::ReflectSubCall {
+        msgs: vec![payload.clone()],
+    };
+    let info = mock_info("creator", &[]);
+    let mut res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
+    assert_eq!(0, res.messages.len());
+    assert_eq!(1, res.submessages.len());
+    let submsg = res.submessages.pop().expect("must have a submessage");
+    assert_eq!(payload, submsg);
+}
+
+// this mocks out what happens after reflect_subcall
+#[test]
+fn reply_and_query() {
+    let mut deps = mock_instance(WASM, &[]);
+
+    let msg = InitMsg { callback_id: None };
+    let info = mock_info("creator", &coins(2, "token"));
+    let _res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+
+    let id = 123u64;
+    let data = Binary::from(b"foobar");
+    let events = vec![Event::new("message", vec![attr("signer", "caller-addr")])];
+    let result = ContractResult::Ok(SubcallResponse {
+        events: events.clone(),
+        data: Some(data.clone()),
+    });
+    let subcall = Reply { id, result };
+    let res: Response = reply(&mut deps, mock_env(), subcall).unwrap();
+    assert_eq!(0, res.messages.len());
+
+    // query for a non-existant id
+    let qres = query(&mut deps, mock_env(), QueryMsg::SubCallResult { id: 65432 });
+    assert!(qres.is_err());
+
+    // query for the real id
+    let raw = query(&mut deps, mock_env(), QueryMsg::SubCallResult { id }).unwrap();
+    let qres: Reply = from_binary(&raw).unwrap();
+    assert_eq!(qres.id, id);
+    let result = qres.result.unwrap();
+    assert_eq!(result.data, Some(data));
+    assert_eq!(result.events, events);
 }

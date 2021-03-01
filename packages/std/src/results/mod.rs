@@ -7,6 +7,7 @@ mod cosmos_msg;
 mod empty;
 mod query;
 mod response;
+mod subcall;
 mod system_result;
 
 pub use attribute::{attr, Attribute};
@@ -17,6 +18,7 @@ pub use cosmos_msg::{wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, Staking
 pub use empty::Empty;
 pub use query::QueryResponse;
 pub use response::Response;
+pub use subcall::{Event, Reply, SubMsg, SubcallResponse};
 pub use system_result::SystemResult;
 
 #[deprecated(since = "0.14.0", note = "Renamed to Response.")]

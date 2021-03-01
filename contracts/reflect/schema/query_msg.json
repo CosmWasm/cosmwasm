@@ -76,6 +76,28 @@
           }
         }
       }
+    },
+    {
+      "description": "If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::Reply",
+      "type": "object",
+      "required": [
+        "sub_call_result"
+      ],
+      "properties": {
+        "sub_call_result": {
+          "type": "object",
+          "required": [
+            "id"
+          ],
+          "properties": {
+            "id": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          }
+        }
+      }
     }
   ],
   "definitions": {
