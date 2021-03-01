@@ -28,18 +28,6 @@ use crate::sections::encode_sections;
 use crate::serde::to_vec;
 use crate::GasInfo;
 
-// 1000 Cosmos SDK * 100 CosmWasm factor (~154 us in crypto benchmarks)
-const GAS_COST_SECP256K1_VERIFY: u64 = 100000;
-
-// Gas costs relative to secp256k1_verify cost
-const GAS_COST_SECP256K1_RECOVER_PUBKEY: u64 = 105195; // 100_000 * 162 us / 154 us
-const GAS_COST_ED25519_VERIFY: u64 = 40909; // 100_000 * 63 us / 154 us
-
-// Gas costs relative to ed25519_verify cost
-// From https://docs.rs/ed25519-zebra/2.2.0/ed25519_zebra/batch/index.html
-const GAS_COST_ED25519_BATCH_VERIFY: u64 = GAS_COST_ED25519_VERIFY / 2;
-const GAS_COST_ED25519_BATCH_VERIFY_ONE_PUBKEY: u64 = GAS_COST_ED25519_VERIFY / 4;
-
 /// A kibi (kilo binary)
 const KI: usize = 1024;
 /// A mibi (mega binary)
@@ -306,7 +294,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     let pubkey = read_region(&env.memory(), pubkey_ptr, ECDSA_PUBKEY_MAX_LEN)?;
 
     let result = secp256k1_verify(&hash, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_VERIFY);
+    let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
@@ -336,7 +324,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     };
 
     let result = secp256k1_recover_pubkey(&hash, &signature, recover_param);
-    let gas_info = GasInfo::with_cost(GAS_COST_SECP256K1_RECOVER_PUBKEY);
+    let gas_info = GasInfo::with_cost(env.gas_config.secp256k1_recover_pubkey_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(pubkey) => {
@@ -366,7 +354,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
     let result = ed25519_verify(&message, &signature, &pubkey);
-    let gas_info = GasInfo::with_cost(GAS_COST_ED25519_VERIFY);
+    let gas_info = GasInfo::with_cost(env.gas_config.ed25519_verify_cost);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
@@ -412,11 +400,11 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
 
     let result = ed25519_batch_verify(&messages, &signatures, &public_keys);
     let gas_cost = if public_keys.len() == 1 {
-        GAS_COST_ED25519_BATCH_VERIFY_ONE_PUBKEY
+        env.gas_config.ed25519_batch_verify_one_pubkey_cost
     } else {
-        GAS_COST_ED25519_BATCH_VERIFY
+        env.gas_config.ed25519_batch_verify_cost
     } * signatures.len() as u64;
-    let gas_info = GasInfo::with_cost(max(gas_cost, GAS_COST_ED25519_VERIFY));
+    let gas_info = GasInfo::with_cost(max(gas_cost, env.gas_config.ed25519_verify_cost));
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
@@ -1852,6 +1840,7 @@ mod tests {
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::InvalidOrder { .. },
+                ..
             } => {}
             e => panic!("Unexpected error: {:?}", e),
         }
@@ -1900,6 +1889,7 @@ mod tests {
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::IteratorDoesNotExist { id, .. },
+                ..
             } => assert_eq!(id, non_existent_id),
             e => panic!("Unexpected error: {:?}", e),
         }
