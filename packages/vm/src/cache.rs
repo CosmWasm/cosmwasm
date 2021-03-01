@@ -144,6 +144,10 @@ where
     /// pinned cache.
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
     pub fn pin(&mut self, checksum: &Checksum) -> VmResult<()> {
+        if self.pinned_memory_cache.has(checksum) {
+            return Ok(());
+        }
+
         // Try to get module from the memory cache
         if let Some(module) = self.memory_cache.load(checksum)? {
             self.stats.hits_memory_cache += 1;
@@ -831,8 +835,19 @@ mod tests {
         assert_eq!(cache.stats().hits_fs_cache, 1);
         assert_eq!(cache.stats().misses, 0);
 
-        // pin
-        let _ = cache.pin(&id);
+        // first pin hits memory cache
+        cache.pin(&id).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
+
+        // consecutive pins are no-ops
+        cache.pin(&id).unwrap();
+        assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
+        assert_eq!(cache.stats().hits_memory_cache, 1);
+        assert_eq!(cache.stats().hits_fs_cache, 1);
+        assert_eq!(cache.stats().misses, 0);
 
         // check pinned
         let backend = mock_backend(&[]);
@@ -843,7 +858,7 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // unpin
-        let _ = cache.unpin(&id);
+        cache.unpin(&id).unwrap();
 
         // verify unpinned
         let backend = mock_backend(&[]);
@@ -854,10 +869,10 @@ mod tests {
         assert_eq!(cache.stats().misses, 0);
 
         // unpin again has no effect
-        let _ = cache.unpin(&id).unwrap();
+        cache.unpin(&id).unwrap();
 
         // unpin non existent id has no effect
         let non_id = Checksum::generate(b"non_existent");
-        let _ = cache.unpin(&non_id).unwrap();
+        cache.unpin(&non_id).unwrap();
     }
 }
