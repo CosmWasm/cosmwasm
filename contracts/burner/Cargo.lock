@@ -115,10 +115,8 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 [[package]]
 name = "clru"
 version = "0.4.0"
-source = "git+https://github.com/maurolacy/clru-rs?rev=88bb2300#88bb23002249c9b74cf99aaa858cfd0b15df6a36"
-dependencies = [
- "thiserror",
-]
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "591ff76ca0691bd91c1b0b5b987e5cf93b21ec810ad96665c5a569c60846dd93"
 
 [[package]]
 name = "const-oid"

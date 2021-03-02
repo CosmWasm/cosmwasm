@@ -1,44 +1,77 @@
-use clru::CLruCache;
+use clru::{CLruCache, CLruCacheConfig, WeightScale};
+use std::collections::hash_map::RandomState;
 use wasmer::Module;
 
 use crate::{Checksum, Size, VmError, VmResult};
+use std::num::NonZeroUsize;
 
 // Minimum module size.
-// Based on `examples/module_size.sh`, and the cosmwasm-plus modules.
-// We use an estimated *minimum* module size in order to compute a cache capacity
-// big enough to handle a size-limited cache without hitting the capacity (number of entries) limit.
+// Based on `examples/module_size.sh`, and the cosmwasm-plus contracts.
+// We use an estimated *minimum* module size in order to compute a number of pre-allocated entries
+// that are enough to handle a size-limited cache without requiring re-allocation / resizing.
 // This will incurr an extra memory cost for the unused entries, but it's negligible:
 // Assuming the cost per entry is 48 bytes, 10000 entries will have an extra cost of just ~500 kB.
 // Which is a very small percentage (~0.03%) of our typical cache memory budget (2 GB).
 const MINIMUM_MODULE_SIZE: Size = Size::kibi(250);
 
+#[derive(Debug)]
+struct SizedModule {
+    pub module: Module,
+    pub size: usize,
+}
+
+#[derive(Debug)]
+struct SizeScale;
+
+impl WeightScale<Checksum, SizedModule> for SizeScale {
+    #[inline]
+    fn weight(&self, _key: &Checksum, value: &SizedModule) -> usize {
+        value.size
+    }
+}
+
 /// An in-memory module cache
 pub struct InMemoryCache {
-    modules: CLruCache<Checksum, Module>,
+    modules: Option<CLruCache<Checksum, SizedModule, RandomState, SizeScale>>,
 }
 
 impl InMemoryCache {
     /// Creates a new cache with the given size (in bytes)
-    /// and estimated number of entries
+    /// and pre-allocated entries.
     pub fn new(size: Size) -> Self {
-        let max_entries = size.0 / MINIMUM_MODULE_SIZE.0;
+        let preallocated_entries = size.0 / MINIMUM_MODULE_SIZE.0;
+
         InMemoryCache {
-            modules: CLruCache::with_weight(max_entries, size.0),
+            modules: if size.0 > 0 {
+                Some(CLruCache::with_config(
+                    CLruCacheConfig::new(NonZeroUsize::new(size.0).unwrap())
+                        .with_memory(preallocated_entries)
+                        .with_scale(SizeScale),
+                ))
+            } else {
+                None
+            },
         }
     }
 
     pub fn store(&mut self, checksum: &Checksum, module: Module, size: usize) -> VmResult<()> {
-        self.modules
-            .put_with_weight(*checksum, module, size)
-            .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
+        if let Some(modules) = &mut self.modules {
+            modules
+                .put_with_weight(*checksum, SizedModule { module, size })
+                .map_err(|e| VmError::cache_err(format!("{:?}", e)))?;
+        }
         Ok(())
     }
 
     /// Looks up a module in the cache and creates a new module
     pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
-        match self.modules.get(checksum) {
-            Some(module) => Ok(Some(module.clone())),
-            None => Ok(None),
+        if let Some(modules) = &mut self.modules {
+            match modules.get(checksum) {
+                Some(sized_module) => Ok(Some(sized_module.module.clone())),
+                None => Ok(None),
+            }
+        } else {
+            Ok(None)
         }
     }
 }
