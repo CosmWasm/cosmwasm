@@ -103,8 +103,9 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "clru"
-version = "0.3.0"
-source = "git+https://github.com/marmeladema/clru-rs?rev=a1d41d92#a1d41d926cdc9a6e195cde52543ea38e73dffbdc"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "591ff76ca0691bd91c1b0b5b987e5cf93b21ec810ad96665c5a569c60846dd93"
 
 [[package]]
 name = "const-oid"
