@@ -71,6 +71,11 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
+    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr> {
+        self.addr_canonicalize(human).map(|_canonical| ())?;
+        Ok(human.into())
+    }
+
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {

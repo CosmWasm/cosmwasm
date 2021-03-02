@@ -36,6 +36,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
+    fn addr_validate(source_ptr: u32) -> u32;
     fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
     fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
@@ -155,6 +156,22 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
+    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr> {
+        let source = build_region(human.as_bytes());
+        let source_ptr = &*source as *const Region as u32;
+
+        let result = unsafe { addr_validate(source_ptr) };
+        if result != 0 {
+            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
+            return Err(StdError::generic_err(format!(
+                "addr_validate errored: {}",
+                error
+            )));
+        }
+
+        Ok(human.into())
+    }
+
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
         let send = build_region(human.as_bytes());
         let send_ptr = &*send as *const Region as u32;

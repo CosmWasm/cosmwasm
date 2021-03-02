@@ -129,6 +129,7 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
+    fn addr_validate(source_ptr: u32) -> u32;
     fn addr_canonicalize(source: u32, destination: u32) -> u32;
     fn addr_humanize(source: u32, destination: u32) -> u32;
 

@@ -77,10 +77,7 @@ pub trait Api {
     /// let validated: HumanAddr = api.addr_validate(input).unwrap();
     /// assert_eq!(validated, input);
     /// ```
-    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr> {
-        self.addr_canonicalize(human).map(|_canonical| ())?;
-        Ok(human.into())
-    }
+    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr>;
 
     /// Takes a human readable address and returns a canonical binary representation of it.
     /// This can be used when a compact fixed length representation is needed.
