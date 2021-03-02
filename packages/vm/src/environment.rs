@@ -301,13 +301,13 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     pub fn memory(&self) -> Memory {
         self.with_wasmer_instance(|instance| {
-            let mut memories: Vec<Memory> = instance
+            let first: Option<Memory> = instance
                 .exports
                 .iter()
                 .memories()
-                .map(|pair| pair.1.clone())
-                .collect();
-            let memory = memories.pop().unwrap();
+                .next()
+                .map(|pair| pair.1.clone());
+            let memory = first.unwrap();
             Ok(memory)
         })
         .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
