@@ -933,7 +933,7 @@ jobs:
           name: Build development contracts
           command: |
             echo "Building all contracts under ./contracts"
-            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.10.6 ./contracts/*/
+            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.10.8 ./contracts/*/
             docker cp with_code:/code/artifacts .
       - run:
           name: Publish artifacts on GitHub
