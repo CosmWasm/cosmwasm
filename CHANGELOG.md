@@ -52,6 +52,7 @@ and this project adheres to
   returns "submessages" (above). ([#796])
 - cosmwasm-std: Implement `From<Uint128> for String`, `From<Uint128> for u128`
   as well as `From<u{32,16,8}> for Uint128`.
+- cosmwasm-vm: Add import `addr_validate` ([#802]).
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -62,6 +63,7 @@ and this project adheres to
 [#768]: https://github.com/CosmWasm/cosmwasm/pull/768
 [#793]: https://github.com/CosmWasm/cosmwasm/pull/793
 [#796]: https://github.com/CosmWasm/cosmwasm/pull/796
+[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ### Changed
 

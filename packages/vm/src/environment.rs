@@ -429,6 +429,7 @@ mod tests {
                 "db_scan" => Function::new_native(&store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "addr_validate" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "addr_canonicalize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "addr_humanize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),

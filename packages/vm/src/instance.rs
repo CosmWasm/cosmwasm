@@ -9,9 +9,10 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    native_addr_canonicalize, native_addr_humanize, native_db_read, native_db_remove,
-    native_db_write, native_debug, native_ed25519_batch_verify, native_ed25519_verify,
-    native_query_chain, native_secp256k1_recover_pubkey, native_secp256k1_verify,
+    native_addr_canonicalize, native_addr_humanize, native_addr_validate, native_db_read,
+    native_db_remove, native_db_write, native_debug, native_ed25519_batch_verify,
+    native_ed25519_verify, native_query_chain, native_secp256k1_recover_pubkey,
+    native_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
@@ -103,6 +104,14 @@ where
         env_imports.insert(
             "db_remove",
             Function::new_native_with_env(store, env.clone(), native_db_remove),
+        );
+
+        // Reads human address from source_ptr and checks if it is valid.
+        // Returns 0 on if the input is valid. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Ownership of the input pointer is not transferred to the host.
+        env_imports.insert(
+            "addr_validate",
+            Function::new_native_with_env(store, env.clone(), native_addr_validate),
         );
 
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.

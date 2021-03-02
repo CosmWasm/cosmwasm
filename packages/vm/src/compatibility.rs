@@ -13,6 +13,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.db_read",
     "env.db_write",
     "env.db_remove",
+    "env.addr_validate",
     "env.addr_canonicalize",
     "env.addr_humanize",
     "env.secp256k1_verify",
@@ -319,6 +320,7 @@ mod tests {
             (import "env" "db_read" (func (param i32 i32) (result i32)))
             (import "env" "db_write" (func (param i32 i32) (result i32)))
             (import "env" "db_remove" (func (param i32) (result i32)))
+            (import "env" "addr_validate" (func (param i32) (result i32)))
             (import "env" "addr_canonicalize" (func (param i32 i32) (result i32)))
             (import "env" "addr_humanize" (func (param i32 i32) (result i32)))
             (import "env" "secp256k1_verify" (func (param i32 i32 i32) (result i32)))

@@ -74,6 +74,13 @@ pub fn native_db_remove<A: BackendApi, S: Storage, Q: Querier>(
     do_remove(env, key_ptr)
 }
 
+pub fn native_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    source_ptr: u32,
+) -> VmResult<u32> {
+    do_addr_validate(&env, source_ptr)
+}
+
 pub fn native_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
@@ -224,6 +231,32 @@ fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
     result?;
 
     Ok(())
+}
+
+fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    source_ptr: u32,
+) -> VmResult<u32> {
+    let source_data = read_region(&env.memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
+    if source_data.is_empty() {
+        return write_to_contract::<A, S, Q>(env, b"Input is empty");
+    }
+
+    let source_string = match String::from_utf8(source_data) {
+        Ok(s) => s,
+        Err(_) => return write_to_contract::<A, S, Q>(env, b"Input is not valid UTF-8"),
+    };
+    let human: HumanAddr = source_string.into();
+
+    let (result, gas_info) = env.api.canonical_address(&human);
+    process_gas_info::<A, S, Q>(env, gas_info)?;
+    match result {
+        Ok(_canonical) => Ok(0),
+        Err(BackendError::UserErr { msg, .. }) => {
+            Ok(write_to_contract::<A, S, Q>(env, msg.as_bytes())?)
+        }
+        Err(err) => Err(VmError::from(err)),
+    }
 }
 
 fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
@@ -564,6 +597,7 @@ mod tests {
                 "db_scan" => Function::new_native(&store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "addr_validate" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "addr_canonicalize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "addr_humanize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
@@ -890,6 +924,92 @@ mod tests {
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
+        }
+    }
+
+    #[test]
+    fn do_addr_validate_works() {
+        let api = MockApi::default();
+        let (env, _instance) = make_instance(api);
+
+        let source_ptr = write_data(&env, b"foo");
+
+        leave_default_data(&env);
+
+        let res = do_addr_validate(&env, source_ptr).unwrap();
+        assert_eq!(res, 0);
+    }
+
+    #[test]
+    fn do_addr_validate_reports_invalid_input_back_to_contract() {
+        let api = MockApi::default();
+        let (env, _instance) = make_instance(api);
+
+        let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
+        let source_ptr2 = write_data(&env, b""); // empty
+        let source_ptr3 = write_data(&env, b"addressexceedingaddressspace"); // too long
+
+        leave_default_data(&env);
+
+        let res = do_addr_validate(&env, source_ptr1).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(&env, res)).unwrap();
+        assert_eq!(err, "Input is not valid UTF-8");
+
+        let res = do_addr_validate(&env, source_ptr2).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(&env, res)).unwrap();
+        assert_eq!(err, "Input is empty");
+
+        let res = do_addr_validate(&env, source_ptr3).unwrap();
+        assert_ne!(res, 0);
+        let err = String::from_utf8(force_read(&env, res)).unwrap();
+        assert_eq!(err, "Invalid input: human address too long");
+    }
+
+    #[test]
+    fn do_addr_validate_fails_for_broken_backend() {
+        let api = MockApi::new_failing("Temporarily unavailable");
+        let (env, _instance) = make_instance(api);
+
+        let source_ptr = write_data(&env, b"foo");
+
+        leave_default_data(&env);
+
+        let result = do_addr_validate(&env, source_ptr);
+        match result.unwrap_err() {
+            VmError::BackendErr {
+                source: BackendError::Unknown { msg, .. },
+                ..
+            } => {
+                assert_eq!(msg.unwrap(), "Temporarily unavailable");
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
+        }
+    }
+
+    #[test]
+    fn do_addr_validate_fails_for_large_inputs() {
+        let api = MockApi::default();
+        let (env, _instance) = make_instance(api);
+
+        let source_ptr = write_data(&env, &[61; 100]);
+
+        leave_default_data(&env);
+
+        let result = do_addr_validate(&env, source_ptr);
+        match result.unwrap_err() {
+            VmError::CommunicationErr {
+                source:
+                    CommunicationError::RegionLengthTooBig {
+                        length, max_length, ..
+                    },
+                ..
+            } => {
+                assert_eq!(length, 100);
+                assert_eq!(max_length, 90);
+            }
+            err => panic!("Incorrect error returned: {:?}", err),
         }
     }
 
