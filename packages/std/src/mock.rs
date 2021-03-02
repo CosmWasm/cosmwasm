@@ -548,14 +548,6 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "length not correct")]
-    fn human_address_input_length() {
-        let api = MockApi::default();
-        let input = CanonicalAddr(Binary(vec![61; 11]));
-        api.human_address(&input).unwrap();
-    }
-
-    #[test]
     #[should_panic(expected = "address too short")]
     fn canonical_address_min_input_length() {
         let api = MockApi::default();
@@ -569,6 +561,14 @@ mod tests {
         let api = MockApi::default();
         let human = HumanAddr::from("some-extremely-long-address-not-supported-by-this-api");
         let _ = api.canonical_address(&human).unwrap();
+    }
+
+    #[test]
+    #[should_panic(expected = "length not correct")]
+    fn human_address_input_length() {
+        let api = MockApi::default();
+        let input = CanonicalAddr(Binary(vec![61; 11]));
+        api.human_address(&input).unwrap();
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)
