@@ -65,8 +65,21 @@ pub trait Storage {
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api {
     /// Takes a human readable address and validates if it's correctly formatted.
-    fn addr_validate(&self, human: &str) -> StdResult<()> {
-        self.addr_canonicalize(human).map(|_canonical| ())
+    /// If it succeeds, a HumanAddr is returned.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Api, HumanAddr};
+    /// # use cosmwasm_std::testing::MockApi;
+    /// # let api = MockApi::default();
+    /// let input = "what-users-provide";
+    /// let validated: HumanAddr = api.addr_validate(input).unwrap();
+    /// assert_eq!(validated, input);
+    /// ```
+    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr> {
+        self.addr_canonicalize(human).map(|_canonical| ())?;
+        Ok(human.into())
     }
 
     /// Takes a human readable address and returns a canonical binary representation of it.
