@@ -71,7 +71,7 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn addr_canonicalize(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
+    fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
             return Err(StdError::generic_err(
@@ -84,7 +84,7 @@ impl Api for MockApi {
             ));
         }
 
-        let mut out = Vec::from(human.as_str());
+        let mut out = Vec::from(human);
 
         // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
@@ -561,6 +561,17 @@ mod tests {
         let api = MockApi::default();
         let human = HumanAddr::from("some-extremely-long-address-not-supported-by-this-api");
         let _ = api.addr_canonicalize(&human).unwrap();
+    }
+
+    #[test]
+    fn addr_canonicalize_works_with_string_inputs() {
+        let api = MockApi::default();
+
+        let input = String::from("foobar123");
+        api.addr_canonicalize(&input).unwrap();
+
+        let input = "foobar456";
+        api.addr_canonicalize(&input).unwrap();
     }
 
     #[test]

@@ -155,8 +155,8 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
-    fn addr_canonicalize(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
-        let send = build_region(human.as_str().as_bytes());
+    fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
+        let send = build_region(human.as_bytes());
         let send_ptr = &*send as *const Region as u32;
         let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
 

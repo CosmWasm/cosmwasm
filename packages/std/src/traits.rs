@@ -65,13 +65,13 @@ pub trait Storage {
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api {
     /// Takes a human readable address and validates if it's correctly formatted.
-    fn addr_validate(&self, human: &HumanAddr) -> StdResult<()> {
+    fn addr_validate(&self, human: &str) -> StdResult<()> {
         self.addr_canonicalize(human).map(|_canonical| ())
     }
 
     /// Takes a human readable address and returns a canonical binary representation of it.
     /// This can be used when a compact fixed length representation is needed.
-    fn addr_canonicalize(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
+    fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
 
     /// Takes a canonical address and returns a human readble address.
     /// This is the inverse of [addr_canonicalize].
