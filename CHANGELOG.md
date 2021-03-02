@@ -47,9 +47,9 @@ and this project adheres to
 - cosmwasm-std: Add extra field `submessages` to `Response`, such that you can
   get a callback from these messages after their execution (success or failure).
   ([#796])
-- cosmwasm-std: Added `reply` entry point that will receive all
-  callbacks from submessages dispatched by this contract. This is only required
-  if contract returns "submessages" (above). ([#796])
+- cosmwasm-std: Added `reply` entry point that will receive all callbacks from
+  submessages dispatched by this contract. This is only required if contract
+  returns "submessages" (above). ([#796])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
