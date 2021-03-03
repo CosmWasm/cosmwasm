@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "HandleMsg",
+  "title": "ExecuteMsg",
   "anyOf": [
     {
       "type": "object",
@@ -544,7 +544,7 @@
                   "$ref": "#/definitions/HumanAddr"
                 },
                 "msg": {
-                  "description": "msg is the json-encoded HandleMsg struct (as raw Binary)",
+                  "description": "msg is the json-encoded ExecuteMsg struct (as raw Binary)",
                   "allOf": [
                     {
                       "$ref": "#/definitions/Binary"

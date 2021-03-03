@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Response_for_CustomMsg",
-  "description": "A response of a contract entry point, such as `init`, `handle` or `migrate`.\n\nThis type can be constructed directly at the end of the call. Alternatively a mutable response instance can be created early in the contract's logic and incrementally be updated.\n\n## Examples\n\nDirect:\n\n``` # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo}; # type InitMsg = (); # use cosmwasm_std::{attr, Response, StdResult};\n\npub fn init( deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg, ) -> StdResult<Response> { // ...\n\nOk(Response { submessages: vec![], messages: vec![], attributes: vec![attr(\"action\", \"init\")], data: None, }) } ```\n\nMutating:\n\n``` # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo}; # type InitMsg = (); # type MyError = (); # use cosmwasm_std::Response;\n\npub fn init( deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg, ) -> Result<Response, MyError> { let mut response = Response::new(); // ... response.add_attribute(\"Let the\", \"hacking begin\"); // ... response.add_message(BankMsg::Send { to_address: HumanAddr::from(\"recipient\"), amount: coins(128, \"uint\"), }); response.add_attribute(\"foo\", \"bar\"); // ... response.set_data(Binary::from(b\"the result data\")); Ok(response) } ```",
+  "description": "A response of a contract entry point, such as `init`, `execute` or `migrate`.\n\nThis type can be constructed directly at the end of the call. Alternatively a mutable response instance can be created early in the contract's logic and incrementally be updated.\n\n## Examples\n\nDirect:\n\n``` # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo}; # type InitMsg = (); # use cosmwasm_std::{attr, Response, StdResult};\n\npub fn init( deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg, ) -> StdResult<Response> { // ...\n\nOk(Response { submessages: vec![], messages: vec![], attributes: vec![attr(\"action\", \"init\")], data: None, }) } ```\n\nMutating:\n\n``` # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo}; # type InitMsg = (); # type MyError = (); # use cosmwasm_std::Response;\n\npub fn init( deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg, ) -> Result<Response, MyError> { let mut response = Response::new(); // ... response.add_attribute(\"Let the\", \"hacking begin\"); // ... response.add_message(BankMsg::Send { to_address: HumanAddr::from(\"recipient\"), amount: coins(128, \"uint\"), }); response.add_attribute(\"foo\", \"bar\"); // ... response.set_data(Binary::from(b\"the result data\")); Ok(response) } ```",
   "type": "object",
   "required": [
     "attributes",
@@ -535,7 +535,7 @@
                   "$ref": "#/definitions/HumanAddr"
                 },
                 "msg": {
-                  "description": "msg is the json-encoded HandleMsg struct (as raw Binary)",
+                  "description": "msg is the json-encoded ExecuteMsg struct (as raw Binary)",
                   "allOf": [
                     {
                       "$ref": "#/definitions/Binary"
