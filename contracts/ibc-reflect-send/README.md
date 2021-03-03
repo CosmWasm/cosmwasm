@@ -26,7 +26,7 @@ packets over the channel, but rather sends packets (the opposite of
 Upon a successful connection, it will send a `WhoAmI` packet to find the address
 on the remote chain and store it locally to answer all queries.
 
-It contains 4 methods in `HandleMsg`:
+It contains 4 methods in `ExecuteMsg`:
 
 - `UpdateAdmin` - to change which account can send
 - `SendMsgs` - to send a packet full of `CosmosMsg` to the remote chain over the

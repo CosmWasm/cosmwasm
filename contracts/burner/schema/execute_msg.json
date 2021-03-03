@@ -1,0 +1,6 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ExecuteMsg",
+  "description": "ExecuteMsg is a placeholder where we don't take any input",
+  "type": "object"
+}

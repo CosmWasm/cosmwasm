@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "HandleMsg",
+  "title": "ExecuteMsg",
   "anyOf": [
     {
       "description": "Releasing all funds in the contract to the beneficiary. This is the only \"proper\" action of this demo contract.",
