@@ -33,7 +33,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 const REQUIRED_EXPORTS: &[&str] = &[
     "interface_version_5",
     "init",
-    "handle",
+    "execute",
     "allocate",
     "deallocate",
 ];

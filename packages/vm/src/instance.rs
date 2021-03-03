@@ -527,7 +527,7 @@ mod tests {
                 (func (type 0) nop)
                 (export "interface_version_5" (func 0))
                 (export "init" (func 0))
-                (export "handle" (func 0))
+                (export "execute" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
             )"#,
@@ -546,7 +546,7 @@ mod tests {
                 (func (type 0) nop)
                 (export "interface_version_5" (func 0))
                 (export "init" (func 0))
-                (export "handle" (func 0))
+                (export "execute" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
             )"#,
@@ -780,7 +780,7 @@ mod tests {
 mod singlepass_tests {
     use cosmwasm_std::{coins, Empty};
 
-    use crate::calls::{call_handle, call_init, call_query};
+    use crate::calls::{call_execute, call_init, call_query};
     use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
@@ -802,7 +802,7 @@ mod singlepass_tests {
     }
 
     #[test]
-    fn contract_deducts_gas_handle() {
+    fn contract_deducts_gas_execute() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init contract
@@ -813,14 +813,14 @@ mod singlepass_tests {
             .unwrap();
 
         // run contract - just sanity check - results validate in contract unit tests
-        let gas_before_handle = instance.get_gas_left();
+        let gas_before_execute = instance.get_gas_left();
         let info = mock_info("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
-        let handle_used = gas_before_handle - instance.get_gas_left();
+        let execute_used = gas_before_execute - instance.get_gas_left();
         assert_eq!(handle_used, 168567);
     }
 

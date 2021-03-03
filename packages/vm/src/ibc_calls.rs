@@ -235,7 +235,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calls::{call_handle, call_init};
+    use crate::calls::{call_execute, call_init};
     use crate::testing::{mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
     use cosmwasm_std::{Empty, IbcOrder};
@@ -269,12 +269,13 @@ mod tests {
             .unwrap();
 
         // which creates a reflect account. here we get the callback
-        let handle_msg = format!(
+        let execute_msg = format!(
             r#"{{"init_callback":{{"id":"{}","contract_addr":"{}"}}}}"#,
             channel_id, account
         );
         let info = mock_info(account, &[]);
-        call_handle::<_, _, _, Empty>(instance, &mock_env(), &info, handle_msg.as_bytes()).unwrap();
+        call_execute::<_, _, _, Empty>(instance, &mock_env(), &info, execute_msg.as_bytes())
+            .unwrap();
     }
 
     const CHANNEL_ID: &str = "channel-123";
