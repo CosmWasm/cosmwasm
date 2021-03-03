@@ -4,7 +4,7 @@
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
 //! do_init and do_wrapper should be wrapped with a extern "C" entry point
-//! including the contract-specific init/handle function pointer.
+//! including the contract-specific init/execute function pointer.
 use std::fmt;
 use std::vec::Vec;
 
@@ -90,13 +90,13 @@ where
     release_buffer(v) as u32
 }
 
-/// do_handle should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// do_execute should be wrapped in an external "C" export, containing a contract-specific function as arg
 ///
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
+pub fn do_execute<M, C, E>(
+    execute_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -106,8 +106,8 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_handle(
-        handle_fn,
+    let res = _do_execute(
+        execute_fn,
         env_ptr as *mut Region,
         info_ptr as *mut Region,
         msg_ptr as *mut Region,
@@ -215,8 +215,8 @@ where
     init_fn(deps.as_mut(), env, info, msg).into()
 }
 
-fn _do_handle<M, C, E>(
-    handle_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
+fn _do_execute<M, C, E>(
+    execute_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -235,7 +235,7 @@ where
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    handle_fn(deps.as_mut(), env, info, msg).into()
+    execute_fn(deps.as_mut(), env, info, msg).into()
 }
 
 fn _do_migrate<M, C, E>(

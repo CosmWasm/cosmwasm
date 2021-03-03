@@ -21,7 +21,7 @@
 /// }
 ///
 /// # type HandleMsg = ();
-/// pub fn handle(
+/// pub fn execute(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
@@ -62,7 +62,7 @@ macro_rules! create_entry_points {
     (@inner; $contract:ident, migration = $migration:tt) => {
         mod wasm {
             use super::$contract;
-            use cosmwasm_std::{do_handle, do_init, do_migrate, do_query};
+            use cosmwasm_std::{do_execute, do_init, do_migrate, do_query};
 
             #[no_mangle]
             extern "C" fn init(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
@@ -70,8 +70,8 @@ macro_rules! create_entry_points {
             }
 
             #[no_mangle]
-            extern "C" fn handle(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-                do_handle(&$contract::handle, env_ptr, info_ptr, msg_ptr)
+            extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
+                do_execute(&$contract::execute, env_ptr, info_ptr, msg_ptr)
             }
 
             #[no_mangle]
