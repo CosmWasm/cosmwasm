@@ -265,7 +265,7 @@ fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResul
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calls::{call_handle, call_init};
+    use crate::calls::{call_execute, call_init};
     use crate::errors::VmError;
     use crate::features::features_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
@@ -507,7 +507,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_init_on_cached_contract() {
+    fn call_init_on_cached_contract() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
@@ -569,7 +569,7 @@ mod tests {
     }
 
     #[test]
-    fn execute_handle_on_cached_contract() {
+    fn call_execute_on_cached_contract() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
@@ -591,10 +591,10 @@ mod tests {
                 .unwrap();
             assert_eq!(response.messages.len(), 0);
 
-            // handle
+            // execute
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
-            let response = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
@@ -618,10 +618,10 @@ mod tests {
                 .unwrap();
             assert_eq!(response.messages.len(), 0);
 
-            // handle
+            // execute
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
-            let response = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
@@ -647,10 +647,10 @@ mod tests {
                 .unwrap();
             assert_eq!(response.messages.len(), 0);
 
-            // handle
+            // execute
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
-            let response = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
             assert_eq!(response.messages.len(), 1);
@@ -688,7 +688,7 @@ mod tests {
         let mut instance = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
         let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
 
@@ -696,7 +696,7 @@ mod tests {
         let mut instance = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
         let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(1, msgs.len());
     }

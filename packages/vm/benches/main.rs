@@ -7,7 +7,7 @@ use cosmwasm_vm::testing::{
     mock_backend, mock_env, mock_info, mock_instance_options, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{
-    call_handle, call_init, features_from_csv, Cache, CacheOptions, Checksum, Instance,
+    call_execute, call_init, features_from_csv, Cache, CacheOptions, Checksum, Instance,
     InstanceOptions, Size,
 };
 
@@ -53,7 +53,7 @@ fn bench_instance(c: &mut Criterion) {
         });
     });
 
-    group.bench_function("execute handle", |b| {
+    group.bench_function("execute execute", |b| {
         let backend = mock_backend(&[]);
         let much_gas: InstanceOptions = InstanceOptions {
             gas_limit: 500_000_000_000,
@@ -72,7 +72,7 @@ fn bench_instance(c: &mut Criterion) {
             let info = mock_info("verifies", &coins(15, "earth"));
             let msg = br#"{"release":{}}"#;
             let contract_result =
-                call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         });
     });

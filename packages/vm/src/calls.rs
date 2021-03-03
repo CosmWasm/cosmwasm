@@ -12,7 +12,7 @@ use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
 
 const MAX_LENGTH_INIT: usize = 100_000;
-const MAX_LENGTH_HANDLE: usize = 100_000;
+const MAX_LENGTH_EXECUTE: usize = 100_000;
 const MAX_LENGTH_MIGRATE: usize = 100_000;
 const MAX_LENGTH_SUDO: usize = 100_000;
 const MAX_LENGTH_SUBCALL_RESPONSE: usize = 100_000;
@@ -37,7 +37,7 @@ where
     Ok(result)
 }
 
-pub fn call_handle<A, S, Q, U>(
+pub fn call_execute<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
@@ -51,7 +51,7 @@ where
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
-    let data = call_handle_raw(instance, &env, &info, msg)?;
+    let data = call_execute_raw(instance, &env, &info, msg)?;
     let result: ContractResult<Response<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -148,9 +148,9 @@ where
     call_raw(instance, "init", &[env, info, msg], MAX_LENGTH_INIT)
 }
 
-/// Calls Wasm export "handle" and returns raw data from the contract.
+/// Calls Wasm export "execute" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_handle_raw<A, S, Q>(
+pub fn call_execute_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     info: &[u8],
@@ -162,7 +162,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "handle", &[env, info, msg], MAX_LENGTH_HANDLE)
+    call_raw(instance, "execute", &[env, info, msg], MAX_LENGTH_EXECUTE)
 }
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
@@ -277,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn call_handle_works() {
+    fn call_execute_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init
@@ -287,10 +287,10 @@ mod tests {
             .unwrap()
             .unwrap();
 
-        // handle
+        // execute
         let info = mock_info("verifies", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        call_handle::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
     }
