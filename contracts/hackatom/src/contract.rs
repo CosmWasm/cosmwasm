@@ -614,7 +614,12 @@ mod tests {
 
         let execute_info = mock_info(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = execute(deps.as_mut(), mock_env(), execute_info, ExecuteMsg::Panic {});
+        let _ = execute(
+            deps.as_mut(),
+            mock_env(),
+            execute_info,
+            ExecuteMsg::Panic {},
+        );
     }
 
     #[test]
