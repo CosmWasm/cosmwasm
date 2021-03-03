@@ -7,7 +7,7 @@ use std::fmt;
 
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 
-use crate::calls::{call_handle, call_init, call_migrate, call_query, call_reply, call_system};
+use crate::calls::{call_handle, call_init, call_migrate, call_query, call_reply, call_sudo};
 use crate::instance::Instance;
 use crate::serde::to_vec;
 use crate::{BackendApi, Querier, Storage};
@@ -71,10 +71,10 @@ where
     call_migrate(instance, &env, &serialized_msg).expect("VM error")
 }
 
-// system mimicks the call signature of the smart contracts.
+// sudo mimicks the call signature of the smart contracts.
 // thus it moves env and msg rather than take them as reference.
 // this is inefficient here, but only used in test code
-pub fn system<A, S, Q, M, U>(
+pub fn sudo<A, S, Q, M, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     msg: M,
@@ -87,7 +87,7 @@ where
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_system(instance, &env, &serialized_msg).expect("VM error")
+    call_sudo(instance, &env, &serialized_msg).expect("VM error")
 }
 
 // reply mimicks the call signature of the smart contracts.
