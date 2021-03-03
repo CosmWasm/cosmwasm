@@ -85,6 +85,8 @@ and this project adheres to
 - cosmwasm-std: Remove `Default` implementation from `HumanAddr`,
   `CanonicalAddr`, `ContractInfo`, `MessageInfo`, `BlockInfo` and `Env`. If you
   need one of those, you're probably doing something wrong.
+- cosmwasm-std: Make `label` in `WasmMsg::Instantiate` non-optional to better
+  match the Go/database format.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
