@@ -3,7 +3,7 @@ use std::fs::create_dir_all;
 
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 
-use queue::contract::{CountResponse, HandleMsg, Item, ListResponse, QueryMsg, SumResponse};
+use queue::contract::{CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, SumResponse};
 use queue::msg::{InitMsg, MigrateMsg};
 
 fn main() {
@@ -13,7 +13,7 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(InitMsg), &out_dir);
-    export_schema(&schema_for!(HandleMsg), &out_dir);
+    export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(MigrateMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(Item), &out_dir);
