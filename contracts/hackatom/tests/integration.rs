@@ -25,12 +25,12 @@ use cosmwasm_vm::{
     call_handle, from_slice,
     testing::{
         handle, init, migrate, mock_env, mock_info, mock_instance, mock_instance_with_balances,
-        query, system, test_io, MOCK_CONTRACT_ADDR,
+        query, sudo, test_io, MOCK_CONTRACT_ADDR,
     },
     BackendApi, Storage, VmError,
 };
 
-use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, SystemMsg, CONFIG_KEY};
+use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, SudoMsg, CONFIG_KEY};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
@@ -146,7 +146,7 @@ fn migrate_verifier() {
 }
 
 #[test]
-fn system_can_steal_tokens() {
+fn sudo_can_steal_tokens() {
     let mut deps = mock_instance(WASM, &[]);
 
     let verifier = HumanAddr::from("verifies");
@@ -160,14 +160,14 @@ fn system_can_steal_tokens() {
     let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
-    // system takes any tax it wants
+    // sudo takes any tax it wants
     let to_address = HumanAddr::from("community-pool");
     let amount = coins(700, "gold");
-    let sys_msg = SystemMsg::StealFunds {
+    let sys_msg = SudoMsg::StealFunds {
         recipient: to_address.clone(),
         amount: amount.clone(),
     };
-    let res: Response = system(&mut deps, mock_env(), sys_msg).unwrap();
+    let res: Response = sudo(&mut deps, mock_env(), sys_msg).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");
     assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);

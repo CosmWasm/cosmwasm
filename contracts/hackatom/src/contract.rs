@@ -30,12 +30,12 @@ pub struct MigrateMsg {
     pub verifier: HumanAddr,
 }
 
-/// SystemMsg is only expose for internal sdk modules to call.
+/// SudoMsg is only exposed for internal SDK modules to call.
 /// This is showing how we can expose "admin" functionality than can not be called by
 /// external users or contracts, but only trusted (native/Go) code in the blockchain
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum SystemMsg {
+pub enum SudoMsg {
     StealFunds {
         recipient: HumanAddr,
         amount: Vec<Coin>,
@@ -135,9 +135,9 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Ha
 }
 
 #[entry_point]
-pub fn system(_deps: DepsMut, _env: Env, msg: SystemMsg) -> Result<Response, HackError> {
+pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackError> {
     match msg {
-        SystemMsg::StealFunds { recipient, amount } => {
+        SudoMsg::StealFunds { recipient, amount } => {
             let msg = BankMsg::Send {
                 to_address: recipient,
                 amount,
@@ -461,7 +461,7 @@ mod tests {
     }
 
     #[test]
-    fn system_can_steal_tokens() {
+    fn sudo_can_steal_tokens() {
         let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr::from("verifies");
@@ -475,14 +475,14 @@ mod tests {
         let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
-        // system takes any tax it wants
+        // sudo takes any tax it wants
         let to_address = HumanAddr::from("community-pool");
         let amount = coins(700, "gold");
-        let sys_msg = SystemMsg::StealFunds {
+        let sys_msg = SudoMsg::StealFunds {
             recipient: to_address.clone(),
             amount: amount.clone(),
         };
-        let res = system(deps.as_mut(), mock_env(), sys_msg).unwrap();
+        let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
         assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
