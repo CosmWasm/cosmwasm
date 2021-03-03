@@ -26,6 +26,10 @@ major releases of `cosmwasm`. Note that you can also view the
 - Rename the `handle` entry point to `execute`.
   Also, rename `HandleMsg` to `ExecuteMsg`.
 
+- Rename `InitResponse`, `HandleResponse` and `MigrateResponse` to `Response`.
+  The old names are still supported (with a deprecation warning), and will be
+  removed in the next version.
+
 - Remove `from_address` from `BankMsg::Send`, which is now automatically filled
   with the contract address:
 
@@ -70,7 +74,7 @@ major releases of `cosmwasm`. Note that you can also view the
       _env: Env,
       _info: MessageInfo,
       _msg: InitMsg,
-  ) -> StdResult<InitResponse> {
+  ) -> StdResult<Response> {
       // …
   }
 
@@ -80,7 +84,7 @@ major releases of `cosmwasm`. Note that you can also view the
       _env: Env,
       _info: MessageInfo,
       _msg: ExecuteMsg,
-  ) -> StdResult<HandleResponse> {
+  ) -> StdResult<Response> {
       // …
   }
 
@@ -91,7 +95,7 @@ major releases of `cosmwasm`. Note that you can also view the
       env: Env,
       _info: MessageInfo,
       msg: MigrateMsg,
-  ) -> StdResult<MigrateResponse> {
+  ) -> StdResult<Response> {
       // …
   }
 
@@ -101,8 +105,8 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
-- Since `InitResponse` now contains a `data` field like `HandleResponse` and
-  `MigrateResponse`, converting `Context` into `InitResponse` always succeeds.
+- Since `Response` contains a `data` field, converting `Context` into `Response`
+  always succeeds.
 
   ```rust
   // before
@@ -114,7 +118,7 @@ major releases of `cosmwasm`. Note that you can also view the
   }
 
   // after
-  pub fn init(deps: DepsMut, env: Env, info: MessageInfo, msg: InitMsg) -> Result<InitResponse, HackError> {
+  pub fn init(deps: DepsMut, env: Env, info: MessageInfo, msg: InitMsg) -> Result<Response, HackError> {
       // …
       let mut ctx = Context::new();
       ctx.add_attribute("Let the", "hacking begin");
@@ -136,7 +140,7 @@ major releases of `cosmwasm`. Note that you can also view the
   }
 
   // After
-  pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<MigrateResponse> {
+  pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
     // ...
   }
   ```
@@ -150,13 +154,12 @@ major releases of `cosmwasm`. Note that you can also view the
   [msgmigratecontract]:
     https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L86-L96
 
-- Add mutating helper methods to `InitResponse`, `HandleResponse` and
-  `MigrateResponse` that can be used instead of a creating a `Context` that is
-  later converted to a response:
+- Add mutating helper methods to `Response` that can be used instead of
+  creating a `Context` that is later converted to a response:
 
   ```rust
   // before
-  pub fn handle_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, ContractError> {
+  pub fn handle_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
       // ...
 
       // release counter_offer to creator
@@ -180,11 +183,11 @@ major releases of `cosmwasm`. Note that you can also view the
 
 
   // after
-  pub fn execute_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, ContractError> {
+  pub fn execute_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, ContractError> {
       // ...
 
       // release counter_offer to creator
-      let mut resp = HandleResponse::new();
+      let mut resp = Response::new();
       resp.add_message(BankMsg::Send {
           to_address: state.creator,
           amount: state.counter_offer,
