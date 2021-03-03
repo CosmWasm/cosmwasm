@@ -1,6 +1,6 @@
 #![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
-use cosmwasm_std::{Binary, Deps, StdResult, Uint128};
+use cosmwasm_std::{Binary, Deps, Uint128};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -85,10 +85,6 @@ pub struct ListVerificationsResponse {
     pub verification_schemes: Vec<String>,
 }
 
-pub(crate) fn list_verifications(_deps: Deps) -> StdResult<Vec<String>> {
-    Ok(vec![
-        "secp256k1".into(),
-        "ed25519".into(),
-        "ed25519_batch".into(),
-    ])
+pub(crate) fn list_verifications(_deps: Deps) -> Vec<String> {
+    vec!["secp256k1".into(), "ed25519".into(), "ed25519_batch".into()]
 }

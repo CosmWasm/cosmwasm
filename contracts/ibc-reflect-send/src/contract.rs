@@ -86,7 +86,7 @@ pub fn handle_send_msgs(
         channel_id,
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp: build_timeout_timestamp(&env.block),
+        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
     };
 
     Ok(Response {
@@ -117,7 +117,7 @@ pub fn handle_check_remote_balance(
         channel_id,
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp: build_timeout_timestamp(&env.block),
+        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
     };
 
     Ok(Response {
@@ -168,7 +168,7 @@ pub fn handle_send_funds(
         to_address: remote_addr,
         amount,
         timeout_block: None,
-        timeout_timestamp: build_timeout_timestamp(&env.block),
+        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
     };
 
     Ok(Response {
