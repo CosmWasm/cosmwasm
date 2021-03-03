@@ -210,7 +210,7 @@ pub fn query_verify_tendermint_batch(
 }
 
 pub fn query_list_verifications(deps: Deps) -> StdResult<ListVerificationsResponse> {
-    let verification_schemes: Vec<_> = list_verifications(deps)?;
+    let verification_schemes: Vec<_> = list_verifications(deps);
     Ok(ListVerificationsResponse {
         verification_schemes,
     })

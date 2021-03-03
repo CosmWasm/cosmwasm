@@ -99,6 +99,7 @@ fn enqueue(storage: &mut dyn Storage, value: i32) -> StdResult<()> {
     Ok(())
 }
 
+#[allow(clippy::unnecessary_wraps)]
 fn handle_dequeue(deps: DepsMut) -> StdResult<Response> {
     // find the first element in the queue and extract value
     let first = deps.storage.range(None, None, Order::Ascending).next();
@@ -135,16 +136,16 @@ pub fn migrate(deps: DepsMut, _env: Env, _msg: MigrateMsg) -> StdResult<Response
 
 pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
-        QueryMsg::Count {} => to_binary(&query_count(deps)?),
+        QueryMsg::Count {} => to_binary(&query_count(deps)),
         QueryMsg::Sum {} => to_binary(&query_sum(deps)?),
         QueryMsg::Reducer {} => to_binary(&query_reducer(deps)?),
-        QueryMsg::List {} => to_binary(&query_list(deps)?),
+        QueryMsg::List {} => to_binary(&query_list(deps)),
     }
 }
 
-fn query_count(deps: Deps) -> StdResult<CountResponse> {
+fn query_count(deps: Deps) -> CountResponse {
     let count = deps.storage.range(None, None, Order::Ascending).count() as u32;
-    Ok(CountResponse { count })
+    CountResponse { count }
 }
 
 fn query_sum(deps: Deps) -> StdResult<SumResponse> {
@@ -186,7 +187,7 @@ fn query_reducer(deps: Deps) -> StdResult<ReducerResponse> {
 
 /// Does a range query with both bounds set. Not really useful but to debug an issue
 /// between VM and Wasm: https://github.com/CosmWasm/cosmwasm/issues/508
-fn query_list(deps: Deps) -> StdResult<ListResponse> {
+fn query_list(deps: Deps) -> ListResponse {
     let empty: Vec<u32> = deps
         .storage
         .range(Some(b"large"), Some(b"larger"), Order::Ascending)
@@ -202,7 +203,7 @@ fn query_list(deps: Deps) -> StdResult<ListResponse> {
         .range(Some(b"\x20"), None, Order::Ascending)
         .map(|(k, _)| k[0] as u32)
         .collect();
-    Ok(ListResponse { empty, early, late })
+    ListResponse { empty, early, late }
 }
 
 #[cfg(test)]
@@ -222,7 +223,7 @@ mod tests {
     }
 
     fn get_count(deps: Deps) -> u32 {
-        query_count(deps).unwrap().count
+        query_count(deps).count
     }
 
     fn get_sum(deps: Deps) -> i32 {

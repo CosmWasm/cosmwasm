@@ -63,7 +63,7 @@ and this project adheres to
 
 ### Changed
 
-- all: Drop support for Rust versions lower than 1.49.0.
+- all: Drop support for Rust versions lower than 1.50.0.
 - all: The `query` enpoint is now optional. It is still highly recommended to
   expose it an almost any use case though.
 - all: Change the encoding of the key/value region of the `db_next` import to a

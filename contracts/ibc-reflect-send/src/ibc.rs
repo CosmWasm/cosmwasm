@@ -15,10 +15,9 @@ pub const IBC_VERSION: &str = "ibc-reflect-v1";
 /// packets live one hour
 const PACKET_LIFETIME: u64 = 60 * 60;
 
-pub(crate) fn build_timeout_timestamp(block: &BlockInfo) -> Option<u64> {
+pub(crate) fn build_timeout_timestamp(block: &BlockInfo) -> u64 {
     let timeout = block.time + PACKET_LIFETIME;
-    let timeout_nanos = timeout * 1_000_000_000;
-    Some(timeout_nanos)
+    timeout * 1_000_000_000
 }
 
 #[entry_point]
@@ -66,7 +65,7 @@ pub fn ibc_channel_connect(
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
         timeout_block: None,
-        timeout_timestamp: build_timeout_timestamp(&env.block),
+        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
     };
 
     Ok(IbcBasicResponse {
@@ -136,6 +135,7 @@ pub fn ibc_packet_ack(
 }
 
 // receive PacketMsg::Dispatch response
+#[allow(clippy::unnecessary_wraps)]
 fn acknowledge_dispatch(
     _deps: DepsMut,
     _caller: String,

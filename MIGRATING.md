@@ -6,8 +6,8 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.13 -> 0.14 (unreleased)
 
-- The minimum Rust supported version for 0.14 is 1.49.0. Verify your Rust
-  version is >= 1.49.0 with: `rustc --version`
+- The minimum Rust supported version for 0.14 is 1.50.0. Verify your Rust
+  version is >= 1.50.0 with: `rustc --version`
 
 - Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
 
