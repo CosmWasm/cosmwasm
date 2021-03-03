@@ -246,7 +246,7 @@ pub fn ibc_packet_timeout(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contract::{handle, init, query};
+    use crate::contract::{execute, init, query};
     use crate::msg::{AccountResponse, HandleMsg, InitMsg, QueryMsg};
 
     use cosmwasm_std::testing::{
@@ -372,7 +372,7 @@ mod tests {
             msgs: msgs_to_dispatch,
         };
         let info = mock_info(CREATOR, &[]);
-        let mut res = handle(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
+        let mut res = execute(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let packet = match res.messages.swap_remove(0) {
             CosmosMsg::Ibc(IbcMsg::SendPacket {
@@ -415,7 +415,7 @@ mod tests {
             transfer_channel_id: transfer_channel_id.into(),
         };
         let info = mock_info(CREATOR, &coins(12344, "utrgd"));
-        handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
         // let's try with no sent funds in the message
         let msg = HandleMsg::SendFunds {
@@ -423,7 +423,7 @@ mod tests {
             transfer_channel_id: transfer_channel_id.into(),
         };
         let info = mock_info(CREATOR, &[]);
-        handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
         // 3rd times the charm
         let msg = HandleMsg::SendFunds {
@@ -431,7 +431,7 @@ mod tests {
             transfer_channel_id: transfer_channel_id.into(),
         };
         let info = mock_info(CREATOR, &coins(12344, "utrgd"));
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
         match &res.messages[0] {
             CosmosMsg::Ibc(IbcMsg::Transfer {

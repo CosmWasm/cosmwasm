@@ -23,7 +23,7 @@ use cosmwasm_std::{
     IbcBasicResponse, IbcMsg, IbcOrder, Response,
 };
 use cosmwasm_vm::testing::{
-    handle, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, init, mock_env, mock_info,
+    execute, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, init, mock_env, mock_info,
     mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
@@ -163,12 +163,12 @@ fn dispatch_message_send_and_ack() {
         amount: coins(123456789, "uatom"),
     }
     .into()];
-    let handle_msg = HandleMsg::SendMsgs {
+    let execute_msg = HandleMsg::SendMsgs {
         channel_id: channel_id.into(),
         msgs: msgs_to_dispatch,
     };
     let info = mock_info(CREATOR, &[]);
-    let mut res: Response = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
+    let mut res: Response = execute(&mut deps, mock_env(), info, execute_msg).unwrap();
     assert_eq!(1, res.messages.len());
     let packet = match res.messages.swap_remove(0) {
         CosmosMsg::Ibc(IbcMsg::SendPacket {
@@ -211,7 +211,7 @@ fn send_remote_funds() {
         transfer_channel_id: transfer_channel_id.into(),
     };
     let info = mock_info(CREATOR, &coins(12344, "utrgd"));
-    handle::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
+    execute::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
 
     // let's try with no sent funds in the message
     let msg = HandleMsg::SendFunds {
@@ -219,7 +219,7 @@ fn send_remote_funds() {
         transfer_channel_id: transfer_channel_id.into(),
     };
     let info = mock_info(CREATOR, &[]);
-    handle::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
+    execute::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
 
     // 3rd times the charm
     let msg = HandleMsg::SendFunds {
@@ -227,7 +227,7 @@ fn send_remote_funds() {
         transfer_channel_id: transfer_channel_id.into(),
     };
     let info = mock_info(CREATOR, &coins(12344, "utrgd"));
-    let res: Response = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = execute(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(1, res.messages.len());
     match &res.messages[0] {
         CosmosMsg::Ibc(IbcMsg::Transfer {

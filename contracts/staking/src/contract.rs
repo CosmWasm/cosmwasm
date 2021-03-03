@@ -52,7 +52,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdRes
 }
 
 #[entry_point]
-pub fn handle(
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -583,7 +583,7 @@ mod tests {
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
 
         // try to bond and make sure we trigger delegation
-        let res = handle(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let delegate = &res.messages[0];
         match delegate {
@@ -621,7 +621,7 @@ mod tests {
         let bob = HumanAddr::from("bob");
         let bond_msg = HandleMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
-        let res = handle(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
@@ -632,7 +632,7 @@ mod tests {
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
-        let _ = handle(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
+        let _ = execute(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
 
         // update the querier with new bond
         set_delegation(&mut deps.querier, 1500, "ustake");
@@ -648,7 +648,7 @@ mod tests {
         let alice = HumanAddr::from("alice");
         let bond_msg = HandleMsg::Bond {};
         let info = mock_info(&alice, &[coin(3000, "ustake")]);
-        let res = handle(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
@@ -682,7 +682,7 @@ mod tests {
         let info = mock_info(&bob, &[coin(500, "photon")]);
 
         // try to bond and make sure we trigger delegation
-        let res = handle(deps.as_mut(), mock_env(), info, bond_msg);
+        let res = execute(deps.as_mut(), mock_env(), info, bond_msg);
         match res.unwrap_err() {
             StakingError::Std {
                 original: StdError::GenericErr { msg, .. },
@@ -708,7 +708,7 @@ mod tests {
         let bob = HumanAddr::from("bob");
         let bond_msg = HandleMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
-        let res = handle(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
 
         // update the querier with new bond
@@ -720,7 +720,7 @@ mod tests {
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
-        let _ = handle(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
+        let _ = execute(deps.as_mut(), mock_env(), info, rebond_msg).unwrap();
 
         // update the querier with new bond, lower balance
         set_delegation(&mut deps.querier, 1500, "ustake");
@@ -731,7 +731,7 @@ mod tests {
             amount: Uint128(600),
         };
         let info = mock_info(&creator, &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, unbond_msg);
+        let res = execute(deps.as_mut(), mock_env(), info, unbond_msg);
         match res.unwrap_err() {
             StakingError::Std {
                 original: StdError::Underflow { .. },
@@ -749,7 +749,7 @@ mod tests {
         let bobs_claim = Uint128(810);
         let bobs_balance = Uint128(400);
         let info = mock_info(&bob, &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, unbond_msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, unbond_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let delegate = &res.messages[0];
         match delegate {

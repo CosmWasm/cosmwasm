@@ -149,7 +149,7 @@ pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackErr
     }
 }
 
-pub fn handle(
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -504,7 +504,7 @@ mod tests {
     }
 
     #[test]
-    fn handle_release_works() {
+    fn execute_release_works() {
         let mut deps = mock_dependencies(&[]);
 
         // initialize the store
@@ -525,16 +525,16 @@ mod tests {
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary can release it
-        let handle_info = mock_info(verifier.as_str(), &[]);
-        let handle_res = handle(
+        let execute_info = mock_info(verifier.as_str(), &[]);
+        let execute_res = execute(
             deps.as_mut(),
             mock_env(),
-            handle_info,
+            execute_info,
             HandleMsg::Release {},
         )
         .unwrap();
-        assert_eq!(handle_res.messages.len(), 1);
-        let msg = handle_res.messages.get(0).expect("no message");
+        assert_eq!(execute_res.messages.len(), 1);
+        let msg = execute_res.messages.get(0).expect("no message");
         assert_eq!(
             msg,
             &BankMsg::Send {
@@ -544,14 +544,14 @@ mod tests {
             .into(),
         );
         assert_eq!(
-            handle_res.attributes,
+            execute_res.attributes,
             vec![attr("action", "release"), attr("destination", "benefits")],
         );
-        assert_eq!(handle_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
+        assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
     }
 
     #[test]
-    fn handle_release_fails_for_wrong_sender() {
+    fn execute_release_fails_for_wrong_sender() {
         let mut deps = mock_dependencies(&[]);
 
         // initialize the store
@@ -572,14 +572,14 @@ mod tests {
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
 
         // beneficiary cannot release it
-        let handle_info = mock_info(beneficiary.as_str(), &[]);
-        let handle_res = handle(
+        let execute_info = mock_info(beneficiary.as_str(), &[]);
+        let execute_res = execute(
             deps.as_mut(),
             mock_env(),
-            handle_info,
+            execute_info,
             HandleMsg::Release {},
         );
-        assert_eq!(handle_res.unwrap_err(), HackError::Unauthorized {});
+        assert_eq!(execute_res.unwrap_err(), HackError::Unauthorized {});
 
         // state should not change
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
@@ -596,7 +596,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "This page intentionally faulted")]
-    fn handle_panic() {
+    fn execute_panic() {
         let mut deps = mock_dependencies(&[]);
 
         // initialize the store
@@ -612,13 +612,13 @@ mod tests {
         let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info(beneficiary.as_str(), &[]);
+        let execute_info = mock_info(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = handle(deps.as_mut(), mock_env(), handle_info, HandleMsg::Panic {});
+        let _ = execute(deps.as_mut(), mock_env(), execute_info, HandleMsg::Panic {});
     }
 
     #[test]
-    fn handle_user_errors_in_api_calls() {
+    fn execute_user_errors_in_api_calls() {
         let mut deps = mock_dependencies(&[]);
 
         let init_msg = InitMsg {
@@ -629,11 +629,11 @@ mod tests {
         let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let handle_info = mock_info("anyone", &[]);
-        handle(
+        let execute_info = mock_info("anyone", &[]);
+        execute(
             deps.as_mut(),
             mock_env(),
-            handle_info,
+            execute_info,
             HandleMsg::UserErrorsInApiCalls {},
         )
         .unwrap();

@@ -21,7 +21,7 @@ pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> Std
 }
 
 #[entry_point]
-pub fn handle(
+pub fn execute(
     _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,

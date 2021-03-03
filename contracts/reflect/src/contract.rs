@@ -38,7 +38,7 @@ pub fn init(
     Ok(resp)
 }
 
-pub fn handle(
+pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -274,7 +274,7 @@ mod tests {
             msgs: payload.clone(),
         };
         let info = mock_info("creator", &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(payload, res.messages);
     }
 
@@ -295,7 +295,7 @@ mod tests {
         let msg = HandleMsg::ReflectMsg { msgs: payload };
 
         let info = mock_info("random", &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, msg);
+        let res = execute(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
             ReflectError::NotCurrentOwner { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
@@ -314,7 +314,7 @@ mod tests {
         let payload = vec![];
 
         let msg = HandleMsg::ReflectMsg { msgs: payload };
-        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err, ReflectError::MessagesEmpty);
     }
 
@@ -346,7 +346,7 @@ mod tests {
             msgs: payload.clone(),
         };
         let info = mock_info("creator", &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(payload, res.messages);
     }
 
@@ -361,7 +361,7 @@ mod tests {
         let info = mock_info("creator", &[]);
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner { owner: new_owner };
-        let res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // should change state
         assert_eq!(0, res.messages.len());
@@ -383,7 +383,7 @@ mod tests {
         let new_owner = HumanAddr::from("friend");
         let msg = HandleMsg::ChangeOwner { owner: new_owner };
 
-        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         let expected = deps.api.canonical_address(&creator).unwrap();
         let actual = deps.api.canonical_address(&random).unwrap();
         assert_eq!(err, ReflectError::NotCurrentOwner { expected, actual });
@@ -402,7 +402,7 @@ mod tests {
         let msg = HandleMsg::ChangeOwner {
             owner: HumanAddr::from("x"),
         };
-        let err = handle(deps.as_mut(), mock_env(), info, msg).unwrap_err();
+        let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         match err {
             ReflectError::Std(StdError::GenericErr { msg, .. }) => {
                 assert!(msg.contains("human address too short"))
@@ -472,7 +472,7 @@ mod tests {
             msgs: vec![payload.clone()],
         };
         let info = mock_info("creator", &[]);
-        let mut res = handle(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let mut res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         assert_eq!(1, res.submessages.len());
         let submsg = res.submessages.pop().expect("must have a submessage");
