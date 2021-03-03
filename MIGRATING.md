@@ -23,6 +23,9 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
+- Rename the `handle` entry point to `execute`.
+  Also, rename `HandleMsg` to `ExecuteMsg`.
+
 - Remove `from_address` from `BankMsg::Send`, which is now automatically filled
   with the contract address:
 
@@ -72,11 +75,11 @@ major releases of `cosmwasm`. Note that you can also view the
   }
 
   #[entry_point]
-  pub fn handle(
+  pub fn execute(
       _deps: DepsMut,
       _env: Env,
       _info: MessageInfo,
-      _msg: HandleMsg,
+      _msg: ExecuteMsg,
   ) -> StdResult<HandleResponse> {
       // …
   }
@@ -177,7 +180,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
 
   // after
-  pub fn handle_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, ContractError> {
+  pub fn execute_impl(deps: DepsMut, env: Env, info: MessageInfo) -> Result<HandleResponse, ContractError> {
       // ...
 
       // release counter_offer to creator
