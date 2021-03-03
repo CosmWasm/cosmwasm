@@ -7,7 +7,7 @@ use cosmwasm_std::{
 
 use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
-    HandleMsg, InitMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectHandleMsg,
+    ExecuteMsg, InitMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
     ReflectInitMsg, WhoAmIResponse,
 };
 use crate::state::{accounts, accounts_read, config, Config};
@@ -31,9 +31,9 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
 }
 
 #[entry_point]
-pub fn execute(deps: DepsMut, _env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
+pub fn execute(deps: DepsMut, _env: Env, info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
     match msg {
-        HandleMsg::InitCallback { id, contract_addr } => {
+        ExecuteMsg::InitCallback { id, contract_addr } => {
             execute_init_callback(deps, info, id, contract_addr)
         }
     }
@@ -167,7 +167,7 @@ pub fn ibc_channel_close(
             to_address: env.contract.address,
             amount,
         };
-        let reflect_msg = ReflectHandleMsg::ReflectMsg {
+        let reflect_msg = ReflectExecuteMsg::ReflectMsg {
             msgs: vec![bank_msg.into()],
         };
         let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
@@ -239,7 +239,7 @@ fn receive_dispatch(
     // let them know we're fine
     let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
     // create the message to re-dispatch to the reflect contract
-    let reflect_msg = ReflectHandleMsg::ReflectMsg { msgs };
+    let reflect_msg = ReflectExecuteMsg::ReflectMsg { msgs };
     let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
     // and we are golden
     Ok(IbcReceiveResponse {
@@ -345,7 +345,7 @@ mod tests {
         ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
 
         // which creates a reflect account. here we get the callback
-        let execute_msg = HandleMsg::InitCallback {
+        let execute_msg = ExecuteMsg::InitCallback {
             id: channel_id.into(),
             contract_addr: account.clone(),
         };
@@ -417,7 +417,7 @@ mod tests {
         assert_eq!(0, res.accounts.len());
 
         // we get the callback from reflect
-        let execute_msg = HandleMsg::InitCallback {
+        let execute_msg = ExecuteMsg::InitCallback {
             id: channel_id.to_string(),
             contract_addr: REFLECT_ADDR.into(),
         };
@@ -500,10 +500,10 @@ mod tests {
             assert_eq!(account, contract_addr.as_str());
             assert_eq!(0, send.len());
             // parse the message - should callback with proper channel_id
-            let rmsg: ReflectHandleMsg = from_slice(&msg).unwrap();
+            let rmsg: ReflectExecuteMsg = from_slice(&msg).unwrap();
             assert_eq!(
                 rmsg,
-                ReflectHandleMsg::ReflectMsg {
+                ReflectExecuteMsg::ReflectMsg {
                     msgs: msgs_to_dispatch
                 }
             );
@@ -555,9 +555,9 @@ mod tests {
         }) = &res.messages[0]
         {
             assert_eq!(contract_addr.as_str(), account);
-            let reflect: ReflectHandleMsg = from_slice(msg).unwrap();
+            let reflect: ReflectExecuteMsg = from_slice(msg).unwrap();
             match reflect {
-                ReflectHandleMsg::ReflectMsg { msgs } => {
+                ReflectExecuteMsg::ReflectMsg { msgs } => {
                     assert_eq!(1, msgs.len());
                     assert_eq!(
                         &msgs[0],

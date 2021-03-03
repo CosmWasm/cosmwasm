@@ -6,7 +6,7 @@ use cosmwasm_std::{
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse,
+    CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InitMsg, OwnerResponse,
     QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, replies, replies_read, State};
@@ -42,12 +42,12 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: HandleMsg,
+    msg: ExecuteMsg,
 ) -> Result<Response<CustomMsg>, ReflectError> {
     match msg {
-        HandleMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
-        HandleMsg::ReflectSubCall { msgs } => try_reflect_subcall(deps, env, info, msgs),
-        HandleMsg::ChangeOwner { owner } => try_change_owner(deps, env, info, owner),
+        ExecuteMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
+        ExecuteMsg::ReflectSubCall { msgs } => try_reflect_subcall(deps, env, info, msgs),
+        ExecuteMsg::ChangeOwner { owner } => try_change_owner(deps, env, info, owner),
     }
 }
 
@@ -270,7 +270,7 @@ mod tests {
         }
         .into()];
 
-        let msg = HandleMsg::ReflectMsg {
+        let msg = ExecuteMsg::ReflectMsg {
             msgs: payload.clone(),
         };
         let info = mock_info("creator", &[]);
@@ -292,7 +292,7 @@ mod tests {
             amount: coins(1, "token"),
         }
         .into()];
-        let msg = HandleMsg::ReflectMsg { msgs: payload };
+        let msg = ExecuteMsg::ReflectMsg { msgs: payload };
 
         let info = mock_info("random", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg);
@@ -313,7 +313,7 @@ mod tests {
         let info = mock_info("creator", &[]);
         let payload = vec![];
 
-        let msg = HandleMsg::ReflectMsg { msgs: payload };
+        let msg = ExecuteMsg::ReflectMsg { msgs: payload };
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         assert_eq!(err, ReflectError::MessagesEmpty);
     }
@@ -342,7 +342,7 @@ mod tests {
             .into(),
         ];
 
-        let msg = HandleMsg::ReflectMsg {
+        let msg = ExecuteMsg::ReflectMsg {
             msgs: payload.clone(),
         };
         let info = mock_info("creator", &[]);
@@ -360,7 +360,7 @@ mod tests {
 
         let info = mock_info("creator", &[]);
         let new_owner = HumanAddr::from("friend");
-        let msg = HandleMsg::ChangeOwner { owner: new_owner };
+        let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // should change state
@@ -381,7 +381,7 @@ mod tests {
         let random = HumanAddr::from("random");
         let info = mock_info(&random, &[]);
         let new_owner = HumanAddr::from("friend");
-        let msg = HandleMsg::ChangeOwner { owner: new_owner };
+        let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
 
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
         let expected = deps.api.canonical_address(&creator).unwrap();
@@ -399,7 +399,7 @@ mod tests {
         let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let info = mock_info(&creator, &[]);
-        let msg = HandleMsg::ChangeOwner {
+        let msg = ExecuteMsg::ChangeOwner {
             owner: HumanAddr::from("x"),
         };
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
@@ -468,7 +468,7 @@ mod tests {
             .into(),
         };
 
-        let msg = HandleMsg::ReflectSubCall {
+        let msg = ExecuteMsg::ReflectSubCall {
             msgs: vec![payload.clone()],
         };
         let info = mock_info("creator", &[]);

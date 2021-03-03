@@ -30,8 +30,8 @@ use cosmwasm_vm::{from_slice, Instance};
 
 use ibc_reflect::contract::IBC_VERSION;
 use ibc_reflect::msg::{
-    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, HandleMsg, InitMsg,
-    ListAccountsResponse, PacketMsg, QueryMsg, ReflectHandleMsg, ReflectInitMsg,
+    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, ExecuteMsg, InitMsg,
+    ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, ReflectInitMsg,
 };
 
 // This line will test the output of cargo wasm
@@ -72,7 +72,7 @@ fn connect<T: Into<HumanAddr>>(
     let _: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
 
     // which creates a reflect account. here we get the callback
-    let execute_msg = HandleMsg::InitCallback {
+    let execute_msg = ExecuteMsg::InitCallback {
         id: channel_id.into(),
         contract_addr: account.clone(),
     };
@@ -146,7 +146,7 @@ fn proper_handshake_flow() {
     assert_eq!(0, res.accounts.len());
 
     // we get the callback from reflect
-    let execute_msg = HandleMsg::InitCallback {
+    let execute_msg = ExecuteMsg::InitCallback {
         id: channel_id.to_string(),
         contract_addr: REFLECT_ADDR.into(),
     };
@@ -233,10 +233,10 @@ fn handle_dispatch_packet() {
         assert_eq!(account, contract_addr.as_str());
         assert_eq!(0, send.len());
         // parse the message - should callback with proper channel_id
-        let rmsg: ReflectHandleMsg = from_slice(&msg).unwrap();
+        let rmsg: ReflectExecuteMsg = from_slice(&msg).unwrap();
         assert_eq!(
             rmsg,
-            ReflectHandleMsg::ReflectMsg {
+            ReflectExecuteMsg::ReflectMsg {
                 msgs: msgs_to_dispatch
             }
         );

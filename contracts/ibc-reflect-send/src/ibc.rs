@@ -247,7 +247,7 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use crate::contract::{execute, init, query};
-    use crate::msg::{AccountResponse, HandleMsg, InitMsg, QueryMsg};
+    use crate::msg::{AccountResponse, ExecuteMsg, InitMsg, QueryMsg};
 
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
@@ -367,7 +367,7 @@ mod tests {
             amount: coins(123456789, "uatom"),
         }
         .into()];
-        let handle_msg = HandleMsg::SendMsgs {
+        let handle_msg = ExecuteMsg::SendMsgs {
             channel_id: channel_id.into(),
             msgs: msgs_to_dispatch,
         };
@@ -410,7 +410,7 @@ mod tests {
         who_am_i_response(deps.as_mut(), reflect_channel_id, remote_addr);
 
         // let's try to send funds to a channel that doesn't exist
-        let msg = HandleMsg::SendFunds {
+        let msg = ExecuteMsg::SendFunds {
             reflect_channel_id: "random-channel".into(),
             transfer_channel_id: transfer_channel_id.into(),
         };
@@ -418,7 +418,7 @@ mod tests {
         execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
         // let's try with no sent funds in the message
-        let msg = HandleMsg::SendFunds {
+        let msg = ExecuteMsg::SendFunds {
             reflect_channel_id: reflect_channel_id.into(),
             transfer_channel_id: transfer_channel_id.into(),
         };
@@ -426,7 +426,7 @@ mod tests {
         execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
 
         // 3rd times the charm
-        let msg = HandleMsg::SendFunds {
+        let msg = ExecuteMsg::SendFunds {
             reflect_channel_id: reflect_channel_id.into(),
             transfer_channel_id: transfer_channel_id.into(),
         };

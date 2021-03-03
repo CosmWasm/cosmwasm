@@ -6,7 +6,7 @@ use cosmwasm_std::{
 
 use crate::errors::{StakingError, Unauthorized};
 use crate::msg::{
-    BalanceResponse, ClaimsResponse, HandleMsg, InitMsg, InvestmentResponse, QueryMsg,
+    BalanceResponse, ClaimsResponse, ExecuteMsg, InitMsg, InvestmentResponse, QueryMsg,
     TokenInfoResponse,
 };
 use crate::state::{
@@ -56,17 +56,17 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: HandleMsg,
+    msg: ExecuteMsg,
 ) -> Result<Response, StakingError> {
     match msg {
-        HandleMsg::Transfer { recipient, amount } => {
+        ExecuteMsg::Transfer { recipient, amount } => {
             Ok(transfer(deps, env, info, recipient, amount)?)
         }
-        HandleMsg::Bond {} => Ok(bond(deps, env, info)?),
-        HandleMsg::Unbond { amount } => Ok(unbond(deps, env, info, amount)?),
-        HandleMsg::Claim {} => Ok(claim(deps, env, info)?),
-        HandleMsg::Reinvest {} => Ok(reinvest(deps, env, info)?),
-        HandleMsg::_BondAllTokens {} => _bond_all_tokens(deps, env, info),
+        ExecuteMsg::Bond {} => Ok(bond(deps, env, info)?),
+        ExecuteMsg::Unbond { amount } => Ok(unbond(deps, env, info, amount)?),
+        ExecuteMsg::Claim {} => Ok(claim(deps, env, info)?),
+        ExecuteMsg::Reinvest {} => Ok(reinvest(deps, env, info)?),
+        ExecuteMsg::_BondAllTokens {} => _bond_all_tokens(deps, env, info),
     }
 }
 
@@ -305,7 +305,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
 pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Response> {
     let contract_addr = env.contract.address;
     let invest = invest_info_read(deps.storage).load()?;
-    let msg = to_binary(&HandleMsg::_BondAllTokens {})?;
+    let msg = to_binary(&ExecuteMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
     let res = Response {
@@ -579,7 +579,7 @@ mod tests {
 
         // let's bond some tokens now
         let bob = HumanAddr::from("bob");
-        let bond_msg = HandleMsg::Bond {};
+        let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
 
         // try to bond and make sure we trigger delegation
@@ -619,7 +619,7 @@ mod tests {
 
         // let's bond some tokens now
         let bob = HumanAddr::from("bob");
-        let bond_msg = HandleMsg::Bond {};
+        let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
@@ -628,7 +628,7 @@ mod tests {
         set_delegation(&mut deps.querier, 1000, "ustake");
 
         // fake a reinvestment (this must be sent by the contract itself)
-        let rebond_msg = HandleMsg::_BondAllTokens {};
+        let rebond_msg = ExecuteMsg::_BondAllTokens {};
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
@@ -646,7 +646,7 @@ mod tests {
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
         let alice = HumanAddr::from("alice");
-        let bond_msg = HandleMsg::Bond {};
+        let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&alice, &[coin(3000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
@@ -678,7 +678,7 @@ mod tests {
 
         // let's bond some tokens now
         let bob = HumanAddr::from("bob");
-        let bond_msg = HandleMsg::Bond {};
+        let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(500, "photon")]);
 
         // try to bond and make sure we trigger delegation
@@ -706,7 +706,7 @@ mod tests {
 
         // let's bond some tokens now
         let bob = HumanAddr::from("bob");
-        let bond_msg = HandleMsg::Bond {};
+        let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
         assert_eq!(1, res.messages.len());
@@ -716,7 +716,7 @@ mod tests {
 
         // fake a reinvestment (this must be sent by the contract itself)
         // after this, we see 1000 issues and 1500 bonded (and a price of 1.5)
-        let rebond_msg = HandleMsg::_BondAllTokens {};
+        let rebond_msg = ExecuteMsg::_BondAllTokens {};
         let info = mock_info(MOCK_CONTRACT_ADDR, &[]);
         deps.querier
             .update_balance(MOCK_CONTRACT_ADDR, coins(500, "ustake"));
@@ -727,7 +727,7 @@ mod tests {
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, vec![]);
 
         // creator now tries to unbond these tokens - this must fail
-        let unbond_msg = HandleMsg::Unbond {
+        let unbond_msg = ExecuteMsg::Unbond {
             amount: Uint128(600),
         };
         let info = mock_info(&creator, &[]);
@@ -742,7 +742,7 @@ mod tests {
         // bob unbonds 600 tokens at 10% tax...
         // 60 are taken and send to the owner
         // 540 are unbonded in exchange for 540 * 1.5 = 810 native tokens
-        let unbond_msg = HandleMsg::Unbond {
+        let unbond_msg = ExecuteMsg::Unbond {
             amount: Uint128(600),
         };
         let owner_cut = Uint128(60);

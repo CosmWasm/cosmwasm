@@ -2,7 +2,7 @@ use cosmwasm_std::{
     attr, entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
 };
 
-use crate::msg::{HandleMsg, InitMsg, MigrateMsg};
+use crate::msg::{ExecuteMsg, InitMsg, MigrateMsg};
 
 #[entry_point]
 pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
@@ -16,7 +16,7 @@ pub fn execute(
     _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: HandleMsg,
+    _msg: ExecuteMsg,
 ) -> StdResult<Response> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
