@@ -5,7 +5,7 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use cosmwasm_std::BalanceResponse;
 
 use hackatom::contract::{
-    ExecuteMsg, InitMsg, MigrateMsg, QueryMsg, State, SystemMsg, VerifierResponse,
+    ExecuteMsg, InitMsg, MigrateMsg, QueryMsg, State, SudoMsg, VerifierResponse,
 };
 
 fn main() {
@@ -17,7 +17,7 @@ fn main() {
     export_schema(&schema_for!(InitMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(MigrateMsg), &out_dir);
-    export_schema(&schema_for!(SystemMsg), &out_dir);
+    export_schema(&schema_for!(SudoMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
     export_schema(&schema_for!(VerifierResponse), &out_dir);
