@@ -551,6 +551,7 @@
               "type": "object",
               "required": [
                 "code_id",
+                "label",
                 "msg",
                 "send"
               ],
@@ -561,11 +562,8 @@
                   "minimum": 0.0
                 },
                 "label": {
-                  "description": "optional human-readbale label for the contract",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "description": "A human-readbale label for the contract",
+                  "type": "string"
                 },
                 "msg": {
                   "description": "msg is the json-encoded InitMsg struct (as raw Binary)",

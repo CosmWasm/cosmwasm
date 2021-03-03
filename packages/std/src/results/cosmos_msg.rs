@@ -111,8 +111,8 @@ pub enum WasmMsg {
         /// msg is the json-encoded InitMsg struct (as raw Binary)
         msg: Binary,
         send: Vec<Coin>,
-        /// optional human-readbale label for the contract
-        label: Option<String>,
+        /// A human-readbale label for the contract
+        label: String,
     },
     /// Migrates a given contracts to use new wasm code. Passes a MigrateMsg to allow us to
     /// customize behavior.
@@ -135,7 +135,7 @@ pub fn wasm_instantiate<T>(
     code_id: u64,
     msg: &T,
     send: Vec<Coin>,
-    label: Option<String>,
+    label: String,
 ) -> StdResult<WasmMsg>
 where
     T: Serialize,

@@ -132,7 +132,7 @@ fn proper_handshake_flow() {
     {
         assert_eq!(&REFLECT_ID, code_id);
         assert_eq!(0, send.len());
-        assert!(label.as_ref().unwrap().contains(channel_id));
+        assert!(label.contains(channel_id));
         // parse the message - should callback with proper channel_id
         let rmsg: ReflectInitMsg = from_slice(&msg).unwrap();
         assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
