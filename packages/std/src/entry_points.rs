@@ -20,12 +20,12 @@
 /// #   Ok(Default::default())
 /// }
 ///
-/// # type HandleMsg = ();
+/// # type ExecuteMsg = ();
 /// pub fn execute(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
-///     msg: HandleMsg,
+///     msg: ExecuteMsg,
 /// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
@@ -39,7 +39,7 @@
 /// #   Ok(Default::default())
 /// }
 /// ```
-/// where `InitMsg`, `HandleMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`.
+/// where `InitMsg`, `ExecuteMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`.
 ///
 /// # Example
 ///
