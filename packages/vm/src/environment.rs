@@ -311,7 +311,7 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
             // This is ensured by `check_wasm`/`check_wasm_memories`, which is called for every
             // contract added to the Cache as well as in integration tests.
             // It is possible to bypass this check when using `Instance::from_code` but then you
-            // learn the hard way when this panic or when trying to upload the contract to chain.
+            // learn the hard way when this panics, or when trying to upload the contract to chain.
             let memory = first.expect("A contract must have exactly one exported memory.");
             Ok(memory)
         })
