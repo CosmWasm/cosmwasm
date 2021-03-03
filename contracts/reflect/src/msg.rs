@@ -26,7 +26,7 @@ pub enum CallbackMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum HandleMsg {
+pub enum ExecuteMsg {
     ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
     ReflectSubCall { msgs: Vec<SubMsg<CustomMsg>> },
     ChangeOwner { owner: HumanAddr },

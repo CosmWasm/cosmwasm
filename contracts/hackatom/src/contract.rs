@@ -53,7 +53,7 @@ pub struct State {
 // https://github.com/cosmwasm/wasmd/issues/8#issuecomment-576146751
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum HandleMsg {
+pub enum ExecuteMsg {
     /// Releasing all funds in the contract to the beneficiary. This is the only "proper" action of this demo contract.
     Release {},
     /// Infinite loop to burn cpu cycles (only run when metering is enabled)
@@ -153,16 +153,16 @@ pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: HandleMsg,
+    msg: ExecuteMsg,
 ) -> Result<Response, HackError> {
     match msg {
-        HandleMsg::Release {} => do_release(deps, env, info),
-        HandleMsg::CpuLoop {} => do_cpu_loop(),
-        HandleMsg::StorageLoop {} => do_storage_loop(deps),
-        HandleMsg::MemoryLoop {} => do_memory_loop(),
-        HandleMsg::AllocateLargeMemory { pages } => do_allocate_large_memory(pages),
-        HandleMsg::Panic {} => do_panic(),
-        HandleMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(deps.api),
+        ExecuteMsg::Release {} => do_release(deps, env, info),
+        ExecuteMsg::CpuLoop {} => do_cpu_loop(),
+        ExecuteMsg::StorageLoop {} => do_storage_loop(deps),
+        ExecuteMsg::MemoryLoop {} => do_memory_loop(),
+        ExecuteMsg::AllocateLargeMemory { pages } => do_allocate_large_memory(pages),
+        ExecuteMsg::Panic {} => do_panic(),
+        ExecuteMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(deps.api),
     }
 }
 
@@ -530,7 +530,7 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             execute_info,
-            HandleMsg::Release {},
+            ExecuteMsg::Release {},
         )
         .unwrap();
         assert_eq!(execute_res.messages.len(), 1);
@@ -577,7 +577,7 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             execute_info,
-            HandleMsg::Release {},
+            ExecuteMsg::Release {},
         );
         assert_eq!(execute_res.unwrap_err(), HackError::Unauthorized {});
 
@@ -614,7 +614,7 @@ mod tests {
 
         let execute_info = mock_info(beneficiary.as_str(), &[]);
         // this should panic
-        let _ = execute(deps.as_mut(), mock_env(), execute_info, HandleMsg::Panic {});
+        let _ = execute(deps.as_mut(), mock_env(), execute_info, ExecuteMsg::Panic {});
     }
 
     #[test]
@@ -634,7 +634,7 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             execute_info,
-            HandleMsg::UserErrorsInApiCalls {},
+            ExecuteMsg::UserErrorsInApiCalls {},
         )
         .unwrap();
     }

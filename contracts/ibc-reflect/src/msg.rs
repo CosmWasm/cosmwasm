@@ -12,7 +12,7 @@ pub struct InitMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum HandleMsg {
+pub enum ExecuteMsg {
     /// InitCallback is returned from reflect contract after a new contract is set up
     InitCallback {
         /// id was provided in the InitMsg
@@ -57,7 +57,7 @@ pub struct ReflectInitMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ReflectHandleMsg {
+pub enum ReflectExecuteMsg {
     ReflectMsg { msgs: Vec<CosmosMsg> },
 }
 

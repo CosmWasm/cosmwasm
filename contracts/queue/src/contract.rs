@@ -18,7 +18,7 @@ pub struct Item {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum HandleMsg {
+pub enum ExecuteMsg {
     // Enqueue will add some value to the end of list
     Enqueue { value: i32 },
     // Dequeue will remove value from start of the list
@@ -73,11 +73,11 @@ pub fn execute(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: HandleMsg,
+    msg: ExecuteMsg,
 ) -> StdResult<Response> {
     match msg {
-        HandleMsg::Enqueue { value } => handle_enqueue(deps, value),
-        HandleMsg::Dequeue {} => handle_dequeue(deps),
+        ExecuteMsg::Enqueue { value } => handle_enqueue(deps, value),
+        ExecuteMsg::Dequeue {} => handle_dequeue(deps),
     }
 }
 
@@ -249,7 +249,7 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             info,
-            HandleMsg::Enqueue { value: 25 },
+            ExecuteMsg::Enqueue { value: 25 },
         )
         .unwrap();
         assert_eq!(get_count(deps.as_ref()), 1);
@@ -263,21 +263,21 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 25 },
+            ExecuteMsg::Enqueue { value: 25 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 35 },
+            ExecuteMsg::Enqueue { value: 35 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
             mock_env(),
             info,
-            HandleMsg::Enqueue { value: 45 },
+            ExecuteMsg::Enqueue { value: 45 },
         )
         .unwrap();
         assert_eq!(get_count(deps.as_ref()), 3);
@@ -291,17 +291,17 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 25 },
+            ExecuteMsg::Enqueue { value: 25 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 17 },
+            ExecuteMsg::Enqueue { value: 17 },
         )
         .unwrap();
-        let res = execute(deps.as_mut(), mock_env(), info, HandleMsg::Dequeue {}).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, ExecuteMsg::Dequeue {}).unwrap();
         // ensure we popped properly
         assert!(res.data.is_some());
         let data = res.data.unwrap();
@@ -319,28 +319,28 @@ mod tests {
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 40 },
+            ExecuteMsg::Enqueue { value: 40 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 15 },
+            ExecuteMsg::Enqueue { value: 15 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 85 },
+            ExecuteMsg::Enqueue { value: 85 },
         )
         .unwrap();
         execute(
             deps.as_mut(),
             mock_env(),
             info,
-            HandleMsg::Enqueue { value: -10 },
+            ExecuteMsg::Enqueue { value: -10 },
         )
         .unwrap();
         assert_eq!(get_count(deps.as_ref()), 4);
@@ -357,7 +357,7 @@ mod tests {
                 deps.as_mut(),
                 mock_env(),
                 info.clone(),
-                HandleMsg::Enqueue { value: 40 },
+                ExecuteMsg::Enqueue { value: 40 },
             )
             .unwrap();
         }
@@ -366,7 +366,7 @@ mod tests {
                 deps.as_mut(),
                 mock_env(),
                 info.clone(),
-                HandleMsg::Dequeue {},
+                ExecuteMsg::Dequeue {},
             )
             .unwrap();
         }

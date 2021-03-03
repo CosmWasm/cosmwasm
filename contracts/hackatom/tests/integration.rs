@@ -30,7 +30,7 @@ use cosmwasm_vm::{
     BackendApi, Storage, VmError,
 };
 
-use hackatom::contract::{HandleMsg, InitMsg, MigrateMsg, QueryMsg, State, SudoMsg, CONFIG_KEY};
+use hackatom::contract::{ExecuteMsg, InitMsg, MigrateMsg, QueryMsg, State, SudoMsg, CONFIG_KEY};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
@@ -106,7 +106,7 @@ fn init_and_query() {
     assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
     // bad query returns parse error (pass wrong type - this connection is not enforced)
-    let qres = query(&mut deps, mock_env(), HandleMsg::Release {});
+    let qres = query(&mut deps, mock_env(), ExecuteMsg::Release {});
     let msg = qres.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -199,7 +199,7 @@ fn fails_on_bad_init() {
     let mut deps = mock_instance(WASM, &[]);
     let info = mock_info("creator", &coins(1000, "earth"));
     // bad init returns parse error (pass wrong type - this connection is not enforced)
-    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, HandleMsg::Release {});
+    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, ExecuteMsg::Release {});
     let msg = res.unwrap_err();
     assert!(msg.contains("Error parsing"));
 }
@@ -232,7 +232,7 @@ fn execute_release_works() {
     // beneficiary can release it
     let execute_info = mock_info(verifier.as_str(), &[]);
     let execute_res: Response =
-        execute(&mut deps, mock_env(), execute_info, HandleMsg::Release {}).unwrap();
+        execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {}).unwrap();
     assert_eq!(execute_res.messages.len(), 1);
     let msg = execute_res.messages.get(0).expect("no message");
     assert_eq!(
@@ -278,7 +278,7 @@ fn execute_release_fails_for_wrong_sender() {
     // beneficiary cannot release it
     let execute_info = mock_info(beneficiary.as_str(), &[]);
     let execute_res: ContractResult<Response> =
-        execute(&mut deps, mock_env(), execute_info, HandleMsg::Release {});
+        execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {});
     let msg = execute_res.unwrap_err();
     assert!(msg.contains("Unauthorized"));
 
@@ -318,7 +318,7 @@ fn execute_cpu_loop() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&HandleMsg::CpuLoop {}).unwrap(),
+        &to_vec(&ExecuteMsg::CpuLoop {}).unwrap(),
     );
     assert!(execute_res.is_err());
     assert_eq!(deps.get_gas_left(), 0);
@@ -339,7 +339,7 @@ fn execute_storage_loop() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&HandleMsg::StorageLoop {}).unwrap(),
+        &to_vec(&ExecuteMsg::StorageLoop {}).unwrap(),
     );
     assert!(execute_res.is_err());
     assert_eq!(deps.get_gas_left(), 0);
@@ -360,7 +360,7 @@ fn execute_memory_loop() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&HandleMsg::MemoryLoop {}).unwrap(),
+        &to_vec(&ExecuteMsg::MemoryLoop {}).unwrap(),
     );
     assert!(execute_res.is_err());
     assert_eq!(deps.get_gas_left(), 0);
@@ -387,7 +387,7 @@ fn execute_allocate_large_memory() {
         &mut deps,
         mock_env(),
         execute_info,
-        HandleMsg::AllocateLargeMemory { pages: 48 },
+        ExecuteMsg::AllocateLargeMemory { pages: 48 },
     )
     .unwrap();
     assert_eq!(
@@ -412,7 +412,7 @@ fn execute_allocate_large_memory() {
         &mut deps,
         mock_env(),
         execute_info,
-        HandleMsg::AllocateLargeMemory { pages: 1600 },
+        ExecuteMsg::AllocateLargeMemory { pages: 1600 },
     );
     assert_eq!(result.unwrap_err(), "Generic error: memory.grow failed");
     let gas_used = gas_before - deps.get_gas_left();
@@ -442,7 +442,7 @@ fn execute_panic() {
         &mut deps,
         &mock_env(),
         &execute_info,
-        &to_vec(&HandleMsg::Panic {}).unwrap(),
+        &to_vec(&ExecuteMsg::Panic {}).unwrap(),
     );
     match execute_res.unwrap_err() {
         VmError::RuntimeErr { .. } => {}
@@ -463,7 +463,7 @@ fn execute_user_errors_in_api_calls() {
         &mut deps,
         mock_env(),
         execute_info,
-        HandleMsg::UserErrorsInApiCalls {},
+        ExecuteMsg::UserErrorsInApiCalls {},
     )
     .unwrap();
 }

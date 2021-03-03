@@ -27,7 +27,7 @@ use cosmwasm_vm::{
 };
 
 use queue::contract::{
-    CountResponse, HandleMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
+    CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
 };
 use queue::msg::{InitMsg, MigrateMsg};
 
@@ -69,7 +69,7 @@ fn push_and_query() {
         &mut deps,
         mock_env(),
         info,
-        HandleMsg::Enqueue { value: 25 },
+        ExecuteMsg::Enqueue { value: 25 },
     )
     .unwrap();
     assert_eq!(get_count(&mut deps), 1);
@@ -83,21 +83,21 @@ fn multiple_push() {
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 25 },
+        ExecuteMsg::Enqueue { value: 25 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 35 },
+        ExecuteMsg::Enqueue { value: 35 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info,
-        HandleMsg::Enqueue { value: 45 },
+        ExecuteMsg::Enqueue { value: 45 },
     )
     .unwrap();
     assert_eq!(get_count(&mut deps), 3);
@@ -111,17 +111,17 @@ fn push_and_pop() {
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 25 },
+        ExecuteMsg::Enqueue { value: 25 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 17 },
+        ExecuteMsg::Enqueue { value: 17 },
     )
     .unwrap();
-    let res: Response = execute(&mut deps, mock_env(), info, HandleMsg::Dequeue {}).unwrap();
+    let res: Response = execute(&mut deps, mock_env(), info, ExecuteMsg::Dequeue {}).unwrap();
     // ensure we popped properly
     assert!(res.data.is_some());
     let data = res.data.unwrap();
@@ -139,28 +139,28 @@ fn push_and_reduce() {
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 40 },
+        ExecuteMsg::Enqueue { value: 40 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 15 },
+        ExecuteMsg::Enqueue { value: 15 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 85 },
+        ExecuteMsg::Enqueue { value: 85 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info,
-        HandleMsg::Enqueue { value: -10 },
+        ExecuteMsg::Enqueue { value: -10 },
     )
     .unwrap();
     assert_eq!(get_count(&mut deps), 4);
@@ -178,14 +178,14 @@ fn migrate_works() {
         &mut deps,
         mock_env(),
         info.clone(),
-        HandleMsg::Enqueue { value: 25 },
+        ExecuteMsg::Enqueue { value: 25 },
     )
     .unwrap();
     let _: Response = execute(
         &mut deps,
         mock_env(),
         info,
-        HandleMsg::Enqueue { value: 17 },
+        ExecuteMsg::Enqueue { value: 17 },
     )
     .unwrap();
     assert_eq!(get_count(&mut deps), 2);
@@ -208,13 +208,13 @@ fn query_list() {
             &mut deps,
             mock_env(),
             info.clone(),
-            HandleMsg::Enqueue { value: 40 },
+            ExecuteMsg::Enqueue { value: 40 },
         )
         .unwrap();
     }
     for _ in 0..0x19 {
         let _: Response =
-            execute(&mut deps, mock_env(), info.clone(), HandleMsg::Dequeue {}).unwrap();
+            execute(&mut deps, mock_env(), info.clone(), ExecuteMsg::Dequeue {}).unwrap();
     }
     // we add 0x25 items and then remove the first 0x19, leaving [0x19, 0x1a, 0x1b, ..., 0x24]
     // since we count up to 0x20 in early, we get early and late both with data

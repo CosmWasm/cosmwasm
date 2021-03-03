@@ -6,7 +6,7 @@ use cosmwasm_std::{
 use crate::ibc::build_timeout_timestamp;
 use crate::ibc_msg::PacketMsg;
 use crate::msg::{
-    AccountInfo, AccountResponse, AdminResponse, HandleMsg, InitMsg, ListAccountsResponse, QueryMsg,
+    AccountInfo, AccountResponse, AdminResponse, ExecuteMsg, InitMsg, ListAccountsResponse, QueryMsg,
 };
 use crate::state::{accounts, accounts_read, config, config_read, Config};
 
@@ -25,16 +25,16 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdRe
 }
 
 #[entry_point]
-pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> StdResult<Response> {
     match msg {
-        HandleMsg::UpdateAdmin { admin } => handle_update_admin(deps, info, admin),
-        HandleMsg::SendMsgs { channel_id, msgs } => {
+        ExecuteMsg::UpdateAdmin { admin } => handle_update_admin(deps, info, admin),
+        ExecuteMsg::SendMsgs { channel_id, msgs } => {
             handle_send_msgs(deps, env, info, channel_id, msgs)
         }
-        HandleMsg::CheckRemoteBalance { channel_id } => {
+        ExecuteMsg::CheckRemoteBalance { channel_id } => {
             handle_check_remote_balance(deps, env, info, channel_id)
         }
-        HandleMsg::SendFunds {
+        ExecuteMsg::SendFunds {
             reflect_channel_id,
             transfer_channel_id,
         } => handle_send_funds(deps, env, info, reflect_channel_id, transfer_channel_id),

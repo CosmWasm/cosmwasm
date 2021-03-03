@@ -30,7 +30,7 @@ use cosmwasm_vm::{from_slice, Instance};
 
 use ibc_reflect_send::ibc::IBC_VERSION;
 use ibc_reflect_send::ibc_msg::{AcknowledgementMsg, PacketMsg, WhoAmIResponse};
-use ibc_reflect_send::msg::{AccountResponse, AdminResponse, HandleMsg, InitMsg, QueryMsg};
+use ibc_reflect_send::msg::{AccountResponse, AdminResponse, ExecuteMsg, InitMsg, QueryMsg};
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] =
@@ -163,7 +163,7 @@ fn dispatch_message_send_and_ack() {
         amount: coins(123456789, "uatom"),
     }
     .into()];
-    let execute_msg = HandleMsg::SendMsgs {
+    let execute_msg = ExecuteMsg::SendMsgs {
         channel_id: channel_id.into(),
         msgs: msgs_to_dispatch,
     };
@@ -206,7 +206,7 @@ fn send_remote_funds() {
     who_am_i_response(&mut deps, reflect_channel_id, remote_addr);
 
     // let's try to send funds to a channel that doesn't exist
-    let msg = HandleMsg::SendFunds {
+    let msg = ExecuteMsg::SendFunds {
         reflect_channel_id: "random-channel".into(),
         transfer_channel_id: transfer_channel_id.into(),
     };
@@ -214,7 +214,7 @@ fn send_remote_funds() {
     execute::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
 
     // let's try with no sent funds in the message
-    let msg = HandleMsg::SendFunds {
+    let msg = ExecuteMsg::SendFunds {
         reflect_channel_id: reflect_channel_id.into(),
         transfer_channel_id: transfer_channel_id.into(),
     };
@@ -222,7 +222,7 @@ fn send_remote_funds() {
     execute::<_, _, _, _, Empty>(&mut deps, mock_env(), info, msg).unwrap_err();
 
     // 3rd times the charm
-    let msg = HandleMsg::SendFunds {
+    let msg = ExecuteMsg::SendFunds {
         reflect_channel_id: reflect_channel_id.into(),
         transfer_channel_id: transfer_channel_id.into(),
     };

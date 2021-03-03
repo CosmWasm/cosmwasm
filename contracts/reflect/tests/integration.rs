@@ -30,7 +30,7 @@ use cosmwasm_vm::{
 };
 
 use reflect::msg::{
-    CapitalizedResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery,
+    CapitalizedResponse, CustomMsg, ExecuteMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery,
 };
 use reflect::testing::custom_query_execute;
 
@@ -96,7 +96,7 @@ fn reflect() {
         }
         .into(),
     ];
-    let msg = HandleMsg::ReflectMsg {
+    let msg = ExecuteMsg::ReflectMsg {
         msgs: payload.clone(),
     };
     let info = mock_info("creator", &[]);
@@ -120,7 +120,7 @@ fn reflect_requires_owner() {
         amount: coins(1, "token"),
     }
     .into()];
-    let msg = HandleMsg::ReflectMsg { msgs: payload };
+    let msg = ExecuteMsg::ReflectMsg { msgs: payload };
 
     let info = mock_info("someone", &[]);
     let res: ContractResult<Response<CustomMsg>> = execute(&mut deps, mock_env(), info, msg);
@@ -138,7 +138,7 @@ fn transfer() {
 
     let info = mock_info("creator", &[]);
     let new_owner = HumanAddr::from("friend");
-    let msg = HandleMsg::ChangeOwner { owner: new_owner };
+    let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
@@ -158,7 +158,7 @@ fn transfer_requires_owner() {
 
     let info = mock_info("random", &[]);
     let new_owner = HumanAddr::from("friend");
-    let msg = HandleMsg::ChangeOwner { owner: new_owner };
+    let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
 
     let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
@@ -205,7 +205,7 @@ fn reflect_subcall() {
         .into(),
     };
 
-    let msg = HandleMsg::ReflectSubCall {
+    let msg = ExecuteMsg::ReflectSubCall {
         msgs: vec![payload.clone()],
     };
     let info = mock_info("creator", &[]);
