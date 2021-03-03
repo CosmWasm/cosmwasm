@@ -301,13 +301,18 @@ impl<A: BackendApi, S: Storage, Q: Querier> Environment<A, S, Q> {
 
     pub fn memory(&self) -> Memory {
         self.with_wasmer_instance(|instance| {
-            let mut memories: Vec<Memory> = instance
+            let first: Option<Memory> = instance
                 .exports
                 .iter()
                 .memories()
-                .map(|pair| pair.1.clone())
-                .collect();
-            let memory = memories.pop().unwrap();
+                .next()
+                .map(|pair| pair.1.clone());
+            // Every contract in CosmWasm must have exactly one exported memory.
+            // This is ensured by `check_wasm`/`check_wasm_memories`, which is called for every
+            // contract added to the Cache as well as in integration tests.
+            // It is possible to bypass this check when using `Instance::from_code` but then you
+            // learn the hard way when this panics, or when trying to upload the contract to chain.
+            let memory = first.expect("A contract must have exactly one exported memory.");
             Ok(memory)
         })
         .expect("Wasmer instance is not set. This is a bug in the lifecycle.")
