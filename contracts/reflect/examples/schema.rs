@@ -5,7 +5,7 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use cosmwasm_std::Response;
 
 use reflect::msg::{
-    CapitalizedResponse, ChainResponse, CustomMsg, HandleMsg, InitMsg, OwnerResponse, QueryMsg,
+    CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InitMsg, OwnerResponse, QueryMsg,
     RawResponse,
 };
 use reflect::state::State;
@@ -18,7 +18,7 @@ fn main() {
 
     export_schema(&schema_for!(CustomMsg), &out_dir);
     export_schema(&schema_for!(InitMsg), &out_dir);
-    export_schema(&schema_for!(HandleMsg), &out_dir);
+    export_schema(&schema_for!(ExecuteMsg), &out_dir);
     export_schema(&schema_for!(Response<CustomMsg>), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
     export_schema(&schema_for!(State), &out_dir);
