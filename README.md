@@ -341,7 +341,7 @@ for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo check --tests)
 Step 2 (medium fast checks)
 
 ```sh
-for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo fmt && cargo check --tests && cargo wasm-debug && cargo unit-test && cargo clippy -- -D warnings && cargo schema) || break; done
+for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo fmt && cargo check --tests && cargo wasm-debug && cargo unit-test && cargo clippy --tests -- -D warnings && cargo schema) || break; done
 ```
 
 Step 3 (slower checks)
