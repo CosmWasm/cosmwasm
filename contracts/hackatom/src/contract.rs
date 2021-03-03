@@ -30,7 +30,7 @@ pub struct MigrateMsg {
     pub verifier: HumanAddr,
 }
 
-/// SudoMsg is only exposed for internal SDK modules to call.
+/// SudoMsg is only exposed for internal Cosmos SDK modules to call.
 /// This is showing how we can expose "admin" functionality than can not be called by
 /// external users or contracts, but only trusted (native/Go) code in the blockchain
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
