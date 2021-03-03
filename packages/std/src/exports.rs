@@ -136,13 +136,13 @@ where
     release_buffer(v) as u32
 }
 
-/// do_system should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// do_sudo should be wrapped in an external "C" export, containing a contract-specific function as arg
 ///
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_system<M, C, E>(
-    system_fn: &dyn Fn(DepsMut, Env, M) -> Result<Response<C>, E>,
+pub fn do_sudo<M, C, E>(
+    sudo_fn: &dyn Fn(DepsMut, Env, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -151,7 +151,7 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_system(system_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
+    let res = _do_sudo(sudo_fn, env_ptr as *mut Region, msg_ptr as *mut Region);
     let v = to_vec(&res).unwrap();
     release_buffer(v) as u32
 }
@@ -258,8 +258,8 @@ where
     migrate_fn(deps.as_mut(), env, msg).into()
 }
 
-fn _do_system<M, C, E>(
-    system_fn: &dyn Fn(DepsMut, Env, M) -> Result<Response<C>, E>,
+fn _do_sudo<M, C, E>(
+    sudo_fn: &dyn Fn(DepsMut, Env, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<Response<C>>
@@ -275,7 +275,7 @@ where
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    system_fn(deps.as_mut(), env, msg).into()
+    sudo_fn(deps.as_mut(), env, msg).into()
 }
 
 fn _do_reply<C, E>(
