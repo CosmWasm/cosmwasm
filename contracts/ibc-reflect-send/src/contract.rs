@@ -6,7 +6,8 @@ use cosmwasm_std::{
 use crate::ibc::build_timeout_timestamp;
 use crate::ibc_msg::PacketMsg;
 use crate::msg::{
-    AccountInfo, AccountResponse, AdminResponse, ExecuteMsg, InitMsg, ListAccountsResponse, QueryMsg,
+    AccountInfo, AccountResponse, AdminResponse, ExecuteMsg, InitMsg, ListAccountsResponse,
+    QueryMsg,
 };
 use crate::state::{accounts, accounts_read, config, config_read, Config};
 
