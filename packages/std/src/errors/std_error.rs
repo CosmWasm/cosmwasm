@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::errors::{RecoverPubkeyError, VerificationError};
 
-/// Structured error type for init, handle and query.
+/// Structured error type for init, execute and query.
 ///
 /// This can be serialized and passed over the Wasm/VM boundary, which allows us to use structured
 /// error types in e.g. integration tests. In that process backtraces are stripped off.
@@ -377,7 +377,7 @@ impl From<RecoverPubkeyError> for StdError {
     }
 }
 
-/// The return type for init, handle and query. Since the error type cannot be serialized to JSON,
+/// The return type for init, execute and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
 /// The prefix "Std" means "the standard result within the standard library". This is not the only

@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt;
 
 /// This is the final result type that is created and serialized in a contract for
-/// every init/handle/migrate call. The VM then deserializes this type to distinguish
+/// every init/execute/migrate call. The VM then deserializes this type to distinguish
 /// between successful and failed executions.
 ///
 /// We use a custom type here instead of Rust's Result because we want to be able to

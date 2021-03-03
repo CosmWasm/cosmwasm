@@ -65,7 +65,7 @@ pub struct BlockInfo {
 }
 
 /// Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed
-/// along with the contract execution message into the `init` and `handle` entry points.
+/// along with the contract execution message into the `init` and `execute` entry points.
 ///
 /// It contains the essential info for authorization - identity of the call, and payment.
 ///
