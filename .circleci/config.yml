@@ -716,7 +716,11 @@ jobs:
       - run:
           name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --no-default-features -- -D warnings
+      - run:
+          name: Clippy linting on vm (all feature flags)
+          working_directory: ~/project/packages/vm
+          command: cargo clippy --features iterator,staking,stargate -- -D warnings
       #
       # Contracts
       #
