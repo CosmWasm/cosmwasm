@@ -25,7 +25,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdRe
 }
 
 #[entry_point]
-pub fn handle(deps: DepsMut, env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
+pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
     match msg {
         HandleMsg::UpdateAdmin { admin } => handle_update_admin(deps, info, admin),
         HandleMsg::SendMsgs { channel_id, msgs } => {

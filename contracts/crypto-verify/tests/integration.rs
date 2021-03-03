@@ -15,9 +15,9 @@
 //!          let data = store.get(CONFIG_KEY).expect("no data stored");
 //!          //...
 //!      });
-//! 4. Anywhere you see init/handle(deps.as_mut(), ...) you must replace it with init/handle(&mut deps, ...)
+//! 4. Anywhere you see init/execute(deps.as_mut(), ...) you must replace it with init/execute(&mut deps, ...)
 //! 5. Anywhere you see query(deps.as_ref(), ...) you must replace it with query(&mut deps, ...)
-//! (Use cosmwasm_vm::testing::{init, handle, query}, instead of the contract variants).
+//! (Use cosmwasm_vm::testing::{init, execute, query}, instead of the contract variants).
 
 use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{

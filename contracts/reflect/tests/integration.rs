@@ -23,7 +23,7 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     testing::{
-        handle, init, mock_env, mock_info, mock_instance, mock_instance_options, query, reply,
+        execute, init, mock_env, mock_info, mock_instance, mock_instance_options, query, reply,
         MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Backend, Instance,
@@ -100,7 +100,7 @@ fn reflect() {
         msgs: payload.clone(),
     };
     let info = mock_info("creator", &[]);
-    let res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
     assert_eq!(payload, res.messages);
@@ -123,7 +123,7 @@ fn reflect_requires_owner() {
     let msg = HandleMsg::ReflectMsg { msgs: payload };
 
     let info = mock_info("someone", &[]);
-    let res: ContractResult<Response<CustomMsg>> = handle(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response<CustomMsg>> = execute(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -139,7 +139,7 @@ fn transfer() {
     let info = mock_info("creator", &[]);
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner { owner: new_owner };
-    let res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should change state
     assert_eq!(0, res.messages.len());
@@ -160,7 +160,7 @@ fn transfer_requires_owner() {
     let new_owner = HumanAddr::from("friend");
     let msg = HandleMsg::ChangeOwner { owner: new_owner };
 
-    let res: ContractResult<Response> = handle(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert!(msg.contains("Permission denied: the sender is not the current owner"));
 }
@@ -209,7 +209,7 @@ fn reflect_subcall() {
         msgs: vec![payload.clone()],
     };
     let info = mock_info("creator", &[]);
-    let mut res: Response<CustomMsg> = handle(&mut deps, mock_env(), info, msg).unwrap();
+    let mut res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     assert_eq!(1, res.submessages.len());
     let submsg = res.submessages.pop().expect("must have a submessage");

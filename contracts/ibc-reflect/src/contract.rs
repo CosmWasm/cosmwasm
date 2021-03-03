@@ -31,15 +31,15 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
 }
 
 #[entry_point]
-pub fn handle(deps: DepsMut, _env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
+pub fn execute(deps: DepsMut, _env: Env, info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
     match msg {
         HandleMsg::InitCallback { id, contract_addr } => {
-            handle_init_callback(deps, info, id, contract_addr)
+            execute_init_callback(deps, info, id, contract_addr)
         }
     }
 }
 
-pub fn handle_init_callback(
+pub fn execute_init_callback(
     deps: DepsMut,
     info: MessageInfo,
     id: String,
@@ -64,7 +64,7 @@ pub fn handle_init_callback(
     Ok(Response {
         submessages: vec![],
         messages: vec![],
-        attributes: vec![attr("action", "handle_init_callback")],
+        attributes: vec![attr("action", "execute_init_callback")],
         data: None,
     })
 }
@@ -345,12 +345,12 @@ mod tests {
         ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
 
         // which creates a reflect account. here we get the callback
-        let handle_msg = HandleMsg::InitCallback {
+        let execute_msg = HandleMsg::InitCallback {
             id: channel_id.into(),
             contract_addr: account.clone(),
         };
         let info = mock_info(account, &[]);
-        handle(deps.branch(), mock_env(), info, handle_msg).unwrap();
+        execute(deps.branch(), mock_env(), info, execute_msg).unwrap();
     }
 
     #[test]
@@ -417,12 +417,12 @@ mod tests {
         assert_eq!(0, res.accounts.len());
 
         // we get the callback from reflect
-        let handle_msg = HandleMsg::InitCallback {
+        let execute_msg = HandleMsg::InitCallback {
             id: channel_id.to_string(),
             contract_addr: REFLECT_ADDR.into(),
         };
         let info = mock_info(REFLECT_ADDR, &[]);
-        let res = handle(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, execute_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // ensure this is now registered

@@ -23,7 +23,7 @@ use cosmwasm_std::{
     IbcReceiveResponse, Response, WasmMsg,
 };
 use cosmwasm_vm::testing::{
-    handle, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, init, mock_env, mock_info,
+    execute, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, init, mock_env, mock_info,
     mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
@@ -72,12 +72,12 @@ fn connect<T: Into<HumanAddr>>(
     let _: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
 
     // which creates a reflect account. here we get the callback
-    let handle_msg = HandleMsg::InitCallback {
+    let execute_msg = HandleMsg::InitCallback {
         id: channel_id.into(),
         contract_addr: account.clone(),
     };
     let info = mock_info(account, &[]);
-    let _: Response = handle(deps, mock_env(), info, handle_msg).unwrap();
+    let _: Response = execute(deps, mock_env(), info, execute_msg).unwrap();
 }
 
 #[test]
@@ -146,12 +146,12 @@ fn proper_handshake_flow() {
     assert_eq!(0, res.accounts.len());
 
     // we get the callback from reflect
-    let handle_msg = HandleMsg::InitCallback {
+    let execute_msg = HandleMsg::InitCallback {
         id: channel_id.to_string(),
         contract_addr: REFLECT_ADDR.into(),
     };
     let info = mock_info(REFLECT_ADDR, &[]);
-    let res: Response = handle(&mut deps, mock_env(), info, handle_msg).unwrap();
+    let res: Response = execute(&mut deps, mock_env(), info, execute_msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // ensure this is now registered

@@ -69,7 +69,12 @@ pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> Std
     Ok(Response::default())
 }
 
-pub fn handle(deps: DepsMut, _env: Env, _info: MessageInfo, msg: HandleMsg) -> StdResult<Response> {
+pub fn execute(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: HandleMsg,
+) -> StdResult<Response> {
     match msg {
         HandleMsg::Enqueue { value } => handle_enqueue(deps, value),
         HandleMsg::Dequeue {} => handle_dequeue(deps),
@@ -240,7 +245,7 @@ mod tests {
     #[test]
     fn push_and_query() {
         let (mut deps, info) = create_contract();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info,
@@ -254,21 +259,21 @@ mod tests {
     #[test]
     fn multiple_push() {
         let (mut deps, info) = create_contract();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 25 },
         )
         .unwrap();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 35 },
         )
         .unwrap();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info,
@@ -282,21 +287,21 @@ mod tests {
     #[test]
     fn push_and_pop() {
         let (mut deps, info) = create_contract();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 25 },
         )
         .unwrap();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 17 },
         )
         .unwrap();
-        let res = handle(deps.as_mut(), mock_env(), info, HandleMsg::Dequeue {}).unwrap();
+        let res = execute(deps.as_mut(), mock_env(), info, HandleMsg::Dequeue {}).unwrap();
         // ensure we popped properly
         assert!(res.data.is_some());
         let data = res.data.unwrap();
@@ -310,28 +315,28 @@ mod tests {
     #[test]
     fn push_and_reduce() {
         let (mut deps, info) = create_contract();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 40 },
         )
         .unwrap();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 15 },
         )
         .unwrap();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info.clone(),
             HandleMsg::Enqueue { value: 85 },
         )
         .unwrap();
-        handle(
+        execute(
             deps.as_mut(),
             mock_env(),
             info,
@@ -348,7 +353,7 @@ mod tests {
     fn query_list() {
         let (mut deps, info) = create_contract();
         for _ in 0..0x25 {
-            handle(
+            execute(
                 deps.as_mut(),
                 mock_env(),
                 info.clone(),
@@ -357,7 +362,7 @@ mod tests {
             .unwrap();
         }
         for _ in 0..0x19 {
-            handle(
+            execute(
                 deps.as_mut(),
                 mock_env(),
                 info.clone(),
