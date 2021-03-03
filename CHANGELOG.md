@@ -63,6 +63,9 @@ and this project adheres to
 
 ### Changed
 
+- contracts: Rename `HandleMsg` to `ExecuteMsg`.
+- all: Rename `handle` entry point to `execute`.
+- all: Rename `system` entry point to `sudo`.
 - all: Drop support for Rust versions lower than 1.50.0.
 - all: The `query` enpoint is now optional. It is still highly recommended to
   expose it an almost any use case though.
