@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "SudoMsg",
-  "description": "SudoMsg is only exposed for internal SDK modules to call. This is showing how we can expose \"admin\" functionality than can not be called by external users or contracts, but only trusted (native/Go) code in the blockchain",
+  "description": "SudoMsg is only exposed for internal Cosmos SDK modules to call. This is showing how we can expose \"admin\" functionality than can not be called by external users or contracts, but only trusted (native/Go) code in the blockchain",
   "anyOf": [
     {
       "type": "object",
