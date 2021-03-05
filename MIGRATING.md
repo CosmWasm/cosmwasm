@@ -489,9 +489,9 @@ major releases of `cosmwasm`. Note that you can also view the
 
 - Add `MessageInfo` as separate arg after `Env` for `init`, `handle`, `migrate`.
   Add `Env` arg to `query`. Use `info.sender` instead of `env.message.sender`
-  and `info.funds` rather than `env.message.sent_funds`.
-  Just changing the function signatures of the 3-4 export functions should be
-  enough, then the compiler will warn you anywhere you use `env.message`.
+  and `info.sent_funds` rather than `env.message.sent_funds`. Just changing the
+  function signatures of the 3-4 export functions should be enough, then the
+  compiler will warn you anywhere you use `env.message`
 
   ```rust
   // before
