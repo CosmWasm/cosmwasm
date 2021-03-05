@@ -29,6 +29,7 @@ major releases of `cosmwasm`. Note that you can also view the
 - Rename `InitResponse`, `HandleResponse` and `MigrateResponse` to `Response`.
   The old names are still supported (with a deprecation warning), and will be
   removed in the next version.
+  Also, you'll need to add the `submessages` field to `Response`.
 
 - Remove `from_address` from `BankMsg::Send`, which is now automatically filled
   with the contract address:
@@ -145,7 +146,7 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
-  `MessageInfo::sent_funds` was always empty since [MsgMigrateContract] does not
+  `MessageInfo::funds` was always empty since [MsgMigrateContract] does not
   have a funds field. `MessageInfo::sender` should not be needed for
   authentication because the chain checks permissions before calling `migrate`.
   If the sender's address is needed for anything else, this should be expressed
@@ -205,6 +206,9 @@ major releases of `cosmwasm`. Note that you can also view the
       Ok(resp)
   }
   ```
+
+- If necessary, add a wildcard arm to the `match` of now non-exhaustive
+  message types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
 
 ## 0.12 -> 0.13
 
@@ -485,9 +489,9 @@ major releases of `cosmwasm`. Note that you can also view the
 
 - Add `MessageInfo` as separate arg after `Env` for `init`, `handle`, `migrate`.
   Add `Env` arg to `query`. Use `info.sender` instead of `env.message.sender`
-  and `info.sent_funds` rather than `env.message.sent_funds`. Just changing the
-  function signatures of the 3-4 export functions should be enough, then the
-  compiler will warn you anywhere you use `env.message`
+  and `info.funds` rather than `env.message.sent_funds`.
+  Just changing the function signatures of the 3-4 export functions should be
+  enough, then the compiler will warn you anywhere you use `env.message`.
 
   ```rust
   // before
