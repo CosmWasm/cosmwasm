@@ -143,7 +143,7 @@ impl FunctionMiddleware for FunctionDeterministic {
                 Ok(())
             }
             _ => {
-                let msg = format!("Non-determinstic operator detected: {:?}", operator);
+                let msg = format!("Non-deterministic operator detected: {:?}", operator);
                 Err(MiddlewareError::new("Deterministic", msg))
             }
         }
