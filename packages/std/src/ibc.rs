@@ -89,7 +89,7 @@ pub struct PortIdResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ListChannelsResponse {
-    pub channels: Vec<IbcEndpoint>,
+    pub channels: Vec<IbcChannel>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
