@@ -3,7 +3,8 @@ use std::io::Read;
 
 use clap::{App, Arg};
 
-use cosmwasm_vm::internals::compile;
+use cosmwasm_vm::features_from_csv;
+use cosmwasm_vm::internals::{check_wasm, compile};
 
 pub fn main() {
     let matches = App::new("Module compilation")
@@ -25,6 +26,9 @@ pub fn main() {
     // Read wasm
     let mut wasm = Vec::<u8>::new();
     file.read_to_end(&mut wasm).unwrap();
+
+    // Check wasm
+    check_wasm(&wasm, &features_from_csv("staking")).unwrap();
 
     // Compile module
     compile(&wasm, None).unwrap();
