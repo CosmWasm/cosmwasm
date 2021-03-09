@@ -182,6 +182,11 @@ impl Uint128 {
     }
 }
 
+// `From<u{128,64,32,16,8}>` is implemented manually instead of
+// using `impl<T: Into<u128>> From<T> for Uint128` because
+// of the conflict with `TryFrom<&str>` as described here
+// https://stackoverflow.com/questions/63136970/how-do-i-work-around-the-upstream-crates-may-add-a-new-impl-of-trait-error
+
 impl From<u128> for Uint128 {
     fn from(val: u128) -> Self {
         Uint128(val)
@@ -190,6 +195,24 @@ impl From<u128> for Uint128 {
 
 impl From<u64> for Uint128 {
     fn from(val: u64) -> Self {
+        Uint128(val.into())
+    }
+}
+
+impl From<u32> for Uint128 {
+    fn from(val: u32) -> Self {
+        Uint128(val.into())
+    }
+}
+
+impl From<u16> for Uint128 {
+    fn from(val: u16) -> Self {
+        Uint128(val.into())
+    }
+}
+
+impl From<u8> for Uint128 {
+    fn from(val: u8) -> Self {
         Uint128(val.into())
     }
 }
@@ -653,8 +676,20 @@ mod tests {
 
     #[test]
     fn uint128_convert_from() {
-        let a = Uint128::from(12345u64);
-        assert_eq!(a.0, 12345);
+        let a = Uint128::from(5u128);
+        assert_eq!(a.0, 5);
+
+        let a = Uint128::from(5u64);
+        assert_eq!(a.0, 5);
+
+        let a = Uint128::from(5u32);
+        assert_eq!(a.0, 5);
+
+        let a = Uint128::from(5u16);
+        assert_eq!(a.0, 5);
+
+        let a = Uint128::from(5u8);
+        assert_eq!(a.0, 5);
 
         let result = Uint128::try_from("34567");
         assert_eq!(result.unwrap().0, 34567);
