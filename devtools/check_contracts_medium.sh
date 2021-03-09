@@ -6,6 +6,8 @@ for contract_dir in contracts/*/; do
   (
     cd "$contract_dir"
     cargo fmt
+    mkdir -p target/wasm32-unknown-unknown/release/
+    touch target/wasm32-unknown-unknown/release/"$(basename "$contract_dir" | tr - _)".wasm
     cargo check --tests
     cargo unit-test
     cargo clippy --tests -- -D warnings
