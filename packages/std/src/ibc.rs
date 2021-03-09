@@ -10,7 +10,7 @@ use std::fmt;
 use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
-use crate::results::{Attribute, CosmosMsg, Empty};
+use crate::results::{Attribute, CosmosMsg, Empty, SubMsg};
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
@@ -203,6 +203,13 @@ pub struct IbcBasicResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
+    /// Optional list of "subcalls" to make. These will be executed in order
+    /// (and this contract's subcall_response entry point invoked)
+    /// *before* any of the "fire and forget" messages get executed.
+    pub submessages: Vec<SubMsg<T>>,
+    /// After any submessages are processed, these are all dispatched in the host blockchain.
+    /// If they all succeed, then the transaction is committed. If any fail, then the transaction
+    /// and any local contract state changes are reverted.
     pub messages: Vec<CosmosMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
@@ -214,6 +221,7 @@ where
 {
     fn default() -> Self {
         IbcBasicResponse {
+            submessages: vec![],
             messages: vec![],
             attributes: vec![],
         }
@@ -233,6 +241,13 @@ where
     /// The bytes we return to the contract that sent the packet.
     /// This may represent a success or error of exection
     pub acknowledgement: Binary,
+    /// Optional list of "subcalls" to make. These will be executed in order
+    /// (and this contract's subcall_response entry point invoked)
+    /// *before* any of the "fire and forget" messages get executed.
+    pub submessages: Vec<SubMsg<T>>,
+    /// After any submessages are processed, these are all dispatched in the host blockchain.
+    /// If they all succeed, then the transaction is committed. If any fail, then the transaction
+    /// and any local contract state changes are reverted.
     pub messages: Vec<CosmosMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
@@ -245,6 +260,7 @@ where
     fn default() -> Self {
         IbcReceiveResponse {
             acknowledgement: Binary(vec![]),
+            submessages: vec![],
             messages: vec![],
             attributes: vec![],
         }

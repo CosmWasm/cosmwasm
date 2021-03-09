@@ -147,6 +147,7 @@ pub fn ibc_channel_connect(
     };
     let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], label)?;
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![msg.into()],
         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
     })
@@ -183,6 +184,7 @@ pub fn ibc_channel_close(
     let steal_funds = !messages.is_empty();
 
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages,
         attributes: vec![
             attr("action", "ibc_close"),
@@ -226,6 +228,7 @@ pub fn ibc_packet_receive(
         let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Err(msg))?;
         Ok(IbcReceiveResponse {
             acknowledgement,
+            submessages: vec![],
             messages: vec![],
             attributes: vec![],
         })
@@ -249,6 +252,7 @@ fn receive_dispatch(
     // and we are golden
     Ok(IbcReceiveResponse {
         acknowledgement,
+        submessages: vec![],
         messages: vec![wasm_msg.into()],
         attributes: vec![attr("action", "receive_dispatch")],
     })
@@ -262,6 +266,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     // and we are golden
     Ok(IbcReceiveResponse {
         acknowledgement,
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "receive_who_am_i")],
     })
@@ -276,6 +281,7 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     // and we are golden
     Ok(IbcReceiveResponse {
         acknowledgement,
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "receive_balances")],
     })
@@ -289,6 +295,7 @@ pub fn ibc_packet_ack(
     _ack: IbcAcknowledgement,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
     })
@@ -302,6 +309,7 @@ pub fn ibc_packet_timeout(
     _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
     })

@@ -69,6 +69,7 @@ pub fn ibc_channel_connect(
     };
 
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![msg.into()],
         attributes: vec![
             attr("action", "ibc_connect"),
@@ -89,6 +90,7 @@ pub fn ibc_channel_close(
     accounts(deps.storage).remove(channel_id.as_bytes());
 
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_close"), attr("channel_id", channel_id)],
     })
@@ -103,6 +105,7 @@ pub fn ibc_packet_receive(
 ) -> StdResult<IbcReceiveResponse> {
     Ok(IbcReceiveResponse {
         acknowledgement: b"{}".into(),
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
     })
@@ -143,6 +146,7 @@ fn acknowledge_dispatch(
 ) -> StdResult<IbcBasicResponse> {
     // TODO: actually handle success/error?
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_dispatch")],
     })
@@ -160,6 +164,7 @@ fn acknowledge_who_am_i(
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
             return Ok(IbcBasicResponse {
+                submessages: vec![],
                 messages: vec![],
                 attributes: vec![attr("action", "acknowledge_who_am_i"), attr("error", e)],
             })
@@ -180,6 +185,7 @@ fn acknowledge_who_am_i(
     })?;
 
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_who_am_i")],
     })
@@ -197,6 +203,7 @@ fn acknowledge_balances(
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
             return Ok(IbcBasicResponse {
+                submessages: vec![],
                 messages: vec![],
                 attributes: vec![attr("action", "acknowledge_balances"), attr("error", e)],
             })
@@ -225,6 +232,7 @@ fn acknowledge_balances(
     })?;
 
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_balances")],
     })
@@ -238,6 +246,7 @@ pub fn ibc_packet_timeout(
     _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
+        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
     })
