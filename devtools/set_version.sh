@@ -1,6 +1,6 @@
 #!/bin/bash
 set -o errexit -o nounset -o pipefail
-command -v shellcheck > /dev/null && shellcheck "$0"
+command -v shellcheck >/dev/null && shellcheck "$0"
 
 gnused="$(command -v gsed || echo sed)"
 
@@ -11,8 +11,8 @@ function print_usage() {
 }
 
 if [ "$#" -ne 1 ]; then
-    print_usage
-    exit 1
+  print_usage
+  exit 1
 fi
 
 # Check repo
@@ -25,9 +25,9 @@ fi
 # Ensure repo is not dirty
 CHANGES_IN_REPO=$(git status --porcelain)
 if [[ -n "$CHANGES_IN_REPO" ]]; then
-    echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
-    git status && git --no-pager diff
-    exit 3
+  echo "Repository is dirty. Showing 'git status' and 'git --no-pager diff' for debugging now:"
+  git status && git --no-pager diff
+  exit 3
 fi
 
 NEW="$1"
