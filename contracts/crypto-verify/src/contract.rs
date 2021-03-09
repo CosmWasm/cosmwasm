@@ -10,8 +10,7 @@ use crate::ethereum::{
     decode_address, ethereum_address_raw, get_recovery_param, verify_transaction,
 };
 use crate::msg::{
-    list_verifications, ExecuteMsg, InstantiateMsg, ListVerificationsResponse, QueryMsg,
-    VerifyResponse,
+    list_verifications, InstantiateMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
 };
 
 pub const VERSION: &str = "crypto-verify-v2";
@@ -22,16 +21,6 @@ pub fn instantiate(
     _env: Env,
     _info: MessageInfo,
     _msg: InstantiateMsg,
-) -> StdResult<Response> {
-    Ok(Response::default())
-}
-
-#[entry_point]
-pub fn execute(
-    _deps: DepsMut,
-    _env: Env,
-    _info: MessageInfo,
-    _msg: ExecuteMsg,
 ) -> StdResult<Response> {
     Ok(Response::default())
 }

@@ -70,8 +70,8 @@ and this project adheres to
 - all: Rename `init` entry point to `instantiate`.
 - all: Rename `system` entry point to `sudo`.
 - all: Drop support for Rust versions lower than 1.50.0.
-- all: The `query` enpoint is now optional. It is still highly recommended to
-  expose it an almost any use case though.
+- all: The `query` and `execute` entry points are now optional. It is still
+  highly recommended to implement and expose them in almost any use case though.
 - all: Change the encoding of the key/value region of the `db_next` import to a
   more generic encoding that supports an arbitrary number of sections. This
   encoding can then be reused for other multi value regions.
