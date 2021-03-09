@@ -23,6 +23,9 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
+- Rename the `init` entry point to `instantiate`. Also, rename `InitMsg` to
+  `InstantiateMsg`.
+
 - Rename the `handle` entry point to `execute`. Also, rename `HandleMsg` to
   `ExecuteMsg`.
 

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "MessageInfo",
-  "description": "Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed along with the contract execution message into the `init` and `execute` entry points.\n\nIt contains the essential info for authorization - identity of the call, and payment.\n\n[MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61 [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78",
+  "description": "Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed along with the contract execution message into the `instantiate` and `execute` entry points.\n\nIt contains the essential info for authorization - identity of the call, and payment.\n\n[MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61 [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78",
   "type": "object",
   "required": [
     "funds",

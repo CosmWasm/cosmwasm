@@ -7,7 +7,7 @@ use crate::Binary;
 use super::{Attribute, CosmosMsg, Empty};
 use crate::results::SubMsg;
 
-/// A response of a contract entry point, such as `init`, `execute` or `migrate`.
+/// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
 /// This type can be constructed directly at the end of the call. Alternatively a
 /// mutable response instance can be created early in the contract's logic and
@@ -19,22 +19,22 @@ use crate::results::SubMsg;
 ///
 /// ```
 /// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo};
-/// # type InitMsg = ();
+/// # type InstantiateMsg = ();
 /// #
 /// use cosmwasm_std::{attr, Response, StdResult};
 ///
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     _info: MessageInfo,
-///     msg: InitMsg,
+///     msg: InstantiateMsg,
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
 ///     Ok(Response {
 ///         submessages: vec![],
 ///         messages: vec![],
-///         attributes: vec![attr("action", "init")],
+///         attributes: vec![attr("action", "instantiate")],
 ///         data: None,
 ///     })
 /// }
@@ -44,16 +44,16 @@ use crate::results::SubMsg;
 ///
 /// ```
 /// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo};
-/// # type InitMsg = ();
+/// # type InstantiateMsg = ();
 /// # type MyError = ();
 /// #
 /// use cosmwasm_std::Response;
 ///
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     info: MessageInfo,
-///     msg: InitMsg,
+///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
 ///     let mut response = Response::new();
 ///     // ...

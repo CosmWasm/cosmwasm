@@ -326,7 +326,7 @@ where
 mod tests {
     use super::*;
     use crate::backend::Storage;
-    use crate::call_init;
+    use crate::call_instantiate;
     use crate::errors::VmError;
     use crate::testing::{
         mock_backend, mock_env, mock_info, mock_instance, mock_instance_options,
@@ -471,7 +471,7 @@ mod tests {
         // set up an instance that will experience an error in an import
         let error_message = "Api failed intentionally";
         let mut instance = mock_instance_with_failing_api(&CONTRACT, &[], error_message);
-        let init_result = call_init::<_, _, _, serde_json::Value>(
+        let init_result = call_instantiate::<_, _, _, serde_json::Value>(
             &mut instance,
             &mock_env(),
             &mock_info("someone", &[]),
@@ -526,7 +526,7 @@ mod tests {
                 (type (func))
                 (func (type 0) nop)
                 (export "interface_version_5" (func 0))
-                (export "init" (func 0))
+                (export "instantiate" (func 0))
                 (export "execute" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
@@ -545,7 +545,7 @@ mod tests {
                 (type (func))
                 (func (type 0) nop)
                 (export "interface_version_5" (func 0))
-                (export "init" (func 0))
+                (export "instantiate" (func 0))
                 (export "execute" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
@@ -593,7 +593,7 @@ mod tests {
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -780,7 +780,7 @@ mod tests {
 mod singlepass_tests {
     use cosmwasm_std::{coins, Empty};
 
-    use crate::calls::{call_execute, call_init, call_query};
+    use crate::calls::{call_execute, call_instantiate, call_query};
     use crate::testing::{mock_env, mock_info, mock_instance, mock_instance_with_gas_limit};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
@@ -793,7 +793,7 @@ mod singlepass_tests {
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -808,7 +808,7 @@ mod singlepass_tests {
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -831,7 +831,7 @@ mod singlepass_tests {
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
+        let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg);
         assert!(res.is_err());
     }
 
@@ -842,7 +842,7 @@ mod singlepass_tests {
         // init contract
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        let _res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        let _res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 

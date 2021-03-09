@@ -18,9 +18,9 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{coins, BankMsg, ContractResult, HumanAddr, Order, Response};
-use cosmwasm_vm::testing::{init, migrate, mock_env, mock_info, mock_instance};
+use cosmwasm_vm::testing::{instantiate, migrate, mock_env, mock_info, mock_instance};
 
-use burner::msg::{InitMsg, MigrateMsg};
+use burner::msg::{InstantiateMsg, MigrateMsg};
 use cosmwasm_vm::Storage;
 
 // This line will test the output of cargo wasm
@@ -29,13 +29,13 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/bu
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
 #[test]
-fn init_fails() {
+fn instantiate_fails() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg {};
+    let msg = InstantiateMsg {};
     let info = mock_info("creator", &coins(1000, "earth"));
     // we can just call .unwrap() to assert this was a success
-    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,

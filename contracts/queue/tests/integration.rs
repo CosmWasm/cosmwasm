@@ -20,8 +20,8 @@
 use cosmwasm_std::{from_binary, from_slice, HumanAddr, MessageInfo, Response};
 use cosmwasm_vm::{
     testing::{
-        execute, init, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query, MockApi,
-        MockQuerier, MockStorage,
+        execute, instantiate, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query,
+        MockApi, MockQuerier, MockStorage,
     },
     Instance,
 };
@@ -29,7 +29,7 @@ use cosmwasm_vm::{
 use queue::contract::{
     CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
 };
-use queue::msg::{InitMsg, MigrateMsg};
+use queue::msg::{InstantiateMsg, MigrateMsg};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
@@ -38,7 +38,8 @@ fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInf
     let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
     let creator = HumanAddr(String::from("creator"));
     let info = mock_info(creator.as_str(), &[]);
-    let res: Response = init(&mut deps, mock_env(), info.clone(), InitMsg {}).unwrap();
+    let res: Response =
+        instantiate(&mut deps, mock_env(), info.clone(), InstantiateMsg {}).unwrap();
     assert_eq!(0, res.messages.len());
     (deps, info)
 }
@@ -56,7 +57,7 @@ fn get_sum(deps: &mut Instance<MockApi, MockStorage, MockQuerier>) -> i32 {
 }
 
 #[test]
-fn init_and_query() {
+fn instantiate_and_query() {
     let (mut deps, _) = create_contract();
     assert_eq!(get_count(&mut deps), 0);
     assert_eq!(get_sum(&mut deps), 0);

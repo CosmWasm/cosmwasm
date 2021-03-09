@@ -6,7 +6,7 @@ use cosmwasm_std::{
 
 use crate::errors::{StakingError, Unauthorized};
 use crate::msg::{
-    BalanceResponse, ClaimsResponse, ExecuteMsg, InitMsg, InvestmentResponse, QueryMsg,
+    BalanceResponse, ClaimsResponse, ExecuteMsg, InstantiateMsg, InvestmentResponse, QueryMsg,
     TokenInfoResponse,
 };
 use crate::state::{
@@ -17,7 +17,12 @@ use crate::state::{
 const FALLBACK_RATIO: Decimal = Decimal::one();
 
 #[entry_point]
-pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, msg: InitMsg) -> StdResult<Response> {
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    msg: InstantiateMsg,
+) -> StdResult<Response> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
     if !vals.iter().any(|v| v.address == msg.validator) {
@@ -467,8 +472,8 @@ mod tests {
 
     const DEFAULT_VALIDATOR: &str = "default-validator";
 
-    fn default_init(tax_percent: u64, min_withdrawal: u128) -> InitMsg {
-        InitMsg {
+    fn default_init(tax_percent: u64, min_withdrawal: u128) -> InstantiateMsg {
+        InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 9,
@@ -493,7 +498,7 @@ mod tests {
             .update_staking("ustake", &[sample_validator("john")], &[]);
 
         let creator = HumanAddr::from("creator");
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 9,
@@ -503,8 +508,8 @@ mod tests {
         };
         let info = mock_info(&creator, &[]);
 
-        // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, msg);
+        // make sure we can instantiate with this
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg);
         match res.unwrap_err() {
             StdError::GenericErr { msg, .. } => {
                 assert_eq!(msg, "my-validator is not in the current validator set")
@@ -527,7 +532,7 @@ mod tests {
         );
 
         let creator = HumanAddr::from("creator");
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 0,
@@ -537,8 +542,8 @@ mod tests {
         };
         let info = mock_info(&creator, &[]);
 
-        // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
+        // make sure we can instantiate with this
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg.clone()).unwrap();
         assert_eq!(0, res.messages.len());
 
         // token info is proper
@@ -570,11 +575,11 @@ mod tests {
         set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
-        let init_msg = default_init(2, 50);
+        let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
-        // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, init_msg).unwrap();
+        // make sure we can instantiate with this
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
@@ -610,11 +615,11 @@ mod tests {
         set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
-        let init_msg = default_init(2, 50);
+        let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
-        // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, init_msg).unwrap();
+        // make sure we can instantiate with this
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
@@ -669,11 +674,11 @@ mod tests {
         set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
-        let init_msg = default_init(2, 50);
+        let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
-        // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, init_msg).unwrap();
+        // make sure we can instantiate with this
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
@@ -697,11 +702,11 @@ mod tests {
         set_validator(&mut deps.querier);
 
         let creator = HumanAddr::from("creator");
-        let init_msg = default_init(10, 50);
+        let instantiate_msg = default_init(10, 50);
         let info = mock_info(&creator, &[]);
 
-        // make sure we can init with this
-        let res = init(deps.as_mut(), mock_env(), info, init_msg).unwrap();
+        // make sure we can instantiate with this
+        let res = instantiate(deps.as_mut(), mock_env(), info, instantiate_msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now

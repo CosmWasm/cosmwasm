@@ -21,12 +21,12 @@
 
 use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{
-    init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
+    instantiate, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 use hex_literal::hex;
 
-use crypto_verify::msg::{InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
+use crypto_verify::msg::{InstantiateMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
 
 // Output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/crypto_verify.wasm");
@@ -56,15 +56,15 @@ const ED25519_PUBLIC_KEY2_HEX: &str =
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
-    let msg = InitMsg {};
+    let msg = InstantiateMsg {};
     let info = mock_info(CREATOR, &[]);
-    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
 
 #[test]
-fn init_works() {
+fn instantiate_works() {
     setup();
 }
 

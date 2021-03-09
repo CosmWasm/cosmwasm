@@ -20,11 +20,14 @@
 use cosmwasm_std::{
     coin, from_binary, ContractResult, Decimal, HumanAddr, Response, Uint128, Validator,
 };
-use cosmwasm_vm::testing::{init, mock_backend, mock_env, mock_info, mock_instance_options, query};
+use cosmwasm_vm::testing::{
+    instantiate, mock_backend, mock_env, mock_info, mock_instance_options, query,
+};
 use cosmwasm_vm::Instance;
 
 use staking::msg::{
-    BalanceResponse, ClaimsResponse, InitMsg, InvestmentResponse, QueryMsg, TokenInfoResponse,
+    BalanceResponse, ClaimsResponse, InstantiateMsg, InvestmentResponse, QueryMsg,
+    TokenInfoResponse,
 };
 
 // This line will test the output of cargo wasm
@@ -51,7 +54,7 @@ fn initialization_with_missing_validator() {
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
 
     let creator = HumanAddr::from("creator");
-    let msg = InitMsg {
+    let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
@@ -61,8 +64,8 @@ fn initialization_with_missing_validator() {
     };
     let info = mock_info(&creator, &[]);
 
-    // make sure we can init with this
-    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, msg);
+    // make sure we can instantiate with this
+    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -89,7 +92,7 @@ fn proper_initialization() {
     assert!(deps.required_features.contains("staking"));
 
     let creator = HumanAddr::from("creator");
-    let msg = InitMsg {
+    let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
@@ -100,7 +103,7 @@ fn proper_initialization() {
     let info = mock_info(&creator, &[]);
 
     // make sure we can init with this
-    let res: Response = init(&mut deps, mock_env(), info, msg.clone()).unwrap();
+    let res: Response = instantiate(&mut deps, mock_env(), info, msg.clone()).unwrap();
     assert_eq!(0, res.messages.len());
 
     // token info is proper

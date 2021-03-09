@@ -13,7 +13,7 @@ use cosmwasm_std::{
 use crate::errors::HackError;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
+pub struct InstantiateMsg {
     pub verifier: HumanAddr,
     pub beneficiary: HumanAddr,
 }
@@ -99,11 +99,11 @@ pub struct RecurseResponse {
 
 pub const CONFIG_KEY: &[u8] = b"config";
 
-pub fn init(
+pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    msg: InitMsg,
+    msg: InstantiateMsg,
 ) -> Result<Response, HackError> {
     deps.api.debug("here we go 🚀");
 
@@ -391,12 +391,12 @@ mod tests {
             funder: deps.api.canonical_address(&creator).unwrap(),
         };
 
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             verifier,
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
         assert_eq!(res.attributes.len(), 1);
         assert_eq!(res.attributes[0].key, "Let the");
@@ -409,18 +409,18 @@ mod tests {
     }
 
     #[test]
-    fn init_and_query() {
+    fn instantiate_and_query() {
         let mut deps = mock_dependencies(&[]);
 
         let verifier = HumanAddr(String::from("verifies"));
         let beneficiary = HumanAddr(String::from("benefits"));
         let creator = HumanAddr(String::from("creator"));
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             verifier: verifier.clone(),
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // now let's query
@@ -435,12 +435,12 @@ mod tests {
         let verifier = HumanAddr::from("verifies");
         let beneficiary = HumanAddr::from("benefits");
         let creator = HumanAddr::from("creator");
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             verifier,
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // check it is 'verifies'
@@ -467,12 +467,12 @@ mod tests {
         let verifier = HumanAddr::from("verifies");
         let beneficiary = HumanAddr::from("benefits");
         let creator = HumanAddr::from("creator");
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             verifier,
             beneficiary,
         };
         let info = mock_info(creator.as_str(), &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // sudo takes any tax it wants
@@ -512,13 +512,13 @@ mod tests {
         let verifier = HumanAddr::from("verifies");
         let beneficiary = HumanAddr::from("benefits");
 
-        let init_msg = InitMsg {
+        let instantiate_msg = InstantiateMsg {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
         let init_info = mock_info(creator.as_str(), &init_amount);
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -559,13 +559,13 @@ mod tests {
         let verifier = HumanAddr::from("verifies");
         let beneficiary = HumanAddr::from("benefits");
 
-        let init_msg = InitMsg {
+        let instantiate_msg = InstantiateMsg {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
         let init_info = mock_info(creator.as_str(), &init_amount);
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
         // balance changed in init
@@ -604,12 +604,12 @@ mod tests {
         let beneficiary = HumanAddr(String::from("benefits"));
         let creator = HumanAddr(String::from("creator"));
 
-        let init_msg = InitMsg {
+        let instantiate_msg = InstantiateMsg {
             verifier,
             beneficiary: beneficiary.clone(),
         };
         let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let execute_info = mock_info(beneficiary.as_str(), &[]);
@@ -626,12 +626,12 @@ mod tests {
     fn execute_user_errors_in_api_calls() {
         let mut deps = mock_dependencies(&[]);
 
-        let init_msg = InitMsg {
+        let instantiate_msg = InstantiateMsg {
             verifier: HumanAddr::from("verifies"),
             beneficiary: HumanAddr::from("benefits"),
         };
         let init_info = mock_info("creator", &coins(1000, "earth"));
-        let init_res = init(deps.as_mut(), mock_env(), init_info, init_msg).unwrap();
+        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
         let execute_info = mock_info("anyone", &[]);

@@ -101,7 +101,7 @@ The required exports provided by the cosmwasm smart contract are:
 extern "C" fn allocate(size: usize) -> u32;
 extern "C" fn deallocate(pointer: u32);
 
-extern "C" fn init(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
+extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn execute(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn query(env_ptr: u32, msg_ptr: u32) -> u32;
 extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
@@ -110,7 +110,7 @@ extern "C" fn migrate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32;
 `allocate`/`deallocate` allow the host to manage data within the Wasm VM. If
 you're using Rust, you can implement them by simply
 [re-exporting them from cosmwasm::exports](https://github.com/CosmWasm/cosmwasm/blob/v0.6.3/contracts/hackatom/src/lib.rs#L5).
-`init`, `execute` and `query` must be defined by your contract.
+`instantiate`, `execute` and `query` must be defined by your contract.
 
 ### Imports
 
@@ -194,16 +194,16 @@ pub struct Region {
 If you followed the [instructions above](#Creating), you should have a runable
 smart contract. You may notice that all of the Wasm exports are taken care of by
 `lib.rs`, which should shouldn't need to modify. What you need to do is simply
-look in `contract.rs` and implement `init` and `execute` functions, defining
-your custom `InitMsg` and `ExecuteMsg` structs for parsing your custom message
-types (as json):
+look in `contract.rs` and implement `instantiate` and `execute` functions,
+defining your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your
+custom message types (as json):
 
 ```rust
-pub fn init<S: Storage, A: Api, Q: Querier>(
+pub fn instantiate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
-    msg: InitMsg,
+    msg: InstantiateMsg,
 ) -> StdResult<Response> {}
 
 pub fn execute<S: Storage, A: Api, Q: Querier>(

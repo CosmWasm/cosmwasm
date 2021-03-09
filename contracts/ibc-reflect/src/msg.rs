@@ -4,9 +4,9 @@ use cosmwasm_std::{Coin, ContractResult, CosmosMsg, HumanAddr};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// InitMsg just needs to know the code_id of a reflect contract to spawn sub-accounts
+/// Just needs to know the code_id of a reflect contract to spawn sub-accounts
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
+pub struct InstantiateMsg {
     pub reflect_code_id: u64,
 }
 
@@ -51,7 +51,7 @@ pub struct AccountInfo {
 
 /// This is the message we send to the reflect contract to initialize it
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ReflectInitMsg {
+pub struct ReflectInstantiateMsg {
     pub callback_id: Option<String>,
 }
 

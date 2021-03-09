@@ -8,7 +8,7 @@ use cosmwasm_std::{
     QueryResponse, Response, StdResult, Storage,
 };
 
-use crate::msg::{InitMsg, MigrateMsg};
+use crate::msg::{InstantiateMsg, MigrateMsg};
 
 // we store one entry for each item in the queue
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -64,8 +64,13 @@ pub struct ListResponse {
     pub late: Vec<u32>,
 }
 
-// init is a no-op, just empty data
-pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
+// A no-op, just empty data
+pub fn instantiate(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    _msg: InstantiateMsg,
+) -> StdResult<Response> {
     Ok(Response::default())
 }
 
@@ -222,7 +227,7 @@ mod tests {
     fn create_contract() -> (OwnedDeps<MockStorage, MockApi, MockQuerier>, MessageInfo) {
         let mut deps = mock_dependencies(&coins(1000, "earth"));
         let info = mock_info("creator", &coins(1000, "earth"));
-        let res = init(deps.as_mut(), mock_env(), info.clone(), InitMsg {}).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info.clone(), InstantiateMsg {}).unwrap();
         assert_eq!(0, res.messages.len());
         (deps, info)
     }
@@ -236,7 +241,7 @@ mod tests {
     }
 
     #[test]
-    fn init_and_query() {
+    fn instantiate_and_query() {
         let (deps, _) = create_contract();
         assert_eq!(get_count(deps.as_ref()), 0);
         assert_eq!(get_sum(deps.as_ref()), 0);

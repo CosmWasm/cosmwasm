@@ -18,7 +18,7 @@ const MAX_LENGTH_SUDO: usize = 100_000;
 const MAX_LENGTH_SUBCALL_RESPONSE: usize = 100_000;
 const MAX_LENGTH_QUERY: usize = 100_000;
 
-pub fn call_init<A, S, Q, U>(
+pub fn call_instantiate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
     info: &MessageInfo,
@@ -32,7 +32,7 @@ where
 {
     let env = to_vec(env)?;
     let info = to_vec(info)?;
-    let data = call_init_raw(instance, &env, &info, msg)?;
+    let data = call_instantiate_raw(instance, &env, &info, msg)?;
     let result: ContractResult<Response<U>> = from_slice(&data)?;
     Ok(result)
 }
@@ -131,9 +131,9 @@ where
     Ok(result)
 }
 
-/// Calls Wasm export "init" and returns raw data from the contract.
+/// Calls Wasm export "instantiate" and returns raw data from the contract.
 /// The result is length limited to prevent abuse but otherwise unchecked.
-pub fn call_init_raw<A, S, Q>(
+pub fn call_instantiate_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
     info: &[u8],
@@ -145,7 +145,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "init", &[env, info, msg], MAX_LENGTH_INIT)
+    call_raw(instance, "instantiate", &[env, info, msg], MAX_LENGTH_INIT)
 }
 
 /// Calls Wasm export "execute" and returns raw data from the contract.
@@ -265,13 +265,13 @@ mod tests {
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     #[test]
-    fn call_init_works() {
+    fn call_instantiate_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
     }
@@ -283,7 +283,7 @@ mod tests {
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -302,7 +302,7 @@ mod tests {
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 
@@ -327,7 +327,7 @@ mod tests {
         // init
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-        call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 

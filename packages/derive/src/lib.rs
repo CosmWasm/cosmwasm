@@ -15,16 +15,16 @@ use std::str::FromStr;
 /// #     Response, QueryResponse,
 /// # };
 /// #
-/// # type InitMsg = ();
+/// # type InstantiateMsg = ();
 /// # type ExecuteMsg = ();
 /// # type QueryMsg = ();
 ///
 /// #[entry_point]
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
-///     msg: InitMsg,
+///     msg: InstantiateMsg,
 /// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
@@ -49,7 +49,7 @@ use std::str::FromStr;
 /// }
 /// ```
 ///
-/// where `InitMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
+/// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are contract defined
 /// types that implement `DeserializeOwned + JsonSchema`.
 ///
 /// This is an alternative implementation of `cosmwasm_std::create_entry_points!(contract)`
