@@ -28,12 +28,11 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 ];
 
 /// Lists all entry points we expect to be present when calling a contract.
-/// Other optional exports exist, e.g. "query" and "migrate".
+/// Other optional exports exist, e.g. "execute", "migrate" and "query".
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
 const REQUIRED_EXPORTS: &[&str] = &[
     "interface_version_5",
     "instantiate",
-    "execute",
     "allocate",
     "deallocate",
 ];

@@ -13,7 +13,3 @@ pub struct MigrateMsg {
 /// A placeholder where we don't take any input
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {}
-
-/// ExecuteMsg is a placeholder where we don't take any input
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ExecuteMsg {}

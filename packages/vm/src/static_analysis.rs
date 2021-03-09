@@ -73,7 +73,7 @@ mod tests {
                         false
                     }
                 });
-        assert_eq!(exported_functions.count(), 8); // 6 required export plus "migrate" and "sudo"
+        assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
 
         let exported_memories = module
             .export_section()
@@ -139,7 +139,6 @@ mod tests {
                 (func (type 0) nop)
                 (export "interface_version_5" (func 0))
                 (export "instantiate" (func 0))
-                (export "execute" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
             )"#,
