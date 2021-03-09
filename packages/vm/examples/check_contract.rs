@@ -7,9 +7,9 @@ use cosmwasm_vm::features_from_csv;
 use cosmwasm_vm::internals::{check_wasm, compile};
 
 pub fn main() {
-    let matches = App::new("Module compilation")
+    let matches = App::new("Contract checking")
         .version("0.1.0")
-        .long_about("Checks that the given wasm file compiles successfully")
+        .long_about("Checks the given wasm file (memories, exports, imports, supported features, and non-determinism).")
         .author("Mauro Lacy <mauro@lacy.com.es>")
         .arg(
             Arg::with_name("WASM")
@@ -32,5 +32,5 @@ pub fn main() {
 
     // Compile module
     compile(&wasm, None).unwrap();
-    println!("module compiled successfully")
+    println!("contract checks passed.")
 }
