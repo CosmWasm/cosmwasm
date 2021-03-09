@@ -172,7 +172,7 @@
           }
         },
         {
-          "description": "Lists all (portID, channelID) pairs that are bound to a given port If port_id is omitted, list all channels bound to the contract's port. Returns ListChannelsResponse.",
+          "description": "Lists all channels that are bound to a given port. If `port_id` is omitted, this list all channels bound to the contract's port. Returns a `ListChannelsResponse`.",
           "type": "object",
           "required": [
             "list_channels"

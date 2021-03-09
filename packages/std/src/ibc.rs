@@ -67,9 +67,9 @@ pub enum IbcQuery {
     /// Gets the Port ID the current contract is bound to.
     /// Returns PortIdResponse
     PortId {},
-    /// Lists all (portID, channelID) pairs that are bound to a given port
-    /// If port_id is omitted, list all channels bound to the contract's port.
-    /// Returns ListChannelsResponse.
+    /// Lists all channels that are bound to a given port.
+    /// If `port_id` is omitted, this list all channels bound to the contract's port.
+    /// Returns a `ListChannelsResponse`.
     ListChannels { port_id: Option<String> },
     /// Lists all information for a (portID, channelID) pair.
     /// If port_id is omitted, it will default to the contract's own channel.
@@ -89,7 +89,7 @@ pub struct PortIdResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct ListChannelsResponse {
-    pub channels: Vec<IbcEndpoint>,
+    pub channels: Vec<IbcChannel>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
