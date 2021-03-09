@@ -519,7 +519,7 @@
                   "type": "string"
                 },
                 "msg": {
-                  "description": "msg is the json-encoded InitMsg struct (as raw Binary)",
+                  "description": "msg is the JSON-encoded InstantiateMsg struct (as raw Binary)",
                   "allOf": [
                     {
                       "$ref": "#/definitions/Binary"

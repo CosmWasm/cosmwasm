@@ -10,12 +10,12 @@
 /// #     Response, QueryResponse,
 /// # };
 /// #
-/// # type InitMsg = ();
+/// # type InstantiateMsg = ();
 /// pub fn instantiate(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
-///     msg: InitMsg,
+///     msg: InstantiateMsg,
 /// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
@@ -39,7 +39,7 @@
 /// #   Ok(Default::default())
 /// }
 /// ```
-/// where `InitMsg`, `ExecuteMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`.
+/// where `InstantiateMsg`, `ExecuteMsg`, and `QueryMsg` are types that implement `DeserializeOwned + JsonSchema`.
 ///
 /// # Example
 ///

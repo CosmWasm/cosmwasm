@@ -10,7 +10,8 @@ use crate::ethereum::{
     decode_address, ethereum_address_raw, get_recovery_param, verify_transaction,
 };
 use crate::msg::{
-    list_verifications, ExecuteMsg, InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse,
+    list_verifications, ExecuteMsg, InstantiateMsg, ListVerificationsResponse, QueryMsg,
+    VerifyResponse,
 };
 
 pub const VERSION: &str = "crypto-verify-v2";
@@ -20,7 +21,7 @@ pub fn instantiate(
     _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InitMsg,
+    _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     Ok(Response::default())
 }
@@ -257,7 +258,7 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
-        let msg = InitMsg {};
+        let msg = InstantiateMsg {};
         let info = mock_info(CREATOR, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());

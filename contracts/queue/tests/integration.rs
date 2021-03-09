@@ -29,7 +29,7 @@ use cosmwasm_vm::{
 use queue::contract::{
     CountResponse, ExecuteMsg, Item, ListResponse, QueryMsg, ReducerResponse, SumResponse,
 };
-use queue::msg::{InitMsg, MigrateMsg};
+use queue::msg::{InstantiateMsg, MigrateMsg};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/queue.wasm");
 
@@ -38,7 +38,8 @@ fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInf
     let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
     let creator = HumanAddr(String::from("creator"));
     let info = mock_info(creator.as_str(), &[]);
-    let res: Response = instantiate(&mut deps, mock_env(), info.clone(), InitMsg {}).unwrap();
+    let res: Response =
+        instantiate(&mut deps, mock_env(), info.clone(), InstantiateMsg {}).unwrap();
     assert_eq!(0, res.messages.len());
     (deps, info)
 }

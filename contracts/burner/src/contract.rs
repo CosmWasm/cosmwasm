@@ -2,14 +2,14 @@ use cosmwasm_std::{
     attr, entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
 };
 
-use crate::msg::{ExecuteMsg, InitMsg, MigrateMsg};
+use crate::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg};
 
 #[entry_point]
 pub fn instantiate(
     _deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    _msg: InitMsg,
+    _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     Err(StdError::generic_err(
         "You can only use this contract for migrations",
@@ -68,7 +68,7 @@ mod tests {
     fn instantiate_fails() {
         let mut deps = mock_dependencies(&[]);
 
-        let msg = InitMsg {};
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(1000, "earth"));
         // we can just call .unwrap() to assert this was a success
         let res = instantiate(deps.as_mut(), mock_env(), info, msg);

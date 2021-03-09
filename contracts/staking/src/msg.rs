@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Coin, Decimal, HumanAddr, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
+pub struct InstantiateMsg {
     /// name of the derivative token (FIXME: auto-generate?)
     pub name: String,
     /// symbol / ticker of the derivative token

@@ -26,7 +26,7 @@ use cosmwasm_vm::testing::{
 use cosmwasm_vm::{from_slice, Instance};
 use hex_literal::hex;
 
-use crypto_verify::msg::{InitMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
+use crypto_verify::msg::{InstantiateMsg, ListVerificationsResponse, QueryMsg, VerifyResponse};
 
 // Output of cargo wasm
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/crypto_verify.wasm");
@@ -56,7 +56,7 @@ const ED25519_PUBLIC_KEY2_HEX: &str =
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
-    let msg = InitMsg {};
+    let msg = InstantiateMsg {};
     let info = mock_info(CREATOR, &[]);
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());

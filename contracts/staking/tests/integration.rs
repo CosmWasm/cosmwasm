@@ -26,7 +26,8 @@ use cosmwasm_vm::testing::{
 use cosmwasm_vm::Instance;
 
 use staking::msg::{
-    BalanceResponse, ClaimsResponse, InitMsg, InvestmentResponse, QueryMsg, TokenInfoResponse,
+    BalanceResponse, ClaimsResponse, InstantiateMsg, InvestmentResponse, QueryMsg,
+    TokenInfoResponse,
 };
 
 // This line will test the output of cargo wasm
@@ -53,7 +54,7 @@ fn initialization_with_missing_validator() {
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
 
     let creator = HumanAddr::from("creator");
-    let msg = InitMsg {
+    let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
@@ -91,7 +92,7 @@ fn proper_initialization() {
     assert!(deps.required_features.contains("staking"));
 
     let creator = HumanAddr::from("creator");
-    let msg = InitMsg {
+    let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,

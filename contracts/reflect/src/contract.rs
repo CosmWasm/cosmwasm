@@ -6,8 +6,8 @@ use cosmwasm_std::{
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InitMsg, OwnerResponse,
-    QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
+    CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg,
+    OwnerResponse, QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, replies, replies_read, State};
 
@@ -15,7 +15,7 @@ pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: InitMsg,
+    msg: InstantiateMsg,
 ) -> StdResult<Response<CustomMsg>> {
     let state = State {
         owner: deps.api.canonical_address(&info.sender)?,
@@ -24,7 +24,7 @@ pub fn instantiate(
 
     let mut resp = Response::new();
     if let Some(id) = msg.callback_id {
-        let data = CallbackMsg::InitCallback {
+        let data = CallbackMsg::InstantiateCallback {
             id,
             contract_addr: env.contract.address,
         };
@@ -205,7 +205,7 @@ mod tests {
     fn proper_instantialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
@@ -222,7 +222,7 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
         let caller = HumanAddr::from("calling-contract");
 
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             callback_id: Some("foobar".to_string()),
         };
         let info = mock_info(&caller, &coins(1000, "earth"));
@@ -241,7 +241,7 @@ mod tests {
                 let parsed: CallbackMsg = from_binary(&msg).unwrap();
                 assert_eq!(
                     parsed,
-                    CallbackMsg::InitCallback {
+                    CallbackMsg::InstantiateCallback {
                         id: "foobar".to_string(),
                         contract_addr: MOCK_CONTRACT_ADDR.into(),
                     }
@@ -260,7 +260,7 @@ mod tests {
     fn reflect() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -282,7 +282,7 @@ mod tests {
     fn reflect_requires_owner() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -306,7 +306,7 @@ mod tests {
     fn reflect_reject_empty_msgs() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -322,7 +322,7 @@ mod tests {
     fn reflect_multiple_messages() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -354,7 +354,7 @@ mod tests {
     fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -373,7 +373,7 @@ mod tests {
     fn change_owner_requires_current_owner_as_sender() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let creator = HumanAddr::from("creator");
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -394,7 +394,7 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
         let creator = HumanAddr::from("creator");
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -453,7 +453,7 @@ mod tests {
     fn reflect_subcall() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -484,7 +484,7 @@ mod tests {
     fn reply_and_query() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InitMsg { callback_id: None };
+        let msg = InstantiateMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 

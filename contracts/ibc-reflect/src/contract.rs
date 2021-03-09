@@ -7,8 +7,8 @@ use cosmwasm_std::{
 
 use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
-    ExecuteMsg, InitMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
-    ReflectInitMsg, WhoAmIResponse,
+    ExecuteMsg, InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
+    ReflectInstantiateMsg, WhoAmIResponse,
 };
 use crate::state::{accounts, accounts_read, config, Config};
 
@@ -19,7 +19,7 @@ pub fn instantiate(
     deps: DepsMut,
     _env: Env,
     _info: MessageInfo,
-    msg: InitMsg,
+    msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     let cfg = Config {
@@ -147,7 +147,7 @@ pub fn ibc_channel_connect(
     let chan_id = channel.endpoint.channel_id;
 
     let label = format!("ibc-reflect-{}", &chan_id);
-    let payload = ReflectInitMsg {
+    let payload = ReflectInstantiateMsg {
         callback_id: Some(chan_id.clone()),
     };
     let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], label)?;
@@ -337,7 +337,7 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             reflect_code_id: REFLECT_ID,
         };
         let info = mock_info(CREATOR, &[]);
@@ -375,7 +375,7 @@ mod tests {
     fn instantiate_works() {
         let mut deps = mock_dependencies(&[]);
 
-        let msg = InitMsg {
+        let msg = InstantiateMsg {
             reflect_code_id: 17,
         };
         let info = mock_info("creator", &[]);
@@ -423,7 +423,7 @@ mod tests {
             assert_eq!(0, send.len());
             assert!(label.contains(channel_id));
             // parse the message - should callback with proper channel_id
-            let rmsg: ReflectInitMsg = from_slice(&msg).unwrap();
+            let rmsg: ReflectInstantiateMsg = from_slice(&msg).unwrap();
             assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
         } else {
             panic!("invalid return message: {:?}", res.messages[0]);
@@ -530,7 +530,7 @@ mod tests {
         }
 
         // invalid packet format on registered channel also returns app-level error
-        let bad_data = InitMsg {
+        let bad_data = InstantiateMsg {
             reflect_code_id: 12345,
         };
         let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();

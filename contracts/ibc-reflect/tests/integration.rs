@@ -30,8 +30,8 @@ use cosmwasm_vm::{from_slice, Instance};
 
 use ibc_reflect::contract::IBC_VERSION;
 use ibc_reflect::msg::{
-    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, ExecuteMsg, InitMsg,
-    ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, ReflectInitMsg,
+    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, ExecuteMsg, InstantiateMsg,
+    ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, ReflectInstantiateMsg,
 };
 
 // This line will test the output of cargo wasm
@@ -45,7 +45,7 @@ const REFLECT_ADDR: &str = "reflect-acct-1";
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
-    let msg = InitMsg {
+    let msg = InstantiateMsg {
         reflect_code_id: REFLECT_ID,
     };
     let info = mock_info(CREATOR, &[]);
@@ -84,7 +84,7 @@ fn connect<T: Into<HumanAddr>>(
 fn instantiate_works() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg {
+    let msg = InstantiateMsg {
         reflect_code_id: 17,
     };
     let info = mock_info("creator", &[]);
@@ -134,7 +134,7 @@ fn proper_handshake_flow() {
         assert_eq!(0, send.len());
         assert!(label.contains(channel_id));
         // parse the message - should callback with proper channel_id
-        let rmsg: ReflectInitMsg = from_slice(&msg).unwrap();
+        let rmsg: ReflectInstantiateMsg = from_slice(&msg).unwrap();
         assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
     } else {
         panic!("invalid return message: {:?}", res.messages[0]);
@@ -245,7 +245,7 @@ fn handle_dispatch_packet() {
     }
 
     // invalid packet format on registered channel also returns app-level error
-    let bad_data = InitMsg {
+    let bad_data = InstantiateMsg {
         reflect_code_id: 12345,
     };
     let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();

@@ -108,7 +108,7 @@ pub enum WasmMsg {
     /// `sender` is automatically filled with the current contract's address.
     Instantiate {
         code_id: u64,
-        /// msg is the json-encoded InitMsg struct (as raw Binary)
+        /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         msg: Binary,
         send: Vec<Coin>,
         /// A human-readbale label for the contract

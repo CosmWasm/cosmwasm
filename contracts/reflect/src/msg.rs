@@ -6,8 +6,8 @@ use serde::{Deserialize, Serialize};
 use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, HumanAddr, QueryRequest, SubMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct InitMsg {
-    /// if set, returns CallbackMsg::InitCallback{} to the caller with this contract's address
+pub struct InstantiateMsg {
+    /// if set, returns CallbackMsg::InstantiateCallback{} to the caller with this contract's address
     /// and this id
     pub callback_id: Option<String>,
 }
@@ -16,8 +16,8 @@ pub struct InitMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CallbackMsg {
-    InitCallback {
-        /// id was provided in the InitMsg
+    InstantiateCallback {
+        /// Callback ID provided in the InstantiateMsg
         id: String,
         /// contract_addr is the address of this contract
         contract_addr: HumanAddr,

@@ -30,7 +30,7 @@ use cosmwasm_vm::{from_slice, Instance};
 
 use ibc_reflect_send::ibc::IBC_VERSION;
 use ibc_reflect_send::ibc_msg::{AcknowledgementMsg, PacketMsg, WhoAmIResponse};
-use ibc_reflect_send::msg::{AccountResponse, AdminResponse, ExecuteMsg, InitMsg, QueryMsg};
+use ibc_reflect_send::msg::{AccountResponse, AdminResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
 // This line will test the output of cargo wasm
 static WASM: &[u8] =
@@ -40,7 +40,7 @@ const CREATOR: &str = "creator";
 
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
-    let msg = InitMsg {};
+    let msg = InstantiateMsg {};
     let info = mock_info(CREATOR, &[]);
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());

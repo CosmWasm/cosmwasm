@@ -6,10 +6,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::state::AccountData;
 
-/// InitMsg needs no info. Owner of the contract is whoever signed the InitMsg
+/// This needs no info. Owner of the contract is whoever signed the InstantiateMsg.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub struct InitMsg {}
+pub struct InstantiateMsg {}
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]

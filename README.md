@@ -195,15 +195,15 @@ If you followed the [instructions above](#Creating), you should have a runable
 smart contract. You may notice that all of the Wasm exports are taken care of by
 `lib.rs`, which should shouldn't need to modify. What you need to do is simply
 look in `contract.rs` and implement `instantiate` and `execute` functions,
-defining your custom `InitMsg` and `ExecuteMsg` structs for parsing your custom
-message types (as json):
+defining your custom `InstantiateMsg` and `ExecuteMsg` structs for parsing your
+custom message types (as json):
 
 ```rust
 pub fn instantiate<S: Storage, A: Api, Q: Querier>(
     deps: &mut Deps<S, A, Q>,
     env: Env,
     info: MessageInfo,
-    msg: InitMsg,
+    msg: InstantiateMsg,
 ) -> StdResult<Response> {}
 
 pub fn execute<S: Storage, A: Api, Q: Querier>(

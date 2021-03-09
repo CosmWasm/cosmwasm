@@ -256,7 +256,7 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use crate::contract::{execute, instantiate, query};
-    use crate::msg::{AccountResponse, ExecuteMsg, InitMsg, QueryMsg};
+    use crate::msg::{AccountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
@@ -268,7 +268,7 @@ mod tests {
 
     fn setup() -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
         let mut deps = mock_dependencies(&[]);
-        let msg = InitMsg {};
+        let msg = InstantiateMsg {};
         let info = mock_info(CREATOR, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());

@@ -30,7 +30,8 @@ use cosmwasm_vm::{
 };
 
 use reflect::msg::{
-    CapitalizedResponse, CustomMsg, ExecuteMsg, InitMsg, OwnerResponse, QueryMsg, SpecialQuery,
+    CapitalizedResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse, QueryMsg,
+    SpecialQuery,
 };
 use reflect::testing::custom_query_execute;
 
@@ -60,7 +61,7 @@ pub fn mock_dependencies_with_custom_querier(
 fn proper_initialization() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
@@ -77,7 +78,7 @@ fn proper_initialization() {
 fn reflect() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -110,7 +111,7 @@ fn reflect() {
 fn reflect_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -132,7 +133,7 @@ fn reflect_requires_owner() {
 fn transfer() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -152,7 +153,7 @@ fn transfer() {
 fn transfer_requires_owner() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -190,7 +191,7 @@ fn dispatch_custom_query() {
 fn reflect_subcall() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
     let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -221,7 +222,7 @@ fn reflect_subcall() {
 fn reply_and_query() {
     let mut deps = mock_instance(WASM, &[]);
 
-    let msg = InitMsg { callback_id: None };
+    let msg = InstantiateMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
     let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 

@@ -19,7 +19,7 @@ use crate::results::SubMsg;
 ///
 /// ```
 /// # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo};
-/// # type InitMsg = ();
+/// # type InstantiateMsg = ();
 /// #
 /// use cosmwasm_std::{attr, Response, StdResult};
 ///
@@ -27,7 +27,7 @@ use crate::results::SubMsg;
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     _info: MessageInfo,
-///     msg: InitMsg,
+///     msg: InstantiateMsg,
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
@@ -44,7 +44,7 @@ use crate::results::SubMsg;
 ///
 /// ```
 /// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo};
-/// # type InitMsg = ();
+/// # type InstantiateMsg = ();
 /// # type MyError = ();
 /// #
 /// use cosmwasm_std::Response;
@@ -53,7 +53,7 @@ use crate::results::SubMsg;
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     info: MessageInfo,
-///     msg: InitMsg,
+///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
 ///     let mut response = Response::new();
 ///     // ...
