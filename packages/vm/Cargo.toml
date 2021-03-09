@@ -30,7 +30,7 @@ cranelift = ["wasmer/cranelift"]
 bench = false
 
 [[example]]
-name = "compile_module"
+name = "check_contract"
 required-features = ["iterator"]
 
 [dependencies]
