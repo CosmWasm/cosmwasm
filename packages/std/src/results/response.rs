@@ -7,7 +7,7 @@ use crate::Binary;
 use super::{Attribute, CosmosMsg, Empty};
 use crate::results::SubMsg;
 
-/// A response of a contract entry point, such as `init`, `execute` or `migrate`.
+/// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
 /// This type can be constructed directly at the end of the call. Alternatively a
 /// mutable response instance can be created early in the contract's logic and

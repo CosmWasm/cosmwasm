@@ -17,8 +17,8 @@ intention here.
 This is the contract from the sending chain which corresponds to the
 [`ibc-reflect`](../ibc-reflect) "factory" contract on the receiving chain.
 
-The `ibc-reflect-send` contract has one admin and binds a port on `init`. You
-can bind any number of channels to this contract, each one linked to a
+The `ibc-reflect-send` contract has one admin and binds a port on `instantiate`.
+You can bind any number of channels to this contract, each one linked to a
 `ibc-reflect` contract on a remote chain. It does not accept any incoming
 packets over the channel, but rather sends packets (the opposite of
 `ibc-reflect`).
