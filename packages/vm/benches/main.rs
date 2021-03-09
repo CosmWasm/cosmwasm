@@ -7,7 +7,7 @@ use cosmwasm_vm::testing::{
     mock_backend, mock_env, mock_info, mock_instance_options, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{
-    call_execute, call_init, features_from_csv, Cache, CacheOptions, Checksum, Instance,
+    call_execute, call_instantiate, features_from_csv, Cache, CacheOptions, Checksum, Instance,
     InstanceOptions, Size,
 };
 
@@ -48,7 +48,7 @@ fn bench_instance(c: &mut Criterion) {
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
             let contract_result =
-                call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         });
     });
@@ -65,7 +65,7 @@ fn bench_instance(c: &mut Criterion) {
         let info = mock_info("creator", &coins(1000, "earth"));
         let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
         let contract_result =
-            call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         assert!(contract_result.into_result().is_ok());
 
         b.iter(|| {
