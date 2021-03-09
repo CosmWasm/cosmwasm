@@ -8,13 +8,16 @@ pull_request_rules:
       - label=automerge
       - label!=WIP
       # We need to list them all individually. Here is why: https://doc.mergify.io/conditions.html#validating-all-status-check
+      - "status-success=ci/circleci: package_crypto"
       - "status-success=ci/circleci: package_schema"
       - "status-success=ci/circleci: package_std"
       - "status-success=ci/circleci: package_storage"
       - "status-success=ci/circleci: package_vm"
-      - "status-success=ci/circleci: package_vm_cranelift"
       - "status-success=ci/circleci: contract_burner"
+      - "status-success=ci/circleci: contract_crypto_verify"
       - "status-success=ci/circleci: contract_hackatom"
+      - "status-success=ci/circleci: contract_ibc_reflect"
+      - "status-success=ci/circleci: contract_ibc_reflect_send"
       - "status-success=ci/circleci: contract_queue"
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"
