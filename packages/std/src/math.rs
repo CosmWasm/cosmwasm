@@ -205,15 +205,15 @@ impl TryFrom<&str> for Uint128 {
     }
 }
 
-impl Into<String> for Uint128 {
-    fn into(self) -> String {
-        self.0.to_string()
+impl From<Uint128> for String {
+    fn from(original: Uint128) -> Self {
+        original.to_string()
     }
 }
 
-impl Into<u128> for Uint128 {
-    fn into(self) -> u128 {
-        self.0
+impl From<Uint128> for u128 {
+    fn from(original: Uint128) -> Self {
+        original.0
     }
 }
 
@@ -363,9 +363,8 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::errors::{StdError, StdResult};
+    use crate::errors::StdError;
     use crate::{from_slice, to_vec};
-    use std::convert::TryInto;
 
     #[test]
     fn decimal_one() {
@@ -642,17 +641,37 @@ mod tests {
     }
 
     #[test]
-    fn to_and_from_uint128() {
-        let a: Uint128 = 12345u64.into();
-        assert_eq!(12345, a.u128());
-        assert_eq!("12345", a.to_string());
+    fn uint128_convert_into() {
+        let original = Uint128(12345);
+        let a = u128::from(original);
+        assert_eq!(a, 12345);
 
-        let a: Uint128 = "34567".try_into().unwrap();
-        assert_eq!(34567, a.u128());
-        assert_eq!("34567", a.to_string());
+        let original = Uint128(12345);
+        let a = String::from(original);
+        assert_eq!(a, "12345");
+    }
 
-        let a: StdResult<Uint128> = "1.23".try_into();
-        assert!(a.is_err());
+    #[test]
+    fn uint128_convert_from() {
+        let a = Uint128::from(12345u64);
+        assert_eq!(a.0, 12345);
+
+        let result = Uint128::try_from("34567");
+        assert_eq!(result.unwrap().0, 34567);
+
+        let result = Uint128::try_from("1.23");
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn uint128_implements_display() {
+        let a = Uint128(12345);
+        assert_eq!(format!("Embedded: {}", a), "Embedded: 12345");
+        assert_eq!(a.to_string(), "12345");
+
+        let a = Uint128(0);
+        assert_eq!(format!("Embedded: {}", a), "Embedded: 0");
+        assert_eq!(a.to_string(), "0");
     }
 
     #[test]

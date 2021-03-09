@@ -50,6 +50,8 @@ and this project adheres to
 - cosmwasm-std: Added `reply` entry point that will receive all callbacks from
   submessages dispatched by this contract. This is only required if contract
   returns "submessages" (above). ([#796])
+- cosmwasm-std: Implement `From<Uint128> for String` and
+  `From<Uint128> for u128`.
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
