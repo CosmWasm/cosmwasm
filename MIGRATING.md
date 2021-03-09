@@ -23,13 +23,13 @@ major releases of `cosmwasm`. Note that you can also view the
   # ...
   ```
 
-- Rename the `handle` entry point to `execute`.
-  Also, rename `HandleMsg` to `ExecuteMsg`.
+- Rename the `handle` entry point to `execute`. Also, rename `HandleMsg` to
+  `ExecuteMsg`.
 
 - Rename `InitResponse`, `HandleResponse` and `MigrateResponse` to `Response`.
   The old names are still supported (with a deprecation warning), and will be
-  removed in the next version.
-  Also, you'll need to add the `submessages` field to `Response`.
+  removed in the next version. Also, you'll need to add the `submessages` field
+  to `Response`.
 
 - Remove `from_address` from `BankMsg::Send`, which is now automatically filled
   with the contract address:
@@ -146,17 +146,17 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
-  `MessageInfo::funds` was always empty since [MsgMigrateContract] does not
-  have a funds field. `MessageInfo::sender` should not be needed for
-  authentication because the chain checks permissions before calling `migrate`.
-  If the sender's address is needed for anything else, this should be expressed
-  as part of the migrate message.
+  `MessageInfo::funds` was always empty since [MsgMigrateContract] does not have
+  a funds field. `MessageInfo::sender` should not be needed for authentication
+  because the chain checks permissions before calling `migrate`. If the sender's
+  address is needed for anything else, this should be expressed as part of the
+  migrate message.
 
   [msgmigratecontract]:
     https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L86-L96
 
-- Add mutating helper methods to `Response` that can be used instead of
-  creating a `Context` that is later converted to a response:
+- Add mutating helper methods to `Response` that can be used instead of creating
+  a `Context` that is later converted to a response:
 
   ```rust
   // before
@@ -207,8 +207,8 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
-- If necessary, add a wildcard arm to the `match` of now non-exhaustive
-  message types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
+- If necessary, add a wildcard arm to the `match` of now non-exhaustive message
+  types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
 
 ## 0.12 -> 0.13
 
