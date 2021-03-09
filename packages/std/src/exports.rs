@@ -3,8 +3,10 @@
 //! interface_version_5, allocate and deallocate turn into Wasm exports
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
-//! do_init and do_wrapper should be wrapped with a extern "C" entry point
-//! including the contract-specific init/execute function pointer.
+//! `do_execute`, `do_instantiate`, `do_migrate`, `do_query`, `do_reply`
+//! and `do_sudo` should be wrapped with a extern "C" entry point including
+//! the contract-specific function pointer. This is done via the `#[entry_point]`
+//! macro attribute from cosmwasm-derive.
 use std::fmt;
 use std::vec::Vec;
 
@@ -64,13 +66,13 @@ macro_rules! r#try_into_contract_result {
     };
 }
 
-/// do_init should be wrapped in an external "C" export, containing a contract-specific function as arg
+/// This should be wrapped in an external "C" export, containing a contract-specific function as an argument.
 ///
 /// - `M`: message type for request
 /// - `C`: custom response message type (see CosmosMsg)
 /// - `E`: error type for responses
-pub fn do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
+pub fn do_instantiate<M, C, E>(
+    instantiate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: u32,
     info_ptr: u32,
     msg_ptr: u32,
@@ -80,8 +82,8 @@ where
     C: Serialize + Clone + fmt::Debug + PartialEq + JsonSchema,
     E: ToString,
 {
-    let res = _do_init(
-        init_fn,
+    let res = _do_instantiate(
+        instantiate_fn,
         env_ptr as *mut Region,
         info_ptr as *mut Region,
         msg_ptr as *mut Region,
@@ -192,8 +194,8 @@ where
     release_buffer(v) as u32
 }
 
-fn _do_init<M, C, E>(
-    init_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
+fn _do_instantiate<M, C, E>(
+    instantiate_fn: &dyn Fn(DepsMut, Env, MessageInfo, M) -> Result<Response<C>, E>,
     env_ptr: *mut Region,
     info_ptr: *mut Region,
     msg_ptr: *mut Region,
@@ -212,7 +214,7 @@ where
     let msg: M = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
-    init_fn(deps.as_mut(), env, info, msg).into()
+    instantiate_fn(deps.as_mut(), env, info, msg).into()
 }
 
 fn _do_execute<M, C, E>(

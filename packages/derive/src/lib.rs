@@ -20,7 +20,7 @@ use std::str::FromStr;
 /// # type QueryMsg = ();
 ///
 /// #[entry_point]
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,

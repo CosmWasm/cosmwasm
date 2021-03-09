@@ -12,7 +12,12 @@ use crate::msg::{
 use crate::state::{accounts, accounts_read, config, config_read, Config};
 
 #[entry_point]
-pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    info: MessageInfo,
+    _msg: InitMsg,
+) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     let cfg = Config { admin: info.sender };
     config(deps.storage).save(&cfg)?;
@@ -21,7 +26,7 @@ pub fn init(deps: DepsMut, _env: Env, info: MessageInfo, _msg: InitMsg) -> StdRe
         data: None,
         submessages: vec![],
         messages: vec![],
-        attributes: vec![attr("action", "init")],
+        attributes: vec![attr("action", "instantiate")],
     })
 }
 
@@ -221,11 +226,11 @@ mod tests {
     const CREATOR: &str = "creator";
 
     #[test]
-    fn init_works() {
+    fn instantiate_works() {
         let mut deps = mock_dependencies(&[]);
         let msg = InitMsg {};
         let info = mock_info(CREATOR, &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         let admin = query_admin(deps.as_ref()).unwrap();

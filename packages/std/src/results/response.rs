@@ -23,7 +23,7 @@ use crate::results::SubMsg;
 /// #
 /// use cosmwasm_std::{attr, Response, StdResult};
 ///
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     _info: MessageInfo,
@@ -34,7 +34,7 @@ use crate::results::SubMsg;
 ///     Ok(Response {
 ///         submessages: vec![],
 ///         messages: vec![],
-///         attributes: vec![attr("action", "init")],
+///         attributes: vec![attr("action", "instantiate")],
 ///         data: None,
 ///     })
 /// }
@@ -49,7 +49,7 @@ use crate::results::SubMsg;
 /// #
 /// use cosmwasm_std::Response;
 ///
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     info: MessageInfo,

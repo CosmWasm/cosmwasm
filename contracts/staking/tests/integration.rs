@@ -20,7 +20,9 @@
 use cosmwasm_std::{
     coin, from_binary, ContractResult, Decimal, HumanAddr, Response, Uint128, Validator,
 };
-use cosmwasm_vm::testing::{init, mock_backend, mock_env, mock_info, mock_instance_options, query};
+use cosmwasm_vm::testing::{
+    instantiate, mock_backend, mock_env, mock_info, mock_instance_options, query,
+};
 use cosmwasm_vm::Instance;
 
 use staking::msg::{
@@ -61,8 +63,8 @@ fn initialization_with_missing_validator() {
     };
     let info = mock_info(&creator, &[]);
 
-    // make sure we can init with this
-    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, msg);
+    // make sure we can instantiate with this
+    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
     let msg = res.unwrap_err();
     assert_eq!(
         msg,
@@ -100,7 +102,7 @@ fn proper_initialization() {
     let info = mock_info(&creator, &[]);
 
     // make sure we can init with this
-    let res: Response = init(&mut deps, mock_env(), info, msg.clone()).unwrap();
+    let res: Response = instantiate(&mut deps, mock_env(), info, msg.clone()).unwrap();
     assert_eq!(0, res.messages.len());
 
     // token info is proper

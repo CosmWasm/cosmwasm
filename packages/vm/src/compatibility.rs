@@ -32,7 +32,7 @@ const SUPPORTED_IMPORTS: &[&str] = &[
 /// This is unlikely to change much, must be frozen at 1.0 to avoid breaking existing contracts
 const REQUIRED_EXPORTS: &[&str] = &[
     "interface_version_5",
-    "init",
+    "instantiate",
     "execute",
     "allocate",
     "deallocate",

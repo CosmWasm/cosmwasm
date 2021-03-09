@@ -23,8 +23,8 @@ use cosmwasm_std::{
     IbcReceiveResponse, Response, WasmMsg,
 };
 use cosmwasm_vm::testing::{
-    execute, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, init, mock_env, mock_info,
-    mock_instance, query, MockApi, MockQuerier, MockStorage,
+    execute, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env,
+    mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 
@@ -49,7 +49,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
         reflect_code_id: REFLECT_ID,
     };
     let info = mock_info(CREATOR, &[]);
-    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
@@ -81,14 +81,14 @@ fn connect<T: Into<HumanAddr>>(
 }
 
 #[test]
-fn init_works() {
+fn instantiate_works() {
     let mut deps = mock_instance(WASM, &[]);
 
     let msg = InitMsg {
         reflect_code_id: 17,
     };
     let info = mock_info("creator", &[]);
-    let res: ContractResult<Response> = init(&mut deps, mock_env(), info, msg);
+    let res: ContractResult<Response> = instantiate(&mut deps, mock_env(), info, msg);
     let msgs = res.unwrap().messages;
     assert_eq!(0, msgs.len());
 }

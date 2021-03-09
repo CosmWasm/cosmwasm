@@ -255,7 +255,7 @@ pub fn ibc_packet_timeout(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::contract::{execute, init, query};
+    use crate::contract::{execute, instantiate, query};
     use crate::msg::{AccountResponse, ExecuteMsg, InitMsg, QueryMsg};
 
     use cosmwasm_std::testing::{
@@ -270,7 +270,7 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         let msg = InitMsg {};
         let info = mock_info(CREATOR, &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
     }

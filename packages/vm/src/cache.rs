@@ -265,7 +265,7 @@ fn load_wasm_from_disk<P: Into<PathBuf>>(dir: P, checksum: &Checksum) -> VmResul
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calls::{call_execute, call_init};
+    use crate::calls::{call_execute, call_instantiate};
     use crate::errors::VmError;
     use crate::features::features_from_csv;
     use crate::testing::{mock_backend, mock_env, mock_info, MockApi, MockQuerier, MockStorage};
@@ -507,7 +507,7 @@ mod tests {
     }
 
     #[test]
-    fn call_init_on_cached_contract() {
+    fn call_instantiate_on_cached_contract() {
         let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
@@ -524,7 +524,8 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let res =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
         }
@@ -542,7 +543,8 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let res =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
         }
@@ -562,7 +564,8 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+            let res =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             let msgs = res.unwrap().messages;
             assert_eq!(msgs.len(), 0);
         }
@@ -586,9 +589,10 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let response = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-                .unwrap()
-                .unwrap();
+            let response =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(response.messages.len(), 0);
 
             // execute
@@ -613,9 +617,10 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let response = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-                .unwrap()
-                .unwrap();
+            let response =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(response.messages.len(), 0);
 
             // execute
@@ -642,9 +647,10 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let response = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
-                .unwrap()
-                .unwrap();
+            let response =
+                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                    .unwrap()
+                    .unwrap();
             assert_eq!(response.messages.len(), 0);
 
             // execute
@@ -670,7 +676,8 @@ mod tests {
         let mut instance = cache.get_instance(&id, backend1, TESTING_OPTIONS).unwrap();
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
-        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        let res =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let backend1 = instance.recycle().unwrap();
@@ -679,7 +686,8 @@ mod tests {
         let mut instance = cache.get_instance(&id, backend2, TESTING_OPTIONS).unwrap();
         let info = mock_info("owner2", &coins(500, "earth"));
         let msg = br#"{"verifier": "bob", "beneficiary": "john"}"#;
-        let res = call_init::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
+        let res =
+            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
         let msgs = res.unwrap().messages;
         assert_eq!(msgs.len(), 0);
         let backend2 = instance.recycle().unwrap();
@@ -720,7 +728,7 @@ mod tests {
         // Consume some gas
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
-        call_init::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(&mut instance1, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
         assert!(instance1.get_gas_left() < original_gas);
@@ -754,7 +762,9 @@ mod tests {
         // Consume some gas. This fails
         let info1 = mock_info("owner1", &coins(1000, "earth"));
         let msg1 = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
-        match call_init::<_, _, _, Empty>(&mut instance1, &mock_env(), &info1, msg1).unwrap_err() {
+        match call_instantiate::<_, _, _, Empty>(&mut instance1, &mock_env(), &info1, msg1)
+            .unwrap_err()
+        {
             VmError::GasDepletion { .. } => (), // all good, continue
             e => panic!("unexpected error, {:?}", e),
         }
@@ -775,7 +785,7 @@ mod tests {
         // Now it works
         let info2 = mock_info("owner2", &coins(500, "earth"));
         let msg2 = br#"{"verifier": "bob", "beneficiary": "john"}"#;
-        call_init::<_, _, _, Empty>(&mut instance2, &mock_env(), &info2, msg2)
+        call_instantiate::<_, _, _, Empty>(&mut instance2, &mock_env(), &info2, msg2)
             .unwrap()
             .unwrap();
     }

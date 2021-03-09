@@ -11,7 +11,7 @@ use crate::msg::{
 };
 use crate::state::{config, config_read, replies, replies_read, State};
 
-pub fn init(
+pub fn instantiate(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
@@ -202,14 +202,14 @@ mod tests {
     };
 
     #[test]
-    fn proper_initialization() {
+    fn proper_instantialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // it worked, let's query the state
@@ -218,7 +218,7 @@ mod tests {
     }
 
     #[test]
-    fn init_with_callback() {
+    fn instantiate_with_callback() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
         let caller = HumanAddr::from("calling-contract");
 
@@ -228,7 +228,7 @@ mod tests {
         let info = mock_info(&caller, &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = &res.messages[0];
         match msg {
@@ -262,7 +262,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
             to_address: HumanAddr::from("friend"),
@@ -284,7 +284,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         // signer is not owner
         let payload = vec![BankMsg::Send {
@@ -308,7 +308,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let info = mock_info("creator", &[]);
         let payload = vec![];
@@ -324,7 +324,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![
             BankMsg::Send {
@@ -356,7 +356,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let info = mock_info("creator", &[]);
         let new_owner = HumanAddr::from("friend");
@@ -376,7 +376,7 @@ mod tests {
         let msg = InitMsg { callback_id: None };
         let creator = HumanAddr::from("creator");
         let info = mock_info(&creator, &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let random = HumanAddr::from("random");
         let info = mock_info(&random, &[]);
@@ -396,7 +396,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info(&creator, &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let info = mock_info(&creator, &[]);
         let msg = ExecuteMsg::ChangeOwner {
@@ -455,7 +455,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let id = 123u64;
         let payload = SubMsg {
@@ -486,7 +486,7 @@ mod tests {
 
         let msg = InitMsg { callback_id: None };
         let info = mock_info("creator", &coins(2, "token"));
-        let _res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let id = 123u64;
         let data = Binary::from(b"foobar");

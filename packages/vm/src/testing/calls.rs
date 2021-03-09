@@ -7,15 +7,17 @@ use std::fmt;
 
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 
-use crate::calls::{call_execute, call_init, call_migrate, call_query, call_reply, call_sudo};
+use crate::calls::{
+    call_execute, call_instantiate, call_migrate, call_query, call_reply, call_sudo,
+};
 use crate::instance::Instance;
 use crate::serde::to_vec;
 use crate::{BackendApi, Querier, Storage};
 
-// init mimicks the call signature of the smart contracts.
-// thus it moves env and msg rather than take them as reference.
-// this is inefficient here, but only used in test code
-pub fn init<A, S, Q, M, U>(
+/// Mimicks the call signature of the smart contracts.
+/// Thus it moves env and msg rather than take them as reference.
+/// This is inefficient here, but only used in test code.
+pub fn instantiate<A, S, Q, M, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
     info: MessageInfo,
@@ -29,7 +31,7 @@ where
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
     let serialized_msg = to_vec(&msg).expect("Testing error: Could not seralize request message");
-    call_init(instance, &env, &info, &serialized_msg).expect("VM error")
+    call_instantiate(instance, &env, &info, &serialized_msg).expect("VM error")
 }
 
 // execute mimicks the call signature of the smart contracts.

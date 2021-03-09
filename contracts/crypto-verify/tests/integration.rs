@@ -21,7 +21,7 @@
 
 use cosmwasm_std::{Binary, Response, Uint128};
 use cosmwasm_vm::testing::{
-    init, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
+    instantiate, mock_env, mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
 };
 use cosmwasm_vm::{from_slice, Instance};
 use hex_literal::hex;
@@ -58,13 +58,13 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
     let msg = InitMsg {};
     let info = mock_info(CREATOR, &[]);
-    let res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
     deps
 }
 
 #[test]
-fn init_works() {
+fn instantiate_works() {
     setup();
 }
 

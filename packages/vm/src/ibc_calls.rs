@@ -235,7 +235,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calls::{call_execute, call_init};
+    use crate::calls::{call_execute, call_instantiate};
     use crate::testing::{mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
     use cosmwasm_std::{Empty, IbcOrder};
@@ -251,7 +251,7 @@ mod tests {
         // init
         let info = mock_info("creator", &[]);
         let msg = br#"{"reflect_code_id":77}"#;
-        call_init::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
+        call_instantiate::<_, _, _, Empty>(instance, &mock_env(), &info, msg)
             .unwrap()
             .unwrap();
 

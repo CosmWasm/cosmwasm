@@ -23,8 +23,8 @@ use cosmwasm_std::{
 };
 use cosmwasm_vm::{
     testing::{
-        execute, init, mock_env, mock_info, mock_instance, mock_instance_options, query, reply,
-        MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        execute, instantiate, mock_env, mock_info, mock_instance, mock_instance_options, query,
+        reply, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     },
     Backend, Instance,
 };
@@ -64,7 +64,7 @@ fn proper_initialization() {
     let info = mock_info("creator", &coins(1000, "earth"));
 
     // we can just call .unwrap() to assert this was a success
-    let res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(0, res.messages.len());
 
     // it worked, let's query the state
@@ -79,7 +79,7 @@ fn reflect() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let payload = vec![
         BankMsg::Send {
@@ -112,7 +112,7 @@ fn reflect_requires_owner() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
@@ -134,7 +134,7 @@ fn transfer() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
     let new_owner = HumanAddr::from("friend");
@@ -154,7 +154,7 @@ fn transfer_requires_owner() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response<CustomMsg> = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("random", &[]);
     let new_owner = HumanAddr::from("friend");
@@ -192,7 +192,7 @@ fn reflect_subcall() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let id = 123u64;
     let payload = SubMsg {
@@ -223,7 +223,7 @@ fn reply_and_query() {
 
     let msg = InitMsg { callback_id: None };
     let info = mock_info("creator", &coins(2, "token"));
-    let _res: Response = init(&mut deps, mock_env(), info, msg).unwrap();
+    let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let id = 123u64;
     let data = Binary::from(b"foobar");

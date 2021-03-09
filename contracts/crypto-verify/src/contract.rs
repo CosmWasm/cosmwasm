@@ -16,7 +16,12 @@ use crate::msg::{
 pub const VERSION: &str = "crypto-verify-v2";
 
 #[entry_point]
-pub fn init(_deps: DepsMut, _env: Env, _info: MessageInfo, _msg: InitMsg) -> StdResult<Response> {
+pub fn instantiate(
+    _deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    _msg: InitMsg,
+) -> StdResult<Response> {
     Ok(Response::default())
 }
 
@@ -254,13 +259,13 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         let msg = InitMsg {};
         let info = mock_info(CREATOR, &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
     }
 
     #[test]
-    fn init_works() {
+    fn instantiate_works() {
         setup();
     }
 

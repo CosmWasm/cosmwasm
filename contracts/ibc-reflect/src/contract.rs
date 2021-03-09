@@ -15,7 +15,12 @@ use crate::state::{accounts, accounts_read, config, Config};
 pub const IBC_VERSION: &str = "ibc-reflect-v1";
 
 #[entry_point]
-pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdResult<Response> {
+pub fn instantiate(
+    deps: DepsMut,
+    _env: Env,
+    _info: MessageInfo,
+    msg: InitMsg,
+) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
     let cfg = Config {
         reflect_code_id: msg.reflect_code_id,
@@ -25,7 +30,7 @@ pub fn init(deps: DepsMut, _env: Env, _info: MessageInfo, msg: InitMsg) -> StdRe
     Ok(Response {
         submessages: vec![],
         messages: vec![],
-        attributes: vec![attr("action", "init")],
+        attributes: vec![attr("action", "instantiate")],
         data: None,
     })
 }
@@ -336,7 +341,7 @@ mod tests {
             reflect_code_id: REFLECT_ID,
         };
         let info = mock_info(CREATOR, &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
         deps
     }
@@ -367,14 +372,14 @@ mod tests {
     }
 
     #[test]
-    fn init_works() {
+    fn instantiate_works() {
         let mut deps = mock_dependencies(&[]);
 
         let msg = InitMsg {
             reflect_code_id: 17,
         };
         let info = mock_info("creator", &[]);
-        let res = init(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len())
     }
 

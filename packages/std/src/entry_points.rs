@@ -11,7 +11,7 @@
 /// # };
 /// #
 /// # type InitMsg = ();
-/// pub fn init(
+/// pub fn instantiate(
 ///     deps: DepsMut,
 ///     env: Env,
 ///     info: MessageInfo,
@@ -62,11 +62,11 @@ macro_rules! create_entry_points {
     (@inner; $contract:ident, migration = $migration:tt) => {
         mod wasm {
             use super::$contract;
-            use cosmwasm_std::{do_execute, do_init, do_migrate, do_query};
+            use cosmwasm_std::{do_execute, do_instantiate, do_migrate, do_query};
 
             #[no_mangle]
-            extern "C" fn init(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
-                do_init(&$contract::init, env_ptr, info_ptr, msg_ptr)
+            extern "C" fn instantiate(env_ptr: u32, info_ptr: u32, msg_ptr: u32) -> u32 {
+                do_instantiate(&$contract::instantiate, env_ptr, info_ptr, msg_ptr)
             }
 
             #[no_mangle]
