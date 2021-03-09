@@ -332,20 +332,8 @@ cargo fmt \
 
 **Contracts**
 
-Step 1 (fast checks, rebuilds lock files)
-
-```sh
-for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo check --tests) || break; done
-```
-
-Step 2 (medium fast checks)
-
-```sh
-for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo fmt && cargo check --tests && cargo wasm-debug && cargo unit-test && cargo clippy --tests -- -D warnings && cargo schema) || break; done
-```
-
-Step 3 (slower checks)
-
-```sh
-for contract_dir in contracts/*/; do (cd "$contract_dir" && cargo wasm && cargo integration-test) || break; done
-```
+| Step | Description                      | Command                                |
+| ---- | -------------------------------- | -------------------------------------- |
+| 1    | fast checks, rebuilds lock files | `./devtools/check_contracts_fast.sh`   |
+| 2    | medium fast checks               | `./devtools/check_contracts_medium.sh` |
+| 3    | slower checks                    | `./devtools/check_contracts_full.sh`   |
