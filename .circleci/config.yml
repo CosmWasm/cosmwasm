@@ -871,6 +871,18 @@ jobs:
             docker run --volumes-from with_code cosmwasm/rust-optimizer:0.10.8 ./contracts/*/
             docker cp with_code:/code/artifacts .
       - run:
+          name: Install check_contract
+          # Uses --debug for compilation speed
+          command: cargo install --debug --features iterator --path ./packages/vm --example check_contract -- cosmwasm-vm
+      - run:
+          name: Check development contracts
+          command: |
+            for W in ./artifacts/*.wasm
+            do
+              echo -n "Checking `basename $W`... "
+              check_contract $W
+            done
+      - run:
           name: Publish artifacts on GitHub
           command: |
             TAG="$CIRCLE_TAG"
