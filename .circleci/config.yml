@@ -43,7 +43,9 @@ workflows:
             tags:
               only: /^v[0-9]+\.[0-9]+\.[0-9]+.*/
             branches:
-              ignore: /.*/
+#              ignore: /.*/
+              only:
+                - ci-build-release-fix
 
 jobs:
   package_crypto:
@@ -898,15 +900,15 @@ jobs:
           command: |
             go get github.com/tcnksm/ghr
             ghr --version
-      - run:
-          name: Publish artifacts on GitHub
-          command: |
-            TAG="$CIRCLE_TAG"
-            TITLE="$TAG"
-            BODY="Attached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
-            ghr -t "$GITHUB_TOKEN" \
-              -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" \
-              -c "$CIRCLE_SHA1" \
-              -n "$TITLE" -b "$BODY" \
-              -delete \
-              "$TAG" ./artifacts/
+#      - run:
+#          name: Publish artifacts on GitHub
+#          command: |
+#            TAG="$CIRCLE_TAG"
+#            TITLE="$TAG"
+#            BODY="Attached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
+#            ghr -t "$GITHUB_TOKEN" \
+#              -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" \
+#              -c "$CIRCLE_SHA1" \
+#              -n "$TITLE" -b "$BODY" \
+#              -delete \
+#              "$TAG" ./artifacts/
