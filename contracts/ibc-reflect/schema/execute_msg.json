@@ -3,7 +3,7 @@
   "title": "ExecuteMsg",
   "anyOf": [
     {
-      "description": "InitCallback is returned from reflect contract after a new contract is set up",
+      "description": "InitCallback is returned from reflect contract after a new contract is set up.\n\nThis type must match [CallbackMsg::InitCallback from reflect](https://github.com/CosmWasm/cosmwasm/blob/9fd06ea/contracts/reflect/src/msg.rs#L19-L24).",
       "type": "object",
       "required": [
         "init_callback"
