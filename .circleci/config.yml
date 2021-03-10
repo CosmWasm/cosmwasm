@@ -865,6 +865,7 @@ jobs:
             # create a dummy container which will hold a volume with config
             docker create -v /code --name with_code alpine /bin/true
             # copy a config file into this volume
+            docker cp ./Cargo.toml with_code:/code
             docker cp ./contracts with_code:/code
             docker cp ./packages with_code:/code
       - run:
@@ -876,7 +877,7 @@ jobs:
           name: Check development contracts
           command: |
             echo "Checking all contracts under ./artifacts"
-            docker run --volumes-from with_code rust:1.50.0 /bin/bash -e -c 'cargo install --debug --features iterator --path ./code/packages/vm --example check_contract -- cosmwasm-vm; for W in ./code/artifacts/*.wasm; do echo -n "Checking `basename $W`... "; check_contract $W; done'
+            docker run --volumes-from with_code rust:1.50.0 /bin/bash -e -c 'cd ./code/packages/vm; ./examples/check_contract.sh ../../../code/artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
 #      - run:
 #          name: Publish artifacts on GitHub
