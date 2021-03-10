@@ -81,9 +81,6 @@ and follow the instructions. This will give you a simple contract along with
 tests, and a properly configured build environment. From there you can edit the
 code to add your desired logic and publish it as an independent repo.
 
-If you want to understand a bit more, you can read some instructions on how we
-[configure a library for wasm](./Building.md)
-
 ## API entry points
 
 WebAssembly contracts are basically black boxes. The have no default entry
