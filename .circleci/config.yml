@@ -872,19 +872,12 @@ jobs:
           command: |
             echo "Building all contracts under ./contracts"
             docker run --volumes-from with_code cosmwasm/rust-optimizer:0.10.8 ./contracts/*/
-            docker cp with_code:/code/artifacts .
-      - run:
-          name: Install check_contract
-          # Uses --debug for compilation speed
-          command: cargo install --debug --features iterator --path ./packages/vm --example check_contract -- cosmwasm-vm
       - run:
           name: Check development contracts
           command: |
-            for W in ./artifacts/*.wasm
-            do
-              echo -n "Checking `basename $W`... "
-              check_contract $W
-            done
+            echo "Checking all contracts under ./artifacts"
+            docker run --volumes-from with_code rust:1.50.0 /bin/bash -e -c 'cargo install --debug --features iterator --path ./code/packages/vm --example check_contract -- cosmwasm-vm; for W in ./code/artifacts/*.wasm; do echo -n "Checking `basename $W`... "; check_contract $W; done'
+            docker cp with_code:/code/artifacts .
 #      - run:
 #          name: Publish artifacts on GitHub
 #          command: |
