@@ -23,9 +23,9 @@ RESULTS="$BASE_DIR/$PROG.log"
 SUMMARY="$BASE_DIR/ms_print.log"
 
 if [ "$PROFILE" = "release" ]; then
-  RUSTFLAGS="-g" cargo build --release --example module_size
+  RUSTFLAGS="-g" cargo build --release --example $PROG
 else
-  cargo build --example module_size
+  cargo build --example $PROG
 fi
 
 $MEM_UTIL --massif-out-file=$RESULTS $BIN $WASM
