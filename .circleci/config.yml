@@ -851,12 +851,6 @@ jobs:
   build_and_upload_devcontracts:
     docker:
       - image: rust:1.50.0
-    environment:
-      # For go install below
-      GOROOT=$HOME/.go
-      PATH=$GOROOT/bin:$PATH
-      GOPATH=$HOME/go
-      PATH=$GOPATH/bin:$PATH
     steps:
       - run:
           name: Install Docker client
@@ -890,16 +884,6 @@ jobs:
               echo -n "Checking `basename $W`... "
               check_contract $W
             done
-      - run:
-          name: Install go
-          command: |
-            wget -q -O - https://raw.githubusercontent.com/canha/golang-tools-install-script/master/goinstall.sh | bash
-            go version
-      - run:
-          name: Install ghr
-          command: |
-            go get github.com/tcnksm/ghr
-            ghr --version
 #      - run:
 #          name: Publish artifacts on GitHub
 #          command: |
