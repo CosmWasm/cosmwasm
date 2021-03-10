@@ -24,7 +24,7 @@ pub fn instantiate(
 
     let mut resp = Response::new();
     if let Some(id) = msg.callback_id {
-        let data = CallbackMsg::InstantiateCallback {
+        let data = CallbackMsg::InitCallback {
             id,
             contract_addr: env.contract.address,
         };
@@ -241,7 +241,7 @@ mod tests {
                 let parsed: CallbackMsg = from_binary(&msg).unwrap();
                 assert_eq!(
                     parsed,
-                    CallbackMsg::InstantiateCallback {
+                    CallbackMsg::InitCallback {
                         id: "foobar".to_string(),
                         contract_addr: MOCK_CONTRACT_ADDR.into(),
                     }
