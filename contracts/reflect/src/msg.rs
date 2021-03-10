@@ -16,7 +16,7 @@ pub struct InstantiateMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum CallbackMsg {
-    InstantiateCallback {
+    InitCallback {
         /// Callback ID provided in the InstantiateMsg
         id: String,
         /// contract_addr is the address of this contract
