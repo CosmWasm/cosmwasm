@@ -3,6 +3,7 @@ use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
 use std::path::PathBuf;
+use std::sync::Mutex;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
 use crate::checksum::Checksum;
@@ -49,6 +50,7 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     type_api: PhantomData<A>,
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
+    m: Mutex<()>,
 }
 
 pub struct AnalysisReport {
@@ -94,6 +96,7 @@ where
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
+            m: Mutex::new(()),
         })
     }
 
@@ -185,6 +188,8 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
+        let _lock = self.m.lock().unwrap();
+
         // Try to get module from the pinned memory cache
         if let Some(module) = self.pinned_memory_cache.load(checksum)? {
             self.stats.hits_pinned_memory_cache += 1;
