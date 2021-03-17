@@ -108,7 +108,7 @@ where
         self.inner.lock().unwrap().stats
     }
 
-    pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
+    pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
         let mut cache = self.inner.lock().unwrap();
         check_wasm(wasm, &cache.supported_features)?;
         let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
@@ -155,7 +155,7 @@ where
     /// If not found, the code is loaded from the file system, compiled, and stored into the
     /// pinned cache.
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
-    pub fn pin(&mut self, checksum: &Checksum) -> VmResult<()> {
+    pub fn pin(&self, checksum: &Checksum) -> VmResult<()> {
         let mut cache = self.inner.lock().unwrap();
         if cache.pinned_memory_cache.has(checksum) {
             return Ok(());
@@ -186,7 +186,7 @@ where
     ///
     /// Not found IDs are silently ignored, and no integrity check (checksum validation) is done
     /// on the removed value.
-    pub fn unpin(&mut self, checksum: &Checksum) -> VmResult<()> {
+    pub fn unpin(&self, checksum: &Checksum) -> VmResult<()> {
         self.inner
             .lock()
             .unwrap()
@@ -197,7 +197,7 @@ where
     /// Returns an Instance tied to a previously saved Wasm.
     /// Depending on availability, this is either generated from a cached instance, a cached module or Wasm code.
     pub fn get_instance(
-        &mut self,
+        &self,
         checksum: &Checksum,
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
@@ -325,7 +325,7 @@ mod tests {
 
     #[test]
     fn save_wasm_works() {
-        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
     }
@@ -333,7 +333,7 @@ mod tests {
     #[test]
     // This property is required when the same bytecode is uploaded multiple times
     fn save_wasm_allows_saving_multiple_times() {
-        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         cache.save_wasm(CONTRACT).unwrap();
         cache.save_wasm(CONTRACT).unwrap();
@@ -353,7 +353,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         let save_result = cache.save_wasm(&wasm);
         match save_result.unwrap_err() {
@@ -369,7 +369,7 @@ mod tests {
         // Who knows if and when the uploaded contract will be executed. Don't pollute
         // memory cache before the init call.
 
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         let backend = mock_backend(&[]);
@@ -384,7 +384,7 @@ mod tests {
 
     #[test]
     fn load_wasm_works() {
-        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
@@ -404,7 +404,7 @@ mod tests {
                 memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
                 instance_memory_limit: TESTING_MEMORY_LIMIT,
             };
-            let mut cache1: Cache<MockApi, MockStorage, MockQuerier> =
+            let cache1: Cache<MockApi, MockStorage, MockQuerier> =
                 unsafe { Cache::new(options1).unwrap() };
             id = cache1.save_wasm(CONTRACT).unwrap();
         }
@@ -450,7 +450,7 @@ mod tests {
             memory_cache_size: TESTING_MEMORY_CACHE_SIZE,
             instance_memory_limit: TESTING_MEMORY_LIMIT,
         };
-        let mut cache: Cache<MockApi, MockStorage, MockQuerier> =
+        let cache: Cache<MockApi, MockStorage, MockQuerier> =
             unsafe { Cache::new(options).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
@@ -469,7 +469,7 @@ mod tests {
 
     #[test]
     fn get_instance_finds_cached_module() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let backend = mock_backend(&[]);
         let _instance = cache.get_instance(&id, backend, TESTING_OPTIONS).unwrap();
@@ -481,7 +481,7 @@ mod tests {
 
     #[test]
     fn get_instance_finds_cached_modules_and_stores_to_memory() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
         let backend1 = mock_backend(&[]);
         let backend2 = mock_backend(&[]);
@@ -534,7 +534,7 @@ mod tests {
 
     #[test]
     fn call_instantiate_on_cached_contract() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         // from file system
@@ -599,7 +599,7 @@ mod tests {
 
     #[test]
     fn call_execute_on_cached_contract() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         // from file system
@@ -691,7 +691,7 @@ mod tests {
 
     #[test]
     fn use_multiple_cached_instances_of_same_contract() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         // these differentiate the two instances of the same contract
@@ -737,7 +737,7 @@ mod tests {
 
     #[test]
     fn resets_gas_when_reusing_instance() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         let backend1 = mock_backend(&[]);
@@ -770,7 +770,7 @@ mod tests {
 
     #[test]
     fn recovers_from_out_of_gas() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         let backend1 = mock_backend(&[]);
@@ -860,7 +860,7 @@ mod tests {
 
     #[test]
     fn pin_unpin_works() {
-        let mut cache = unsafe { Cache::new(make_testing_options()).unwrap() };
+        let cache = unsafe { Cache::new(make_testing_options()).unwrap() };
         let id = cache.save_wasm(CONTRACT).unwrap();
 
         // check not pinned
