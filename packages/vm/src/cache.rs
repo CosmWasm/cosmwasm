@@ -245,6 +245,14 @@ where
     }
 }
 
+unsafe impl<A, S, Q> Sync for Cache<A, S, Q>
+where
+    A: BackendApi + 'static,
+    S: Storage + 'static,
+    Q: Querier + 'static,
+{
+}
+
 /// save stores the wasm code in the given directory and returns an ID for lookup.
 /// It will create the directory if it doesn't exist.
 /// Saving the same byte code multiple times is allowed.
