@@ -38,7 +38,6 @@ pub struct CacheOptions {
 
 pub struct CacheInner {
     wasm_path: PathBuf,
-    supported_features: HashSet<String>,
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
     /// e.g. full MiBs.
     instance_memory_limit: Size,
@@ -49,6 +48,9 @@ pub struct CacheInner {
 }
 
 pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
+    /// Supported features are immutable for the lifetime of the cache,
+    /// i.e. any number of read-only references is allowed to access it concurrently.
+    supported_features: HashSet<String>,
     inner: Mutex<CacheInner>,
     // Those two don't store data but only fix type information
     type_api: PhantomData<A>,
@@ -89,9 +91,9 @@ where
         let fs_cache = FileSystemCache::new(base_dir.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(Cache {
+            supported_features,
             inner: Mutex::new(CacheInner {
                 wasm_path,
-                supported_features,
                 instance_memory_limit,
                 pinned_memory_cache: PinnedMemoryCache::new(),
                 memory_cache: InMemoryCache::new(memory_cache_size),
@@ -109,10 +111,11 @@ where
     }
 
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
-        let mut cache = self.inner.lock().unwrap();
-        check_wasm(wasm, &cache.supported_features)?;
-        let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
+        check_wasm(wasm, &self.supported_features)?;
         let module = compile(wasm, None)?;
+
+        let mut cache = self.inner.lock().unwrap();
+        let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
         cache.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
