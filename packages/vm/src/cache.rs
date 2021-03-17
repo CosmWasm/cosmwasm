@@ -123,7 +123,11 @@ where
     ///
     /// If the given ID is not found or the content does not match the hash (=ID), an error is returned.
     pub fn load_wasm(&self, checksum: &Checksum) -> VmResult<Vec<u8>> {
-        let code = load_wasm_from_disk(&self.inner.lock().unwrap().wasm_path, checksum)?;
+        self.load_wasm_with_path(&self.inner.lock().unwrap().wasm_path, checksum)
+    }
+
+    fn load_wasm_with_path(&self, wasm_path: &PathBuf, checksum: &Checksum) -> VmResult<Vec<u8>> {
+        let code = load_wasm_from_disk(&wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {
             Err(VmError::integrity_err())
@@ -171,7 +175,7 @@ where
         }
 
         // Re-compile from original Wasm bytecode
-        let code = self.load_wasm(checksum)?;
+        let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         let module = compile(&code, Some(cache.instance_memory_limit))?;
         // Store into the fs cache too
         cache.fs_cache.store(checksum, &module)?;
@@ -230,7 +234,7 @@ where
         // This is needed for chains that upgrade their node software in a way that changes the module
         // serialization format. If you do not replay all transactions, previous calls of `save_wasm`
         // stored the old module format.
-        let wasm = self.load_wasm(checksum)?;
+        let wasm = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         cache.stats.misses += 1;
         let module = compile(&wasm, Some(cache.instance_memory_limit))?;
         let instance =
