@@ -36,7 +36,7 @@ pub struct CacheOptions {
     pub instance_memory_limit: Size,
 }
 
-pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
+pub struct CacheInner {
     wasm_path: PathBuf,
     supported_features: HashSet<String>,
     /// Instances memory limit in bytes. Use a value that is divisible by the Wasm page size 65536,
@@ -46,11 +46,14 @@ pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
     memory_cache: InMemoryCache,
     fs_cache: FileSystemCache,
     stats: Stats,
+}
+
+pub struct Cache<A: BackendApi, S: Storage, Q: Querier> {
+    inner: Mutex<CacheInner>,
     // Those two don't store data but only fix type information
     type_api: PhantomData<A>,
     type_storage: PhantomData<S>,
     type_querier: PhantomData<Q>,
-    m: Mutex<()>,
 }
 
 pub struct AnalysisReport {
@@ -86,29 +89,31 @@ where
         let fs_cache = FileSystemCache::new(base_dir.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(Cache {
-            wasm_path,
-            supported_features,
-            instance_memory_limit,
-            pinned_memory_cache: PinnedMemoryCache::new(),
-            memory_cache: InMemoryCache::new(memory_cache_size),
-            fs_cache,
-            stats: Stats::default(),
+            inner: Mutex::new(CacheInner {
+                wasm_path,
+                supported_features,
+                instance_memory_limit,
+                pinned_memory_cache: PinnedMemoryCache::new(),
+                memory_cache: InMemoryCache::new(memory_cache_size),
+                fs_cache,
+                stats: Stats::default(),
+            }),
             type_storage: PhantomData::<S>,
             type_api: PhantomData::<A>,
             type_querier: PhantomData::<Q>,
-            m: Mutex::new(()),
         })
     }
 
     pub fn stats(&self) -> Stats {
-        self.stats
+        self.inner.lock().unwrap().stats
     }
 
     pub fn save_wasm(&mut self, wasm: &[u8]) -> VmResult<Checksum> {
-        check_wasm(wasm, &self.supported_features)?;
-        let checksum = save_wasm_to_disk(&self.wasm_path, wasm)?;
+        let mut cache = self.inner.lock().unwrap();
+        check_wasm(wasm, &cache.supported_features)?;
+        let checksum = save_wasm_to_disk(&cache.wasm_path, wasm)?;
         let module = compile(wasm, None)?;
-        self.fs_cache.store(&checksum, &module)?;
+        cache.fs_cache.store(&checksum, &module)?;
         Ok(checksum)
     }
 
@@ -118,7 +123,7 @@ where
     ///
     /// If the given ID is not found or the content does not match the hash (=ID), an error is returned.
     pub fn load_wasm(&self, checksum: &Checksum) -> VmResult<Vec<u8>> {
-        let code = load_wasm_from_disk(&self.wasm_path, checksum)?;
+        let code = load_wasm_from_disk(&self.inner.lock().unwrap().wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {
             Err(VmError::integrity_err())
@@ -147,29 +152,30 @@ where
     /// pinned cache.
     /// If the given ID is not found, or the content does not match the hash (=ID), an error is returned.
     pub fn pin(&mut self, checksum: &Checksum) -> VmResult<()> {
-        if self.pinned_memory_cache.has(checksum) {
+        let mut cache = self.inner.lock().unwrap();
+        if cache.pinned_memory_cache.has(checksum) {
             return Ok(());
         }
 
         // Try to get module from the memory cache
-        if let Some(module) = self.memory_cache.load(checksum)? {
-            self.stats.hits_memory_cache += 1;
-            return self.pinned_memory_cache.store(checksum, module);
+        if let Some(module) = cache.memory_cache.load(checksum)? {
+            cache.stats.hits_memory_cache += 1;
+            return cache.pinned_memory_cache.store(checksum, module);
         }
 
         // Try to get module from file system cache
-        let store = make_runtime_store(Some(self.instance_memory_limit));
-        if let Some((module, _)) = self.fs_cache.load(checksum, &store)? {
-            self.stats.hits_fs_cache += 1;
-            return self.pinned_memory_cache.store(checksum, module);
+        let store = make_runtime_store(Some(cache.instance_memory_limit));
+        if let Some((module, _)) = cache.fs_cache.load(checksum, &store)? {
+            cache.stats.hits_fs_cache += 1;
+            return cache.pinned_memory_cache.store(checksum, module);
         }
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm(checksum)?;
-        let module = compile(&code, Some(self.instance_memory_limit))?;
+        let module = compile(&code, Some(cache.instance_memory_limit))?;
         // Store into the fs cache too
-        self.fs_cache.store(checksum, &module)?;
-        self.pinned_memory_cache.store(checksum, module)
+        cache.fs_cache.store(checksum, &module)?;
+        cache.pinned_memory_cache.store(checksum, module)
     }
 
     /// Unpins a Module, i.e. removes it from the pinned memory cache.
@@ -177,7 +183,11 @@ where
     /// Not found IDs are silently ignored, and no integrity check (checksum validation) is done
     /// on the removed value.
     pub fn unpin(&mut self, checksum: &Checksum) -> VmResult<()> {
-        self.pinned_memory_cache.remove(checksum)
+        self.inner
+            .lock()
+            .unwrap()
+            .pinned_memory_cache
+            .remove(checksum)
     }
 
     /// Returns an Instance tied to a previously saved Wasm.
@@ -188,31 +198,30 @@ where
         backend: Backend<A, S, Q>,
         options: InstanceOptions,
     ) -> VmResult<Instance<A, S, Q>> {
-        let _lock = self.m.lock().unwrap();
-
+        let mut cache = self.inner.lock().unwrap();
         // Try to get module from the pinned memory cache
-        if let Some(module) = self.pinned_memory_cache.load(checksum)? {
-            self.stats.hits_pinned_memory_cache += 1;
+        if let Some(module) = cache.pinned_memory_cache.load(checksum)? {
+            cache.stats.hits_pinned_memory_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
             return Ok(instance);
         }
 
         // Get module from memory cache
-        if let Some(module) = self.memory_cache.load(checksum)? {
-            self.stats.hits_memory_cache += 1;
+        if let Some(module) = cache.memory_cache.load(checksum)? {
+            cache.stats.hits_memory_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
             return Ok(instance);
         }
 
         // Get module from file system cache
-        let store = make_runtime_store(Some(self.instance_memory_limit));
-        if let Some((module, module_size)) = self.fs_cache.load(checksum, &store)? {
-            self.stats.hits_fs_cache += 1;
+        let store = make_runtime_store(Some(cache.instance_memory_limit));
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
+            cache.stats.hits_fs_cache += 1;
             let instance =
                 Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
-            self.memory_cache.store(checksum, module, module_size)?;
+            cache.memory_cache.store(checksum, module, module_size)?;
             return Ok(instance);
         }
 
@@ -222,12 +231,12 @@ where
         // serialization format. If you do not replay all transactions, previous calls of `save_wasm`
         // stored the old module format.
         let wasm = self.load_wasm(checksum)?;
-        self.stats.misses += 1;
-        let module = compile(&wasm, Some(self.instance_memory_limit))?;
+        cache.stats.misses += 1;
+        let module = compile(&wasm, Some(cache.instance_memory_limit))?;
         let instance =
             Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
-        let module_size = self.fs_cache.store(checksum, &module)?;
-        self.memory_cache.store(checksum, module, module_size)?;
+        let module_size = cache.fs_cache.store(checksum, &module)?;
+        cache.memory_cache.store(checksum, module, module_size)?;
         Ok(instance)
     }
 }
