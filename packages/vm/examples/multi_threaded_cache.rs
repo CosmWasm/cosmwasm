@@ -20,7 +20,9 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
-const THREAD_COUNT: usize = 32;
+const SAVE_WASM_THREADS: usize = 32;
+const INSTANTION_THREADS: usize = 2048;
+const THREADS: usize = SAVE_WASM_THREADS + INSTANTION_THREADS;
 
 pub fn main() {
     let options = CacheOptions {
@@ -36,8 +38,16 @@ pub fn main() {
 
     let checksum = cache.save_wasm(CONTRACT).unwrap();
 
-    let mut threads = Vec::with_capacity(THREAD_COUNT);
-    (0..THREAD_COUNT).for_each(|_| {
+    let mut threads = Vec::with_capacity(THREADS);
+    for _ in 0..SAVE_WASM_THREADS {
+        let cache = Arc::clone(&cache);
+
+        threads.push(thread::spawn(move || {
+            let checksum = cache.save_wasm(CONTRACT).unwrap();
+            println!("Done saving Wasm {}", checksum);
+        }));
+    }
+    for _ in 0..INSTANTION_THREADS {
         let cache = Arc::clone(&cache);
 
         threads.push(thread::spawn(move || {
@@ -45,6 +55,7 @@ pub fn main() {
             let mut instance = cache
                 .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
+            println!("Done instantiating contract");
 
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
@@ -58,7 +69,7 @@ pub fn main() {
                 call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
             assert!(contract_result.into_result().is_ok());
         }));
-    });
+    }
 
     threads.into_iter().for_each(|thread| {
         thread
@@ -68,6 +79,9 @@ pub fn main() {
 
     assert_eq!(cache.stats().misses, 0);
     assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
-    assert_eq!(cache.stats().hits_memory_cache, THREAD_COUNT as u32 - 1);
+    assert_eq!(
+        cache.stats().hits_memory_cache,
+        INSTANTION_THREADS as u32 - 1
+    );
     assert_eq!(cache.stats().hits_fs_cache, 1);
 }
