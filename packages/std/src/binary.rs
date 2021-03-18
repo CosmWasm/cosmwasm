@@ -541,7 +541,7 @@ mod tests {
         assert_eq!(set.len(), 2);
 
         let set1 = HashSet::<Binary>::from_iter(vec![b.clone(), a1.clone()]);
-        let set2 = HashSet::from_iter(vec![a1.clone(), a2.clone(), b.clone()]);
+        let set2 = HashSet::from_iter(vec![a1, a2, b]);
         assert_eq!(set1, set2);
     }
 

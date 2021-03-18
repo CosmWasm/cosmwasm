@@ -664,7 +664,7 @@ mod tests {
         let expected = hex!("044a071e8a6e10aada2b8cf39fa3b5fb3400b04e99ea8ae64ceea1a977dbeaf5d5f8c8fbd10b71ab14cd561f7df8eb6da50f8a8d81ba564342244d26d1d4211595");
 
         // Wrong hash
-        let mut corrupted_hash = hash.clone();
+        let mut corrupted_hash = hash;
         corrupted_hash[0] ^= 0x01;
         let pubkey = api
             .secp256k1_recover_pubkey(&corrupted_hash, &signature, recovery_param)
@@ -784,9 +784,7 @@ mod tests {
 
         // all
         let all = bank
-            .query(&BankQuery::AllBalances {
-                address: addr.clone(),
-            })
+            .query(&BankQuery::AllBalances { address: addr })
             .unwrap()
             .unwrap();
         let res: AllBalanceResponse = from_binary(&all).unwrap();
@@ -813,7 +811,7 @@ mod tests {
         // missing denom
         let miss = bank
             .query(&BankQuery::Balance {
-                address: addr.clone(),
+                address: addr,
                 denom: "MISS".to_string(),
             })
             .unwrap()
@@ -970,21 +968,21 @@ mod tests {
 
         // filter a by validator (1 and 1)
         let dels = get_delegator(&staking, user_a.clone(), val1.clone());
-        assert_eq!(dels, Some(del1a.clone()));
-        let dels = get_delegator(&staking, user_a.clone(), val2.clone());
-        assert_eq!(dels, Some(del2a.clone()));
+        assert_eq!(dels, Some(del1a));
+        let dels = get_delegator(&staking, user_a, val2.clone());
+        assert_eq!(dels, Some(del2a));
 
         // filter b by validator (2 and 0)
         let dels = get_delegator(&staking, user_b.clone(), val1.clone());
-        assert_eq!(dels, Some(del1b.clone()));
-        let dels = get_delegator(&staking, user_b.clone(), val2.clone());
+        assert_eq!(dels, Some(del1b));
+        let dels = get_delegator(&staking, user_b, val2.clone());
         assert_eq!(dels, None);
 
         // filter c by validator (0 and 1)
-        let dels = get_delegator(&staking, user_c.clone(), val1.clone());
+        let dels = get_delegator(&staking, user_c.clone(), val1);
         assert_eq!(dels, None);
-        let dels = get_delegator(&staking, user_c.clone(), val2.clone());
-        assert_eq!(dels, Some(del2c.clone()));
+        let dels = get_delegator(&staking, user_c, val2);
+        assert_eq!(dels, Some(del2c));
     }
 
     #[test]

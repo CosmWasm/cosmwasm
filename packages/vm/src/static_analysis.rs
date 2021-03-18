@@ -60,19 +60,12 @@ mod tests {
         let module = deserialize_wasm(CONTRACT).unwrap();
         assert_eq!(module.version(), 1);
 
-        let exported_functions =
-            module
-                .export_section()
-                .unwrap()
-                .entries()
-                .iter()
-                .filter(|entry| {
-                    if let Internal::Function(_) = entry.internal() {
-                        true
-                    } else {
-                        false
-                    }
-                });
+        let exported_functions = module
+            .export_section()
+            .unwrap()
+            .entries()
+            .iter()
+            .filter(|entry| matches!(entry.internal(), Internal::Function(_)));
         assert_eq!(exported_functions.count(), 8); // 4 required exports plus "execute", "migrate", "query" and "sudo"
 
         let exported_memories = module
@@ -80,13 +73,7 @@ mod tests {
             .unwrap()
             .entries()
             .iter()
-            .filter(|entry| {
-                if let Internal::Memory(_) = entry.internal() {
-                    true
-                } else {
-                    false
-                }
-            });
+            .filter(|entry| matches!(entry.internal(), Internal::Memory(_)));
         assert_eq!(exported_memories.count(), 1);
     }
 

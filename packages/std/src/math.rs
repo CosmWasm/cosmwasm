@@ -432,13 +432,13 @@ mod tests {
         // 1/3 (result floored)
         assert_eq!(
             Decimal::from_ratio(1u64, 3u64),
-            Decimal(0_333_333_333_333_333_333)
+            Decimal(333_333_333_333_333_333)
         );
 
         // 2/3 (result floored)
         assert_eq!(
             Decimal::from_ratio(2u64, 3u64),
-            Decimal(0_666_666_666_666_666_666)
+            Decimal(666_666_666_666_666_666)
         );
     }
 
@@ -467,9 +467,9 @@ mod tests {
         assert_eq!(Decimal::from_str("0.123").unwrap(), Decimal::permille(123));
 
         assert_eq!(Decimal::from_str("40.00").unwrap(), Decimal::percent(4000));
-        assert_eq!(Decimal::from_str("04.00").unwrap(), Decimal::percent(0400));
-        assert_eq!(Decimal::from_str("00.40").unwrap(), Decimal::percent(0040));
-        assert_eq!(Decimal::from_str("00.04").unwrap(), Decimal::percent(0004));
+        assert_eq!(Decimal::from_str("04.00").unwrap(), Decimal::percent(400));
+        assert_eq!(Decimal::from_str("00.40").unwrap(), Decimal::percent(40));
+        assert_eq!(Decimal::from_str("00.04").unwrap(), Decimal::percent(4));
 
         // Can handle 18 fractional digits
         assert_eq!(
@@ -738,6 +738,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::op_ref)]
     fn uint128_math() {
         let a = Uint128(12345);
         let b = Uint128(23456);

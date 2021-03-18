@@ -74,8 +74,8 @@ mod tests {
     fn execute2(_deps: DepsMut) {}
 
     fn query(deps: Deps) {
-        query2(deps.clone());
-        query2(deps.clone());
+        query2(deps);
+        query2(deps);
     }
     fn query2(_deps: Deps) {}
 

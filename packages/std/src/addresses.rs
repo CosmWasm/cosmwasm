@@ -251,7 +251,7 @@ mod tests {
         assert_eq!(set.len(), 2);
 
         let set1 = HashSet::<HumanAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
-        let set2 = HashSet::from_iter(vec![alice1.clone(), alice2.clone(), bob.clone()]);
+        let set2 = HashSet::from_iter(vec![alice1, alice2, bob]);
         assert_eq!(set1, set2);
     }
 
@@ -399,7 +399,7 @@ mod tests {
         assert_eq!(set.len(), 2);
 
         let set1 = HashSet::<CanonicalAddr>::from_iter(vec![bob.clone(), alice1.clone()]);
-        let set2 = HashSet::from_iter(vec![alice1.clone(), alice2.clone(), bob.clone()]);
+        let set2 = HashSet::from_iter(vec![alice1, alice2, bob]);
         assert_eq!(set1, set2);
     }
 }

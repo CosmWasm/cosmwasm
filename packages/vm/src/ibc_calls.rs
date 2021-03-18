@@ -307,7 +307,7 @@ mod tests {
         let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
         let ack = IbcAcknowledgement {
             acknowledgement: br#"{}"#.into(),
-            original_packet: packet.clone(),
+            original_packet: packet,
         };
         call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
             .unwrap()

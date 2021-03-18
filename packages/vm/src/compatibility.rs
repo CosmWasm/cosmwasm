@@ -149,14 +149,13 @@ fn check_wasm_features(module: &Module, supported_features: &HashSet<String>) ->
 mod tests {
     use super::*;
     use crate::errors::VmError;
-    use std::iter::FromIterator;
 
     static CONTRACT_0_6: &[u8] = include_bytes!("../testdata/hackatom_0.6.wasm");
     static CONTRACT_0_7: &[u8] = include_bytes!("../testdata/hackatom_0.7.wasm");
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
     fn default_features() -> HashSet<String> {
-        HashSet::from_iter(["staking".to_string()].iter().cloned())
+        ["staking".to_string()].iter().cloned().collect()
     }
 
     #[test]
@@ -277,7 +276,7 @@ mod tests {
     #[test]
     fn check_wasm_exports_works() {
         // this is invalid, as it doesn't contain all required exports
-        const WAT_MISSING_EXPORTS: &'static str = r#"
+        const WAT_MISSING_EXPORTS: &str = r#"
             (module
               (type $t0 (func (param i32) (result i32)))
               (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
@@ -417,16 +416,15 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        let supported = HashSet::from_iter(
-            [
-                "water".to_string(),
-                "nutrients".to_string(),
-                "sun".to_string(),
-                "freedom".to_string(),
-            ]
-            .iter()
-            .cloned(),
-        );
+        let supported = [
+            "water".to_string(),
+            "nutrients".to_string(),
+            "sun".to_string(),
+            "freedom".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
         check_wasm_features(&module, &supported).unwrap();
     }
 
@@ -448,15 +446,14 @@ mod tests {
         let module = deserialize_wasm(&wasm).unwrap();
 
         // Support set 1
-        let supported = HashSet::from_iter(
-            [
-                "water".to_string(),
-                "nutrients".to_string(),
-                "freedom".to_string(),
-            ]
-            .iter()
-            .cloned(),
-        );
+        let supported = [
+            "water".to_string(),
+            "nutrients".to_string(),
+            "freedom".to_string(),
+        ]
+        .iter()
+        .cloned()
+        .collect();
         match check_wasm_features(&module, &supported).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
@@ -466,15 +463,14 @@ mod tests {
         }
 
         // Support set 2
-        let supported = HashSet::from_iter(
-            [
-                "nutrients".to_string(),
-                "freedom".to_string(),
-                "Water".to_string(), // features are case sensitive (and lowercase by convention)
-            ]
-            .iter()
-            .cloned(),
-        );
+        let supported = [
+            "nutrients".to_string(),
+            "freedom".to_string(),
+            "Water".to_string(), // features are case sensitive (and lowercase by convention)
+        ]
+        .iter()
+        .cloned()
+        .collect();
         match check_wasm_features(&module, &supported).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
@@ -484,7 +480,7 @@ mod tests {
         }
 
         // Support set 3
-        let supported = HashSet::from_iter(["freedom".to_string()].iter().cloned());
+        let supported = ["freedom".to_string()].iter().cloned().collect();
         match check_wasm_features(&module, &supported).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,
@@ -494,7 +490,7 @@ mod tests {
         }
 
         // Support set 4
-        let supported = HashSet::from_iter([].iter().cloned());
+        let supported = [].iter().cloned().collect();
         match check_wasm_features(&module, &supported).unwrap_err() {
             VmError::StaticValidationErr { msg, .. } => assert_eq!(
                 msg,

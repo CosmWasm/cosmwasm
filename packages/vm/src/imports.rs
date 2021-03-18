@@ -615,8 +615,7 @@ mod tests {
         let result = allocate
             .call(&[capacity.into()])
             .expect("error calling allocate");
-        let region_ptr = ref_to_u32(&result[0]).expect("error converting result");
-        region_ptr
+        ref_to_u32(&result[0]).expect("error converting result")
     }
 
     /// A Region reader that is just good enough for the tests in this file
@@ -968,7 +967,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &vec![61; 100]);
+        let source_ptr = write_data(&env, &[61; 100]);
         let dest_ptr = create_empty(&mut instance, 8);
 
         leave_default_data(&env);
@@ -1070,7 +1069,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &vec![61; 33]);
+        let source_ptr = write_data(&env, &[61; 33]);
         let dest_ptr = create_empty(&mut instance, 50);
 
         leave_default_data(&env);
@@ -1119,7 +1118,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_works() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1137,7 +1136,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_hash_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // alter hash
@@ -1157,7 +1156,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_hash_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // extend / break hash
@@ -1181,7 +1180,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_hash_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let mut hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         // reduce / break hash
@@ -1201,7 +1200,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1221,7 +1220,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1245,7 +1244,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1265,7 +1264,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_format_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1285,7 +1284,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1305,7 +1304,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1329,7 +1328,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1349,7 +1348,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = hex::decode(ECDSA_HASH_HEX).unwrap();
         let hash_ptr = write_data(&env, &hash);
@@ -1367,7 +1366,7 @@ mod tests {
     #[test]
     fn do_secp256k1_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let hash = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let hash_ptr = write_data(&env, &hash);
@@ -1385,7 +1384,7 @@ mod tests {
     #[test]
     fn do_secp256k1_recover_pubkey_works() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         // https://gist.github.com/webmaster128/130b628d83621a33579751846699ed15
         let hash = hex!("5ae8317d34d1e595e3fa7247db80c0af4320cce1116de187f8f7e2e099c0d8d0");
@@ -1407,7 +1406,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_works() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1425,7 +1424,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_msg_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // alter msg
@@ -1445,7 +1444,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_msg_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // extend / break msg
@@ -1469,7 +1468,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_sig_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1489,7 +1488,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1513,7 +1512,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_sig_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1533,7 +1532,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_pubkey_verify_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1553,7 +1552,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_larger_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1577,7 +1576,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_shorter_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1597,7 +1596,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_empty_pubkey_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         let msg_ptr = write_data(&env, &msg);
@@ -1615,7 +1614,7 @@ mod tests {
     #[test]
     fn do_ed25519_verify_wrong_data_fails() {
         let api = MockApi::default();
-        let (env, mut _instance) = make_instance(api.clone());
+        let (env, mut _instance) = make_instance(api);
 
         let msg = vec![0x22; MESSAGE_HASH_MAX_LEN];
         let msg_ptr = write_data(&env, &msg);

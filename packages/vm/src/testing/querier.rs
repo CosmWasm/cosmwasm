@@ -134,10 +134,7 @@ mod tests {
         // all
         let all = querier
             .query::<Empty>(
-                &BankQuery::AllBalances {
-                    address: addr.clone(),
-                }
-                .into(),
+                &BankQuery::AllBalances { address: addr }.into(),
                 DEFAULT_QUERY_GAS_LIMIT,
             )
             .0
@@ -175,7 +172,7 @@ mod tests {
         let miss = querier
             .query::<Empty>(
                 &BankQuery::Balance {
-                    address: addr.clone(),
+                    address: addr,
                     denom: "MISS".to_string(),
                 }
                 .into(),
