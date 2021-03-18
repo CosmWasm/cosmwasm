@@ -21,8 +21,8 @@ const MEMORY_CACHE_SIZE: Size = Size::mebi(200);
 static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
 const SAVE_WASM_THREADS: usize = 32;
-const INSTANTION_THREADS: usize = 2048;
-const THREADS: usize = SAVE_WASM_THREADS + INSTANTION_THREADS;
+const INSTANTIATION_THREADS: usize = 2048;
+const THREADS: usize = SAVE_WASM_THREADS + INSTANTIATION_THREADS;
 
 pub fn main() {
     let options = CacheOptions {
@@ -47,7 +47,7 @@ pub fn main() {
             println!("Done saving Wasm {}", checksum);
         }));
     }
-    for _ in 0..INSTANTION_THREADS {
+    for _ in 0..INSTANTIATION_THREADS {
         let cache = Arc::clone(&cache);
 
         threads.push(thread::spawn(move || {
@@ -81,7 +81,7 @@ pub fn main() {
     assert_eq!(cache.stats().hits_pinned_memory_cache, 0);
     assert_eq!(
         cache.stats().hits_memory_cache,
-        INSTANTION_THREADS as u32 - 1
+        INSTANTIATION_THREADS as u32 - 1
     );
     assert_eq!(cache.stats().hits_fs_cache, 1);
 }
