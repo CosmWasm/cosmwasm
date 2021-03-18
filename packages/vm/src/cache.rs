@@ -68,9 +68,7 @@ where
     S: Storage + 'static,    // 'static is needed by `impl<…> Instance`
     Q: Querier + 'static,    // 'static is needed by `impl<…> Instance`
 {
-    /// new stores the data for cache under base_dir
-    ///
-    /// Instance caching is disabled since 0.8.1 and any cache size value will be treated as 0.
+    /// Creates a new cache that stores data in `base_dir`.
     ///
     /// # Safety
     ///
