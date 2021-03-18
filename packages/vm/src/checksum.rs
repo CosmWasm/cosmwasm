@@ -1,4 +1,5 @@
 use std::convert::TryFrom;
+use std::fmt;
 
 use sha2::{Digest, Sha256};
 
@@ -19,7 +20,16 @@ impl Checksum {
 
     /// Creates a lowercase hex encoded copy of this checksum
     pub fn to_hex(&self) -> String {
-        hex::encode(self.0)
+        self.to_string()
+    }
+}
+
+impl fmt::Display for Checksum {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        for byte in self.0.iter() {
+            write!(f, "{:02x}", byte)?;
+        }
+        Ok(())
     }
 }
 
@@ -65,6 +75,22 @@ mod tests {
             0x84, 0x22, 0x71, 0x04,
         ];
         assert_eq!(checksum.0, expected);
+    }
+
+    #[test]
+    fn implemented_display() {
+        let wasm = vec![0x68, 0x69, 0x6a];
+        let checksum = Checksum::generate(&wasm);
+        // echo -n "hij" | sha256sum
+        let embedded = format!("Check: {}", checksum);
+        assert_eq!(
+            embedded,
+            "Check: 722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104"
+        );
+        assert_eq!(
+            checksum.to_string(),
+            "722c8c993fd75a7627d69ed941344fe2a1423a3e75efd3e6778a142884227104"
+        );
     }
 
     #[test]
