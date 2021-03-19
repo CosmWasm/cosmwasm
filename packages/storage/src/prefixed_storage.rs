@@ -115,14 +115,14 @@ mod tests {
         let mut storage = MockStorage::new();
 
         // set
-        let mut foo = PrefixedStorage::new(&mut storage, b"foo");
-        foo.set(b"bar", b"gotcha");
+        let mut s1 = PrefixedStorage::new(&mut storage, b"foo");
+        s1.set(b"bar", b"gotcha");
         assert_eq!(storage.get(b"\x00\x03foobar").unwrap(), b"gotcha".to_vec());
 
         // get
-        let foo = PrefixedStorage::new(&mut storage, b"foo");
-        assert_eq!(foo.get(b"bar"), Some(b"gotcha".to_vec()));
-        assert_eq!(foo.get(b"elsewhere"), None);
+        let s2 = PrefixedStorage::new(&mut storage, b"foo");
+        assert_eq!(s2.get(b"bar"), Some(b"gotcha".to_vec()));
+        assert_eq!(s2.get(b"elsewhere"), None);
     }
 
     #[test]
@@ -149,13 +149,13 @@ mod tests {
         storage.set(b"\x00\x03foobar", b"gotcha");
 
         // try readonly correctly
-        let foo = ReadonlyPrefixedStorage::new(&storage, b"foo");
-        assert_eq!(foo.get(b"bar"), Some(b"gotcha".to_vec()));
-        assert_eq!(foo.get(b"elsewhere"), None);
+        let s1 = ReadonlyPrefixedStorage::new(&storage, b"foo");
+        assert_eq!(s1.get(b"bar"), Some(b"gotcha".to_vec()));
+        assert_eq!(s1.get(b"elsewhere"), None);
 
         // no collisions with other prefixes
-        let fo = ReadonlyPrefixedStorage::new(&storage, b"fo");
-        assert_eq!(fo.get(b"obar"), None);
+        let s2 = ReadonlyPrefixedStorage::new(&storage, b"fo");
+        assert_eq!(s2.get(b"obar"), None);
     }
 
     #[test]

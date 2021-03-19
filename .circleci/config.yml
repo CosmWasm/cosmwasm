@@ -695,33 +695,37 @@ jobs:
       # Workspace packages
       #
       - run:
+          name: Clippy linting on crypto
+          working_directory: ~/project/packages/crypto
+          command: cargo clippy --tests -- -D warnings
+      - run:
           name: Clippy linting on schema
           working_directory: ~/project/packages/schema
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on std (no feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on std (all feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy --features iterator,staking -- -D warnings
+          command: cargo clippy --tests --features iterator,staking -- -D warnings
       - run:
           name: Clippy linting on storage (no feature flags)
           working_directory: ~/project/packages/storage
-          command: cargo clippy -- -D warnings
+          command: cargo clippy --tests -- -D warnings
       - run:
           name: Clippy linting on storage (all feature flags)
           working_directory: ~/project/packages/storage
-          command: cargo clippy --features iterator -- -D warnings
+          command: cargo clippy --tests --features iterator -- -D warnings
       - run:
           name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --no-default-features -- -D warnings
+          command: cargo clippy --tests --no-default-features -- -D warnings
       - run:
           name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --features iterator,staking,stargate -- -D warnings
+          command: cargo clippy --tests --features iterator,staking,stargate -- -D warnings
       #
       # Contracts
       #

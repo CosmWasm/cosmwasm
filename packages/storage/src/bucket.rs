@@ -230,7 +230,7 @@ mod tests {
         };
         bucket.save(b"maria", &data).unwrap();
 
-        let reader = bucket_read::<Data>(&mut store, b"data");
+        let reader = bucket_read::<Data>(&store, b"data");
 
         // check empty data handling
         assert!(reader.load(b"john").is_err());
@@ -291,7 +291,7 @@ mod tests {
 
         // it's my birthday
         let birthday = |mayd: Option<Data>| -> StdResult<Data> {
-            let mut d = mayd.ok_or(StdError::not_found("Data"))?;
+            let mut d = mayd.ok_or_else(|| StdError::not_found("Data"))?;
             d.age += 1;
             Ok(d)
         };
@@ -321,7 +321,7 @@ mod tests {
         let mut old_age = 0i32;
         bucket
             .update(b"maria", |mayd: Option<Data>| -> StdResult<_> {
-                let mut d = mayd.ok_or(StdError::not_found("Data"))?;
+                let mut d = mayd.ok_or_else(|| StdError::not_found("Data"))?;
                 old_age = d.age;
                 d.age += 1;
                 Ok(d)
@@ -390,7 +390,7 @@ mod tests {
                 data.age += 1;
                 Ok(data)
             } else {
-                return Err(MyError::NotFound);
+                Err(MyError::NotFound)
             }
         });
         match res.unwrap_err() {

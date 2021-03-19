@@ -106,7 +106,7 @@ mod tests {
 
     #[test]
     fn into_vec_works() {
-        let checksum = Checksum::generate(&vec![12u8; 17]);
+        let checksum = Checksum::generate(&[12u8; 17]);
         let as_vec: Vec<u8> = checksum.into();
         assert_eq!(as_vec, checksum.0);
     }

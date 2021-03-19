@@ -80,7 +80,7 @@ mod tests {
     fn empty_context() {
         let ctx = Context::new();
 
-        let init: Response = ctx.clone().into();
+        let init: Response = ctx.into();
         assert_eq!(init, Response::default());
     }
 
@@ -105,7 +105,7 @@ mod tests {
         let expected_attributes = vec![attr("sender", "john"), attr("action", "test")];
         let expected_data = Some(Binary::from(b"banana"));
 
-        let response: Response = ctx.clone().into();
+        let response: Response = ctx.into();
         assert_eq!(&response.messages, &expected_msgs);
         assert_eq!(&response.attributes, &expected_attributes);
         assert_eq!(&response.data, &expected_data);
