@@ -12,7 +12,8 @@
         "debug": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "type": "object",
@@ -23,7 +24,8 @@
         "raw": {
           "$ref": "#/definitions/Binary"
         }
-      }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

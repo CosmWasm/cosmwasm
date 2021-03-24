@@ -11,7 +11,8 @@
         "owner": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "This will call out to SpecialQuery::Capitalized",
@@ -31,7 +32,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Queries the blockchain and returns the result untouched",
@@ -51,7 +53,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Queries another contract and returns the data",
@@ -75,7 +78,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::Reply",
@@ -97,7 +101,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
@@ -125,7 +130,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "This calls into the native bank module for all denominations. Note that this may be much more expensive than Balance and should be avoided if possible. Return value is AllBalanceResponse.",
@@ -145,7 +151,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -169,7 +176,8 @@
             "port_id": {
               "type": "object"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "Lists all channels that are bound to a given port. If `port_id` is omitted, this list all channels bound to the contract's port. Returns a `ListChannelsResponse`.",
@@ -189,7 +197,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "Lists all information for a (portID, channelID) pair. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call) Returns ChannelResponse.",
@@ -215,7 +224,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -230,7 +240,8 @@
             "bank": {
               "$ref": "#/definitions/BankQuery"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -241,7 +252,8 @@
             "custom": {
               "$ref": "#/definitions/SpecialQuery"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -252,7 +264,8 @@
             "staking": {
               "$ref": "#/definitions/StakingQuery"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "A Stargate query encoded the same way as abci_query, with path and protobuf encoded Data. The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md) The response is also protobuf encoded. The caller is responsible for compiling the proper protobuf definitions",
@@ -282,7 +295,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -293,7 +307,8 @@
             "ibc": {
               "$ref": "#/definitions/IbcQuery"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -304,7 +319,8 @@
             "wasm": {
               "$ref": "#/definitions/WasmQuery"
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -320,7 +336,8 @@
             "ping": {
               "type": "object"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "type": "object",
@@ -339,7 +356,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -355,7 +373,8 @@
             "bonded_denom": {
               "type": "object"
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "AllDelegations will return all delegations by the delegator",
@@ -375,7 +394,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "Delegation will return more detailed info on a particular delegation, defined by delegator/validator pair",
@@ -399,7 +419,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "Returns all registered Validators on the system",
@@ -411,7 +432,8 @@
             "validators": {
               "type": "object"
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -444,7 +466,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         },
         {
           "description": "this queries the raw kv-store of the contract. returns the raw, unparsed data stored at that key, which may be an empty vector if not present",
@@ -473,7 +496,8 @@
                 }
               }
             }
-          }
+          },
+          "additionalProperties": false
         }
       ]
     }

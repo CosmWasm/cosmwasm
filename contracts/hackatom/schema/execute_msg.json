@@ -12,7 +12,8 @@
         "release": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Infinite loop to burn cpu cycles (only run when metering is enabled)",
@@ -24,7 +25,8 @@
         "cpu_loop": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Infinite loop making storage calls (to test when their limit hits)",
@@ -36,7 +38,8 @@
         "storage_loop": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Infinite loop reading and writing memory",
@@ -48,7 +51,8 @@
         "memory_loop": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Allocate large amounts of memory without consuming much gas",
@@ -70,7 +74,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Trigger a panic to ensure framework handles gracefully",
@@ -82,7 +87,8 @@
         "panic": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Starting with CosmWasm 0.10, some API calls return user errors back to the contract. This triggers such user errors, ensuring the transaction does not fail in the backend.",
@@ -94,7 +100,8 @@
         "user_errors_in_api_calls": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     }
   ]
 }

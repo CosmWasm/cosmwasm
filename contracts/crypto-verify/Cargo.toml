@@ -36,7 +36,7 @@ cosmwasm-std = { path = "../../packages/std", features = ["iterator"] }
 cosmwasm-storage = { path = "../../packages/storage", features = ["iterator"] }
 hex = "0.4"
 rlp = "0.5"
-schemars = "0.7"
+schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.9"
 sha3 = "0.9"

@@ -20,7 +20,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Claims shows the number of tokens this address can access when they are done unbonding",
@@ -40,7 +41,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "TokenInfo shows the metadata of the token for UIs",
@@ -52,7 +54,8 @@
         "token_info": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Investment shows info on total staking tokens under custody, with which validator, as well as how many derivative tokens are lists. It also shows with the exit tax.",
@@ -64,7 +67,8 @@
         "investment": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
