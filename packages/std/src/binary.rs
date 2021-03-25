@@ -1,5 +1,4 @@
 use std::fmt;
-use std::mem;
 use std::ops::Deref;
 
 use schemars::JsonSchema;
@@ -59,19 +58,13 @@ impl Binary {
     /// let num = u64::from_be_bytes(binary.to_array().unwrap());
     /// assert_eq!(num, 10045108015024774967);
     /// ```
-    pub fn to_array<A>(&self) -> StdResult<A>
-    where
-        A: ByteArray,
-    {
-        let out_size = std::mem::size_of::<A>();
-        if self.len() != out_size {
-            return Err(StdError::invalid_data_size(out_size, self.len()));
+    pub fn to_array<const LENGTH: usize>(&self) -> StdResult<[u8; LENGTH]> {
+        if self.len() != LENGTH {
+            return Err(StdError::invalid_data_size(LENGTH, self.len()));
         }
 
-        // We cannot use Default::default() because it is only implemented for
-        // short arrays [T; 0] … [T; 64].
-        let mut out: A = unsafe { mem::zeroed() };
-        <A as AsMut<[u8]>>::as_mut(&mut out).copy_from_slice(&self.0);
+        let mut out: [u8; LENGTH] = [0; LENGTH];
+        out.copy_from_slice(&self.0);
         Ok(out)
     }
 }
@@ -221,32 +214,6 @@ impl<'de> de::Visitor<'de> for Base64Visitor {
     }
 }
 
-/// A marker trait for `[u8; $N]`, which is needed as long as
-/// https://rust-lang.github.io/rfcs/2000-const-generics.html is not stable.
-///
-/// Implementing this for other types (like Vec<u8>) results in undefined behaviour.
-pub unsafe trait ByteArray: Sized + AsMut<[u8]> {}
-
-// Macro needed until https://rust-lang.github.io/rfcs/2000-const-generics.html is stable.
-// See https://users.rust-lang.org/t/how-to-implement-trait-for-fixed-size-array-of-any-size/31494
-macro_rules! implement_fixes_size_arrays {
-    ($($N:literal)+) => {
-        $(
-            unsafe impl ByteArray for [u8; $N] {}
-        )+
-    }
-}
-
-implement_fixes_size_arrays! {
-     0  1  2  3  4  5  6  7  8  9
-    10 11 12 13 14 15 16 17 18 19
-    20 21 22 23 24 25 26 27 28 29
-    30 31 32 33 34 35 36 37 38 39
-    40 41 42 43 44 45 46 47 48 49
-    50 51 52 53 54 55 56 57 58 59
-    60 61 62 63 64
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -289,7 +256,7 @@ mod tests {
 
         // invalid size
         let binary = Binary::from(&[1, 2, 3]);
-        let error = binary.to_array::<[u8; 8]>().unwrap_err();
+        let error = binary.to_array::<8>().unwrap_err();
         match error {
             StdError::InvalidDataSize {
                 expected, actual, ..

@@ -23,7 +23,7 @@ mod traits;
 mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
-pub use crate::binary::{Binary, ByteArray};
+pub use crate::binary::Binary;
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
