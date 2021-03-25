@@ -1,5 +1,4 @@
 #![cfg_attr(feature = "backtraces", feature(backtrace))]
-#![allow(clippy::field_reassign_with_default)] // see https://github.com/CosmWasm/cosmwasm/issues/685
 
 // Exposed on all platforms
 

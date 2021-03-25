@@ -31,7 +31,7 @@ backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 
 [dependencies]
 cosmwasm-std = { path = "../../packages/std" }
-schemars = "0.7"
+schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.9.1"
 thiserror = "1.0"

@@ -12,7 +12,8 @@
         "ok": {
           "$ref": "#/definitions/WhoAmIResponse"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "An error type that every custom error created by contract developers can be converted to. This could potientially have more structure, but String is the easiest.",
@@ -24,7 +25,8 @@
         "error": {
           "type": "string"
         }
-      }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {

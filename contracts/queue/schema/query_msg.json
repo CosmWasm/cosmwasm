@@ -11,7 +11,8 @@
         "count": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "type": "object",
@@ -22,7 +23,8 @@
         "sum": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "type": "object",
@@ -33,7 +35,8 @@
         "reducer": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "type": "object",
@@ -44,7 +47,8 @@
         "list": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     }
   ]
 }

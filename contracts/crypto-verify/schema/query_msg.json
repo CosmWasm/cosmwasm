@@ -43,7 +43,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Ethereum text verification (compatible to the eth_sign RPC/web3 enpoint). This cannot be used to verify transaction.\n\nSee https://web3js.readthedocs.io/en/v1.2.0/web3-eth.html#sign",
@@ -78,7 +79,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "type": "object",
@@ -145,7 +147,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Tendermint format (ed25519 verification scheme).",
@@ -188,7 +191,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Tendermint format (batch ed25519 verification scheme).",
@@ -228,7 +232,8 @@
             }
           }
         }
-      }
+      },
+      "additionalProperties": false
     },
     {
       "description": "Returns a list of supported verification schemes. No pagination - this is a short list.",
@@ -240,7 +245,8 @@
         "list_verification_schemes": {
           "type": "object"
         }
-      }
+      },
+      "additionalProperties": false
     }
   ],
   "definitions": {
