@@ -94,40 +94,18 @@ impl Deref for Binary {
     }
 }
 
-// Macro needed until https://rust-lang.github.io/rfcs/2000-const-generics.html is stable.
-// See https://users.rust-lang.org/t/how-to-implement-trait-for-fixed-size-array-of-any-size/31494
-macro_rules! implement_from_for_fixed_length_arrays {
-    ($($N:literal)+) => {
-        $(
-            // Reference
-            impl From<&[u8; $N]> for Binary {
-                fn from(source: &[u8; $N]) -> Self {
-                    Self(source.to_vec())
-                }
-            }
-
-            // Owned
-            impl From<[u8; $N]> for Binary {
-                fn from(source: [u8; $N]) -> Self {
-                    // Implementation available for $N <= 64.
-                    // Requires https://caniuse.rs/features/vec_from_array available since Rust 1.44.0
-                    // as well as "Traits on larger arrays" (https://blog.rust-lang.org/2020/10/08/Rust-1.47.html#traits-on-larger-arrays)
-                    // available since Rust 1.47.0
-                    Self(source.into())
-                }
-            }
-        )+
+// Reference
+impl<const LENGTH: usize> From<&[u8; LENGTH]> for Binary {
+    fn from(source: &[u8; LENGTH]) -> Self {
+        Self(source.to_vec())
     }
 }
 
-implement_from_for_fixed_length_arrays! {
-     0  1  2  3  4  5  6  7  8  9
-    10 11 12 13 14 15 16 17 18 19
-    20 21 22 23 24 25 26 27 28 29
-    30 31 32 33 34 35 36 37 38 39
-    40 41 42 43 44 45 46 47 48 49
-    50 51 52 53 54 55 56 57 58 59
-    60 61 62 63 64
+// Owned
+impl<const LENGTH: usize> From<[u8; LENGTH]> for Binary {
+    fn from(source: [u8; LENGTH]) -> Self {
+        Self(source.into())
+    }
 }
 
 impl From<Vec<u8>> for Binary {

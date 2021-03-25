@@ -96,6 +96,9 @@ and this project adheres to
 - cosmwasm-std: `Binary::to_array` is now generic over the array length instead
   of the output type. As a consequence the obsolete type `ByteArray` was
   removed. The array length is not restricted to 0-64 anymore.
+- cosmwasm-std: Use const generics to implement `From<&[u8; LENGTH]> for Binary`
+  and `From<[u8; LENGTH]> for Binary`, such that the array length is not
+  restricted to 0-64 anymore.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
