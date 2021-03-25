@@ -212,6 +212,16 @@ major releases of `cosmwasm`. Note that you can also view the
   }
   ```
 
+- Use type `Pair` instead of `KV`
+
+  ```rust
+  // before
+  use cosmwasm_std::KV;
+
+  // after
+  use cosmwasm_std::Pair;
+  ```
+
 - If necessary, add a wildcard arm to the `match` of now non-exhaustive message
   types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
 

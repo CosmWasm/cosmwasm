@@ -34,7 +34,8 @@ pub use crate::ibc::{
     PortIdResponse,
 };
 #[cfg(feature = "iterator")]
-pub use crate::iterator::{Order, KV};
+#[allow(deprecated)]
+pub use crate::iterator::{Order, Pair, KV};
 pub use crate::math::{Decimal, Uint128};
 pub use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,

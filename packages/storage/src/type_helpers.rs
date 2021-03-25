@@ -2,7 +2,7 @@ use serde::de::DeserializeOwned;
 use std::any::type_name;
 
 #[cfg(feature = "iterator")]
-use cosmwasm_std::KV;
+use cosmwasm_std::Pair;
 use cosmwasm_std::{from_slice, StdError, StdResult};
 
 /// may_deserialize parses json bytes from storage (Option), returning Ok(None) if no data present
@@ -27,7 +27,7 @@ pub(crate) fn must_deserialize<T: DeserializeOwned>(value: &Option<Vec<u8>>) -> 
 }
 
 #[cfg(feature = "iterator")]
-pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: KV) -> StdResult<KV<T>> {
+pub(crate) fn deserialize_kv<T: DeserializeOwned>(kv: Pair<Vec<u8>>) -> StdResult<Pair<T>> {
     let (k, v) = kv;
     let t = from_slice::<T>(&v)?;
     Ok((k, t))

@@ -97,6 +97,9 @@ and this project adheres to
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
   ([#697])
+- cosmwasm-std: Rename type `KV` to `Pair` in order to comply to naming
+  convention as enforced by clippy rule `upper_case_acronyms` from Rust 1.51.0
+  on.
 - cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
   `interface_version_5`.
 - cosmwasm-vm: Rename trait `Api` to `BackendApi` to better express this is the
