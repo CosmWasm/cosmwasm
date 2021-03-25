@@ -69,7 +69,7 @@ and this project adheres to
 - all: Rename `handle` entry point to `execute`.
 - all: Rename `init` entry point to `instantiate`.
 - all: Rename `system` entry point to `sudo`.
-- all: Drop support for Rust versions lower than 1.50.0.
+- all: Drop support for Rust versions lower than 1.51.0.
 - all: The `query` and `execute` entry points are now optional. It is still
   highly recommended to implement and expose them in almost any use case though.
 - all: Change the encoding of the key/value region of the `db_next` import to a
