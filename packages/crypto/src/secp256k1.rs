@@ -260,7 +260,8 @@ mod tests {
             // secp256k1_verify works
             assert!(
                 secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
-                format!("secp256k1_verify() failed (test case {})", i)
+                "secp256k1_verify() failed (test case {})",
+                i
             );
         }
     }
@@ -301,7 +302,8 @@ mod tests {
             // secp256k1_verify() works
             assert!(
                 secp256k1_verify(&message_hash, &signature, &public_key).unwrap(),
-                format!("verify() failed (test case {})", i)
+                "verify() failed (test case {})",
+                i
             );
         }
     }

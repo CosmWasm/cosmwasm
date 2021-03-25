@@ -233,17 +233,12 @@ fn do_canonicalize_address<A: BackendApi, S: Storage, Q: Querier>(
 ) -> VmResult<u32> {
     let source_data = read_region(&env.memory(), source_ptr, MAX_LENGTH_HUMAN_ADDRESS)?;
     if source_data.is_empty() {
-        return Ok(write_to_contract::<A, S, Q>(env, b"Input is empty")?);
+        return write_to_contract::<A, S, Q>(env, b"Input is empty");
     }
 
     let source_string = match String::from_utf8(source_data) {
         Ok(s) => s,
-        Err(_) => {
-            return Ok(write_to_contract::<A, S, Q>(
-                env,
-                b"Input is not valid UTF-8",
-            )?)
-        }
+        Err(_) => return write_to_contract::<A, S, Q>(env, b"Input is not valid UTF-8"),
     };
     let human: HumanAddr = source_string.into();
 

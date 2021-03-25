@@ -52,10 +52,9 @@ impl TryFrom<&[u8]> for Checksum {
     }
 }
 
-impl Into<Vec<u8>> for Checksum {
-    fn into(self) -> Vec<u8> {
-        // Rust 1.43+ also supports self.0.into()
-        self.0.to_vec()
+impl From<Checksum> for Vec<u8> {
+    fn from(original: Checksum) -> Vec<u8> {
+        original.0.into()
     }
 }
 

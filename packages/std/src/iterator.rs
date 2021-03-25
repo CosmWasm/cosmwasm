@@ -28,8 +28,8 @@ impl TryFrom<i32> for Order {
     }
 }
 
-impl Into<i32> for Order {
-    fn into(self) -> i32 {
-        self as i32
+impl From<Order> for i32 {
+    fn from(original: Order) -> i32 {
+        original as _
     }
 }
