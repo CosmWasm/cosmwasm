@@ -6,7 +6,7 @@ use std::iter::Sum;
 use std::ops;
 use std::str::FromStr;
 
-use crate::errors::{StdError, StdResult};
+use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
 ///
@@ -180,6 +180,80 @@ impl Uint128 {
     pub fn is_zero(&self) -> bool {
         self.0 == 0
     }
+
+    pub fn checked_add(self, other: Self) -> Result<Self, OverflowError> {
+        self.0
+            .checked_add(other.0)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Add, self, other))
+    }
+
+    pub fn checked_sub(self, other: Self) -> Result<Self, OverflowError> {
+        self.0
+            .checked_sub(other.0)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Sub, self, other))
+    }
+
+    pub fn checked_mul(self, other: Self) -> Result<Self, OverflowError> {
+        self.0
+            .checked_mul(other.0)
+            .map(Self)
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Mul, self, other))
+    }
+
+    pub fn checked_div(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.0
+            .checked_div(other.0)
+            .map(Self)
+            .ok_or_else(|| DivideByZeroError::new(self))
+    }
+
+    pub fn checked_div_euclid(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.0
+            .checked_div_euclid(other.0)
+            .map(Self)
+            .ok_or_else(|| DivideByZeroError::new(self))
+    }
+
+    pub fn checked_rem(self, other: Self) -> Result<Self, DivideByZeroError> {
+        self.0
+            .checked_rem(other.0)
+            .map(Self)
+            .ok_or_else(|| DivideByZeroError::new(self))
+    }
+
+    pub fn wrapping_add(self, other: Self) -> Self {
+        Self(self.0.wrapping_add(other.0))
+    }
+
+    pub fn wrapping_sub(self, other: Self) -> Self {
+        Self(self.0.wrapping_sub(other.0))
+    }
+
+    pub fn wrapping_mul(self, other: Self) -> Self {
+        Self(self.0.wrapping_mul(other.0))
+    }
+
+    pub fn wrapping_pow(self, other: u32) -> Self {
+        Self(self.0.wrapping_pow(other))
+    }
+
+    pub fn saturating_add(self, other: Self) -> Self {
+        Self(self.0.saturating_add(other.0))
+    }
+
+    pub fn saturating_sub(self, other: Self) -> Self {
+        Self(self.0.saturating_sub(other.0))
+    }
+
+    pub fn saturating_mul(self, other: Self) -> Self {
+        Self(self.0.saturating_mul(other.0))
+    }
+
+    pub fn saturating_pow(self, other: u32) -> Self {
+        Self(self.0.saturating_pow(other))
+    }
 }
 
 // `From<u{128,64,32,16,8}>` is implemented manually instead of
@@ -275,21 +349,21 @@ impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
 }
 
 impl ops::Sub<Uint128> for Uint128 {
-    type Output = StdResult<Self>;
+    type Output = Result<Self, OverflowError>;
 
-    fn sub(self, other: Uint128) -> StdResult<Self> {
+    fn sub(self, other: Uint128) -> Result<Self, OverflowError> {
         self.sub(&other)
     }
 }
 
 impl<'a> ops::Sub<&'a Uint128> for Uint128 {
-    type Output = StdResult<Self>;
+    type Output = Result<Self, OverflowError>;
 
-    fn sub(self, rhs: &'a Uint128) -> StdResult<Self> {
+    fn sub(self, rhs: &'a Uint128) -> Result<Self, OverflowError> {
         let (min, sub) = (self.u128(), rhs.u128());
         min.checked_sub(sub)
             .map(Uint128)
-            .ok_or_else(|| StdError::underflow(min, sub))
+            .ok_or_else(|| OverflowError::new(OverflowOperation::Sub, min, sub))
     }
 }
 
@@ -761,14 +835,10 @@ mod tests {
 
         // error result on underflow (- would produce negative result)
         let underflow_result = a - b;
-        match underflow_result.unwrap_err() {
-            StdError::Underflow {
-                minuend,
-                subtrahend,
-                ..
-            } => assert_eq!((minuend, subtrahend), (a.to_string(), b.to_string())),
-            err => panic!("Unexpected error: {:?}", err),
-        }
+        let OverflowError {
+            operand1, operand2, ..
+        } = underflow_result.unwrap_err();
+        assert_eq!((operand1, operand2), (a.to_string(), b.to_string()));
     }
 
     #[test]
@@ -855,5 +925,55 @@ mod tests {
 
         let sum_as_owned = nums.into_iter().sum();
         assert_eq!(expected, sum_as_owned);
+    }
+
+    #[test]
+    fn uint128_methods() {
+        // checked_*
+        assert!(matches!(
+            Uint128(u128::MAX).checked_add(Uint128(1)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint128(0).checked_sub(Uint128(1)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint128(u128::MAX).checked_mul(Uint128(2)),
+            Err(OverflowError { .. })
+        ));
+        assert!(matches!(
+            Uint128(u128::MAX).checked_div(Uint128(0)),
+            Err(DivideByZeroError { .. })
+        ));
+        assert!(matches!(
+            Uint128(u128::MAX).checked_div_euclid(Uint128(0)),
+            Err(DivideByZeroError { .. })
+        ));
+        assert!(matches!(
+            Uint128(u128::MAX).checked_rem(Uint128(0)),
+            Err(DivideByZeroError { .. })
+        ));
+
+        // saturating_*
+        assert_eq!(
+            Uint128(u128::MAX).saturating_add(Uint128(1)),
+            Uint128(u128::MAX)
+        );
+        assert_eq!(Uint128(0).saturating_sub(Uint128(1)), Uint128(0));
+        assert_eq!(
+            Uint128(u128::MAX).saturating_mul(Uint128(2)),
+            Uint128(u128::MAX)
+        );
+        assert_eq!(Uint128(u128::MAX).saturating_pow(2), Uint128(u128::MAX));
+
+        // wrapping_*
+        assert_eq!(Uint128(u128::MAX).wrapping_add(Uint128(1)), Uint128(0));
+        assert_eq!(Uint128(0).wrapping_sub(Uint128(1)), Uint128(u128::MAX));
+        assert_eq!(
+            Uint128(u128::MAX).wrapping_mul(Uint128(2)),
+            Uint128(u128::MAX - 1)
+        );
+        assert_eq!(Uint128(u128::MAX).wrapping_pow(2), Uint128(1));
     }
 }
