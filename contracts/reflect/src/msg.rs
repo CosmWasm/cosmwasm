@@ -90,9 +90,9 @@ pub enum CustomMsg {
     Raw(Binary),
 }
 
-impl Into<CosmosMsg<CustomMsg>> for CustomMsg {
-    fn into(self) -> CosmosMsg<CustomMsg> {
-        CosmosMsg::Custom(self)
+impl From<CustomMsg> for CosmosMsg<CustomMsg> {
+    fn from(original: CustomMsg) -> Self {
+        CosmosMsg::Custom(original)
     }
 }
 
