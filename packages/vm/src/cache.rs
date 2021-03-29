@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::fs::{create_dir_all, File, OpenOptions};
 use std::io::{Read, Write};
 use std::marker::PhantomData;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 
 use crate::backend::{Backend, BackendApi, Querier, Storage};
@@ -127,7 +127,7 @@ where
         self.load_wasm_with_path(&self.inner.lock().unwrap().wasm_path, checksum)
     }
 
-    fn load_wasm_with_path(&self, wasm_path: &PathBuf, checksum: &Checksum) -> VmResult<Vec<u8>> {
+    fn load_wasm_with_path(&self, wasm_path: &Path, checksum: &Checksum) -> VmResult<Vec<u8>> {
         let code = load_wasm_from_disk(&wasm_path, checksum)?;
         // verify hash matches (integrity check)
         if Checksum::generate(&code) != *checksum {

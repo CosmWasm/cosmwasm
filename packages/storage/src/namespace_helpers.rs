@@ -1,6 +1,6 @@
 use cosmwasm_std::Storage;
 #[cfg(feature = "iterator")]
-use cosmwasm_std::{Order, KV};
+use cosmwasm_std::{Order, Pair};
 
 pub(crate) fn get_with_prefix(
     storage: &dyn Storage,
@@ -37,7 +37,7 @@ pub(crate) fn range_with_prefix<'a>(
     start: Option<&[u8]>,
     end: Option<&[u8]>,
     order: Order,
-) -> Box<dyn Iterator<Item = KV> + 'a> {
+) -> Box<dyn Iterator<Item = Pair> + 'a> {
     // prepare start, end with prefix
     let start = match start {
         Some(s) => concat(namespace, s),
@@ -153,7 +153,7 @@ mod tests {
 
         // ensure we get proper result from prefixed_range iterator
         let iter = range_with_prefix(&storage, &prefix, None, None, Order::Descending);
-        let elements: Vec<KV> = iter.collect();
+        let elements: Vec<Pair> = iter.collect();
         assert_eq!(
             elements,
             vec![
@@ -179,14 +179,14 @@ mod tests {
         set_with_prefix(&mut storage, &other_prefix, b"moon", b"buggy");
 
         // make sure start and end are applied properly
-        let res: Vec<KV> =
+        let res: Vec<Pair> =
             range_with_prefix(&storage, &prefix, Some(b"b"), Some(b"c"), Order::Ascending)
                 .collect();
         assert_eq!(res.len(), 1);
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));
 
         // make sure start and end are applied properly
-        let res: Vec<KV> = range_with_prefix(
+        let res: Vec<Pair> = range_with_prefix(
             &storage,
             &prefix,
             Some(b"bas"),
@@ -196,7 +196,7 @@ mod tests {
         .collect();
         assert_eq!(res.len(), 0);
 
-        let res: Vec<KV> =
+        let res: Vec<Pair> =
             range_with_prefix(&storage, &prefix, Some(b"ant"), None, Order::Ascending).collect();
         assert_eq!(res.len(), 2);
         assert_eq!(res[0], (b"bar".to_vec(), b"none".to_vec()));

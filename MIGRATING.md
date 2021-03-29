@@ -6,8 +6,8 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.13 -> 0.14 (unreleased)
 
-- The minimum Rust supported version for 0.14 is 1.50.0. Verify your Rust
-  version is >= 1.50.0 with: `rustc --version`
+- The minimum Rust supported version for 0.14 is 1.51.0. Verify your Rust
+  version is >= 1.51.0 with: `rustc --version`
 
 - Update CosmWasm and schemars dependencies in Cargo.toml (skip the ones you
   don't use):
@@ -210,6 +210,16 @@ major releases of `cosmwasm`. Note that you can also view the
       resp.add_attribute("action", "execute");
       Ok(resp)
   }
+  ```
+
+- Use type `Pair` instead of `KV`
+
+  ```rust
+  // before
+  use cosmwasm_std::KV;
+
+  // after
+  use cosmwasm_std::Pair;
   ```
 
 - If necessary, add a wildcard arm to the `match` of now non-exhaustive message

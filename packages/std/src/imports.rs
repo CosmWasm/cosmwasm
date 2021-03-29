@@ -13,7 +13,7 @@ use crate::serde::from_slice;
 use crate::traits::{Api, Querier, QuerierResult, Storage};
 #[cfg(feature = "iterator")]
 use crate::{
-    iterator::{Order, KV},
+    iterator::{Order, Pair},
     memory::get_optional_region_address,
 };
 
@@ -107,7 +107,7 @@ impl Storage for ExternalStorage {
         start: Option<&[u8]>,
         end: Option<&[u8]>,
         order: Order,
-    ) -> Box<dyn Iterator<Item = KV>> {
+    ) -> Box<dyn Iterator<Item = Pair>> {
         // There is lots of gotchas on turning options into regions for FFI, thus this design
         // See: https://github.com/CosmWasm/cosmwasm/pull/509
         let start_region = start.map(build_region);
@@ -129,7 +129,7 @@ struct ExternalIterator {
 
 #[cfg(feature = "iterator")]
 impl Iterator for ExternalIterator {
-    type Item = KV;
+    type Item = Pair;
 
     fn next(&mut self) -> Option<Self::Item> {
         let next_result = unsafe { db_next(self.iterator_id) };

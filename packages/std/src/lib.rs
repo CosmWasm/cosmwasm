@@ -23,7 +23,7 @@ mod traits;
 mod types;
 
 pub use crate::addresses::{CanonicalAddr, HumanAddr};
-pub use crate::binary::{Binary, ByteArray};
+pub use crate::binary::Binary;
 pub use crate::coins::{coin, coins, has_coins, Coin};
 pub use crate::deps::{Deps, DepsMut, OwnedDeps};
 pub use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
@@ -34,7 +34,8 @@ pub use crate::ibc::{
     PortIdResponse,
 };
 #[cfg(feature = "iterator")]
-pub use crate::iterator::{Order, KV};
+#[allow(deprecated)]
+pub use crate::iterator::{Order, Pair, KV};
 pub use crate::math::{Decimal, Uint128};
 pub use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,

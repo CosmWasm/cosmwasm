@@ -69,7 +69,7 @@ and this project adheres to
 - all: Rename `handle` entry point to `execute`.
 - all: Rename `init` entry point to `instantiate`.
 - all: Rename `system` entry point to `sudo`.
-- all: Drop support for Rust versions lower than 1.50.0.
+- all: Drop support for Rust versions lower than 1.51.0.
 - all: The `query` and `execute` entry points are now optional. It is still
   highly recommended to implement and expose them in almost any use case though.
 - all: Change the encoding of the key/value region of the `db_next` import to a
@@ -93,10 +93,19 @@ and this project adheres to
   need one of those, you're probably doing something wrong.
 - cosmwasm-std: Make `label` in `WasmMsg::Instantiate` non-optional to better
   match the Go/database format.
+- cosmwasm-std: `Binary::to_array` is now generic over the array length instead
+  of the output type. As a consequence the obsolete type `ByteArray` was
+  removed. The array length is not restricted to 0-64 anymore.
+- cosmwasm-std: Use const generics to implement `From<&[u8; LENGTH]> for Binary`
+  and `From<[u8; LENGTH]> for Binary`, such that the array length is not
+  restricted to 0-64 anymore.
 - cosmwasm-vm: Avoid serialization of Modules in `InMemoryCache`, for
   performance. Also, remove `memory_limit` from `InstanceOptions`, and define it
   instead at `Cache` level (same memory limit for all cached instances).
   ([#697])
+- cosmwasm-std: Rename type `KV` to `Pair` in order to comply to naming
+  convention as enforced by clippy rule `upper_case_acronyms` from Rust 1.51.0
+  on.
 - cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
   `interface_version_5`.
 - cosmwasm-vm: Rename trait `Api` to `BackendApi` to better express this is the

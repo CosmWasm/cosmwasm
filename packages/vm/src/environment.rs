@@ -398,11 +398,6 @@ mod tests {
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/hackatom.wasm");
 
-    // shorthands for function generics below
-    type MA = MockApi;
-    type MS = MockStorage;
-    type MQ = MockQuerier;
-
     // prepared data
     const INIT_KEY: &[u8] = b"foo";
     const INIT_VALUE: &[u8] = b"bar";
@@ -415,7 +410,12 @@ mod tests {
     const DEFAULT_QUERY_GAS_LIMIT: u64 = 300_000;
     const TESTING_MEMORY_LIMIT: Option<Size> = Some(Size::mebi(16));
 
-    fn make_instance(gas_limit: u64) -> (Environment<MA, MS, MQ>, Box<WasmerInstance>) {
+    fn make_instance(
+        gas_limit: u64,
+    ) -> (
+        Environment<MockApi, MockStorage, MockQuerier>,
+        Box<WasmerInstance>,
+    ) {
         let env = Environment::new(MockApi::default(), gas_limit, false);
 
         let module = compile(&CONTRACT, TESTING_MEMORY_LIMIT).unwrap();
@@ -447,7 +447,7 @@ mod tests {
         (env, instance)
     }
 
-    fn leave_default_data(env: &Environment<MA, MS, MQ>) {
+    fn leave_default_data(env: &Environment<MockApi, MockStorage, MockQuerier>) {
         // create some mock data
         let mut storage = MockStorage::new();
         storage
@@ -490,17 +490,17 @@ mod tests {
         assert_eq!(env.get_gas_left(), 100);
 
         // Consume all the Gas that we allocated
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(70)).unwrap();
+        process_gas_info(&env, GasInfo::with_cost(70)).unwrap();
         assert_eq!(env.get_gas_left(), 30);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(4)).unwrap();
+        process_gas_info(&env, GasInfo::with_cost(4)).unwrap();
         assert_eq!(env.get_gas_left(), 26);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(6)).unwrap();
+        process_gas_info(&env, GasInfo::with_cost(6)).unwrap();
         assert_eq!(env.get_gas_left(), 20);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(20)).unwrap();
+        process_gas_info(&env, GasInfo::with_cost(20)).unwrap();
         assert_eq!(env.get_gas_left(), 0);
 
         // Using one more unit of gas triggers a failure
-        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(1)).unwrap_err() {
+        match process_gas_info(&env, GasInfo::with_cost(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -512,17 +512,17 @@ mod tests {
         assert_eq!(env.get_gas_left(), 100);
 
         // Consume all the Gas that we allocated
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(70)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(70)).unwrap();
         assert_eq!(env.get_gas_left(), 30);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(4)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(4)).unwrap();
         assert_eq!(env.get_gas_left(), 26);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(6)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(6)).unwrap();
         assert_eq!(env.get_gas_left(), 20);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(20)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(20)).unwrap();
         assert_eq!(env.get_gas_left(), 0);
 
         // Using one more unit of gas triggers a failure
-        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(1)).unwrap_err() {
+        match process_gas_info(&env, GasInfo::with_externally_used(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -536,26 +536,26 @@ mod tests {
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 0);
 
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(17, 4)).unwrap();
+        process_gas_info(&env, GasInfo::new(17, 4)).unwrap();
         assert_eq!(env.get_gas_left(), 79);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 4);
 
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(9, 0)).unwrap();
+        process_gas_info(&env, GasInfo::new(9, 0)).unwrap();
         assert_eq!(env.get_gas_left(), 70);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 4);
 
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(0, 70)).unwrap();
+        process_gas_info(&env, GasInfo::new(0, 70)).unwrap();
         assert_eq!(env.get_gas_left(), 0);
         let gas_state = env.with_gas_state(|gas_state| gas_state.clone());
         assert_eq!(gas_state.gas_limit, 100);
         assert_eq!(gas_state.externally_used_gas, 74);
 
         // More cost fail but do not change stats
-        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(1, 0)).unwrap_err() {
+        match process_gas_info(&env, GasInfo::new(1, 0)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -565,7 +565,7 @@ mod tests {
         assert_eq!(gas_state.externally_used_gas, 74);
 
         // More externally used fails and changes stats
-        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::new(0, 1)).unwrap_err() {
+        match process_gas_info(&env, GasInfo::new(0, 1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
@@ -580,7 +580,7 @@ mod tests {
         // with_externally_used
         {
             let (env, _instance) = make_instance(100);
-            let result = process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(120));
+            let result = process_gas_info(&env, GasInfo::with_externally_used(120));
             match result.unwrap_err() {
                 VmError::GasDepletion { .. } => {}
                 err => panic!("unexpected error: {:?}", err),
@@ -594,7 +594,7 @@ mod tests {
         // with_cost
         {
             let (env, _instance) = make_instance(100);
-            let result = process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_cost(120));
+            let result = process_gas_info(&env, GasInfo::with_cost(120));
             match result.unwrap_err() {
                 VmError::GasDepletion { .. } => {}
                 err => panic!("unexpected error: {:?}", err),
@@ -612,22 +612,22 @@ mod tests {
         assert_eq!(env.get_gas_left(), 100);
 
         // Some gas was consumed externally
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(50)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(50)).unwrap();
         assert_eq!(env.get_gas_left(), 50);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(4)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(4)).unwrap();
         assert_eq!(env.get_gas_left(), 46);
 
         // Consume 20 gas directly in wasmer
         env.decrease_gas_left(20).unwrap();
         assert_eq!(env.get_gas_left(), 26);
 
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(6)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(6)).unwrap();
         assert_eq!(env.get_gas_left(), 20);
-        process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(20)).unwrap();
+        process_gas_info(&env, GasInfo::with_externally_used(20)).unwrap();
         assert_eq!(env.get_gas_left(), 0);
 
         // Using one more unit of gas triggers a failure
-        match process_gas_info::<MA, MS, MQ>(&env, GasInfo::with_externally_used(1)).unwrap_err() {
+        match process_gas_info(&env, GasInfo::with_externally_used(1)).unwrap_err() {
             VmError::GasDepletion { .. } => {}
             err => panic!("unexpected error: {:?}", err),
         }
