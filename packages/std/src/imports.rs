@@ -155,7 +155,7 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
-    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
+    fn addr_canonicalize(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         let send = build_region(human.as_str().as_bytes());
         let send_ptr = &*send as *const Region as u32;
         let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
@@ -173,7 +173,7 @@ impl Api for ExternalApi {
         Ok(CanonicalAddr(Binary(out)))
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         let send = build_region(&canonical);
         let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);

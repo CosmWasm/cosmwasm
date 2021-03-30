@@ -71,7 +71,7 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
+    fn addr_canonicalize(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
         // Dummy input validation. This is more sophisticated for formats like bech32, where format and checksum are validated.
         if human.len() < 3 {
             return Err(StdError::generic_err(
@@ -98,7 +98,7 @@ impl Api for MockApi {
         Ok(out.into())
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
         if canonical.len() != self.canonical_length {
             return Err(StdError::generic_err(
                 "Invalid input: canonical address length not correct",
@@ -542,33 +542,33 @@ mod tests {
         let api = MockApi::default();
 
         let original = HumanAddr::from("shorty");
-        let canonical = api.canonical_address(&original).unwrap();
-        let recovered = api.human_address(&canonical).unwrap();
+        let canonical = api.addr_canonicalize(&original).unwrap();
+        let recovered = api.addr_humanize(&canonical).unwrap();
         assert_eq!(recovered, original);
     }
 
     #[test]
     #[should_panic(expected = "address too short")]
-    fn canonical_address_min_input_length() {
+    fn addr_canonicalize_min_input_length() {
         let api = MockApi::default();
         let human = HumanAddr("1".to_string());
-        let _ = api.canonical_address(&human).unwrap();
+        let _ = api.addr_canonicalize(&human).unwrap();
     }
 
     #[test]
     #[should_panic(expected = "address too long")]
-    fn canonical_address_max_input_length() {
+    fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
         let human = HumanAddr::from("some-extremely-long-address-not-supported-by-this-api");
-        let _ = api.canonical_address(&human).unwrap();
+        let _ = api.addr_canonicalize(&human).unwrap();
     }
 
     #[test]
     #[should_panic(expected = "length not correct")]
-    fn human_address_input_length() {
+    fn addr_humanize_input_length() {
         let api = MockApi::default();
         let input = CanonicalAddr(Binary(vec![61; 11]));
-        api.human_address(&input).unwrap();
+        api.addr_humanize(&input).unwrap();
     }
 
     // Basic "works" test. Exhaustive tests on VM's side (packages/vm/src/imports.rs)

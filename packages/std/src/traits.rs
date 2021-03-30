@@ -64,8 +64,21 @@ pub trait Storage {
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api {
-    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
-    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
+    /// Takes a human readable address and validates if it's correctly formatted.
+    fn addr_validate(&self, human: &HumanAddr) -> bool {
+        match self.addr_canonicalize(human) {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+
+    /// Takes a human readable address and returns a canonical binary representation of it.
+    /// This can be used when a compact fixed length representation is needed.
+    fn addr_canonicalize(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
+
+    /// Takes a canonical address and returns a human readble address.
+    /// This is the inverse of [addr_canonicalize].
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
 
     fn secp256k1_verify(
         &self,

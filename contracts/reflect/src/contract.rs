@@ -18,7 +18,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response<CustomMsg>> {
     let state = State {
-        owner: deps.api.canonical_address(&info.sender)?,
+        owner: deps.api.addr_canonicalize(&info.sender)?,
     };
     config(deps.storage).save(&state)?;
 
@@ -59,7 +59,7 @@ pub fn try_reflect(
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let state = config(deps.storage).load()?;
 
-    let sender = deps.api.canonical_address(&info.sender)?;
+    let sender = deps.api.addr_canonicalize(&info.sender)?;
     if sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
             expected: state.owner,
@@ -86,7 +86,7 @@ pub fn try_reflect_subcall(
     msgs: Vec<SubMsg<CustomMsg>>,
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let state = config(deps.storage).load()?;
-    let sender = deps.api.canonical_address(&info.sender)?;
+    let sender = deps.api.addr_canonicalize(&info.sender)?;
     if sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
             expected: state.owner,
@@ -114,14 +114,14 @@ pub fn try_change_owner(
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let api = deps.api;
     config(deps.storage).update(|mut state| {
-        let sender = api.canonical_address(&info.sender)?;
+        let sender = api.addr_canonicalize(&info.sender)?;
         if sender != state.owner {
             return Err(ReflectError::NotCurrentOwner {
                 expected: state.owner,
                 actual: sender,
             });
         }
-        state.owner = api.canonical_address(&owner)?;
+        state.owner = api.addr_canonicalize(&owner)?;
         Ok(state)
     })?;
     Ok(Response {
@@ -151,7 +151,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 fn query_owner(deps: Deps) -> StdResult<OwnerResponse> {
     let state = config_read(deps.storage).load()?;
     let resp = OwnerResponse {
-        owner: deps.api.human_address(&state.owner)?,
+        owner: deps.api.addr_humanize(&state.owner)?,
     };
     Ok(resp)
 }
@@ -384,8 +384,8 @@ mod tests {
         let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
 
         let err = execute(deps.as_mut(), mock_env(), info, msg).unwrap_err();
-        let expected = deps.api.canonical_address(&creator).unwrap();
-        let actual = deps.api.canonical_address(&random).unwrap();
+        let expected = deps.api.addr_canonicalize(&creator).unwrap();
+        let actual = deps.api.addr_canonicalize(&random).unwrap();
         assert_eq!(err, ReflectError::NotCurrentOwner { expected, actual });
     }
 

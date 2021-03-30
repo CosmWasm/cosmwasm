@@ -108,9 +108,9 @@ pub fn instantiate(
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
-            verifier: deps.api.canonical_address(&msg.verifier)?,
-            beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-            funder: deps.api.canonical_address(&info.sender)?,
+            verifier: deps.api.addr_canonicalize(&msg.verifier)?,
+            beneficiary: deps.api.addr_canonicalize(&msg.beneficiary)?,
+            funder: deps.api.addr_canonicalize(&info.sender)?,
         })?,
     );
 
@@ -126,7 +126,7 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Ha
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let mut config: State = from_slice(&data)?;
-    config.verifier = deps.api.canonical_address(&msg.verifier)?;
+    config.verifier = deps.api.addr_canonicalize(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
     Ok(Response::default())
@@ -171,8 +171,8 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if deps.api.canonical_address(&info.sender)? == state.verifier {
-        let to_addr = deps.api.human_address(&state.beneficiary)?;
+    if deps.api.addr_canonicalize(&info.sender)? == state.verifier {
+        let to_addr = deps.api.addr_humanize(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(&env.contract.address)?;
 
         let mut resp = Response::new();
@@ -247,7 +247,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     // Canonicalize
 
     let empty = HumanAddr::from("");
-    match api.canonical_address(&empty).unwrap_err() {
+    match api.addr_canonicalize(&empty).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -259,7 +259,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     }
 
     let invalid_bech32 = HumanAddr::from("bn93hg934hg08q340g8u4jcau3");
-    match api.canonical_address(&invalid_bech32).unwrap_err() {
+    match api.addr_canonicalize(&invalid_bech32).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -273,7 +273,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     // Humanize
 
     let empty: CanonicalAddr = vec![].into();
-    match api.human_address(&empty).unwrap_err() {
+    match api.addr_humanize(&empty).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -285,7 +285,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     }
 
     let too_short: CanonicalAddr = vec![0xAA, 0xBB, 0xCC].into();
-    match api.human_address(&too_short).unwrap_err() {
+    match api.addr_humanize(&too_short).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -297,7 +297,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     }
 
     let wrong_length: CanonicalAddr = vec![0xA6; 17].into();
-    match api.human_address(&wrong_length).unwrap_err() {
+    match api.addr_humanize(&wrong_length).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -327,7 +327,7 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
-    let addr = deps.api.human_address(&state.verifier)?;
+    let addr = deps.api.addr_humanize(&state.verifier)?;
     Ok(VerifierResponse { verifier: addr })
 }
 
@@ -384,9 +384,9 @@ mod tests {
         let beneficiary = HumanAddr(String::from("benefits"));
         let creator = HumanAddr(String::from("creator"));
         let expected_state = State {
-            verifier: deps.api.canonical_address(&verifier).unwrap(),
-            beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-            funder: deps.api.canonical_address(&creator).unwrap(),
+            verifier: deps.api.addr_canonicalize(&verifier).unwrap(),
+            beneficiary: deps.api.addr_canonicalize(&beneficiary).unwrap(),
+            funder: deps.api.addr_canonicalize(&creator).unwrap(),
         };
 
         let msg = InstantiateMsg {
@@ -585,9 +585,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: deps.api.canonical_address(&verifier).unwrap(),
-                beneficiary: deps.api.canonical_address(&beneficiary).unwrap(),
-                funder: deps.api.canonical_address(&creator).unwrap(),
+                verifier: deps.api.addr_canonicalize(&verifier).unwrap(),
+                beneficiary: deps.api.addr_canonicalize(&beneficiary).unwrap(),
+                funder: deps.api.addr_canonicalize(&creator).unwrap(),
             }
         );
     }
