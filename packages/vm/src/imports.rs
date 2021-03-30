@@ -905,7 +905,8 @@ mod tests {
         leave_default_data(&env);
 
         let api = MockApi::default();
-        do_canonicalize_address(&env, source_ptr, dest_ptr).unwrap();
+        let res = do_canonicalize_address(&env, source_ptr, dest_ptr).unwrap();
+        assert_eq!(res, 0);
         let data = force_read(&env, dest_ptr);
         assert_eq!(data.len(), api.canonical_length);
     }
