@@ -198,7 +198,7 @@ mod tests {
     use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, Api, BankMsg, BankQuery, Binary,
-        ContractResult, Event, StakingMsg, StdError, SubcallResponse,
+        ContractResult, Event, ReplyOn, StakingMsg, StdError, SubcallResponse,
     };
 
     #[test]
@@ -466,6 +466,7 @@ mod tests {
                 amount: coins(1, "token"),
             }
             .into(),
+            reply_on: ReplyOn::default(),
         };
 
         let msg = ExecuteMsg::ReflectSubCall {

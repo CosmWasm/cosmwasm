@@ -44,8 +44,8 @@ pub use crate::query::{
 };
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
-    Event, QueryResponse, Reply, Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
-    WasmMsg,
+    Event, QueryResponse, Reply, ReplyOn, Response, StakingMsg, SubMsg, SubcallResponse,
+    SystemResult, WasmMsg,
 };
 #[allow(deprecated)]
 pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse};
