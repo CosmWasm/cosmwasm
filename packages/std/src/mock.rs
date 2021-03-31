@@ -3,7 +3,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::HashMap;
 
-use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
@@ -71,9 +71,9 @@ impl Default for MockApi {
 }
 
 impl Api for MockApi {
-    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr> {
+    fn addr_validate(&self, human: &str) -> StdResult<Addr> {
         self.addr_canonicalize(human).map(|_canonical| ())?;
-        Ok(human.into())
+        Ok(Addr::unchecked(human))
     }
 
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {

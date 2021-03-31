@@ -52,6 +52,8 @@ and this project adheres to
   returns "submessages" (above). ([#796])
 - cosmwasm-std: Implement `From<Uint128> for String`, `From<Uint128> for u128`
   as well as `From<u{32,16,8}> for Uint128`.
+- cosmwasm-std: Create new address type `Addr`. This is human readable (like
+  `HumanAddr`) but is immutable and always contains a valid address ([#802]).
 - cosmwasm-vm: Add import `addr_validate` ([#802]).
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692

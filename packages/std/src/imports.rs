@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 use crate::import_helpers::{from_high_half, from_low_half};
@@ -156,7 +156,7 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
-    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr> {
+    fn addr_validate(&self, human: &str) -> StdResult<Addr> {
         let source = build_region(human.as_bytes());
         let source_ptr = &*source as *const Region as u32;
 
@@ -169,7 +169,7 @@ impl Api for ExternalApi {
             )));
         }
 
-        Ok(human.into())
+        Ok(Addr::unchecked(human))
     }
 
     fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {

@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, Serialize};
 use std::ops::Deref;
 
-use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
@@ -65,19 +65,19 @@ pub trait Storage {
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api {
     /// Takes a human readable address and validates if it's correctly formatted.
-    /// If it succeeds, a HumanAddr is returned.
+    /// If it succeeds, a Addr is returned.
     ///
     /// ## Examples
     ///
     /// ```
-    /// # use cosmwasm_std::{Api, HumanAddr};
+    /// # use cosmwasm_std::{Api, Addr};
     /// # use cosmwasm_std::testing::MockApi;
     /// # let api = MockApi::default();
     /// let input = "what-users-provide";
-    /// let validated: HumanAddr = api.addr_validate(input).unwrap();
+    /// let validated: Addr = api.addr_validate(input).unwrap();
     /// assert_eq!(validated, input);
     /// ```
-    fn addr_validate(&self, human: &str) -> StdResult<HumanAddr>;
+    fn addr_validate(&self, human: &str) -> StdResult<Addr>;
 
     /// Takes a human readable address and returns a canonical binary representation of it.
     /// This can be used when a compact fixed length representation is needed.
