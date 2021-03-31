@@ -6,6 +6,19 @@ use crate::{Binary, ContractResult};
 
 use super::{Attribute, CosmosMsg, Empty};
 
+/// Use this to define when the contract gets a response callback.
+/// If you only need it for errors or success you can select just those in order
+/// to save gas.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum ReplyOn {
+    /// Always perform a callback after SubMsg is processed
+    Always,
+    /// Only callback if SubMsg returned an error, no callback on success case
+    Error,
+    /// Only callback if SubMsg was successful, no callback on error case
+    Success,
+}
+
 /// A sub-message that will guarantee a subcall_response callback on success or error
 /// Note on error the subcall will revert any partial state changes due to this message,
 /// but not revert any state changes in the calling contract (that must be done in the
@@ -18,6 +31,7 @@ where
     pub id: u64,
     pub msg: CosmosMsg<T>,
     pub gas_limit: Option<u64>,
+    pub reply_on: ReplyOn,
 }
 
 /// The Result object returned to subcall_response. We always get the same id back

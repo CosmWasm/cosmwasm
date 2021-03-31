@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::Binary;
+use crate::{Binary, ReplyOn};
 
 use super::{Attribute, CosmosMsg, Empty};
 use crate::results::SubMsg;
@@ -125,11 +125,13 @@ where
         id: u64,
         msg: U,
         gas_limit: Option<u64>,
+        reply_on: ReplyOn,
     ) {
         let sub = SubMsg {
             id,
             msg: msg.into(),
             gas_limit,
+            reply_on,
         };
         self.submessages.push(sub);
     }
@@ -157,6 +159,7 @@ mod tests {
                 }
                 .into(),
                 gas_limit: Some(12345u64),
+                reply_on: ReplyOn::Always,
             }],
             messages: vec![BankMsg::Send {
                 to_address: HumanAddr::from("you"),
