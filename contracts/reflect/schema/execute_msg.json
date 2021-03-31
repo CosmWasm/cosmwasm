@@ -400,9 +400,9 @@
       "description": "Use this to define when the contract gets a response callback. If you only need it for errors or success you can select just those in order to save gas.",
       "type": "string",
       "enum": [
-        "Always",
-        "Error",
-        "Success"
+        "always",
+        "error",
+        "success"
       ]
     },
     "StakingMsg": {
