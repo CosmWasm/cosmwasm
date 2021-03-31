@@ -13,7 +13,6 @@ use cosmwasm_crypto::{
 
 #[cfg(feature = "iterator")]
 use cosmwasm_std::Order;
-use cosmwasm_std::{CanonicalAddr, HumanAddr};
 
 use crate::backend::{BackendApi, BackendError, Querier, Storage};
 use crate::conversion::{ref_to_u32, to_u32};
@@ -246,9 +245,8 @@ fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
         Ok(s) => s,
         Err(_) => return write_to_contract::<A, S, Q>(env, b"Input is not valid UTF-8"),
     };
-    let human: HumanAddr = source_string.into();
 
-    let (result, gas_info) = env.api.canonical_address(&human);
+    let (result, gas_info) = env.api.canonical_address(&source_string);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(_canonical) => Ok(0),
@@ -273,9 +271,8 @@ fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
         Ok(s) => s,
         Err(_) => return write_to_contract::<A, S, Q>(env, b"Input is not valid UTF-8"),
     };
-    let human: HumanAddr = source_string.into();
 
-    let (result, gas_info) = env.api.canonical_address(&human);
+    let (result, gas_info) = env.api.canonical_address(&source_string);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(canonical) => {
@@ -294,14 +291,13 @@ fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    let canonical: CanonicalAddr =
-        read_region(&env.memory(), source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?.into();
+    let canonical = read_region(&env.memory(), source_ptr, MAX_LENGTH_CANONICAL_ADDRESS)?;
 
     let (result, gas_info) = env.api.human_address(&canonical);
     process_gas_info::<A, S, Q>(env, gas_info)?;
     match result {
         Ok(human) => {
-            write_region(&env.memory(), destination_ptr, human.as_str().as_bytes())?;
+            write_region(&env.memory(), destination_ptr, human.as_bytes())?;
             Ok(0)
         }
         Err(BackendError::UserErr { msg, .. }) => {

@@ -1,7 +1,5 @@
 use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
-use cosmwasm_std::{
-    Addr, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
-};
+use cosmwasm_std::{Addr, BlockInfo, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -65,7 +63,7 @@ impl Default for MockApi {
 }
 
 impl BackendApi for MockApi {
-    fn canonical_address(&self, human: &HumanAddr) -> BackendResult<CanonicalAddr> {
+    fn canonical_address(&self, human: &str) -> BackendResult<Vec<u8>> {
         let gas_info = GasInfo::with_cost(GAS_COST_CANONICALIZE);
 
         if let Some(backend_error) = self.backend_error {
@@ -90,7 +88,7 @@ impl BackendApi for MockApi {
             );
         }
 
-        let mut out = Vec::from(human.as_str());
+        let mut out = Vec::from(human);
         // pad to canonical length with NULL bytes
         out.resize(self.canonical_length, 0x00);
         // content-dependent rotate followed by shuffle to destroy
@@ -100,10 +98,10 @@ impl BackendApi for MockApi {
         for _ in 0..18 {
             out = riffle_shuffle(&out);
         }
-        (Ok(out.into()), gas_info)
+        (Ok(out), gas_info)
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> BackendResult<HumanAddr> {
+    fn human_address(&self, canonical: &[u8]) -> BackendResult<String> {
         let gas_info = GasInfo::with_cost(GAS_COST_HUMANIZE);
 
         if let Some(backend_error) = self.backend_error {
@@ -119,7 +117,7 @@ impl BackendApi for MockApi {
             );
         }
 
-        let mut tmp: Vec<u8> = canonical.clone().into();
+        let mut tmp: Vec<u8> = canonical.into();
         // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
         for _ in 0..2 {
             tmp = riffle_shuffle(&tmp);
@@ -131,7 +129,7 @@ impl BackendApi for MockApi {
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
 
         let result = match String::from_utf8(trimmed) {
-            Ok(human) => Ok(HumanAddr(human)),
+            Ok(human) => Ok(human),
             Err(err) => Err(err.into()),
         };
         (result, gas_info)
@@ -170,7 +168,7 @@ pub fn mock_info<U: Into<HumanAddr>>(sender: U, funds: &[Coin]) -> MessageInfo {
 mod tests {
     use super::*;
     use crate::BackendError;
-    use cosmwasm_std::{coins, Binary};
+    use cosmwasm_std::coins;
 
     #[test]
     fn mock_info_arguments() {
@@ -190,8 +188,8 @@ mod tests {
     fn canonicalize_and_humanize_restores_original() {
         let api = MockApi::default();
 
-        let original = HumanAddr::from("shorty");
-        let canonical = api.canonical_address(&original).0.unwrap();
+        let original = "shorty";
+        let canonical = api.canonical_address(original).0.unwrap();
         let (recovered, _gas_cost) = api.human_address(&canonical);
         assert_eq!(recovered.unwrap(), original);
     }
@@ -199,7 +197,7 @@ mod tests {
     #[test]
     fn human_address_input_length() {
         let api = MockApi::default();
-        let input = CanonicalAddr(Binary(vec![61; 11]));
+        let input = vec![61; 11];
         let (result, _gas_info) = api.human_address(&input);
         match result.unwrap_err() {
             BackendError::UserErr { .. } => {}
@@ -210,8 +208,8 @@ mod tests {
     #[test]
     fn canonical_address_min_input_length() {
         let api = MockApi::default();
-        let human = HumanAddr::from("1");
-        match api.canonical_address(&human).0.unwrap_err() {
+        let human = "1";
+        match api.canonical_address(human).0.unwrap_err() {
             BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
@@ -220,8 +218,8 @@ mod tests {
     #[test]
     fn canonical_address_max_input_length() {
         let api = MockApi::default();
-        let human = HumanAddr::from("longer-than-the-address-length-supported-by-this-api");
-        match api.canonical_address(&human).0.unwrap_err() {
+        let human = "longer-than-the-address-length-supported-by-this-api";
+        match api.canonical_address(human).0.unwrap_err() {
             BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }

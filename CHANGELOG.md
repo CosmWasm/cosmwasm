@@ -117,6 +117,10 @@ and this project adheres to
   API provided by the VM's backend (i.e. the blockchain).
 - cosmwasm-vm: Rename imports to `addr_canonicalize` and `addr_humanize`
   ([#802]).
+- cosmwasm-vm: Replace types `HumanAddr`/`CanonicalAddr` with
+  `&str`/`String`/`&[u8]`/`Vec<u8>` in the methods of `BackendApi`. The address
+  types belong in the contract development and the backend operates on raw
+  strings and binary anyways.
 - contracts: `reflect` contract requires `stargate` feature and supports
   redispatching `Stargate` and `IbcMsg::Transfer` messages ([#692])
 - cosmwasm-std: The arithmetic methods of `Uint128` got a huge overhaul, making
