@@ -207,13 +207,13 @@ impl<'a> QuerierWrapper<'a> {
 
     // this queries another wasm contract. You should know a priori the proper types for T and U
     // (response and request) based on the contract API
-    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<HumanAddr>>(
+    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<String>>(
         &self,
-        contract: V,
+        contract_addr: V,
         msg: &U,
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
-            contract_addr: contract.into(),
+            contract_addr: contract_addr.into(),
             msg: to_binary(msg)?,
         }
         .into();
@@ -227,13 +227,13 @@ impl<'a> QuerierWrapper<'a> {
     //
     // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
     // It only returns error on some runtime issue, not on any data cases.
-    pub fn query_wasm_raw<T: Into<HumanAddr>, U: Into<Binary>>(
+    pub fn query_wasm_raw<T: Into<String>, U: Into<Binary>>(
         &self,
-        contract: T,
+        contract_addr: T,
         key: U,
     ) -> StdResult<Option<Vec<u8>>> {
         let request: QueryRequest<Empty> = WasmQuery::Raw {
-            contract_addr: contract.into(),
+            contract_addr: contract_addr.into(),
             key: key.into(),
         }
         .into();

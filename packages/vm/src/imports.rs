@@ -536,7 +536,7 @@ fn to_low_half(data: u32) -> u64 {
 mod tests {
     use super::*;
     use cosmwasm_std::{
-        coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, HumanAddr, QueryRequest,
+        coins, from_binary, AllBalanceResponse, BankQuery, Binary, Empty, QueryRequest,
         SystemError, SystemResult, WasmQuery,
     };
     use hex_literal::hex;
@@ -1796,7 +1796,7 @@ mod tests {
         let (env, _instance) = make_instance(api);
 
         let request: QueryRequest<Empty> = QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: HumanAddr::from("non-existent"),
+            contract_addr: String::from("non-existent"),
             msg: Binary::from(b"{}" as &[u8]),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
@@ -1812,7 +1812,7 @@ mod tests {
         match query_result {
             SystemResult::Ok(_) => panic!("This must not succeed"),
             SystemResult::Err(SystemError::NoSuchContract { addr }) => {
-                assert_eq!(addr, HumanAddr::from("non-existent"))
+                assert_eq!(addr, "non-existent")
             }
             SystemResult::Err(err) => panic!("Unexpected error: {:?}", err),
         }

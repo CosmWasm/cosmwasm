@@ -454,7 +454,7 @@
               ],
               "properties": {
                 "contract_addr": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 },
                 "msg": {
                   "description": "msg is the json-encoded QueryMsg struct",
@@ -484,7 +484,7 @@
               ],
               "properties": {
                 "contract_addr": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 },
                 "key": {
                   "description": "Key is the raw key used in the contracts Storage",

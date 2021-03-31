@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::{Binary, HumanAddr};
+use crate::Binary;
 
 /// SystemError is used for errors inside the VM and is API friendly (i.e. serializable).
 ///
@@ -16,11 +16,22 @@ use crate::{Binary, HumanAddr};
 #[serde(rename_all = "snake_case")]
 #[non_exhaustive]
 pub enum SystemError {
-    InvalidRequest { error: String, request: Binary },
-    InvalidResponse { error: String, response: Binary },
-    NoSuchContract { addr: HumanAddr },
+    InvalidRequest {
+        error: String,
+        request: Binary,
+    },
+    InvalidResponse {
+        error: String,
+        response: Binary,
+    },
+    NoSuchContract {
+        /// The address that was attemted to query
+        addr: String,
+    },
     Unknown {},
-    UnsupportedRequest { kind: String },
+    UnsupportedRequest {
+        kind: String,
+    },
 }
 
 impl std::error::Error for SystemError {}
