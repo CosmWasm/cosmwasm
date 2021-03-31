@@ -384,6 +384,15 @@
         }
       }
     },
+    "ReplyOn": {
+      "description": "Use this to define when the contract gets a response callback. If you only need it for errors or success you can select just those in order to save gas.",
+      "type": "string",
+      "enum": [
+        "Always",
+        "Error",
+        "Success"
+      ]
+    },
     "StakingMsg": {
       "description": "The message types of the staking module.\n\nSee https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto",
       "anyOf": [
@@ -505,7 +514,8 @@
       "type": "object",
       "required": [
         "id",
-        "msg"
+        "msg",
+        "reply_on"
       ],
       "properties": {
         "gas_limit": {
@@ -523,6 +533,9 @@
         },
         "msg": {
           "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
+        },
+        "reply_on": {
+          "$ref": "#/definitions/ReplyOn"
         }
       }
     },
