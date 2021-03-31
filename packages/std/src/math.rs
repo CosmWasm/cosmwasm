@@ -324,7 +324,7 @@ impl ops::Add<Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: Self) -> Self {
-        Uint128(self.u128() + rhs.u128())
+        Uint128(self.u128().checked_add(rhs.u128()).unwrap())
     }
 }
 
@@ -332,19 +332,19 @@ impl<'a> ops::Add<&'a Uint128> for Uint128 {
     type Output = Self;
 
     fn add(self, rhs: &'a Uint128) -> Self {
-        Uint128(self.u128() + rhs.u128())
+        Uint128(self.u128().checked_add(rhs.u128()).unwrap())
     }
 }
 
 impl ops::AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
-        self.0 += rhs.u128();
+        self.0 = self.0.checked_add(rhs.u128()).unwrap();
     }
 }
 
 impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
-        self.0 += rhs.u128();
+        self.0 = self.0.checked_add(rhs.u128()).unwrap();
     }
 }
 
