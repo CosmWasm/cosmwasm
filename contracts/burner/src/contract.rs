@@ -30,7 +30,9 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     }
 
     // get balance and send all to recipient
-    let balance = deps.querier.query_all_balances(&env.contract.address)?;
+    let balance = deps
+        .querier
+        .query_all_balances(env.contract.address.clone())?;
     let send = BankMsg::Send {
         to_address: msg.payout.clone(),
         amount: balance,

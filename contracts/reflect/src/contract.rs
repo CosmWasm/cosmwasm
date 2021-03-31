@@ -26,7 +26,7 @@ pub fn instantiate(
     if let Some(id) = msg.callback_id {
         let data = CallbackMsg::InitCallback {
             id,
-            contract_addr: env.contract.address,
+            contract_addr: env.contract.address.into(),
         };
         let msg = WasmMsg::Execute {
             contract_addr: info.sender,

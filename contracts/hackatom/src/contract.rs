@@ -173,7 +173,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
 
     if deps.api.addr_canonicalize(&info.sender)? == state.verifier {
         let to_addr = deps.api.addr_humanize(&state.beneficiary)?;
-        let balance = deps.querier.query_all_balances(&env.contract.address)?;
+        let balance = deps.querier.query_all_balances(env.contract.address)?;
 
         let mut resp = Response::new();
         resp.add_attribute("action", "release");
@@ -315,9 +315,12 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
-        QueryMsg::Recurse { depth, work } => {
-            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
-        }
+        QueryMsg::Recurse { depth, work } => to_binary(&query_recurse(
+            deps,
+            depth,
+            work,
+            env.contract.address.into(),
+        )?),
     }
 }
 

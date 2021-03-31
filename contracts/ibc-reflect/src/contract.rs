@@ -175,7 +175,7 @@ pub fn ibc_channel_close(
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
     let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
         let bank_msg = BankMsg::Send {
-            to_address: env.contract.address,
+            to_address: env.contract.address.into(),
             amount,
         };
         let reflect_msg = ReflectExecuteMsg::ReflectMsg {

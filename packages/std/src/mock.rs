@@ -192,7 +192,7 @@ pub fn mock_env() -> Env {
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         contract: ContractInfo {
-            address: HumanAddr::from(MOCK_CONTRACT_ADDR),
+            address: Addr::unchecked(MOCK_CONTRACT_ADDR),
         },
     }
 }

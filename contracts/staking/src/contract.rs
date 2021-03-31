@@ -109,7 +109,7 @@ pub fn transfer(
 
 // get_bonded returns the total amount of delegations from contract
 // it ensures they are all the same denom
-fn get_bonded(querier: &QuerierWrapper, contract: &HumanAddr) -> StdResult<Uint128> {
+fn get_bonded(querier: &QuerierWrapper, contract: HumanAddr) -> StdResult<Uint128> {
     let bonds = querier.query_all_delegations(contract)?;
     if bonds.is_empty() {
         return Ok(Uint128(0));
@@ -152,7 +152,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
         .ok_or_else(|| StdError::generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
 
     // bonded is the total number of tokens we have delegated from this address
-    let bonded = get_bonded(&deps.querier, &env.contract.address)?;
+    let bonded = get_bonded(&deps.querier, env.contract.address.into())?;
 
     // calculate to_mint and update total supply
     let mut totals = total_supply(deps.storage);
@@ -220,7 +220,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
 
     // re-calculate bonded to ensure we have real values
     // bonded is the total number of tokens we have delegated from this address
-    let bonded = get_bonded(&deps.querier, &env.contract.address)?;
+    let bonded = get_bonded(&deps.querier, env.contract.address.into())?;
 
     // calculate how many native tokens this is worth and update supply
     let remainder = amount.checked_sub(tax)?;
@@ -263,7 +263,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     let invest = invest_info_read(deps.storage).load()?;
     let mut balance = deps
         .querier
-        .query_balance(&env.contract.address, &invest.bond_denom)?;
+        .query_balance(env.contract.address, &invest.bond_denom)?;
     if balance.amount < invest.min_withdrawal {
         return Err(StdError::generic_err(
             "Insufficient balance in contract to process claim",
@@ -318,11 +318,11 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
         messages: vec![
             StakingMsg::Withdraw {
                 validator: invest.validator,
-                recipient: Some(contract_addr.clone()),
+                recipient: Some(contract_addr.clone().into()),
             }
             .into(),
             WasmMsg::Execute {
-                contract_addr,
+                contract_addr: contract_addr.into(),
                 msg,
                 send: vec![],
             }
@@ -340,7 +340,7 @@ pub fn _bond_all_tokens(
     info: MessageInfo,
 ) -> Result<Response, StakingError> {
     // this is just meant as a call-back to ourself
-    if info.sender != env.contract.address {
+    if info.sender.as_str() != env.contract.address {
         return Err(Unauthorized {}.build());
     }
 
@@ -348,7 +348,7 @@ pub fn _bond_all_tokens(
     let invest = invest_info_read(deps.storage).load()?;
     let mut balance = deps
         .querier
-        .query_balance(&env.contract.address, &invest.bond_denom)?;
+        .query_balance(env.contract.address, &invest.bond_denom)?;
 
     // we deduct pending claims from our account balance before reinvesting.
     // if there is not enough funds, we just return a no-op

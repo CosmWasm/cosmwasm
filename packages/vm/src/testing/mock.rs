@@ -1,5 +1,7 @@
 use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
-use cosmwasm_std::{BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
+use cosmwasm_std::{
+    Addr, BlockInfo, CanonicalAddr, Coin, ContractInfo, Env, HumanAddr, MessageInfo,
+};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -150,7 +152,7 @@ pub fn mock_env() -> Env {
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         contract: ContractInfo {
-            address: HumanAddr::from(MOCK_CONTRACT_ADDR),
+            address: Addr::unchecked(MOCK_CONTRACT_ADDR),
         },
     }
 }

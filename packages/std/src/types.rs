@@ -1,16 +1,16 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::HumanAddr;
+use crate::addresses::{Addr, HumanAddr};
 use crate::coins::Coin;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Env {
     pub block: BlockInfo,
     pub contract: ContractInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlockInfo {
     pub height: u64,
     /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
@@ -26,7 +26,7 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageInfo};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -35,7 +35,7 @@ pub struct BlockInfo {
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
     /// #     contract: ContractInfo {
-    /// #         address: HumanAddr::from("contract"),
+    /// #         address: Addr::unchecked("contract"),
     /// #     },
     /// # };
     /// # extern crate chrono;
@@ -46,7 +46,7 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageInfo};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -55,7 +55,7 @@ pub struct BlockInfo {
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
     /// #     contract: ContractInfo {
-    /// #         address: HumanAddr::from("contract"),
+    /// #         address: Addr::unchecked("contract"),
     /// #     },
     /// # };
     /// let millis = (env.block.time * 1_000) + (env.block.time_nanos / 1_000_000);
@@ -89,7 +89,7 @@ pub struct MessageInfo {
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ContractInfo {
-    pub address: HumanAddr,
+    pub address: Addr,
 }
