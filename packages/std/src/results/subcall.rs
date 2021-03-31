@@ -10,6 +10,7 @@ use super::{Attribute, CosmosMsg, Empty};
 /// If you only need it for errors or success you can select just those in order
 /// to save gas.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
 pub enum ReplyOn {
     /// Always perform a callback after SubMsg is processed
     Always,
