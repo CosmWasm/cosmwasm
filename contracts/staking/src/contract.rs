@@ -675,7 +675,7 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         set_validator(&mut deps.querier);
 
-        let creator = HumanAddr::from("creator");
+        let creator = String::from("creator");
         let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
@@ -684,7 +684,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = HumanAddr::from("bob");
+        let bob = String::from("bob");
         let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(500, "photon")]);
 
