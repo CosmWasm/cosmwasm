@@ -35,6 +35,13 @@ impl fmt::Display for Addr {
     }
 }
 
+impl AsRef<str> for Addr {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
 /// Implement `Addr == &str`
 impl PartialEq<&str> for Addr {
     fn eq(&self, rhs: &&str) -> bool {
@@ -225,6 +232,12 @@ mod tests {
         let embedded = format!("Address: {}", addr);
         assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
         assert_eq!(addr.to_string(), "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn addr_implements_as_ref_for_str() {
+        let addr = Addr::unchecked("literal-string");
+        assert_eq!(addr.as_ref(), "literal-string");
     }
 
     #[test]
