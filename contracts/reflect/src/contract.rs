@@ -466,7 +466,7 @@ mod tests {
                 amount: coins(1, "token"),
             }
             .into(),
-            reply_on: ReplyOn::Always,
+            reply_on: ReplyOn::default(),
         };
 
         let msg = ExecuteMsg::ReflectSubCall {

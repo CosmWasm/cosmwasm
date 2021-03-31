@@ -19,6 +19,12 @@ pub enum ReplyOn {
     Success,
 }
 
+impl Default for ReplyOn {
+    fn default() -> Self {
+        ReplyOn::Always
+    }
+}
+
 /// A sub-message that will guarantee a subcall_response callback on success or error
 /// Note on error the subcall will revert any partial state changes due to this message,
 /// but not revert any state changes in the calling contract (that must be done in the

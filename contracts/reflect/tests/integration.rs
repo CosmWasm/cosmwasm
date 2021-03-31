@@ -204,6 +204,7 @@ fn reflect_subcall() {
             amount: coins(1, "token"),
         }
         .into(),
+        reply_on: Default::default(),
     };
 
     let msg = ExecuteMsg::ReflectSubCall {
