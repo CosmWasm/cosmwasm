@@ -4,9 +4,8 @@ use std::fs::create_dir_all;
 use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use cosmwasm_std::BalanceResponse;
 
-use hackatom::contract::{
-    ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, State, SudoMsg, VerifierResponse,
-};
+use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg, VerifierResponse};
+use hackatom::state::State;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();

@@ -30,9 +30,8 @@ use cosmwasm_vm::{
     BackendApi, Storage, VmError,
 };
 
-use hackatom::contract::{
-    ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, State, SudoMsg, CONFIG_KEY,
-};
+use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg};
+use hackatom::state::{State, CONFIG_KEY};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
