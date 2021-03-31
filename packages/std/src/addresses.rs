@@ -35,6 +35,20 @@ impl fmt::Display for Addr {
     }
 }
 
+/// Implement `Addr == &str`
+impl PartialEq<&str> for Addr {
+    fn eq(&self, rhs: &&str) -> bool {
+        self.0 == *rhs
+    }
+}
+
+/// Implement `&str == Addr`
+impl PartialEq<Addr> for &str {
+    fn eq(&self, rhs: &Addr) -> bool {
+        *self == rhs.0
+    }
+}
+
 // Addr->String and Addr->HumanAddr are safe conversions.
 // However, the opposite direction is unsafe and must not be implemented.
 
@@ -211,6 +225,16 @@ mod tests {
         let embedded = format!("Address: {}", addr);
         assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
         assert_eq!(addr.to_string(), "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn addr_implements_partial_eq_with_str() {
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+
+        // `Addr == &str`
+        assert_eq!(addr, "cos934gh9034hg04g0h134");
+        // `&str == Addr`
+        assert_eq!("cos934gh9034hg04g0h134", addr);
     }
 
     #[test]
