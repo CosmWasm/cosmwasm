@@ -1,7 +1,6 @@
 use cosmwasm_std::{
-    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, HumanAddr,
-    MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128,
-    WasmMsg,
+    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
+    QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -109,8 +108,8 @@ pub fn transfer(
 
 // get_bonded returns the total amount of delegations from contract
 // it ensures they are all the same denom
-fn get_bonded(querier: &QuerierWrapper, contract: HumanAddr) -> StdResult<Uint128> {
-    let bonds = querier.query_all_delegations(contract)?;
+fn get_bonded<U: Into<String>>(querier: &QuerierWrapper, contract_addr: U) -> StdResult<Uint128> {
+    let bonds = querier.query_all_delegations(contract_addr)?;
     if bonds.is_empty() {
         return Ok(Uint128(0));
     }
@@ -152,7 +151,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
         .ok_or_else(|| StdError::generic_err(format!("No {} tokens sent", &invest.bond_denom)))?;
 
     // bonded is the total number of tokens we have delegated from this address
-    let bonded = get_bonded(&deps.querier, env.contract.address.into())?;
+    let bonded = get_bonded(&deps.querier, env.contract.address)?;
 
     // calculate to_mint and update total supply
     let mut totals = total_supply(deps.storage);
@@ -222,7 +221,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
 
     // re-calculate bonded to ensure we have real values
     // bonded is the total number of tokens we have delegated from this address
-    let bonded = get_bonded(&deps.querier, env.contract.address.into())?;
+    let bonded = get_bonded(&deps.querier, env.contract.address)?;
 
     // calculate how many native tokens this is worth and update supply
     let remainder = amount.checked_sub(tax)?;
@@ -437,7 +436,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coins, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
+    use cosmwasm_std::{coins, Coin, CosmosMsg, Decimal, FullDelegation, HumanAddr, Validator};
     use std::str::FromStr;
 
     fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {

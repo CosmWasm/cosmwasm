@@ -275,7 +275,7 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_all_delegations<U: Into<HumanAddr>>(
+    pub fn query_all_delegations<U: Into<String>>(
         &self,
         delegator: U,
     ) -> StdResult<Vec<Delegation>> {
@@ -288,10 +288,10 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_delegation<U: Into<HumanAddr>>(
+    pub fn query_delegation<U: Into<String>, V: Into<String>>(
         &self,
         delegator: U,
-        validator: U,
+        validator: V,
     ) -> StdResult<Option<FullDelegation>> {
         let request = StakingQuery::Delegation {
             delegator: delegator.into(),

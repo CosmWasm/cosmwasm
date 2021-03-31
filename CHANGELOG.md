@@ -54,8 +54,8 @@ and this project adheres to
   as well as `From<u{32,16,8}> for Uint128`.
 - cosmwasm-std: Create new address type `Addr`. This is human readable (like
   `HumanAddr`) but is immutable and always contains a valid address ([#802]).
-- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery` and `WasmQuery`
-  query requests.
+- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
+  and `WasmQuery` query requests.
 - cosmwasm-vm: Add import `addr_validate` ([#802]).
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692

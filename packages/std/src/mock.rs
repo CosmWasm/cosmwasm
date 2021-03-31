@@ -461,7 +461,7 @@ impl StakingQuerier {
                 let delegations: Vec<_> = self
                     .delegations
                     .iter()
-                    .filter(|d| &d.delegator == delegator)
+                    .filter(|d| d.delegator.as_str() == delegator)
                     .cloned()
                     .map(|d| d.into())
                     .collect();
@@ -472,10 +472,9 @@ impl StakingQuerier {
                 delegator,
                 validator,
             } => {
-                let delegation = self
-                    .delegations
-                    .iter()
-                    .find(|d| &d.delegator == delegator && &d.validator == validator);
+                let delegation = self.delegations.iter().find(|d| {
+                    d.delegator.as_str() == delegator && d.validator.as_str() == validator
+                });
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
@@ -887,7 +886,7 @@ mod tests {
     }
 
     // gets delegators from query or panic
-    fn get_all_delegators(staking: &StakingQuerier, delegator: HumanAddr) -> Vec<Delegation> {
+    fn get_all_delegators(staking: &StakingQuerier, delegator: String) -> Vec<Delegation> {
         let raw = staking
             .query(&StakingQuery::AllDelegations { delegator })
             .unwrap()
@@ -899,8 +898,8 @@ mod tests {
     // gets full delegators from query or panic
     fn get_delegator(
         staking: &StakingQuerier,
-        delegator: HumanAddr,
-        validator: HumanAddr,
+        delegator: String,
+        validator: String,
     ) -> Option<FullDelegation> {
         let raw = staking
             .query(&StakingQuery::Delegation {
@@ -915,24 +914,24 @@ mod tests {
 
     #[test]
     fn staking_querier_delegations() {
-        let val1 = HumanAddr::from("validator-one");
-        let val2 = HumanAddr::from("validator-two");
+        let val1 = String::from("validator-one");
+        let val2 = String::from("validator-two");
 
-        let user_a = HumanAddr::from("investor");
-        let user_b = HumanAddr::from("speculator");
-        let user_c = HumanAddr::from("hodler");
+        let user_a = String::from("investor");
+        let user_b = String::from("speculator");
+        let user_c = String::from("hodler");
 
         // we need multiple validators per delegator, so the queries provide different results
         let del1a = FullDelegation {
-            delegator: user_a.clone(),
-            validator: val1.clone(),
+            delegator: user_a.clone().into(),
+            validator: val1.clone().into(),
             amount: coin(100, "ustake"),
             can_redelegate: coin(100, "ustake"),
             accumulated_rewards: coins(5, "ustake"),
         };
         let del2a = FullDelegation {
-            delegator: user_a.clone(),
-            validator: val2.clone(),
+            delegator: user_a.clone().into(),
+            validator: val2.clone().into(),
             amount: coin(500, "ustake"),
             can_redelegate: coin(500, "ustake"),
             accumulated_rewards: coins(20, "ustake"),
@@ -940,8 +939,8 @@ mod tests {
 
         // note we cannot have multiple delegations on one validator, they are collapsed into one
         let del1b = FullDelegation {
-            delegator: user_b.clone(),
-            validator: val1.clone(),
+            delegator: user_b.clone().into(),
+            validator: val1.clone().into(),
             amount: coin(500, "ustake"),
             can_redelegate: coin(0, "ustake"),
             accumulated_rewards: coins(0, "ustake"),
@@ -949,8 +948,8 @@ mod tests {
 
         // and another one on val2
         let del2c = FullDelegation {
-            delegator: user_c.clone(),
-            validator: val2.clone(),
+            delegator: user_c.clone().into(),
+            validator: val2.clone().into(),
             amount: coin(8888, "ustake"),
             can_redelegate: coin(4567, "ustake"),
             accumulated_rewards: coins(900, "ustake"),
@@ -975,7 +974,7 @@ mod tests {
         assert_eq!(dels, vec![del2c.clone().into()]);
 
         // for user with no delegations...
-        let dels = get_all_delegators(&staking, HumanAddr::from("no one"));
+        let dels = get_all_delegators(&staking, String::from("no one"));
         assert_eq!(dels, vec![]);
 
         // filter a by validator (1 and 1)

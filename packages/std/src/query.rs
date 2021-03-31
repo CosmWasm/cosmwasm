@@ -150,12 +150,12 @@ pub enum StakingQuery {
     /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
     BondedDenom {},
     /// AllDelegations will return all delegations by the delegator
-    AllDelegations { delegator: HumanAddr },
+    AllDelegations { delegator: String },
     /// Delegation will return more detailed info on a particular
     /// delegation, defined by delegator/validator pair
     Delegation {
-        delegator: HumanAddr,
-        validator: HumanAddr,
+        delegator: String,
+        validator: String,
     },
     /// Returns all registered Validators on the system
     Validators {},

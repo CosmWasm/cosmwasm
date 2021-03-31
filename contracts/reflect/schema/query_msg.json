@@ -160,9 +160,6 @@
       "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
       "type": "string"
     },
-    "HumanAddr": {
-      "type": "string"
-    },
     "IbcQuery": {
       "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
       "anyOf": [
@@ -390,7 +387,7 @@
               ],
               "properties": {
                 "delegator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
@@ -412,10 +409,10 @@
               ],
               "properties": {
                 "delegator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 },
                 "validator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
