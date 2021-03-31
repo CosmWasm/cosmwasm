@@ -1,5 +1,5 @@
 use cosmwasm_std::testing::{digit_sum, riffle_shuffle};
-use cosmwasm_std::{Addr, BlockInfo, Coin, ContractInfo, Env, HumanAddr, MessageInfo};
+use cosmwasm_std::{Addr, BlockInfo, Coin, ContractInfo, Env, MessageInfo};
 
 use super::querier::MockQuerier;
 use super::storage::MockStorage;
@@ -12,18 +12,17 @@ const GAS_COST_CANONICALIZE: u64 = 55;
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
 pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockApi, MockStorage, MockQuerier> {
-    let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     Backend {
         api: MockApi::default(),
         storage: MockStorage::default(),
-        querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
+        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)]),
     }
 }
 
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_backend_with_balances(
-    balances: &[(&HumanAddr, &[Coin])],
+    balances: &[(&str, &[Coin])],
 ) -> Backend<MockApi, MockStorage, MockQuerier> {
     Backend {
         api: MockApi::default(),
@@ -168,7 +167,7 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
 mod tests {
     use super::*;
     use crate::BackendError;
-    use cosmwasm_std::coins;
+    use cosmwasm_std::{coins, HumanAddr};
 
     #[test]
     fn mock_info_arguments() {

@@ -185,7 +185,7 @@ fn sudo_can_steal_tokens() {
 fn querier_callbacks_work() {
     let rich_addr = String::from("foobar");
     let rich_balance = coins(10000, "gold");
-    let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr.clone().into(), &rich_balance)]);
+    let mut deps = mock_instance_with_balances(WASM, &[(&rich_addr, &rich_balance)]);
 
     // querying with balance gets the balance
     let query_msg = QueryMsg::OtherBalance { address: rich_addr };

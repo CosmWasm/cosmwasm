@@ -265,7 +265,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     let invest = invest_info_read(deps.storage).load()?;
     let mut balance = deps
         .querier
-        .query_balance(env.contract.address, &invest.bond_denom)?;
+        .query_balance(env.contract.address, invest.bond_denom)?;
     if balance.amount < invest.min_withdrawal {
         return Err(StdError::generic_err(
             "Insufficient balance in contract to process claim",

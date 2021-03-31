@@ -38,11 +38,11 @@ pub enum QueryRequest<C: CustomQuery> {
 pub enum BankQuery {
     /// This calls into the native bank module for one denomination
     /// Return value is BalanceResponse
-    Balance { address: HumanAddr, denom: String },
+    Balance { address: String, denom: String },
     /// This calls into the native bank module for all denominations.
     /// Note that this may be much more expensive than Balance and should be avoided if possible.
     /// Return value is AllBalanceResponse.
-    AllBalances { address: HumanAddr },
+    AllBalances { address: String },
 }
 
 /// A trait that is required to avoid conflicts with other query types like BankQuery and WasmQuery

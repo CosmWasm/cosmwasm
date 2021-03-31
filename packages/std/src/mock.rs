@@ -28,18 +28,17 @@ pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 pub fn mock_dependencies(
     contract_balance: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
-    let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
-        querier: MockQuerier::new(&[(&contract_addr, contract_balance)]),
+        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)]),
     }
 }
 
 /// Initializes the querier along with the mock_dependencies.
 /// Sets all balances provided (yoy must explicitly set contract balance if desired)
 pub fn mock_dependencies_with_balances(
-    balances: &[(&HumanAddr, &[Coin])],
+    balances: &[(&str, &[Coin])],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier> {
     OwnedDeps {
         storage: MockStorage::default(),
@@ -292,7 +291,7 @@ pub struct MockQuerier<C: DeserializeOwned = Empty> {
 }
 
 impl<C: DeserializeOwned> MockQuerier<C> {
-    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
+    pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
             staking: StakingQuerier::default(),
@@ -307,7 +306,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     }
 
     // set a new balance for the given address and return the old balance
-    pub fn update_balance<U: Into<HumanAddr>>(
+    pub fn update_balance<U: Into<String>>(
         &mut self,
         addr: U,
         balance: Vec<Coin>,
@@ -386,14 +385,14 @@ impl NoWasmQuerier {
 
 #[derive(Clone, Default)]
 pub struct BankQuerier {
-    balances: HashMap<HumanAddr, Vec<Coin>>,
+    balances: HashMap<String, Vec<Coin>>,
 }
 
 impl BankQuerier {
-    pub fn new(balances: &[(&HumanAddr, &[Coin])]) -> Self {
+    pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         let mut map = HashMap::new();
         for (addr, coins) in balances.iter() {
-            map.insert(HumanAddr::from(addr), coins.to_vec());
+            map.insert(addr.to_string(), coins.to_vec());
         }
         BankQuerier { balances: map }
     }
@@ -792,11 +791,10 @@ mod tests {
 
     #[test]
     fn bank_querier_all_balances() {
-        let addr = HumanAddr::from("foobar");
+        let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let bank = BankQuerier::new(&[(&addr, &balance)]);
 
-        // all
         let all = bank
             .query(&BankQuery::AllBalances { address: addr })
             .unwrap()
@@ -807,7 +805,7 @@ mod tests {
 
     #[test]
     fn bank_querier_one_balance() {
-        let addr = HumanAddr::from("foobar");
+        let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let bank = BankQuerier::new(&[(&addr, &balance)]);
 
@@ -836,14 +834,14 @@ mod tests {
 
     #[test]
     fn bank_querier_missing_account() {
-        let addr = HumanAddr::from("foobar");
+        let addr = String::from("foobar");
         let balance = vec![coin(123, "ELF"), coin(777, "FLY")];
         let bank = BankQuerier::new(&[(&addr, &balance)]);
 
         // all balances on empty account is empty vec
         let all = bank
             .query(&BankQuery::AllBalances {
-                address: HumanAddr::from("elsewhere"),
+                address: String::from("elsewhere"),
             })
             .unwrap()
             .unwrap();
@@ -853,7 +851,7 @@ mod tests {
         // any denom on balances on empty account is empty coin
         let miss = bank
             .query(&BankQuery::Balance {
-                address: HumanAddr::from("elsewhere"),
+                address: String::from("elsewhere"),
                 denom: "ELF".to_string(),
             })
             .unwrap()

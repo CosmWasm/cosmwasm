@@ -1,7 +1,7 @@
 //! This file has some helpers for integration tests.
 //! They should be imported via full path to ensure there is no confusion
 //! use cosmwasm_vm::testing::X
-use cosmwasm_std::{Coin, HumanAddr};
+use cosmwasm_std::Coin;
 use std::collections::HashSet;
 
 use crate::compatibility::check_wasm;
@@ -51,7 +51,7 @@ pub fn mock_instance_with_failing_api(
 
 pub fn mock_instance_with_balances(
     wasm: &[u8],
-    balances: &[(&HumanAddr, &[Coin])],
+    balances: &[(&str, &[Coin])],
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     mock_instance_with_options(
         wasm,
@@ -78,7 +78,7 @@ pub fn mock_instance_with_gas_limit(
 #[derive(Debug)]
 pub struct MockInstanceOptions<'a> {
     // dependencies
-    pub balances: &'a [(&'a HumanAddr, &'a [Coin])],
+    pub balances: &'a [(&'a str, &'a [Coin])],
     /// This option is merged into balances and might override an existing value
     pub contract_balance: Option<&'a [Coin]>,
     /// When set, all calls to the API fail with BackendError::Unknown containing this message
@@ -126,16 +126,16 @@ pub fn mock_instance_with_options(
     options: MockInstanceOptions,
 ) -> Instance<MockApi, MockStorage, MockQuerier> {
     check_wasm(wasm, &options.supported_features).unwrap();
-    let contract_address = HumanAddr::from(MOCK_CONTRACT_ADDR);
+    let contract_address = MOCK_CONTRACT_ADDR;
 
     // merge balances
     let mut balances = options.balances.to_vec();
     if let Some(contract_balance) = options.contract_balance {
         // Remove old entry if exists
-        if let Some(pos) = balances.iter().position(|item| *item.0 == contract_address) {
+        if let Some(pos) = balances.iter().position(|item| item.0 == contract_address) {
             balances.remove(pos);
         }
-        balances.push((&contract_address, contract_balance));
+        balances.push((contract_address, contract_balance));
     }
 
     let api = if let Some(backend_error) = options.backend_error {

@@ -431,7 +431,7 @@ mod tests {
         // with bank query
         let msg = QueryMsg::Chain {
             request: BankQuery::AllBalances {
-                address: HumanAddr::from(MOCK_CONTRACT_ADDR),
+                address: MOCK_CONTRACT_ADDR.to_string(),
             }
             .into(),
         };

@@ -408,7 +408,7 @@ mod tests {
     fn querier_callbacks_work() {
         let rich_addr = String::from("foobar");
         let rich_balance = coins(10000, "gold");
-        let deps = mock_dependencies_with_balances(&[(&rich_addr.clone().into(), &rich_balance)]);
+        let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
 
         // querying with balance gets the balance
         let bal = query_other_balance(deps.as_ref(), rich_addr).unwrap();

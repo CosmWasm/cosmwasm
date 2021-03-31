@@ -182,17 +182,21 @@ impl<'a> QuerierWrapper<'a> {
         }
     }
 
-    pub fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
+    pub fn query_balance<U: Into<String>, V: Into<String>>(
+        &self,
+        address: U,
+        denom: V,
+    ) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
-            denom: denom.to_string(),
+            denom: denom.into(),
         }
         .into();
         let res: BalanceResponse = self.query(&request)?;
         Ok(res.amount)
     }
 
-    pub fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
+    pub fn query_all_balances<U: Into<String>>(&self, address: U) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -327,7 +331,7 @@ mod tests {
 
     #[test]
     fn auto_deref_raw_query() {
-        let acct = HumanAddr::from("foobar");
+        let acct = String::from("foobar");
         let querier: MockQuerier<Empty> = MockQuerier::new(&[(&acct, &coins(5, "BTC"))]);
         let wrapper = QuerierWrapper::new(&querier);
         let query = QueryRequest::<Empty>::Bank(BankQuery::Balance {

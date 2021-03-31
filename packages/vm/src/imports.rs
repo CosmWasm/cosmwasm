@@ -619,7 +619,7 @@ mod tests {
         storage.set(KEY1, VALUE1).0.expect("error setting");
         storage.set(KEY2, VALUE2).0.expect("error setting");
         let querier: MockQuerier<Empty> =
-            MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
+            MockQuerier::new(&[(INIT_ADDR, &coins(INIT_AMOUNT, INIT_DENOM))]);
         env.move_in(storage, querier);
     }
 
@@ -1748,7 +1748,7 @@ mod tests {
         let (env, _instance) = make_instance(api);
 
         let request: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
-            address: HumanAddr::from(INIT_ADDR),
+            address: INIT_ADDR.to_string(),
         });
         let request_data = cosmwasm_std::to_vec(&request).unwrap();
         let request_ptr = write_data(&env, &request_data);

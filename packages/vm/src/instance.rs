@@ -343,7 +343,7 @@ mod tests {
         mock_instance_with_options, MockInstanceOptions,
     };
     use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
+        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
         QueryRequest,
     };
 
@@ -671,7 +671,7 @@ mod tests {
 
     #[test]
     fn with_querier_works_readonly() {
-        let rich_addr = HumanAddr::from("foobar");
+        let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
         let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance)]);
 
@@ -726,7 +726,7 @@ mod tests {
     /// This is needed for writing intagration tests in which the balance of a contract changes over time
     #[test]
     fn with_querier_allows_updating_balances() {
-        let rich_addr = HumanAddr::from("foobar");
+        let rich_addr = String::from("foobar");
         let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
         let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
         let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance1)]);
