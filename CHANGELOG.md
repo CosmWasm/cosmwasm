@@ -110,6 +110,8 @@ and this project adheres to
   `interface_version_5`.
 - cosmwasm-vm: Rename trait `Api` to `BackendApi` to better express this is the
   API provided by the VM's backend (i.e. the blockchain).
+- cosmwasm-vm: Rename imports to `addr_canonicalize` and `addr_humanize`
+  ([#802]).
 - contracts: `reflect` contract requires `stargate` feature and supports
   redispatching `Stargate` and `IbcMsg::Transfer` messages ([#692])
 - cosmwasm-std: The arithmetic methods of `Uint128` got a huge overhaul, making
@@ -140,6 +142,7 @@ and this project adheres to
 [#853]: https://github.com/CosmWasm/cosmwasm/pull/853
 [#858]: https://github.com/CosmWasm/cosmwasm/issues/858
 [u128]: https://doc.rust-lang.org/std/primitive.u128.html
+[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ### Deprecated
 

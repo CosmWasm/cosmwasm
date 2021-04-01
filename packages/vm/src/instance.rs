@@ -9,8 +9,8 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    native_canonicalize_address, native_db_read, native_db_remove, native_db_write, native_debug,
-    native_ed25519_batch_verify, native_ed25519_verify, native_humanize_address,
+    native_addr_canonicalize, native_addr_humanize, native_db_read, native_db_remove,
+    native_db_write, native_debug, native_ed25519_batch_verify, native_ed25519_verify,
     native_query_chain, native_secp256k1_recover_pubkey, native_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
@@ -110,8 +110,8 @@ where
         // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
-            "canonicalize_address",
-            Function::new_native_with_env(store, env.clone(), native_canonicalize_address),
+            "addr_canonicalize",
+            Function::new_native_with_env(store, env.clone(), native_addr_canonicalize),
         );
 
         // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
@@ -119,8 +119,8 @@ where
         // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
-            "humanize_address",
-            Function::new_native_with_env(store, env.clone(), native_humanize_address),
+            "addr_humanize",
+            Function::new_native_with_env(store, env.clone(), native_addr_humanize),
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.

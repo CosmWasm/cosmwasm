@@ -74,20 +74,20 @@ pub fn native_db_remove<A: BackendApi, S: Storage, Q: Querier>(
     do_remove(env, key_ptr)
 }
 
-pub fn native_canonicalize_address<A: BackendApi, S: Storage, Q: Querier>(
+pub fn native_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    do_canonicalize_address(&env, source_ptr, destination_ptr)
+    do_addr_canonicalize(&env, source_ptr, destination_ptr)
 }
 
-pub fn native_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
+pub fn native_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
 ) -> VmResult<u32> {
-    do_humanize_address(&env, source_ptr, destination_ptr)
+    do_addr_humanize(&env, source_ptr, destination_ptr)
 }
 
 pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
@@ -226,7 +226,7 @@ fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_canonicalize_address<A: BackendApi, S: Storage, Q: Querier>(
+fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -256,7 +256,7 @@ fn do_canonicalize_address<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_humanize_address<A: BackendApi, S: Storage, Q: Querier>(
+fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -564,8 +564,8 @@ mod tests {
                 "db_scan" => Function::new_native(&store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
-                "canonicalize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
-                "humanize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "addr_canonicalize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "addr_humanize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
@@ -894,7 +894,7 @@ mod tests {
     }
 
     #[test]
-    fn do_canonicalize_address_works() {
+    fn do_addr_canonicalize_works() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
         let api = MockApi::default();
@@ -905,14 +905,14 @@ mod tests {
         leave_default_data(&env);
 
         let api = MockApi::default();
-        let res = do_canonicalize_address(&env, source_ptr, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(&env, source_ptr, dest_ptr).unwrap();
         assert_eq!(res, 0);
         let data = force_read(&env, dest_ptr);
         assert_eq!(data.len(), api.canonical_length);
     }
 
     #[test]
-    fn do_canonicalize_address_reports_invalid_input_back_to_contract() {
+    fn do_addr_canonicalize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
@@ -923,24 +923,24 @@ mod tests {
 
         leave_default_data(&env);
 
-        let res = do_canonicalize_address(&env, source_ptr1, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(&env, source_ptr1, dest_ptr).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Input is not valid UTF-8");
 
-        let res = do_canonicalize_address(&env, source_ptr2, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(&env, source_ptr2, dest_ptr).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Input is empty");
 
-        let res = do_canonicalize_address(&env, source_ptr3, dest_ptr).unwrap();
+        let res = do_addr_canonicalize(&env, source_ptr3, dest_ptr).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Invalid input: human address too long");
     }
 
     #[test]
-    fn do_canonicalize_address_fails_for_broken_backend() {
+    fn do_addr_canonicalize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
         let (env, mut instance) = make_instance(api);
 
@@ -949,7 +949,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_canonicalize_address(&env, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(&env, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
@@ -962,7 +962,7 @@ mod tests {
     }
 
     #[test]
-    fn do_canonicalize_address_fails_for_large_inputs() {
+    fn do_addr_canonicalize_fails_for_large_inputs() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
@@ -971,7 +971,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_canonicalize_address(&env, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(&env, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -988,7 +988,7 @@ mod tests {
     }
 
     #[test]
-    fn do_canonicalize_address_fails_for_small_destination_region() {
+    fn do_addr_canonicalize_fails_for_small_destination_region() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
@@ -997,7 +997,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_canonicalize_address(&env, source_ptr, dest_ptr);
+        let result = do_addr_canonicalize(&env, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },
@@ -1011,7 +1011,7 @@ mod tests {
     }
 
     #[test]
-    fn do_humanize_address_works() {
+    fn do_addr_humanize_works() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
         let api = MockApi::default();
@@ -1022,13 +1022,13 @@ mod tests {
 
         leave_default_data(&env);
 
-        let error_ptr = do_humanize_address(&env, source_ptr, dest_ptr).unwrap();
+        let error_ptr = do_addr_humanize(&env, source_ptr, dest_ptr).unwrap();
         assert_eq!(error_ptr, 0);
         assert_eq!(force_read(&env, dest_ptr), source_data);
     }
 
     #[test]
-    fn do_humanize_address_reports_invalid_input_back_to_contract() {
+    fn do_addr_humanize_reports_invalid_input_back_to_contract() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
@@ -1037,14 +1037,14 @@ mod tests {
 
         leave_default_data(&env);
 
-        let res = do_humanize_address(&env, source_ptr, dest_ptr).unwrap();
+        let res = do_addr_humanize(&env, source_ptr, dest_ptr).unwrap();
         assert_ne!(res, 0);
         let err = String::from_utf8(force_read(&env, res)).unwrap();
         assert_eq!(err, "Invalid input: canonical address length not correct");
     }
 
     #[test]
-    fn do_humanize_address_fails_for_broken_backend() {
+    fn do_addr_humanize_fails_for_broken_backend() {
         let api = MockApi::new_failing("Temporarily unavailable");
         let (env, mut instance) = make_instance(api);
 
@@ -1053,7 +1053,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_humanize_address(&env, source_ptr, dest_ptr);
+        let result = do_addr_humanize(&env, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::Unknown { msg, .. },
@@ -1064,7 +1064,7 @@ mod tests {
     }
 
     #[test]
-    fn do_humanize_address_fails_for_input_too_long() {
+    fn do_addr_humanize_fails_for_input_too_long() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
@@ -1073,7 +1073,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_humanize_address(&env, source_ptr, dest_ptr);
+        let result = do_addr_humanize(&env, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -1090,7 +1090,7 @@ mod tests {
     }
 
     #[test]
-    fn do_humanize_address_fails_for_destination_region_too_small() {
+    fn do_addr_humanize_fails_for_destination_region_too_small() {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
         let api = MockApi::default();
@@ -1101,7 +1101,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_humanize_address(&env, source_ptr, dest_ptr);
+        let result = do_addr_humanize(&env, source_ptr, dest_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionTooSmall { size, required, .. },

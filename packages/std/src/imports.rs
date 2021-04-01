@@ -36,8 +36,8 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
-    fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
     fn secp256k1_recover_pubkey(
@@ -160,11 +160,11 @@ impl Api for ExternalApi {
         let send_ptr = &*send as *const Region as u32;
         let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
 
-        let result = unsafe { canonicalize_address(send_ptr, canon as u32) };
+        let result = unsafe { addr_canonicalize(send_ptr, canon as u32) };
         if result != 0 {
             let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
-                "canonicalize_address errored: {}",
+                "addr_canonicalize errored: {}",
                 error
             )));
         }
@@ -178,11 +178,11 @@ impl Api for ExternalApi {
         let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 
-        let result = unsafe { humanize_address(send_ptr, human as u32) };
+        let result = unsafe { addr_humanize(send_ptr, human as u32) };
         if result != 0 {
             let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
-                "humanize_address errored: {}",
+                "addr_humanize errored: {}",
                 error
             )));
         }
