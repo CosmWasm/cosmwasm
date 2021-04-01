@@ -131,7 +131,7 @@ mod tests {
     use cosmwasm_std::testing::MockStorage;
     use serde::{Deserialize, Serialize};
 
-    use cosmwasm_std::StdError;
+    use cosmwasm_std::{OverflowError, OverflowOperation, StdError};
 
     #[derive(Serialize, Deserialize, PartialEq, Debug)]
     struct Config {
@@ -251,9 +251,15 @@ mod tests {
         };
         writer.save(&cfg).unwrap();
 
-        let output = writer.update(&|_c| Err(StdError::underflow(4, 7)));
+        let output = writer.update(&|_c| {
+            Err(StdError::from(OverflowError::new(
+                OverflowOperation::Sub,
+                4,
+                7,
+            )))
+        });
         match output.unwrap_err() {
-            StdError::Underflow { .. } => {}
+            StdError::Overflow(_) => {}
             err => panic!("Unexpected error: {:?}", err),
         }
         assert_eq!(writer.load().unwrap(), cfg);

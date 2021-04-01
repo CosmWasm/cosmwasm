@@ -86,8 +86,8 @@ pub fn transfer(
     let sender_raw = deps.api.canonical_address(&info.sender)?;
 
     let mut accounts = balances(deps.storage);
-    accounts.update(&sender_raw, |balance: Option<Uint128>| {
-        balance.unwrap_or_default() - send
+    accounts.update(&sender_raw, |balance: Option<Uint128>| -> StdResult<_> {
+        Ok(balance.unwrap_or_default().checked_sub(send)?)
     })?;
     accounts.update(&rcpt_raw, |balance: Option<Uint128>| -> StdResult<_> {
         Ok(balance.unwrap_or_default() + send)
@@ -209,7 +209,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     // deduct all from the account
     let mut accounts = balances(deps.storage);
     accounts.update(&sender_raw, |balance| -> StdResult<_> {
-        balance.unwrap_or_default() - amount
+        Ok(balance.unwrap_or_default().checked_sub(amount)?)
     })?;
     if tax > Uint128(0) {
         // add tax to the owner
@@ -223,14 +223,14 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let bonded = get_bonded(&deps.querier, &env.contract.address)?;
 
     // calculate how many native tokens this is worth and update supply
-    let remainder = (amount - tax)?;
+    let remainder = amount.checked_sub(tax)?;
     let mut totals = total_supply(deps.storage);
     let mut supply = totals.load()?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let unbond = remainder.multiply_ratio(bonded, supply.issued);
-    supply.bonded = (bonded - unbond)?;
-    supply.issued = (supply.issued - remainder)?;
+    supply.bonded = bonded.checked_sub(unbond)?;
+    supply.issued = supply.issued.checked_sub(remainder)?;
     supply.claims += unbond;
     totals.save(&supply)?;
 
@@ -273,15 +273,15 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     // check how much to send - min(balance, claims[sender]), and reduce the claim
     let sender_raw = deps.api.canonical_address(&info.sender)?;
     let mut to_send = balance.amount;
-    claims(deps.storage).update(sender_raw.as_slice(), |claim| {
+    claims(deps.storage).update(sender_raw.as_slice(), |claim| -> StdResult<_> {
         let claim = claim.ok_or_else(|| StdError::generic_err("no claim for this address"))?;
         to_send = to_send.min(claim);
-        claim - to_send
+        Ok(claim.checked_sub(to_send)?)
     })?;
 
     // update total supply (lower claim)
     total_supply(deps.storage).update(|mut supply| -> StdResult<_> {
-        supply.claims = (supply.claims - to_send)?;
+        supply.claims = supply.claims.checked_sub(to_send)?;
         Ok(supply)
     })?;
 
@@ -353,15 +353,15 @@ pub fn _bond_all_tokens(
     // we deduct pending claims from our account balance before reinvesting.
     // if there is not enough funds, we just return a no-op
     match total_supply(deps.storage).update(|mut supply| {
-        balance.amount = (balance.amount - supply.claims)?;
+        balance.amount = balance.amount.checked_sub(supply.claims)?;
         // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
-        (balance.amount - invest.min_withdrawal)?;
+        balance.amount.checked_sub(invest.min_withdrawal)?;
         supply.bonded += balance.amount;
         Ok(supply)
     }) {
         Ok(_) => {}
         // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
-        Err(StdError::Underflow { .. }) => return Ok(Response::default()),
+        Err(StdError::Overflow(_)) => return Ok(Response::default()),
         Err(e) => return Err(e.into()),
     }
 
@@ -739,7 +739,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, unbond_msg);
         match res.unwrap_err() {
             StakingError::Std {
-                original: StdError::Underflow { .. },
+                original: StdError::Overflow(_),
             } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
