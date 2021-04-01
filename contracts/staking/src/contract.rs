@@ -361,7 +361,7 @@ pub fn _bond_all_tokens(
     }) {
         Ok(_) => {}
         // if it is below the minimum, we do a no-op (do not revert other state from withdrawal)
-        Err(StdError::Overflow(_)) => return Ok(Response::default()),
+        Err(StdError::Overflow { .. }) => return Ok(Response::default()),
         Err(e) => return Err(e.into()),
     }
 
@@ -739,7 +739,7 @@ mod tests {
         let res = execute(deps.as_mut(), mock_env(), info, unbond_msg);
         match res.unwrap_err() {
             StakingError::Std {
-                original: StdError::Overflow(_),
+                original: StdError::Overflow { .. },
             } => {}
             err => panic!("Unexpected error: {:?}", err),
         }

@@ -83,10 +83,18 @@ pub enum StdError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
-    #[error(transparent)]
-    Overflow(#[from] OverflowError),
-    #[error(transparent)]
-    DivideByZero(#[from] DivideByZeroError),
+    #[error("Overflow: {source}")]
+    Overflow {
+        source: OverflowError,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
+    #[error("Divide by zero: {source}")]
+    DivideByZero {
+        source: DivideByZeroError,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
 }
 
 impl StdError {
@@ -161,6 +169,22 @@ impl StdError {
         StdError::SerializeErr {
             source_type: source.into(),
             msg: msg.to_string(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub fn overflow(source: OverflowError) -> Self {
+        StdError::Overflow {
+            source,
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub fn divide_by_zero(source: DivideByZeroError) -> Self {
+        StdError::DivideByZero {
+            source,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
@@ -320,16 +344,34 @@ impl PartialEq<StdError> for StdError {
                     false
                 }
             }
-            StdError::Overflow(err) => {
-                if let StdError::Overflow(rhs_err) = rhs {
-                    err == rhs_err
+            StdError::Overflow {
+                source,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::Overflow {
+                    source: rhs_source,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
                 } else {
                     false
                 }
             }
-            StdError::DivideByZero(err) => {
-                if let StdError::DivideByZero(rhs_err) = rhs {
-                    err == rhs_err
+            StdError::DivideByZero {
+                source,
+                #[cfg(feature = "backtraces")]
+                    backtrace: _,
+            } => {
+                if let StdError::DivideByZero {
+                    source: rhs_source,
+                    #[cfg(feature = "backtraces")]
+                        backtrace: _,
+                } = rhs
+                {
+                    source == rhs_source
                 } else {
                     false
                 }
@@ -362,6 +404,18 @@ impl From<RecoverPubkeyError> for StdError {
     }
 }
 
+impl From<OverflowError> for StdError {
+    fn from(source: OverflowError) -> Self {
+        Self::overflow(source)
+    }
+}
+
+impl From<DivideByZeroError> for StdError {
+    fn from(source: DivideByZeroError) -> Self {
+        Self::divide_by_zero(source)
+    }
+}
+
 /// The return type for init, execute and query. Since the error type cannot be serialized to JSON,
 /// this is only available within the contract and its unit tests.
 ///
@@ -389,8 +443,6 @@ pub struct OverflowError {
     pub operation: OverflowOperation,
     pub operand1: String,
     pub operand2: String,
-    #[cfg(feature = "backtraces")]
-    backtrace: Backtrace,
 }
 
 impl OverflowError {
@@ -399,8 +451,6 @@ impl OverflowError {
             operation,
             operand1: operand1.to_string(),
             operand2: operand2.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
         }
     }
 }
@@ -409,16 +459,12 @@ impl OverflowError {
 #[error("Cannot devide {operand} by zero")]
 pub struct DivideByZeroError {
     pub operand: String,
-    #[cfg(feature = "backtraces")]
-    backtrace: Backtrace,
 }
 
 impl DivideByZeroError {
     pub fn new<U: ToString>(operand: U) -> Self {
         Self {
             operand: operand.to_string(),
-            #[cfg(feature = "backtraces")]
-            backtrace: Backtrace::capture(),
         }
     }
 }
@@ -552,14 +598,19 @@ mod tests {
 
     #[test]
     fn underflow_works_for_u128() {
-        let error = StdError::from(OverflowError::new(OverflowOperation::Sub, 123u128, 456u128));
+        let error =
+            StdError::overflow(OverflowError::new(OverflowOperation::Sub, 123u128, 456u128));
         match error {
-            StdError::Overflow(OverflowError {
-                operation: OverflowOperation::Sub,
-                operand1,
-                operand2,
+            StdError::Overflow {
+                source:
+                    OverflowError {
+                        operation,
+                        operand1,
+                        operand2,
+                    },
                 ..
-            }) => {
+            } => {
+                assert_eq!(operation, OverflowOperation::Sub);
                 assert_eq!(operand1, "123");
                 assert_eq!(operand2, "456");
             }
@@ -568,15 +619,19 @@ mod tests {
     }
 
     #[test]
-    fn underflow_works_for_i64() {
-        let error = StdError::from(OverflowError::new(OverflowOperation::Sub, 777i64, 1234i64));
+    fn overflow_works_for_i64() {
+        let error = StdError::overflow(OverflowError::new(OverflowOperation::Sub, 777i64, 1234i64));
         match error {
-            StdError::Overflow(OverflowError {
-                operation: OverflowOperation::Sub,
-                operand1,
-                operand2,
+            StdError::Overflow {
+                source:
+                    OverflowError {
+                        operation,
+                        operand1,
+                        operand2,
+                    },
                 ..
-            }) => {
+            } => {
+                assert_eq!(operation, OverflowOperation::Sub);
                 assert_eq!(operand1, "777");
                 assert_eq!(operand2, "1234");
             }
@@ -585,20 +640,32 @@ mod tests {
     }
 
     #[test]
+    fn divide_by_zero_works() {
+        let error = StdError::divide_by_zero(DivideByZeroError::new(123u128));
+        match error {
+            StdError::DivideByZero {
+                source: DivideByZeroError { operand },
+                ..
+            } => assert_eq!(operand, "123"),
+            _ => panic!("expect different error"),
+        }
+    }
+
+    #[test]
     fn implements_debug() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
-        let embedded = format!("Debug message: {:?}", error);
+        let embedded = format!("Debug: {:?}", error);
         assert_eq!(
             embedded,
-            r#"Debug message: Overflow(OverflowError { operation: Sub, operand1: "3", operand2: "5" })"#
+            r#"Debug: Overflow { source: OverflowError { operation: Sub, operand1: "3", operand2: "5" } }"#
         );
     }
 
     #[test]
     fn implements_display() {
         let error: StdError = StdError::from(OverflowError::new(OverflowOperation::Sub, 3, 5));
-        let embedded = format!("Display message: {}", error);
-        assert_eq!(embedded, "Display message: Cannot Sub with 3 and 5");
+        let embedded = format!("Display: {}", error);
+        assert_eq!(embedded, "Display: Overflow: Cannot Sub with 3 and 5");
     }
 
     #[test]
