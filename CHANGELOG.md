@@ -166,6 +166,12 @@ and this project adheres to
   deprecated in favour of the new `Response`.
 - cosmwasm-std: `Context` is deprecated in favour of the new mutable helpers in
   `Response`.
+- cosmwasm-std: `HumanAddr` is not much more than an alias to `String` and it
+  does not provide significant safety advantages. With CosmWasm 0.14, we now use
+  `String` when there was `HumanAddr` before. There is also the new `Addr`,
+  which holds a validated immutable human readable address. ([#802])
+
+[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ## [0.13.2] - 2021-01-14
 

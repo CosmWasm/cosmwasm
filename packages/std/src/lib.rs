@@ -22,6 +22,7 @@ mod storage;
 mod traits;
 mod types;
 
+#[allow(deprecated)]
 pub use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
 pub use crate::binary::Binary;
 pub use crate::coins::{coin, coins, has_coins, Coin};
