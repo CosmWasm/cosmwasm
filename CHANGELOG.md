@@ -112,11 +112,34 @@ and this project adheres to
   API provided by the VM's backend (i.e. the blockchain).
 - contracts: `reflect` contract requires `stargate` feature and supports
   redispatching `Stargate` and `IbcMsg::Transfer` messages ([#692])
+- cosmwasm-std: The arithmetic methods of `Uint128` got a huge overhaul, making
+  them more consistent with the bahaviour of the Rust primitive types. Thank you
+  [@yihuang] for bringing this up and for the great implementation. ([#853])
+  1.  `Uint128` got the new functions `checked_add`, `checked_sub`,
+      `checked_mul`, `checked_div`, `checked_div_euclid`, `checked_rem`,
+      `wrapping_add`, `wrapping_sub`, `wrapping_mul`, `wrapping_pow`,
+      `saturating_add`, `saturating_sub`, `saturating_mul` and `saturating_pow`
+      which match their equivalent in [u128] except that instead of `Option` the
+      checked methods return a `Result` with an `OverflowError` or
+      `DivideByZeroError` that carries a few debug information and can directly
+      be converted to `StdError`/`StdResult` by using the `?` operator.
+  2.  `StdError::Underflow` and `StdError::underflow` were removed in favour of
+      `StdError::Overflow`. `StdError::DivideByZeroError` was added.
+  3.  The `-` operator (`impl ops::Sub<Uint128> for Uint128`) was removed
+      because it returned a `StdResult` instead of panicking in the case of an
+      overflow. This behaviour was inconsistent with `+` and the Rust standard
+      library. Please use the explicit `*_sub` methods introduced above. In a
+      couple of releases from now, we want to introduce the operator again with
+      panicking overflow behaviour ([#858]).
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
 [#736]: https://github.com/CosmWasm/cosmwasm/pull/736
 [#690]: https://github.com/CosmWasm/cosmwasm/issues/690
+[@yihuang]: https://github.com/yihuang
+[#853]: https://github.com/CosmWasm/cosmwasm/pull/853
+[#858]: https://github.com/CosmWasm/cosmwasm/issues/858
+[u128]: https://doc.rust-lang.org/std/primitive.u128.html
 
 ### Deprecated
 
