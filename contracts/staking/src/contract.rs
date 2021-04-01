@@ -223,14 +223,14 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let bonded = get_bonded(&deps.querier, &env.contract.address)?;
 
     // calculate how many native tokens this is worth and update supply
-    let remainder = (amount - tax)?;
+    let remainder = amount.checked_sub(tax)?;
     let mut totals = total_supply(deps.storage);
     let mut supply = totals.load()?;
     // TODO: this is just temporary check - we should use dynamic query or have a way to recover
     assert_bonds(&supply, bonded)?;
     let unbond = remainder.multiply_ratio(bonded, supply.issued);
-    supply.bonded = (bonded - unbond)?;
-    supply.issued = (supply.issued - remainder)?;
+    supply.bonded = bonded.checked_sub(unbond)?;
+    supply.issued = supply.issued.checked_sub(remainder)?;
     supply.claims += unbond;
     totals.save(&supply)?;
 
@@ -281,7 +281,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
 
     // update total supply (lower claim)
     total_supply(deps.storage).update(|mut supply| -> StdResult<_> {
-        supply.claims = (supply.claims - to_send)?;
+        supply.claims = supply.claims.checked_sub(to_send)?;
         Ok(supply)
     })?;
 
@@ -353,9 +353,9 @@ pub fn _bond_all_tokens(
     // we deduct pending claims from our account balance before reinvesting.
     // if there is not enough funds, we just return a no-op
     match total_supply(deps.storage).update(|mut supply| {
-        balance.amount = (balance.amount - supply.claims)?;
+        balance.amount = balance.amount.checked_sub(supply.claims)?;
         // this just triggers the "no op" case if we don't have min_withdrawal left to reinvest
-        (balance.amount - invest.min_withdrawal)?;
+        balance.amount.checked_sub(invest.min_withdrawal)?;
         supply.bonded += balance.amount;
         Ok(supply)
     }) {

@@ -348,25 +348,6 @@ impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     }
 }
 
-impl ops::Sub<Uint128> for Uint128 {
-    type Output = Result<Self, OverflowError>;
-
-    fn sub(self, other: Uint128) -> Result<Self, OverflowError> {
-        self.sub(&other)
-    }
-}
-
-impl<'a> ops::Sub<&'a Uint128> for Uint128 {
-    type Output = Result<Self, OverflowError>;
-
-    fn sub(self, rhs: &'a Uint128) -> Result<Self, OverflowError> {
-        let (min, sub) = (self.u128(), rhs.u128());
-        min.checked_sub(sub)
-            .map(Uint128)
-            .ok_or_else(|| OverflowError::new(OverflowOperation::Sub, min, sub))
-    }
-}
-
 /// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
 /// need a Decimal result for the same calculation, use Decimal(d*u) or Decimal(u*d).
@@ -822,8 +803,7 @@ mod tests {
         assert_eq!(a + &b, Uint128(35801));
 
         // test - with owned and reference right hand side
-        assert_eq!((b - a).unwrap(), Uint128(11111));
-        assert_eq!((b - &a).unwrap(), Uint128(11111));
+        assert_eq!((b.checked_sub(a)).unwrap(), Uint128(11111));
 
         // test += with owned and reference right hand side
         let mut c = Uint128(300000);
@@ -834,7 +814,7 @@ mod tests {
         assert_eq!(d, Uint128(323456));
 
         // error result on underflow (- would produce negative result)
-        let underflow_result = a - b;
+        let underflow_result = a.checked_sub(b);
         let OverflowError {
             operand1, operand2, ..
         } = underflow_result.unwrap_err();
