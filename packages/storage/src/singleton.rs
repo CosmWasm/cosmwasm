@@ -259,7 +259,7 @@ mod tests {
             )))
         });
         match output.unwrap_err() {
-            StdError::Overflow(_) => {}
+            StdError::Overflow { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
         }
         assert_eq!(writer.load().unwrap(), cfg);
