@@ -24,7 +24,7 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
-    if !vals.iter().any(|v| v.address.as_str() == msg.validator) {
+    if !vals.iter().any(|v| v.address.as_ref() == msg.validator) {
         return Err(StdError::generic_err(format!(
             "{} is not in the current validator set",
             msg.validator
@@ -436,23 +436,23 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_info, MockQuerier, MOCK_CONTRACT_ADDR,
     };
-    use cosmwasm_std::{coins, Coin, CosmosMsg, Decimal, FullDelegation, HumanAddr, Validator};
+    use cosmwasm_std::{coins, Addr, Coin, CosmosMsg, Decimal, FullDelegation, Validator};
     use std::str::FromStr;
 
-    fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
+    fn sample_validator(addr: &str) -> Validator {
         Validator {
-            address: addr.into(),
+            address: Addr::unchecked(addr),
             commission: Decimal::percent(3),
             max_commission: Decimal::percent(10),
             max_change_rate: Decimal::percent(1),
         }
     }
 
-    fn sample_delegation<U: Into<HumanAddr>>(addr: U, amount: Coin) -> FullDelegation {
+    fn sample_delegation(validator_addr: &str, amount: Coin) -> FullDelegation {
         let can_redelegate = amount.clone();
         FullDelegation {
-            validator: addr.into(),
-            delegator: HumanAddr::from(MOCK_CONTRACT_ADDR),
+            validator: Addr::unchecked(validator_addr),
+            delegator: Addr::unchecked(MOCK_CONTRACT_ADDR),
             amount,
             can_redelegate,
             accumulated_rewards: Vec::new(),

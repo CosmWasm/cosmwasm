@@ -461,7 +461,7 @@ impl StakingQuerier {
                 let delegations: Vec<_> = self
                     .delegations
                     .iter()
-                    .filter(|d| d.delegator.as_str() == delegator)
+                    .filter(|d| d.delegator.as_ref() == delegator)
                     .cloned()
                     .map(|d| d.into())
                     .collect();
@@ -473,7 +473,7 @@ impl StakingQuerier {
                 validator,
             } => {
                 let delegation = self.delegations.iter().find(|d| {
-                    d.delegator.as_str() == delegator && d.validator.as_str() == validator
+                    d.delegator.as_ref() == delegator && d.validator.as_ref() == validator
                 });
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
@@ -862,13 +862,13 @@ mod tests {
     #[test]
     fn staking_querier_validators() {
         let val1 = Validator {
-            address: HumanAddr::from("validator-one"),
+            address: Addr::unchecked("validator-one"),
             commission: Decimal::percent(1),
             max_commission: Decimal::percent(3),
             max_change_rate: Decimal::percent(1),
         };
         let val2 = Validator {
-            address: HumanAddr::from("validator-two"),
+            address: Addr::unchecked("validator-two"),
             commission: Decimal::permille(15),
             max_commission: Decimal::permille(40),
             max_change_rate: Decimal::permille(5),
@@ -886,9 +886,14 @@ mod tests {
     }
 
     // gets delegators from query or panic
-    fn get_all_delegators(staking: &StakingQuerier, delegator: String) -> Vec<Delegation> {
+    fn get_all_delegators<U: Into<String>>(
+        staking: &StakingQuerier,
+        delegator: U,
+    ) -> Vec<Delegation> {
         let raw = staking
-            .query(&StakingQuery::AllDelegations { delegator })
+            .query(&StakingQuery::AllDelegations {
+                delegator: delegator.into(),
+            })
             .unwrap()
             .unwrap();
         let dels: AllDelegationsResponse = from_binary(&raw).unwrap();
@@ -896,15 +901,15 @@ mod tests {
     }
 
     // gets full delegators from query or panic
-    fn get_delegator(
+    fn get_delegator<U: Into<String>, V: Into<String>>(
         staking: &StakingQuerier,
-        delegator: String,
-        validator: String,
+        delegator: U,
+        validator: V,
     ) -> Option<FullDelegation> {
         let raw = staking
             .query(&StakingQuery::Delegation {
-                delegator,
-                validator,
+                delegator: delegator.into(),
+                validator: validator.into(),
             })
             .unwrap()
             .unwrap();
@@ -914,24 +919,24 @@ mod tests {
 
     #[test]
     fn staking_querier_delegations() {
-        let val1 = String::from("validator-one");
-        let val2 = String::from("validator-two");
+        let val1 = Addr::unchecked("validator-one");
+        let val2 = Addr::unchecked("validator-two");
 
-        let user_a = String::from("investor");
-        let user_b = String::from("speculator");
-        let user_c = String::from("hodler");
+        let user_a = Addr::unchecked("investor");
+        let user_b = Addr::unchecked("speculator");
+        let user_c = Addr::unchecked("hodler");
 
         // we need multiple validators per delegator, so the queries provide different results
         let del1a = FullDelegation {
-            delegator: user_a.clone().into(),
-            validator: val1.clone().into(),
+            delegator: user_a.clone(),
+            validator: val1.clone(),
             amount: coin(100, "ustake"),
             can_redelegate: coin(100, "ustake"),
             accumulated_rewards: coins(5, "ustake"),
         };
         let del2a = FullDelegation {
-            delegator: user_a.clone().into(),
-            validator: val2.clone().into(),
+            delegator: user_a.clone(),
+            validator: val2.clone(),
             amount: coin(500, "ustake"),
             can_redelegate: coin(500, "ustake"),
             accumulated_rewards: coins(20, "ustake"),
@@ -939,8 +944,8 @@ mod tests {
 
         // note we cannot have multiple delegations on one validator, they are collapsed into one
         let del1b = FullDelegation {
-            delegator: user_b.clone().into(),
-            validator: val1.clone().into(),
+            delegator: user_b.clone(),
+            validator: val1.clone(),
             amount: coin(500, "ustake"),
             can_redelegate: coin(0, "ustake"),
             accumulated_rewards: coins(0, "ustake"),
@@ -948,8 +953,8 @@ mod tests {
 
         // and another one on val2
         let del2c = FullDelegation {
-            delegator: user_c.clone().into(),
-            validator: val2.clone().into(),
+            delegator: user_c.clone(),
+            validator: val2.clone(),
             amount: coin(8888, "ustake"),
             can_redelegate: coin(4567, "ustake"),
             accumulated_rewards: coins(900, "ustake"),

@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::HumanAddr;
+use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coins::Coin;
 #[cfg(feature = "stargate")]
@@ -175,11 +175,13 @@ pub struct AllDelegationsResponse {
     pub delegations: Vec<Delegation>,
 }
 
-/// Delegation is basic (cheap to query) data about a delegation
+/// Delegation is basic (cheap to query) data about a delegation.
+///
+/// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Delegation {
-    pub delegator: HumanAddr,
-    pub validator: HumanAddr,
+    pub delegator: Addr,
+    pub validator: Addr,
     /// How much we have locked in the delegation
     pub amount: Coin,
 }
@@ -202,11 +204,13 @@ pub struct DelegationResponse {
 }
 
 /// FullDelegation is all the info on the delegation, some (like accumulated_reward and can_redelegate)
-/// is expensive to query
+/// is expensive to query.
+///
+/// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct FullDelegation {
-    pub delegator: HumanAddr,
-    pub validator: HumanAddr,
+    pub delegator: Addr,
+    pub validator: Addr,
     /// How much we have locked in the delegation
     pub amount: Coin,
     /// can_redelegate captures how much can be immediately redelegated.
@@ -223,9 +227,10 @@ pub struct ValidatorsResponse {
     pub validators: Vec<Validator>,
 }
 
+/// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Validator {
-    pub address: HumanAddr,
+    pub address: Addr,
     pub commission: Decimal,
     pub max_commission: Decimal,
     /// TODO: what units are these (in terms of time)?
