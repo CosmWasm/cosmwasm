@@ -19,7 +19,9 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
-    let cfg = Config { admin: info.sender };
+    let cfg = Config {
+        admin: info.sender.into(),
+    };
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
@@ -54,7 +56,7 @@ pub fn handle_update_admin(
 ) -> StdResult<Response> {
     // auth check
     let mut cfg = config(deps.storage).load()?;
-    if info.sender != cfg.admin {
+    if info.sender.as_ref() != cfg.admin {
         return Err(StdError::generic_err("Only admin may set new admin"));
     }
     cfg.admin = new_admin;
@@ -80,7 +82,7 @@ pub fn handle_send_msgs(
 ) -> StdResult<Response> {
     // auth check
     let cfg = config(deps.storage).load()?;
-    if info.sender != cfg.admin {
+    if info.sender.as_ref() != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
@@ -111,7 +113,7 @@ pub fn handle_check_remote_balance(
 ) -> StdResult<Response> {
     // auth check
     let cfg = config(deps.storage).load()?;
-    if info.sender != cfg.admin {
+    if info.sender.as_ref() != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)

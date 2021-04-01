@@ -110,7 +110,7 @@ pub fn instantiate(
         &to_vec(&State {
             verifier: deps.api.addr_canonicalize(&msg.verifier)?,
             beneficiary: deps.api.addr_canonicalize(&msg.beneficiary)?,
-            funder: deps.api.addr_canonicalize(&info.sender)?,
+            funder: deps.api.addr_canonicalize(info.sender.as_ref())?,
         })?,
     );
 
@@ -171,7 +171,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if deps.api.addr_canonicalize(&info.sender)? == state.verifier {
+    if deps.api.addr_canonicalize(info.sender.as_ref())? == state.verifier {
         let to_addr = deps.api.addr_humanize(&state.beneficiary)?;
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 

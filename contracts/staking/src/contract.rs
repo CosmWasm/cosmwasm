@@ -41,7 +41,7 @@ pub fn instantiate(
 
     let denom = deps.querier.query_bonded_denom()?;
     let invest = InvestmentInfo {
-        owner: deps.api.addr_canonicalize(&info.sender)?,
+        owner: deps.api.addr_canonicalize(info.sender.as_ref())?,
         exit_tax: msg.exit_tax,
         bond_denom: denom,
         validator: msg.validator,
@@ -83,7 +83,7 @@ pub fn transfer(
     send: Uint128,
 ) -> StdResult<Response> {
     let rcpt_raw = deps.api.addr_canonicalize(&recipient)?;
-    let sender_raw = deps.api.addr_canonicalize(&info.sender)?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
 
     let mut accounts = balances(deps.storage);
     accounts.update(&sender_raw, |balance: Option<Uint128>| -> StdResult<_> {
@@ -140,7 +140,7 @@ fn assert_bonds(supply: &Supply, bonded: Uint128) -> StdResult<()> {
 }
 
 pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
-    let sender_raw = deps.api.addr_canonicalize(&info.sender)?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
 
     // ensure we have the proper denom
     let invest = invest_info_read(deps.storage).load()?;
@@ -193,7 +193,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
 }
 
 pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> StdResult<Response> {
-    let sender_raw = deps.api.addr_canonicalize(&info.sender)?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
 
     let invest = invest_info_read(deps.storage).load()?;
     // ensure it is big enough to care
@@ -271,7 +271,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     }
 
     // check how much to send - min(balance, claims[sender]), and reduce the claim
-    let sender_raw = deps.api.addr_canonicalize(&info.sender)?;
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
     let mut to_send = balance.amount;
     claims(deps.storage).update(sender_raw.as_slice(), |claim| -> StdResult<_> {
         let claim = claim.ok_or_else(|| StdError::generic_err("no claim for this address"))?;
@@ -290,7 +290,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     let res = Response {
         submessages: vec![],
         messages: vec![BankMsg::Send {
-            to_address: info.sender.clone(),
+            to_address: info.sender.clone().into(),
             amount: vec![balance],
         }
         .into()],
@@ -340,7 +340,7 @@ pub fn _bond_all_tokens(
     info: MessageInfo,
 ) -> Result<Response, StakingError> {
     // this is just meant as a call-back to ourself
-    if info.sender.as_str() != env.contract.address {
+    if info.sender != env.contract.address {
         return Err(Unauthorized {}.build());
     }
 

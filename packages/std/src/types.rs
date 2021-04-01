@@ -1,7 +1,6 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::{Addr, HumanAddr};
+use crate::addresses::Addr;
 use crate::coins::Coin;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
@@ -71,7 +70,7 @@ pub struct BlockInfo {
 ///
 /// [MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61
 /// [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MessageInfo {
     /// The `sender` field from `MsgInstantiateContract` and `MsgExecuteContract`.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
@@ -82,7 +81,7 @@ pub struct MessageInfo {
     ///
     /// Additional signers of the transaction that are either needed for other messages or contain unnecessary
     /// signatures are not propagated into the contract.
-    pub sender: HumanAddr,
+    pub sender: Addr,
     /// The funds that are sent to the contract as part of `MsgInstantiateContract`
     /// or `MsgExecuteContract`. The transfer is processed in bank before the contract
     /// is executed such that the new balance is visible during contract execution.

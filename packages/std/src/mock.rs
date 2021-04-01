@@ -199,9 +199,9 @@ pub fn mock_env() -> Env {
 
 /// Just set sender and funds for the message.
 /// This is intended for use in test code only.
-pub fn mock_info<U: Into<HumanAddr>>(sender: U, funds: &[Coin]) -> MessageInfo {
+pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
     MessageInfo {
-        sender: sender.into(),
+        sender: Addr::unchecked(sender),
         funds: funds.to_vec(),
     }
 }
@@ -532,14 +532,12 @@ mod tests {
     fn mock_info_arguments() {
         let name = HumanAddr("my name".to_string());
 
-        // make sure we can generate with &str, &HumanAddr, and HumanAddr
+        // make sure we can generate with &str and &HumanAddr
         let a = mock_info("my name", &coins(100, "atom"));
         let b = mock_info(&name, &coins(100, "atom"));
-        let c = mock_info(name, &coins(100, "atom"));
 
         // and the results are the same
         assert_eq!(a, b);
-        assert_eq!(a, c);
     }
 
     #[test]

@@ -110,7 +110,8 @@ and this project adheres to
 - cosmwasm-std: Rename type `KV` to `Pair` in order to comply to naming
   convention as enforced by clippy rule `upper_case_acronyms` from Rust 1.51.0
   on.
-- cosmwasm-std: `ContractInfo::address` is now of type `Addr`.
+- cosmwasm-std: `ContractInfo::address` and `MessageInfo::sender` are now of
+  type `Addr`. The value of those fields is created by the host and thus valid.
 - cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
   `interface_version_5`.
 - cosmwasm-vm: Rename trait `Api` to `BackendApi` to better express this is the

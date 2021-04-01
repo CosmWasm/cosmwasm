@@ -18,7 +18,7 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response<CustomMsg>> {
     let state = State {
-        owner: deps.api.addr_canonicalize(&info.sender)?,
+        owner: deps.api.addr_canonicalize(info.sender.as_ref())?,
     };
     config(deps.storage).save(&state)?;
 
@@ -29,7 +29,7 @@ pub fn instantiate(
             contract_addr: env.contract.address.into(),
         };
         let msg = WasmMsg::Execute {
-            contract_addr: info.sender,
+            contract_addr: info.sender.into(),
             msg: to_binary(&data)?,
             send: vec![],
         };
@@ -59,7 +59,7 @@ pub fn try_reflect(
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let state = config(deps.storage).load()?;
 
-    let sender = deps.api.addr_canonicalize(&info.sender)?;
+    let sender = deps.api.addr_canonicalize(info.sender.as_ref())?;
     if sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
             expected: state.owner,
@@ -86,7 +86,7 @@ pub fn try_reflect_subcall(
     msgs: Vec<SubMsg<CustomMsg>>,
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let state = config(deps.storage).load()?;
-    let sender = deps.api.addr_canonicalize(&info.sender)?;
+    let sender = deps.api.addr_canonicalize(info.sender.as_ref())?;
     if sender != state.owner {
         return Err(ReflectError::NotCurrentOwner {
             expected: state.owner,
@@ -114,7 +114,7 @@ pub fn try_change_owner(
 ) -> Result<Response<CustomMsg>, ReflectError> {
     let api = deps.api;
     config(deps.storage).update(|mut state| {
-        let sender = api.addr_canonicalize(&info.sender)?;
+        let sender = api.addr_canonicalize(info.sender.as_ref())?;
         if sender != state.owner {
             return Err(ReflectError::NotCurrentOwner {
                 expected: state.owner,

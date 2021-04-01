@@ -61,7 +61,7 @@ fn connect<T: Into<HumanAddr>>(
     channel_id: &str,
     account: T,
 ) {
-    let account = account.into();
+    let account: HumanAddr = account.into();
     // first we try to open with a valid handshake
     let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
     handshake_open.counterparty_version = None;
@@ -76,7 +76,7 @@ fn connect<T: Into<HumanAddr>>(
         id: channel_id.into(),
         contract_addr: account.clone(),
     };
-    let info = mock_info(account, &[]);
+    let info = mock_info(&account, &[]);
     let _: Response = execute(deps, mock_env(), info, execute_msg).unwrap();
 }
 

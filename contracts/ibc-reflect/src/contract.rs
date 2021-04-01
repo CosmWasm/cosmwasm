@@ -56,7 +56,7 @@ pub fn execute_init_callback(
     contract_addr: HumanAddr,
 ) -> StdResult<Response> {
     // sanity check - the caller is registering itself
-    if info.sender != contract_addr {
+    if info.sender.as_ref() != contract_addr {
         return Err(StdError::generic_err("Must register self on callback"));
     }
 
@@ -349,7 +349,7 @@ mod tests {
     // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
     fn connect<T: Into<HumanAddr>>(mut deps: DepsMut, channel_id: &str, account: T) {
-        let account = account.into();
+        let account: HumanAddr = account.into();
 
         // open packet has no counterparty versin, connect does
         // TODO: validate this with alpe
@@ -367,7 +367,7 @@ mod tests {
             id: channel_id.into(),
             contract_addr: account.clone(),
         };
-        let info = mock_info(account, &[]);
+        let info = mock_info(&account, &[]);
         execute(deps.branch(), mock_env(), info, execute_msg).unwrap();
     }
 
