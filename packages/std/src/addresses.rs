@@ -56,6 +56,20 @@ impl PartialEq<Addr> for &str {
     }
 }
 
+/// Implement `Addr == String`
+impl PartialEq<String> for Addr {
+    fn eq(&self, rhs: &String) -> bool {
+        &self.0 == rhs
+    }
+}
+
+/// Implement `String == Addr`
+impl PartialEq<Addr> for String {
+    fn eq(&self, rhs: &Addr) -> bool {
+        self == &rhs.0
+    }
+}
+
 // Addr->String and Addr->HumanAddr are safe conversions.
 // However, the opposite direction is unsafe and must not be implemented.
 
@@ -248,6 +262,16 @@ mod tests {
         assert_eq!(addr, "cos934gh9034hg04g0h134");
         // `&str == Addr`
         assert_eq!("cos934gh9034hg04g0h134", addr);
+    }
+
+    #[test]
+    fn addr_implements_partial_eq_with_string() {
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+
+        // `Addr == String`
+        assert_eq!(addr, String::from("cos934gh9034hg04g0h134"));
+        // `String == Addr`
+        assert_eq!(String::from("cos934gh9034hg04g0h134"), addr);
     }
 
     #[test]
