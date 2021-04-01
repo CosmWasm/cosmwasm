@@ -167,18 +167,21 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
 mod tests {
     use super::*;
     use crate::BackendError;
-    use cosmwasm_std::{coins, HumanAddr};
+    use cosmwasm_std::coins;
 
     #[test]
-    fn mock_info_arguments() {
-        let name = HumanAddr("my name".to_string());
-
-        // make sure we can generate with &str and &HumanAddr
-        let a = mock_info("my name", &coins(100, "atom"));
-        let b = mock_info(&name, &coins(100, "atom"));
-
-        // and the results are the same
-        assert_eq!(a, b);
+    fn mock_info_works() {
+        let info = mock_info("my name", &coins(100, "atom"));
+        assert_eq!(
+            info,
+            MessageInfo {
+                sender: Addr::unchecked("my name"),
+                funds: vec![Coin {
+                    amount: 100u128.into(),
+                    denom: "atom".into(),
+                }]
+            }
+        );
     }
 
     #[test]

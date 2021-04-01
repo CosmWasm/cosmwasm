@@ -527,15 +527,18 @@ mod tests {
         "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
     #[test]
-    fn mock_info_arguments() {
-        let name = HumanAddr("my name".to_string());
-
-        // make sure we can generate with &str and &HumanAddr
-        let a = mock_info("my name", &coins(100, "atom"));
-        let b = mock_info(&name, &coins(100, "atom"));
-
-        // and the results are the same
-        assert_eq!(a, b);
+    fn mock_info_works() {
+        let info = mock_info("my name", &coins(100, "atom"));
+        assert_eq!(
+            info,
+            MessageInfo {
+                sender: Addr::unchecked("my name"),
+                funds: vec![Coin {
+                    amount: 100u128.into(),
+                    denom: "atom".into(),
+                }]
+            }
+        );
     }
 
     #[test]
