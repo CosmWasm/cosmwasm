@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, Serialize};
 use std::ops::Deref;
 
-use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
@@ -85,7 +85,7 @@ pub trait Api {
 
     /// Takes a canonical address and returns a human readble address.
     /// This is the inverse of [addr_canonicalize].
-    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr>;
 
     fn secp256k1_verify(
         &self,

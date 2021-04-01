@@ -13,7 +13,8 @@ use crate::binary::Binary;
 /// This type represents a validated address. It can be created in the following ways
 /// 1. Use `Addr::unchecked(input)`
 /// 2. Use `let checked: Addr = deps.api.addr_validate(input)?`
-/// 3. Deserialize from JSON. This must only be done from JSON that was validated before
+/// 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`
+/// 4. Deserialize from JSON. This must only be done from JSON that was validated before
 ///    such as a contract's state. `Addr` must not be used in messages sent by the user
 ///    because this would result in unvalidated instances.
 ///

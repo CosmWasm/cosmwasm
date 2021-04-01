@@ -3,7 +3,7 @@ use serde::de::DeserializeOwned;
 use serde::Serialize;
 use std::collections::HashMap;
 
-use crate::addresses::{Addr, CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::deps::OwnedDeps;
@@ -102,7 +102,7 @@ impl Api for MockApi {
         Ok(out.into())
     }
 
-    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
         if canonical.len() != self.canonical_length {
             return Err(StdError::generic_err(
                 "Invalid input: canonical address length not correct",
@@ -121,7 +121,7 @@ impl Api for MockApi {
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed)?;
-        Ok(human.into())
+        Ok(Addr::unchecked(human))
     }
 
     fn secp256k1_verify(
@@ -513,7 +513,7 @@ pub fn digit_sum(input: &[u8]) -> usize {
 mod tests {
     use super::*;
     use crate::query::Delegation;
-    use crate::{coin, coins, from_binary, Decimal, HumanAddr};
+    use crate::{coin, coins, from_binary, Decimal};
     use hex_literal::hex;
 
     const SECP256K1_MSG_HASH_HEX: &str =
@@ -545,7 +545,7 @@ mod tests {
     fn canonicalize_and_humanize_restores_original() {
         let api = MockApi::default();
 
-        let original = HumanAddr::from("shorty");
+        let original = String::from("shorty");
         let canonical = api.addr_canonicalize(&original).unwrap();
         let recovered = api.addr_humanize(&canonical).unwrap();
         assert_eq!(recovered, original);
@@ -555,7 +555,7 @@ mod tests {
     #[should_panic(expected = "address too short")]
     fn addr_canonicalize_min_input_length() {
         let api = MockApi::default();
-        let human = HumanAddr("1".to_string());
+        let human = String::from("1");
         let _ = api.addr_canonicalize(&human).unwrap();
     }
 
@@ -563,7 +563,7 @@ mod tests {
     #[should_panic(expected = "address too long")]
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
-        let human = HumanAddr::from("some-extremely-long-address-not-supported-by-this-api");
+        let human = String::from("some-extremely-long-address-not-supported-by-this-api");
         let _ = api.addr_canonicalize(&human).unwrap();
     }
 

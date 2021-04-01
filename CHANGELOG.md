@@ -147,6 +147,8 @@ and this project adheres to
       panicking overflow behaviour ([#858]).
 - cosmwasm-std: Change address types in `BankMsg`, `IbcMsg` and `WasmMsg` from
   `HumanAddr` to `String` ([#802]).
+- cosmwasm-std: `Api::addr_humanize` now returns `Addr` instead of `HumanAddr`
+  ([#802]).
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
