@@ -52,7 +52,7 @@ pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackErr
     match msg {
         SudoMsg::StealFunds { recipient, amount } => {
             let msg = BankMsg::Send {
-                to_address: recipient.into(),
+                to_address: recipient,
                 amount,
             };
             let mut response = Response::default();
@@ -394,14 +394,7 @@ mod tests {
         let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
-        assert_eq!(
-            msg,
-            &BankMsg::Send {
-                to_address: to_address.into(),
-                amount
-            }
-            .into(),
-        );
+        assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
     }
 
     #[test]
@@ -454,7 +447,7 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                to_address: beneficiary.into(),
+                to_address: beneficiary,
                 amount: coins(1000, "earth"),
             }
             .into(),

@@ -71,7 +71,7 @@ fn migrate_cleans_up_data() {
     assert_eq!(
         msg,
         &BankMsg::Send {
-            to_address: payout.into(),
+            to_address: payout,
             amount: coins(123456, "gold"),
         }
         .into(),

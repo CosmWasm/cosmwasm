@@ -32,7 +32,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     // get balance and send all to recipient
     let balance = deps.querier.query_all_balances(env.contract.address)?;
     let send = BankMsg::Send {
-        to_address: msg.payout.clone().into(),
+        to_address: msg.payout.clone(),
         amount: balance,
     };
 
@@ -91,7 +91,7 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                to_address: payout.into(),
+                to_address: payout,
                 amount: coins(123456, "gold"),
             }
             .into(),

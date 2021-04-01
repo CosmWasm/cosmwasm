@@ -74,7 +74,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{coins, BankMsg, HumanAddr, Response};
+    use crate::{coins, BankMsg, Response};
 
     #[test]
     fn empty_context() {
@@ -89,17 +89,17 @@ mod tests {
         let mut ctx = Context::new();
 
         // build it up with the builder commands
-        ctx.add_attribute("sender", &HumanAddr::from("john"));
+        ctx.add_attribute("sender", &String::from("john"));
         ctx.add_attribute("action", "test");
         ctx.add_message(BankMsg::Send {
-            to_address: HumanAddr::from("foo"),
+            to_address: String::from("foo"),
             amount: coins(128, "uint"),
         });
         ctx.set_data(b"banana");
 
         // and this is what is should return
         let expected_msgs = vec![CosmosMsg::Bank(BankMsg::Send {
-            to_address: HumanAddr::from("foo"),
+            to_address: String::from("foo"),
             amount: coins(128, "uint"),
         })];
         let expected_attributes = vec![attr("sender", "john"), attr("action", "test")];

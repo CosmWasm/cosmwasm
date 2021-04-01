@@ -145,6 +145,8 @@ and this project adheres to
       library. Please use the explicit `*_sub` methods introduced above. In a
       couple of releases from now, we want to introduce the operator again with
       panicking overflow behaviour ([#858]).
+- cosmwasm-std: Change address types in `BankMsg`, `IbcMsg` and `WasmMsg` from
+  `HumanAddr` to `String` ([#802]).
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697

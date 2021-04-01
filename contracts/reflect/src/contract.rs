@@ -195,7 +195,7 @@ mod tests {
     use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BankMsg, BankQuery, Binary, ContractResult,
-        Event, HumanAddr, ReplyOn, StakingMsg, StdError, SubcallResponse,
+        Event, ReplyOn, StakingMsg, StdError, SubcallResponse,
     };
 
     #[test]
@@ -262,7 +262,7 @@ mod tests {
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let payload = vec![BankMsg::Send {
-            to_address: HumanAddr::from("friend"),
+            to_address: String::from("friend"),
             amount: coins(1, "token"),
         }
         .into()];
@@ -285,7 +285,7 @@ mod tests {
 
         // signer is not owner
         let payload = vec![BankMsg::Send {
-            to_address: HumanAddr::from("friend"),
+            to_address: String::from("friend"),
             amount: coins(1, "token"),
         }
         .into()];
@@ -325,7 +325,7 @@ mod tests {
 
         let payload = vec![
             BankMsg::Send {
-                to_address: HumanAddr::from("friend"),
+                to_address: String::from("friend"),
                 amount: coins(1, "token"),
             }
             .into(),
@@ -333,7 +333,7 @@ mod tests {
             CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
             CustomMsg::Debug("Hi, Dad!".to_string()).into(),
             StakingMsg::Delegate {
-                validator: HumanAddr::from("validator"),
+                validator: String::from("validator"),
                 amount: coin(100, "ustake"),
             }
             .into(),
@@ -463,7 +463,7 @@ mod tests {
             id,
             gas_limit: None,
             msg: BankMsg::Send {
-                to_address: HumanAddr::from("friend"),
+                to_address: String::from("friend"),
                 amount: coins(1, "token"),
             }
             .into(),

@@ -94,7 +94,7 @@
                   }
                 },
                 "to_address": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
@@ -240,9 +240,6 @@
         }
       ]
     },
-    "HumanAddr": {
-      "type": "string"
-    },
     "IbcMsg": {
       "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
       "anyOf": [
@@ -295,11 +292,7 @@
                 },
                 "to_address": {
                   "description": "address on the remote chain to receive these tokens",
-                  "allOf": [
-                    {
-                      "$ref": "#/definitions/HumanAddr"
-                    }
-                  ]
+                  "type": "string"
                 }
               }
             }
@@ -426,7 +419,7 @@
                   "$ref": "#/definitions/Coin"
                 },
                 "validator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
@@ -451,7 +444,7 @@
                   "$ref": "#/definitions/Coin"
                 },
                 "validator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
@@ -473,17 +466,13 @@
               "properties": {
                 "recipient": {
                   "description": "this is the \"withdraw address\", the one that should receive the rewards if None, then use delegator address",
-                  "anyOf": [
-                    {
-                      "$ref": "#/definitions/HumanAddr"
-                    },
-                    {
-                      "type": "null"
-                    }
+                  "type": [
+                    "string",
+                    "null"
                   ]
                 },
                 "validator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
@@ -509,10 +498,10 @@
                   "$ref": "#/definitions/Coin"
                 },
                 "dst_validator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 },
                 "src_validator": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 }
               }
             }
@@ -573,7 +562,7 @@
               ],
               "properties": {
                 "contract_addr": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 },
                 "msg": {
                   "description": "msg is the json-encoded ExecuteMsg struct (as raw Binary)",
@@ -654,7 +643,7 @@
               ],
               "properties": {
                 "contract_addr": {
-                  "$ref": "#/definitions/HumanAddr"
+                  "type": "string"
                 },
                 "msg": {
                   "description": "msg is the json-encoded MigrateMsg struct that will be passed to the new code",

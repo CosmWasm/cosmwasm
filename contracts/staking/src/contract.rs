@@ -176,7 +176,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let res = Response {
         submessages: vec![],
         messages: vec![StakingMsg::Delegate {
-            validator: invest.validator.into(),
+            validator: invest.validator,
             amount: payment.clone(),
         }
         .into()],
@@ -244,7 +244,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let res = Response {
         submessages: vec![],
         messages: vec![StakingMsg::Undelegate {
-            validator: invest.validator.into(),
+            validator: invest.validator,
             amount: coin(unbond.u128(), &invest.bond_denom),
         }
         .into()],
@@ -318,7 +318,7 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
         submessages: vec![],
         messages: vec![
             StakingMsg::Withdraw {
-                validator: invest.validator.into(),
+                validator: invest.validator,
                 recipient: Some(contract_addr.clone().into()),
             }
             .into(),
@@ -370,7 +370,7 @@ pub fn _bond_all_tokens(
     let res = Response {
         submessages: vec![],
         messages: vec![StakingMsg::Delegate {
-            validator: invest.validator.into(),
+            validator: invest.validator,
             amount: balance.clone(),
         }
         .into()],

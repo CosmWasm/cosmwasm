@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, HumanAddr, Reply,
-    Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
+    StakingMsg, SubMsg, SubcallResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -83,7 +83,7 @@ fn reflect() {
 
     let payload = vec![
         BankMsg::Send {
-            to_address: HumanAddr::from("friend"),
+            to_address: String::from("friend"),
             amount: coins(1, "token"),
         }
         .into(),
@@ -91,7 +91,7 @@ fn reflect() {
         CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
         CustomMsg::Debug("Hi, Dad!".to_string()).into(),
         StakingMsg::Delegate {
-            validator: HumanAddr::from("validator"),
+            validator: String::from("validator"),
             amount: coin(100, "ustake"),
         }
         .into(),
@@ -116,7 +116,7 @@ fn reflect_requires_owner() {
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
-        to_address: HumanAddr::from("friend"),
+        to_address: String::from("friend"),
         amount: coins(1, "token"),
     }
     .into()];
@@ -199,7 +199,7 @@ fn reflect_subcall() {
         id,
         gas_limit: None,
         msg: BankMsg::Send {
-            to_address: HumanAddr::from("friend"),
+            to_address: String::from("friend"),
             amount: coins(1, "token"),
         }
         .into(),
