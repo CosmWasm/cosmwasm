@@ -23,7 +23,7 @@
               }
             },
             "recipient": {
-              "$ref": "#/definitions/HumanAddr"
+              "type": "string"
             }
           }
         }
@@ -46,9 +46,6 @@
           "type": "string"
         }
       }
-    },
-    "HumanAddr": {
-      "type": "string"
     },
     "Uint128": {
       "type": "string"

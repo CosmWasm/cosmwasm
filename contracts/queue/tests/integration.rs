@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{from_binary, from_slice, HumanAddr, MessageInfo, Response};
+use cosmwasm_std::{from_binary, from_slice, MessageInfo, Response};
 use cosmwasm_vm::{
     testing::{
         execute, instantiate, migrate, mock_env, mock_info, mock_instance_with_gas_limit, query,
@@ -36,8 +36,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/qu
 fn create_contract() -> (Instance<MockApi, MockStorage, MockQuerier>, MessageInfo) {
     let gas_limit = 500_000_000; // enough for many executions within one instance
     let mut deps = mock_instance_with_gas_limit(WASM, gas_limit);
-    let creator = HumanAddr(String::from("creator"));
-    let info = mock_info(creator.as_str(), &[]);
+    let creator = String::from("creator");
+    let info = mock_info(&creator, &[]);
     let res: Response =
         instantiate(&mut deps, mock_env(), info.clone(), InstantiateMsg {}).unwrap();
     assert_eq!(0, res.messages.len());

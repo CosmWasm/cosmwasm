@@ -1,13 +1,12 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::CanonicalAddr;
+use cosmwasm_std::Addr;
 
 pub const CONFIG_KEY: &[u8] = b"config";
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct State {
-    pub verifier: CanonicalAddr,
-    pub beneficiary: CanonicalAddr,
-    pub funder: CanonicalAddr,
+    pub verifier: Addr,
+    pub beneficiary: Addr,
+    pub funder: Addr,
 }

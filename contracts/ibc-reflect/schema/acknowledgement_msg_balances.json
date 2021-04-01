@@ -39,7 +39,7 @@
       ],
       "properties": {
         "account": {
-          "$ref": "#/definitions/HumanAddr"
+          "type": "string"
         },
         "balances": {
           "type": "array",
@@ -63,9 +63,6 @@
           "type": "string"
         }
       }
-    },
-    "HumanAddr": {
-      "type": "string"
     },
     "Uint128": {
       "type": "string"

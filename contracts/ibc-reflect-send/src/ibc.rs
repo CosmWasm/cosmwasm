@@ -160,7 +160,7 @@ fn acknowledge_who_am_i(
     ack: AcknowledgementMsg<WhoAmIResponse>,
 ) -> StdResult<IbcBasicResponse> {
     // ignore errors (but mention in log)
-    let res: WhoAmIResponse = match ack {
+    let WhoAmIResponse { account } = match ack {
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
             return Ok(IbcBasicResponse {
@@ -170,13 +170,14 @@ fn acknowledge_who_am_i(
             })
         }
     };
+    let checked_account = deps.api.addr_validate(&account)?;
 
     accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
         match acct {
             Some(mut acct) => {
                 // set the account the first time
                 if acct.remote_addr.is_none() {
-                    acct.remote_addr = Some(res.account);
+                    acct.remote_addr = Some(checked_account);
                 }
                 Ok(acct)
             }
@@ -199,7 +200,7 @@ fn acknowledge_balances(
     ack: AcknowledgementMsg<BalancesResponse>,
 ) -> StdResult<IbcBasicResponse> {
     // ignore errors (but mention in log)
-    let res: BalancesResponse = match ack {
+    let BalancesResponse { account, balances } = match ack {
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
             return Ok(IbcBasicResponse {
@@ -209,22 +210,23 @@ fn acknowledge_balances(
             })
         }
     };
+    let checked_account = deps.api.addr_validate(&account)?;
 
     accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
         match acct {
             Some(acct) => {
-                if let Some(old_addr) = &acct.remote_addr {
-                    if old_addr != &res.account {
+                if let Some(old_addr) = acct.remote_addr {
+                    if old_addr != checked_account {
                         return Err(StdError::generic_err(format!(
                             "remote account changed from {} to {}",
-                            old_addr, &res.account
+                            old_addr, checked_account
                         )));
                     }
                 }
                 Ok(AccountData {
                     last_update_time: env.block.time,
-                    remote_addr: Some(res.account),
-                    remote_balance: res.balances,
+                    remote_addr: Some(checked_account),
+                    remote_balance: balances,
                 })
             }
             None => Err(StdError::generic_err("no account to update")),
@@ -262,7 +264,7 @@ mod tests {
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
         MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, HumanAddr, OwnedDeps};
+    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, OwnedDeps};
 
     const CREATOR: &str = "creator";
 
@@ -299,7 +301,7 @@ mod tests {
         };
     }
 
-    fn who_am_i_response<T: Into<HumanAddr>>(deps: DepsMut, channel_id: &str, account: T) {
+    fn who_am_i_response<T: Into<String>>(deps: DepsMut, channel_id: &str, account: T) {
         let packet = PacketMsg::WhoAmI {};
         let response = AcknowledgementMsg::Ok(WhoAmIResponse {
             account: account.into(),
@@ -353,7 +355,7 @@ mod tests {
         };
         let r = query(deps.as_ref(), mock_env(), q).unwrap();
         let acct: AccountResponse = from_slice(&r).unwrap();
-        assert_eq!(acct.remote_addr.unwrap(), HumanAddr::from(remote_addr));
+        assert_eq!(acct.remote_addr.unwrap(), remote_addr);
         assert!(acct.remote_balance.is_empty());
         assert_eq!(0, acct.last_update_time);
     }

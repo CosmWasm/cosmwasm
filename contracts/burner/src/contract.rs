@@ -30,11 +30,9 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     }
 
     // get balance and send all to recipient
-    let balance = deps
-        .querier
-        .query_all_balances(env.contract.address.clone())?;
+    let balance = deps.querier.query_all_balances(env.contract.address)?;
     let send = BankMsg::Send {
-        to_address: msg.payout.clone(),
+        to_address: msg.payout.clone().into(),
         amount: balance,
     };
 
@@ -52,7 +50,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{mock_dependencies, mock_env, mock_info};
-    use cosmwasm_std::{coins, HumanAddr, StdError, Storage};
+    use cosmwasm_std::{coins, StdError, Storage};
 
     #[test]
     fn instantiate_fails() {
@@ -82,7 +80,7 @@ mod tests {
         assert_eq!(3, cnt);
 
         // change the verifier via migrate
-        let payout = HumanAddr::from("someone else");
+        let payout = String::from("someone else");
         let msg = MigrateMsg {
             payout: payout.clone(),
         };
@@ -93,7 +91,7 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                to_address: payout,
+                to_address: payout.into(),
                 amount: coins(123456, "gold"),
             }
             .into(),

@@ -1,9 +1,9 @@
 use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, AllBalanceResponse, Api, BankMsg, CanonicalAddr,
-    Deps, DepsMut, Env, HumanAddr, MessageInfo, QueryRequest, QueryResponse, Response, StdError,
-    StdResult, WasmQuery,
+    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
+    CanonicalAddr, Deps, DepsMut, Env, MessageInfo, QueryRequest, QueryResponse, Response,
+    StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
@@ -23,9 +23,9 @@ pub fn instantiate(
     deps.storage.set(
         CONFIG_KEY,
         &to_vec(&State {
-            verifier: deps.api.addr_canonicalize(&msg.verifier)?,
-            beneficiary: deps.api.addr_canonicalize(&msg.beneficiary)?,
-            funder: deps.api.addr_canonicalize(info.sender.as_ref())?,
+            verifier: deps.api.addr_validate(&msg.verifier)?,
+            beneficiary: deps.api.addr_validate(&msg.beneficiary)?,
+            funder: info.sender,
         })?,
     );
 
@@ -41,7 +41,7 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, Ha
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let mut config: State = from_slice(&data)?;
-    config.verifier = deps.api.addr_canonicalize(&msg.verifier)?;
+    config.verifier = deps.api.addr_validate(&msg.verifier)?;
     deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
 
     Ok(Response::default())
@@ -52,7 +52,7 @@ pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackErr
     match msg {
         SudoMsg::StealFunds { recipient, amount } => {
             let msg = BankMsg::Send {
-                to_address: recipient,
+                to_address: recipient.into(),
                 amount,
             };
             let mut response = Response::default();
@@ -86,15 +86,15 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
 
-    if deps.api.addr_canonicalize(info.sender.as_ref())? == state.verifier {
-        let to_addr = deps.api.addr_humanize(&state.beneficiary)?;
+    if info.sender == state.verifier {
+        let to_addr = state.beneficiary;
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
         let mut resp = Response::new();
         resp.add_attribute("action", "release");
         resp.add_attribute("destination", to_addr.clone());
         resp.add_message(BankMsg::Send {
-            to_address: to_addr,
+            to_address: to_addr.into(),
             amount: balance,
         });
         resp.set_data(&[0xF0, 0x0B, 0xAA]);
@@ -161,8 +161,8 @@ fn do_panic() -> Result<Response, HackError> {
 fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
     // Canonicalize
 
-    let empty = HumanAddr::from("");
-    match api.addr_canonicalize(&empty).unwrap_err() {
+    let empty = "";
+    match api.addr_canonicalize(empty).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -173,8 +173,8 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         }
     }
 
-    let invalid_bech32 = HumanAddr::from("bn93hg934hg08q340g8u4jcau3");
-    match api.addr_canonicalize(&invalid_bech32).unwrap_err() {
+    let invalid_bech32 = "bn93hg934hg08q340g8u4jcau3";
+    match api.addr_canonicalize(invalid_bech32).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {
             return Err(StdError::generic_err(format!(
@@ -230,12 +230,9 @@ pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::Verifier {} => to_binary(&query_verifier(deps)?),
         QueryMsg::OtherBalance { address } => to_binary(&query_other_balance(deps, address)?),
-        QueryMsg::Recurse { depth, work } => to_binary(&query_recurse(
-            deps,
-            depth,
-            work,
-            env.contract.address.into(),
-        )?),
+        QueryMsg::Recurse { depth, work } => {
+            to_binary(&query_recurse(deps, depth, work, env.contract.address)?)
+        }
     }
 }
 
@@ -245,23 +242,19 @@ fn query_verifier(deps: Deps) -> StdResult<VerifierResponse> {
         .get(CONFIG_KEY)
         .ok_or_else(|| StdError::not_found("State"))?;
     let state: State = from_slice(&data)?;
-    let addr = deps.api.addr_humanize(&state.verifier)?;
-    Ok(VerifierResponse { verifier: addr })
+    Ok(VerifierResponse {
+        verifier: state.verifier.into(),
+    })
 }
 
-fn query_other_balance(deps: Deps, address: HumanAddr) -> StdResult<AllBalanceResponse> {
+fn query_other_balance(deps: Deps, address: String) -> StdResult<AllBalanceResponse> {
     let amount = deps.querier.query_all_balances(address)?;
     Ok(AllBalanceResponse { amount })
 }
 
-fn query_recurse(
-    deps: Deps,
-    depth: u32,
-    work: u32,
-    contract: HumanAddr,
-) -> StdResult<RecurseResponse> {
+fn query_recurse(deps: Deps, depth: u32, work: u32, contract: Addr) -> StdResult<RecurseResponse> {
     // perform all hashes as requested
-    let mut hashed: Vec<u8> = contract.as_str().as_bytes().to_vec();
+    let mut hashed: Vec<u8> = contract.as_ref().into();
     for _ in 0..work {
         hashed = Sha256::digest(&hashed).to_vec()
     }
@@ -278,7 +271,7 @@ fn query_recurse(
             work,
         };
         let query = QueryRequest::Wasm(WasmQuery::Smart {
-            contract_addr: contract,
+            contract_addr: contract.into(),
             msg: to_binary(&req)?,
         });
         deps.querier.query(&query)
@@ -298,13 +291,13 @@ mod tests {
     fn proper_initialization() {
         let mut deps = mock_dependencies(&[]);
 
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
+        let creator = String::from("creator");
         let expected_state = State {
-            verifier: deps.api.addr_canonicalize(&verifier).unwrap(),
-            beneficiary: deps.api.addr_canonicalize(&beneficiary).unwrap(),
-            funder: deps.api.addr_canonicalize(&creator).unwrap(),
+            verifier: deps.api.addr_validate(&verifier).unwrap(),
+            beneficiary: deps.api.addr_validate(&beneficiary).unwrap(),
+            funder: deps.api.addr_validate(&creator).unwrap(),
         };
 
         let msg = InstantiateMsg {
@@ -328,14 +321,14 @@ mod tests {
     fn instantiate_and_query() {
         let mut deps = mock_dependencies(&[]);
 
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
+        let creator = String::from("creator");
         let msg = InstantiateMsg {
             verifier: verifier.clone(),
             beneficiary,
         };
-        let info = mock_info(creator.as_str(), &[]);
+        let info = mock_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -348,14 +341,14 @@ mod tests {
     fn migrate_verifier() {
         let mut deps = mock_dependencies(&[]);
 
-        let verifier = HumanAddr::from("verifies");
-        let beneficiary = HumanAddr::from("benefits");
-        let creator = HumanAddr::from("creator");
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
+        let creator = String::from("creator");
         let msg = InstantiateMsg {
             verifier,
             beneficiary,
         };
-        let info = mock_info(creator.as_str(), &[]);
+        let info = mock_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
@@ -364,7 +357,7 @@ mod tests {
         assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         // change the verifier via migrate
-        let new_verifier = HumanAddr::from("someone else");
+        let new_verifier = String::from("someone else");
         let msg = MigrateMsg {
             verifier: new_verifier.clone(),
         };
@@ -380,19 +373,19 @@ mod tests {
     fn sudo_can_steal_tokens() {
         let mut deps = mock_dependencies(&[]);
 
-        let verifier = HumanAddr::from("verifies");
-        let beneficiary = HumanAddr::from("benefits");
-        let creator = HumanAddr::from("creator");
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
+        let creator = String::from("creator");
         let msg = InstantiateMsg {
             verifier,
             beneficiary,
         };
-        let info = mock_info(creator.as_str(), &[]);
+        let info = mock_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(0, res.messages.len());
 
         // sudo takes any tax it wants
-        let to_address = HumanAddr::from("community-pool");
+        let to_address = String::from("community-pool");
         let amount = coins(700, "gold");
         let sys_msg = SudoMsg::StealFunds {
             recipient: to_address.clone(),
@@ -401,21 +394,28 @@ mod tests {
         let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
-        assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
+        assert_eq!(
+            msg,
+            &BankMsg::Send {
+                to_address: to_address.into(),
+                amount
+            }
+            .into(),
+        );
     }
 
     #[test]
     fn querier_callbacks_work() {
-        let rich_addr = HumanAddr::from("foobar");
+        let rich_addr = String::from("foobar");
         let rich_balance = coins(10000, "gold");
-        let deps = mock_dependencies_with_balances(&[(&rich_addr, &rich_balance)]);
+        let deps = mock_dependencies_with_balances(&[(&rich_addr.clone().into(), &rich_balance)]);
 
         // querying with balance gets the balance
         let bal = query_other_balance(deps.as_ref(), rich_addr).unwrap();
         assert_eq!(bal.amount, rich_balance);
 
         // querying other accounts gets none
-        let bal = query_other_balance(deps.as_ref(), HumanAddr::from("someone else")).unwrap();
+        let bal = query_other_balance(deps.as_ref(), String::from("someone else")).unwrap();
         assert_eq!(bal.amount, vec![]);
     }
 
@@ -424,16 +424,16 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
 
         // initialize the store
-        let creator = HumanAddr::from("creator");
-        let verifier = HumanAddr::from("verifies");
-        let beneficiary = HumanAddr::from("benefits");
+        let creator = String::from("creator");
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
 
         let instantiate_msg = InstantiateMsg {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_info = mock_info(creator.as_str(), &init_amount);
+        let init_info = mock_info(&creator, &init_amount);
         let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
@@ -454,7 +454,7 @@ mod tests {
         assert_eq!(
             msg,
             &BankMsg::Send {
-                to_address: beneficiary,
+                to_address: beneficiary.into(),
                 amount: coins(1000, "earth"),
             }
             .into(),
@@ -471,16 +471,16 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
 
         // initialize the store
-        let creator = HumanAddr::from("creator");
-        let verifier = HumanAddr::from("verifies");
-        let beneficiary = HumanAddr::from("benefits");
+        let creator = String::from("creator");
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
 
         let instantiate_msg = InstantiateMsg {
             verifier: verifier.clone(),
             beneficiary: beneficiary.clone(),
         };
         let init_amount = coins(1000, "earth");
-        let init_info = mock_info(creator.as_str(), &init_amount);
+        let init_info = mock_info(&creator, &init_amount);
         let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(init_res.messages.len(), 0);
 
@@ -503,9 +503,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: deps.api.addr_canonicalize(&verifier).unwrap(),
-                beneficiary: deps.api.addr_canonicalize(&beneficiary).unwrap(),
-                funder: deps.api.addr_canonicalize(&creator).unwrap(),
+                verifier: Addr::unchecked(verifier),
+                beneficiary: Addr::unchecked(beneficiary),
+                funder: Addr::unchecked(creator),
             }
         );
     }
@@ -516,19 +516,19 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
 
         // initialize the store
-        let verifier = HumanAddr(String::from("verifies"));
-        let beneficiary = HumanAddr(String::from("benefits"));
-        let creator = HumanAddr(String::from("creator"));
+        let verifier = String::from("verifies");
+        let beneficiary = String::from("benefits");
+        let creator = String::from("creator");
 
         let instantiate_msg = InstantiateMsg {
             verifier,
             beneficiary: beneficiary.clone(),
         };
-        let init_info = mock_info(creator.as_str(), &coins(1000, "earth"));
+        let init_info = mock_info(&creator, &coins(1000, "earth"));
         let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
         assert_eq!(0, init_res.messages.len());
 
-        let execute_info = mock_info(beneficiary.as_str(), &[]);
+        let execute_info = mock_info(&beneficiary, &[]);
         // this should panic
         let _ = execute(
             deps.as_mut(),
@@ -543,8 +543,8 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
 
         let instantiate_msg = InstantiateMsg {
-            verifier: HumanAddr::from("verifies"),
-            beneficiary: HumanAddr::from("benefits"),
+            verifier: String::from("verifies"),
+            beneficiary: String::from("benefits"),
         };
         let init_info = mock_info("creator", &coins(1000, "earth"));
         let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
@@ -566,7 +566,7 @@ mod tests {
         // let's just make sure the last step looks right
 
         let deps = mock_dependencies(&[]);
-        let contract = HumanAddr::from("my-contract");
+        let contract = Addr::unchecked("my-contract");
         let bin_contract: &[u8] = b"my-contract";
 
         // return the unhashed value here

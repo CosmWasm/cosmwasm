@@ -53,12 +53,12 @@ fn initialization_with_missing_validator() {
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
 
-    let creator = HumanAddr::from("creator");
+    let creator = String::from("creator");
     let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
-        validator: HumanAddr::from("my-validator"),
+        validator: String::from("my-validator"),
         exit_tax: Decimal::percent(2),
         min_withdrawal: Uint128(50),
     };
@@ -91,12 +91,12 @@ fn proper_initialization() {
     assert_eq!(deps.required_features.len(), 1);
     assert!(deps.required_features.contains("staking"));
 
-    let creator = HumanAddr::from("creator");
+    let creator = String::from("creator");
     let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
-        validator: HumanAddr::from("my-validator"),
+        validator: String::from("my-validator"),
         exit_tax: Decimal::percent(2),
         min_withdrawal: Uint128(50),
     };

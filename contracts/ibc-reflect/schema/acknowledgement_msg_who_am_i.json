@@ -30,9 +30,6 @@
     }
   ],
   "definitions": {
-    "HumanAddr": {
-      "type": "string"
-    },
     "WhoAmIResponse": {
       "description": "This is the success response we send on ack for PacketMsg::WhoAmI. Return the caller's account address on the remote chain",
       "type": "object",
@@ -41,7 +38,7 @@
       ],
       "properties": {
         "account": {
-          "$ref": "#/definitions/HumanAddr"
+          "type": "string"
         }
       }
     }

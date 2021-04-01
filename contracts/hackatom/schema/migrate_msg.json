@@ -8,11 +8,6 @@
   ],
   "properties": {
     "verifier": {
-      "$ref": "#/definitions/HumanAddr"
-    }
-  },
-  "definitions": {
-    "HumanAddr": {
       "type": "string"
     }
   }

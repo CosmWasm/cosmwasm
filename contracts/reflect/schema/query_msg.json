@@ -71,7 +71,7 @@
           ],
           "properties": {
             "contract": {
-              "$ref": "#/definitions/HumanAddr"
+              "type": "string"
             },
             "key": {
               "$ref": "#/definitions/Binary"

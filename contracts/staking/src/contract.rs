@@ -25,7 +25,7 @@ pub fn instantiate(
 ) -> StdResult<Response> {
     // ensure the validator is registered
     let vals = deps.querier.query_validators()?;
-    if !vals.iter().any(|v| v.address == msg.validator) {
+    if !vals.iter().any(|v| v.address.as_str() == msg.validator) {
         return Err(StdError::generic_err(format!(
             "{} is not in the current validator set",
             msg.validator
@@ -41,10 +41,10 @@ pub fn instantiate(
 
     let denom = deps.querier.query_bonded_denom()?;
     let invest = InvestmentInfo {
-        owner: deps.api.addr_canonicalize(info.sender.as_ref())?,
+        owner: info.sender,
         exit_tax: msg.exit_tax,
         bond_denom: denom,
-        validator: msg.validator,
+        validator: deps.api.addr_validate(&msg.validator)?.into(),
         min_withdrawal: msg.min_withdrawal,
     };
     invest_info(deps.storage).save(&invest)?;
@@ -79,7 +79,7 @@ pub fn transfer(
     deps: DepsMut,
     _env: Env,
     info: MessageInfo,
-    recipient: HumanAddr,
+    recipient: String,
     send: Uint128,
 ) -> StdResult<Response> {
     let rcpt_raw = deps.api.addr_canonicalize(&recipient)?;
@@ -177,7 +177,7 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     let res = Response {
         submessages: vec![],
         messages: vec![StakingMsg::Delegate {
-            validator: invest.validator,
+            validator: invest.validator.into(),
             amount: payment.clone(),
         }
         .into()],
@@ -193,8 +193,6 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
 }
 
 pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> StdResult<Response> {
-    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
-
     let invest = invest_info_read(deps.storage).load()?;
     // ensure it is big enough to care
     if amount < invest.min_withdrawal {
@@ -203,6 +201,10 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
             invest.min_withdrawal, invest.bond_denom
         )));
     }
+
+    let sender_raw = deps.api.addr_canonicalize(info.sender.as_ref())?;
+    let owner_raw = deps.api.addr_canonicalize(invest.owner.as_ref())?;
+
     // calculate tax and remainer to unbond
     let tax = amount * invest.exit_tax;
 
@@ -213,7 +215,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     })?;
     if tax > Uint128(0) {
         // add tax to the owner
-        accounts.update(&invest.owner, |balance: Option<Uint128>| -> StdResult<_> {
+        accounts.update(&owner_raw, |balance: Option<Uint128>| -> StdResult<_> {
             Ok(balance.unwrap_or_default() + tax)
         })?;
     }
@@ -243,7 +245,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     let res = Response {
         submessages: vec![],
         messages: vec![StakingMsg::Undelegate {
-            validator: invest.validator,
+            validator: invest.validator.into(),
             amount: coin(unbond.u128(), &invest.bond_denom),
         }
         .into()],
@@ -317,7 +319,7 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
         submessages: vec![],
         messages: vec![
             StakingMsg::Withdraw {
-                validator: invest.validator,
+                validator: invest.validator.into(),
                 recipient: Some(contract_addr.clone().into()),
             }
             .into(),
@@ -369,7 +371,7 @@ pub fn _bond_all_tokens(
     let res = Response {
         submessages: vec![],
         messages: vec![StakingMsg::Delegate {
-            validator: invest.validator,
+            validator: invest.validator.into(),
             amount: balance.clone(),
         }
         .into()],
@@ -384,8 +386,8 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
     match msg {
         QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
         QueryMsg::Investment {} => to_binary(&query_investment(deps)?),
-        QueryMsg::Balance { address } => to_binary(&query_balance(deps, address)?),
-        QueryMsg::Claims { address } => to_binary(&query_claims(deps, address)?),
+        QueryMsg::Balance { address } => to_binary(&query_balance(deps, &address)?),
+        QueryMsg::Claims { address } => to_binary(&query_claims(deps, &address)?),
     }
 }
 
@@ -393,16 +395,16 @@ pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
     token_info_read(deps.storage).load()
 }
 
-pub fn query_balance(deps: Deps, address: HumanAddr) -> StdResult<BalanceResponse> {
-    let address_raw = deps.api.addr_canonicalize(&address)?;
+pub fn query_balance(deps: Deps, address: &str) -> StdResult<BalanceResponse> {
+    let address_raw = deps.api.addr_canonicalize(address)?;
     let balance = balances_read(deps.storage)
         .may_load(address_raw.as_slice())?
         .unwrap_or_default();
     Ok(BalanceResponse { balance })
 }
 
-pub fn query_claims(deps: Deps, address: HumanAddr) -> StdResult<ClaimsResponse> {
-    let address_raw = deps.api.addr_canonicalize(&address)?;
+pub fn query_claims(deps: Deps, address: &str) -> StdResult<ClaimsResponse> {
+    let address_raw = deps.api.addr_canonicalize(address)?;
     let claims = claims_read(deps.storage)
         .may_load(address_raw.as_slice())?
         .unwrap_or_default();
@@ -414,7 +416,7 @@ pub fn query_investment(deps: Deps) -> StdResult<InvestmentResponse> {
     let supply = total_supply_read(deps.storage).load()?;
 
     let res = InvestmentResponse {
-        owner: deps.api.addr_humanize(&invest.owner)?,
+        owner: invest.owner.into(),
         exit_tax: invest.exit_tax,
         validator: invest.validator,
         min_withdrawal: invest.min_withdrawal,
@@ -477,18 +479,18 @@ mod tests {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 9,
-            validator: HumanAddr::from(DEFAULT_VALIDATOR),
+            validator: String::from(DEFAULT_VALIDATOR),
             exit_tax: Decimal::percent(tax_percent),
             min_withdrawal: Uint128(min_withdrawal),
         }
     }
 
-    fn get_balance<U: Into<HumanAddr>>(deps: Deps, addr: U) -> Uint128 {
-        query_balance(deps, addr.into()).unwrap().balance
+    fn get_balance(deps: Deps, addr: &str) -> Uint128 {
+        query_balance(deps, addr).unwrap().balance
     }
 
-    fn get_claims<U: Into<HumanAddr>>(deps: Deps, addr: U) -> Uint128 {
-        query_claims(deps, addr.into()).unwrap().claims
+    fn get_claims(deps: Deps, addr: &str) -> Uint128 {
+        query_claims(deps, addr).unwrap().claims
     }
 
     #[test]
@@ -497,12 +499,12 @@ mod tests {
         deps.querier
             .update_staking("ustake", &[sample_validator("john")], &[]);
 
-        let creator = HumanAddr::from("creator");
+        let creator = String::from("creator");
         let msg = InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 9,
-            validator: HumanAddr::from("my-validator"),
+            validator: String::from("my-validator"),
             exit_tax: Decimal::percent(2),
             min_withdrawal: Uint128(50),
         };
@@ -531,12 +533,12 @@ mod tests {
             &[],
         );
 
-        let creator = HumanAddr::from("creator");
+        let creator = String::from("creator");
         let msg = InstantiateMsg {
             name: "Cool Derivative".to_string(),
             symbol: "DRV".to_string(),
             decimals: 0,
-            validator: HumanAddr::from("my-validator"),
+            validator: String::from("my-validator"),
             exit_tax: Decimal::percent(2),
             min_withdrawal: Uint128(50),
         };
@@ -574,7 +576,7 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         set_validator(&mut deps.querier);
 
-        let creator = HumanAddr::from("creator");
+        let creator = String::from("creator");
         let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
@@ -583,7 +585,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = HumanAddr::from("bob");
+        let bob = String::from("bob");
         let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
 
@@ -614,7 +616,7 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         set_validator(&mut deps.querier);
 
-        let creator = HumanAddr::from("creator");
+        let creator = String::from("creator");
         let instantiate_msg = default_init(2, 50);
         let info = mock_info(&creator, &[]);
 
@@ -623,7 +625,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = HumanAddr::from("bob");
+        let bob = String::from("bob");
         let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
@@ -650,7 +652,7 @@ mod tests {
         assert_eq!(invest.nominal_value, ratio);
 
         // we bond some other tokens and get a different issuance price (maintaining the ratio)
-        let alice = HumanAddr::from("alice");
+        let alice = String::from("alice");
         let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&alice, &[coin(3000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();
@@ -701,7 +703,7 @@ mod tests {
         let mut deps = mock_dependencies(&[]);
         set_validator(&mut deps.querier);
 
-        let creator = HumanAddr::from("creator");
+        let creator = String::from("creator");
         let instantiate_msg = default_init(10, 50);
         let info = mock_info(&creator, &[]);
 
@@ -710,7 +712,7 @@ mod tests {
         assert_eq!(0, res.messages.len());
 
         // let's bond some tokens now
-        let bob = HumanAddr::from("bob");
+        let bob = String::from("bob");
         let bond_msg = ExecuteMsg::Bond {};
         let info = mock_info(&bob, &[coin(10, "random"), coin(1000, "ustake")]);
         let res = execute(deps.as_mut(), mock_env(), info, bond_msg).unwrap();

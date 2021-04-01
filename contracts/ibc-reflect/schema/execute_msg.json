@@ -18,11 +18,7 @@
           "properties": {
             "contract_addr": {
               "description": "contract_addr is the address of this contract",
-              "allOf": [
-                {
-                  "$ref": "#/definitions/HumanAddr"
-                }
-              ]
+              "type": "string"
             },
             "id": {
               "description": "id was provided in the InitMsg",
@@ -33,10 +29,5 @@
       },
       "additionalProperties": false
     }
-  ],
-  "definitions": {
-    "HumanAddr": {
-      "type": "string"
-    }
-  }
+  ]
 }

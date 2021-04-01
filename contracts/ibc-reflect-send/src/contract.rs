@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, HumanAddr, IbcMsg, MessageInfo,
-    Order, QueryResponse, Response, StdError, StdResult,
+    attr, entry_point, to_binary, Addr, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Order,
+    QueryResponse, Response, StdError, StdResult,
 };
 
 use crate::ibc::build_timeout_timestamp;
@@ -19,9 +19,7 @@ pub fn instantiate(
     _msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // we store the reflect_id for creating accounts later
-    let cfg = Config {
-        admin: info.sender.into(),
-    };
+    let cfg = Config { admin: info.sender };
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
@@ -52,14 +50,14 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
 pub fn handle_update_admin(
     deps: DepsMut,
     info: MessageInfo,
-    new_admin: HumanAddr,
+    new_admin: String,
 ) -> StdResult<Response> {
     // auth check
     let mut cfg = config(deps.storage).load()?;
-    if info.sender.as_ref() != cfg.admin {
+    if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may set new admin"));
     }
-    cfg.admin = new_admin;
+    cfg.admin = deps.api.addr_validate(&new_admin)?;
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
@@ -161,7 +159,7 @@ pub fn handle_send_funds(
 
     // load remote account
     let data = accounts(deps.storage).load(reflect_channel_id.as_bytes())?;
-    let remote_addr = match data.remote_addr {
+    let remote_addr: Addr = match data.remote_addr {
         Some(addr) => addr,
         None => {
             return Err(StdError::generic_err(
@@ -173,7 +171,7 @@ pub fn handle_send_funds(
     // construct a packet to send
     let msg = IbcMsg::Transfer {
         channel_id: transfer_channel_id,
-        to_address: remote_addr,
+        to_address: remote_addr.into(),
         amount,
         timeout_block: None,
         timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
@@ -217,7 +215,9 @@ fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 
 fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
     let Config { admin } = config_read(deps.storage).load()?;
-    Ok(AdminResponse { admin })
+    Ok(AdminResponse {
+        admin: admin.into(),
+    })
 }
 
 #[cfg(test)]

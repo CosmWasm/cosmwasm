@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, ContractResult, CosmosMsg, HumanAddr};
+use cosmwasm_std::{Coin, ContractResult, CosmosMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -23,13 +23,13 @@ pub type DispatchResponse = ();
 /// Return the caller's account address on the remote chain
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct WhoAmIResponse {
-    pub account: HumanAddr,
+    pub account: String,
 }
 
 /// This is the success response we send on ack for PacketMsg::Balance.
 /// Just acknowledge success or error
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BalancesResponse {
-    pub account: HumanAddr,
+    pub account: String,
     pub balances: Vec<Coin>,
 }

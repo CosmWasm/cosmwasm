@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
-    Deps, DepsMut, Empty, Env, HumanAddr, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
-    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Response, StdError,
+    Deps, DepsMut, Empty, Env, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder,
+    IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Response, StdError,
     StdResult,
 };
 
@@ -53,10 +53,12 @@ pub fn execute_init_callback(
     deps: DepsMut,
     info: MessageInfo,
     id: String,
-    contract_addr: HumanAddr,
+    contract_addr: String,
 ) -> StdResult<Response> {
+    let contract_addr = deps.api.addr_validate(&contract_addr)?;
+
     // sanity check - the caller is registering itself
-    if info.sender.as_ref() != contract_addr {
+    if info.sender != contract_addr {
         return Err(StdError::generic_err("Must register self on callback"));
     }
 
@@ -90,18 +92,18 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 pub fn query_account(deps: Deps, channel_id: String) -> StdResult<AccountResponse> {
     let account = accounts_read(deps.storage).load(channel_id.as_bytes())?;
     Ok(AccountResponse {
-        account: Some(account),
+        account: Some(account.into()),
     })
 }
 
 pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
     let accounts: StdResult<Vec<_>> = accounts_read(deps.storage)
         .range(None, None, Order::Ascending)
-        .map(|r| {
-            let (k, account) = r?;
+        .map(|item| {
+            let (key, account) = item?;
             Ok(AccountInfo {
-                account,
-                channel_id: String::from_utf8(k)?,
+                account: account.into(),
+                channel_id: String::from_utf8(key)?,
             })
         })
         .collect();
@@ -172,7 +174,7 @@ pub fn ibc_channel_close(
     accounts(deps.storage).remove(channel_id.as_bytes());
 
     // transfer current balance if any (steal the money)
-    let amount = deps.querier.query_all_balances(&reflect_addr)?;
+    let amount = deps.querier.query_all_balances(reflect_addr.clone())?;
     let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
         let bank_msg = BankMsg::Send {
             to_address: env.contract.address.into(),
@@ -266,7 +268,9 @@ fn receive_dispatch(
 // processes PacketMsg::WhoAmI variant
 fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
     let account = accounts(deps.storage).load(caller.as_bytes())?;
-    let response = WhoAmIResponse { account };
+    let response = WhoAmIResponse {
+        account: account.into(),
+    };
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
     Ok(IbcReceiveResponse {
@@ -280,8 +284,11 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
 // processes PacketMsg::Balances variant
 fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
     let account = accounts(deps.storage).load(caller.as_bytes())?;
-    let balances = deps.querier.query_all_balances(&account)?;
-    let response = BalancesResponse { account, balances };
+    let balances = deps.querier.query_all_balances(account.clone())?;
+    let response = BalancesResponse {
+        account: account.into(),
+        balances,
+    };
     let acknowledgement = to_binary(&AcknowledgementMsg::Ok(response))?;
     // and we are golden
     Ok(IbcReceiveResponse {
@@ -348,8 +355,8 @@ mod tests {
 
     // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
-    fn connect<T: Into<HumanAddr>>(mut deps: DepsMut, channel_id: &str, account: T) {
-        let account: HumanAddr = account.into();
+    fn connect<T: Into<String>>(mut deps: DepsMut, channel_id: &str, account: T) {
+        let account: String = account.into();
 
         // open packet has no counterparty versin, connect does
         // TODO: validate this with alpe
@@ -465,7 +472,7 @@ mod tests {
         )
         .unwrap();
         let res: AccountResponse = from_slice(&raw).unwrap();
-        assert_eq!(res.account.unwrap(), HumanAddr::from(REFLECT_ADDR));
+        assert_eq!(res.account.unwrap(), REFLECT_ADDR);
     }
 
     #[test]
@@ -492,7 +499,7 @@ mod tests {
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(
             ack.unwrap_err(),
-            "invalid packet: cosmwasm_std::addresses::HumanAddr not found"
+            "invalid packet: cosmwasm_std::addresses::Addr not found"
         );
 
         // register the channel

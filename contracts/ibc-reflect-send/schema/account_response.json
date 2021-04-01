@@ -15,13 +15,9 @@
     },
     "remote_addr": {
       "description": "in normal cases, it should be set, but there is a delay between binding the channel and making a query and in that time it is empty",
-      "anyOf": [
-        {
-          "$ref": "#/definitions/HumanAddr"
-        },
-        {
-          "type": "null"
-        }
+      "type": [
+        "string",
+        "null"
       ]
     },
     "remote_balance": {
@@ -46,9 +42,6 @@
           "type": "string"
         }
       }
-    },
-    "HumanAddr": {
-      "type": "string"
     },
     "Uint128": {
       "type": "string"

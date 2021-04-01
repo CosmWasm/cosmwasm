@@ -19,8 +19,8 @@
 
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
 use cosmwasm_std::{
-    attr, coin, coins, to_binary, BankMsg, CosmosMsg, Empty, HumanAddr, IbcAcknowledgement,
-    IbcBasicResponse, IbcMsg, IbcOrder, Response,
+    attr, coin, coins, to_binary, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcBasicResponse,
+    IbcMsg, IbcOrder, Response,
 };
 use cosmwasm_vm::testing::{
     execute, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, instantiate, mock_env,
@@ -71,7 +71,7 @@ fn connect(deps: &mut Instance<MockApi, MockStorage, MockQuerier>, channel_id: &
     };
 }
 
-fn who_am_i_response<T: Into<HumanAddr>>(
+fn who_am_i_response<T: Into<String>>(
     deps: &mut Instance<MockApi, MockStorage, MockQuerier>,
     channel_id: &str,
     account: T,
@@ -140,7 +140,7 @@ fn proper_handshake_flow() {
 
     // account should be set up
     let acct = get_account(&mut deps, channel_id);
-    assert_eq!(acct.remote_addr.unwrap(), HumanAddr::from(remote_addr));
+    assert_eq!(acct.remote_addr.unwrap(), remote_addr);
     assert!(acct.remote_balance.is_empty());
     assert_eq!(0, acct.last_update_time);
 }

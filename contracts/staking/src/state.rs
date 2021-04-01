@@ -1,7 +1,6 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Decimal, HumanAddr, Storage, Uint128};
+use cosmwasm_std::{Addr, Decimal, Storage, Uint128};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -35,24 +34,24 @@ pub fn claims_read(storage: &dyn Storage) -> ReadonlyBucket<Uint128> {
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct InvestmentInfo {
     /// owner created the contract and takes a cut
-    pub owner: CanonicalAddr,
+    pub owner: Addr,
     /// this is the denomination we can stake (and only one we accept for payments)
     pub bond_denom: String,
     /// this is how much the owner takes as a cut when someone unbonds
     pub exit_tax: Decimal,
     /// All tokens are bonded to this validator
     /// FIXME: humanize/canonicalize address doesn't work for validator addrresses
-    pub validator: HumanAddr,
+    pub validator: String,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum
     /// that can be unbonded (to avoid needless staking tx)
     pub min_withdrawal: Uint128,
 }
 
 /// Supply is dynamic and tracks the current supply of staked and ERC20 tokens.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
 pub struct Supply {
     /// issued is how many derivative tokens this contract has issued
     pub issued: Uint128,

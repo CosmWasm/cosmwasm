@@ -16,7 +16,7 @@
           ],
           "properties": {
             "admin": {
-              "$ref": "#/definitions/HumanAddr"
+              "type": "string"
             }
           }
         }

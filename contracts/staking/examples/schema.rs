@@ -7,7 +7,6 @@ use staking::msg::{
     BalanceResponse, ClaimsResponse, ExecuteMsg, InstantiateMsg, InvestmentResponse, QueryMsg,
     TokenInfoResponse,
 };
-use staking::state::{InvestmentInfo, Supply};
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -22,6 +21,4 @@ fn main() {
     export_schema(&schema_for!(ClaimsResponse), &out_dir);
     export_schema(&schema_for!(InvestmentResponse), &out_dir);
     export_schema(&schema_for!(TokenInfoResponse), &out_dir);
-    export_schema(&schema_for!(InvestmentInfo), &out_dir);
-    export_schema(&schema_for!(Supply), &out_dir);
 }

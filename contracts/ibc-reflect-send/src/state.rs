@@ -1,7 +1,6 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Coin, HumanAddr, Storage};
+use cosmwasm_std::{Addr, Coin, Storage};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -10,18 +9,18 @@ use cosmwasm_storage::{
 pub const KEY_CONFIG: &[u8] = b"config";
 pub const PREFIX_ACCOUNTS: &[u8] = b"accounts";
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Config {
-    pub admin: HumanAddr,
+    pub admin: Addr,
 }
 
-#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
 pub struct AccountData {
     /// last block balance was updated (0 is never)
     pub last_update_time: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
-    pub remote_addr: Option<HumanAddr>,
+    pub remote_addr: Option<Addr>,
     pub remote_balance: Vec<Coin>,
 }
 

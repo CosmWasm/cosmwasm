@@ -61,7 +61,7 @@
           ],
           "properties": {
             "owner": {
-              "$ref": "#/definitions/HumanAddr"
+              "type": "string"
             }
           }
         }

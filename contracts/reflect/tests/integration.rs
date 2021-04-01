@@ -138,7 +138,7 @@ fn transfer() {
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
-    let new_owner = HumanAddr::from("friend");
+    let new_owner = String::from("friend");
     let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -158,7 +158,7 @@ fn transfer_requires_owner() {
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("random", &[]);
-    let new_owner = HumanAddr::from("friend");
+    let new_owner = String::from("friend");
     let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
 
     let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);

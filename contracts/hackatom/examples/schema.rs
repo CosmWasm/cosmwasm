@@ -5,7 +5,6 @@ use cosmwasm_schema::{export_schema, remove_schemas, schema_for};
 use cosmwasm_std::BalanceResponse;
 
 use hackatom::msg::{ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, SudoMsg, VerifierResponse};
-use hackatom::state::State;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -18,7 +17,6 @@ fn main() {
     export_schema(&schema_for!(MigrateMsg), &out_dir);
     export_schema(&schema_for!(SudoMsg), &out_dir);
     export_schema(&schema_for!(QueryMsg), &out_dir);
-    export_schema(&schema_for!(State), &out_dir);
     export_schema(&schema_for!(VerifierResponse), &out_dir);
     export_schema(&schema_for!(BalanceResponse), &out_dir);
 }

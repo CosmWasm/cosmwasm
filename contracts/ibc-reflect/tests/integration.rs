@@ -19,8 +19,8 @@
 
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_recv};
 use cosmwasm_std::{
-    coins, BankMsg, ContractResult, CosmosMsg, HumanAddr, IbcBasicResponse, IbcOrder,
-    IbcReceiveResponse, Response, WasmMsg,
+    coins, BankMsg, ContractResult, CosmosMsg, IbcBasicResponse, IbcOrder, IbcReceiveResponse,
+    Response, WasmMsg,
 };
 use cosmwasm_vm::testing::{
     execute, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env,
@@ -56,12 +56,12 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 
 // connect will run through the entire handshake to set up a proper connect and
 // save the account (tested in detail in `proper_handshake_flow`)
-fn connect<T: Into<HumanAddr>>(
+fn connect<T: Into<String>>(
     deps: &mut Instance<MockApi, MockStorage, MockQuerier>,
     channel_id: &str,
     account: T,
 ) {
-    let account: HumanAddr = account.into();
+    let account: String = account.into();
     // first we try to open with a valid handshake
     let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
     handshake_open.counterparty_version = None;
@@ -176,7 +176,7 @@ fn proper_handshake_flow() {
     )
     .unwrap();
     let res: AccountResponse = from_slice(&raw).unwrap();
-    assert_eq!(res.account.unwrap(), HumanAddr::from(REFLECT_ADDR));
+    assert_eq!(res.account.unwrap(), REFLECT_ADDR);
 }
 
 #[test]
@@ -203,7 +203,7 @@ fn handle_dispatch_packet() {
     let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
     assert_eq!(
         ack.unwrap_err(),
-        "invalid packet: cosmwasm_std::addresses::HumanAddr not found"
+        "invalid packet: cosmwasm_std::addresses::Addr not found"
     );
 
     // register the channel

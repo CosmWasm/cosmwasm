@@ -1,12 +1,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Binary, Coin, HumanAddr};
+use cosmwasm_std::{Binary, Coin};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
-    pub verifier: HumanAddr,
-    pub beneficiary: HumanAddr,
+    pub verifier: String,
+    pub beneficiary: String,
 }
 
 /// MigrateMsg allows a privileged contract administrator to run
@@ -18,7 +18,7 @@ pub struct InstantiateMsg {
 /// by blockchain logic (in the future by blockchain governance)
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct MigrateMsg {
-    pub verifier: HumanAddr,
+    pub verifier: String,
 }
 
 /// SudoMsg is only exposed for internal Cosmos SDK modules to call.
@@ -28,7 +28,7 @@ pub struct MigrateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum SudoMsg {
     StealFunds {
-        recipient: HumanAddr,
+        recipient: String,
         amount: Vec<Coin>,
     },
 }
@@ -62,7 +62,7 @@ pub enum QueryMsg {
     /// use to ensure query path works in integration tests
     Verifier {},
     /// This returns cosmwasm_std::AllBalanceResponse to demo use of the querier
-    OtherBalance { address: HumanAddr },
+    OtherBalance { address: String },
     /// Recurse will execute a query into itself up to depth-times and return
     /// Each step of the recursion may perform some extra work to test gas metering
     /// (`work` rounds of sha256 on contract).
@@ -72,7 +72,7 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct VerifierResponse {
-    pub verifier: HumanAddr,
+    pub verifier: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
