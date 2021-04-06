@@ -8,6 +8,7 @@ use reflect::msg::{
     CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse,
     QueryMsg, RawResponse,
 };
+use reflect::state::State;
 
 fn main() {
     let mut out_dir = current_dir().unwrap();
@@ -15,6 +16,7 @@ fn main() {
     create_dir_all(&out_dir).unwrap();
     remove_schemas(&out_dir).unwrap();
 
+    // messages
     export_schema(&schema_for!(CustomMsg), &out_dir);
     export_schema(&schema_for!(InstantiateMsg), &out_dir);
     export_schema(&schema_for!(ExecuteMsg), &out_dir);
@@ -26,4 +28,7 @@ fn main() {
     export_schema(&schema_for!(CapitalizedResponse), &out_dir);
     export_schema(&schema_for!(ChainResponse), &out_dir);
     export_schema(&schema_for!(RawResponse), &out_dir);
+
+    // state
+    export_schema(&schema_for!(State), &out_dir);
 }

@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Reply, Storage};
@@ -9,7 +10,7 @@ use cosmwasm_storage::{
 const CONFIG_KEY: &[u8] = b"config";
 const RESULT_PREFIX: &[u8] = b"result";
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
     pub owner: Addr,
 }
