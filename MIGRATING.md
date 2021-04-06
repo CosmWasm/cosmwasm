@@ -225,6 +225,80 @@ major releases of `cosmwasm`. Note that you can also view the
 - If necessary, add a wildcard arm to the `match` of now non-exhaustive message
   types `BankMsg`, `BankQuery`, `WasmMsg` and `WasmQuery`.
 
+- `HumanAddr` has been deprecated in favour of simply `String`. It never added
+  any significant safety bonus over `String` and was just a marker type. The new
+  type `Addr` was created to hold validated addresses. Those can be created via
+  `Addr::unchecked`, `Api::addr_validate`, `Api::addr_humanize` and JSON
+  deserialization. In order to maintain type safety, deserialization into `Addr`
+  must only be done from trusted sources like a contract's state or a query
+  response. User inputs must be deserialized into `String`. This new `Addr` type
+  allows makes it easy to use human readable addresses in state:
+
+  With pre-validated `Addr` from `MessageInfo`:
+
+  ```rust
+  // before
+  pub struct State {
+      pub owner: CanonicalAddr,
+  }
+
+  let state = State {
+      owner: deps.api.canonical_address(&info.sender)?,
+  };
+
+
+  // after
+  pub struct State {
+      pub owner: Addr,
+  }
+  let state = State {
+      owner: info.sender.clone(),
+  };
+  ```
+
+  With user input in `msg`:
+
+  ```rust
+  // before
+  pub struct State {
+      pub verifier: CanonicalAddr,
+      pub beneficiary: CanonicalAddr,
+      pub funder: CanonicalAddr,
+  }
+
+  deps.storage.set(
+      CONFIG_KEY,
+      &to_vec(&State {
+          verifier: deps.api.canonical_address(&msg.verifier)?,
+          beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
+          funder: deps.api.canonical_address(&info.sender)?,
+      })?,
+  );
+
+  // after
+  pub struct State {
+      pub verifier: Addr,
+      pub beneficiary: Addr,
+      pub funder: Addr,
+  }
+
+  deps.storage.set(
+      CONFIG_KEY,
+      &to_vec(&State {
+          verifier: deps.api.addr_validate(&msg.verifier)?,
+          verifier: deps.api.addr_validate(&msg.verifier)?,
+          funder: info.sender,
+      })?,
+  );
+  ```
+
+  The existing `CanonicalAddr` remains unchanged and can be used in which a
+  compact binary representation is desired. For JSON state this does not save
+  much data (e.g. the bech32 address
+  cosmos1pfq05em6sfkls66ut4m2257p7qwlk448h8mysz takes 45 bytes as direct ASCII
+  and 28 bytes when its canonical representation is base64 encoded). For fixed
+  length database keys `CanonicalAddr` remains handy though.
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0. Verify your Rust
