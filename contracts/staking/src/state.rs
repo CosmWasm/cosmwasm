@@ -1,3 +1,4 @@
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use cosmwasm_std::{Addr, Decimal, Storage, Uint128};
@@ -5,8 +6,6 @@ use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
 };
-
-use crate::msg::TokenInfoResponse;
 
 pub const KEY_INVESTMENT: &[u8] = b"invest";
 pub const KEY_TOKEN_INFO: &[u8] = b"token";
@@ -34,7 +33,7 @@ pub fn claims_read(storage: &dyn Storage) -> ReadonlyBucket<Uint128> {
 }
 
 /// Investment info is fixed at initialization, and is used to control the function of the contract
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InvestmentInfo {
     /// owner created the contract and takes a cut
     pub owner: Addr,
@@ -50,8 +49,19 @@ pub struct InvestmentInfo {
     pub min_withdrawal: Uint128,
 }
 
+/// Info to display the derivative token in a UI
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct TokenInfo {
+    /// name of the derivative token
+    pub name: String,
+    /// symbol / ticker of the derivative token
+    pub symbol: String,
+    /// decimal places of the derivative token (for UI)
+    pub decimals: u8,
+}
+
 /// Supply is dynamic and tracks the current supply of staked and ERC20 tokens.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Default, JsonSchema)]
 pub struct Supply {
     /// issued is how many derivative tokens this contract has issued
     pub issued: Uint128,
@@ -69,11 +79,11 @@ pub fn invest_info_read(storage: &dyn Storage) -> ReadonlySingleton<InvestmentIn
     singleton_read(storage, KEY_INVESTMENT)
 }
 
-pub fn token_info(storage: &mut dyn Storage) -> Singleton<TokenInfoResponse> {
+pub fn token_info(storage: &mut dyn Storage) -> Singleton<TokenInfo> {
     singleton(storage, KEY_TOKEN_INFO)
 }
 
-pub fn token_info_read(storage: &dyn Storage) -> ReadonlySingleton<TokenInfoResponse> {
+pub fn token_info_read(storage: &dyn Storage) -> ReadonlySingleton<TokenInfo> {
     singleton_read(storage, KEY_TOKEN_INFO)
 }
 

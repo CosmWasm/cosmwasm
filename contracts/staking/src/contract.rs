@@ -10,7 +10,7 @@ use crate::msg::{
 };
 use crate::state::{
     balances, balances_read, claims, claims_read, invest_info, invest_info_read, token_info,
-    token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply,
+    token_info_read, total_supply, total_supply_read, InvestmentInfo, Supply, TokenInfo,
 };
 
 const FALLBACK_RATIO: Decimal = Decimal::one();
@@ -31,7 +31,7 @@ pub fn instantiate(
         )));
     }
 
-    let token = TokenInfoResponse {
+    let token = TokenInfo {
         name: msg.name,
         symbol: msg.symbol,
         decimals: msg.decimals,
@@ -391,7 +391,17 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
 }
 
 pub fn query_token_info(deps: Deps) -> StdResult<TokenInfoResponse> {
-    token_info_read(deps.storage).load()
+    let TokenInfo {
+        name,
+        symbol,
+        decimals,
+    } = token_info_read(deps.storage).load()?;
+
+    Ok(TokenInfoResponse {
+        name,
+        symbol,
+        decimals,
+    })
 }
 
 pub fn query_balance(deps: Deps, address: &str) -> StdResult<BalanceResponse> {
