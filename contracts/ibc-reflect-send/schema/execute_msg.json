@@ -131,7 +131,7 @@
           "additionalProperties": false
         },
         {
-          "description": "This will burn the given coins from the contracts account. There is no sdk message that performs this, but it can be done by calling the bank keeper. Important if a contract controls significant token supply that must be retired.",
+          "description": "This will burn the given coins from the contract's account. There is no Cosmos SDK message that performs this, but it can be done by calling the bank keeper. Important if a contract controls significant token supply that must be retired.",
           "type": "object",
           "required": [
             "burn"
