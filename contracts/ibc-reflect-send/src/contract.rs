@@ -80,7 +80,7 @@ pub fn handle_send_msgs(
 ) -> StdResult<Response> {
     // auth check
     let cfg = config(deps.storage).load()?;
-    if info.sender.as_ref() != cfg.admin {
+    if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
@@ -111,7 +111,7 @@ pub fn handle_check_remote_balance(
 ) -> StdResult<Response> {
     // auth check
     let cfg = config(deps.storage).load()?;
-    if info.sender.as_ref() != cfg.admin {
+    if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may send messages"));
     }
     // ensure the channel exists (not found if not registered)
