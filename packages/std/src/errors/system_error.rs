@@ -25,7 +25,7 @@ pub enum SystemError {
         response: Binary,
     },
     NoSuchContract {
-        /// The address that was attemted to query
+        /// The address that was attempted to query
         addr: String,
     },
     Unknown {},
