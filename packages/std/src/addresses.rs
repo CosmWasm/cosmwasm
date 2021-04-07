@@ -27,6 +27,21 @@ use crate::binary::Binary;
 pub struct Addr(String);
 
 impl Addr {
+    /// Creates a new `Addr` instance from the given input without checking the validity
+    /// of the input. Since `Addr` must always contain valid addresses, the caller is
+    /// responsible for ensuring the input is valid.
+    ///
+    /// Use this in cases where the address was validated before or in test code.
+    /// If you see this in contract code, it should most likely be replaced with
+    /// `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Addr};
+    /// let address = Addr::unchecked("foobar");
+    /// assert_eq!(address, "foobar");
+    /// ```
     pub fn unchecked<T: Into<String>>(input: T) -> Addr {
         Addr(input.into())
     }
