@@ -1,5 +1,5 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, Addr, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Order,
+    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Order,
     QueryResponse, Response, StdError, StdResult,
 };
 
@@ -159,7 +159,7 @@ pub fn handle_send_funds(
 
     // load remote account
     let data = accounts(deps.storage).load(reflect_channel_id.as_bytes())?;
-    let remote_addr: Addr = match data.remote_addr {
+    let remote_addr = match data.remote_addr {
         Some(addr) => addr,
         None => {
             return Err(StdError::generic_err(
@@ -171,7 +171,7 @@ pub fn handle_send_funds(
     // construct a packet to send
     let msg = IbcMsg::Transfer {
         channel_id: transfer_channel_id,
-        to_address: remote_addr.into(),
+        to_address: remote_addr,
         amount,
         timeout_block: None,
         timeout_timestamp: Some(build_timeout_timestamp(&env.block)),

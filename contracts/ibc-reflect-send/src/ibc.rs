@@ -170,14 +170,13 @@ fn acknowledge_who_am_i(
             })
         }
     };
-    let checked_account = deps.api.addr_validate(&account)?;
 
     accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
         match acct {
             Some(mut acct) => {
                 // set the account the first time
                 if acct.remote_addr.is_none() {
-                    acct.remote_addr = Some(checked_account);
+                    acct.remote_addr = Some(account);
                 }
                 Ok(acct)
             }
@@ -210,22 +209,21 @@ fn acknowledge_balances(
             })
         }
     };
-    let checked_account = deps.api.addr_validate(&account)?;
 
     accounts(deps.storage).update(caller.as_bytes(), |acct| -> StdResult<_> {
         match acct {
             Some(acct) => {
                 if let Some(old_addr) = acct.remote_addr {
-                    if old_addr != checked_account {
+                    if old_addr != account {
                         return Err(StdError::generic_err(format!(
                             "remote account changed from {} to {}",
-                            old_addr, checked_account
+                            old_addr, account
                         )));
                     }
                 }
                 Ok(AccountData {
                     last_update_time: env.block.time,
-                    remote_addr: Some(checked_account),
+                    remote_addr: Some(account),
                     remote_balance: balances,
                 })
             }

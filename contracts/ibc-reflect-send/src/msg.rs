@@ -74,7 +74,7 @@ impl AccountInfo {
         AccountInfo {
             channel_id,
             last_update_time: input.last_update_time,
-            remote_addr: input.remote_addr.map(|addr| addr.into()),
+            remote_addr: input.remote_addr,
             remote_balance: input.remote_balance,
         }
     }
@@ -94,7 +94,7 @@ impl From<AccountData> for AccountResponse {
     fn from(input: AccountData) -> Self {
         AccountResponse {
             last_update_time: input.last_update_time,
-            remote_addr: input.remote_addr.map(|addr| addr.into()),
+            remote_addr: input.remote_addr,
             remote_balance: input.remote_balance,
         }
     }
