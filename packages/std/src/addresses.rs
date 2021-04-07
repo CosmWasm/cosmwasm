@@ -82,9 +82,21 @@ impl From<Addr> for String {
     }
 }
 
+impl From<&Addr> for String {
+    fn from(addr: &Addr) -> Self {
+        addr.0.clone()
+    }
+}
+
 impl From<Addr> for HumanAddr {
     fn from(addr: Addr) -> Self {
         HumanAddr(addr.0)
+    }
+}
+
+impl From<&Addr> for HumanAddr {
+    fn from(addr: &Addr) -> Self {
+        HumanAddr(addr.0.clone())
     }
 }
 
@@ -283,15 +295,29 @@ mod tests {
 
     #[test]
     fn addr_implements_into_string() {
+        // owned Addr
         let addr = Addr::unchecked("cos934gh9034hg04g0h134");
         let string: String = addr.into();
+        assert_eq!(string, "cos934gh9034hg04g0h134");
+
+        // &Addr
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let addr_ref = &addr;
+        let string: String = addr_ref.into();
         assert_eq!(string, "cos934gh9034hg04g0h134");
     }
 
     #[test]
     fn addr_implements_into_human_address() {
+        // owned Addr
         let addr = Addr::unchecked("cos934gh9034hg04g0h134");
         let human: HumanAddr = addr.into();
+        assert_eq!(human, "cos934gh9034hg04g0h134");
+
+        // &Addr
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let addr_ref = &addr;
+        let human: HumanAddr = addr_ref.into();
         assert_eq!(human, "cos934gh9034hg04g0h134");
     }
 

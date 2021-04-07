@@ -174,7 +174,7 @@ pub fn ibc_channel_close(
     accounts(deps.storage).remove(channel_id.as_bytes());
 
     // transfer current balance if any (steal the money)
-    let amount = deps.querier.query_all_balances(reflect_addr.clone())?;
+    let amount = deps.querier.query_all_balances(&reflect_addr)?;
     let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
         let bank_msg = BankMsg::Send {
             to_address: env.contract.address.into(),
@@ -284,7 +284,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
 // processes PacketMsg::Balances variant
 fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveResponse> {
     let account = accounts(deps.storage).load(caller.as_bytes())?;
-    let balances = deps.querier.query_all_balances(account.clone())?;
+    let balances = deps.querier.query_all_balances(&account)?;
     let response = BalancesResponse {
         account: account.into(),
         balances,
