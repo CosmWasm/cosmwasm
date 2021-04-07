@@ -232,7 +232,7 @@ major releases of `cosmwasm`. Note that you can also view the
   deserialization. In order to maintain type safety, deserialization into `Addr`
   must only be done from trusted sources like a contract's state or a query
   response. User inputs must be deserialized into `String`. This new `Addr` type
-  allows makes it easy to use human readable addresses in state:
+  makes it easy to use human readable addresses in state:
 
   With pre-validated `Addr` from `MessageInfo`:
 
@@ -243,7 +243,7 @@ major releases of `cosmwasm`. Note that you can also view the
   }
 
   let state = State {
-      owner: deps.api.canonical_address(&info.sender)?,
+      owner: deps.api.canonical_address(&info.sender /* of type HumanAddr */)?,
   };
 
 
@@ -252,7 +252,7 @@ major releases of `cosmwasm`. Note that you can also view the
       pub owner: Addr,
   }
   let state = State {
-      owner: info.sender.clone(),
+      owner: info.sender.clone() /* of type Addr */,
   };
   ```
 
@@ -269,9 +269,9 @@ major releases of `cosmwasm`. Note that you can also view the
   deps.storage.set(
       CONFIG_KEY,
       &to_vec(&State {
-          verifier: deps.api.canonical_address(&msg.verifier)?,
-          beneficiary: deps.api.canonical_address(&msg.beneficiary)?,
-          funder: deps.api.canonical_address(&info.sender)?,
+          verifier: deps.api.canonical_address(&msg.verifier /* of type HumanAddr */)?,
+          beneficiary: deps.api.canonical_address(&msg.beneficiary /* of type HumanAddr */)?,
+          funder: deps.api.canonical_address(&info.sender /* of type HumanAddr */)?,
       })?,
   );
 
@@ -285,16 +285,16 @@ major releases of `cosmwasm`. Note that you can also view the
   deps.storage.set(
       CONFIG_KEY,
       &to_vec(&State {
-          verifier: deps.api.addr_validate(&msg.verifier)?,
-          verifier: deps.api.addr_validate(&msg.verifier)?,
-          funder: info.sender,
+          verifier: deps.api.addr_validate(&msg.verifier /* of type String */)?,
+          beneficiary: deps.api.addr_validate(&msg.beneficiary /* of type String */)?,
+          funder: info.sender /* of type Addr */,
       })?,
   );
   ```
 
-  The existing `CanonicalAddr` remains unchanged and can be used in which a
-  compact binary representation is desired. For JSON state this does not save
-  much data (e.g. the bech32 address
+  The existing `CanonicalAddr` remains unchanged and can be used in cases in
+  which a compact binary representation is desired. For JSON state this does not
+  save much data (e.g. the bech32 address
   cosmos1pfq05em6sfkls66ut4m2257p7qwlk448h8mysz takes 45 bytes as direct ASCII
   and 28 bytes when its canonical representation is base64 encoded). For fixed
   length database keys `CanonicalAddr` remains handy though.
