@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coin, from_binary, ContractResult, Decimal, HumanAddr, Response, Uint128, Validator,
+    coin, from_binary, Addr, ContractResult, Decimal, Response, Uint128, Validator,
 };
 use cosmwasm_vm::testing::{
     instantiate, mock_backend, mock_env, mock_info, mock_instance_options, query,
@@ -35,9 +35,9 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/st
 // You can uncomment this line instead to test productionified build from cosmwasm-opt
 // static WASM: &[u8] = include_bytes!("../contract.wasm");
 
-fn sample_validator<U: Into<HumanAddr>>(addr: U) -> Validator {
+fn sample_validator(addr: &str) -> Validator {
     Validator {
-        address: addr.into(),
+        address: Addr::unchecked(addr),
         commission: Decimal::percent(3),
         max_commission: Decimal::percent(10),
         max_change_rate: Decimal::percent(1),
@@ -53,12 +53,12 @@ fn initialization_with_missing_validator() {
     let (instance_options, memory_limit) = mock_instance_options();
     let mut deps = Instance::from_code(WASM, backend, instance_options, memory_limit).unwrap();
 
-    let creator = HumanAddr::from("creator");
+    let creator = String::from("creator");
     let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
-        validator: HumanAddr::from("my-validator"),
+        validator: String::from("my-validator"),
         exit_tax: Decimal::percent(2),
         min_withdrawal: Uint128(50),
     };
@@ -91,12 +91,12 @@ fn proper_initialization() {
     assert_eq!(deps.required_features.len(), 1);
     assert!(deps.required_features.contains("staking"));
 
-    let creator = HumanAddr::from("creator");
+    let creator = String::from("creator");
     let msg = InstantiateMsg {
         name: "Cool Derivative".to_string(),
         symbol: "DRV".to_string(),
         decimals: 9,
-        validator: HumanAddr::from("my-validator"),
+        validator: String::from("my-validator"),
         exit_tax: Decimal::percent(2),
         min_withdrawal: Uint128(50),
     };

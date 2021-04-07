@@ -1,7 +1,7 @@
 use serde::{de::DeserializeOwned, Serialize};
 use std::ops::Deref;
 
-use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, VerificationError};
@@ -64,8 +64,28 @@ pub trait Storage {
 /// We can use feature flags to opt-in to non-essential methods
 /// for backwards compatibility in systems that don't have them all.
 pub trait Api {
-    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr>;
-    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr>;
+    /// Takes a human readable address and validates if it's correctly formatted.
+    /// If it succeeds, a Addr is returned.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Api, Addr};
+    /// # use cosmwasm_std::testing::MockApi;
+    /// # let api = MockApi::default();
+    /// let input = "what-users-provide";
+    /// let validated: Addr = api.addr_validate(input).unwrap();
+    /// assert_eq!(validated, input);
+    /// ```
+    fn addr_validate(&self, human: &str) -> StdResult<Addr>;
+
+    /// Takes a human readable address and returns a canonical binary representation of it.
+    /// This can be used when a compact fixed length representation is needed.
+    fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr>;
+
+    /// Takes a canonical address and returns a human readble address.
+    /// This is the inverse of [addr_canonicalize].
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr>;
 
     fn secp256k1_verify(
         &self,
@@ -162,17 +182,21 @@ impl<'a> QuerierWrapper<'a> {
         }
     }
 
-    pub fn query_balance<U: Into<HumanAddr>>(&self, address: U, denom: &str) -> StdResult<Coin> {
+    pub fn query_balance<U: Into<String>, V: Into<String>>(
+        &self,
+        address: U,
+        denom: V,
+    ) -> StdResult<Coin> {
         let request = BankQuery::Balance {
             address: address.into(),
-            denom: denom.to_string(),
+            denom: denom.into(),
         }
         .into();
         let res: BalanceResponse = self.query(&request)?;
         Ok(res.amount)
     }
 
-    pub fn query_all_balances<U: Into<HumanAddr>>(&self, address: U) -> StdResult<Vec<Coin>> {
+    pub fn query_all_balances<U: Into<String>>(&self, address: U) -> StdResult<Vec<Coin>> {
         let request = BankQuery::AllBalances {
             address: address.into(),
         }
@@ -183,13 +207,13 @@ impl<'a> QuerierWrapper<'a> {
 
     // this queries another wasm contract. You should know a priori the proper types for T and U
     // (response and request) based on the contract API
-    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<HumanAddr>>(
+    pub fn query_wasm_smart<T: DeserializeOwned, U: Serialize, V: Into<String>>(
         &self,
-        contract: V,
+        contract_addr: V,
         msg: &U,
     ) -> StdResult<T> {
         let request = WasmQuery::Smart {
-            contract_addr: contract.into(),
+            contract_addr: contract_addr.into(),
             msg: to_binary(msg)?,
         }
         .into();
@@ -203,13 +227,13 @@ impl<'a> QuerierWrapper<'a> {
     //
     // Similar return value to Storage.get(). Returns Some(val) or None if the data is there.
     // It only returns error on some runtime issue, not on any data cases.
-    pub fn query_wasm_raw<T: Into<HumanAddr>, U: Into<Binary>>(
+    pub fn query_wasm_raw<T: Into<String>, U: Into<Binary>>(
         &self,
-        contract: T,
+        contract_addr: T,
         key: U,
     ) -> StdResult<Option<Vec<u8>>> {
         let request: QueryRequest<Empty> = WasmQuery::Raw {
-            contract_addr: contract.into(),
+            contract_addr: contract_addr.into(),
             key: key.into(),
         }
         .into();
@@ -251,7 +275,7 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_all_delegations<U: Into<HumanAddr>>(
+    pub fn query_all_delegations<U: Into<String>>(
         &self,
         delegator: U,
     ) -> StdResult<Vec<Delegation>> {
@@ -264,10 +288,10 @@ impl<'a> QuerierWrapper<'a> {
     }
 
     #[cfg(feature = "staking")]
-    pub fn query_delegation<U: Into<HumanAddr>>(
+    pub fn query_delegation<U: Into<String>, V: Into<String>>(
         &self,
         delegator: U,
-        validator: U,
+        validator: V,
     ) -> StdResult<Option<FullDelegation>> {
         let request = StakingQuery::Delegation {
             delegator: delegator.into(),
@@ -307,7 +331,7 @@ mod tests {
 
     #[test]
     fn auto_deref_raw_query() {
-        let acct = HumanAddr::from("foobar");
+        let acct = String::from("foobar");
         let querier: MockQuerier<Empty> = MockQuerier::new(&[(&acct, &coins(5, "BTC"))]);
         let wrapper = QuerierWrapper::new(&querier);
         let query = QueryRequest::<Empty>::Bank(BankQuery::Balance {

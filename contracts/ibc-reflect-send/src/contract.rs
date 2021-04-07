@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, HumanAddr, IbcMsg, MessageInfo,
-    Order, QueryResponse, Response, StdError, StdResult,
+    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Order,
+    QueryResponse, Response, StdError, StdResult,
 };
 
 use crate::ibc::build_timeout_timestamp;
@@ -50,14 +50,14 @@ pub fn execute(deps: DepsMut, env: Env, info: MessageInfo, msg: ExecuteMsg) -> S
 pub fn handle_update_admin(
     deps: DepsMut,
     info: MessageInfo,
-    new_admin: HumanAddr,
+    new_admin: String,
 ) -> StdResult<Response> {
     // auth check
     let mut cfg = config(deps.storage).load()?;
     if info.sender != cfg.admin {
         return Err(StdError::generic_err("Only admin may set new admin"));
     }
-    cfg.admin = new_admin;
+    cfg.admin = deps.api.addr_validate(&new_admin)?;
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
@@ -215,7 +215,9 @@ fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 
 fn query_admin(deps: Deps) -> StdResult<AdminResponse> {
     let Config { admin } = config_read(deps.storage).load()?;
-    Ok(AdminResponse { admin })
+    Ok(AdminResponse {
+        admin: admin.into(),
+    })
 }
 
 #[cfg(test)]

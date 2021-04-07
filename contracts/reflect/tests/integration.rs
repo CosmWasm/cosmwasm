@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, HumanAddr, Reply,
-    Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
+    StakingMsg, SubMsg, SubcallResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -45,9 +45,8 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/re
 pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
 ) -> Backend<MockApi, MockStorage, MockQuerier<SpecialQuery>> {
-    let contract_addr = HumanAddr::from(MOCK_CONTRACT_ADDR);
     let custom_querier: MockQuerier<SpecialQuery> =
-        MockQuerier::new(&[(&contract_addr, contract_balance)])
+        MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(query)));
 
     Backend {
@@ -84,7 +83,7 @@ fn reflect() {
 
     let payload = vec![
         BankMsg::Send {
-            to_address: HumanAddr::from("friend"),
+            to_address: String::from("friend"),
             amount: coins(1, "token"),
         }
         .into(),
@@ -92,7 +91,7 @@ fn reflect() {
         CustomMsg::Raw(Binary(b"{\"foo\":123}".to_vec())).into(),
         CustomMsg::Debug("Hi, Dad!".to_string()).into(),
         StakingMsg::Delegate {
-            validator: HumanAddr::from("validator"),
+            validator: String::from("validator"),
             amount: coin(100, "ustake"),
         }
         .into(),
@@ -117,7 +116,7 @@ fn reflect_requires_owner() {
 
     // signer is not owner
     let payload = vec![BankMsg::Send {
-        to_address: HumanAddr::from("friend"),
+        to_address: String::from("friend"),
         amount: coins(1, "token"),
     }
     .into()];
@@ -138,7 +137,7 @@ fn transfer() {
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("creator", &[]);
-    let new_owner = HumanAddr::from("friend");
+    let new_owner = String::from("friend");
     let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
@@ -158,7 +157,7 @@ fn transfer_requires_owner() {
     let _res: Response<CustomMsg> = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let info = mock_info("random", &[]);
-    let new_owner = HumanAddr::from("friend");
+    let new_owner = String::from("friend");
     let msg = ExecuteMsg::ChangeOwner { owner: new_owner };
 
     let res: ContractResult<Response> = execute(&mut deps, mock_env(), info, msg);
@@ -200,7 +199,7 @@ fn reflect_subcall() {
         id,
         gas_limit: None,
         msg: BankMsg::Send {
-            to_address: HumanAddr::from("friend"),
+            to_address: String::from("friend"),
             amount: coins(1, "token"),
         }
         .into(),

@@ -35,32 +35,22 @@
       "description": "owner created the contract and takes a cut",
       "allOf": [
         {
-          "$ref": "#/definitions/CanonicalAddr"
+          "$ref": "#/definitions/Addr"
         }
       ]
     },
     "validator": {
       "description": "All tokens are bonded to this validator FIXME: humanize/canonicalize address doesn't work for validator addrresses",
-      "allOf": [
-        {
-          "$ref": "#/definitions/HumanAddr"
-        }
-      ]
+      "type": "string"
     }
   },
   "definitions": {
-    "Binary": {
-      "description": "Binary is a wrapper around Vec<u8> to add base64 de/serialization with serde. It also adds some helper methods to help encode inline.\n\nThis is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>",
+    "Addr": {
+      "description": "A human readable address.\n\nIn Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no assumptions should be made other than being UTF-8 encoded and of reasonable length.\n\nThis type represents a validated address. It can be created in the following ways 1. Use `Addr::unchecked(input)` 2. Use `let checked: Addr = deps.api.addr_validate(input)?` 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?` 4. Deserialize from JSON. This must only be done from JSON that was validated before such as a contract's state. `Addr` must not be used in messages sent by the user because this would result in unvalidated instances.\n\nThis type is immutable. If you really need to mutate it (Really? Are you sure?), create a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String` instance.",
       "type": "string"
-    },
-    "CanonicalAddr": {
-      "$ref": "#/definitions/Binary"
     },
     "Decimal": {
       "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
-      "type": "string"
-    },
-    "HumanAddr": {
       "type": "string"
     },
     "Uint128": {

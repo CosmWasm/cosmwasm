@@ -1,6 +1,6 @@
 use std::vec::Vec;
 
-use crate::addresses::{CanonicalAddr, HumanAddr};
+use crate::addresses::{Addr, CanonicalAddr};
 use crate::binary::Binary;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 use crate::import_helpers::{from_high_half, from_low_half};
@@ -36,8 +36,9 @@ extern "C" {
     #[cfg(feature = "iterator")]
     fn db_next(iterator_id: u32) -> u32;
 
-    fn canonicalize_address(source_ptr: u32, destination_ptr: u32) -> u32;
-    fn humanize_address(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn addr_validate(source_ptr: u32) -> u32;
+    fn addr_canonicalize(source_ptr: u32, destination_ptr: u32) -> u32;
+    fn addr_humanize(source_ptr: u32, destination_ptr: u32) -> u32;
 
     fn secp256k1_verify(message_hash_ptr: u32, signature_ptr: u32, public_key_ptr: u32) -> u32;
     fn secp256k1_recover_pubkey(
@@ -155,16 +156,32 @@ impl ExternalApi {
 }
 
 impl Api for ExternalApi {
-    fn canonical_address(&self, human: &HumanAddr) -> StdResult<CanonicalAddr> {
-        let send = build_region(human.as_str().as_bytes());
-        let send_ptr = &*send as *const Region as u32;
-        let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
+    fn addr_validate(&self, human: &str) -> StdResult<Addr> {
+        let source = build_region(human.as_bytes());
+        let source_ptr = &*source as *const Region as u32;
 
-        let result = unsafe { canonicalize_address(send_ptr, canon as u32) };
+        let result = unsafe { addr_validate(source_ptr) };
         if result != 0 {
             let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
-                "canonicalize_address errored: {}",
+                "addr_validate errored: {}",
+                error
+            )));
+        }
+
+        Ok(Addr::unchecked(human))
+    }
+
+    fn addr_canonicalize(&self, human: &str) -> StdResult<CanonicalAddr> {
+        let send = build_region(human.as_bytes());
+        let send_ptr = &*send as *const Region as u32;
+        let canon = alloc(CANONICAL_ADDRESS_BUFFER_LENGTH);
+
+        let result = unsafe { addr_canonicalize(send_ptr, canon as u32) };
+        if result != 0 {
+            let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
+            return Err(StdError::generic_err(format!(
+                "addr_canonicalize errored: {}",
                 error
             )));
         }
@@ -173,22 +190,22 @@ impl Api for ExternalApi {
         Ok(CanonicalAddr(Binary(out)))
     }
 
-    fn human_address(&self, canonical: &CanonicalAddr) -> StdResult<HumanAddr> {
+    fn addr_humanize(&self, canonical: &CanonicalAddr) -> StdResult<Addr> {
         let send = build_region(&canonical);
         let send_ptr = &*send as *const Region as u32;
         let human = alloc(HUMAN_ADDRESS_BUFFER_LENGTH);
 
-        let result = unsafe { humanize_address(send_ptr, human as u32) };
+        let result = unsafe { addr_humanize(send_ptr, human as u32) };
         if result != 0 {
             let error = unsafe { consume_string_region_written_by_vm(result as *mut Region) };
             return Err(StdError::generic_err(format!(
-                "humanize_address errored: {}",
+                "addr_humanize errored: {}",
                 error
             )));
         }
 
         let address = unsafe { consume_string_region_written_by_vm(human) };
-        Ok(address.into())
+        Ok(Addr::unchecked(address))
     }
 
     fn secp256k1_verify(

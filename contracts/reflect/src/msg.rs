@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, HumanAddr, QueryRequest, SubMsg};
+use cosmwasm_std::{Binary, CosmosMsg, CustomQuery, QueryRequest, SubMsg};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -19,7 +19,7 @@ pub enum CallbackMsg {
         /// Callback ID provided in the InstantiateMsg
         id: String,
         /// contract_addr is the address of this contract
-        contract_addr: HumanAddr,
+        contract_addr: String,
     },
 }
 
@@ -28,7 +28,7 @@ pub enum CallbackMsg {
 pub enum ExecuteMsg {
     ReflectMsg { msgs: Vec<CosmosMsg<CustomMsg>> },
     ReflectSubCall { msgs: Vec<SubMsg<CustomMsg>> },
-    ChangeOwner { owner: HumanAddr },
+    ChangeOwner { owner: String },
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,7 +45,7 @@ pub enum QueryMsg {
     },
     /// Queries another contract and returns the data
     Raw {
-        contract: HumanAddr,
+        contract: String,
         key: Binary,
     },
     /// If there was a previous ReflectSubCall with this ID, returns cosmwasm_std::Reply
@@ -58,7 +58,7 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct OwnerResponse {
-    pub owner: HumanAddr,
+    pub owner: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]

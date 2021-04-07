@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, CosmosMsg, Empty, HumanAddr};
+use cosmwasm_std::{Coin, CosmosMsg, Empty};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +14,7 @@ pub struct InstantiateMsg {}
 pub enum ExecuteMsg {
     /// Changes the admin
     UpdateAdmin {
-        admin: HumanAddr,
+        admin: String,
     },
     SendMsgs {
         channel_id: String,
@@ -50,7 +50,7 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AdminResponse {
-    pub admin: HumanAddr,
+    pub admin: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -65,7 +65,7 @@ pub struct AccountInfo {
     pub last_update_time: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
-    pub remote_addr: Option<HumanAddr>,
+    pub remote_addr: Option<String>,
     pub remote_balance: Vec<Coin>,
 }
 
@@ -86,7 +86,7 @@ pub struct AccountResponse {
     pub last_update_time: u64,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
-    pub remote_addr: Option<HumanAddr>,
+    pub remote_addr: Option<String>,
     pub remote_balance: Vec<Coin>,
 }
 

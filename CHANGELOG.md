@@ -52,6 +52,11 @@ and this project adheres to
   returns "submessages" (above). ([#796])
 - cosmwasm-std: Implement `From<Uint128> for String`, `From<Uint128> for u128`
   as well as `From<u{32,16,8}> for Uint128`.
+- cosmwasm-std: Create new address type `Addr`. This is human readable (like
+  `HumanAddr`) but is immutable and always contains a valid address ([#802]).
+- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
+  and `WasmQuery` query requests.
+- cosmwasm-vm: Add import `addr_validate` ([#802]).
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -62,6 +67,7 @@ and this project adheres to
 [#768]: https://github.com/CosmWasm/cosmwasm/pull/768
 [#793]: https://github.com/CosmWasm/cosmwasm/pull/793
 [#796]: https://github.com/CosmWasm/cosmwasm/pull/796
+[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ### Changed
 
@@ -106,10 +112,18 @@ and this project adheres to
 - cosmwasm-std: Rename type `KV` to `Pair` in order to comply to naming
   convention as enforced by clippy rule `upper_case_acronyms` from Rust 1.51.0
   on.
+- cosmwasm-std: `ContractInfo::address` and `MessageInfo::sender` are now of
+  type `Addr`. The value of those fields is created by the host and thus valid.
 - cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_4` to
   `interface_version_5`.
 - cosmwasm-vm: Rename trait `Api` to `BackendApi` to better express this is the
   API provided by the VM's backend (i.e. the blockchain).
+- cosmwasm-vm: Rename imports to `addr_canonicalize` and `addr_humanize`
+  ([#802]).
+- cosmwasm-vm: Replace types `HumanAddr`/`CanonicalAddr` with
+  `&str`/`String`/`&[u8]`/`Vec<u8>` in the methods of `BackendApi`. The address
+  types belong in the contract development and the backend operates on raw
+  strings and binary anyways.
 - contracts: `reflect` contract requires `stargate` feature and supports
   redispatching `Stargate` and `IbcMsg::Transfer` messages ([#692])
 - cosmwasm-std: The arithmetic methods of `Uint128` got a huge overhaul, making
@@ -131,6 +145,10 @@ and this project adheres to
       library. Please use the explicit `*_sub` methods introduced above. In a
       couple of releases from now, we want to introduce the operator again with
       panicking overflow behaviour ([#858]).
+- cosmwasm-std: Change address types in `BankMsg`, `IbcMsg` and `WasmMsg` from
+  `HumanAddr` to `String` ([#802]).
+- cosmwasm-std: `Api::addr_humanize` now returns `Addr` instead of `HumanAddr`
+  ([#802]).
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
@@ -140,6 +158,7 @@ and this project adheres to
 [#853]: https://github.com/CosmWasm/cosmwasm/pull/853
 [#858]: https://github.com/CosmWasm/cosmwasm/issues/858
 [u128]: https://doc.rust-lang.org/std/primitive.u128.html
+[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ### Deprecated
 
@@ -147,6 +166,12 @@ and this project adheres to
   deprecated in favour of the new `Response`.
 - cosmwasm-std: `Context` is deprecated in favour of the new mutable helpers in
   `Response`.
+- cosmwasm-std: `HumanAddr` is not much more than an alias to `String` and it
+  does not provide significant safety advantages. With CosmWasm 0.14, we now use
+  `String` when there was `HumanAddr` before. There is also the new `Addr`,
+  which holds a validated immutable human readable address. ([#802])
+
+[#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 
 ## [0.13.2] - 2021-01-14
 

@@ -13,8 +13,9 @@ const SUPPORTED_IMPORTS: &[&str] = &[
     "env.db_read",
     "env.db_write",
     "env.db_remove",
-    "env.canonicalize_address",
-    "env.humanize_address",
+    "env.addr_validate",
+    "env.addr_canonicalize",
+    "env.addr_humanize",
     "env.secp256k1_verify",
     "env.secp256k1_recover_pubkey",
     "env.ed25519_verify",
@@ -319,8 +320,9 @@ mod tests {
             (import "env" "db_read" (func (param i32 i32) (result i32)))
             (import "env" "db_write" (func (param i32 i32) (result i32)))
             (import "env" "db_remove" (func (param i32) (result i32)))
-            (import "env" "canonicalize_address" (func (param i32 i32) (result i32)))
-            (import "env" "humanize_address" (func (param i32 i32) (result i32)))
+            (import "env" "addr_validate" (func (param i32) (result i32)))
+            (import "env" "addr_canonicalize" (func (param i32 i32) (result i32)))
+            (import "env" "addr_humanize" (func (param i32 i32) (result i32)))
             (import "env" "secp256k1_verify" (func (param i32 i32 i32) (result i32)))
             (import "env" "secp256k1_recover_pubkey" (func (param i32 i32 i32) (result i64)))
             (import "env" "ed25519_verify" (func (param i32 i32 i32) (result i32)))
@@ -354,8 +356,8 @@ mod tests {
             "env.db_read",
             "env.db_write",
             "env.db_remove",
-            "env.canonicalize_address",
-            "env.humanize_address",
+            "env.addr_canonicalize",
+            "env.addr_humanize",
             "env.debug",
             "env.query_chain",
         ];
@@ -365,7 +367,7 @@ mod tests {
                 println!("{}", msg);
                 assert_eq!(
                     msg,
-                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.canonicalize_address", "env.humanize_address", "env.debug", "env.query_chain"]."#
+                    r#"Wasm contract requires unsupported import: "env.foo". Required imports: {"env.bar", "env.foo", "env.spammyspam01", "env.spammyspam02", "env.spammyspam03", "env.spammyspam04", "env.spammyspam05", "env.spammyspam06", "env.spammyspam07", "env.spammyspam08", ... 2 more}. Available imports: ["env.db_read", "env.db_write", "env.db_remove", "env.addr_canonicalize", "env.addr_humanize", "env.debug", "env.query_chain"]."#
                 );
             }
             err => panic!("Unexpected error: {:?}", err),

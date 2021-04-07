@@ -33,11 +33,7 @@
     },
     "owner": {
       "description": "owner created the contract and takes a cut",
-      "allOf": [
-        {
-          "$ref": "#/definitions/HumanAddr"
-        }
-      ]
+      "type": "string"
     },
     "staked_tokens": {
       "$ref": "#/definitions/Coin"
@@ -47,11 +43,7 @@
     },
     "validator": {
       "description": "All tokens are bonded to this validator",
-      "allOf": [
-        {
-          "$ref": "#/definitions/HumanAddr"
-        }
-      ]
+      "type": "string"
     }
   },
   "definitions": {
@@ -72,9 +64,6 @@
     },
     "Decimal": {
       "description": "A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0\n\nThe greatest possible value that can be represented is 340282366920938463463.374607431768211455 (which is (2^128 - 1) / 10^18)",
-      "type": "string"
-    },
-    "HumanAddr": {
       "type": "string"
     },
     "Uint128": {

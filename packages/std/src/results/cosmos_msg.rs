@@ -2,7 +2,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::addresses::HumanAddr;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
@@ -49,7 +48,7 @@ pub enum BankMsg {
     /// This is translated to a [MsgSend](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/bank/v1beta1/tx.proto#L19-L28).
     /// `from_address` is automatically filled with the current contract's address.
     Send {
-        to_address: HumanAddr,
+        to_address: String,
         amount: Vec<Coin>,
     },
 }
@@ -63,24 +62,24 @@ pub enum BankMsg {
 pub enum StakingMsg {
     /// This is translated to a [MsgDelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L81-L90).
     /// `delegator_address` is automatically filled with the current contract's address.
-    Delegate { validator: HumanAddr, amount: Coin },
+    Delegate { validator: String, amount: Coin },
     /// This is translated to a [MsgUndelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L112-L121).
     /// `delegator_address` is automatically filled with the current contract's address.
-    Undelegate { validator: HumanAddr, amount: Coin },
+    Undelegate { validator: String, amount: Coin },
     /// This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37)
     /// followed by a [MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
     /// `delegator_address` is automatically filled with the current contract's address.
     Withdraw {
-        validator: HumanAddr,
+        validator: String,
         /// this is the "withdraw address", the one that should receive the rewards
         /// if None, then use delegator address
-        recipient: Option<HumanAddr>,
+        recipient: Option<String>,
     },
     /// This is translated to a [MsgBeginRedelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L95-L105).
     /// `delegator_address` is automatically filled with the current contract's address.
     Redelegate {
-        src_validator: HumanAddr,
-        dst_validator: HumanAddr,
+        src_validator: String,
+        dst_validator: String,
         amount: Coin,
     },
 }
@@ -97,7 +96,7 @@ pub enum WasmMsg {
     /// This is translated to a [MsgExecuteContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L68-L78).
     /// `sender` is automatically filled with the current contract's address.
     Execute {
-        contract_addr: HumanAddr,
+        contract_addr: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
         msg: Binary,
         send: Vec<Coin>,
@@ -122,7 +121,7 @@ pub enum WasmMsg {
     /// This is translated to a [MsgMigrateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L86-L96).
     /// `sender` is automatically filled with the current contract's address.
     Migrate {
-        contract_addr: HumanAddr,
+        contract_addr: String,
         /// the code_id of the new logic to place in the given contract
         new_code_id: u64,
         /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
@@ -152,7 +151,7 @@ where
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
 pub fn wasm_execute<T, U>(contract_addr: T, msg: &U, send: Vec<Coin>) -> StdResult<WasmMsg>
 where
-    T: Into<HumanAddr>,
+    T: Into<String>,
     U: Serialize,
 {
     let payload = to_binary(msg)?;
@@ -196,7 +195,7 @@ mod tests {
 
     #[test]
     fn from_bank_msg_works() {
-        let to_address = HumanAddr::from("you");
+        let to_address = String::from("you");
         let amount = coins(1015, "earth");
         let bank = BankMsg::Send { to_address, amount };
         let msg: CosmosMsg = bank.clone().into();

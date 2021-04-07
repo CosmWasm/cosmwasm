@@ -17,7 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{coins, BankMsg, ContractResult, HumanAddr, Order, Response};
+use cosmwasm_std::{coins, BankMsg, ContractResult, Order, Response};
 use cosmwasm_vm::testing::{instantiate, migrate, mock_env, mock_info, mock_instance};
 
 use burner::msg::{InstantiateMsg, MigrateMsg};
@@ -60,7 +60,7 @@ fn migrate_cleans_up_data() {
     .unwrap();
 
     // change the verifier via migrate
-    let payout = HumanAddr::from("someone else");
+    let payout = String::from("someone else");
     let msg = MigrateMsg {
         payout: payout.clone(),
     };

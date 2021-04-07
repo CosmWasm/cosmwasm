@@ -1,16 +1,15 @@
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::HumanAddr;
+use crate::addresses::Addr;
 use crate::coins::Coin;
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Env {
     pub block: BlockInfo,
     pub contract: ContractInfo,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct BlockInfo {
     pub height: u64,
     /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
@@ -26,7 +25,7 @@ pub struct BlockInfo {
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageInfo};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -35,7 +34,7 @@ pub struct BlockInfo {
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
     /// #     contract: ContractInfo {
-    /// #         address: HumanAddr::from("contract"),
+    /// #         address: Addr::unchecked("contract"),
     /// #     },
     /// # };
     /// # extern crate chrono;
@@ -46,7 +45,7 @@ pub struct BlockInfo {
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{BlockInfo, ContractInfo, Env, HumanAddr, MessageInfo};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
@@ -55,7 +54,7 @@ pub struct BlockInfo {
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
     /// #     contract: ContractInfo {
-    /// #         address: HumanAddr::from("contract"),
+    /// #         address: Addr::unchecked("contract"),
     /// #     },
     /// # };
     /// let millis = (env.block.time * 1_000) + (env.block.time_nanos / 1_000_000);
@@ -71,7 +70,7 @@ pub struct BlockInfo {
 ///
 /// [MsgInstantiateContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L47-L61
 /// [MsgExecuteContract]: https://github.com/CosmWasm/wasmd/blob/v0.15.0/x/wasm/internal/types/tx.proto#L68-L78
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct MessageInfo {
     /// The `sender` field from `MsgInstantiateContract` and `MsgExecuteContract`.
     /// You can think of this as the address that initiated the action (i.e. the message). What that
@@ -82,14 +81,14 @@ pub struct MessageInfo {
     ///
     /// Additional signers of the transaction that are either needed for other messages or contain unnecessary
     /// signatures are not propagated into the contract.
-    pub sender: HumanAddr,
+    pub sender: Addr,
     /// The funds that are sent to the contract as part of `MsgInstantiateContract`
     /// or `MsgExecuteContract`. The transfer is processed in bank before the contract
     /// is executed such that the new balance is visible during contract execution.
     pub funds: Vec<Coin>,
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct ContractInfo {
-    pub address: HumanAddr,
+    pub address: Addr,
 }

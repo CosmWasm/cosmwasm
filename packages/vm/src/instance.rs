@@ -9,9 +9,10 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    native_canonicalize_address, native_db_read, native_db_remove, native_db_write, native_debug,
-    native_ed25519_batch_verify, native_ed25519_verify, native_humanize_address,
-    native_query_chain, native_secp256k1_recover_pubkey, native_secp256k1_verify,
+    native_addr_canonicalize, native_addr_humanize, native_addr_validate, native_db_read,
+    native_db_remove, native_db_write, native_debug, native_ed25519_batch_verify,
+    native_ed25519_verify, native_query_chain, native_secp256k1_recover_pubkey,
+    native_secp256k1_verify,
 };
 #[cfg(feature = "iterator")]
 use crate::imports::{native_db_next, native_db_scan};
@@ -105,13 +106,21 @@ where
             Function::new_native_with_env(store, env.clone(), native_db_remove),
         );
 
+        // Reads human address from source_ptr and checks if it is valid.
+        // Returns 0 on if the input is valid. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
+        // Ownership of the input pointer is not transferred to the host.
+        env_imports.insert(
+            "addr_validate",
+            Function::new_native_with_env(store, env.clone(), native_addr_validate),
+        );
+
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
         // A prepared and sufficiently large memory Region is expected at destination_ptr that points to pre-allocated memory.
         // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
-            "canonicalize_address",
-            Function::new_native_with_env(store, env.clone(), native_canonicalize_address),
+            "addr_canonicalize",
+            Function::new_native_with_env(store, env.clone(), native_addr_canonicalize),
         );
 
         // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
@@ -119,8 +128,8 @@ where
         // Returns 0 on success. Returns a non-zero memory location to a Region containing an UTF-8 encoded error string for invalid inputs.
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
-            "humanize_address",
-            Function::new_native_with_env(store, env.clone(), native_humanize_address),
+            "addr_humanize",
+            Function::new_native_with_env(store, env.clone(), native_addr_humanize),
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.
@@ -334,7 +343,7 @@ mod tests {
         mock_instance_with_options, MockInstanceOptions,
     };
     use cosmwasm_std::{
-        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty, HumanAddr,
+        coin, coins, from_binary, AllBalanceResponse, BalanceResponse, BankQuery, Empty,
         QueryRequest,
     };
 
@@ -597,7 +606,7 @@ mod tests {
 
         let report2 = instance.create_gas_report();
         assert_eq!(report2.used_externally, 146);
-        assert_eq!(report2.used_internally, 52531);
+        assert_eq!(report2.used_internally, 52702);
         assert_eq!(report2.limit, LIMIT);
         assert_eq!(
             report2.remaining,
@@ -662,7 +671,7 @@ mod tests {
 
     #[test]
     fn with_querier_works_readonly() {
-        let rich_addr = HumanAddr::from("foobar");
+        let rich_addr = String::from("foobar");
         let rich_balance = vec![coin(10000, "gold"), coin(8000, "silver")];
         let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance)]);
 
@@ -717,7 +726,7 @@ mod tests {
     /// This is needed for writing intagration tests in which the balance of a contract changes over time
     #[test]
     fn with_querier_allows_updating_balances() {
-        let rich_addr = HumanAddr::from("foobar");
+        let rich_addr = String::from("foobar");
         let rich_balance1 = vec![coin(10000, "gold"), coin(500, "silver")];
         let rich_balance2 = vec![coin(10000, "gold"), coin(8000, "silver")];
         let mut instance = mock_instance_with_balances(&CONTRACT, &[(&rich_addr, &rich_balance1)]);
@@ -796,7 +805,7 @@ mod singlepass_tests {
             .unwrap();
 
         let init_used = orig_gas - instance.get_gas_left();
-        assert_eq!(init_used, 52677);
+        assert_eq!(init_used, 52848);
     }
 
     #[test]
@@ -819,7 +828,7 @@ mod singlepass_tests {
             .unwrap();
 
         let execute_used = gas_before_execute - instance.get_gas_left();
-        assert_eq!(execute_used, 168564);
+        assert_eq!(execute_used, 168158);
     }
 
     #[test]
@@ -853,6 +862,6 @@ mod singlepass_tests {
         assert_eq!(answer.as_slice(), b"{\"verifier\":\"verifies\"}");
 
         let query_used = gas_before_query - instance.get_gas_left();
-        assert_eq!(query_used, 38502);
+        assert_eq!(query_used, 38349);
     }
 }

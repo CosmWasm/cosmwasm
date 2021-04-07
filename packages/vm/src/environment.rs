@@ -392,7 +392,7 @@ mod tests {
     use crate::testing::{MockApi, MockQuerier, MockStorage};
     use crate::wasm_backend::compile;
     use cosmwasm_std::{
-        coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, HumanAddr, QueryRequest,
+        coins, from_binary, to_vec, AllBalanceResponse, BankQuery, Empty, QueryRequest,
     };
     use wasmer::{imports, Function, Instance as WasmerInstance};
 
@@ -429,8 +429,9 @@ mod tests {
                 "db_scan" => Function::new_native(&store, |_a: u32, _b: u32, _c: i32| -> u32 { 0 }),
                 "db_next" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
                 "query_chain" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
-                "canonicalize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
-                "humanize_address" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "addr_validate" => Function::new_native(&store, |_a: u32| -> u32 { 0 }),
+                "addr_canonicalize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
+                "addr_humanize" => Function::new_native(&store, |_a: u32, _b: u32| -> u32 { 0 }),
                 "secp256k1_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
                 "secp256k1_recover_pubkey" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u64 { 0 }),
                 "ed25519_verify" => Function::new_native(&store, |_a: u32, _b: u32, _c: u32| -> u32 { 0 }),
@@ -455,7 +456,7 @@ mod tests {
             .0
             .expect("error setting value");
         let querier: MockQuerier<Empty> =
-            MockQuerier::new(&[(&HumanAddr::from(INIT_ADDR), &coins(INIT_AMOUNT, INIT_DENOM))]);
+            MockQuerier::new(&[(INIT_ADDR, &coins(INIT_AMOUNT, INIT_DENOM))]);
         env.move_in(storage, querier);
     }
 
@@ -812,7 +813,7 @@ mod tests {
         let res = env
             .with_querier_from_context::<_, _>(|querier| {
                 let req: QueryRequest<Empty> = QueryRequest::Bank(BankQuery::AllBalances {
-                    address: HumanAddr::from(INIT_ADDR),
+                    address: INIT_ADDR.to_string(),
                 });
                 let (result, _gas_info) =
                     querier.query_raw(&to_vec(&req).unwrap(), DEFAULT_QUERY_GAS_LIMIT);

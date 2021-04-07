@@ -43,7 +43,7 @@ use crate::results::SubMsg;
 /// Mutating:
 ///
 /// ```
-/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, HumanAddr, MessageInfo};
+/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo};
 /// # type InstantiateMsg = ();
 /// # type MyError = ();
 /// #
@@ -60,7 +60,7 @@ use crate::results::SubMsg;
 ///     response.add_attribute("Let the", "hacking begin");
 ///     // ...
 ///     response.add_message(BankMsg::Send {
-///         to_address: HumanAddr::from("recipient"),
+///         to_address: String::from("recipient"),
 ///         amount: coins(128, "uint"),
 ///     });
 ///     response.add_attribute("foo", "bar");
@@ -145,7 +145,6 @@ where
 mod tests {
     use super::super::BankMsg;
     use super::*;
-    use crate::addresses::HumanAddr;
     use crate::{coins, from_slice, to_vec};
 
     #[test]
@@ -154,7 +153,7 @@ mod tests {
             submessages: vec![SubMsg {
                 id: 12,
                 msg: BankMsg::Send {
-                    to_address: HumanAddr::from("checker"),
+                    to_address: String::from("checker"),
                     amount: coins(888, "moon"),
                 }
                 .into(),
@@ -162,7 +161,7 @@ mod tests {
                 reply_on: ReplyOn::Always,
             }],
             messages: vec![BankMsg::Send {
-                to_address: HumanAddr::from("you"),
+                to_address: String::from("you"),
                 amount: coins(1015, "earth"),
             }
             .into()],

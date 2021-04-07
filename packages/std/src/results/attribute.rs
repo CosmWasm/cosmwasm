@@ -19,7 +19,6 @@ pub fn attr<K: ToString, V: ToString>(key: K, value: V) -> Attribute {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::addresses::HumanAddr;
     use crate::Uint128;
 
     #[test]
@@ -32,7 +31,6 @@ mod tests {
         assert_eq!(attr("foo", "42"), expeceted);
         assert_eq!(attr("foo".to_string(), "42"), expeceted);
         assert_eq!(attr("foo", "42".to_string()), expeceted);
-        assert_eq!(attr("foo", HumanAddr::from("42")), expeceted);
         assert_eq!(attr("foo", Uint128(42)), expeceted);
         assert_eq!(attr("foo", 42), expeceted);
     }

@@ -8,14 +8,9 @@
   ],
   "properties": {
     "beneficiary": {
-      "$ref": "#/definitions/HumanAddr"
+      "type": "string"
     },
     "verifier": {
-      "$ref": "#/definitions/HumanAddr"
-    }
-  },
-  "definitions": {
-    "HumanAddr": {
       "type": "string"
     }
   }

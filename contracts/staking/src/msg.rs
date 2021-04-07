@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Coin, Decimal, HumanAddr, Uint128};
+use cosmwasm_std::{Coin, Decimal, Uint128};
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct InstantiateMsg {
@@ -15,7 +15,7 @@ pub struct InstantiateMsg {
     pub decimals: u8,
 
     /// This is the validator that all tokens will be bonded to
-    pub validator: HumanAddr,
+    pub validator: String,
 
     /// this is how much the owner takes as a cut when someone unbonds
     /// TODO
@@ -29,10 +29,7 @@ pub struct InstantiateMsg {
 #[serde(rename_all = "snake_case")]
 pub enum ExecuteMsg {
     /// Transfer moves the derivative token
-    Transfer {
-        recipient: HumanAddr,
-        amount: Uint128,
-    },
+    Transfer { recipient: String, amount: Uint128 },
     /// Bond will bond all staking tokens sent with the message and release derivative tokens
     Bond {},
     /// Unbond will "burn" the given amount of derivative tokens and send the unbonded
@@ -55,9 +52,9 @@ pub enum ExecuteMsg {
 #[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Balance shows the number of staking derivatives
-    Balance { address: HumanAddr },
+    Balance { address: String },
     /// Claims shows the number of tokens this address can access when they are done unbonding
-    Claims { address: HumanAddr },
+    Claims { address: String },
     /// TokenInfo shows the metadata of the token for UIs
     TokenInfo {},
     /// Investment shows info on total staking tokens under custody,
@@ -95,11 +92,11 @@ pub struct InvestmentResponse {
     pub nominal_value: Decimal,
 
     /// owner created the contract and takes a cut
-    pub owner: HumanAddr,
+    pub owner: String,
     /// this is how much the owner takes as a cut when someone unbonds
     pub exit_tax: Decimal,
     /// All tokens are bonded to this validator
-    pub validator: HumanAddr,
+    pub validator: String,
     /// This is the minimum amount we will pull out to reinvest, as well as a minumum
     /// that can be unbonded (to avoid needless staking tx)
     pub min_withdrawal: Uint128,

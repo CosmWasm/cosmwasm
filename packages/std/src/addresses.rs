@@ -1,3 +1,5 @@
+#![allow(deprecated)]
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
@@ -5,6 +7,118 @@ use std::ops::Deref;
 
 use crate::binary::Binary;
 
+/// A human readable address.
+///
+/// In Cosmos, this is typically bech32 encoded. But for multi-chain smart contracts no
+/// assumptions should be made other than being UTF-8 encoded and of reasonable length.
+///
+/// This type represents a validated address. It can be created in the following ways
+/// 1. Use `Addr::unchecked(input)`
+/// 2. Use `let checked: Addr = deps.api.addr_validate(input)?`
+/// 3. Use `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`
+/// 4. Deserialize from JSON. This must only be done from JSON that was validated before
+///    such as a contract's state. `Addr` must not be used in messages sent by the user
+///    because this would result in unvalidated instances.
+///
+/// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
+/// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
+/// instance.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+pub struct Addr(String);
+
+impl Addr {
+    /// Creates a new `Addr` instance from the given input without checking the validity
+    /// of the input. Since `Addr` must always contain valid addresses, the caller is
+    /// responsible for ensuring the input is valid.
+    ///
+    /// Use this in cases where the address was validated before or in test code.
+    /// If you see this in contract code, it should most likely be replaced with
+    /// `let checked: Addr = deps.api.addr_humanize(canonical_addr)?`.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{Addr};
+    /// let address = Addr::unchecked("foobar");
+    /// assert_eq!(address, "foobar");
+    /// ```
+    pub fn unchecked<T: Into<String>>(input: T) -> Addr {
+        Addr(input.into())
+    }
+}
+
+impl fmt::Display for Addr {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", &self.0)
+    }
+}
+
+impl AsRef<str> for Addr {
+    #[inline]
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+/// Implement `Addr == &str`
+impl PartialEq<&str> for Addr {
+    fn eq(&self, rhs: &&str) -> bool {
+        self.0 == *rhs
+    }
+}
+
+/// Implement `&str == Addr`
+impl PartialEq<Addr> for &str {
+    fn eq(&self, rhs: &Addr) -> bool {
+        *self == rhs.0
+    }
+}
+
+/// Implement `Addr == String`
+impl PartialEq<String> for Addr {
+    fn eq(&self, rhs: &String) -> bool {
+        &self.0 == rhs
+    }
+}
+
+/// Implement `String == Addr`
+impl PartialEq<Addr> for String {
+    fn eq(&self, rhs: &Addr) -> bool {
+        self == &rhs.0
+    }
+}
+
+// Addr->String and Addr->HumanAddr are safe conversions.
+// However, the opposite direction is unsafe and must not be implemented.
+
+impl From<Addr> for String {
+    fn from(addr: Addr) -> Self {
+        addr.0
+    }
+}
+
+impl From<&Addr> for String {
+    fn from(addr: &Addr) -> Self {
+        addr.0.clone()
+    }
+}
+
+impl From<Addr> for HumanAddr {
+    fn from(addr: Addr) -> Self {
+        HumanAddr(addr.0)
+    }
+}
+
+impl From<&Addr> for HumanAddr {
+    fn from(addr: &Addr) -> Self {
+        HumanAddr(addr.0.clone())
+    }
+}
+
+#[deprecated(
+    since = "0.14.0",
+    note = "HumanAddr is not much more than an alias to String and it does not provide significant safety advantages. With CosmWasm 0.14, we now use String when there was HumanAddr before. There is also the new Addr, which holds a validated immutable human readable address."
+)]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
 pub struct HumanAddr(pub String);
 
@@ -150,6 +264,77 @@ mod tests {
     use std::collections::HashSet;
     use std::hash::{Hash, Hasher};
     use std::iter::FromIterator;
+
+    #[test]
+    fn addr_unchecked_works() {
+        let a = Addr::unchecked("123");
+        let aa = Addr::unchecked(String::from("123"));
+        let b = Addr::unchecked("be");
+        assert_eq!(a, aa);
+        assert_ne!(a, b);
+    }
+
+    #[test]
+    fn addr_implements_display() {
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let embedded = format!("Address: {}", addr);
+        assert_eq!(embedded, "Address: cos934gh9034hg04g0h134");
+        assert_eq!(addr.to_string(), "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn addr_implements_as_ref_for_str() {
+        let addr = Addr::unchecked("literal-string");
+        assert_eq!(addr.as_ref(), "literal-string");
+    }
+
+    #[test]
+    fn addr_implements_partial_eq_with_str() {
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+
+        // `Addr == &str`
+        assert_eq!(addr, "cos934gh9034hg04g0h134");
+        // `&str == Addr`
+        assert_eq!("cos934gh9034hg04g0h134", addr);
+    }
+
+    #[test]
+    fn addr_implements_partial_eq_with_string() {
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+
+        // `Addr == String`
+        assert_eq!(addr, String::from("cos934gh9034hg04g0h134"));
+        // `String == Addr`
+        assert_eq!(String::from("cos934gh9034hg04g0h134"), addr);
+    }
+
+    #[test]
+    fn addr_implements_into_string() {
+        // owned Addr
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let string: String = addr.into();
+        assert_eq!(string, "cos934gh9034hg04g0h134");
+
+        // &Addr
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let addr_ref = &addr;
+        let string: String = addr_ref.into();
+        assert_eq!(string, "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn addr_implements_into_human_address() {
+        // owned Addr
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let human: HumanAddr = addr.into();
+        assert_eq!(human, "cos934gh9034hg04g0h134");
+
+        // &Addr
+        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
+        let addr_ref = &addr;
+        let human: HumanAddr = addr_ref.into();
+        assert_eq!(human, "cos934gh9034hg04g0h134");
+    }
 
     // Test HumanAddr as_str() for each HumanAddr::from input type
     #[test]

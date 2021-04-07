@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::addresses::HumanAddr;
+use crate::addresses::Addr;
 use crate::binary::Binary;
 use crate::coins::Coin;
 #[cfg(feature = "stargate")]
@@ -38,11 +38,11 @@ pub enum QueryRequest<C: CustomQuery> {
 pub enum BankQuery {
     /// This calls into the native bank module for one denomination
     /// Return value is BalanceResponse
-    Balance { address: HumanAddr, denom: String },
+    Balance { address: String, denom: String },
     /// This calls into the native bank module for all denominations.
     /// Note that this may be much more expensive than Balance and should be avoided if possible.
     /// Return value is AllBalanceResponse.
-    AllBalances { address: HumanAddr },
+    AllBalances { address: String },
 }
 
 /// A trait that is required to avoid conflicts with other query types like BankQuery and WasmQuery
@@ -75,14 +75,14 @@ pub enum WasmQuery {
     /// this queries the public API of another contract at a known address (with known ABI)
     /// return value is whatever the contract returns (caller should know)
     Smart {
-        contract_addr: HumanAddr,
+        contract_addr: String,
         /// msg is the json-encoded QueryMsg struct
         msg: Binary,
     },
     /// this queries the raw kv-store of the contract.
     /// returns the raw, unparsed data stored at that key, which may be an empty vector if not present
     Raw {
-        contract_addr: HumanAddr,
+        contract_addr: String,
         /// Key is the raw key used in the contracts Storage
         key: Binary,
     },
@@ -150,12 +150,12 @@ pub enum StakingQuery {
     /// Returns the denomination that can be bonded (if there are multiple native tokens on the chain)
     BondedDenom {},
     /// AllDelegations will return all delegations by the delegator
-    AllDelegations { delegator: HumanAddr },
+    AllDelegations { delegator: String },
     /// Delegation will return more detailed info on a particular
     /// delegation, defined by delegator/validator pair
     Delegation {
-        delegator: HumanAddr,
-        validator: HumanAddr,
+        delegator: String,
+        validator: String,
     },
     /// Returns all registered Validators on the system
     Validators {},
@@ -175,11 +175,13 @@ pub struct AllDelegationsResponse {
     pub delegations: Vec<Delegation>,
 }
 
-/// Delegation is basic (cheap to query) data about a delegation
+/// Delegation is basic (cheap to query) data about a delegation.
+///
+/// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Delegation {
-    pub delegator: HumanAddr,
-    pub validator: HumanAddr,
+    pub delegator: Addr,
+    pub validator: Addr,
     /// How much we have locked in the delegation
     pub amount: Coin,
 }
@@ -202,11 +204,13 @@ pub struct DelegationResponse {
 }
 
 /// FullDelegation is all the info on the delegation, some (like accumulated_reward and can_redelegate)
-/// is expensive to query
+/// is expensive to query.
+///
+/// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct FullDelegation {
-    pub delegator: HumanAddr,
-    pub validator: HumanAddr,
+    pub delegator: Addr,
+    pub validator: Addr,
     /// How much we have locked in the delegation
     pub amount: Coin,
     /// can_redelegate captures how much can be immediately redelegated.
@@ -223,9 +227,10 @@ pub struct ValidatorsResponse {
     pub validators: Vec<Validator>,
 }
 
+/// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Validator {
-    pub address: HumanAddr,
+    pub address: Addr,
     pub commission: Decimal,
     pub max_commission: Decimal,
     /// TODO: what units are these (in terms of time)?

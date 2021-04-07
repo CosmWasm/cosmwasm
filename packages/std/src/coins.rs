@@ -31,7 +31,7 @@ impl Coin {
 ///
 /// let mut response: Response = Default::default();
 /// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
-///   to_address: info.sender,
+///   to_address: info.sender.into(),
 ///   amount: tip,
 /// })];
 /// ```
@@ -55,7 +55,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 ///
 /// let mut response: Response = Default::default();
 /// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
-///     to_address: info.sender,
+///     to_address: info.sender.into(),
 ///     amount: tip,
 /// })];
 /// ```

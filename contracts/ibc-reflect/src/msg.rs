@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, ContractResult, CosmosMsg, HumanAddr};
+use cosmwasm_std::{Coin, ContractResult, CosmosMsg};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -18,7 +18,7 @@ pub enum ExecuteMsg {
         /// id was provided in the InitMsg
         id: String,
         /// contract_addr is the address of this contract
-        contract_addr: HumanAddr,
+        contract_addr: String,
     },
 }
 
@@ -35,7 +35,7 @@ pub enum QueryMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AccountResponse {
-    pub account: Option<HumanAddr>,
+    pub account: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -45,7 +45,7 @@ pub struct ListAccountsResponse {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AccountInfo {
-    pub account: HumanAddr,
+    pub account: String,
     pub channel_id: String,
 }
 
@@ -81,13 +81,13 @@ pub type DispatchResponse = ();
 /// Return the caller's account address on the remote chain
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct WhoAmIResponse {
-    pub account: HumanAddr,
+    pub account: String,
 }
 
 /// This is the success response we send on ack for PacketMsg::Balance.
 /// Just acknowledge success or error
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct BalancesResponse {
-    pub account: HumanAddr,
+    pub account: String,
     pub balances: Vec<Coin>,
 }

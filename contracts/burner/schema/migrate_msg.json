@@ -7,11 +7,6 @@
   ],
   "properties": {
     "payout": {
-      "$ref": "#/definitions/HumanAddr"
-    }
-  },
-  "definitions": {
-    "HumanAddr": {
       "type": "string"
     }
   }

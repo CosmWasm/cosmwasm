@@ -1,7 +1,7 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{CanonicalAddr, Reply, Storage};
+use cosmwasm_std::{Addr, Reply, Storage};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -12,7 +12,7 @@ const RESULT_PREFIX: &[u8] = b"result";
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct State {
-    pub owner: CanonicalAddr,
+    pub owner: Addr,
 }
 
 pub fn config(storage: &mut dyn Storage) -> Singleton<State> {
