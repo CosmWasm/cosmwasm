@@ -51,6 +51,10 @@ pub enum BankMsg {
         to_address: String,
         amount: Vec<Coin>,
     },
+    /// This will burn the given coins from the contract's account.
+    /// There is no Cosmos SDK message that performs this, but it can be done by calling the bank keeper.
+    /// Important if a contract controls significant token supply that must be retired.
+    Burn { amount: Vec<Coin> },
 }
 
 /// The message types of the staking module.

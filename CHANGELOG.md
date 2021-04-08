@@ -57,6 +57,8 @@ and this project adheres to
 - cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
   and `WasmQuery` query requests.
 - cosmwasm-vm: Add import `addr_validate` ([#802]).
+- cosmwasm-std: Add `BankMsg::Burn` variant when you want the tokens to
+  disappear ([#860])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -68,6 +70,7 @@ and this project adheres to
 [#793]: https://github.com/CosmWasm/cosmwasm/pull/793
 [#796]: https://github.com/CosmWasm/cosmwasm/pull/796
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
+[#860]: https://github.com/CosmWasm/cosmwasm/pull/860
 
 ### Changed
 
