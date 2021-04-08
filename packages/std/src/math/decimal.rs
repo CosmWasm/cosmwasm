@@ -15,7 +15,8 @@ use super::Uint128;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] u128);
 
-const DECIMAL_FRACTIONAL: u128 = 1_000_000_000_000_000_000;
+const DECIMAL_FRACTIONAL: u128 = 1_000_000_000_000_000_000; // 1*10**18
+const DECIMAL_FRACTIONAL_SQUARED: u128 = 1_000_000_000_000_000_000_000_000_000_000_000_000; // (1*10**18)**2 = 1*10**36
 
 impl Decimal {
     pub const MAX: Decimal = Decimal(u128::MAX);
@@ -53,6 +54,19 @@ impl Decimal {
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0
+    }
+
+    /// Returns the multiplicative inverse `1/d` for decimal `d`.
+    ///
+    /// If `d` is zero, none is returned.
+    pub fn inv(&self) -> Option<Decimal> {
+        if self.is_zero() {
+            None
+        } else {
+            // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL_SQUARED.
+            // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL_SQUARED.
+            Some(Decimal(DECIMAL_FRACTIONAL_SQUARED / self.0))
+        }
     }
 }
 
@@ -411,6 +425,61 @@ mod tests {
         assert_eq!(Decimal::one().is_zero(), false);
         assert_eq!(Decimal::percent(123).is_zero(), false);
         assert_eq!(Decimal::permille(1234).is_zero(), false);
+    }
+
+    #[test]
+    fn decimal_inv_works() {
+        // d = 0
+        assert_eq!(Decimal::zero().inv(), None);
+
+        // d == 1
+        assert_eq!(Decimal::one().inv(), Some(Decimal::one()));
+
+        // d > 1 exact
+        assert_eq!(
+            Decimal::from_str("2").unwrap().inv(),
+            Some(Decimal::from_str("0.5").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("20").unwrap().inv(),
+            Some(Decimal::from_str("0.05").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("200").unwrap().inv(),
+            Some(Decimal::from_str("0.005").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("2000").unwrap().inv(),
+            Some(Decimal::from_str("0.0005").unwrap())
+        );
+
+        // d > 1 rounded
+        assert_eq!(
+            Decimal::from_str("3").unwrap().inv(),
+            Some(Decimal::from_str("0.333333333333333333").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("6").unwrap().inv(),
+            Some(Decimal::from_str("0.166666666666666666").unwrap())
+        );
+
+        // d < 1 exact
+        assert_eq!(
+            Decimal::from_str("0.5").unwrap().inv(),
+            Some(Decimal::from_str("2").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("0.05").unwrap().inv(),
+            Some(Decimal::from_str("20").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("0.005").unwrap().inv(),
+            Some(Decimal::from_str("200").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("0.0005").unwrap().inv(),
+            Some(Decimal::from_str("2000").unwrap())
+        );
     }
 
     #[test]
