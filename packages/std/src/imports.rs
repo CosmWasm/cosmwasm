@@ -205,7 +205,7 @@ impl Api for ExternalApi {
         }
 
         let address = unsafe { consume_string_region_written_by_vm(human) };
-        Ok(Addr::unchecked(address))
+        Ok(Addr::unchecked(&address))
     }
 
     fn secp256k1_verify(

@@ -92,7 +92,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
 
         let mut resp = Response::new();
         resp.add_attribute("action", "release");
-        resp.add_attribute("destination", to_addr.clone());
+        resp.add_attribute("destination", to_addr);
         resp.add_message(BankMsg::Send {
             to_address: to_addr.into(),
             amount: balance,
@@ -496,9 +496,9 @@ mod tests {
         assert_eq!(
             state,
             State {
-                verifier: Addr::unchecked(verifier),
-                beneficiary: Addr::unchecked(beneficiary),
-                funder: Addr::unchecked(creator),
+                verifier: Addr::unchecked(&verifier),
+                beneficiary: Addr::unchecked(&beneficiary),
+                funder: Addr::unchecked(&creator),
             }
         );
     }
@@ -563,7 +563,7 @@ mod tests {
         let bin_contract: &[u8] = b"my-contract";
 
         // return the unhashed value here
-        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract.clone()).unwrap();
+        let no_work_query = query_recurse(deps.as_ref(), 0, 0, contract).unwrap();
         assert_eq!(no_work_query.hashed, Binary::from(bin_contract));
 
         // let's see if 5 hashes are done right

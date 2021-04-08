@@ -9,7 +9,7 @@ pub fn mock_dependencies_with_custom_querier(
     contract_balance: &[Coin],
 ) -> OwnedDeps<MockStorage, MockApi, MockQuerier<SpecialQuery>> {
     let custom_querier: MockQuerier<SpecialQuery> =
-        MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)])
+        MockQuerier::new(&[(MOCK_CONTRACT_ADDR.as_str(), contract_balance)])
             .with_custom_handler(|query| SystemResult::Ok(custom_query_execute(&query)));
     OwnedDeps {
         storage: MockStorage::default(),

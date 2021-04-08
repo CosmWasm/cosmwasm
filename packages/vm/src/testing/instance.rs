@@ -135,7 +135,7 @@ pub fn mock_instance_with_options(
         if let Some(pos) = balances.iter().position(|item| item.0 == contract_address) {
             balances.remove(pos);
         }
-        balances.push((contract_address, contract_balance));
+        balances.push((contract_address.as_str(), contract_balance));
     }
 
     let api = if let Some(backend_error) = options.backend_error {

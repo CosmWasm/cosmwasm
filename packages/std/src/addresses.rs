@@ -1,9 +1,10 @@
 #![allow(deprecated)]
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Serialize};
+use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::fmt;
 use std::ops::Deref;
+use std::str;
 
 use crate::binary::Binary;
 
@@ -23,8 +24,18 @@ use crate::binary::Binary;
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
-pub struct Addr(String);
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+pub struct Addr(#[schemars(with = "String")] AddrInner);
+
+/// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
+const ADDR_MAX_LENGTH: usize = 90;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+struct AddrInner {
+    /// UTF-8 encoded human readable string
+    data: [u8; ADDR_MAX_LENGTH],
+    length: usize,
+}
 
 impl Addr {
     /// Creates a new `Addr` instance from the given input without checking the validity
@@ -42,49 +53,111 @@ impl Addr {
     /// let address = Addr::unchecked("foobar");
     /// assert_eq!(address, "foobar");
     /// ```
-    pub fn unchecked<T: Into<String>>(input: T) -> Addr {
-        Addr(input.into())
+    pub const fn unchecked(input: &str) -> Addr {
+        let input_bytes = input.as_bytes();
+        let mut data = [0u8; ADDR_MAX_LENGTH];
+        let mut i = 0;
+        while i < input_bytes.len() {
+            data[i] = input_bytes[i];
+            i += 1;
+        }
+
+        Addr(AddrInner {
+            data,
+            length: input_bytes.len(),
+        })
+    }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        &self.0.data[..self.0.length]
+    }
+
+    pub fn as_str(&self) -> &str {
+        unsafe { str::from_utf8_unchecked(self.as_bytes()) }
     }
 }
 
 impl fmt::Display for Addr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", &self.0)
+        write!(f, "{}", self.as_str())
+    }
+}
+
+impl Serialize for Addr {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: ser::Serializer,
+    {
+        serializer.serialize_str(&self.as_str())
+    }
+}
+
+impl<'de> Deserialize<'de> for Addr {
+    fn deserialize<D>(deserializer: D) -> Result<Addr, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        deserializer.deserialize_str(AddrVisitor)
+    }
+}
+
+struct AddrVisitor;
+
+impl<'de> de::Visitor<'de> for AddrVisitor {
+    type Value = Addr;
+
+    fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+        formatter.write_str("Human readable address string")
+    }
+
+    fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
+    where
+        E: de::Error,
+    {
+        if v.len() > ADDR_MAX_LENGTH {
+            Err(E::custom(format!(
+                "Input too long to be stored in an Addr. Max: {}, actual: {}",
+                ADDR_MAX_LENGTH,
+                v.len()
+            )))
+        } else {
+            Ok(Addr::unchecked(v))
+        }
     }
 }
 
 impl AsRef<str> for Addr {
     #[inline]
     fn as_ref(&self) -> &str {
-        &self.0
+        self.as_str()
     }
 }
 
 /// Implement `Addr == &str`
 impl PartialEq<&str> for Addr {
     fn eq(&self, rhs: &&str) -> bool {
-        self.0 == *rhs
+        self.as_str() == *rhs
     }
 }
 
 /// Implement `&str == Addr`
 impl PartialEq<Addr> for &str {
     fn eq(&self, rhs: &Addr) -> bool {
-        *self == rhs.0
+        *self == rhs.as_str()
     }
 }
 
 /// Implement `Addr == String`
 impl PartialEq<String> for Addr {
     fn eq(&self, rhs: &String) -> bool {
-        &self.0 == rhs
+        self.as_str() == rhs
     }
 }
 
 /// Implement `String == Addr`
 impl PartialEq<Addr> for String {
     fn eq(&self, rhs: &Addr) -> bool {
-        self == &rhs.0
+        self == rhs.as_str()
     }
 }
 
@@ -93,25 +166,25 @@ impl PartialEq<Addr> for String {
 
 impl From<Addr> for String {
     fn from(addr: Addr) -> Self {
-        addr.0
+        addr.as_str().to_owned()
     }
 }
 
 impl From<&Addr> for String {
     fn from(addr: &Addr) -> Self {
-        addr.0.clone()
+        addr.as_str().to_owned()
     }
 }
 
 impl From<Addr> for HumanAddr {
     fn from(addr: Addr) -> Self {
-        HumanAddr(addr.0)
+        HumanAddr(addr.into())
     }
 }
 
 impl From<&Addr> for HumanAddr {
     fn from(addr: &Addr) -> Self {
-        HumanAddr(addr.0.clone())
+        HumanAddr(addr.into())
     }
 }
 
@@ -268,7 +341,7 @@ mod tests {
     #[test]
     fn addr_unchecked_works() {
         let a = Addr::unchecked("123");
-        let aa = Addr::unchecked(String::from("123"));
+        let aa = Addr::unchecked("123");
         let b = Addr::unchecked("be");
         assert_eq!(a, aa);
         assert_ne!(a, b);

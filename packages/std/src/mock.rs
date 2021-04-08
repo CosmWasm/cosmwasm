@@ -21,7 +21,7 @@ use crate::storage::MemoryStorage;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
 
-pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
+pub const MOCK_CONTRACT_ADDR: Addr = Addr::unchecked("cosmos2contract");
 
 /// All external requirements that can be injected for unit tests.
 /// It sets the given balance for the contract itself, nothing else
@@ -31,7 +31,7 @@ pub fn mock_dependencies(
     OwnedDeps {
         storage: MockStorage::default(),
         api: MockApi::default(),
-        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)]),
+        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR.as_str(), contract_balance)]),
     }
 }
 
@@ -121,7 +121,7 @@ impl Api for MockApi {
         let trimmed = tmp.into_iter().filter(|&x| x != 0x00).collect();
         // decode UTF-8 bytes into string
         let human = String::from_utf8(trimmed)?;
-        Ok(Addr::unchecked(human))
+        Ok(Addr::unchecked(&human))
     }
 
     fn secp256k1_verify(
@@ -191,16 +191,16 @@ pub fn mock_env() -> Env {
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         contract: ContractInfo {
-            address: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            address: MOCK_CONTRACT_ADDR,
         },
     }
 }
 
 /// Just set sender and funds for the message.
 /// This is intended for use in test code only.
-pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
+pub fn mock_info<S: AsRef<str>>(sender: S, funds: &[Coin]) -> MessageInfo {
     MessageInfo {
-        sender: Addr::unchecked(sender),
+        sender: Addr::unchecked(sender.as_ref()),
         funds: funds.to_vec(),
     }
 }

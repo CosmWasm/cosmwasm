@@ -5,7 +5,7 @@ use super::querier::MockQuerier;
 use super::storage::MockStorage;
 use crate::{Backend, BackendApi, BackendError, BackendResult, GasInfo};
 
-pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
+pub const MOCK_CONTRACT_ADDR: Addr = Addr::unchecked("cosmos2contract");
 const GAS_COST_HUMANIZE: u64 = 44;
 const GAS_COST_CANONICALIZE: u64 = 55;
 
@@ -15,7 +15,7 @@ pub fn mock_backend(contract_balance: &[Coin]) -> Backend<MockApi, MockStorage, 
     Backend {
         api: MockApi::default(),
         storage: MockStorage::default(),
-        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR, contract_balance)]),
+        querier: MockQuerier::new(&[(MOCK_CONTRACT_ADDR.as_str(), contract_balance)]),
     }
 }
 
@@ -149,16 +149,16 @@ pub fn mock_env() -> Env {
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         contract: ContractInfo {
-            address: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            address: MOCK_CONTRACT_ADDR,
         },
     }
 }
 
 /// Just set sender and funds for the message.
 /// This is intended for use in test code only.
-pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
+pub fn mock_info<S: AsRef<str>>(sender: S, funds: &[Coin]) -> MessageInfo {
     MessageInfo {
-        sender: Addr::unchecked(sender),
+        sender: Addr::unchecked(sender.as_ref()),
         funds: funds.to_vec(),
     }
 }

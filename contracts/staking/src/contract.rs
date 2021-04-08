@@ -462,7 +462,7 @@ mod tests {
         let can_redelegate = amount.clone();
         FullDelegation {
             validator: Addr::unchecked(validator_addr),
-            delegator: Addr::unchecked(MOCK_CONTRACT_ADDR),
+            delegator: MOCK_CONTRACT_ADDR,
             amount,
             can_redelegate,
             accumulated_rewards: Vec::new(),
