@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use crate::errors::StdError;
 
+use super::Fraction;
 use super::Uint128;
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -52,6 +53,18 @@ impl Decimal {
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0
+    }
+}
+
+impl Fraction<u128> for Decimal {
+    #[inline]
+    fn nominator(&self) -> u128 {
+        self.0
+    }
+
+    #[inline]
+    fn denominator(&self) -> u128 {
+        DECIMAL_FRACTIONAL
     }
 }
 
@@ -249,6 +262,13 @@ mod tests {
     #[should_panic(expected = "Denominator must not be zero")]
     fn decimal_from_ratio_panics_for_zero_denominator() {
         Decimal::from_ratio(1u128, 0u128);
+    }
+
+    #[test]
+    fn decimal_implements_fraction() {
+        let fraction = Decimal::from_str("1234.567").unwrap();
+        assert_eq!(fraction.nominator(), 1_234_567_000_000_000_000_000);
+        assert_eq!(fraction.denominator(), 1_000_000_000_000_000_000);
     }
 
     #[test]

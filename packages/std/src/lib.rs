@@ -40,7 +40,7 @@ pub use crate::ibc::{
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
 pub use crate::iterator::{Order, Pair, KV};
-pub use crate::math::{Decimal, Uint128};
+pub use crate::math::{Decimal, Fraction, Uint128};
 pub use crate::query::{
     AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
