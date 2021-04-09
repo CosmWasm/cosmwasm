@@ -52,18 +52,17 @@ impl Addr {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+
+    /// This gets an AddrRef, much like OwnedDeps.as_ref
+    /// We don't implement AsRef as we want an object back, not &AddrRef
+    pub fn as_ref(&'_ self) -> AddrRef<'_> {
+        AddrRef(self.as_str())
+    }
 }
 
 impl fmt::Display for Addr {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", &self.0)
-    }
-}
-
-impl AsRef<str> for Addr {
-    #[inline]
-    fn as_ref(&self) -> &str {
-        self.as_str()
     }
 }
 
@@ -118,7 +117,6 @@ impl From<&Addr> for String {
 
 /// AddrRef is like &Addr but can be created easily without requiring a heap allocation
 /// It is not designed to be serialized but used internally, especially working with storage-plus keys
-/// TODO: do we want PartialEqual methods here as well?
 #[derive(Debug, Clone, Copy)]
 pub struct AddrRef<'a>(&'a str);
 
@@ -145,7 +143,13 @@ impl<'a> AddrRef<'a> {
 
 impl<'a> From<&'a Addr> for AddrRef<'a> {
     fn from(addr: &'a Addr) -> Self {
-        AddrRef(addr.as_ref())
+        AddrRef(addr.as_str())
+    }
+}
+
+impl<'a> PartialEq<&str> for AddrRef<'a> {
+    fn eq(&self, rhs: &&str) -> bool {
+        self.0 == *rhs
     }
 }
 
@@ -305,6 +309,11 @@ mod tests {
     use std::hash::{Hash, Hasher};
     use std::iter::FromIterator;
 
+    // Let's see if we can get this directly from Addr
+    fn demo_deref(addr: AddrRef, compare: &str) {
+        assert_eq!(addr, compare);
+    }
+
     #[test]
     fn addr_unchecked_works() {
         let a = Addr::unchecked("123");
@@ -372,6 +381,8 @@ mod tests {
     fn addr_ref_unchecked_from_literal() {
         let addr_ref = AddrRef::unchecked("my-address");
         assert_eq!(addr_ref.as_str(), "my-address");
+        // PartialEq also implemented
+        assert_eq!(addr_ref, "my-address");
     }
 
     #[test]
@@ -383,13 +394,19 @@ mod tests {
     }
 
     #[test]
-    fn addr_ref_to_and_from_addr() {
+    fn addr_ref_to_addr() {
         let addr_ref = AddrRef::unchecked("foobar");
         let addr: Addr = addr_ref.into();
         // same strings
         assert_eq!(addr.as_str(), addr_ref.as_str());
         // helper also works
         assert_eq!(addr, addr_ref);
+    }
+
+    #[test]
+    fn addr_to_addr_ref() {
+        let addr = Addr::unchecked("some-long-string");
+        demo_deref(addr.as_ref(), "some-long-string");
     }
 
     // Test HumanAddr as_str() for each HumanAddr::from input type
