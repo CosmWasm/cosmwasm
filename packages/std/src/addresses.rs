@@ -4,8 +4,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::ops::Deref;
+use std::str::from_utf8;
 
 use crate::binary::Binary;
+use crate::errors::StdResult;
 
 /// A human readable address.
 ///
@@ -79,6 +81,12 @@ impl PartialEq<Addr> for &str {
     }
 }
 
+impl<'a> PartialEq<AddrRef<'a>> for Addr {
+    fn eq(&self, rhs: &AddrRef<'a>) -> bool {
+        self.0.as_str() == rhs.as_str()
+    }
+}
+
 /// Implement `Addr == String`
 impl PartialEq<String> for Addr {
     fn eq(&self, rhs: &String) -> bool {
@@ -105,6 +113,45 @@ impl From<Addr> for String {
 impl From<&Addr> for String {
     fn from(addr: &Addr) -> Self {
         addr.0.clone()
+    }
+}
+
+/// AddrRef is like &Addr but can be created easily without requiring a heap allocation
+/// It is not designed to be serialized but used internally, especially working with storage-plus keys
+/// TODO: do we want PartialEqual methods here as well?
+#[derive(Debug, Clone, Copy)]
+pub struct AddrRef<'a>(&'a str);
+
+impl<'a> AddrRef<'a> {
+    /// the safe way to construct one from an address (also via From/Into helpers)
+    pub fn new(addr: &'a Addr) -> Self {
+        AddrRef(addr.as_str())
+    }
+
+    /// This should only be used in test code
+    pub const fn unchecked(addr: &'a str) -> Self {
+        AddrRef(addr)
+    }
+
+    /// This is for parsing raw keys stored in the db we created previously with Addr
+    pub fn unchecked_utf8(raw: &'a [u8]) -> StdResult<Self> {
+        Ok(AddrRef(from_utf8(raw)?))
+    }
+
+    pub fn as_str(&self) -> &str {
+        self.0
+    }
+}
+
+impl<'a> From<&'a Addr> for AddrRef<'a> {
+    fn from(addr: &'a Addr) -> Self {
+        AddrRef(addr.as_ref())
+    }
+}
+
+impl<'a> From<AddrRef<'a>> for Addr {
+    fn from(addr: AddrRef<'a>) -> Self {
+        Addr(addr.0.to_string())
     }
 }
 
@@ -319,6 +366,30 @@ mod tests {
         let addr_ref = &addr;
         let string: String = addr_ref.into();
         assert_eq!(string, "cos934gh9034hg04g0h134");
+    }
+
+    #[test]
+    fn addr_ref_unchecked_from_literal() {
+        let addr_ref = AddrRef::unchecked("my-address");
+        assert_eq!(addr_ref.as_str(), "my-address");
+    }
+
+    #[test]
+    fn addr_ref_unchecked_from_bytes() {
+        let addr_ref = AddrRef::unchecked_utf8(b"some-text").unwrap();
+        assert_eq!(addr_ref.as_str(), "some-text");
+        // returns an error if we pass bad data in ("Invalid 2 octet sequence")
+        AddrRef::unchecked_utf8(&[0xc3, 0x28]).unwrap_err();
+    }
+
+    #[test]
+    fn addr_ref_to_and_from_addr() {
+        let addr_ref = AddrRef::unchecked("foobar");
+        let addr: Addr = addr_ref.into();
+        // same strings
+        assert_eq!(addr.as_str(), addr_ref.as_str());
+        // helper also works
+        assert_eq!(addr, addr_ref);
     }
 
     // Test HumanAddr as_str() for each HumanAddr::from input type
