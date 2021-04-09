@@ -103,18 +103,6 @@ impl From<&Addr> for String {
     }
 }
 
-impl From<Addr> for HumanAddr {
-    fn from(addr: Addr) -> Self {
-        HumanAddr(addr.0)
-    }
-}
-
-impl From<&Addr> for HumanAddr {
-    fn from(addr: &Addr) -> Self {
-        HumanAddr(addr.0.clone())
-    }
-}
-
 #[deprecated(
     since = "0.14.0",
     note = "HumanAddr is not much more than an alias to String and it does not provide significant safety advantages. With CosmWasm 0.14, we now use String when there was HumanAddr before. There is also the new Addr, which holds a validated immutable human readable address."
@@ -320,20 +308,6 @@ mod tests {
         let addr_ref = &addr;
         let string: String = addr_ref.into();
         assert_eq!(string, "cos934gh9034hg04g0h134");
-    }
-
-    #[test]
-    fn addr_implements_into_human_address() {
-        // owned Addr
-        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
-        let human: HumanAddr = addr.into();
-        assert_eq!(human, "cos934gh9034hg04g0h134");
-
-        // &Addr
-        let addr = Addr::unchecked("cos934gh9034hg04g0h134");
-        let addr_ref = &addr;
-        let human: HumanAddr = addr_ref.into();
-        assert_eq!(human, "cos934gh9034hg04g0h134");
     }
 
     // Test HumanAddr as_str() for each HumanAddr::from input type
