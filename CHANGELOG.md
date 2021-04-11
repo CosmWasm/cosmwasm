@@ -54,8 +54,6 @@ and this project adheres to
   as well as `From<u{32,16,8}> for Uint128`.
 - cosmwasm-std: Create new address type `Addr`. This is human readable (like
   `HumanAddr`) but is immutable and always contains a valid address ([#802]).
-- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
-  and `WasmQuery` query requests.
 - cosmwasm-vm: Add import `addr_validate` ([#802]).
 - cosmwasm-std: Add `BankMsg::Burn` variant when you want the tokens to
   disappear ([#860])
@@ -148,6 +146,8 @@ and this project adheres to
       library. Please use the explicit `*_sub` methods introduced above. In a
       couple of releases from now, we want to introduce the operator again with
       panicking overflow behaviour ([#858]).
+- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
+  and `WasmQuery` query requests ([#802]).
 - cosmwasm-std: Change address types in `BankMsg`, `IbcMsg` and `WasmMsg` from
   `HumanAddr` to `String` ([#802]).
 - cosmwasm-std: `Api::addr_humanize` now returns `Addr` instead of `HumanAddr`
