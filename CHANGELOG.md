@@ -148,6 +148,10 @@ and this project adheres to
       panicking overflow behaviour ([#858]).
 - cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
   and `WasmQuery` query requests ([#802]).
+- cosmwasm-std: In staking query response types `Delegation`, `FullDelegation`
+  and `Validator` the validator address fields were changed from `HumanAddr` to
+  `String`. The new `Addr` type cannot be used here because it only supports
+  standard account addresses via `Api::addr_*` ([#871]).
 - cosmwasm-std: Change address types in `BankMsg`, `IbcMsg` and `WasmMsg` from
   `HumanAddr` to `String` ([#802]).
 - cosmwasm-std: `Api::addr_humanize` now returns `Addr` instead of `HumanAddr`
@@ -162,6 +166,7 @@ and this project adheres to
 [#858]: https://github.com/CosmWasm/cosmwasm/issues/858
 [u128]: https://doc.rust-lang.org/std/primitive.u128.html
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
+[#871]: https://github.com/CosmWasm/cosmwasm/issues/871
 
 ### Deprecated
 

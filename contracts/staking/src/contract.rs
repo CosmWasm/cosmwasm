@@ -43,7 +43,7 @@ pub fn instantiate(
         owner: info.sender,
         exit_tax: msg.exit_tax,
         bond_denom: denom,
-        validator: deps.api.addr_validate(&msg.validator)?.into(),
+        validator: msg.validator,
         min_withdrawal: msg.min_withdrawal,
     };
     invest_info(deps.storage).save(&invest)?;
@@ -451,7 +451,7 @@ mod tests {
 
     fn sample_validator(addr: &str) -> Validator {
         Validator {
-            address: Addr::unchecked(addr),
+            address: addr.to_owned(),
             commission: Decimal::percent(3),
             max_commission: Decimal::percent(10),
             max_change_rate: Decimal::percent(1),
@@ -461,7 +461,7 @@ mod tests {
     fn sample_delegation(validator_addr: &str, amount: Coin) -> FullDelegation {
         let can_redelegate = amount.clone();
         FullDelegation {
-            validator: Addr::unchecked(validator_addr),
+            validator: validator_addr.to_owned(),
             delegator: Addr::unchecked(MOCK_CONTRACT_ADDR),
             amount,
             can_redelegate,

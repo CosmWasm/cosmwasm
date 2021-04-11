@@ -181,7 +181,8 @@ pub struct AllDelegationsResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Delegation {
     pub delegator: Addr,
-    pub validator: Addr,
+    /// A validator address (e.g. cosmosvaloper1...)
+    pub validator: String,
     /// How much we have locked in the delegation
     pub amount: Coin,
 }
@@ -210,7 +211,8 @@ pub struct DelegationResponse {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct FullDelegation {
     pub delegator: Addr,
-    pub validator: Addr,
+    /// A validator address (e.g. cosmosvaloper1...)
+    pub validator: String,
     /// How much we have locked in the delegation
     pub amount: Coin,
     /// can_redelegate captures how much can be immediately redelegated.
@@ -230,7 +232,8 @@ pub struct ValidatorsResponse {
 /// Instances are created in the querier.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Validator {
-    pub address: Addr,
+    /// A validator address (e.g. cosmosvaloper1...)
+    pub address: String,
     pub commission: Decimal,
     pub max_commission: Decimal,
     /// TODO: what units are these (in terms of time)?

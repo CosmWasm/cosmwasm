@@ -472,9 +472,10 @@ impl StakingQuerier {
                 delegator,
                 validator,
             } => {
-                let delegation = self.delegations.iter().find(|d| {
-                    d.delegator.as_ref() == delegator && d.validator.as_ref() == validator
-                });
+                let delegation = self
+                    .delegations
+                    .iter()
+                    .find(|d| d.delegator.as_ref() == delegator && d.validator == *validator);
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
@@ -865,13 +866,13 @@ mod tests {
     #[test]
     fn staking_querier_validators() {
         let val1 = Validator {
-            address: Addr::unchecked("validator-one"),
+            address: String::from("validator-one"),
             commission: Decimal::percent(1),
             max_commission: Decimal::percent(3),
             max_change_rate: Decimal::percent(1),
         };
         let val2 = Validator {
-            address: Addr::unchecked("validator-two"),
+            address: String::from("validator-two"),
             commission: Decimal::permille(15),
             max_commission: Decimal::permille(40),
             max_change_rate: Decimal::permille(5),
@@ -922,8 +923,8 @@ mod tests {
 
     #[test]
     fn staking_querier_delegations() {
-        let val1 = Addr::unchecked("validator-one");
-        let val2 = Addr::unchecked("validator-two");
+        let val1 = String::from("validator-one");
+        let val2 = String::from("validator-two");
 
         let user_a = Addr::unchecked("investor");
         let user_b = Addr::unchecked("speculator");

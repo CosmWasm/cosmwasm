@@ -40,7 +40,7 @@
       ]
     },
     "validator": {
-      "description": "All tokens are bonded to this validator FIXME: humanize/canonicalize address doesn't work for validator addrresses",
+      "description": "All tokens are bonded to this validator addr_humanize/addr_canonicalize doesn't work for validator addrresses (e.g. cosmosvaloper1...)",
       "type": "string"
     }
   },
