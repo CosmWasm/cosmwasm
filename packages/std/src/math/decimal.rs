@@ -55,20 +55,6 @@ impl Decimal {
     pub fn is_zero(&self) -> bool {
         self.0 == 0
     }
-
-    /// Returns the multiplicative inverse `1/d` for decimal `d`.
-    ///
-    /// If `d` is zero, none is returned.
-    pub fn inv(&self) -> Option<Decimal> {
-        if self.is_zero() {
-            None
-        } else {
-            // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL.
-            // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL. Then
-            // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
-            Some(Decimal(DECIMAL_FRACTIONAL_SQUARED / self.0))
-        }
-    }
 }
 
 impl Fraction<u128> for Decimal {
@@ -80,6 +66,20 @@ impl Fraction<u128> for Decimal {
     #[inline]
     fn denominator(&self) -> u128 {
         DECIMAL_FRACTIONAL
+    }
+
+    /// Returns the multiplicative inverse `1/d` for decimal `d`.
+    ///
+    /// If `d` is zero, none is returned.
+    fn inv(&self) -> Option<Decimal> {
+        if self.is_zero() {
+            None
+        } else {
+            // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL.
+            // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL. Then
+            // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
+            Some(Decimal(DECIMAL_FRACTIONAL_SQUARED / self.0))
+        }
     }
 }
 
