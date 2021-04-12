@@ -45,6 +45,11 @@ impl Addr {
     pub fn unchecked<T: Into<String>>(input: T) -> Addr {
         Addr(input.into())
     }
+
+    #[inline]
+    pub fn as_str(&self) -> &str {
+        self.0.as_str()
+    }
 }
 
 impl fmt::Display for Addr {
@@ -56,7 +61,7 @@ impl fmt::Display for Addr {
 impl AsRef<str> for Addr {
     #[inline]
     fn as_ref(&self) -> &str {
-        &self.0
+        self.as_str()
     }
 }
 
@@ -272,6 +277,12 @@ mod tests {
         let b = Addr::unchecked("be");
         assert_eq!(a, aa);
         assert_ne!(a, b);
+    }
+
+    #[test]
+    fn addr_as_str_works() {
+        let addr = Addr::unchecked("literal-string");
+        assert_eq!(addr.as_str(), "literal-string");
     }
 
     #[test]
