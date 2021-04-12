@@ -63,8 +63,9 @@ impl Decimal {
         if self.is_zero() {
             None
         } else {
-            // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL_SQUARED.
-            // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL_SQUARED.
+            // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL.
+            // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL. Then
+            // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
             Some(Decimal(DECIMAL_FRACTIONAL_SQUARED / self.0))
         }
     }
