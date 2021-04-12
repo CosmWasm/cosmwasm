@@ -54,8 +54,6 @@ and this project adheres to
   as well as `From<u{32,16,8}> for Uint128`.
 - cosmwasm-std: Create new address type `Addr`. This is human readable (like
   `HumanAddr`) but is immutable and always contains a valid address ([#802]).
-- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
-  and `WasmQuery` query requests.
 - cosmwasm-vm: Add import `addr_validate` ([#802]).
 - cosmwasm-std: Add `BankMsg::Burn` variant when you want the tokens to
   disappear ([#860])
@@ -148,6 +146,12 @@ and this project adheres to
       library. Please use the explicit `*_sub` methods introduced above. In a
       couple of releases from now, we want to introduce the operator again with
       panicking overflow behaviour ([#858]).
+- cosmwasm-std: Replace `HumanAddr` with `String` in `BankQuery`, `StakingQuery`
+  and `WasmQuery` query requests ([#802]).
+- cosmwasm-std: In staking query response types `Delegation`, `FullDelegation`
+  and `Validator` the validator address fields were changed from `HumanAddr` to
+  `String`. The new `Addr` type cannot be used here because it only supports
+  standard account addresses via `Api::addr_*` ([#871]).
 - cosmwasm-std: Change address types in `BankMsg`, `IbcMsg` and `WasmMsg` from
   `HumanAddr` to `String` ([#802]).
 - cosmwasm-std: `Api::addr_humanize` now returns `Addr` instead of `HumanAddr`
@@ -162,6 +166,7 @@ and this project adheres to
 [#858]: https://github.com/CosmWasm/cosmwasm/issues/858
 [u128]: https://doc.rust-lang.org/std/primitive.u128.html
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
+[#871]: https://github.com/CosmWasm/cosmwasm/issues/871
 
 ### Deprecated
 

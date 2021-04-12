@@ -17,9 +17,7 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::{
-    coin, from_binary, Addr, ContractResult, Decimal, Response, Uint128, Validator,
-};
+use cosmwasm_std::{coin, from_binary, ContractResult, Decimal, Response, Uint128, Validator};
 use cosmwasm_vm::testing::{
     instantiate, mock_backend, mock_env, mock_info, mock_instance_options, query,
 };
@@ -37,7 +35,7 @@ static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/st
 
 fn sample_validator(addr: &str) -> Validator {
     Validator {
-        address: Addr::unchecked(addr),
+        address: addr.to_owned(),
         commission: Decimal::percent(3),
         max_commission: Decimal::percent(10),
         max_change_rate: Decimal::percent(1),
