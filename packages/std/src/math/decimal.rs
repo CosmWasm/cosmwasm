@@ -41,15 +41,15 @@ impl Decimal {
         Decimal((x as u128) * 1_000_000_000_000_000)
     }
 
-    /// Returns the ratio (nominator / denominator) as a Decimal
-    pub fn from_ratio<A: Into<u128>, B: Into<u128>>(nominator: A, denominator: B) -> Decimal {
-        let nominator: u128 = nominator.into();
+    /// Returns the ratio (numerator / denominator) as a Decimal
+    pub fn from_ratio<A: Into<u128>, B: Into<u128>>(numerator: A, denominator: B) -> Decimal {
+        let numerator: u128 = numerator.into();
         let denominator: u128 = denominator.into();
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
         // TODO: better algorithm with less rounding potential?
-        Decimal(nominator * DECIMAL_FRACTIONAL / denominator)
+        Decimal(numerator * DECIMAL_FRACTIONAL / denominator)
     }
 
     pub fn is_zero(&self) -> bool {
@@ -72,7 +72,7 @@ impl Decimal {
 
 impl Fraction<u128> for Decimal {
     #[inline]
-    fn nominator(&self) -> u128 {
+    fn numerator(&self) -> u128 {
         self.0
     }
 
@@ -281,7 +281,7 @@ mod tests {
     #[test]
     fn decimal_implements_fraction() {
         let fraction = Decimal::from_str("1234.567").unwrap();
-        assert_eq!(fraction.nominator(), 1_234_567_000_000_000_000_000);
+        assert_eq!(fraction.numerator(), 1_234_567_000_000_000_000_000);
         assert_eq!(fraction.denominator(), 1_000_000_000_000_000_000);
     }
 

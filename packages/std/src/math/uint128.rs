@@ -194,15 +194,19 @@ impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
 }
 
 impl Uint128 {
-    /// returns self * nom / denom
-    pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(&self, nom: A, denom: B) -> Uint128 {
-        let nominator: u128 = nom.into();
-        let denominator: u128 = denom.into();
+    /// Returns `self * numerator / denominator`
+    pub fn multiply_ratio<A: Into<u128>, B: Into<u128>>(
+        &self,
+        numerator: A,
+        denominator: B,
+    ) -> Uint128 {
+        let numerator: u128 = numerator.into();
+        let denominator: u128 = denominator.into();
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
         // TODO: minimize rounding that takes place (using gcd algorithm)
-        let val = self.u128() * nominator / denominator;
+        let val = self.u128() * numerator / denominator;
         Uint128::from(val)
     }
 }
