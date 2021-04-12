@@ -461,7 +461,7 @@ impl StakingQuerier {
                 let delegations: Vec<_> = self
                     .delegations
                     .iter()
-                    .filter(|d| d.delegator.as_ref() == delegator)
+                    .filter(|d| d.delegator.as_str() == delegator)
                     .cloned()
                     .map(|d| d.into())
                     .collect();
@@ -475,7 +475,7 @@ impl StakingQuerier {
                 let delegation = self
                     .delegations
                     .iter()
-                    .find(|d| d.delegator.as_ref() == delegator && d.validator == *validator);
+                    .find(|d| d.delegator.as_str() == delegator && d.validator == *validator);
                 let res = DelegationResponse {
                     delegation: delegation.cloned(),
                 };
