@@ -40,6 +40,11 @@ impl PinnedMemoryCache {
     pub fn has(&self, checksum: &Checksum) -> bool {
         self.modules.contains_key(checksum)
     }
+
+    /// Returns the number of elements in the cache.
+    pub fn len(&self) -> usize {
+        self.modules.len()
+    }
 }
 
 #[cfg(test)]
@@ -129,5 +134,36 @@ mod tests {
         cache.remove(&checksum).unwrap();
 
         assert_eq!(cache.has(&checksum), false);
+    }
+
+    #[test]
+    fn len_works() {
+        let mut cache = PinnedMemoryCache::new();
+
+        // Create module
+        let wasm = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+        let checksum = Checksum::generate(&wasm);
+
+        assert_eq!(cache.len(), 0);
+
+        // Add
+        let original = compile(&wasm, None).unwrap();
+        cache.store(&checksum, original).unwrap();
+
+        assert_eq!(cache.len(), 1);
+
+        // Remove
+        cache.remove(&checksum).unwrap();
+
+        assert_eq!(cache.len(), 0);
     }
 }
