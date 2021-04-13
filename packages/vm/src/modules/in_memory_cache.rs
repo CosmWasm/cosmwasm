@@ -82,6 +82,17 @@ impl InMemoryCache {
             .map(|modules| modules.len())
             .unwrap_or_default()
     }
+
+    /// Returns cumulative size of all elements in the cache.
+    ///
+    /// This is based on the values provided with `store`. No actual
+    /// memory size is measured here.
+    pub fn size(&self) -> usize {
+        self.modules
+            .as_ref()
+            .map(|modules| modules.weight())
+            .unwrap_or_default()
+    }
 }
 
 #[cfg(test)]
@@ -222,5 +233,65 @@ mod tests {
             .store(&checksum3, compile(&wasm3, None).unwrap(), 1_500_000)
             .unwrap();
         assert_eq!(cache.len(), 1);
+    }
+
+    #[test]
+    fn size_works() {
+        let mut cache = InMemoryCache::new(Size::mebi(2));
+
+        // Create module
+        let wasm1 = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_one") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 1
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+        let checksum1 = Checksum::generate(&wasm1);
+        let wasm2 = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_two") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 2
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+        let checksum2 = Checksum::generate(&wasm2);
+        let wasm3 = wat::parse_str(
+            r#"(module
+            (type $t0 (func (param i32) (result i32)))
+            (func $add_one (export "add_three") (type $t0) (param $p0 i32) (result i32)
+                get_local $p0
+                i32.const 3
+                i32.add)
+            )"#,
+        )
+        .unwrap();
+        let checksum3 = Checksum::generate(&wasm3);
+
+        assert_eq!(cache.size(), 0);
+
+        // Add 1
+        cache
+            .store(&checksum1, compile(&wasm1, None).unwrap(), 900_000)
+            .unwrap();
+        assert_eq!(cache.size(), 900_000);
+
+        // Add 2
+        cache
+            .store(&checksum2, compile(&wasm2, None).unwrap(), 800_000)
+            .unwrap();
+        assert_eq!(cache.size(), 1_700_000);
+
+        // Add 3 (pushes out the previous two)
+        cache
+            .store(&checksum3, compile(&wasm3, None).unwrap(), 1_500_000)
+            .unwrap();
+        assert_eq!(cache.size(), 1_500_000);
     }
 }

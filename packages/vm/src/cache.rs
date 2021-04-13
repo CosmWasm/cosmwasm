@@ -31,6 +31,8 @@ pub struct Metrics {
     pub stats: Stats,
     pub elements_pinned_memory_cache: usize,
     pub elements_memory_cache: usize,
+    pub size_pinned_memory_cache: usize,
+    pub size_memory_cache: usize,
 }
 
 #[derive(Clone, Debug)]
@@ -121,6 +123,8 @@ where
             stats: cache.stats,
             elements_pinned_memory_cache: cache.pinned_memory_cache.len(),
             elements_memory_cache: cache.memory_cache.len(),
+            size_pinned_memory_cache: 0,
+            size_memory_cache: cache.memory_cache.size(),
         }
     }
 
