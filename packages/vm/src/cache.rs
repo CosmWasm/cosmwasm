@@ -26,6 +26,13 @@ pub struct Stats {
     pub misses: u32,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct Metrics {
+    pub stats: Stats,
+    pub elements_pinned_memory_cache: usize,
+    pub elements_memory_cache: usize,
+}
+
 #[derive(Clone, Debug)]
 pub struct CacheOptions {
     pub base_dir: PathBuf,
@@ -106,6 +113,15 @@ where
 
     pub fn stats(&self) -> Stats {
         self.inner.lock().unwrap().stats
+    }
+
+    pub fn metrics(&self) -> Metrics {
+        let cache = self.inner.lock().unwrap();
+        Metrics {
+            stats: cache.stats,
+            elements_pinned_memory_cache: cache.pinned_memory_cache.len(),
+            elements_memory_cache: cache.memory_cache.len(),
+        }
     }
 
     pub fn save_wasm(&self, wasm: &[u8]) -> VmResult<Checksum> {
