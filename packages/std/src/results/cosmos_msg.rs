@@ -187,14 +187,20 @@ where
     })
 }
 
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {
+impl<T> From<BankMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<StakingMsg> for CosmosMsg<T> {
+impl<T> From<StakingMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: StakingMsg) -> Self {
         CosmosMsg::Staking(msg)
     }
@@ -210,14 +216,20 @@ where
     }
 }
 
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg<T> {
+impl<T> From<WasmMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<IbcMsg> for CosmosMsg<T> {
+impl<T> From<IbcMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
     }
