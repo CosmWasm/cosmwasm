@@ -6,6 +6,7 @@ use std::str::FromStr;
 
 use crate::errors::StdError;
 
+use super::Fraction;
 use super::Uint128;
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -14,7 +15,8 @@ use super::Uint128;
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Decimal(#[schemars(with = "String")] u128);
 
-const DECIMAL_FRACTIONAL: u128 = 1_000_000_000_000_000_000;
+const DECIMAL_FRACTIONAL: u128 = 1_000_000_000_000_000_000; // 1*10**18
+const DECIMAL_FRACTIONAL_SQUARED: u128 = 1_000_000_000_000_000_000_000_000_000_000_000_000; // (1*10**18)**2 = 1*10**36
 
 impl Decimal {
     pub const MAX: Decimal = Decimal(u128::MAX);
@@ -39,19 +41,45 @@ impl Decimal {
         Decimal((x as u128) * 1_000_000_000_000_000)
     }
 
-    /// Returns the ratio (nominator / denominator) as a Decimal
-    pub fn from_ratio<A: Into<u128>, B: Into<u128>>(nominator: A, denominator: B) -> Decimal {
-        let nominator: u128 = nominator.into();
+    /// Returns the ratio (numerator / denominator) as a Decimal
+    pub fn from_ratio<A: Into<u128>, B: Into<u128>>(numerator: A, denominator: B) -> Decimal {
+        let numerator: u128 = numerator.into();
         let denominator: u128 = denominator.into();
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
         // TODO: better algorithm with less rounding potential?
-        Decimal(nominator * DECIMAL_FRACTIONAL / denominator)
+        Decimal(numerator * DECIMAL_FRACTIONAL / denominator)
     }
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0
+    }
+}
+
+impl Fraction<u128> for Decimal {
+    #[inline]
+    fn numerator(&self) -> u128 {
+        self.0
+    }
+
+    #[inline]
+    fn denominator(&self) -> u128 {
+        DECIMAL_FRACTIONAL
+    }
+
+    /// Returns the multiplicative inverse `1/d` for decimal `d`.
+    ///
+    /// If `d` is zero, none is returned.
+    fn inv(&self) -> Option<Decimal> {
+        if self.is_zero() {
+            None
+        } else {
+            // Let self be p/q with p = self.0 and q = DECIMAL_FRACTIONAL.
+            // Now we calculate the inverse a/b = q/p such that b = DECIMAL_FRACTIONAL. Then
+            // `a = DECIMAL_FRACTIONAL*DECIMAL_FRACTIONAL / self.0`.
+            Some(Decimal(DECIMAL_FRACTIONAL_SQUARED / self.0))
+        }
     }
 }
 
@@ -252,6 +280,13 @@ mod tests {
     }
 
     #[test]
+    fn decimal_implements_fraction() {
+        let fraction = Decimal::from_str("1234.567").unwrap();
+        assert_eq!(fraction.numerator(), 1_234_567_000_000_000_000_000);
+        assert_eq!(fraction.denominator(), 1_000_000_000_000_000_000);
+    }
+
+    #[test]
     fn decimal_from_str_works() {
         // Integers
         assert_eq!(Decimal::from_str("0").unwrap(), Decimal::percent(0));
@@ -391,6 +426,61 @@ mod tests {
         assert_eq!(Decimal::one().is_zero(), false);
         assert_eq!(Decimal::percent(123).is_zero(), false);
         assert_eq!(Decimal::permille(1234).is_zero(), false);
+    }
+
+    #[test]
+    fn decimal_inv_works() {
+        // d = 0
+        assert_eq!(Decimal::zero().inv(), None);
+
+        // d == 1
+        assert_eq!(Decimal::one().inv(), Some(Decimal::one()));
+
+        // d > 1 exact
+        assert_eq!(
+            Decimal::from_str("2").unwrap().inv(),
+            Some(Decimal::from_str("0.5").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("20").unwrap().inv(),
+            Some(Decimal::from_str("0.05").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("200").unwrap().inv(),
+            Some(Decimal::from_str("0.005").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("2000").unwrap().inv(),
+            Some(Decimal::from_str("0.0005").unwrap())
+        );
+
+        // d > 1 rounded
+        assert_eq!(
+            Decimal::from_str("3").unwrap().inv(),
+            Some(Decimal::from_str("0.333333333333333333").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("6").unwrap().inv(),
+            Some(Decimal::from_str("0.166666666666666666").unwrap())
+        );
+
+        // d < 1 exact
+        assert_eq!(
+            Decimal::from_str("0.5").unwrap().inv(),
+            Some(Decimal::from_str("2").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("0.05").unwrap().inv(),
+            Some(Decimal::from_str("20").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("0.005").unwrap().inv(),
+            Some(Decimal::from_str("200").unwrap())
+        );
+        assert_eq!(
+            Decimal::from_str("0.0005").unwrap().inv(),
+            Some(Decimal::from_str("2000").unwrap())
+        );
     }
 
     #[test]

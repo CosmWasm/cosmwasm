@@ -57,6 +57,10 @@ and this project adheres to
 - cosmwasm-vm: Add import `addr_validate` ([#802]).
 - cosmwasm-std: Add `BankMsg::Burn` variant when you want the tokens to
   disappear ([#860])
+- cosmwasm-std: Create `Fraction<T>` trait to represent a fraction `p`/`q` with
+  integers `p` and `q`. `Decimal` now implements `Fraction<u128>`, which
+  provides public getters `::numerator()` and `::denominator()`.
+- cosmwasm-std: Add `Decimal::inv` that returns `1/d` for decimal `d`.
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
