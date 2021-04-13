@@ -123,7 +123,7 @@ where
             stats: cache.stats,
             elements_pinned_memory_cache: cache.pinned_memory_cache.len(),
             elements_memory_cache: cache.memory_cache.len(),
-            size_pinned_memory_cache: 0,
+            size_pinned_memory_cache: cache.pinned_memory_cache.size(),
             size_memory_cache: cache.memory_cache.size(),
         }
     }
@@ -185,22 +185,28 @@ where
         // Try to get module from the memory cache
         if let Some(module) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache += 1;
-            return cache.pinned_memory_cache.store(checksum, module);
+            return cache
+                .pinned_memory_cache
+                .store(checksum, module.module, module.size);
         }
 
         // Try to get module from file system cache
         let store = make_runtime_store(Some(cache.instance_memory_limit));
-        if let Some((module, _)) = cache.fs_cache.load(checksum, &store)? {
+        if let Some((module, module_size)) = cache.fs_cache.load(checksum, &store)? {
             cache.stats.hits_fs_cache += 1;
-            return cache.pinned_memory_cache.store(checksum, module);
+            return cache
+                .pinned_memory_cache
+                .store(checksum, module, module_size);
         }
 
         // Re-compile from original Wasm bytecode
         let code = self.load_wasm_with_path(&cache.wasm_path, checksum)?;
         let module = compile(&code, Some(cache.instance_memory_limit))?;
         // Store into the fs cache too
-        cache.fs_cache.store(checksum, &module)?;
-        cache.pinned_memory_cache.store(checksum, module)
+        let module_size = cache.fs_cache.store(checksum, &module)?;
+        cache
+            .pinned_memory_cache
+            .store(checksum, module, module_size)
     }
 
     /// Unpins a Module, i.e. removes it from the pinned memory cache.
@@ -235,8 +241,12 @@ where
         // Get module from memory cache
         if let Some(module) = cache.memory_cache.load(checksum)? {
             cache.stats.hits_memory_cache += 1;
-            let instance =
-                Instance::from_module(&module, backend, options.gas_limit, options.print_debug)?;
+            let instance = Instance::from_module(
+                &module.module,
+                backend,
+                options.gas_limit,
+                options.print_debug,
+            )?;
             return Ok(instance);
         }
 

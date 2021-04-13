@@ -1,9 +1,10 @@
 use clru::{CLruCache, CLruCacheConfig, WeightScale};
 use std::collections::hash_map::RandomState;
+use std::num::NonZeroUsize;
 use wasmer::Module;
 
+use super::sized_module::SizedModule;
 use crate::{Checksum, Size, VmError, VmResult};
-use std::num::NonZeroUsize;
 
 // Minimum module size.
 // Based on `examples/module_size.sh`, and the cosmwasm-plus contracts.
@@ -13,12 +14,6 @@ use std::num::NonZeroUsize;
 // Assuming the cost per entry is 48 bytes, 10000 entries will have an extra cost of just ~500 kB.
 // Which is a very small percentage (~0.03%) of our typical cache memory budget (2 GB).
 const MINIMUM_MODULE_SIZE: Size = Size::kibi(250);
-
-#[derive(Debug)]
-struct SizedModule {
-    pub module: Module,
-    pub size: usize,
-}
 
 #[derive(Debug)]
 struct SizeScale;
@@ -64,10 +59,10 @@ impl InMemoryCache {
     }
 
     /// Looks up a module in the cache and creates a new module
-    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<Module>> {
+    pub fn load(&mut self, checksum: &Checksum) -> VmResult<Option<SizedModule>> {
         if let Some(modules) = &mut self.modules {
             match modules.get(checksum) {
-                Some(sized_module) => Ok(Some(sized_module.module.clone())),
+                Some(module) => Ok(Some(module.clone())),
                 None => Ok(None),
             }
         } else {
@@ -167,7 +162,7 @@ mod tests {
 
         // Ensure cached module can be executed
         {
-            let instance = WasmerInstance::new(&cached, &imports! {}).unwrap();
+            let instance = WasmerInstance::new(&cached.module, &imports! {}).unwrap();
             set_remaining_points(&instance, TESTING_GAS_LIMIT);
             let add_one = instance.exports.get_function("add_one").unwrap();
             let result = add_one.call(&[42.into()]).unwrap();
