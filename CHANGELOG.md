@@ -104,6 +104,8 @@ and this project adheres to
   need one of those, you're probably doing something wrong.
 - cosmwasm-std: Make `label` in `WasmMsg::Instantiate` non-optional to better
   match the Go/database format.
+- cosmwasm-std: Add new field `admin` to `WasmMsg::Instantiate` to fully support
+  `MsgInstantiateContract` from `x/wasm` ([#861]).
 - cosmwasm-std: `Binary::to_array` is now generic over the array length instead
   of the output type. As a consequence the obsolete type `ByteArray` was
   removed. The array length is not restricted to 0-64 anymore.
@@ -171,6 +173,7 @@ and this project adheres to
 [u128]: https://doc.rust-lang.org/std/primitive.u128.html
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 [#871]: https://github.com/CosmWasm/cosmwasm/issues/871
+[#861]: https://github.com/CosmWasm/cosmwasm/issues/861
 
 ### Deprecated
 

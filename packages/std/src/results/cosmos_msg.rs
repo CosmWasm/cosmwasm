@@ -107,9 +107,10 @@ pub enum WasmMsg {
     },
     /// Instantiates a new contracts from previously uploaded Wasm code.
     ///
-    /// This is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L47-L61).
+    /// This is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.16.0-alpha1/x/wasm/internal/types/tx.proto#L47-L61).
     /// `sender` is automatically filled with the current contract's address.
     Instantiate {
+        admin: Option<String>,
         code_id: u64,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         msg: Binary,
@@ -133,7 +134,9 @@ pub enum WasmMsg {
     },
 }
 
-/// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
+/// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
+///
+/// When using this, `admin` is always unset. If you need more flexibility, create the message directly.
 pub fn wasm_instantiate<T>(
     code_id: u64,
     msg: &T,
@@ -145,6 +148,7 @@ where
 {
     let payload = to_binary(msg)?;
     Ok(WasmMsg::Instantiate {
+        admin: None,
         code_id,
         msg: payload,
         send,
