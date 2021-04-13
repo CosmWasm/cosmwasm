@@ -288,7 +288,7 @@
           "additionalProperties": false
         },
         {
-          "description": "Instantiates a new contracts from previously uploaded Wasm code.\n\nThis is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto#L47-L61). `sender` is automatically filled with the current contract's address.",
+          "description": "Instantiates a new contracts from previously uploaded Wasm code.\n\nThis is translated to a [MsgInstantiateContract](https://github.com/CosmWasm/wasmd/blob/v0.16.0-alpha1/x/wasm/internal/types/tx.proto#L47-L61). `sender` is automatically filled with the current contract's address.",
           "type": "object",
           "required": [
             "instantiate"
@@ -303,6 +303,12 @@
                 "send"
               ],
               "properties": {
+                "admin": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
                 "code_id": {
                   "type": "integer",
                   "format": "uint64",

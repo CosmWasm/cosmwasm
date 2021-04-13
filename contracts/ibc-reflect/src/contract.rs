@@ -420,14 +420,16 @@ mod tests {
         // and set up a reflect account
         assert_eq!(1, res.messages.len());
         if let CosmosMsg::Wasm(WasmMsg::Instantiate {
+            admin,
             code_id,
             msg,
             send,
             label,
         }) = &res.messages[0]
         {
-            assert_eq!(&REFLECT_ID, code_id);
-            assert_eq!(0, send.len());
+            assert_eq!(*admin, None);
+            assert_eq!(*code_id, REFLECT_ID);
+            assert_eq!(send.len(), 0);
             assert!(label.contains(channel_id));
             // parse the message - should callback with proper channel_id
             let rmsg: ReflectInstantiateMsg = from_slice(&msg).unwrap();
