@@ -25,6 +25,8 @@ where
     Custom(T),
     #[cfg(feature = "staking")]
     Staking(StakingMsg),
+    #[cfg(feature = "staking")]
+    Distribution(DistributionMsg),
     /// A Stargate message encoded the same way as a protobof [Any](https://github.com/protocolbuffers/protobuf/blob/master/src/google/protobuf/any.proto).
     /// This is the same structure as messages in `TxBody` from [ADR-020](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-020-protobuf-transaction-encoding.md)
     #[cfg(feature = "stargate")]
@@ -72,21 +74,34 @@ pub enum StakingMsg {
     /// This is translated to a [MsgUndelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L112-L121).
     /// `delegator_address` is automatically filled with the current contract's address.
     Undelegate { validator: String, amount: Coin },
-    /// This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37)
-    /// followed by a [MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
-    /// `delegator_address` is automatically filled with the current contract's address.
-    Withdraw {
-        validator: String,
-        /// this is the "withdraw address", the one that should receive the rewards
-        /// if None, then use delegator address
-        recipient: Option<String>,
-    },
     /// This is translated to a [MsgBeginRedelegate](https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/cosmos/staking/v1beta1/tx.proto#L95-L105).
     /// `delegator_address` is automatically filled with the current contract's address.
     Redelegate {
         src_validator: String,
         dst_validator: String,
         amount: Coin,
+    },
+}
+
+/// The message types of the distribution module.
+///
+/// See https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto
+#[cfg(feature = "staking")]
+#[non_exhaustive]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum DistributionMsg {
+    /// This is translated to a [MsgSetWithdrawAddress](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L29-L37).
+    /// `delegator_address` is automatically filled with the current contract's address.
+    SetWithdrawAddress {
+        /// The `withdraw_address`
+        address: String,
+    },
+    /// This is translated to a [[MsgWithdrawDelegatorReward](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/cosmos/distribution/v1beta1/tx.proto#L42-L50).
+    /// `delegator_address` is automatically filled with the current contract's address.
+    WithdrawDelegatorReward {
+        /// The `validator_address`
+        validator: String,
     },
 }
 
@@ -172,27 +187,49 @@ where
     })
 }
 
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<BankMsg> for CosmosMsg<T> {
+impl<T> From<BankMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: BankMsg) -> Self {
         CosmosMsg::Bank(msg)
     }
 }
 
 #[cfg(feature = "staking")]
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<StakingMsg> for CosmosMsg<T> {
+impl<T> From<StakingMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: StakingMsg) -> Self {
         CosmosMsg::Staking(msg)
     }
 }
 
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<WasmMsg> for CosmosMsg<T> {
+#[cfg(feature = "staking")]
+impl<T> From<DistributionMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn from(msg: DistributionMsg) -> Self {
+        CosmosMsg::Distribution(msg)
+    }
+}
+
+impl<T> From<WasmMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: WasmMsg) -> Self {
         CosmosMsg::Wasm(msg)
     }
 }
 
 #[cfg(feature = "stargate")]
-impl<T: Clone + fmt::Debug + PartialEq + JsonSchema> From<IbcMsg> for CosmosMsg<T> {
+impl<T> From<IbcMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
     }

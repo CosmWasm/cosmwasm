@@ -1,6 +1,7 @@
 use cosmwasm_std::{
-    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
-    QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128, WasmMsg,
+    attr, coin, entry_point, to_binary, BankMsg, Decimal, Deps, DepsMut, DistributionMsg, Env,
+    MessageInfo, QuerierWrapper, QueryResponse, Response, StakingMsg, StdError, StdResult, Uint128,
+    WasmMsg,
 };
 
 use crate::errors::{StakingError, Unauthorized};
@@ -317,9 +318,8 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
     let res = Response {
         submessages: vec![],
         messages: vec![
-            StakingMsg::Withdraw {
+            DistributionMsg::WithdrawDelegatorReward {
                 validator: invest.validator,
-                recipient: Some(contract_addr.clone().into()),
             }
             .into(),
             WasmMsg::Execute {

@@ -164,6 +164,9 @@ and this project adheres to
   ([#802]).
 - cosmwasm-std: Hide `StakingMsg` and `CosmosMsg::Staking` behind the `staking`
   feature flag to make those only available in contracts built for PoS chains.
+- cosmwasm-std: Remove `StakingMsg::Withdraw` in favour of
+  `DistributionMsg::SetWithdrawAddress` and
+  `DistributionMsg::WithdrawDelegatorReward` ([#848]).
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
@@ -176,6 +179,7 @@ and this project adheres to
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 [#871]: https://github.com/CosmWasm/cosmwasm/issues/871
 [#861]: https://github.com/CosmWasm/cosmwasm/issues/861
+[#848]: https://github.com/CosmWasm/cosmwasm/issues/848
 
 ### Deprecated
 
