@@ -24,8 +24,8 @@ pub fn instantiate(
     msg: InstantiateMsg,
 ) -> StdResult<Response> {
     // ensure the validator is registered
-    let vals = deps.querier.query_all_validators()?;
-    if !vals.iter().any(|v| v.address == msg.validator) {
+    let validator = deps.querier.query_validator(msg.validator.clone())?;
+    if validator.is_none() {
         return Err(StdError::generic_err(format!(
             "{} is not in the current validator set",
             msg.validator
