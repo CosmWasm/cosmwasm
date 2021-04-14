@@ -46,10 +46,11 @@ pub use crate::query::{
     CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
     ValidatorsResponse, WasmQuery,
 };
+#[cfg(feature = "staking")]
+pub use crate::results::StakingMsg;
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
-    Event, QueryResponse, Reply, ReplyOn, Response, StakingMsg, SubMsg, SubcallResponse,
-    SystemResult, WasmMsg,
+    Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubcallResponse, SystemResult, WasmMsg,
 };
 #[allow(deprecated)]
 pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse};
