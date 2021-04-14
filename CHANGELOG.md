@@ -61,6 +61,8 @@ and this project adheres to
   integers `p` and `q`. `Decimal` now implements `Fraction<u128>`, which
   provides public getters `::numerator()` and `::denominator()`.
 - cosmwasm-std: Add `Decimal::inv` that returns `1/d` for decimal `d`.
+- cosmwasm-vm: Add `Cache::metrics` to expose internal data for monitoring
+  purposes ([#763]).
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -68,6 +70,7 @@ and this project adheres to
 [#711]: https://github.com/CosmWasm/cosmwasm/pull/711
 [#714]: https://github.com/CosmWasm/cosmwasm/pull/714
 [#716]: https://github.com/CosmWasm/cosmwasm/pull/716
+[#763]: https://github.com/CosmWasm/cosmwasm/issues/763
 [#768]: https://github.com/CosmWasm/cosmwasm/pull/768
 [#793]: https://github.com/CosmWasm/cosmwasm/pull/793
 [#796]: https://github.com/CosmWasm/cosmwasm/pull/796
