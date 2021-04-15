@@ -15,8 +15,8 @@ mod wasm;
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
 #[cfg(feature = "staking")]
 pub use staking::{
-    AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
-    StakingQuery, Validator, ValidatorsResponse,
+    AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,
+    DelegationResponse, FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
 #[cfg(feature = "stargate")]
 pub use stargate::StargateResponse;

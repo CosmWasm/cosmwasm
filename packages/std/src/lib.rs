@@ -46,8 +46,8 @@ pub use crate::query::{
 };
 #[cfg(feature = "staking")]
 pub use crate::query::{
-    AllDelegationsResponse, BondedDenomResponse, Delegation, FullDelegation, StakingQuery,
-    Validator, ValidatorsResponse,
+    AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation, FullDelegation,
+    StakingQuery, Validator, ValidatorResponse,
 };
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,

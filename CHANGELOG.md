@@ -173,6 +173,12 @@ and this project adheres to
 - cosmwasm-std: Remove `StakingMsg::Withdraw` in favour of
   `DistributionMsg::SetWithdrawAddress` and
   `DistributionMsg::WithdrawDelegatorReward` ([#848]).
+- cosmwasm-std: Rename `StakingQuery::Validators`, `ValidatorsResponse` and
+  `QuerierWrapper::query_validators` to `StakingQuery::AllValidators`,
+  `AllValidatorsResponse` and `QuerierWrapper.query_all_validators`. Add
+  `StakingQuery::Validator`, `ValidatorResponse` and
+  `QuerierWrapper::query_validator` to allow querying a single validator.
+  ([#879])
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
@@ -186,6 +192,7 @@ and this project adheres to
 [#871]: https://github.com/CosmWasm/cosmwasm/issues/871
 [#861]: https://github.com/CosmWasm/cosmwasm/issues/861
 [#848]: https://github.com/CosmWasm/cosmwasm/issues/848
+[#879]: https://github.com/CosmWasm/cosmwasm/pull/879
 
 ### Deprecated
 

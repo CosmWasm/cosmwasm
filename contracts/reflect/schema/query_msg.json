@@ -420,14 +420,36 @@
           "additionalProperties": false
         },
         {
-          "description": "Returns all registered Validators on the system",
+          "description": "Returns all validators in the currently active validator set.\n\nThe query response type is `AllValidatorsResponse`.",
           "type": "object",
           "required": [
-            "validators"
+            "all_validators"
           ],
           "properties": {
-            "validators": {
+            "all_validators": {
               "type": "object"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Returns the validator at the given address. Returns None if the validator is not part of the currently active validator set.\n\nThe query response type is `ValidatorResponse`.",
+          "type": "object",
+          "required": [
+            "validator"
+          ],
+          "properties": {
+            "validator": {
+              "type": "object",
+              "required": [
+                "address"
+              ],
+              "properties": {
+                "address": {
+                  "description": "The validator's address (e.g. (e.g. cosmosvaloper1...))",
+                  "type": "string"
+                }
+              }
             }
           },
           "additionalProperties": false
