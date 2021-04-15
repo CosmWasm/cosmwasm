@@ -19,8 +19,18 @@ pub enum StakingQuery {
         delegator: String,
         validator: String,
     },
-    /// Returns all registered Validators on the system
-    Validators {},
+    /// Returns all validators in the currently active validator set.
+    ///
+    /// The query response type is `AllValidatorsResponse`.
+    AllValidators {},
+    /// Returns the validator at the given address. Returns None if the validator is
+    /// not part of the currently active validator set.
+    ///
+    /// The query response type is `ValidatorResponse`.
+    Validator {
+        /// The validator's address (e.g. (e.g. cosmosvaloper1...))
+        address: String,
+    },
 }
 
 /// BondedDenomResponse is data format returned from StakingRequest::BondedDenom query
@@ -85,10 +95,16 @@ pub struct FullDelegation {
     pub accumulated_rewards: Vec<Coin>,
 }
 
-/// ValidatorsResponse is data format returned from StakingRequest::Validators query
+/// The data format returned from StakingRequest::AllValidators query
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ValidatorsResponse {
+pub struct AllValidatorsResponse {
     pub validators: Vec<Validator>,
+}
+
+/// The data format returned from StakingRequest::Validator query
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct ValidatorResponse {
+    pub validator: Option<Validator>,
 }
 
 /// Instances are created in the querier.

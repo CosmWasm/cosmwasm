@@ -15,8 +15,8 @@ use crate::query::{
 };
 #[cfg(feature = "staking")]
 use crate::query::{
-    AllDelegationsResponse, BondedDenomResponse, DelegationResponse, FullDelegation, StakingQuery,
-    Validator, ValidatorsResponse,
+    AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, DelegationResponse,
+    FullDelegation, StakingQuery, Validator, ValidatorResponse,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
@@ -459,10 +459,19 @@ impl StakingQuerier {
                 };
                 to_binary(&res).into()
             }
-            StakingQuery::Validators {} => {
-                let res = ValidatorsResponse {
+            StakingQuery::AllValidators {} => {
+                let res = AllValidatorsResponse {
                     validators: self.validators.clone(),
                 };
+                to_binary(&res).into()
+            }
+            StakingQuery::Validator { address } => {
+                let validator: Option<Validator> = self
+                    .validators
+                    .iter()
+                    .find(|validator| validator.address == *address)
+                    .cloned();
+                let res = ValidatorResponse { validator };
                 to_binary(&res).into()
             }
             StakingQuery::AllDelegations { delegator } => {
@@ -874,7 +883,7 @@ mod tests {
 
     #[cfg(feature = "staking")]
     #[test]
-    fn staking_querier_validators() {
+    fn staking_querier_all_validators() {
         let val1 = Validator {
             address: String::from("validator-one"),
             commission: Decimal::percent(1),
@@ -892,11 +901,60 @@ mod tests {
 
         // one match
         let raw = staking
-            .query(&StakingQuery::Validators {})
+            .query(&StakingQuery::AllValidators {})
             .unwrap()
             .unwrap();
-        let vals: ValidatorsResponse = from_binary(&raw).unwrap();
+        let vals: AllValidatorsResponse = from_binary(&raw).unwrap();
         assert_eq!(vals.validators, vec![val1, val2]);
+    }
+
+    #[cfg(feature = "staking")]
+    #[test]
+    fn staking_querier_validator() {
+        let address1 = String::from("validator-one");
+        let address2 = String::from("validator-two");
+        let address_non_existent = String::from("wannabe-validator");
+
+        let val1 = Validator {
+            address: address1.clone(),
+            commission: Decimal::percent(1),
+            max_commission: Decimal::percent(3),
+            max_change_rate: Decimal::percent(1),
+        };
+        let val2 = Validator {
+            address: address2.clone(),
+            commission: Decimal::permille(15),
+            max_commission: Decimal::permille(40),
+            max_change_rate: Decimal::permille(5),
+        };
+
+        let staking = StakingQuerier::new("ustake", &[val1.clone(), val2.clone()], &[]);
+
+        // query 1
+        let raw = staking
+            .query(&StakingQuery::Validator { address: address1 })
+            .unwrap()
+            .unwrap();
+        let res: ValidatorResponse = from_binary(&raw).unwrap();
+        assert_eq!(res.validator, Some(val1));
+
+        // query 2
+        let raw = staking
+            .query(&StakingQuery::Validator { address: address2 })
+            .unwrap()
+            .unwrap();
+        let res: ValidatorResponse = from_binary(&raw).unwrap();
+        assert_eq!(res.validator, Some(val2));
+
+        // query non-existent
+        let raw = staking
+            .query(&StakingQuery::Validator {
+                address: address_non_existent,
+            })
+            .unwrap()
+            .unwrap();
+        let res: ValidatorResponse = from_binary(&raw).unwrap();
+        assert_eq!(res.validator, None);
     }
 
     #[cfg(feature = "staking")]
