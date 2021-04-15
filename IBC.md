@@ -253,6 +253,36 @@ Note the different return response here (`IbcReceiveResponse` rather than
 that will be returned to the original contract, informing it of failure or
 success.
 
+Here is the
+[`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L129-L146)
+that contains all information needed to process the receipt. You can generally
+ignore timeout (this is only called if it hasn't yet timed out) and sequence
+(which is used by the IBC framework to avoid duplicates). I generally use
+`dest.channel_id` like `info.sender` to authenticate the packet, and parse
+`data` into a `PacketMsg` structure. After that you can process this more or
+less like in `execute`.
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcPacket {
+    /// The raw data send from the other side in the packet
+    pub data: Binary,
+    /// identifies the channel and port on the sending chain.
+    pub src: IbcEndpoint,
+    /// identifies the channel and port on the receiving chain.
+    pub dest: IbcEndpoint,
+    /// The sequence number of the packet on the given channel
+    pub sequence: u64,
+    /// block height after which the packet times out.
+    /// at least one of timeout_block, timeout_timestamp is required
+    pub timeout_block: Option<IbcTimeoutBlock>,
+    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+    /// See https://golang.org/pkg/time/#Time.UnixNano
+    /// at least one of timeout_block, timeout_timestamp is required
+    pub timeout_timestamp: Option<u64>,
+}
+```
+
 TODO: explain how to handle this
 
 TODO: document the default JSON encoding used in ICS20
@@ -275,7 +305,20 @@ pub fn ibc_packet_ack(
 ) -> StdResult<IbcBasicResponse> { }
 ```
 
-TODO: explain the data available
+The
+[`IbcAcknowledgement` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L148-L152)
+contains both the original packet that was sent as well as the acknowledgement
+bytes returned from executing the remote contract. You can use the
+`original_packet` to map it the proper handler, and parse the `acknowledgement`
+there:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcAcknowledgement {
+    pub acknowledgement: Binary,
+    pub original_packet: IbcPacket,
+}
+```
 
 TODO: explain how to handle this
 
