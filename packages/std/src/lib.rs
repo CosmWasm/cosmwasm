@@ -42,9 +42,12 @@ pub use crate::ibc::{
 pub use crate::iterator::{Order, Pair, KV};
 pub use crate::math::{Decimal, Fraction, Uint128};
 pub use crate::query::{
-    AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
-    CustomQuery, Delegation, FullDelegation, QueryRequest, StakingQuery, Validator,
-    ValidatorsResponse, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
+};
+#[cfg(feature = "staking")]
+pub use crate::query::{
+    AllDelegationsResponse, BondedDenomResponse, Delegation, FullDelegation, StakingQuery,
+    Validator, ValidatorsResponse,
 };
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
@@ -88,10 +91,12 @@ pub use crate::ibc_exports::{
 mod mock;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod testing {
+    #[cfg(feature = "staking")]
+    pub use crate::mock::StakingQuerier;
     pub use crate::mock::{
         digit_sum, mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info,
         riffle_shuffle, BankQuerier, MockApi, MockQuerier, MockQuerierCustomHandlerResult,
-        MockStorage, StakingQuerier, MOCK_CONTRACT_ADDR,
+        MockStorage, MOCK_CONTRACT_ADDR,
     };
     #[cfg(feature = "stargate")]
     pub use crate::mock::{mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv};

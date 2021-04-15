@@ -11,9 +11,12 @@ use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, Verifi
 #[cfg(feature = "stargate")]
 use crate::ibc::{IbcChannel, IbcEndpoint, IbcOrder, IbcPacket, IbcTimeoutBlock};
 use crate::query::{
-    AllBalanceResponse, AllDelegationsResponse, BalanceResponse, BankQuery, BondedDenomResponse,
-    CustomQuery, DelegationResponse, FullDelegation, QueryRequest, StakingQuery, Validator,
-    ValidatorsResponse, WasmQuery,
+    AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
+};
+#[cfg(feature = "staking")]
+use crate::query::{
+    AllDelegationsResponse, BondedDenomResponse, DelegationResponse, FullDelegation, StakingQuery,
+    Validator, ValidatorsResponse,
 };
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
@@ -280,6 +283,7 @@ pub type MockQuerierCustomHandlerResult = SystemResult<ContractResult<Binary>>;
 /// TODO: also allow querying contracts
 pub struct MockQuerier<C: DeserializeOwned = Empty> {
     bank: BankQuerier,
+    #[cfg(feature = "staking")]
     staking: StakingQuerier,
     // placeholder to add support later
     wasm: NoWasmQuerier,
@@ -294,6 +298,7 @@ impl<C: DeserializeOwned> MockQuerier<C> {
     pub fn new(balances: &[(&str, &[Coin])]) -> Self {
         MockQuerier {
             bank: BankQuerier::new(balances),
+            #[cfg(feature = "staking")]
             staking: StakingQuerier::default(),
             wasm: NoWasmQuerier {},
             // strange argument notation suggested as a workaround here: https://github.com/rust-lang/rust/issues/41078#issuecomment-294296365
@@ -353,6 +358,7 @@ impl<C: CustomQuery + DeserializeOwned> MockQuerier<C> {
         match &request {
             QueryRequest::Bank(bank_query) => self.bank.query(bank_query),
             QueryRequest::Custom(custom_query) => (*self.custom_handler)(custom_query),
+            #[cfg(feature = "staking")]
             QueryRequest::Staking(staking_query) => self.staking.query(staking_query),
             QueryRequest::Wasm(msg) => self.wasm.query(msg),
             #[cfg(feature = "stargate")]
@@ -427,6 +433,7 @@ impl BankQuerier {
     }
 }
 
+#[cfg(feature = "staking")]
 #[derive(Clone, Default)]
 pub struct StakingQuerier {
     denom: String,
@@ -434,6 +441,7 @@ pub struct StakingQuerier {
     delegations: Vec<FullDelegation>,
 }
 
+#[cfg(feature = "staking")]
 impl StakingQuerier {
     pub fn new(denom: &str, validators: &[Validator], delegations: &[FullDelegation]) -> Self {
         StakingQuerier {
@@ -513,8 +521,9 @@ pub fn digit_sum(input: &[u8]) -> usize {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::query::Delegation;
-    use crate::{coin, coins, from_binary, Decimal};
+    use crate::{coin, coins, from_binary};
+    #[cfg(feature = "staking")]
+    use crate::{Decimal, Delegation};
     use hex_literal::hex;
 
     const SECP256K1_MSG_HASH_HEX: &str =
@@ -863,6 +872,7 @@ mod tests {
         assert_eq!(res.amount, coin(0, "ELF"));
     }
 
+    #[cfg(feature = "staking")]
     #[test]
     fn staking_querier_validators() {
         let val1 = Validator {
@@ -889,6 +899,7 @@ mod tests {
         assert_eq!(vals.validators, vec![val1, val2]);
     }
 
+    #[cfg(feature = "staking")]
     // gets delegators from query or panic
     fn get_all_delegators<U: Into<String>>(
         staking: &StakingQuerier,
@@ -904,6 +915,7 @@ mod tests {
         dels.delegations
     }
 
+    #[cfg(feature = "staking")]
     // gets full delegators from query or panic
     fn get_delegator<U: Into<String>, V: Into<String>>(
         staking: &StakingQuerier,
@@ -921,6 +933,7 @@ mod tests {
         dels.delegation
     }
 
+    #[cfg(feature = "staking")]
     #[test]
     fn staking_querier_delegations() {
         let val1 = String::from("validator-one");
