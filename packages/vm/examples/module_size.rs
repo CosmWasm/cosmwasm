@@ -60,12 +60,12 @@ pub fn main() {
 }
 
 #[inline(never)]
-fn module_compile(wasm: &Vec<u8>, memory_limit: Option<Size>) -> Module {
+fn module_compile(wasm: &[u8], memory_limit: Option<Size>) -> Module {
     compile(&wasm, memory_limit).unwrap()
 }
 
 #[inline(never)]
-fn module_deserialize(serialized: &Vec<u8>, memory_limit: Option<Size>) -> Module {
+fn module_deserialize(serialized: &[u8], memory_limit: Option<Size>) -> Module {
     // Deserialize using make_runtime_store()
     let store = make_runtime_store(memory_limit);
     unsafe { Module::deserialize(&store, serialized) }.unwrap()

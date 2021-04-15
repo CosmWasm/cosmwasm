@@ -697,35 +697,35 @@ jobs:
       - run:
           name: Clippy linting on crypto
           working_directory: ~/project/packages/crypto
-          command: cargo clippy --tests -- -D warnings
+          command: cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on schema
           working_directory: ~/project/packages/schema
-          command: cargo clippy --tests -- -D warnings
+          command: cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on std (no feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy --tests -- -D warnings
+          command: cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on std (all feature flags)
           working_directory: ~/project/packages/std
-          command: cargo clippy --tests --features iterator,staking -- -D warnings
+          command: cargo clippy --all-targets --features iterator,staking -- -D warnings
       - run:
           name: Clippy linting on storage (no feature flags)
           working_directory: ~/project/packages/storage
-          command: cargo clippy --tests -- -D warnings
+          command: cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on storage (all feature flags)
           working_directory: ~/project/packages/storage
-          command: cargo clippy --tests --features iterator -- -D warnings
+          command: cargo clippy --all-targets --features iterator -- -D warnings
       - run:
           name: Clippy linting on vm (no feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --tests --no-default-features -- -D warnings
+          command: cargo clippy --all-targets --no-default-features -- -D warnings
       - run:
           name: Clippy linting on vm (all feature flags)
           working_directory: ~/project/packages/vm
-          command: cargo clippy --tests --features iterator,staking,stargate -- -D warnings
+          command: cargo clippy --all-targets --features iterator,staking,stargate -- -D warnings
       #
       # Contracts
       #
@@ -735,56 +735,56 @@ jobs:
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/burner.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on crypto-verify
           working_directory: ~/project/contracts/crypto-verify
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/crypto_verify.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on hackatom
           working_directory: ~/project/contracts/hackatom
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/hackatom.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on ibc-reflect
           working_directory: ~/project/contracts/ibc-reflect
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/ibc_reflect.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on ibc-reflect-send
           working_directory: ~/project/contracts/ibc-reflect-send
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/ibc_reflect_send.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on queue
           working_directory: ~/project/contracts/queue
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/queue.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on reflect
           working_directory: ~/project/contracts/reflect
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/reflect.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - run:
           name: Clippy linting on staking
           working_directory: ~/project/contracts/staking
           command: |
             mkdir -p target/wasm32-unknown-unknown/release
             touch target/wasm32-unknown-unknown/release/staking.wasm
-            cargo clippy --tests -- -D warnings
+            cargo clippy --all-targets -- -D warnings
       - save_cache:
           paths:
             - /usr/local/cargo/registry
