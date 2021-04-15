@@ -33,9 +33,8 @@ pub use crate::errors::{
 };
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
-    ChannelResponse, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg,
-    IbcOrder, IbcPacket, IbcQuery, IbcReceiveResponse, IbcTimeoutBlock, ListChannelsResponse,
-    PortIdResponse,
+    IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
+    IbcReceiveResponse, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
@@ -49,6 +48,8 @@ pub use crate::query::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation, FullDelegation,
     StakingQuery, Validator, ValidatorResponse,
 };
+#[cfg(feature = "stargate")]
+pub use crate::query::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
     Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubcallResponse, SystemResult, WasmMsg,
