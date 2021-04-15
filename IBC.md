@@ -183,3 +183,130 @@ pub fn ibc_channel_close(
 ```
 
 ### Packet Lifecycle
+
+Unfortunately the
+[IBC spec on Pakcet Lifecycle](https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#packet-flow--handling)
+is missing all useful diagrams, but it may provide some theoretical background
+for this text if you wish to look.
+
+In short, IBC allows us to send packets from chain A to chain B and get a
+response from them. The first step is the contract/module in chain A requesting
+to send a packet. This is then relayed to chain B, where it "receives" the
+packet and calculates an "acknowledgement" (which may contain a success result
+or an error message, as opaque bytes to be interpretted by the sending
+contract). The acknowledgement is then relayed back to chain A, completing the
+cycle.
+
+In some cases, the packet may never be delivered, and if it is proven not to be
+delivered before the timeout period, this can abort the packet, calling the
+"timeout" handler on chain A. In this case, chain A sends and later gets
+"timeout". No "receive" nor "acknowledgement" callbacks are ever executed.
+
+#### Sending a Packet
+
+In order to send a packet, a contract can simply return `IbcMsg::SendPacket`
+along with the channel over which to send the packet (which you saved in
+`ibc_channel_connect`), as well as opaque data bytes to be interpreted by the
+other side. You must also return a timeout either as block height or block time
+of the remote chain, just like in the ICS20 `Transfer` messages above:
+
+```rust
+pub enum IbcMsg {
+    /// Sends an IBC packet with given data over the existing channel.
+    /// Data should be encoded in a format defined by the channel version,
+    /// and the module on the other side should know how to parse this.
+    SendPacket {
+        channel_id: String,
+        data: Binary,
+        /// block height after which the packet times out.
+        /// at least one of timeout_block, timeout_timestamp is required
+        timeout_block: Option<IbcTimeoutBlock>,
+        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
+        /// See https://golang.org/pkg/time/#Time.UnixNano
+        /// at least one of timeout_block, timeout_timestamp is required
+        timeout_timestamp: Option<u64>,
+    },
+}
+```
+
+#### Receiving a Packet
+
+After a contract on chain A sends a packet, it is generally processed by the
+contract on chain B on the other side of the channel. This is done by executing
+the following callback on chain B:
+
+```rust
+#[entry_point]
+/// we look for a the proper reflect contract to relay to and send the message
+/// We cannot return any meaningful response value as we do not know the response value
+/// of execution. We just return ok if we dispatched, error if we failed to dispatch
+pub fn ibc_packet_receive(
+    deps: DepsMut,
+    env: Env,
+    packet: IbcPacket,
+) -> StdResult<IbcReceiveResponse> { }
+```
+
+Note the different return response here (`IbcReceiveResponse` rather than
+`IbcBasicResponse`)? This is because it has an extra field
+`acknowledgement: Binary`, which must be filled out. That is the response bytes
+that will be returned to the original contract, informing it of failure or
+success.
+
+TODO: explain how to handle this
+
+TODO: document the default JSON encoding used in ICS20
+
+TODO: explain how to handle/parse errors (As part of
+https://github.com/CosmWasm/cosmwasm/issues/762)
+
+#### Receiving an Acknowledgement
+
+If chain B successfully received the packet (even if the contract returned an
+error message), chain A will eventually get an acknowledgement:
+
+```rust
+#[entry_point]
+/// never should be called as we do not send packets
+pub fn ibc_packet_ack(
+    deps: DepsMut,
+    env: Env,
+    ack: IbcAcknowledgement,
+) -> StdResult<IbcBasicResponse> { }
+```
+
+TODO: explain the data available
+
+TODO: explain how to handle this
+
+#### Handling Timeouts
+
+If the packet was not received on chain B before the timeout, we can be certain
+that it will never be processed there. In such a case, a relayer can return a
+timeout proof to cancel the pending packet. In such a case the calling contract
+will never get `ibc_packet_ack`, but rather `ibc_packet_timeout`. One of the two
+calls will eventually get called for each packet that is sent as long as there
+is a functioning relayer. (In the absence of a functioning relayer, it will
+never get a response).
+
+The timeout callback looks like this:
+
+```rust
+#[entry_point]
+/// never should be called as we do not send packets
+pub fn ibc_packet_timeout(
+    deps: DepsMut,
+    env: Env,
+    packet: IbcPacket,
+) -> StdResult<IbcBasicResponse> {}
+```
+
+It is generally handled just like the error case in `ibc_packet_ack`, reverting
+the state change from sending the packet (eg. if we send tokens over ICS20, both
+an ack failure as well as a timeout will return those tokens to the original
+sender).
+
+Note that like `ibc_packet_ack`, we get the original packet we sent, which must
+contain all information needed to revert itself. Thus the ICS20 packet contains
+the original sender address, even though that is unimportant in the receiving
+chain.
