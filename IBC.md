@@ -77,4 +77,109 @@ created, the contract will process all packets and receipts.
 
 ### Channel Lifecycle
 
+You should first familiarize yourself with the
+[4 step channel handshake protocol](https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management)
+from the IBC spec. After realizing that it was 2 slight variants of 2 steps, we
+simplified the interface for the contracts. Each side will receive 2 calls to
+establish a new channel, and returning an error in any of the steps will abort
+the handshake. Below we will refer to the chains as A and B - A is where the
+handshake initialized at.
+
+#### Channel Open
+
+The first step of a handshake on either chain is `ibc_channel_open`, which
+combines `ChanOpenInit` and `ChanOpenTry` from the spec. The only valid action
+of the contract is to accept the channel or reject it. This is generally based
+on the ordering and version in the `IbcChannel` information, but you could
+enforce other constraints as well:
+
+```rust
+#[entry_point]
+/// enforces ordering and versioning constraints
+pub fn ibc_channel_open(deps: DepsMut, env: Env, channel: IbcChannel) -> StdResult<()> { }
+```
+
+This is the
+[IbcChannel structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L70-L81)
+used heavily in the handshake process:
+
+```rust
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcChannel {
+    pub endpoint: IbcEndpoint,
+    pub counterparty_endpoint: IbcEndpoint,
+    pub order: IbcOrder,
+    pub version: String,
+    /// CounterpartyVersion can be None when not known this context, yet
+    pub counterparty_version: Option<String>,
+    /// The connection upon which this channel was created. If this is a multi-hop
+    /// channel, we only expose the first hop.
+    pub connection_id: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcEndpoint {
+    pub port_id: String,
+    pub channel_id: String,
+}
+```
+
+Note that neither `counterparty_version` nor `counterparty_endpoint` is set in
+`ibc_channel_open` for chain A. Chain B should enforce any
+`counterparty_version` constraints in `ibc_channel_open`. (So test if the field
+is `None` before enforcing any logic).
+
+You should save any state related to `counterparty_endpoint` only in
+`ibc_channel_connect` when it is fixed.
+
+#### Channel Connect
+
+Once both sides have returned `Ok()` to `ibc_channel_open`, we move onto the
+second step of the handshake, which is equivalent to `ChanOpenAck` and
+`ChanOpenConfirm` from the spec:
+
+```rust
+#[entry_point]
+/// once it's established, we may take some setup action
+pub fn ibc_channel_connect(
+    deps: DepsMut,
+    env: Env,
+    channel: IbcChannel,
+) -> StdResult<IbcBasicResponse> { }
+```
+
+At this point, it is expected that the contract updates its internal state and
+may return `CosmosMsg` in the `Reponse` to interact with other contracts, just
+like in `execute`.
+
+Once this has been called, you may expect to send and receive any number of
+packets with the contract. The packets will only stop once the channel is closed
+(which may never happen).
+
+### Channel Close
+
+A contract may request to close a channel that belongs to it via the following
+`CosmosMsg`:
+
+```rust
+pub enum IbcMsg {
+    /// This will close an existing channel that is owned by this contract.
+    /// Port is auto-assigned to the contracts' ibc port
+    CloseChannel { channel_id: String },
+}
+```
+
+Once a channel is closed, due to error, our request, or request of the other
+side, the following callback is made on the contract, which allows it to take
+appropriate cleanup action:
+
+```rust
+#[entry_point]
+pub fn ibc_channel_close(
+    deps: DepsMut,
+    env: Env,
+    channel: IbcChannel,
+) -> StdResult<IbcBasicResponse> { }
+```
+
 ### Packet Lifecycle
