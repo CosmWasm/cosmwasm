@@ -165,8 +165,11 @@ and this project adheres to
   `HumanAddr` to `String` ([#802]).
 - cosmwasm-std: `Api::addr_humanize` now returns `Addr` instead of `HumanAddr`
   ([#802]).
-- cosmwasm-std: Hide `StakingMsg` and `CosmosMsg::Staking` behind the `staking`
-  feature flag to make those only available in contracts built for PoS chains.
+- cosmwasm-std: Hide `StakingMsg`, `CosmosMsg::Staking`,
+  `AllDelegationsResponse`, `BondedDenomResponse`, `Delegation`,
+  `FullDelegation`, `StakingQuery`, `Validator`, `ValidatorsResponse` and
+  `testing::StakingQuerier` behind the `staking` feature flag to make those only
+  available in contracts built for PoS chains.
 - cosmwasm-std: Remove `StakingMsg::Withdraw` in favour of
   `DistributionMsg::SetWithdrawAddress` and
   `DistributionMsg::WithdrawDelegatorReward` ([#848]).

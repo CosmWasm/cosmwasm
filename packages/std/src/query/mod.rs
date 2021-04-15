@@ -13,6 +13,7 @@ mod stargate;
 mod wasm;
 
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
+#[cfg(feature = "staking")]
 pub use staking::{
     AllDelegationsResponse, BondedDenomResponse, Delegation, DelegationResponse, FullDelegation,
     StakingQuery, Validator, ValidatorsResponse,
@@ -27,6 +28,7 @@ pub use wasm::WasmQuery;
 pub enum QueryRequest<C: CustomQuery> {
     Bank(BankQuery),
     Custom(C),
+    #[cfg(feature = "staking")]
     Staking(StakingQuery),
     /// A Stargate query encoded the same way as abci_query, with path and protobuf encoded Data.
     /// The format is defined in [ADR-21](https://github.com/cosmos/cosmos-sdk/blob/master/docs/architecture/adr-021-protobuf-query-encoding.md)

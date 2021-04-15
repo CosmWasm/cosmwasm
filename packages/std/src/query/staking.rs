@@ -1,3 +1,5 @@
+#![cfg(feature = "staking")]
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
