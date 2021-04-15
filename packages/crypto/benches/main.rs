@@ -50,6 +50,7 @@ fn read_cosmos_sigs() -> Vec<Encoded> {
     serde_json::from_reader(reader).unwrap()
 }
 
+#[allow(clippy::type_complexity)]
 fn read_decode_cosmos_sigs() -> (Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<Vec<u8>>) {
     let codes = read_cosmos_sigs();
 

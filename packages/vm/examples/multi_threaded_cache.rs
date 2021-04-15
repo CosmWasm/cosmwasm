@@ -32,8 +32,7 @@ pub fn main() {
         instance_memory_limit: DEFAULT_MEMORY_LIMIT,
     };
 
-    let cache: Cache<MockApi, MockStorage, MockQuerier> =
-        unsafe { Cache::new(options.clone()).unwrap() };
+    let cache: Cache<MockApi, MockStorage, MockQuerier> = unsafe { Cache::new(options).unwrap() };
     let cache = Arc::new(cache);
 
     let checksum = cache.save_wasm(CONTRACT).unwrap();
@@ -51,7 +50,7 @@ pub fn main() {
         let cache = Arc::clone(&cache);
 
         threads.push(thread::spawn(move || {
-            let checksum = checksum.clone();
+            let checksum = checksum;
             let mut instance = cache
                 .get_instance(&checksum, mock_backend(&[]), DEFAULT_INSTANCE_OPTIONS)
                 .unwrap();
