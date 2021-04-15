@@ -2,17 +2,18 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "stargate")]
-use crate::ibc::IbcQuery;
-#[cfg(feature = "stargate")]
 use crate::Binary;
 use crate::Empty;
 
 mod bank;
+mod ibc;
 mod staking;
 mod stargate;
 mod wasm;
 
 pub use bank::{AllBalanceResponse, BalanceResponse, BankQuery};
+#[cfg(feature = "stargate")]
+pub use ibc::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 #[cfg(feature = "staking")]
 pub use staking::{
     AllDelegationsResponse, AllValidatorsResponse, BondedDenomResponse, Delegation,

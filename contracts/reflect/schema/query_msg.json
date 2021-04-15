@@ -164,7 +164,7 @@
       "description": "These are queries to the various IBC modules to see the state of the contract's IBC connection. These will return errors if the contract is not \"ibc enabled\"",
       "anyOf": [
         {
-          "description": "Gets the Port ID the current contract is bound to. Returns PortIdResponse",
+          "description": "Gets the Port ID the current contract is bound to.\n\nReturns a `PortIdResponse`.",
           "type": "object",
           "required": [
             "port_id"
@@ -177,7 +177,7 @@
           "additionalProperties": false
         },
         {
-          "description": "Lists all channels that are bound to a given port. If `port_id` is omitted, this list all channels bound to the contract's port. Returns a `ListChannelsResponse`.",
+          "description": "Lists all channels that are bound to a given port. If `port_id` is omitted, this list all channels bound to the contract's port.\n\nReturns a `ListChannelsResponse`.",
           "type": "object",
           "required": [
             "list_channels"
@@ -198,7 +198,7 @@
           "additionalProperties": false
         },
         {
-          "description": "Lists all information for a (portID, channelID) pair. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call) Returns ChannelResponse.",
+          "description": "Lists all information for a (portID, channelID) pair. If port_id is omitted, it will default to the contract's own channel. (To save a PortId{} call)\n\nReturns a `ChannelResponse`.",
           "type": "object",
           "required": [
             "channel"
