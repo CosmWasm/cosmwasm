@@ -126,11 +126,16 @@ pub struct IbcEndpoint {
 
 Note that neither `counterparty_version` nor `counterparty_endpoint` is set in
 `ibc_channel_open` for chain A. Chain B should enforce any
-`counterparty_version` constraints in `ibc_channel_open`. (So test if the field
-is `None` before enforcing any logic).
+`counterparty_version` constraints in `ibc_channel_open`. Chain A must enforce
+`counterparty_version` or `counterparty_endpoint` restrictions in
+`ibc_channel_connect`.
 
-You should save any state related to `counterparty_endpoint` only in
-`ibc_channel_connect` when it is fixed.
+(Just test if the `counterparty_version` field is `Some(x)` in both calls and
+then enforce the counterparty restrictions if set. That will check these once at
+the proper place for both chain A and chain B).
+
+You should save any state only in `ibc_channel_connect` once the channel has
+been approved by the remote side.
 
 #### Channel Connect
 
@@ -150,7 +155,10 @@ pub fn ibc_channel_connect(
 
 At this point, it is expected that the contract updates its internal state and
 may return `CosmosMsg` in the `Reponse` to interact with other contracts, just
-like in `execute`.
+like in `execute`. In particular, you will most likely want to store the local
+channel_id (`channel.endpoint.channel_id`) in the contract's storage, so it
+knows what open channels it has (and can expose those via queries or maintain
+state for each one).
 
 Once this has been called, you may expect to send and receive any number of
 packets with the contract. The packets will only stop once the channel is closed
@@ -169,9 +177,9 @@ pub enum IbcMsg {
 }
 ```
 
-Once a channel is closed, due to error, our request, or request of the other
-side, the following callback is made on the contract, which allows it to take
-appropriate cleanup action:
+Once a channel is closed, whether due to an IBC error, at our request, or at the
+request of the other side, the following callback is made on the contract, which
+allows it to take appropriate cleanup action:
 
 ```rust
 #[entry_point]
@@ -229,6 +237,13 @@ pub enum IbcMsg {
 }
 ```
 
+For the content of the `data` field, we recommend that you model it on the
+format of `ExecuteMsg` (an enum with serde) and encode it via
+`cosmwasm_std::to_binary(&packet_msg)?`. This is the approach for a new protocol
+you develop with cosmwasm contracts. If you are working with an existing
+protocol, please read their spec and create the proper type along with JSON or
+Protobuf encoders for it as the protocol requires.
+
 #### Receiving a Packet
 
 After a contract on chain A sends a packet, it is generally processed by the
@@ -237,9 +252,6 @@ the following callback on chain B:
 
 ```rust
 #[entry_point]
-/// we look for a the proper reflect contract to relay to and send the message
-/// We cannot return any meaningful response value as we do not know the response value
-/// of execution. We just return ok if we dispatched, error if we failed to dispatch
 pub fn ibc_packet_receive(
     deps: DepsMut,
     env: Env,
@@ -251,7 +263,7 @@ Note the different return response here (`IbcReceiveResponse` rather than
 `IbcBasicResponse`)? This is because it has an extra field
 `acknowledgement: Binary`, which must be filled out. That is the response bytes
 that will be returned to the original contract, informing it of failure or
-success.
+success. (Note: this is vague as it will be refined in the next PR)
 
 Here is the
 [`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L129-L146)
@@ -259,8 +271,12 @@ that contains all information needed to process the receipt. You can generally
 ignore timeout (this is only called if it hasn't yet timed out) and sequence
 (which is used by the IBC framework to avoid duplicates). I generally use
 `dest.channel_id` like `info.sender` to authenticate the packet, and parse
-`data` into a `PacketMsg` structure. After that you can process this more or
-less like in `execute`.
+`data` into a `PacketMsg` structure, using the same encoding rules as we
+discussed in the last section.
+
+After that you can process `PacketMsg` more or less like an `ExecuteMsg`,
+including calling into other contracts. The only major difference is that you
+must return Acknowledgement bytes in the protocol-specified format
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -283,12 +299,37 @@ pub struct IbcPacket {
 }
 ```
 
-TODO: explain how to handle this
-
-TODO: document the default JSON encoding used in ICS20
-
 TODO: explain how to handle/parse errors (As part of
 https://github.com/CosmWasm/cosmwasm/issues/762)
+
+##### Standard Acknowledgement Format
+
+Although the ICS spec leave the actual acknowledgement as opaque bytes, it does
+provide a recommendation for the format you can use, allowing contracts to
+easily differentiate between success and error (and allow IBC explorers to label
+such packets without knowing every protocol).
+
+It is defined as part of the
+[ICS4 - Channel Spec](https://github.com/cosmos/cosmos-sdk/blob/v0.42.4/proto/ibc/core/channel/v1/channel.proto#L134-L147).
+
+```proto
+message Acknowledgement {
+  // response contains either a result or an error and must be non-empty
+  oneof response {
+    bytes  result = 21;
+    string error  = 22;
+  }
+}
+```
+
+Although it suggests this is a Protobuf object, the ICS spec doesn't define
+whether to encode it as JSON or Protobuf. In the ICS20 implementation, this is
+JSON encoded when returned from a contract. Given that, we will consider this
+structure, JSON-encoded, to be the "standard" acknowledgement format.
+
+You can find a
+[CosmWasm-compatible definition of this format](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L52-L72)
+as part of the `cw20-ics20` contract.
 
 #### Receiving an Acknowledgement
 
@@ -309,8 +350,10 @@ The
 [`IbcAcknowledgement` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L148-L152)
 contains both the original packet that was sent as well as the acknowledgement
 bytes returned from executing the remote contract. You can use the
-`original_packet` to map it the proper handler, and parse the `acknowledgement`
-there:
+`original_packet` to
+[map it the proper handler](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/contracts/ibc-reflect-send/src/ibc.rs#L114-L138)
+(after parsing your custom data format), and parse the `acknowledgement` there,
+to determine how to respond:
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -320,7 +363,18 @@ pub struct IbcAcknowledgement {
 }
 ```
 
-TODO: explain how to handle this
+On success, you will want to commit the pending state. For some contracts like
+`cw20-ics20`, you accept the tokens before sending the packet, so no need to
+commit any more state. On other contracts, you may want to store the data
+returned as part of the acknowledgement (like
+[storing the remote address after calling "WhoAmI"](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/contracts/ibc-reflect-send/src/ibc.rs#L157-L192)
+in our simple `ibc-reflect` example.
+
+On error, you will want to revert any state that was pending based on the
+packet. For example, in ics20, if the
+[remote chain rejects the packet](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L246),
+we must
+[return the funds to the original sender](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L291-L317).
 
 #### Handling Timeouts
 
@@ -346,8 +400,11 @@ pub fn ibc_packet_timeout(
 
 It is generally handled just like the error case in `ibc_packet_ack`, reverting
 the state change from sending the packet (eg. if we send tokens over ICS20, both
-an ack failure as well as a timeout will return those tokens to the original
-sender).
+[an ack failure](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L246)
+as well as
+[a timeout](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L258)
+will return those tokens to the original sender. In fact they both dispatch to
+the same `on_packet_failure` function).
 
 Note that like `ibc_packet_ack`, we get the original packet we sent, which must
 contain all information needed to revert itself. Thus the ICS20 packet contains
