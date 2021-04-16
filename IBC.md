@@ -267,9 +267,9 @@ pub fn ibc_packet_receive(
 
 Note the different return response here (`IbcReceiveResponse` rather than
 `IbcBasicResponse`)? This is because it has an extra field
-`acknowledgement: Binary`, which must be filled out. That is the response bytes
-that will be returned to the original contract, informing it of failure or
-success. (Note: this is vague as it will be refined in the next PR)
+`acknowledgement: Binary`, which must be filled out. All successful message must
+return an encoded `Acknowledgement` response in this field, that can be parsed
+by the sending chain (see below for the standard format).
 
 Here is the
 [`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L129-L146)
@@ -305,8 +305,66 @@ pub struct IbcPacket {
 }
 ```
 
-TODO: explain how to handle/parse errors (As part of
-https://github.com/CosmWasm/cosmwasm/issues/762)
+##### Error Handling
+
+A major issue that is unique to `ibc_packet_receive` is that it is expected to
+often reject an incoming packet, but it cannot abort the transaction. We
+actually expect all state changes from the contract (as well as dispatched
+messages) to be reverted when the packet is rejected, but the transaction to
+properly commit an acknowledgement with encoded error (to be read by the sending
+chain).
+
+The atomicity issue was first
+[analyzed in the Cosmos SDK implementation](https://github.com/cosmos/ibc-go/issues/68)
+and refined into
+[changing semantics of the OnRecvPacket SDK method](https://github.com/cosmos/ibc-go/issues/91),
+which was
+[implemented in April 2021](https://github.com/cosmos/ibc-go/pull/107), likely
+to be released with Cosmos SDK 0.43 or 0.44. Since we want the best,
+future-proof interface for contracts, we will use an approach inspired by that
+work, and add an adapter in `wasmd` until we can upgrade to a Cosmos SDK version
+that implements this.
+
+The contract will need to correctly create a success `Acknowledgement` in the
+`Response`, before any messages are dispatched. However, if any of the
+dispatched messages (or the contract itself) returns and error, the runtime will
+revert all state changes caused by running this (including in messages and
+submessages) and return an error acknowledgement rather than the original
+success that may have been returned.
+
+There was quite some
+[discussion on how to encode the errors](https://github.com/CosmWasm/cosmwasm/issues/762),
+but in the end, I propose a simple default implementation with an easy opt-in
+for custom messages. If the contract or any messages return an error, we end up
+with a simple error string, which is not designed for IBC Packets. The default
+behavior will be to take that string and embed it into a JSON-encoded "Standard
+Acknowledgement Format", as defined below. This will work for ICS20 and is
+recommended to be used for all CosmWasm designed protocols.
+
+To enable compatibility with other protocols, a contract can expose an optional
+export to "rewrite" the error into the proper format. This would look like:
+
+```rust
+#[entry_point]
+pub fn ibc_encode_receive_error(
+    deps: Deps,
+    env: Env,
+    packet: IbcPacket,
+    error: String,
+) -> StdResult<Binary> { }
+```
+
+The function receives the original packet as well as the error string returned,
+and is responsible for creating a proper binary-encoded "error acknowledgement"
+that can be sent to the calling contract. For example, it could protobuf-encode
+the `Acknowledgement message` defined below. `Deps`, `Env` and `IbcPacket` are
+passed just in case more context is needed for encoding, but likely unused. This
+function should never return an error (even if the IbcPacket was malformed), but
+we allow it to return one if there is some pathological state (rather than
+panicking in the contract,`StdResult::Err` returns useful information to the
+caller). If this returns an error, the transaction will return an error, meaning
+no acknowledgement nor receipt will be writen, and then same packet may be
+relayer again later.
 
 ##### Standard Acknowledgement Format
 
