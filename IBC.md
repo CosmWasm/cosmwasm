@@ -32,15 +32,26 @@ pub enum IbcMsg {
         /// packet data only supports one coin
         /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
         amount: Coin,
-        /// block after which the packet times out.
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_block: Option<IbcTimeoutBlock>,
-        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
-        /// See https://golang.org/pkg/time/#Time.UnixNano
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_timestamp: Option<u64>,
+        /// when packet times out, measured on remote chain
+        timeout: IbcTimeout,
     }
 }
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IbcTimeout {
+    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out
+    /// (measured on the remote chain)
+    /// See https://golang.org/pkg/time/#Time.UnixNano
+    TimestampNanos(u64),
+    /// block after which the packet times out (measured on remote chain)
+    Block(IbcTimeoutBlock),
+    Both {
+        timestamp_nanos: u64,
+        block: IbcTimeoutBlock,
+    },
+}
+
 ```
 
 Note the `to_address` is likely not a valid `Addr`, as it uses the bech32 prefix
@@ -226,13 +237,8 @@ pub enum IbcMsg {
     SendPacket {
         channel_id: String,
         data: Binary,
-        /// block height after which the packet times out.
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_block: Option<IbcTimeoutBlock>,
-        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
-        /// See https://golang.org/pkg/time/#Time.UnixNano
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_timestamp: Option<u64>,
+        /// when packet times out, measured on remote chain
+        timeout: IbcTimeout,
     },
 }
 ```
