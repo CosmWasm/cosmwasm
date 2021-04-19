@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::addresses::Addr;
 use crate::coins::Coin;
+use crate::timestamp::Timestamp;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 pub struct Env {
@@ -61,6 +62,16 @@ pub struct BlockInfo {
     /// ```
     pub time_nanos: u64,
     pub chain_id: String,
+}
+
+impl BlockInfo {
+    /// Returns the block creation time as a Timestamp in nanosecond precision
+    pub fn timestamp(&self) -> Timestamp {
+        Timestamp {
+            seconds: self.time,
+            nanos: self.time_nanos,
+        }
+    }
 }
 
 /// Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed

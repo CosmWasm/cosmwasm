@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, IbcTimeout, StdError, StdResult,
+    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError, StdResult,
 };
 
 use crate::ibc_msg::{
@@ -58,7 +58,7 @@ pub fn ibc_channel_connect(
     let msg = IbcMsg::SendPacket {
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
-        timeout: IbcTimeout::in_secs(&env.block, PACKET_LIFETIME),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(IbcBasicResponse {
@@ -255,7 +255,7 @@ mod tests {
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
         MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, OwnedDeps};
+    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, IbcTimeout, OwnedDeps};
 
     const CREATOR: &str = "creator";
 

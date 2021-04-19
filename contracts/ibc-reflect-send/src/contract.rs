@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, IbcTimeout, MessageInfo,
-    Order, QueryResponse, Response, StdError, StdResult,
+    attr, entry_point, to_binary, CosmosMsg, Deps, DepsMut, Env, IbcMsg, MessageInfo, Order,
+    QueryResponse, Response, StdError, StdResult,
 };
 
 use crate::ibc::PACKET_LIFETIME;
@@ -91,7 +91,7 @@ pub fn handle_send_msgs(
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
-        timeout: IbcTimeout::in_secs(&env.block, PACKET_LIFETIME),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
@@ -121,7 +121,7 @@ pub fn handle_check_remote_balance(
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
-        timeout: IbcTimeout::in_secs(&env.block, PACKET_LIFETIME),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
@@ -171,7 +171,7 @@ pub fn handle_send_funds(
         channel_id: transfer_channel_id,
         to_address: remote_addr,
         amount,
-        timeout: IbcTimeout::in_secs(&env.block, PACKET_LIFETIME),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
