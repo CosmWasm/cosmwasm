@@ -2,9 +2,10 @@
 
 If you import `cosmwasm-std` with the `stargate` feature flag, it will expose a
 number of IBC-related functionality. This requires that the host chain is
-running an IBC-enabled version of `wasmd`, that is `v0.16.0` or higher. You will
-get an error when you upload the contract if the chain doesn't support this
-functionality.
+running an IBC-enabled version of
+[`x/wasmd`](https://github.com/CosmWasm/wasmd/tree/master/x/wasm), that is
+`v0.16.0` or higher. You will get an error when you upload the contract if the
+chain doesn't support this functionality.
 
 ## Sending Tokens via ICS20
 
@@ -70,7 +71,7 @@ example for anything discussed below.
 
 In order to enable IBC communication, a contract must expose the following 6
 entry points. Upon detecting such an "IBC-Enabled" contract, the
-[wasmd runtime](https://github.com/CosmWasm/wasmd) will automatically bind a
+[`x/wasm` runtime](https://github.com/CosmWasm/wasmd) will automatically bind a
 port for this contract (`wasm.<contract-address>`), which allows a relayer to
 create channels between this contract and another chain. Once channels are
 created, the contract will process all packets and receipts.
@@ -167,12 +168,12 @@ packets with the contract. The packets will only stop once the channel is closed
 ### Channel Close
 
 A contract may request to close a channel that belongs to it via the following
-`CosmosMsg`:
+`CosmosMsg::Ibc`:
 
 ```rust
 pub enum IbcMsg {
     /// This will close an existing channel that is owned by this contract.
-    /// Port is auto-assigned to the contracts' ibc port
+    /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
 }
 ```
@@ -201,14 +202,13 @@ In short, IBC allows us to send packets from chain A to chain B and get a
 response from them. The first step is the contract/module in chain A requesting
 to send a packet. This is then relayed to chain B, where it "receives" the
 packet and calculates an "acknowledgement" (which may contain a success result
-or an error message, as opaque bytes to be interpretted by the sending
-contract). The acknowledgement is then relayed back to chain A, completing the
-cycle.
+or an error message, as opaque bytes to be interpreted by the sending contract).
+The acknowledgement is then relayed back to chain A, completing the cycle.
 
 In some cases, the packet may never be delivered, and if it is proven not to be
-delivered before the timeout period, this can abort the packet, calling the
-"timeout" handler on chain A. In this case, chain A sends and later gets
-"timeout". No "receive" nor "acknowledgement" callbacks are ever executed.
+delivered before the timeout, this can abort the packet, calling the "timeout"
+handler on chain A. In this case, chain A sends and later gets "timeout". No
+"receive" nor "acknowledgement" callbacks are ever executed.
 
 #### Sending a Packet
 
@@ -276,7 +276,7 @@ discussed in the last section.
 
 After that you can process `PacketMsg` more or less like an `ExecuteMsg`,
 including calling into other contracts. The only major difference is that you
-must return Acknowledgement bytes in the protocol-specified format
+must return Acknowledgement bytes in the protocol-specified format.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
