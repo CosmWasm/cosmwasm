@@ -53,7 +53,7 @@ pub enum IbcMsg {
         timeout_timestamp: Option<u64>,
     },
     /// This will close an existing channel that is owned by this contract.
-    /// Port is auto-assigned to the contracts' ibc port
+    /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
 }
 

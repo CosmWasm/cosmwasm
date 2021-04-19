@@ -430,7 +430,7 @@
           "additionalProperties": false
         },
         {
-          "description": "This will close an existing channel that is owned by this contract. Port is auto-assigned to the contracts' ibc port",
+          "description": "This will close an existing channel that is owned by this contract. Port is auto-assigned to the contract's IBC port",
           "type": "object",
           "required": [
             "close_channel"
