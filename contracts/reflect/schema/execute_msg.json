@@ -340,6 +340,7 @@
               "required": [
                 "amount",
                 "channel_id",
+                "timeout",
                 "to_address"
               ],
               "properties": {
@@ -355,25 +356,13 @@
                   "description": "exisiting channel to send the tokens over",
                   "type": "string"
                 },
-                "timeout_block": {
-                  "description": "block after which the packet times out. at least one of timeout_block, timeout_timestamp is required",
-                  "anyOf": [
+                "timeout": {
+                  "description": "when packet times out, measured on remote chain",
+                  "allOf": [
                     {
-                      "$ref": "#/definitions/IbcTimeoutBlock"
-                    },
-                    {
-                      "type": "null"
+                      "$ref": "#/definitions/IbcTimeout"
                     }
                   ]
-                },
-                "timeout_timestamp": {
-                  "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out. See https://golang.org/pkg/time/#Time.UnixNano at least one of timeout_block, timeout_timestamp is required",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "format": "uint64",
-                  "minimum": 0.0
                 },
                 "to_address": {
                   "description": "address on the remote chain to receive these tokens",
@@ -395,7 +384,8 @@
               "type": "object",
               "required": [
                 "channel_id",
-                "data"
+                "data",
+                "timeout"
               ],
               "properties": {
                 "channel_id": {
@@ -404,25 +394,13 @@
                 "data": {
                   "$ref": "#/definitions/Binary"
                 },
-                "timeout_block": {
-                  "description": "block height after which the packet times out. at least one of timeout_block, timeout_timestamp is required",
-                  "anyOf": [
+                "timeout": {
+                  "description": "when packet times out, measured on remote chain",
+                  "allOf": [
                     {
-                      "$ref": "#/definitions/IbcTimeoutBlock"
-                    },
-                    {
-                      "type": "null"
+                      "$ref": "#/definitions/IbcTimeout"
                     }
                   ]
-                },
-                "timeout_timestamp": {
-                  "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out. See https://golang.org/pkg/time/#Time.UnixNano at least one of timeout_block, timeout_timestamp is required",
-                  "type": [
-                    "integer",
-                    "null"
-                  ],
-                  "format": "uint64",
-                  "minimum": 0.0
                 }
               }
             }
@@ -430,7 +408,7 @@
           "additionalProperties": false
         },
         {
-          "description": "This will close an existing channel that is owned by this contract. Port is auto-assigned to the contracts' ibc port",
+          "description": "This will close an existing channel that is owned by this contract. Port is auto-assigned to the contract's IBC port",
           "type": "object",
           "required": [
             "close_channel"
@@ -444,6 +422,64 @@
               "properties": {
                 "channel_id": {
                   "type": "string"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "IbcTimeout": {
+      "anyOf": [
+        {
+          "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out (measured on the remote chain) See https://golang.org/pkg/time/#Time.UnixNano",
+          "type": "object",
+          "required": [
+            "timestamp_nanos"
+          ],
+          "properties": {
+            "timestamp_nanos": {
+              "type": "integer",
+              "format": "uint64",
+              "minimum": 0.0
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "block after which the packet times out (measured on remote chain)",
+          "type": "object",
+          "required": [
+            "block"
+          ],
+          "properties": {
+            "block": {
+              "$ref": "#/definitions/IbcTimeoutBlock"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "both"
+          ],
+          "properties": {
+            "both": {
+              "type": "object",
+              "required": [
+                "block",
+                "timestamp_nanos"
+              ],
+              "properties": {
+                "block": {
+                  "$ref": "#/definitions/IbcTimeoutBlock"
+                },
+                "timestamp_nanos": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
                 }
               }
             }

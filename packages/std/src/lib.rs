@@ -19,6 +19,7 @@ mod results;
 mod sections;
 mod serde;
 mod storage;
+mod timestamp;
 mod traits;
 mod types;
 
@@ -34,7 +35,7 @@ pub use crate::errors::{
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
     IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg, IbcOrder, IbcPacket,
-    IbcReceiveResponse, IbcTimeoutBlock,
+    IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
@@ -60,6 +61,7 @@ pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse}
 pub use crate::results::{DistributionMsg, StakingMsg};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
+pub use crate::timestamp::Timestamp;
 pub use crate::traits::{Api, Querier, QuerierResult, QuerierWrapper, Storage};
 pub use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
 

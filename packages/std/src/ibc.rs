@@ -10,6 +10,7 @@ use std::fmt;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::results::{Attribute, CosmosMsg, Empty, SubMsg};
+use crate::timestamp::Timestamp;
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
@@ -30,13 +31,8 @@ pub enum IbcMsg {
         /// packet data only supports one coin
         /// https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/applications/transfer/v1/transfer.proto#L11-L20
         amount: Coin,
-        /// block after which the packet times out.
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_block: Option<IbcTimeoutBlock>,
-        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
-        /// See https://golang.org/pkg/time/#Time.UnixNano
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_timestamp: Option<u64>,
+        /// when packet times out, measured on remote chain
+        timeout: IbcTimeout,
     },
     /// Sends an IBC packet with given data over the existing channel.
     /// Data should be encoded in a format defined by the channel version,
@@ -44,16 +40,11 @@ pub enum IbcMsg {
     SendPacket {
         channel_id: String,
         data: Binary,
-        /// block height after which the packet times out.
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_block: Option<IbcTimeoutBlock>,
-        /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
-        /// See https://golang.org/pkg/time/#Time.UnixNano
-        /// at least one of timeout_block, timeout_timestamp is required
-        timeout_timestamp: Option<u64>,
+        /// when packet times out, measured on remote chain
+        timeout: IbcTimeout,
     },
     /// This will close an existing channel that is owned by this contract.
-    /// Port is auto-assigned to the contracts' ibc port
+    /// Port is auto-assigned to the contract's IBC port
     CloseChannel { channel_id: String },
 }
 
@@ -61,6 +52,27 @@ pub enum IbcMsg {
 pub struct IbcEndpoint {
     pub port_id: String,
     pub channel_id: String,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum IbcTimeout {
+    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out
+    /// (measured on the remote chain)
+    /// See https://golang.org/pkg/time/#Time.UnixNano
+    TimestampNanos(u64),
+    /// block after which the packet times out (measured on remote chain)
+    Block(IbcTimeoutBlock),
+    Both {
+        timestamp_nanos: u64,
+        block: IbcTimeoutBlock,
+    },
+}
+
+impl From<Timestamp> for IbcTimeout {
+    fn from(time: Timestamp) -> IbcTimeout {
+        IbcTimeout::TimestampNanos(time.seconds * 1_000_000_000 + time.nanos)
+    }
 }
 
 // These are various messages used in the callbacks
@@ -136,6 +148,8 @@ pub struct IbcPacket {
     pub dest: IbcEndpoint,
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
+    // TODO: use IbcTimeout here as well? I doubt this is easier to parse and this
+    // is data coming from SDK -> contract
     /// block height after which the packet times out.
     /// at least one of timeout_block, timeout_timestamp is required
     pub timeout_block: Option<IbcTimeoutBlock>,
@@ -239,11 +253,10 @@ mod tests {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
-            timeout_block: None,
-            timeout_timestamp: Some(1234567890),
+            timeout: IbcTimeout::TimestampNanos(1234567890),
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout_block":null,"timeout_timestamp":1234567890}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp_nanos":1234567890}}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 

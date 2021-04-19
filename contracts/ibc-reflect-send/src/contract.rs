@@ -3,7 +3,7 @@ use cosmwasm_std::{
     QueryResponse, Response, StdError, StdResult,
 };
 
-use crate::ibc::build_timeout_timestamp;
+use crate::ibc::PACKET_LIFETIME;
 use crate::ibc_msg::PacketMsg;
 use crate::msg::{
     AccountInfo, AccountResponse, AdminResponse, ExecuteMsg, InstantiateMsg, ListAccountsResponse,
@@ -91,8 +91,7 @@ pub fn handle_send_msgs(
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
-        timeout_block: None,
-        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
@@ -122,8 +121,7 @@ pub fn handle_check_remote_balance(
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
-        timeout_block: None,
-        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
@@ -173,8 +171,7 @@ pub fn handle_send_funds(
         channel_id: transfer_channel_id,
         to_address: remote_addr,
         amount,
-        timeout_block: None,
-        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
+        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
