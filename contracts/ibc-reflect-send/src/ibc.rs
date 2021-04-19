@@ -1,7 +1,6 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, BlockInfo, DepsMut, Env, IbcAcknowledgement,
-    IbcBasicResponse, IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError,
-    StdResult,
+    attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcAcknowledgement, IbcBasicResponse,
+    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, IbcTimeout, StdError, StdResult,
 };
 
 use crate::ibc_msg::{
@@ -13,12 +12,7 @@ pub const IBC_VERSION: &str = "ibc-reflect-v1";
 
 // TODO: make configurable?
 /// packets live one hour
-const PACKET_LIFETIME: u64 = 60 * 60;
-
-pub(crate) fn build_timeout_timestamp(block: &BlockInfo) -> u64 {
-    let timeout = block.time + PACKET_LIFETIME;
-    timeout * 1_000_000_000
-}
+pub const PACKET_LIFETIME: u64 = 60 * 60;
 
 #[entry_point]
 /// enforces ordering and versioing constraints
@@ -64,8 +58,7 @@ pub fn ibc_channel_connect(
     let msg = IbcMsg::SendPacket {
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
-        timeout_block: None,
-        timeout_timestamp: Some(build_timeout_timestamp(&env.block)),
+        timeout: IbcTimeout::in_secs(&env.block, PACKET_LIFETIME),
     };
 
     Ok(IbcBasicResponse {
@@ -447,14 +440,12 @@ mod tests {
                 channel_id,
                 to_address,
                 amount,
-                timeout_block,
-                timeout_timestamp,
+                timeout,
             }) => {
                 assert_eq!(transfer_channel_id, channel_id.as_str());
                 assert_eq!(remote_addr, to_address.as_str());
                 assert_eq!(&coin(12344, "utrgd"), amount);
-                assert!(timeout_block.is_none());
-                assert!(timeout_timestamp.is_some());
+                assert!(matches!(timeout, IbcTimeout::TimestampNanos { .. }));
             }
             o => panic!("unexpected message: {:?}", o),
         }
