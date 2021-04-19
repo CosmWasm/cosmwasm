@@ -10,7 +10,7 @@ use std::fmt;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::results::{Attribute, CosmosMsg, Empty, SubMsg};
-use crate::types::BlockInfo;
+use crate::timestamp::Timestamp;
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
 /// (contracts that directly speak the IBC protocol via 6 entry points)
@@ -69,11 +69,9 @@ pub enum IbcTimeout {
     },
 }
 
-impl IbcTimeout {
-    pub fn in_secs(block: &BlockInfo, secs: u64) -> Self {
-        let secs = block.time + secs;
-        let nanos = secs * 1_000_000_000 + block.time_nanos;
-        IbcTimeout::TimestampNanos(nanos)
+impl From<Timestamp> for IbcTimeout {
+    fn from(time: Timestamp) -> IbcTimeout {
+        IbcTimeout::TimestampNanos(time.seconds * 1_000_000_000 + time.nanos)
     }
 }
 
