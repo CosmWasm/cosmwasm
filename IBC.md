@@ -254,7 +254,7 @@ Protobuf encoders for it as the protocol requires.
 
 After a contract on chain A sends a packet, it is generally processed by the
 contract on chain B on the other side of the channel. This is done by executing
-the following callback on chain B:
+the following entry point on chain B:
 
 ```rust
 #[entry_point]
@@ -265,24 +265,27 @@ pub fn ibc_packet_receive(
 ) -> StdResult<IbcReceiveResponse> { }
 ```
 
-Note the different return response here (`IbcReceiveResponse` rather than
+This is a very special entry point as it has a unique workflow. (Please see the
+[Acknowledgement Processing section](#Acknowledgement-Processing) below to
+understand it fully).
+
+Also note the different return response here (`IbcReceiveResponse` rather than
 `IbcBasicResponse`)? This is because it has an extra field
 `acknowledgement: Binary`, which must be filled out. All successful message must
 return an encoded `Acknowledgement` response in this field, that can be parsed
-by the sending chain (see below for the standard format).
+by the sending chain.
 
-Here is the
+The
 [`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L129-L146)
-that contains all information needed to process the receipt. You can generally
-ignore timeout (this is only called if it hasn't yet timed out) and sequence
-(which is used by the IBC framework to avoid duplicates). I generally use
-`dest.channel_id` like `info.sender` to authenticate the packet, and parse
+contains all information needed to process the receipt. You can generally ignore
+timeout (this entry point is only called if it hasn't yet timed out) and
+sequence (which is used by the IBC framework to avoid duplicates). I generally
+use `dest.channel_id` like `info.sender` to authenticate the packet, and parse
 `data` into a `PacketMsg` structure, using the same encoding rules as we
 discussed in the last section.
 
 After that you can process `PacketMsg` more or less like an `ExecuteMsg`,
-including calling into other contracts. The only major difference is that you
-must return Acknowledgement bytes in the protocol-specified format.
+including calling into other contracts.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -305,14 +308,15 @@ pub struct IbcPacket {
 }
 ```
 
-##### Error Handling
+##### Acknowledgement Processing
 
 A major issue that is unique to `ibc_packet_receive` is that it is expected to
 often reject an incoming packet, but it cannot abort the transaction. We
 actually expect all state changes from the contract (as well as dispatched
 messages) to be reverted when the packet is rejected, but the transaction to
-properly commit an acknowledgement with encoded error (to be read by the sending
-chain).
+properly commit an acknowledgement with encoded error. In other words, this "IBC
+Handler" will error and revert, but the "IBC Router" must succeed and commit an
+acknowledgement message (that can be parsed by the sending chain as an error).
 
 The atomicity issue was first
 [analyzed in the Cosmos SDK implementation](https://github.com/cosmos/ibc-go/issues/68)
@@ -325,48 +329,80 @@ future-proof interface for contracts, we will use an approach inspired by that
 work, and add an adapter in `wasmd` until we can upgrade to a Cosmos SDK version
 that implements this.
 
-The contract will need to correctly create a success `Acknowledgement` in the
-`Response`, before any messages are dispatched. However, if any of the
-dispatched messages (or the contract itself) returns and error, the runtime will
-revert all state changes caused by running this (including in messages and
-submessages) and return an error acknowledgement rather than the original
-success that may have been returned.
-
-There was quite some
+After quite some
 [discussion on how to encode the errors](https://github.com/CosmWasm/cosmwasm/issues/762),
-but in the end, I propose a simple default implementation with an easy opt-in
-for custom messages. If the contract or any messages return an error, we end up
-with a simple error string, which is not designed for IBC Packets. The default
-behavior will be to take that string and embed it into a JSON-encoded "Standard
-Acknowledgement Format", as defined below. This will work for ICS20 and is
-recommended to be used for all CosmWasm designed protocols.
+we identified a number of issues implementing this idea with the CosmWasm model:
 
-To enable compatibility with other protocols, a contract can expose an optional
-export to "rewrite" the error into the proper format. This would look like:
+1. We only return `Ok(Response)` or `Err(String)`. There is no way to return an
+   arbitrary binary encoded message in the error variant.
+2. If we return `messages` to be dispatched, they may fail with an error, which
+   is returned directly to the x/wasm handler. Obviously an error from the bank
+   handler will not be in the proper IBC Acknowledgement format.
+3. We also realized that in some cases, the original `ibc_packet_receive` will
+   not even have the information needed to format the success response, so we
+   will need some delayed response-builder in this case also.
+
+eg. In the ICS27 spec, they define a packet to register a new account, the
+acknowledgement of that packet should contain the address of the new account on
+the receiving chain. If we implemented this in CosmWasm, the contract would have
+to return a submessage of `WasmMsg::Instantiate{}` and only get the proper
+address for the response in `reply`. Thus, we need to have some way to fully
+build the success acknowledgement after the fact as well.
+
+With this in mind, we designed the following workflow for the `x/wasm` runtime:
+
+1. Wrap the storage with a "local cache", so we don't immediately write out
+   changes
+2. Call `ibc_receive_packet`, get either `Err(String)` or
+   `Ok(Response + acknowledgement)`. If `Err`, jump to 4.
+3. Execute any `submessages` and `messages` returned with this response. If any
+   return `Err`, jump to 4.
+4. `receiveResult` is `Err(String)` if any of the above errored, or `Ok(Binary)`
+   with the original acknowledgement bytes if we have the success case.
+5. Call `ibc_encode_acknowledgement` with the `receiveResult`. The return value
+   is the acknowledgement packet to send to the calling chain. This should never
+   error.
+6. If `ReceiveResult` is `Ok`, commit this "storage cache". If it is `Err`,
+   revert those changes.
+7. Pass the acknowledgement bytes to the IBC router to return
 
 ```rust
 #[entry_point]
-pub fn ibc_encode_receive_error(
-    deps: Deps,
+pub fn ibc_encode_acknowledgement(
+    // maybe we pass some data from reply via storage
+    deps: DepsMut,
     env: Env,
+    // the original packet we got if we need some data from that
     packet: IbcPacket,
-    error: String,
+    // Either Ok(ibc_receive_packet acknowledgement) or Err(failure message)
+    receiveResult: Result<Binary, String>,
 ) -> StdResult<Binary> { }
 ```
 
 The function receives the original packet as well as the error string returned,
 and is responsible for creating a proper binary-encoded "error acknowledgement"
 that can be sent to the calling contract. For example, it could protobuf-encode
-the `Acknowledgement message` defined below. `Deps`, `Env` and `IbcPacket` are
-passed just in case more context is needed for encoding, but likely unused. This
-function should never return an error (even if the IbcPacket was malformed), but
-we allow it to return one if there is some pathological state (rather than
-panicking in the contract,`StdResult::Err` returns useful information to the
-caller). If this returns an error, the transaction will return an error, meaning
-no acknowledgement nor receipt will be writen, and then same packet may be
-relayer again later.
+the `Acknowledgement message` defined below. `DepsMut`, `Env` and `IbcPacket`
+are passed just in case more context is needed for encoding, but likely unused.
+This function should never return an error (even if the IbcPacket was
+malformed), but we allow it to return one if there is some pathological state
+(rather than panicking in the contract,`StdResult::Err` returns useful
+information to the caller). If this returns an error, the transaction will
+return an error, meaning no acknowledgement nor receipt will be writen, and then
+same packet may be relayer again later.
 
-##### Standard Acknowledgement Format
+Note that this is called in every case. If you have a simple application, you
+can calculate the success case in `ibc_receive_packet` and return it already
+encoded, so the encoder only needs to concern itself with to encoding the error.
+eg.
+
+```rust
+{
+  receiveResult.map_err(|e| encode_ack_error)
+}
+```
+
+##### Standard Acknowledgement Envelope
 
 Although the ICS spec leave the actual acknowledgement as opaque bytes, it does
 provide a recommendation for the format you can use, allowing contracts to
@@ -388,12 +424,18 @@ message Acknowledgement {
 
 Although it suggests this is a Protobuf object, the ICS spec doesn't define
 whether to encode it as JSON or Protobuf. In the ICS20 implementation, this is
-JSON encoded when returned from a contract. Given that, we will consider this
-structure, JSON-encoded, to be the "standard" acknowledgement format.
+JSON encoded when returned from a contract. In ICS27, they are discussing using
+a Protobuf-encoded form of this structure.
+
+Note that it leaves the actual success response as app-specific bytes where you
+can place anything, but does provide a standard way for an observer to check
+success-or-error. If you are designing a new protocol, I encourage you to use
+this struct in either of the encodings as the acknowledgement envelope.
 
 You can find a
 [CosmWasm-compatible definition of this format](https://github.com/CosmWasm/cosmwasm-plus/blob/v0.6.0-beta1/contracts/cw20-ics20/src/ibc.rs#L52-L72)
-as part of the `cw20-ics20` contract.
+as part of the `cw20-ics20` contract, along with JSON-encoding. Protobuf
+encoding version can be produced upon request.
 
 #### Receiving an Acknowledgement
 
