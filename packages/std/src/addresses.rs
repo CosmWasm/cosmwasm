@@ -23,7 +23,9 @@ use crate::binary::Binary;
 /// This type is immutable. If you really need to mutate it (Really? Are you sure?), create
 /// a mutable copy using `let mut mutable = Addr::to_string()` and operate on that `String`
 /// instance.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, JsonSchema,
+)]
 pub struct Addr(String);
 
 impl Addr {
