@@ -10,7 +10,7 @@ use crate::errors::{StdError, StdResult};
 /// with serde. It also adds some helper methods to help encode inline.
 ///
 /// This is only needed as serde-json-{core,wasm} has a horrible encoding for Vec<u8>
-#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, JsonSchema)]
+#[derive(Clone, Default, Debug, PartialEq, Eq, Hash, PartialOrd, Ord, JsonSchema)]
 pub struct Binary(#[schemars(with = "String")] pub Vec<u8>);
 
 impl Binary {
