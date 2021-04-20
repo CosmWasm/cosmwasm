@@ -63,6 +63,8 @@ and this project adheres to
 - cosmwasm-std: Add `Decimal::inv` that returns `1/d` for decimal `d`.
 - cosmwasm-vm: Add `Cache::metrics` to expose internal data for monitoring
   purposes ([#763]).
+- cosmwasm-std: Implement `PartialOrd` and `Ord` for `Binary` using the same
+  lexicographical ordering as implemented by `Vec<u8>`.
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
