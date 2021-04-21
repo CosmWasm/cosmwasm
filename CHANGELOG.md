@@ -65,6 +65,8 @@ and this project adheres to
   purposes ([#763]).
 - cosmwasm-std: Implement `PartialOrd` and `Ord` for `Binary` using the same
   lexicographical ordering as implemented by `Vec<u8>`.
+- cosmwasm-std: Implement `PartialOrd` and `Ord` for `Addr` using the same
+  lexicographical ordering as implemented by `String`.
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
