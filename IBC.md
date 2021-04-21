@@ -270,7 +270,7 @@ This is a very special entry point as it has a unique workflow. (Please see the
 understand it fully).
 
 Also note the different return response here (`IbcReceiveResponse` rather than
-`IbcBasicResponse`)? This is because it has an extra field
+`IbcBasicResponse`). This is because it has an extra field
 `acknowledgement: Binary`, which must be filled out. All successful message must
 return an encoded `Acknowledgement` response in this field, that can be parsed
 by the sending chain.
@@ -342,10 +342,10 @@ we identified a number of issues implementing this idea with the CosmWasm model:
    not even have the information needed to format the success response, so we
    will need some delayed response-builder in this case also.
 
-eg. In the ICS27 spec, they define a packet to register a new account, the
-acknowledgement of that packet should contain the address of the new account on
-the receiving chain. If we implemented this in CosmWasm, the contract would have
-to return a submessage of `WasmMsg::Instantiate{}` and only get the proper
+eg. In the ICS27 spec, the authors define a packet to register a new account,
+the acknowledgement of that packet should contain the address of the new account
+on the receiving chain. If we implemented this in CosmWasm, the contract would
+have to return a submessage of `WasmMsg::Instantiate{}` and only get the proper
 address for the response in `reply`. Thus, we need to have some way to fully
 build the success acknowledgement after the fact as well.
 
@@ -386,7 +386,7 @@ the `Acknowledgement message` defined below. `DepsMut`, `Env` and `IbcPacket`
 are passed just in case more context is needed for encoding, but likely unused.
 This function should never return an error (even if the IbcPacket was
 malformed), but we allow it to return one if there is some pathological state
-(rather than panicking in the contract,`StdResult::Err` returns useful
+(rather than panicking in the contract, `StdResult::Err` returns useful
 information to the caller). If this returns an error, the transaction will
 return an error, meaning no acknowledgement nor receipt will be writen, and then
 same packet may be relayer again later.
@@ -424,8 +424,8 @@ message Acknowledgement {
 
 Although it suggests this is a Protobuf object, the ICS spec doesn't define
 whether to encode it as JSON or Protobuf. In the ICS20 implementation, this is
-JSON encoded when returned from a contract. In ICS27, they are discussing using
-a Protobuf-encoded form of this structure.
+JSON encoded when returned from a contract. In ICS27, the authors are discussing
+using a Protobuf-encoded form of this structure.
 
 Note that it leaves the actual success response as app-specific bytes where you
 can place anything, but does provide a standard way for an observer to check
