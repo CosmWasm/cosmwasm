@@ -1,0 +1,51 @@
+name: changelog
+
+on:
+  pull_request:
+
+jobs:
+  changelog:
+    name: Generate Changelog
+    if: startsWith(github.event.pull_request.head.ref, 'release-v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Get version
+        id: get_version
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: echo ::set-output name=VERSION::${HEAD_REF#release-v}
+
+      # Fetches all tags for the repo
+      - name: Fetch tags
+        run: git fetch --depth=1 origin +refs/tags/*:refs/tags/*
+
+      # Check if the app version has a git tag
+      # If there is a git tag for the version set the variable 'tagged' to 0
+      # if there is NOT a git tag for the version set the variable 'tagged' to 1
+      - name: 'Check: version has corrosponding git tag'
+        id: tagged
+        shell: bash
+        run: git show-ref --tags --verify --quiet -- "refs/tags/v${{ steps.get_version.outputs.VERSION }}" && echo "::set-output name=tagged::0" || echo "::set-output name=tagged::1"
+
+      - name: Create new tag
+        if: steps.tagged.outputs.tagged == 1
+        run: |
+          git tag v${{ steps.get_version.outputs.VERSION }}
+
+      - name: Update CHANGELOG.md
+        if: steps.tagged.outputs.tagged == 1
+        working-directory: ./
+        run: |
+          docker pull quay.io/git-chglog/git-chglog:latest
+          docker run -v "$PWD":/workdir quay.io/git-chglog/git-chglog -o CHANGELOG.md 
+      - name: Merge CHANGELOG
+        if: steps.tagged.outputs.tagged == 1
+        uses: stefanzweifel/git-auto-commit-action@v4.2.0
+        with:
+          commit_message: "chore: Update CHANGELOG"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
