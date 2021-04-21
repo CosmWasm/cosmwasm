@@ -299,6 +299,30 @@ major releases of `cosmwasm`. Note that you can also view the
   and 28 bytes when its canonical representation is base64 encoded). For fixed
   length database keys `CanonicalAddr` remains handy though.
 
+- Replace `StakingMsg::Withdraw` with `DistributionMsg::SetWithdrawAddress` and
+  `DistributionMsg::WithdrawDelegatorReward`. `StakingMsg::Withdraw` was a
+  shorthand for the two distribution messages. However, it was unintuitive
+  because it did not set the address for one withdraw only but for all following
+  withdrawls. Since withdrawls are [triggered by different
+  events][distribution docs] such as validators changing their commission rate,
+  an address that was set for a one-time withdrawl would be used for future
+  withdrawls not considered by the contract author.
+
+  If the contract never set a withdraw address other than the contract itself
+  (`env.contract.address`), you can simply replace `StakingMsg::Withdraw` with
+  `DistributionMsg::WithdrawDelegatorReward`. It is then never changed from the
+  default. Otherwise you need to carefully track what the current withdraw
+  address is. A one-time change can be implemented by emitted 3 messages:
+
+  1. `SetWithdrawAddress { address: recipient }` to temporarily change the
+     recipient
+  2. `WithdrawDelegatorReward { validator }` to do a manual withdrawl from the
+     given validator
+  3. `SetWithdrawAddress { address: env.contract.address.into() }` to change it
+     back for all future withdrawls
+
+  [distribution docs]: https://docs.cosmos.network/v0.42/modules/distribution/
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0. Verify your Rust
