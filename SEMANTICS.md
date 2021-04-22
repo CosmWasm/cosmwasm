@@ -66,11 +66,103 @@ call.
 
 ### Basic Execution
 
-Result<Response>
+When we implement a contract, we provide the following entry point:
+
+
+```rust
+pub fn execute(
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    msg: ExecuteMsg,
+) -> Result<Response, ContractError> { }
+```
+
+With `DepsMut`, this can read and write to the backing `Storage`, as well as use the `Api` to validate addresses,
+and `Query` the state of other contracts or native modules. Once it is done, it returns either `Ok(Response)`
+or `Err(ContractError)`. Let's examine what happens next:
+
+If it returns `Err`, this error is converted to a string representation (`err.to_string()`), and this is returned
+to the SDK module. *All state changes are reverted* and `x/wasm` returns this error message, which will *generally*
+(see submessage exception below) abort the transaction, and return this same error message to the external caller.
+
+If it returns `Ok`, the `Response` object is parsed and processed. Let's look at the parts here:
+
+```rust
+pub struct Response<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    /// Optional list of "subcalls" to make. These will be executed in order
+    /// (and this contract's subcall_response entry point invoked)
+    /// *before* any of the "fire and forget" messages get executed.
+    pub submessages: Vec<SubMsg<T>>,
+    /// After any submessages are processed, these are all dispatched in the host blockchain.
+    /// If they all succeed, then the transaction is committed. If any fail, then the transaction
+    /// and any local contract state changes are reverted.
+    pub messages: Vec<CosmosMsg<T>>,
+    /// The attributes that will be emitted as part of a "wasm" event
+    pub attributes: Vec<Attribute>,
+    pub data: Option<Binary>,
+}
+```
+
+In the Cosmos SDK, a transaction returns a number of events to the user, along with an optional data "result". This
+result is hashed into the next block hash to be provable and can return some essential state (although in general
+client apps rely on Events more). This result is more commonly used to pass results between contracts or modules in
+the sdk.
+
+If the contract sets `data`, this will be returned in the `result` field. `attributes` is a list of `{key, value}`
+pairs which will be [appended to a default event](https://github.com/CosmWasm/wasmd/blob/master/x/wasm/types/types.go#L302-L321).
+The final result looks like this to the client:
+
+```json
+{
+  "type": "wasm",
+  "attributes": [
+    {"key":  "contract_addr", "value":  "cosmos1234567890qwerty"},
+    {"key":  "custom-key-1", "value":  "custom-value-1"},
+    {"key":  "custom-key-2", "value":  "custom-value-2"}
+  ]
+}
+```
 
 ### Dispatching Messages
 
-Fire and forget
+Now let's move onto the `messages` field. Some contracts are fine only talking with themselves, such as a cw20
+contract just adjusting it's balances on transfers. But many want to move tokens (native or cw20) or call into
+other contracts for more complex actions. This is where messages come in. We return 
+[`CosmosMsg`, which is a serializable representation](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/results/cosmos_msg.rs#L18-L40)
+of any external call the contract can make. It looks something like this (with `stargate` feature flag enabled):
+
+```rust
+pub enum CosmosMsg<T = Empty>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    Bank(BankMsg),
+    /// This can be defined by each blockchain as a custom extension
+    Custom(T),
+    Staking(StakingMsg),
+    Distribution(DistributionMsg),
+    Stargate {
+        type_url: String,
+        value: Binary,
+    },
+    Ibc(IbcMsg),
+    Wasm(WasmMsg),
+}
+```
+
+If a contract returns two messages - M1 and M2, these will both be parsed and executed in `x/wasm` 
+*with the permissions of the contract* (meaning `info.sender` will be the contract not the original caller).
+If they return success, they will emit a new event with the custom attributes, the `data` field will be ignored,
+and any messages they return will also be processed. If they return an error, the parent call will return an error,
+thus rolling back state of the whole transaction.
+
+Note that the messages are executed *depth-first*. This means if contract A returns M1 (`WasmMsg::Execute`) and 
+M2 (`BankMsg::Send`), and contract B (from the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and `DistributionMsg`),
+the order of execution would be **M1, N1, N2, M2**.
 
 ### Submessages
 
