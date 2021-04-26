@@ -67,6 +67,11 @@ and this project adheres to
   lexicographical ordering as implemented by `Vec<u8>`.
 - cosmwasm-std: Implement `PartialOrd` and `Ord` for `Addr` using the same
   lexicographical ordering as implemented by `String`.
+- cosmwasm-std: Added new `WasmMsg::UpdateAdmin` variant that allows an admin
+  contract (eg. multisig) to set another admin ([#900])
+- cosmwasm-std: Added new `WasmMsg::ClearAdmin` variant that allows an admin
+  contract (eg. multisig) to clear the admin, to prevent future migrations
+  ([#900])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -80,6 +85,7 @@ and this project adheres to
 [#796]: https://github.com/CosmWasm/cosmwasm/pull/796
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 [#860]: https://github.com/CosmWasm/cosmwasm/pull/860
+[#900]: https://github.com/CosmWasm/cosmwasm/pull/900
 
 ### Changed
 

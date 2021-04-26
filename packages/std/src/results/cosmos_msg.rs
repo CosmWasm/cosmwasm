@@ -149,6 +149,15 @@ pub enum WasmMsg {
         /// msg is the json-encoded MigrateMsg struct that will be passed to the new code
         msg: Binary,
     },
+    /// Sets a new admin (for migrate) on the given contract.
+    /// Fails if this contract is not currently admin of the target contract.
+    UpdateAdmin {
+        contract_addr: String,
+        admin: String,
+    },
+    /// Clears the admin on the given contract, so no more migration possible.
+    /// Fails if this contract is not currently admin of the target contract.
+    ClearAdmin { contract_addr: String },
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
