@@ -114,7 +114,10 @@ In the Cosmos SDK, a transaction returns a number of events to the user, along
 with an optional data "result". This result is hashed into the next block hash
 to be provable and can return some essential state (although in general client
 apps rely on Events more). This result is more commonly used to pass results
-between contracts or modules in the sdk.
+between contracts or modules in the sdk. Note that the `ResultHash` includes
+only the `Code` (non-zero meaning error) and `Result` (data) from the
+transaction. Events and log are available via queries, but there are no
+light-client proofs possible.
 
 If the contract sets `data`, this will be returned in the `result` field.
 `attributes` is a list of `{key, value}` pairs which will be
@@ -135,7 +138,7 @@ The final result looks like this to the client:
 ### Dispatching Messages
 
 Now let's move onto the `messages` field. Some contracts are fine only talking
-with themselves, such as a cw20 contract just adjusting it's balances on
+with themselves, such as a cw20 contract just adjusting its balances on
 transfers. But many want to move tokens (native or cw20) or call into other
 contracts for more complex actions. This is where messages come in. We return
 [`CosmosMsg`, which is a serializable representation](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/results/cosmos_msg.rs#L18-L40)
@@ -199,10 +202,10 @@ pub struct SubMsg<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-pub id: u64,
-pub msg: CosmosMsg<T>,
-pub gas_limit: Option<u64>,
-pub reply_on: ReplyOn,
+    pub id: u64,
+    pub msg: CosmosMsg<T>,
+    pub gas_limit: Option<u64>,
+    pub reply_on: ReplyOn,
 }
 
 pub enum ReplyOn {
@@ -227,7 +230,7 @@ If it return success, the temporary state is committed (into the caller's
 cache), and the `Response` is processed as normal (an event is added to the
 current EventManager, messages and submessages are executed). Once the
 `Response` is fully processed, this may then be intercepted by the calling
-contract (for `ReplyOn::Always` and `ReplyOn::Success`). On an error, the the
+contract (for `ReplyOn::Always` and `ReplyOn::Success`). On an error, the
 subcall will revert any partial state changes due to this message, but not
 revert any state changes in the calling contract. The error may then be
 intercepted by the calling contract (for `ReplyOn::Always` and
@@ -245,7 +248,7 @@ pub fn reply(deps: DepsMut, env: Env, msg: Reply) -> Result<Response, ContractEr
 
 pub struct Reply {
     pub id: u64,
-    /// ContractResult is just a nicely serializable version of `Result<T, String>`
+    /// ContractResult is just a nicely serializable version of `Result<SubcallResponse, String>`
     pub result: ContractResult<SubcallResponse>,
 }
 
@@ -268,29 +271,47 @@ is the key vector for reentrancy attacks, which are a large security surface
 area in Ethereum.
 
 The `reply` call may return `Err` itself, in which case it is treated like the
-caller errored, and aborting the transaction. (Unless, of course, the original
-`execute` was itself called from a `submessage`, meaning just the state changes
-since the call that returned `submessage` will be reverted, and this may be
-handled at a higher level). However, on successful processing, `reply` may
-return a normal `Response`, which will be processed as normal - events added to
-the EventManager, and all `messages` and `submessages` dispatched as described
-above.
+caller errored, and aborting the transaction. However, on successful processing,
+`reply` may return a normal `Response`, which will be processed as normal -
+events added to the EventManager, and all `messages` and `submessages`
+dispatched as described above.
 
 The one _critical difference_ with `reply`, is that we _do not drop data_. If
 `reply` returns `data: Some(value)` in the `Response` object, we will overwrite
 the `data` field returned by the caller. That is, if `execute` returns
 `data: Some(b"first thought")` and the `reply` (with all the extra information
-it is privvy to) returns `data: Some(b"better idea")`, then this will be
-returned to the caller of `execute` (either the client or another transaction),
-just as if the original `execute` and returned `data: Some(b"better idea")`. If
-`reply` returns `data: None`, it will not modify any previously set data state.
-If there are multiple submessages all setting this, only the last one is used
-(they all overwrite any previous `data` value).
+it is privy to) returns `data: Some(b"better idea")`, then this will be returned
+to the caller of `execute` (either the client or another transaction), just as
+if the original `execute` and returned `data: Some(b"better idea")`. If `reply`
+returns `data: None`, it will not modify any previously set data state. If there
+are multiple submessages all setting this, only the last one is used (they all
+overwrite any previous `data` value).
 
-`Submessages` (and their replies) are all executed before any `messages`. They
+#### Order and Rollback
+
+Submessages (and their replies) are all executed before any `messages`. They
 also follow the _depth first_ rules as with `messages`. Here is a simple
-example. Contract A returns submessages S1 and S2, and message M1. submessage S1
+example. Contract A returns submessages S1 and S2, and message M1. Submessage S1
 returns message N1. The order will be: **S1, N1, reply(S1), S2, reply(S2), M1**
+
+Please keep in mind that submessage `execution` and `reply` can happen within
+the context of another submessage. For example
+`contract-A--submessage --> contract-B--submessage --> contract-C`. Then
+`contract-B` can revert the state for `contract-C` and itself by returning `Err`
+in the submessage `reply`, but not revert contract-A or the entire transaction.
+It just ends up returning `Err` to contract-A's `reply` function.
+
+Note that errors are not handled with `ReplyOn::Success`, meaning, in such a
+case, an error will be treated just like a normal `message` returning an error.
+This diagram may help explain. Imagine a contract returned two submesssage - (a)
+with `ReplyOn::Success` and (b) with `ReplyOn::Error`:
+
+| processing a) | processing b) | reply called | may overwrite result from reply | note                                              |
+| ------------- | ------------- | ------------ | ------------------------------- | ------------------------------------------------- |
+| ok            | ok            | a)           | a)                              | returns success                                   |
+| err           | err           | none         | none                            | returns error (abort parent transaction)          |
+| err           | ok            | none         | none                            | returns error (abort parent transaction)          |
+| ok            | err           | a)b)         | a)b)                            | if both a) and b) overwrite, only b) will be used |
 
 ## Query Semantics
 
