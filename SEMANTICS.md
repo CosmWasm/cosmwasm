@@ -177,7 +177,14 @@ returns M1 (`WasmMsg::Execute`) and M2 (`BankMsg::Send`), and contract B (from
 the `WasmMsg::Execute`) returns N1 and N2 (eg. `StakingMsg` and
 `DistributionMsg`), the order of execution would be **M1, N1, N2, M2**.
 
-FIXME: explain why we do this - "actor model" and "reentrancy"
+This may be hard to understand at first. "Why can't I just call another
+contract?", you may ask. However, we do this to prevent one of most widespread
+and hardest to detect security holes in Ethereum contracts - reentrancy. We do
+this by following the actor model, which doesn't nest function calls, but
+returns messages that will be executed later. This means all state that is
+carried over between one call and the next happens in storage and not in memory.
+For more information on this design, I recommend you read
+[our docs on the Actor Model](https://docs.cosmwasm.com/0.13/architecture/actor.html).
 
 ### Submessages
 
@@ -315,4 +322,49 @@ with `ReplyOn::Success` and (b) with `ReplyOn::Error`:
 
 ## Query Semantics
 
-Explain `Querier` here as well
+Until now, we have focused on the `Response` object, which allows us to execute
+code in other contracts via the actor model. That is, each contract is run
+sequentially, one after another, and no nested calls are possible. This is
+essential to avoid reentrancy, which is when calling into another contract can
+change my state while I am in the middle of a transaction.
+
+However, there are many times we need access to information from other contracts
+in the middle of processing, such as determining the contract's bank balance
+before sending funds. To enable this, we have exposed the _read only_ `Querier`
+to enable _synchronous_ calls in the middle of the execution. By making it
+read-only (and enforcing that in the VM level), we can prevent the possibility
+of reentrancy, as the query cannot modify any state or execute our contract.
+
+When we "make a query", we serialize a
+[`QueryRequest` struct](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/query/mod.rs#L27-L48)
+that represents all possible calls, and then pass that over FFI to the runtime,
+where it is interpretted in the `x/wasm` SDK module. This is extensible with
+blockchain-specific custom queries just like `CosmosMsg` accepts custom results.
+Also note the ability to perform raw protobuf "Stargate" queries:
+
+```rust
+pub enum QueryRequest<C: CustomQuery> {
+    Bank(BankQuery),
+    Custom(C),
+    Staking(StakingQuery),
+    Stargate {
+        /// this is the fully qualified service path used for routing,
+        /// eg. custom/cosmos_sdk.x.bank.v1.Query/QueryBalance
+        path: String,
+        /// this is the expected protobuf message type (not any), binary encoded
+        data: Binary,
+    },
+    Ibc(IbcQuery),
+    Wasm(WasmQuery),
+}
+```
+
+While this is flexible and needed encoding for the cross-language
+representation, this is a bit of mouthful to generate and use when I just want
+to find my bank balance. To help that, we often use
+[`QuerierWrapper`](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/traits.rs#L148-L314),
+which wraps a `Querier` and exposes a lot of convenience methods that just use
+`QueryRequest` and `Querier.raw_query` under the hood.
+
+You can read a longer explanation of the
+[`Querier` design in our docs](https://docs.cosmwasm.com/0.13/architecture/query.html).
