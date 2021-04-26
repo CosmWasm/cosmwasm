@@ -72,6 +72,7 @@ and this project adheres to
 - cosmwasm-std: Added new `WasmMsg::ClearAdmin` variant that allows an admin
   contract (eg. multisig) to clear the admin, to prevent future migrations
   ([#900])
+- cosmwasm-std: Implement `Display for Coin` ([#901]).
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
@@ -86,6 +87,7 @@ and this project adheres to
 [#802]: https://github.com/CosmWasm/cosmwasm/pull/802
 [#860]: https://github.com/CosmWasm/cosmwasm/pull/860
 [#900]: https://github.com/CosmWasm/cosmwasm/pull/900
+[#901]: https://github.com/CosmWasm/cosmwasm/pull/901
 
 ### Changed
 
