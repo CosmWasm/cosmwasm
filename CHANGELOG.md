@@ -69,8 +69,9 @@ and this project adheres to
   lexicographical ordering as implemented by `String`.
 - cosmwasm-std: Added new `WasmMsg::UpdateAdmin` variant that allows an admin
   contract (eg. multisig) to set another admin ([#900])
-- cosmwasm-std: Added new `WasmMsg::UpdateAdmin` variant that allows an admin
-  contract (eg. multisig) to set another admin ([#900])
+- cosmwasm-std: Added new `WasmMsg::ClearAdmin` variant that allows an admin
+  contract (eg. multisig) to clear the admin, to prevent future migrations
+  ([#900])
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706
