@@ -71,8 +71,6 @@ and this project adheres to
   contract (eg. multisig) to set another admin ([#900])
 - cosmwasm-std: Added new `WasmMsg::UpdateAdmin` variant that allows an admin
   contract (eg. multisig) to set another admin ([#900])
-- cosmwasm-std: Add optional `admin` field to `WasmMsg::Instantiate` to allow a
-  contract to be full admin (able to migrate) a contract it created
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706

@@ -153,7 +153,7 @@ pub enum WasmMsg {
     /// Fails if this contract is not currently admin of the target contract.
     UpdateAdmin {
         contract_addr: String,
-        admin: Option<String>,
+        admin: String,
     },
     /// Clears the admin on the given contract, so no more migration possible.
     /// Fails if this contract is not currently admin of the target contract.

@@ -260,14 +260,12 @@
             "update_admin": {
               "type": "object",
               "required": [
+                "admin",
                 "contract_addr"
               ],
               "properties": {
                 "admin": {
-                  "type": [
-                    "string",
-                    "null"
-                  ]
+                  "type": "string"
                 },
                 "contract_addr": {
                   "type": "string"
