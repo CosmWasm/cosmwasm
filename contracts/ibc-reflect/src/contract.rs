@@ -1,19 +1,20 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, Binary,
-    ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
-    ReplyOn, Response, StdError, StdResult, SubMsg,
+    ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement,
+    IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order,
+    QueryResponse, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, SubcallResponse,
 };
 
 use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
-    ExecuteMsg, InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
+    InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
     ReflectInstantiateMsg, WhoAmIResponse,
 };
-use crate::state::{accounts, accounts_read, config, Config};
+use crate::state::{accounts, accounts_read, config, pending_channel, Config};
 
 pub const IBC_VERSION: &str = "ibc-reflect-v1";
 pub const RECEIVE_DISPATCH_ID: u64 = 1234;
+pub const INIT_CALLBACK_ID: u64 = 7890;
 
 #[entry_point]
 pub fn instantiate(
@@ -37,31 +38,42 @@ pub fn instantiate(
 }
 
 #[entry_point]
-pub fn execute(
-    deps: DepsMut,
-    _env: Env,
-    info: MessageInfo,
-    msg: ExecuteMsg,
-) -> StdResult<Response> {
-    match msg {
-        ExecuteMsg::InitCallback { id, contract_addr } => {
-            execute_init_callback(deps, info, id, contract_addr)
-        }
+pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+    match (reply.id, reply.result) {
+        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => Ok(Response {
+            data: Some(encode_ibc_error(err)),
+            ..Response::default()
+        }),
+        (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
+        _ => Err(StdError::generic_err("invalid reply id")),
     }
 }
 
-pub fn execute_init_callback(
-    deps: DepsMut,
-    info: MessageInfo,
-    id: String,
-    contract_addr: String,
-) -> StdResult<Response> {
-    let contract_addr = deps.api.addr_validate(&contract_addr)?;
+// see https://github.com/CosmWasm/wasmd/blob/408bba14a5c6d583abe32ffb235a364130136298/x/wasm/keeper/msg_server.go#L63-L69
+fn parse_contract_from_event(events: Vec<Event>) -> Option<String> {
+    events
+        .into_iter()
+        .find(|e| e.kind == "message")
+        .and_then(|ev| {
+            ev.attributes
+                .into_iter()
+                .find(|a| a.key == "contract_address")
+        })
+        .map(|a| a.value)
+}
 
-    // sanity check - the caller is registering itself
-    if info.sender != contract_addr {
-        return Err(StdError::generic_err("Must register self on callback"));
-    }
+pub fn handle_init_callback(deps: DepsMut, response: SubcallResponse) -> StdResult<Response> {
+    // we use storage to pass info from the caller to the reply
+    let id = pending_channel(deps.storage).load()?;
+    pending_channel(deps.storage).remove();
+
+    // parse contract info from events
+    let contract_addr = match parse_contract_from_event(response.events) {
+        Some(addr) => deps.api.addr_validate(&addr),
+        None => Err(StdError::generic_err(
+            "No contract_address found in callback events",
+        )),
+    }?;
 
     // store id -> contract_addr if it is empty
     // id comes from: `let chan_id = msg.endpoint.channel_id;` in `ibc_channel_connect`
@@ -154,9 +166,20 @@ pub fn ibc_channel_connect(
         callback_id: Some(chan_id.clone()),
     };
     let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], label)?;
+
+    let sub_msg = SubMsg {
+        id: INIT_CALLBACK_ID,
+        msg: msg.into(),
+        gas_limit: None,
+        reply_on: ReplyOn::Success,
+    };
+
+    // store the channel id for the reply handler
+    pending_channel(deps.storage).save(&chan_id)?;
+
     Ok(IbcBasicResponse {
-        submessages: vec![],
-        messages: vec![msg.into()],
+        messages: vec![],
+        submessages: vec![sub_msg],
         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
     })
 }
@@ -313,21 +336,6 @@ fn receive_dispatch(
 }
 
 #[entry_point]
-pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
-    if reply.id != RECEIVE_DISPATCH_ID {
-        return Err(StdError::generic_err("invalid reply id"));
-    }
-    match reply.result {
-        // this should never be called, but we just "do nothing"
-        ContractResult::Ok(_) => Ok(Response::default()),
-        ContractResult::Err(err) => Ok(Response {
-            data: Some(encode_ibc_error(err)),
-            ..Response::default()
-        }),
-    }
-}
-
-#[entry_point]
 /// never should be called as we do not send packets
 pub fn ibc_packet_ack(
     _deps: DepsMut,
@@ -381,6 +389,19 @@ mod tests {
         deps
     }
 
+    fn fake_events(reflect_addr: &str) -> Vec<Event> {
+        let event = Event {
+            kind: "message".into(),
+            attributes: vec![
+                attr("module", "wasm"),
+                attr("signer", MOCK_CONTRACT_ADDR),
+                attr("code_id", "17"),
+                attr("contract_address", reflect_addr),
+            ],
+        };
+        vec![event]
+    }
+
     // connect will run through the entire handshake to set up a proper connect and
     // save the account (tested in detail in `proper_handshake_flow`)
     fn connect<T: Into<String>>(mut deps: DepsMut, channel_id: &str, account: T) {
@@ -395,15 +416,19 @@ mod tests {
 
         // then we connect (with counter-party version set)
         let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
+        let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
+        assert_eq!(1, res.submessages.len());
+        let id = res.submessages[0].id;
 
-        // which creates a reflect account. here we get the callback
-        let execute_msg = ExecuteMsg::InitCallback {
-            id: channel_id.into(),
-            contract_addr: account.clone(),
+        // fake a reply and ensure this works
+        let response = Reply {
+            id,
+            result: ContractResult::Ok(SubcallResponse {
+                events: fake_events(&account),
+                data: None,
+            }),
         };
-        let info = mock_info(&account, &[]);
-        execute(deps.branch(), mock_env(), info, execute_msg).unwrap();
+        reply(deps.branch(), mock_env(), response).unwrap();
     }
 
     #[test]
@@ -446,14 +471,15 @@ mod tests {
         let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
         // and set up a reflect account
-        assert_eq!(1, res.messages.len());
+        assert_eq!(1, res.submessages.len());
+        let id = res.submessages[0].id;
         if let CosmosMsg::Wasm(WasmMsg::Instantiate {
             admin,
             code_id,
             msg,
             send,
             label,
-        }) = &res.messages[0]
+        }) = &res.submessages[0].msg
         {
             assert_eq!(*admin, None);
             assert_eq!(*code_id, REFLECT_ID);
@@ -471,14 +497,15 @@ mod tests {
         let res: ListAccountsResponse = from_slice(&raw).unwrap();
         assert_eq!(0, res.accounts.len());
 
-        // we get the callback from reflect
-        let execute_msg = ExecuteMsg::InitCallback {
-            id: channel_id.to_string(),
-            contract_addr: REFLECT_ADDR.into(),
+        // fake a reply and ensure this works
+        let response = Reply {
+            id,
+            result: ContractResult::Ok(SubcallResponse {
+                events: fake_events(&REFLECT_ADDR),
+                data: None,
+            }),
         };
-        let info = mock_info(REFLECT_ADDR, &[]);
-        let res = execute(deps.as_mut(), mock_env(), info, execute_msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        reply(deps.as_mut(), mock_env(), response).unwrap();
 
         // ensure this is now registered
         let raw = query(deps.as_ref(), mock_env(), QueryMsg::ListAccounts {}).unwrap();
