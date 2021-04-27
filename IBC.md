@@ -308,10 +308,10 @@ pub struct IbcPacket {
 }
 ```
 
-##### Acknowledgement Processing
+##### Acknowledging Errors
 
 A major issue that is unique to `ibc_packet_receive` is that it is expected to
-often reject an incoming packet, but it cannot abort the transaction. We
+often reject an incoming packet, yet it cannot abort the transaction. We
 actually expect all state changes from the contract (as well as dispatched
 messages) to be reverted when the packet is rejected, but the transaction to
 properly commit an acknowledgement with encoded error. In other words, this "IBC
@@ -331,74 +331,130 @@ that implements this.
 
 After quite some
 [discussion on how to encode the errors](https://github.com/CosmWasm/cosmwasm/issues/762),
-we identified a number of issues implementing this idea with the CosmWasm model:
+we struggled to map this idea to the CosmWasm model. However, we also discovered
+a deep similarity between these requirements and the
+[submessage semantics](./SEMANTICS.md#Submessages). It just requires some
+careful coding on the contract developer's side to new throw errors. This
+produced 3 suggests on how to handle errors and rollbacks _inside
+`ibc_packet_receive`_
 
-1. We only return `Ok(Response)` or `Err(String)`. There is no way to return an
-   arbitrary binary encoded message in the error variant.
-2. If we return `messages` to be dispatched, they may fail with an error, which
-   is returned directly to the x/wasm handler. Obviously an error from the bank
-   handler will not be in the proper IBC Acknowledgement format.
-3. We also realized that in some cases, the original `ibc_packet_receive` will
-   not even have the information needed to format the success response, so we
-   will need some delayed response-builder in this case also.
+1. If the message doesn't modify any state directly, you can simply put the
+   logic in a closure, and capture errors, converting them into error
+   acknowledgements. This would look something like the
+   [main dispatch loop in `ibc-reflect`](https://github.com/CosmWasm/cosmwasm/blob/cd784cd1148ee395574f3e564f102d0d7b5adcc3/contracts/ibc-reflect/src/contract.rs#L217-L248):
 
-eg. In the ICS27 spec, the authors define a packet to register a new account,
-the acknowledgement of that packet should contain the address of the new account
-on the receiving chain. If we implemented this in CosmWasm, the contract would
-have to return a submessage of `WasmMsg::Instantiate{}` and only get the proper
-address for the response in `reply`. Thus, we need to have some way to fully
-build the success acknowledgement after the fact as well.
+```rust
+    (|| {
+        // which local channel did this packet come on
+        let caller = packet.dest.channel_id;
+        let msg: PacketMsg = from_slice(&packet.data)?;
+        match msg {
+            PacketMsg::Dispatch { msgs } => receive_dispatch(deps, caller, msgs),
+            PacketMsg::WhoAmI {} => receive_who_am_i(deps, caller),
+            PacketMsg::Balances {} => receive_balances(deps, caller),
+        }
+    })()
+    .or_else(|e| {
+        // we try to capture all app-level errors and convert them into
+        // acknowledgement packets that contain an error code.
+        let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
+        Ok(IbcReceiveResponse {
+            acknowledgement,
+            submessages: vec![],
+            messages: vec![],
+            attributes: vec![],
+        })
+    })
+```
 
-With this in mind, we designed the following workflow for the `x/wasm` runtime:
+2. If we modify state with an external call, we need to wrap it in a
+   `submessage` and capture the error. This approach requires we use _exactly
+   one_ submessage. If we have multiple, we may commit #1 and rollback #2 (see
+   example 3 for that case). The main point is moving `messages` to
+   `submessages` and reformating the error in `reply`. Note that if you set the
+   `Response.data` field in `reply` it will override the acknowledgement
+   returned from the parent call. (See
+   [bottom of reply section](./SEMANTICS.md#Handling-the-Reply)). You can see a
+   similar example in how
+   [`ibc-reflect` handles `receive_dispatch`](https://github.com/CosmWasm/cosmwasm/blob/eebb9395ccf315320e3f2fcc526ee76788f89174/contracts/ibc-reflect/src/contract.rs#L307-L336).
+   Note how we use a unique reply id for this and use that to catch any
+   execution failure and return an error acknowledgement instead:
 
-1. Wrap the storage with a "local cache", so we don't immediately write out
-   changes
-2. Call `ibc_receive_packet`, get either `Err(String)` or
-   `Ok(Response + acknowledgement)`. If `Err`, jump to 4.
-3. Execute any `submessages` and `messages` returned with this response. If any
-   return `Err`, jump to 4.
-4. `receiveResult` is `Err(String)` if any of the above errored, or `Ok(Binary)`
-   with the original acknowledgement bytes if we have the success case.
-5. Call `ibc_encode_acknowledgement` with the `receiveResult`. The return value
-   is the acknowledgement packet to send to the calling chain. This should never
-   error.
-6. If `ReceiveResult` is `Ok`, commit this "storage cache". If it is `Err`,
-   revert those changes.
-7. Pass the acknowledgement bytes to the IBC router to return
+```rust
+fn receive_dispatch(
+    deps: DepsMut,
+    caller: String,
+    msgs: Vec<CosmosMsg>,
+) -> StdResult<IbcReceiveResponse> {
+    // what is the reflect contract here
+    let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
+
+    // let them know we're fine
+    let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
+    // create the message to re-dispatch to the reflect contract
+    let reflect_msg = ReflectExecuteMsg::ReflectMsg { msgs };
+    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
+
+    // we wrap it in a submessage to properly report errors
+    let sub_msg = SubMsg {
+        id: RECEIVE_DISPATCH_ID,
+        msg: wasm_msg.into(),
+        gas_limit: None,
+        reply_on: ReplyOn::Error,
+    };
+
+    Ok(IbcReceiveResponse {
+        acknowledgement,
+        submessages: vec![sub_msg],
+        messages: vec![],
+        attributes: vec![attr("action", "receive_dispatch")],
+    })
+}
+
+#[entry_point]
+pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+   match (reply.id, reply.result) {
+      (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => Ok(Response {
+         data: Some(encode_ibc_error(err)),
+         ..Response::default()
+      }),
+      (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
+      _ => Err(StdError::generic_err("invalid reply id")),
+   }
+}
+```
+
+3. For a more complex case, where we are modifying local state and possibly
+   sending multiple messages, we need to do a self-call via submessages. What I
+   mean is that we create a new `ExecuteMsg` variant, which returns an error if
+   called by anyone but the contract itself
+   (`if info.sender != env.contract.address { return Err() }`). When receiving
+   the IBC packet, we can create a submessage with `ExecuteMsg::DoReceivePacket`
+   and any args we need to pass down.
+
+   `DoReceivePacket` should return a proper acknowledgement payload on success.
+   And return an error on failure, just like a normal `execute` call. However,
+   here we capture both success and error cases in the `reply` handler (use
+   `ReplyOn::Always`). For success, we return this data verbatim to be set as
+   the packet acknowledgement, and for errors, we encode them as we did above.
+   There is not any example code using this (yet), but it is just recombining
+   pieces we already have. For clarity, the `reply` statement should look
+   something like:
 
 ```rust
 #[entry_point]
-pub fn ibc_encode_acknowledgement(
-    // maybe we pass some data from reply via storage
-    deps: DepsMut,
-    env: Env,
-    // the original packet we got if we need some data from that
-    packet: IbcPacket,
-    // Either Ok(ibc_receive_packet acknowledgement) or Err(failure message)
-    receiveResult: Result<Binary, String>,
-) -> StdResult<Binary> { }
-```
-
-The function receives the original packet as well as the error string returned,
-and is responsible for creating a proper binary-encoded "error acknowledgement"
-that can be sent to the calling contract. For example, it could protobuf-encode
-the `Acknowledgement message` defined below. `DepsMut`, `Env` and `IbcPacket`
-are passed just in case more context is needed for encoding, but likely unused.
-This function should never return an error (even if the IbcPacket was
-malformed), but we allow it to return one if there is some pathological state
-(rather than panicking in the contract, `StdResult::Err` returns useful
-information to the caller). If this returns an error, the transaction will
-return an error, meaning no acknowledgement nor receipt will be writen, and then
-same packet may be relayer again later.
-
-Note that this is called in every case. If you have a simple application, you
-can calculate the success case in `ibc_receive_packet` and return it already
-encoded, so the encoder only needs to concern itself with to encoding the error.
-eg.
-
-```rust
-{
-  receiveResult.map_err(|e| encode_ack_error)
+pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+    if reply.id != DO_IBC_RECEIVE_ID {
+        return Err(StdError::generic_err("invalid reply id"));
+    }
+    let data = match reply.result {
+        ContractResult::Ok(response) => response.data,
+        ContractResult::Err(err) => Some(encode_ibc_error(err)),
+    };
+    Ok(Response {
+        data,
+        ..Response::default()
+    })
 }
 ```
 
