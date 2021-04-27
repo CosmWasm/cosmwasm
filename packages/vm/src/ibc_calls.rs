@@ -235,10 +235,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::calls::{call_execute, call_instantiate};
+    use crate::calls::{call_instantiate, call_reply};
     use crate::testing::{mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage};
     use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
-    use cosmwasm_std::{Empty, IbcOrder};
+    use cosmwasm_std::{attr, Empty, Event, IbcOrder, Reply, SubcallResponse};
 
     static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
     const IBC_VERSION: &str = "ibc-reflect-v1";
@@ -264,18 +264,26 @@ mod tests {
 
         // then we connect (with counter-party version set)
         let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        call_ibc_channel_connect::<_, _, _, Empty>(instance, &mock_env(), &handshake_connect)
-            .unwrap()
-            .unwrap();
+        let res: IbcBasicResponse =
+            call_ibc_channel_connect::<_, _, _, Empty>(instance, &mock_env(), &handshake_connect)
+                .unwrap()
+                .unwrap();
+        assert_eq!(1, res.submessages.len());
+        let id = res.submessages[0].id;
 
+        let event = Event {
+            kind: "message".into(),
+            attributes: vec![attr("contract_address", &account)],
+        };
         // which creates a reflect account. here we get the callback
-        let execute_msg = format!(
-            r#"{{"init_callback":{{"id":"{}","contract_addr":"{}"}}}}"#,
-            channel_id, account
-        );
-        let info = mock_info(account, &[]);
-        call_execute::<_, _, _, Empty>(instance, &mock_env(), &info, execute_msg.as_bytes())
-            .unwrap();
+        let response = Reply {
+            id,
+            result: ContractResult::Ok(SubcallResponse {
+                events: vec![event],
+                data: None,
+            }),
+        };
+        call_reply::<_, _, _, Empty>(instance, &mock_env(), &response).unwrap();
     }
 
     const CHANNEL_ID: &str = "channel-123";
