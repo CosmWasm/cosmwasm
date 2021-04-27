@@ -28,7 +28,7 @@ use cosmwasm_vm::testing::{
 };
 use cosmwasm_vm::{from_slice, Instance};
 
-use ibc_reflect::contract::IBC_VERSION;
+use ibc_reflect::contract::{IBC_VERSION, RECEIVE_DISPATCH_ID};
 use ibc_reflect::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, ExecuteMsg, InstantiateMsg,
     ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, ReflectInstantiateMsg,
@@ -224,13 +224,16 @@ fn handle_dispatch_packet() {
     ack.unwrap();
 
     // and we dispatch the BankMsg
-    assert_eq!(1, res.messages.len());
+    assert_eq!(0, res.messages.len());
+    assert_eq!(1, res.submessages.len());
+    assert_eq!(RECEIVE_DISPATCH_ID, res.submessages[0].id);
+
     // parse the output, ensuring it matches
     if let CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr,
         msg,
         send,
-    }) = &res.messages[0]
+    }) = &res.submessages[0].msg
     {
         assert_eq!(account, contract_addr.as_str());
         assert_eq!(0, send.len());
@@ -253,7 +256,7 @@ fn handle_dispatch_packet() {
     let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
     let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
     // we didn't dispatch anything
-    assert_eq!(0, res.messages.len());
+    assert_eq!(0, res.submessages.len());
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
     assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");

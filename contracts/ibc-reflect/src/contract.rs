@@ -1,8 +1,8 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, CosmosMsg,
-    Deps, DepsMut, Empty, Env, IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcOrder,
-    IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Response, StdError,
-    StdResult,
+    attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, Binary,
+    ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, IbcAcknowledgement, IbcBasicResponse,
+    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
+    ReplyOn, Response, StdError, StdResult, SubMsg,
 };
 
 use crate::msg::{
@@ -13,6 +13,7 @@ use crate::msg::{
 use crate::state::{accounts, accounts_read, config, Config};
 
 pub const IBC_VERSION: &str = "ibc-reflect-v1";
+pub const RECEIVE_DISPATCH_ID: u64 = 1234;
 
 #[entry_point]
 pub fn instantiate(
@@ -207,6 +208,12 @@ pub fn migrate(_deps: DepsMut, _env: Env, _msg: Empty) -> StdResult<Response> {
     Ok(Response::default())
 }
 
+// this encode an error or error message into a proper acknowledgement to the recevier
+fn encode_ibc_error<T: Into<String>>(msg: T) -> Binary {
+    // this cannot error, unwrap to keep the interface simple
+    to_binary(&AcknowledgementMsg::<()>::Err(msg.into())).unwrap()
+}
+
 #[entry_point]
 /// we look for a the proper reflect contract to relay to and send the message
 /// We cannot return any meaningful response value as we do not know the response value
@@ -230,38 +237,13 @@ pub fn ibc_packet_receive(
     .or_else(|e| {
         // we try to capture all app-level errors and convert them into
         // acknowledgement packets that contain an error code.
-        let msg = format!("invalid packet: {}", e);
-        // we only use the error variant here, so we can use any T
-        let acknowledgement = to_binary(&AcknowledgementMsg::<()>::Err(msg))?;
+        let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
         Ok(IbcReceiveResponse {
             acknowledgement,
             submessages: vec![],
             messages: vec![],
             attributes: vec![],
         })
-    })
-}
-
-// processes PacketMsg::Dispatch variant
-fn receive_dispatch(
-    deps: DepsMut,
-    caller: String,
-    msgs: Vec<CosmosMsg>,
-) -> StdResult<IbcReceiveResponse> {
-    // what is the reflect contract here
-    let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
-
-    // let them know we're fine
-    let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
-    // create the message to re-dispatch to the reflect contract
-    let reflect_msg = ReflectExecuteMsg::ReflectMsg { msgs };
-    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-    // and we are golden
-    Ok(IbcReceiveResponse {
-        acknowledgement,
-        submessages: vec![],
-        messages: vec![wasm_msg.into()],
-        attributes: vec![attr("action", "receive_dispatch")],
     })
 }
 
@@ -297,6 +279,52 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
         messages: vec![],
         attributes: vec![attr("action", "receive_balances")],
     })
+}
+
+// processes PacketMsg::Dispatch variant
+fn receive_dispatch(
+    deps: DepsMut,
+    caller: String,
+    msgs: Vec<CosmosMsg>,
+) -> StdResult<IbcReceiveResponse> {
+    // what is the reflect contract here
+    let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
+
+    // let them know we're fine
+    let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
+    // create the message to re-dispatch to the reflect contract
+    let reflect_msg = ReflectExecuteMsg::ReflectMsg { msgs };
+    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
+
+    // we wrap it in a submessage to properly report errors
+    let sub_msg = SubMsg {
+        id: RECEIVE_DISPATCH_ID,
+        msg: wasm_msg.into(),
+        gas_limit: None,
+        reply_on: ReplyOn::Error,
+    };
+
+    Ok(IbcReceiveResponse {
+        acknowledgement,
+        submessages: vec![sub_msg],
+        messages: vec![],
+        attributes: vec![attr("action", "receive_dispatch")],
+    })
+}
+
+#[entry_point]
+pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+    if reply.id != RECEIVE_DISPATCH_ID {
+        return Err(StdError::generic_err("invalid reply id"));
+    }
+    match reply.result {
+        // this should never be called, but we just "do nothing"
+        ContractResult::Ok(_) => Ok(Response::default()),
+        ContractResult::Err(err) => Ok(Response {
+            data: Some(encode_ibc_error(err)),
+            ..Response::default()
+        }),
+    }
 }
 
 #[entry_point]
@@ -515,14 +543,17 @@ mod tests {
         let ack: AcknowledgementMsg<()> = from_slice(&res.acknowledgement).unwrap();
         ack.unwrap();
 
-        // and we dispatch the BankMsg
-        assert_eq!(1, res.messages.len());
+        // and we dispatch the BankMsg via submessage
+        assert_eq!(0, res.messages.len());
+        assert_eq!(1, res.submessages.len());
+        assert_eq!(RECEIVE_DISPATCH_ID, res.submessages[0].id);
+
         // parse the output, ensuring it matches
         if let CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
             msg,
             send,
-        }) = &res.messages[0]
+        }) = &res.submessages[0].msg
         {
             assert_eq!(account, contract_addr.as_str());
             assert_eq!(0, send.len());
@@ -545,7 +576,7 @@ mod tests {
         let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet).unwrap();
         // we didn't dispatch anything
-        assert_eq!(0, res.messages.len());
+        assert_eq!(0, res.submessages.len());
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
