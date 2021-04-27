@@ -333,7 +333,7 @@ After quite some
 [discussion on how to encode the errors](https://github.com/CosmWasm/cosmwasm/issues/762),
 we struggled to map this idea to the CosmWasm model. However, we also discovered
 a deep similarity between these requirements and the
-[submessage semantics](./SEMANTICS.md#Submessages). It just requires some
+[submessage semantics](./SEMANTICS.md#submessages). It just requires some
 careful coding on the contract developer's side to new throw errors. This
 produced 3 suggests on how to handle errors and rollbacks _inside
 `ibc_packet_receive`_
@@ -374,7 +374,7 @@ produced 3 suggests on how to handle errors and rollbacks _inside
    `submessages` and reformating the error in `reply`. Note that if you set the
    `Response.data` field in `reply` it will override the acknowledgement
    returned from the parent call. (See
-   [bottom of reply section](./SEMANTICS.md#Handling-the-Reply)). You can see a
+   [bottom of reply section](./SEMANTICS.md#handling-the-reply)). You can see a
    similar example in how
    [`ibc-reflect` handles `receive_dispatch`](https://github.com/CosmWasm/cosmwasm/blob/eebb9395ccf315320e3f2fcc526ee76788f89174/contracts/ibc-reflect/src/contract.rs#L307-L336).
    Note how we use a unique reply id for this and use that to catch any
