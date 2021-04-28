@@ -10,20 +10,6 @@ pub struct InstantiateMsg {
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum ExecuteMsg {
-    /// InitCallback is returned from reflect contract after a new contract is set up.
-    ///
-    /// This type must match [CallbackMsg::InitCallback from reflect](https://github.com/CosmWasm/cosmwasm/blob/9fd06ea/contracts/reflect/src/msg.rs#L19-L24).
-    InitCallback {
-        /// id was provided in the InitMsg
-        id: String,
-        /// contract_addr is the address of this contract
-        contract_addr: String,
-    },
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-#[serde(rename_all = "snake_case")]
 pub enum QueryMsg {
     /// Returns (reflect) account that is attached to this channel,
     /// or none.

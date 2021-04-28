@@ -19,18 +19,18 @@
 
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_recv};
 use cosmwasm_std::{
-    coins, BankMsg, ContractResult, CosmosMsg, IbcBasicResponse, IbcOrder, IbcReceiveResponse,
-    Response, WasmMsg,
+    attr, coins, BankMsg, ContractResult, CosmosMsg, Event, IbcBasicResponse, IbcOrder,
+    IbcReceiveResponse, Reply, Response, SubcallResponse, WasmMsg,
 };
 use cosmwasm_vm::testing::{
-    execute, ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env,
-    mock_info, mock_instance, query, MockApi, MockQuerier, MockStorage,
+    ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env, mock_info,
+    mock_instance, query, reply, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
 };
 use cosmwasm_vm::{from_slice, Instance};
 
-use ibc_reflect::contract::IBC_VERSION;
+use ibc_reflect::contract::{IBC_VERSION, RECEIVE_DISPATCH_ID};
 use ibc_reflect::msg::{
-    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, ExecuteMsg, InstantiateMsg,
+    AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, InstantiateMsg,
     ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, ReflectInstantiateMsg,
 };
 
@@ -54,6 +54,19 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     deps
 }
 
+fn fake_events(reflect_addr: &str) -> Vec<Event> {
+    let event = Event {
+        kind: "message".into(),
+        attributes: vec![
+            attr("module", "wasm"),
+            attr("signer", MOCK_CONTRACT_ADDR),
+            attr("code_id", "17"),
+            attr("contract_address", reflect_addr),
+        ],
+    };
+    vec![event]
+}
+
 // connect will run through the entire handshake to set up a proper connect and
 // save the account (tested in detail in `proper_handshake_flow`)
 fn connect<T: Into<String>>(
@@ -69,15 +82,19 @@ fn connect<T: Into<String>>(
 
     // then we connect (with counter-party version set)
     let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    let _: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
+    let res: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
+    assert_eq!(1, res.submessages.len());
+    let id = res.submessages[0].id;
 
-    // which creates a reflect account. here we get the callback
-    let execute_msg = ExecuteMsg::InitCallback {
-        id: channel_id.into(),
-        contract_addr: account.clone(),
+    // fake a reply and ensure this works
+    let response = Reply {
+        id,
+        result: ContractResult::Ok(SubcallResponse {
+            events: fake_events(&account),
+            data: None,
+        }),
     };
-    let info = mock_info(&account, &[]);
-    let _: Response = execute(deps, mock_env(), info, execute_msg).unwrap();
+    let _: Response = reply(deps, mock_env(), response).unwrap();
 }
 
 #[test]
@@ -122,14 +139,15 @@ fn proper_handshake_flow() {
     let res: IbcBasicResponse =
         ibc_channel_connect(&mut deps, mock_env(), handshake_connect).unwrap();
     // and set up a reflect account
-    assert_eq!(1, res.messages.len());
+    assert_eq!(1, res.submessages.len());
+    let id = res.submessages[0].id;
     if let CosmosMsg::Wasm(WasmMsg::Instantiate {
         admin,
         code_id,
         msg,
         send,
         label,
-    }) = &res.messages[0]
+    }) = &res.submessages[0].msg
     {
         assert_eq!(*admin, None);
         assert_eq!(*code_id, REFLECT_ID);
@@ -148,12 +166,14 @@ fn proper_handshake_flow() {
     assert_eq!(0, res.accounts.len());
 
     // we get the callback from reflect
-    let execute_msg = ExecuteMsg::InitCallback {
-        id: channel_id.to_string(),
-        contract_addr: REFLECT_ADDR.into(),
+    let response = Reply {
+        id,
+        result: ContractResult::Ok(SubcallResponse {
+            events: fake_events(&REFLECT_ADDR),
+            data: None,
+        }),
     };
-    let info = mock_info(REFLECT_ADDR, &[]);
-    let res: Response = execute(&mut deps, mock_env(), info, execute_msg).unwrap();
+    let res: Response = reply(&mut deps, mock_env(), response).unwrap();
     assert_eq!(0, res.messages.len());
 
     // ensure this is now registered
@@ -224,13 +244,16 @@ fn handle_dispatch_packet() {
     ack.unwrap();
 
     // and we dispatch the BankMsg
-    assert_eq!(1, res.messages.len());
+    assert_eq!(0, res.messages.len());
+    assert_eq!(1, res.submessages.len());
+    assert_eq!(RECEIVE_DISPATCH_ID, res.submessages[0].id);
+
     // parse the output, ensuring it matches
     if let CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr,
         msg,
         send,
-    }) = &res.messages[0]
+    }) = &res.submessages[0].msg
     {
         assert_eq!(account, contract_addr.as_str());
         assert_eq!(0, send.len());
@@ -253,7 +276,7 @@ fn handle_dispatch_packet() {
     let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
     let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
     // we didn't dispatch anything
-    assert_eq!(0, res.messages.len());
+    assert_eq!(0, res.submessages.len());
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
     assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
