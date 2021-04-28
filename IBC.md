@@ -37,21 +37,24 @@ pub enum IbcMsg {
     }
 }
 
+/// In IBC each package must set at least one type of timeout:
+/// the timestamp or the block height. Using this rather complex enum instead of
+/// two timeout fields we ensure that at least one timeout is set.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcTimeout {
-    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out
-    /// (measured on the remote chain)
-    /// See https://golang.org/pkg/time/#Time.UnixNano
-    TimestampNanos(u64),
-    /// block after which the packet times out (measured on remote chain)
+    /// Block timestamp (nanoseconds since UNIX epoch) after which the packet times out
+    /// (measured on the remote chain).
+    Timestamp(Timestamp),
+    /// Block after which the packet times out (measured on remote chain).
     Block(IbcTimeoutBlock),
+    /// Use this to set both timestamp and block timeout. The package then times out once
+    /// the first of both timeouts is hit.
     Both {
-        timestamp_nanos: u64,
+        timestamp: Timestamp,
         block: IbcTimeoutBlock,
     },
 }
-
 ```
 
 Note the `to_address` is likely not a valid `Addr`, as it uses the bech32 prefix
