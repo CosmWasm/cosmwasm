@@ -10,8 +10,26 @@ use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdErro
 /// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
 /// such that the full u128 range can be used for clients that convert JSON numbers to floats,
 /// like JavaScript and jq.
+///
+/// # Examples
+///
+/// Use `from` to create instances of this and `u128` to get the value out:
+///
+/// ```
+/// # use cosmwasm_std::Uint128;
+/// let a = Uint128::from(123u128);
+/// assert_eq!(a.u128(), 123);
+///
+/// let b = Uint128::from(42u64);
+/// assert_eq!(b.u128(), 42);
+///
+/// let c = Uint128::from(70u32);
+/// assert_eq!(c.u128(), 70);
+/// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint128(#[schemars(with = "String")] pub u128);
+pub struct Uint128(
+    #[schemars(with = "String")] pub u128, // Simon thinks this should be private, but does not want to worry about breaking code right now
+);
 
 impl Uint128 {
     /// Creates a Uint128(0)

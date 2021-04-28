@@ -10,6 +10,19 @@ use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdErro
 /// A thin wrapper around u64 that is using strings for JSON encoding/decoding,
 /// such that the full u64 range can be used for clients that convert JSON numbers to floats,
 /// like JavaScript and jq.
+///
+/// # Examples
+///
+/// Use `from` to create instances of this and `u64` to get the value out:
+///
+/// ```
+/// # use cosmwasm_std::Uint64;
+/// let a = Uint64::from(42u64);
+/// assert_eq!(a.u64(), 42);
+///
+/// let b = Uint64::from(70u32);
+/// assert_eq!(b.u64(), 70);
+/// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint64(#[schemars(with = "String")] u64);
 
