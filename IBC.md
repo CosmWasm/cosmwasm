@@ -42,18 +42,9 @@ pub enum IbcMsg {
 /// two timeout fields we ensure that at least one timeout is set.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum IbcTimeout {
-    /// Block timestamp (nanoseconds since UNIX epoch) after which the packet times out
-    /// (measured on the remote chain).
-    Timestamp(Timestamp),
-    /// Block after which the packet times out (measured on remote chain).
-    Block(IbcTimeoutBlock),
-    /// Use this to set both timestamp and block timeout. The package then times out once
-    /// the first of both timeouts is hit.
-    Both {
-        timestamp: Timestamp,
-        block: IbcTimeoutBlock,
-    },
+pub struct IbcTimeout {
+    block: Option<IbcTimeoutBlock>,
+    timestamp: Option<Timestamp>,
 }
 ```
 

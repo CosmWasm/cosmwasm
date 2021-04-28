@@ -388,59 +388,29 @@
     },
     "IbcTimeout": {
       "description": "In IBC each package must set at least one type of timeout: the timestamp or the block height. Using this rather complex enum instead of two timeout fields we ensure that at least one timeout is set.",
-      "anyOf": [
-        {
-          "description": "Block timestamp (nanoseconds since UNIX epoch) after which the packet times out (measured on the remote chain).",
-          "type": "object",
-          "required": [
-            "timestamp"
-          ],
-          "properties": {
-            "timestamp": {
-              "$ref": "#/definitions/Timestamp"
-            }
-          },
-          "additionalProperties": false
-        },
-        {
-          "description": "Block after which the packet times out (measured on remote chain).",
-          "type": "object",
-          "required": [
-            "block"
-          ],
-          "properties": {
-            "block": {
+      "type": "object",
+      "properties": {
+        "block": {
+          "anyOf": [
+            {
               "$ref": "#/definitions/IbcTimeoutBlock"
+            },
+            {
+              "type": "null"
             }
-          },
-          "additionalProperties": false
+          ]
         },
-        {
-          "description": "Use this to set both timestamp and block timeout. The package then times out once the first of both timeouts is hit.",
-          "type": "object",
-          "required": [
-            "both"
-          ],
-          "properties": {
-            "both": {
-              "type": "object",
-              "required": [
-                "block",
-                "timestamp"
-              ],
-              "properties": {
-                "block": {
-                  "$ref": "#/definitions/IbcTimeoutBlock"
-                },
-                "timestamp": {
-                  "$ref": "#/definitions/Timestamp"
-                }
-              }
+        "timestamp": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Timestamp"
+            },
+            {
+              "type": "null"
             }
-          },
-          "additionalProperties": false
+          ]
         }
-      ]
+      }
     },
     "IbcTimeoutBlock": {
       "description": "IBCTimeoutHeight Height is a monotonically increasing data type that can be compared against another Height for the purposes of updating and freezing clients. Ordering is (revision_number, timeout_height)",

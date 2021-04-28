@@ -59,23 +59,46 @@ pub struct IbcEndpoint {
 /// two timeout fields we ensure that at least one timeout is set.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum IbcTimeout {
-    /// Block timestamp (nanoseconds since UNIX epoch) after which the packet times out
-    /// (measured on the remote chain).
-    Timestamp(Timestamp),
-    /// Block after which the packet times out (measured on remote chain).
-    Block(IbcTimeoutBlock),
-    /// Use this to set both timestamp and block timeout. The package then times out once
-    /// the first of both timeouts is hit.
-    Both {
-        timestamp: Timestamp,
-        block: IbcTimeoutBlock,
-    },
+pub struct IbcTimeout {
+    // use private fields to enforce the use of constructors, which ensure that at least one is set
+    block: Option<IbcTimeoutBlock>,
+    timestamp: Option<Timestamp>,
+}
+
+impl IbcTimeout {
+    pub fn with_block(block: IbcTimeoutBlock) -> Self {
+        IbcTimeout {
+            block: Some(block),
+            timestamp: None,
+        }
+    }
+
+    pub fn with_timestamp(timestamp: Timestamp) -> Self {
+        IbcTimeout {
+            block: None,
+            timestamp: Some(timestamp),
+        }
+    }
+
+    pub fn with_both(block: IbcTimeoutBlock, timestamp: Timestamp) -> Self {
+        IbcTimeout {
+            block: Some(block),
+            timestamp: Some(timestamp),
+        }
+    }
+
+    pub fn block(&self) -> Option<IbcTimeoutBlock> {
+        self.block
+    }
+
+    pub fn timestamp(&self) -> Option<Timestamp> {
+        self.timestamp
+    }
 }
 
 impl From<Timestamp> for IbcTimeout {
     fn from(timestamp: Timestamp) -> IbcTimeout {
-        IbcTimeout::Timestamp(timestamp)
+        IbcTimeout::with_timestamp(timestamp)
     }
 }
 
@@ -111,7 +134,7 @@ pub enum IbcOrder {
 /// that can be compared against another Height for the purposes of updating and
 /// freezing clients.
 /// Ordering is (revision_number, timeout_height)
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq, JsonSchema)]
+#[derive(Serialize, Deserialize, Copy, Clone, Debug, PartialEq, Eq, JsonSchema)]
 pub struct IbcTimeoutBlock {
     /// the version that the client is currently on
     /// (eg. after reseting the chain this could increment 1 as height drops to 0)
@@ -257,34 +280,34 @@ mod tests {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
-            timeout: IbcTimeout::Timestamp(Timestamp::from_nanos(1234567890)),
+            timeout: IbcTimeout::with_timestamp(Timestamp::from_nanos(1234567890)),
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp":"1234567890"}}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"block":null,"timestamp":"1234567890"}}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 
     #[test]
     fn ibc_timeout_serialize() {
-        let timestamp = IbcTimeout::Timestamp(Timestamp::from_nanos(684816844));
-        let expected = r#"{"timestamp":"684816844"}"#;
+        let timestamp = IbcTimeout::with_timestamp(Timestamp::from_nanos(684816844));
+        let expected = r#"{"block":null,"timestamp":"684816844"}"#;
         assert_eq!(to_string(&timestamp).unwrap(), expected);
 
-        let block = IbcTimeout::Block(IbcTimeoutBlock {
+        let block = IbcTimeout::with_block(IbcTimeoutBlock {
             revision: 12,
             height: 129,
         });
-        let expected = r#"{"block":{"revision":12,"height":129}}"#;
+        let expected = r#"{"block":{"revision":12,"height":129},"timestamp":null}"#;
         assert_eq!(to_string(&block).unwrap(), expected);
 
-        let both = IbcTimeout::Both {
-            timestamp: Timestamp::from_nanos(684816844),
-            block: IbcTimeoutBlock {
+        let both = IbcTimeout::with_both(
+            IbcTimeoutBlock {
                 revision: 12,
                 height: 129,
             },
-        };
-        let expected = r#"{"both":{"timestamp":"684816844","block":{"revision":12,"height":129}}}"#;
+            Timestamp::from_nanos(684816844),
+        );
+        let expected = r#"{"block":{"revision":12,"height":129},"timestamp":"684816844"}"#;
         assert_eq!(to_string(&both).unwrap(), expected);
     }
 
