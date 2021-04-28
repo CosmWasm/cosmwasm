@@ -325,4 +325,47 @@ mod tests {
         assert!(epoch2a < epoch2b);
         assert!(epoch1b < epoch2b);
     }
+
+    #[test]
+    fn ibc_packet_serialize() {
+        let packet = IbcPacket {
+            data: b"foo".into(),
+            src: IbcEndpoint {
+                port_id: "their-port".to_string(),
+                channel_id: "channel-1234".to_string(),
+            },
+            dest: IbcEndpoint {
+                port_id: "our-port".to_string(),
+                channel_id: "chan33".into(),
+            },
+            sequence: 27,
+            timeout_block: Some(IbcTimeoutBlock {
+                revision: 1,
+                height: 12345678,
+            }),
+            timeout_timestamp: Some(4611686018427387904),
+        };
+        let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout_block":{"revision":1,"height":12345678},"timeout_timestamp":4611686018427387904}"#;
+        assert_eq!(to_string(&packet).unwrap(), expected);
+
+        let no_timestamp = IbcPacket {
+            data: b"foo".into(),
+            src: IbcEndpoint {
+                port_id: "their-port".to_string(),
+                channel_id: "channel-1234".to_string(),
+            },
+            dest: IbcEndpoint {
+                port_id: "our-port".to_string(),
+                channel_id: "chan33".into(),
+            },
+            sequence: 27,
+            timeout_block: Some(IbcTimeoutBlock {
+                revision: 1,
+                height: 12345678,
+            }),
+            timeout_timestamp: None,
+        };
+        let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout_block":{"revision":1,"height":12345678},"timeout_timestamp":null}"#;
+        assert_eq!(to_string(&no_timestamp).unwrap(), expected);
+    }
 }
