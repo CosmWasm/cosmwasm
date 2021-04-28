@@ -31,6 +31,11 @@ impl Timestamp {
         let nanos = Uint64::new(self.0.u64() + addition);
         Timestamp(nanos)
     }
+
+    /// Returns nanoseconds since epoch
+    pub fn nanos(&self) -> u64 {
+        self.0.u64()
+    }
 }
 
 #[cfg(test)]
@@ -67,5 +72,13 @@ mod tests {
         assert_eq!(sum.0.u64(), 126);
         let sum = Timestamp::from_nanos(123).plus_nanos(0);
         assert_eq!(sum.0.u64(), 123);
+    }
+
+    #[test]
+    fn timestamp_nanos() {
+        let sum = Timestamp::from_nanos(123);
+        assert_eq!(sum.nanos(), 123);
+        let sum = Timestamp::from_nanos(0);
+        assert_eq!(sum.nanos(), 0);
     }
 }

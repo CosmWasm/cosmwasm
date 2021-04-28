@@ -16,22 +16,18 @@ pub struct BlockInfo {
     /// Absolute time of the block creation in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
     ///
     /// The source of this is the [BFT Time in Tendermint](https://docs.tendermint.com/master/spec/consensus/bft-time.html),
-    /// converted from nanoseconds to second precision by truncating the fractioal part.
-    pub time: u64,
-    /// The fractional part of the block time in nanoseconds since `time` (0 to 999999999).
-    /// Add this to `time` if you need a high precision block time.
+    /// which has the same nanosecond precision as the `Timestamp` type.
     ///
     /// # Examples
     ///
     /// Using chrono:
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
-    /// #         time: 1_571_797_419,
-    /// #         time_nanos: 879305533,
+    /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
     /// #     contract: ContractInfo {
@@ -40,35 +36,35 @@ pub struct BlockInfo {
     /// # };
     /// # extern crate chrono;
     /// use chrono::NaiveDateTime;
-    /// let dt = NaiveDateTime::from_timestamp(env.block.time as i64, env.block.time_nanos as u32);
+    /// let seconds = env.block.time.nanos() / 1_000_000_000;
+    /// let nsecs = env.block.time.nanos() % 1_000_000_000;
+    /// let dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32);
     /// ```
     ///
     /// Creating a simple millisecond-precision timestamp (as used in JavaScript):
     ///
     /// ```
-    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo};
+    /// # use cosmwasm_std::{Addr, BlockInfo, ContractInfo, Env, MessageInfo, Timestamp};
     /// # let env = Env {
     /// #     block: BlockInfo {
     /// #         height: 12_345,
-    /// #         time: 1_571_797_419,
-    /// #         time_nanos: 879305533,
+    /// #         time: Timestamp::from_nanos(1_571_797_419_879_305_533),
     /// #         chain_id: "cosmos-testnet-14002".to_string(),
     /// #     },
     /// #     contract: ContractInfo {
     /// #         address: Addr::unchecked("contract"),
     /// #     },
     /// # };
-    /// let millis = (env.block.time * 1_000) + (env.block.time_nanos / 1_000_000);
+    /// let millis = env.block.time.nanos() / 1_000_000;
     /// ```
-    pub time_nanos: u64,
+    pub time: Timestamp,
     pub chain_id: String,
 }
 
 impl BlockInfo {
     /// Returns the block creation time as a Timestamp in nanosecond precision
     pub fn timestamp(&self) -> Timestamp {
-        let nanos_since_epoch = self.time * 1_000_000_000 + self.time_nanos;
-        Timestamp::from_nanos(nanos_since_epoch)
+        self.time
     }
 }
 
