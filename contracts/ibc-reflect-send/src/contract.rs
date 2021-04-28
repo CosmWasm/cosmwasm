@@ -91,7 +91,7 @@ pub fn handle_send_msgs(
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
-        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
+        timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
@@ -121,7 +121,7 @@ pub fn handle_check_remote_balance(
     let msg = IbcMsg::SendPacket {
         channel_id,
         data: to_binary(&packet)?,
-        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
+        timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {
@@ -171,7 +171,7 @@ pub fn handle_send_funds(
         channel_id: transfer_channel_id,
         to_address: remote_addr,
         amount,
-        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
+        timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(Response {

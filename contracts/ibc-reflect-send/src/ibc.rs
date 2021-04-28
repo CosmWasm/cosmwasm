@@ -58,7 +58,7 @@ pub fn ibc_channel_connect(
     let msg = IbcMsg::SendPacket {
         channel_id: channel_id.clone(),
         data: to_binary(&packet)?,
-        timeout: env.block.timestamp().plus_seconds(PACKET_LIFETIME).into(),
+        timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
     Ok(IbcBasicResponse {
@@ -334,7 +334,7 @@ mod tests {
         let acct: AccountResponse = from_slice(&r).unwrap();
         assert!(acct.remote_addr.is_none());
         assert!(acct.remote_balance.is_empty());
-        assert_eq!(0, acct.last_update_time);
+        assert_eq!(0, acct.last_update_time.nanos());
 
         // now get feedback from WhoAmI packet
         let remote_addr = "account-789";
@@ -348,7 +348,7 @@ mod tests {
         let acct: AccountResponse = from_slice(&r).unwrap();
         assert_eq!(acct.remote_addr.unwrap(), remote_addr);
         assert!(acct.remote_balance.is_empty());
-        assert_eq!(0, acct.last_update_time);
+        assert_eq!(0, acct.last_update_time.nanos());
     }
 
     #[test]

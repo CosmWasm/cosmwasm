@@ -198,6 +198,8 @@ and this project adheres to
   ([#879])
 - cosmwasm-schema: Make first argument non-mutable in `export_schema_with_title`
   for consistency with `export_schema`.
+- cosmwasm-std: The block time in `BlockInfo::time` is now a `Timestamp`.
+  `BlockInfo::time_nanos` was removed.
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697

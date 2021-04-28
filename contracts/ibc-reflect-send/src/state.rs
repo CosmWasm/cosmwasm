@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use cosmwasm_std::{Addr, Coin, Storage};
+use cosmwasm_std::{Addr, Coin, Storage, Timestamp};
 use cosmwasm_storage::{
     bucket, bucket_read, singleton, singleton_read, Bucket, ReadonlyBucket, ReadonlySingleton,
     Singleton,
@@ -17,7 +17,7 @@ pub struct Config {
 #[derive(Serialize, Deserialize, Clone, Default, Debug, PartialEq)]
 pub struct AccountData {
     /// last block balance was updated (0 is never)
-    pub last_update_time: u64,
+    pub last_update_time: Timestamp,
     /// In normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty.
     ///

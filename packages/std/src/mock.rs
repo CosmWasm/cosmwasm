@@ -21,6 +21,7 @@ use crate::query::{
 use crate::results::{ContractResult, Empty, SystemResult};
 use crate::serde::{from_slice, to_binary};
 use crate::storage::MemoryStorage;
+use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
 
@@ -189,8 +190,7 @@ pub fn mock_env() -> Env {
     Env {
         block: BlockInfo {
             height: 12_345,
-            time: 1_571_797_419,
-            time_nanos: 879305533,
+            time: Timestamp::from_nanos(1_571_797_419_879_305_533),
             chain_id: "cosmos-testnet-14002".to_string(),
         },
         contract: ContractInfo {

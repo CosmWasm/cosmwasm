@@ -1,4 +1,4 @@
-use cosmwasm_std::{Coin, CosmosMsg, Empty};
+use cosmwasm_std::{Coin, CosmosMsg, Empty, Timestamp};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -62,7 +62,7 @@ pub struct ListAccountsResponse {
 pub struct AccountInfo {
     pub channel_id: String,
     /// last block balance was updated (0 is never)
-    pub last_update_time: u64,
+    pub last_update_time: Timestamp,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<String>,
@@ -83,7 +83,7 @@ impl AccountInfo {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct AccountResponse {
     /// last block balance was updated (0 is never)
-    pub last_update_time: u64,
+    pub last_update_time: Timestamp,
     /// in normal cases, it should be set, but there is a delay between binding
     /// the channel and making a query and in that time it is empty
     pub remote_addr: Option<String>,

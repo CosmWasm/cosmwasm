@@ -132,7 +132,7 @@ fn proper_handshake_flow() {
     let acct = get_account(&mut deps, channel_id);
     assert!(acct.remote_addr.is_none());
     assert!(acct.remote_balance.is_empty());
-    assert_eq!(0, acct.last_update_time);
+    assert_eq!(0, acct.last_update_time.nanos());
 
     // now get feedback from WhoAmI packet
     let remote_addr = "account-789";
@@ -142,7 +142,7 @@ fn proper_handshake_flow() {
     let acct = get_account(&mut deps, channel_id);
     assert_eq!(acct.remote_addr.unwrap(), remote_addr);
     assert!(acct.remote_balance.is_empty());
-    assert_eq!(0, acct.last_update_time);
+    assert_eq!(0, acct.last_update_time.nanos());
 }
 
 #[test]
