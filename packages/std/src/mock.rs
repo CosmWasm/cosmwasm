@@ -243,11 +243,11 @@ pub fn mock_ibc_packet_recv<T: Serialize>(my_channel_id: &str, data: &T) -> StdR
             channel_id: my_channel_id.into(),
         },
         sequence: 27,
-        timeout_block: Some(IbcTimeoutBlock {
+        timeout: IbcTimeoutBlock {
             revision: 1,
             height: 12345678,
-        }),
-        timeout_timestamp: None,
+        }
+        .into(),
     })
 }
 
@@ -267,11 +267,11 @@ pub fn mock_ibc_packet_ack<T: Serialize>(my_channel_id: &str, data: &T) -> StdRe
             channel_id: "channel-1234".to_string(),
         },
         sequence: 29,
-        timeout_block: Some(IbcTimeoutBlock {
+        timeout: IbcTimeoutBlock {
             revision: 1,
             height: 432332552,
-        }),
-        timeout_timestamp: None,
+        }
+        .into(),
     })
 }
 

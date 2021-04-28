@@ -20,7 +20,7 @@
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
 use cosmwasm_std::{
     attr, coin, coins, to_binary, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcBasicResponse,
-    IbcMsg, IbcOrder, IbcTimeout, Response,
+    IbcMsg, IbcOrder, Response,
 };
 use cosmwasm_vm::testing::{
     execute, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, instantiate, mock_env,
@@ -239,7 +239,8 @@ fn send_remote_funds() {
             assert_eq!(transfer_channel_id, channel_id.as_str());
             assert_eq!(remote_addr, to_address.as_str());
             assert_eq!(&coin(12344, "utrgd"), amount);
-            assert!(matches!(timeout, IbcTimeout::Timestamp { .. }));
+            assert!(timeout.block().is_none());
+            assert!(timeout.timestamp().is_some());
         }
         o => panic!("unexpected message: {:?}", o),
     }
