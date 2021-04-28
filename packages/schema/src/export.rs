@@ -20,13 +20,13 @@ pub fn export_schema(schema: &RootSchema, out_dir: &Path) {
 
 // use this if you want to override the auto-detected name of the object.
 // very useful when creating an alias for a type-alias.
-pub fn export_schema_with_title(schema: &mut RootSchema, out_dir: &Path, title: &str) {
-    // set the title explicitly on the schemas metadata
-    let metadata = &mut schema.schema.metadata;
-    if let Some(data) = metadata {
-        data.title = Some(title.to_string());
+pub fn export_schema_with_title(schema: &RootSchema, out_dir: &Path, title: &str) {
+    let mut schema = schema.clone();
+    // set the title explicitly on the schema's metadata
+    if let Some(metadata) = &mut schema.schema.metadata {
+        metadata.title = Some(title.to_string());
     }
-    write_schema(schema, out_dir, &title);
+    write_schema(&schema, out_dir, &title);
 }
 
 /// Writes schema to file. Overwrites existing file.
