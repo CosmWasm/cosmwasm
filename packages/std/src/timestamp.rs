@@ -1,18 +1,40 @@
+use schemars::JsonSchema;
+
+use crate::math::Uint64;
+
 /// A point in time in nanosecond precision.
 ///
 /// This type cannot represent any time before the UNIX epoch because both fields are unsigned.
-pub struct Timestamp {
-    /// Absolute time in seconds since the UNIX epoch (00:00:00 on 1970-01-01 UTC).
-    pub seconds: u64,
-    /// The fractional part time in nanoseconds since `time` (0 to 999999999).
-    pub nanos: u64,
-}
+#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+pub struct Timestamp(Uint64);
 
 impl Timestamp {
     pub fn plus_seconds(&self, addition: u64) -> Timestamp {
-        Timestamp {
-            seconds: self.seconds + addition,
-            nanos: self.nanos,
-        }
+        let nanos = self.0 + Uint64::from(addition);
+        Timestamp(nanos)
+    }
+}
+
+impl From<Uint64> for Timestamp {
+    fn from(original: Uint64) -> Self {
+        Self(original)
+    }
+}
+
+impl From<u64> for Timestamp {
+    fn from(original: u64) -> Self {
+        Self(original.into())
+    }
+}
+
+impl From<Timestamp> for Uint64 {
+    fn from(original: Timestamp) -> Uint64 {
+        original.0
+    }
+}
+
+impl From<Timestamp> for u64 {
+    fn from(original: Timestamp) -> u64 {
+        original.0.u64()
     }
 }

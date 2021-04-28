@@ -71,7 +71,7 @@ pub enum IbcTimeout {
 
 impl From<Timestamp> for IbcTimeout {
     fn from(time: Timestamp) -> IbcTimeout {
-        IbcTimeout::TimestampNanos(time.seconds * 1_000_000_000 + time.nanos)
+        IbcTimeout::TimestampNanos(time.into())
     }
 }
 
