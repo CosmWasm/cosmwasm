@@ -32,6 +32,13 @@ pub struct Uint128(
 );
 
 impl Uint128 {
+    /// Creates a Uint128(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
+    pub const fn new(value: u128) -> Self {
+        Uint128(value)
+    }
+
     /// Creates a Uint128(0)
     pub const fn zero() -> Self {
         Uint128(0)

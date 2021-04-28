@@ -27,6 +27,13 @@ use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdErro
 pub struct Uint64(#[schemars(with = "String")] u64);
 
 impl Uint64 {
+    /// Creates a Uint64(value).
+    ///
+    /// This method is less flexible than `from` but can be called in a const context.
+    pub const fn new(value: u64) -> Self {
+        Uint64(value)
+    }
+
     /// Creates a Uint64(0)
     pub const fn zero() -> Self {
         Uint64(0)
