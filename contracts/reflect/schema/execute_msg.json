@@ -431,9 +431,10 @@
       ]
     },
     "IbcTimeout": {
+      "description": "In IBC each package must set at least one type of timeout: the timestamp or the block height. Using this rather complex enum instead of two timeout fields we ensure that at least one timeout is set.",
       "anyOf": [
         {
-          "description": "block timestamp (nanoseconds since UNIX epoch) after which the packet times out (measured on the remote chain) See https://golang.org/pkg/time/#Time.UnixNano",
+          "description": "Block timestamp (nanoseconds since UNIX epoch) after which the packet times out (measured on the remote chain).",
           "type": "object",
           "required": [
             "timestamp"
@@ -446,7 +447,7 @@
           "additionalProperties": false
         },
         {
-          "description": "block after which the packet times out (measured on remote chain)",
+          "description": "Block after which the packet times out (measured on remote chain).",
           "type": "object",
           "required": [
             "block"
@@ -459,6 +460,7 @@
           "additionalProperties": false
         },
         {
+          "description": "Use this to set both timestamp and block timeout. The package then times out once the first of both timeouts is hit.",
           "type": "object",
           "required": [
             "both"

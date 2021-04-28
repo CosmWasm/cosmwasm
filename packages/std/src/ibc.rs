@@ -54,15 +54,19 @@ pub struct IbcEndpoint {
     pub channel_id: String,
 }
 
+/// In IBC each package must set at least one type of timeout:
+/// the timestamp or the block height. Using this rather complex enum instead of
+/// two timeout fields we ensure that at least one timeout is set.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcTimeout {
-    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out
-    /// (measured on the remote chain)
-    /// See https://golang.org/pkg/time/#Time.UnixNano
+    /// Block timestamp (nanoseconds since UNIX epoch) after which the packet times out
+    /// (measured on the remote chain).
     Timestamp(Timestamp),
-    /// block after which the packet times out (measured on remote chain)
+    /// Block after which the packet times out (measured on remote chain).
     Block(IbcTimeoutBlock),
+    /// Use this to set both timestamp and block timeout. The package then times out once
+    /// the first of both timeouts is hit.
     Both {
         timestamp: Timestamp,
         block: IbcTimeoutBlock,
