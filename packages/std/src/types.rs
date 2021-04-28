@@ -67,10 +67,8 @@ pub struct BlockInfo {
 impl BlockInfo {
     /// Returns the block creation time as a Timestamp in nanosecond precision
     pub fn timestamp(&self) -> Timestamp {
-        Timestamp {
-            seconds: self.time,
-            nanos: self.time_nanos,
-        }
+        let nanos_since_epoch = self.time * 1_000_000_000 + self.time_nanos;
+        Timestamp::from_nanos(nanos_since_epoch)
     }
 }
 

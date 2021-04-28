@@ -445,7 +445,7 @@ mod tests {
                 assert_eq!(transfer_channel_id, channel_id.as_str());
                 assert_eq!(remote_addr, to_address.as_str());
                 assert_eq!(&coin(12344, "utrgd"), amount);
-                assert!(matches!(timeout, IbcTimeout::TimestampNanos { .. }));
+                assert!(matches!(timeout, IbcTimeout::Timestamp { .. }));
             }
             o => panic!("unexpected message: {:?}", o),
         }

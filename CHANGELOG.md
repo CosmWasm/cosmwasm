@@ -73,6 +73,11 @@ and this project adheres to
   contract (eg. multisig) to clear the admin, to prevent future migrations
   ([#900])
 - cosmwasm-std: Implement `Display for Coin` ([#901]).
+- cosmwasm-std: Create `Uint64` analogously to `Uint128` with string
+  serialization allowing the use of the full uint64 range in JSON clients that
+  use float numbers, such as JavaScript and jq.
+- cosmwasm-std: Create const functions `Uint64::new` and `Uint128::new` to
+  create instances in a const context.
 
 [#692]: https://github.com/CosmWasm/cosmwasm/issues/692
 [#706]: https://github.com/CosmWasm/cosmwasm/pull/706

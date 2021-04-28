@@ -54,24 +54,28 @@ pub struct IbcEndpoint {
     pub channel_id: String,
 }
 
+/// In IBC each package must set at least one type of timeout:
+/// the timestamp or the block height. Using this rather complex enum instead of
+/// two timeout fields we ensure that at least one timeout is set.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum IbcTimeout {
-    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out
-    /// (measured on the remote chain)
-    /// See https://golang.org/pkg/time/#Time.UnixNano
-    TimestampNanos(u64),
-    /// block after which the packet times out (measured on remote chain)
+    /// Block timestamp (nanoseconds since UNIX epoch) after which the packet times out
+    /// (measured on the remote chain).
+    Timestamp(Timestamp),
+    /// Block after which the packet times out (measured on remote chain).
     Block(IbcTimeoutBlock),
+    /// Use this to set both timestamp and block timeout. The package then times out once
+    /// the first of both timeouts is hit.
     Both {
-        timestamp_nanos: u64,
+        timestamp: Timestamp,
         block: IbcTimeoutBlock,
     },
 }
 
 impl From<Timestamp> for IbcTimeout {
-    fn from(time: Timestamp) -> IbcTimeout {
-        IbcTimeout::TimestampNanos(time.seconds * 1_000_000_000 + time.nanos)
+    fn from(timestamp: Timestamp) -> IbcTimeout {
+        IbcTimeout::Timestamp(timestamp)
     }
 }
 
@@ -253,10 +257,10 @@ mod tests {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
-            timeout: IbcTimeout::TimestampNanos(1234567890),
+            timeout: IbcTimeout::Timestamp(Timestamp::from_nanos(1234567890)),
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp_nanos":1234567890}}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp":"1234567890"}}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 
