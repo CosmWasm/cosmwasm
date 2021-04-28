@@ -196,6 +196,8 @@ and this project adheres to
   `StakingQuery::Validator`, `ValidatorResponse` and
   `QuerierWrapper::query_validator` to allow querying a single validator.
   ([#879])
+- cosmwasm-std: The block time in `BlockInfo::time` is now a `Timestamp`.
+  `BlockInfo::time_nanos` was removed.
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697

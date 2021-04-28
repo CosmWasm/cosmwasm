@@ -323,6 +323,14 @@ major releases of `cosmwasm`. Note that you can also view the
 
   [distribution docs]: https://docs.cosmos.network/v0.42/modules/distribution/
 
+- The block time in `env.block.time` is now a `Timestamp` which stores
+  nanosecond precision. `env.block.time_nanos` was removed. If you need the
+  compnents as before, use
+  ```rust
+  let seconds = env.block.time.nanos() / 1_000_000_000;
+  let nsecs = env.block.time.nanos() % 1_000_000_000;
+  ```
+
 ## 0.12 -> 0.13
 
 - The minimum Rust supported version for 0.13 is 1.47.0. Verify your Rust
