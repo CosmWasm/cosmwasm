@@ -61,13 +61,6 @@ pub struct BlockInfo {
     pub chain_id: String,
 }
 
-impl BlockInfo {
-    /// Returns the block creation time as a Timestamp in nanosecond precision
-    pub fn timestamp(&self) -> Timestamp {
-        self.time
-    }
-}
-
 /// Additional information from [MsgInstantiateContract] and [MsgExecuteContract], which is passed
 /// along with the contract execution message into the `instantiate` and `execute` entry points.
 ///
