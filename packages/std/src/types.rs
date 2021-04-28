@@ -68,7 +68,7 @@ impl BlockInfo {
     /// Returns the block creation time as a Timestamp in nanosecond precision
     pub fn timestamp(&self) -> Timestamp {
         let nanos_since_epoch = self.time * 1_000_000_000 + self.time_nanos;
-        Timestamp::from(nanos_since_epoch)
+        Timestamp::from_nanos(nanos_since_epoch)
     }
 }
 

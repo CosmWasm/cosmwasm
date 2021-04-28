@@ -253,7 +253,7 @@ mod tests {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
-            timeout: IbcTimeout::Timestamp(Timestamp::from(1234567890)),
+            timeout: IbcTimeout::Timestamp(Timestamp::from_nanos(1234567890)),
         };
         let encoded = to_string(&msg).unwrap();
         let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp":"1234567890"}}}"#;

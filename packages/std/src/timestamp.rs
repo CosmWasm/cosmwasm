@@ -12,32 +12,39 @@ use crate::math::Uint64;
 pub struct Timestamp(Uint64);
 
 impl Timestamp {
+    /// Creates a timestamp from nanoseconds since epoch
+    pub const fn from_nanos(nanos_since_epoch: u64) -> Self {
+        Timestamp(Uint64::new(nanos_since_epoch))
+    }
+
+    /// Creates a timestamp from seconds since epoch
+    pub const fn from_seconds(seconds_since_epoch: u64) -> Self {
+        Timestamp(Uint64::new(seconds_since_epoch * 1_000_000_000))
+    }
+
     pub fn plus_seconds(&self, addition: u64) -> Timestamp {
         let nanos = self.0 + Uint64::from(addition);
         Timestamp(nanos)
     }
 }
 
-impl From<Uint64> for Timestamp {
-    fn from(original: Uint64) -> Self {
-        Self(original)
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl From<u64> for Timestamp {
-    fn from(original: u64) -> Self {
-        Self(original.into())
+    #[test]
+    fn timestamp_from_nanos() {
+        let t = Timestamp::from_nanos(123);
+        assert_eq!(t.0.u64(), 123);
+        let t = Timestamp::from_nanos(0);
+        assert_eq!(t.0.u64(), 0);
     }
-}
 
-impl From<Timestamp> for Uint64 {
-    fn from(original: Timestamp) -> Uint64 {
-        original.0
-    }
-}
-
-impl From<Timestamp> for u64 {
-    fn from(original: Timestamp) -> u64 {
-        original.0.u64()
+    #[test]
+    fn timestamp_from_seconds() {
+        let t = Timestamp::from_seconds(123);
+        assert_eq!(t.0.u64(), 123_000_000_000);
+        let t = Timestamp::from_seconds(0);
+        assert_eq!(t.0.u64(), 0);
     }
 }
