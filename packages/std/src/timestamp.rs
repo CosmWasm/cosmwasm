@@ -5,7 +5,7 @@ use crate::math::Uint64;
 
 /// A point in time in nanosecond precision.
 ///
-/// This type cannot represent any time before the UNIX epoch because both fields are unsigned.
+/// This type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.
 #[derive(
     Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
 )]
