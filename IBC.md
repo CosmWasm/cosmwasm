@@ -315,7 +315,7 @@ pub struct IbcPacket {
     /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
     /// See https://golang.org/pkg/time/#Time.UnixNano
     /// at least one of timeout_block, timeout_timestamp is required
-    pub timeout_timestamp: Option<u64>,
+    pub timeout_timestamp: Option<Timestamp>,
 }
 ```
 
