@@ -60,18 +60,18 @@ pub enum IbcTimeout {
     /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out
     /// (measured on the remote chain)
     /// See https://golang.org/pkg/time/#Time.UnixNano
-    TimestampNanos(u64),
+    Timestamp(Timestamp),
     /// block after which the packet times out (measured on remote chain)
     Block(IbcTimeoutBlock),
     Both {
-        timestamp_nanos: u64,
+        timestamp: Timestamp,
         block: IbcTimeoutBlock,
     },
 }
 
 impl From<Timestamp> for IbcTimeout {
-    fn from(time: Timestamp) -> IbcTimeout {
-        IbcTimeout::TimestampNanos(time.into())
+    fn from(timestamp: Timestamp) -> IbcTimeout {
+        IbcTimeout::Timestamp(timestamp)
     }
 }
 
@@ -253,10 +253,10 @@ mod tests {
             channel_id: "channel-123".to_string(),
             to_address: "my-special-addr".into(),
             amount: Coin::new(12345678, "uatom"),
-            timeout: IbcTimeout::TimestampNanos(1234567890),
+            timeout: IbcTimeout::Timestamp(Timestamp::from(1234567890)),
         };
         let encoded = to_string(&msg).unwrap();
-        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp_nanos":1234567890}}}"#;
+        let expected = r#"{"transfer":{"channel_id":"channel-123","to_address":"my-special-addr","amount":{"denom":"uatom","amount":"12345678"},"timeout":{"timestamp":"1234567890"}}}"#;
         assert_eq!(encoded.as_str(), expected);
     }
 

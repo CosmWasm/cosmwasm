@@ -1,11 +1,14 @@
 use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
 
 use crate::math::Uint64;
 
 /// A point in time in nanosecond precision.
 ///
 /// This type cannot represent any time before the UNIX epoch because both fields are unsigned.
-#[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
+#[derive(
+    Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
+)]
 pub struct Timestamp(Uint64);
 
 impl Timestamp {
