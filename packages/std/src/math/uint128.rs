@@ -7,7 +7,9 @@ use std::ops;
 
 use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdError};
 
-//*** Uint128 ***/
+/// A thin wrapper around u128 that is using strings for JSON encoding/decoding,
+/// such that the full u128 range can be used for clients that convert JSON numbers to floats,
+/// like JavaScript and jq.
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
 pub struct Uint128(#[schemars(with = "String")] pub u128);
 
@@ -142,7 +144,7 @@ impl TryFrom<&str> for Uint128 {
     fn try_from(val: &str) -> Result<Self, Self::Error> {
         match val.parse::<u128>() {
             Ok(u) => Ok(Uint128(u)),
-            Err(e) => Err(StdError::generic_err(format!("Parsing coin: {}", e))),
+            Err(e) => Err(StdError::generic_err(format!("Parsing u128: {}", e))),
         }
     }
 }
@@ -211,8 +213,8 @@ impl Uint128 {
     }
 }
 
-/// Serializes as a base64 string
 impl Serialize for Uint128 {
+    /// Serializes as an integer string using base 10
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: ser::Serializer,
@@ -221,8 +223,8 @@ impl Serialize for Uint128 {
     }
 }
 
-/// Deserializes as a base64 string
 impl<'de> Deserialize<'de> for Uint128 {
+    /// Deserialized from an integer string using base 10
     fn deserialize<D>(deserializer: D) -> Result<Uint128, D::Error>
     where
         D: Deserializer<'de>,
@@ -380,7 +382,7 @@ mod tests {
     }
 
     #[test]
-    fn u128_multiply_ratio_works() {
+    fn uint128_multiply_ratio_works() {
         let base = Uint128(500);
 
         // factor 1/1
@@ -403,7 +405,7 @@ mod tests {
 
     #[test]
     #[should_panic(expected = "Denominator must not be zero")]
-    fn u128_multiply_ratio_panics_for_zero_denominator() {
+    fn uint128_multiply_ratio_panics_for_zero_denominator() {
         Uint128(500).multiply_ratio(1u128, 0u128);
     }
 
