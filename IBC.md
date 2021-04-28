@@ -300,13 +300,7 @@ pub struct IbcPacket {
     pub dest: IbcEndpoint,
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
-    /// block height after which the packet times out.
-    /// at least one of timeout_block, timeout_timestamp is required
-    pub timeout_block: Option<IbcTimeoutBlock>,
-    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
-    /// See https://golang.org/pkg/time/#Time.UnixNano
-    /// at least one of timeout_block, timeout_timestamp is required
-    pub timeout_timestamp: Option<Timestamp>,
+    pub timeout: IbcTimeout,
 }
 ```
 

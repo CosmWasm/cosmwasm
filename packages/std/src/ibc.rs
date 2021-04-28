@@ -102,6 +102,12 @@ impl From<Timestamp> for IbcTimeout {
     }
 }
 
+impl From<IbcTimeoutBlock> for IbcTimeout {
+    fn from(original: IbcTimeoutBlock) -> IbcTimeout {
+        IbcTimeout::with_block(original)
+    }
+}
+
 // These are various messages used in the callbacks
 
 /// IbcChannel defines all information on a channel.
@@ -175,15 +181,7 @@ pub struct IbcPacket {
     pub dest: IbcEndpoint,
     /// The sequence number of the packet on the given channel
     pub sequence: u64,
-    // TODO: use IbcTimeout here as well? I doubt this is easier to parse and this
-    // is data coming from SDK -> contract
-    /// block height after which the packet times out.
-    /// at least one of timeout_block, timeout_timestamp is required
-    pub timeout_block: Option<IbcTimeoutBlock>,
-    /// block timestamp (nanoseconds since UNIX epoch) after which the packet times out.
-    /// See https://golang.org/pkg/time/#Time.UnixNano
-    /// at least one of timeout_block, timeout_timestamp is required
-    pub timeout_timestamp: Option<Timestamp>,
+    pub timeout: IbcTimeout,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -362,13 +360,15 @@ mod tests {
                 channel_id: "chan33".into(),
             },
             sequence: 27,
-            timeout_block: Some(IbcTimeoutBlock {
-                revision: 1,
-                height: 12345678,
-            }),
-            timeout_timestamp: Some(Timestamp::from_nanos(4611686018427387904)),
+            timeout: IbcTimeout::with_both(
+                IbcTimeoutBlock {
+                    revision: 1,
+                    height: 12345678,
+                },
+                Timestamp::from_nanos(4611686018427387904),
+            ),
         };
-        let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout_block":{"revision":1,"height":12345678},"timeout_timestamp":"4611686018427387904"}"#;
+        let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout":{"block":{"revision":1,"height":12345678},"timestamp":"4611686018427387904"}}"#;
         assert_eq!(to_string(&packet).unwrap(), expected);
 
         let no_timestamp = IbcPacket {
@@ -382,13 +382,12 @@ mod tests {
                 channel_id: "chan33".into(),
             },
             sequence: 27,
-            timeout_block: Some(IbcTimeoutBlock {
+            timeout: IbcTimeout::with_block(IbcTimeoutBlock {
                 revision: 1,
                 height: 12345678,
             }),
-            timeout_timestamp: None,
         };
-        let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout_block":{"revision":1,"height":12345678},"timeout_timestamp":null}"#;
+        let expected = r#"{"data":"Zm9v","src":{"port_id":"their-port","channel_id":"channel-1234"},"dest":{"port_id":"our-port","channel_id":"chan33"},"sequence":27,"timeout":{"block":{"revision":1,"height":12345678},"timestamp":null}}"#;
         assert_eq!(to_string(&no_timestamp).unwrap(), expected);
     }
 }
