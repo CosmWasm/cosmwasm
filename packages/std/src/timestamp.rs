@@ -23,7 +23,7 @@ impl Timestamp {
     }
 
     pub fn plus_seconds(&self, addition: u64) -> Timestamp {
-        let nanos = self.0 + Uint64::from(addition);
+        let nanos = self.0 + Uint64::from(addition * 1_000_000_000);
         Timestamp(nanos)
     }
 }
@@ -46,5 +46,13 @@ mod tests {
         assert_eq!(t.0.u64(), 123_000_000_000);
         let t = Timestamp::from_seconds(0);
         assert_eq!(t.0.u64(), 0);
+    }
+
+    #[test]
+    fn timestamp_plus_seconds() {
+        let sum = Timestamp::from_nanos(123).plus_seconds(42);
+        assert_eq!(sum.0.u64(), 42_000_000_123);
+        let sum = Timestamp::from_nanos(123).plus_seconds(0);
+        assert_eq!(sum.0.u64(), 123);
     }
 }
