@@ -40,7 +40,7 @@ impl Uint64 {
     }
 
     /// Returns a copy of the internal data
-    pub fn u64(&self) -> u64 {
+    pub const fn u64(&self) -> u64 {
         self.0
     }
 

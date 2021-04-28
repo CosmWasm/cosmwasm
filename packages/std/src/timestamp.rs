@@ -22,8 +22,8 @@ impl Timestamp {
         Timestamp(Uint64::new(seconds_since_epoch * 1_000_000_000))
     }
 
-    pub fn plus_seconds(&self, addition: u64) -> Timestamp {
-        let nanos = self.0 + Uint64::from(addition * 1_000_000_000);
+    pub const fn plus_seconds(&self, addition: u64) -> Timestamp {
+        let nanos = Uint64::new(self.0.u64() + addition * 1_000_000_000);
         Timestamp(nanos)
     }
 }
