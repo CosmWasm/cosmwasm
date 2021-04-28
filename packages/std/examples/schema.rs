@@ -11,5 +11,5 @@ fn main() {
     remove_schemas(&out_dir).unwrap();
 
     export_schema(&schema_for!(Timestamp), &out_dir);
-    export_schema_with_title(&mut schema_for!(CosmosMsg), &out_dir, "CosmosMsg");
+    export_schema_with_title(&schema_for!(CosmosMsg), &out_dir, "CosmosMsg");
 }

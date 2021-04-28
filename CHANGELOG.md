@@ -196,6 +196,8 @@ and this project adheres to
   `StakingQuery::Validator`, `ValidatorResponse` and
   `QuerierWrapper::query_validator` to allow querying a single validator.
   ([#879])
+- cosmwasm-schema: Make first argument non-mutable in `export_schema_with_title`
+  for consistency with `export_schema`.
 - cosmwasm-std: The block time in `BlockInfo::time` is now a `Timestamp`.
   `BlockInfo::time_nanos` was removed.
 
