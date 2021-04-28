@@ -196,6 +196,8 @@ and this project adheres to
   `StakingQuery::Validator`, `ValidatorResponse` and
   `QuerierWrapper::query_validator` to allow querying a single validator.
   ([#879])
+- cosmwasm-schema: Make first argument non-mutable in `export_schema_with_title`
+  for consistency with `export_schema`.
 
 [#696]: https://github.com/CosmWasm/cosmwasm/issues/696
 [#697]: https://github.com/CosmWasm/cosmwasm/issues/697
