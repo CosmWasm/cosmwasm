@@ -265,6 +265,30 @@ mod tests {
     }
 
     #[test]
+    fn ibc_timeout_serialize() {
+        let timestamp = IbcTimeout::Timestamp(Timestamp::from_nanos(684816844));
+        let expected = r#"{"timestamp":"684816844"}"#;
+        assert_eq!(to_string(&timestamp).unwrap(), expected);
+
+        let block = IbcTimeout::Block(IbcTimeoutBlock {
+            revision: 12,
+            height: 129,
+        });
+        let expected = r#"{"block":{"revision":12,"height":129}}"#;
+        assert_eq!(to_string(&block).unwrap(), expected);
+
+        let both = IbcTimeout::Both {
+            timestamp: Timestamp::from_nanos(684816844),
+            block: IbcTimeoutBlock {
+                revision: 12,
+                height: 129,
+            },
+        };
+        let expected = r#"{"both":{"timestamp":"684816844","block":{"revision":12,"height":129}}}"#;
+        assert_eq!(to_string(&both).unwrap(), expected);
+    }
+
+    #[test]
     fn ibc_timeout_block_ord() {
         let epoch1a = IbcTimeoutBlock {
             revision: 1,
