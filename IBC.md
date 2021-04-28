@@ -266,8 +266,8 @@ pub fn ibc_packet_receive(
 ```
 
 This is a very special entry point as it has a unique workflow. (Please see the
-[Acknowledgement Processing section](#Acknowledgement-Processing) below to
-understand it fully).
+[Acknowledging Errors section](#Acknowledging-Errors) below to understand it
+fully).
 
 Also note the different return response here (`IbcReceiveResponse` rather than
 `IbcBasicResponse`). This is because it has an extra field
@@ -277,15 +277,23 @@ by the sending chain.
 
 The
 [`IbcPacket` structure](https://github.com/CosmWasm/cosmwasm/blob/v0.14.0-beta4/packages/std/src/ibc.rs#L129-L146)
-contains all information needed to process the receipt. You can generally ignore
-timeout (this entry point is only called if it hasn't yet timed out) and
-sequence (which is used by the IBC framework to avoid duplicates). I generally
-use `dest.channel_id` like `info.sender` to authenticate the packet, and parse
-`data` into a `PacketMsg` structure, using the same encoding rules as we
-discussed in the last section.
+contains all information needed to process the receipt. This info has already
+been verified by the core IBC modules via light client and merkle proofs. It
+guarantees all metadata in the `IbcPacket` structure is valid, and the `data`
+field was written on the remote chain. Furthermore, it guarantees that the
+packet is processed at most once (zero times if it times out). Fields like
+`dest.channel_id` and `sequence` have a similar trust level to `MessageInfo`,
+which we use to authorize normal transactions. The `data` field should be
+treated like the `ExecuteMsg` data, which is only as valid as the entity that
+signed it.
 
-After that you can process `PacketMsg` more or less like an `ExecuteMsg`,
-including calling into other contracts.
+You can generally ignore `timeout_*` (this entry point is only called if it
+hasn't yet timed out) and `sequence` (which is used by the IBC framework to
+avoid duplicates). I generally use `dest.channel_id` like `info.sender` to
+authenticate the packet, and parse `data` into a `PacketMsg` structure, using
+the same encoding rules as we discussed in the last section. After that you can
+process `PacketMsg` more or less like an `ExecuteMsg`, including calling into
+other contracts.
 
 ```rust
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
@@ -334,8 +342,8 @@ After quite some
 we struggled to map this idea to the CosmWasm model. However, we also discovered
 a deep similarity between these requirements and the
 [submessage semantics](./SEMANTICS.md#submessages). It just requires some
-careful coding on the contract developer's side to new throw errors. This
-produced 3 suggests on how to handle errors and rollbacks _inside
+careful coding on the contract developer's side to not throw errors. This
+produced 3 suggestions on how to handle errors and rollbacks _inside
 `ibc_packet_receive`_
 
 1. If the message doesn't modify any state directly, you can simply put the
@@ -343,7 +351,7 @@ produced 3 suggests on how to handle errors and rollbacks _inside
    acknowledgements. This would look something like the
    [main dispatch loop in `ibc-reflect`](https://github.com/CosmWasm/cosmwasm/blob/cd784cd1148ee395574f3e564f102d0d7b5adcc3/contracts/ibc-reflect/src/contract.rs#L217-L248):
 
-```rust
+   ```rust
     (|| {
         // which local channel did this packet come on
         let caller = packet.dest.channel_id;
@@ -365,7 +373,7 @@ produced 3 suggests on how to handle errors and rollbacks _inside
             attributes: vec![],
         })
     })
-```
+   ```
 
 2. If we modify state with an external call, we need to wrap it in a
    `submessage` and capture the error. This approach requires we use _exactly
@@ -377,52 +385,52 @@ produced 3 suggests on how to handle errors and rollbacks _inside
    [bottom of reply section](./SEMANTICS.md#handling-the-reply)). You can see a
    similar example in how
    [`ibc-reflect` handles `receive_dispatch`](https://github.com/CosmWasm/cosmwasm/blob/eebb9395ccf315320e3f2fcc526ee76788f89174/contracts/ibc-reflect/src/contract.rs#L307-L336).
-   Note how we use a unique reply id for this and use that to catch any
+   Note how we use a unique reply ID for this and use that to catch any
    execution failure and return an error acknowledgement instead:
 
-```rust
-fn receive_dispatch(
-    deps: DepsMut,
-    caller: String,
-    msgs: Vec<CosmosMsg>,
-) -> StdResult<IbcReceiveResponse> {
-    // what is the reflect contract here
-    let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
+   ```rust
+   fn receive_dispatch(
+       deps: DepsMut,
+       caller: String,
+       msgs: Vec<CosmosMsg>,
+   ) -> StdResult<IbcReceiveResponse> {
+       // what is the reflect contract here
+       let reflect_addr = accounts(deps.storage).load(caller.as_bytes())?;
 
-    // let them know we're fine
-    let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
-    // create the message to re-dispatch to the reflect contract
-    let reflect_msg = ReflectExecuteMsg::ReflectMsg { msgs };
-    let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
+       // let them know we're fine
+       let acknowledgement = to_binary(&AcknowledgementMsg::<DispatchResponse>::Ok(()))?;
+       // create the message to re-dispatch to the reflect contract
+       let reflect_msg = ReflectExecuteMsg::ReflectMsg { msgs };
+       let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
 
-    // we wrap it in a submessage to properly report errors
-    let sub_msg = SubMsg {
-        id: RECEIVE_DISPATCH_ID,
-        msg: wasm_msg.into(),
-        gas_limit: None,
-        reply_on: ReplyOn::Error,
-    };
+       // we wrap it in a submessage to properly report errors
+       let sub_msg = SubMsg {
+           id: RECEIVE_DISPATCH_ID,
+           msg: wasm_msg.into(),
+           gas_limit: None,
+           reply_on: ReplyOn::Error,
+       };
 
-    Ok(IbcReceiveResponse {
-        acknowledgement,
-        submessages: vec![sub_msg],
-        messages: vec![],
-        attributes: vec![attr("action", "receive_dispatch")],
-    })
-}
-
-#[entry_point]
-pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
-   match (reply.id, reply.result) {
-      (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => Ok(Response {
-         data: Some(encode_ibc_error(err)),
-         ..Response::default()
-      }),
-      (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
-      _ => Err(StdError::generic_err("invalid reply id")),
+       Ok(IbcReceiveResponse {
+           acknowledgement,
+           submessages: vec![sub_msg],
+           messages: vec![],
+           attributes: vec![attr("action", "receive_dispatch")],
+       })
    }
-}
-```
+
+   #[entry_point]
+   pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+      match (reply.id, reply.result) {
+         (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => Ok(Response {
+            data: Some(encode_ibc_error(err)),
+            ..Response::default()
+         }),
+         (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
+         _ => Err(StdError::generic_err("invalid reply id or result")),
+      }
+   }
+   ```
 
 3. For a more complex case, where we are modifying local state and possibly
    sending multiple messages, we need to do a self-call via submessages. What I
@@ -441,22 +449,22 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
    pieces we already have. For clarity, the `reply` statement should look
    something like:
 
-```rust
-#[entry_point]
-pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
-    if reply.id != DO_IBC_RECEIVE_ID {
-        return Err(StdError::generic_err("invalid reply id"));
-    }
-    let data = match reply.result {
-        ContractResult::Ok(response) => response.data,
-        ContractResult::Err(err) => Some(encode_ibc_error(err)),
-    };
-    Ok(Response {
-        data,
-        ..Response::default()
-    })
-}
-```
+   ```rust
+   #[entry_point]
+   pub fn reply(_deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
+       if reply.id != DO_IBC_RECEIVE_ID {
+           return Err(StdError::generic_err("invalid reply id"));
+       }
+       let data = match reply.result {
+           ContractResult::Ok(response) => response.data,
+           ContractResult::Err(err) => Some(encode_ibc_error(err)),
+       };
+       Ok(Response {
+           data,
+           ..Response::default()
+       })
+   }
+   ```
 
 ##### Standard Acknowledgement Envelope
 

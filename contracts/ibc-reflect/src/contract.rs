@@ -45,7 +45,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
             ..Response::default()
         }),
         (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
-        _ => Err(StdError::generic_err("invalid reply id")),
+        _ => Err(StdError::generic_err("invalid reply id or result")),
     }
 }
 
