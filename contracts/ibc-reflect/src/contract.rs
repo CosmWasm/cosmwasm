@@ -1,8 +1,8 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, wasm_execute, wasm_instantiate, BankMsg, Binary,
-    ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement,
-    IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order,
-    QueryResponse, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, SubcallResponse,
+    attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
+    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, ReplyOn,
+    Response, StdError, StdResult, SubMsg, SubcallResponse, WasmMsg,
 };
 
 use crate::msg::{
@@ -160,9 +160,13 @@ pub fn ibc_channel_connect(
     let cfg = config(deps.storage).load()?;
     let chan_id = channel.endpoint.channel_id;
 
-    let label = format!("ibc-reflect-{}", &chan_id);
-    let msg = wasm_instantiate(cfg.reflect_code_id, b"{}", vec![], label)?;
-
+    let msg = WasmMsg::Instantiate {
+        admin: None,
+        code_id: cfg.reflect_code_id,
+        msg: b"{}".into(),
+        send: vec![],
+        label: format!("ibc-reflect-{}", &chan_id),
+    };
     let sub_msg = SubMsg {
         id: INIT_CALLBACK_ID,
         msg: msg.into(),

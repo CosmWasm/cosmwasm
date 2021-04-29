@@ -17,9 +17,7 @@ pub fn instantiate(
     info: MessageInfo,
     _msg: InstantiateMsg,
 ) -> StdResult<Response<CustomMsg>> {
-    let state = State {
-        owner: info.sender.clone(),
-    };
+    let state = State { owner: info.sender };
     config(deps.storage).save(&state)?;
     Ok(Response::default())
 }
