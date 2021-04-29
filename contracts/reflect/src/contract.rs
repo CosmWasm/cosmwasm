@@ -1,41 +1,27 @@
 use cosmwasm_std::{
     attr, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
     MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
-    SystemResult, WasmMsg,
+    SystemResult,
 };
 
 use crate::errors::ReflectError;
 use crate::msg::{
-    CallbackMsg, CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg,
-    OwnerResponse, QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
+    CapitalizedResponse, ChainResponse, CustomMsg, ExecuteMsg, InstantiateMsg, OwnerResponse,
+    QueryMsg, RawResponse, SpecialQuery, SpecialResponse,
 };
 use crate::state::{config, config_read, replies, replies_read, State};
 
 pub fn instantiate(
     deps: DepsMut,
-    env: Env,
+    _env: Env,
     info: MessageInfo,
-    msg: InstantiateMsg,
+    _msg: InstantiateMsg,
 ) -> StdResult<Response<CustomMsg>> {
     let state = State {
         owner: info.sender.clone(),
     };
     config(deps.storage).save(&state)?;
-
-    let mut resp = Response::new();
-    if let Some(id) = msg.callback_id {
-        let data = CallbackMsg::InitCallback {
-            id,
-            contract_addr: env.contract.address.into(),
-        };
-        let msg = WasmMsg::Execute {
-            contract_addr: info.sender.into(),
-            msg: to_binary(&data)?,
-            send: vec![],
-        };
-        resp.add_message(msg);
-    }
-    Ok(resp)
+    Ok(Response::default())
 }
 
 pub fn execute(
@@ -202,7 +188,7 @@ mod tests {
     fn proper_instantialization() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(1000, "earth"));
 
         // we can just call .unwrap() to assert this was a success
@@ -215,49 +201,10 @@ mod tests {
     }
 
     #[test]
-    fn instantiate_with_callback() {
-        let mut deps = mock_dependencies_with_custom_querier(&[]);
-        let caller = String::from("calling-contract");
-
-        let msg = InstantiateMsg {
-            callback_id: Some("foobar".to_string()),
-        };
-        let info = mock_info(&caller, &coins(1000, "earth"));
-
-        // we can just call .unwrap() to assert this was a success
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(1, res.messages.len());
-        let msg = &res.messages[0];
-        match msg {
-            CosmosMsg::Wasm(WasmMsg::Execute {
-                contract_addr,
-                msg,
-                send,
-            }) => {
-                assert_eq!(contract_addr.as_str(), &caller);
-                let parsed: CallbackMsg = from_binary(&msg).unwrap();
-                assert_eq!(
-                    parsed,
-                    CallbackMsg::InitCallback {
-                        id: "foobar".to_string(),
-                        contract_addr: MOCK_CONTRACT_ADDR.into(),
-                    }
-                );
-                assert_eq!(0, send.len());
-            }
-            _ => panic!("expect wasm execute message"),
-        }
-
-        // it worked, let's query the state
-        let value = query_owner(deps.as_ref()).unwrap();
-        assert_eq!(value.owner, caller);
-    }
-
-    #[test]
     fn reflect() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -279,7 +226,7 @@ mod tests {
     fn reflect_requires_owner() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -303,7 +250,7 @@ mod tests {
     fn reflect_reject_empty_msgs() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -319,7 +266,7 @@ mod tests {
     fn reflect_multiple_messages() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -351,7 +298,7 @@ mod tests {
     fn change_owner_works() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -370,7 +317,7 @@ mod tests {
     fn change_owner_requires_current_owner_as_sender() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let creator = String::from("creator");
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
@@ -395,7 +342,7 @@ mod tests {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
         let creator = String::from("creator");
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info(&creator, &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -454,7 +401,7 @@ mod tests {
     fn reflect_subcall() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
@@ -486,7 +433,7 @@ mod tests {
     fn reply_and_query() {
         let mut deps = mock_dependencies_with_custom_querier(&[]);
 
-        let msg = InstantiateMsg { callback_id: None };
+        let msg = InstantiateMsg {};
         let info = mock_info("creator", &coins(2, "token"));
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
