@@ -7,8 +7,7 @@ use cosmwasm_std::{
 
 use crate::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, BalancesResponse, DispatchResponse,
-    InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
-    ReflectInstantiateMsg, WhoAmIResponse,
+    InstantiateMsg, ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, WhoAmIResponse,
 };
 use crate::state::{accounts, accounts_read, config, pending_channel, Config};
 
@@ -162,10 +161,7 @@ pub fn ibc_channel_connect(
     let chan_id = channel.endpoint.channel_id;
 
     let label = format!("ibc-reflect-{}", &chan_id);
-    let payload = ReflectInstantiateMsg {
-        callback_id: Some(chan_id.clone()),
-    };
-    let msg = wasm_instantiate(cfg.reflect_code_id, &payload, vec![], label)?;
+    let msg = wasm_instantiate(cfg.reflect_code_id, b"{}", vec![], label)?;
 
     let sub_msg = SubMsg {
         id: INIT_CALLBACK_ID,
@@ -476,7 +472,7 @@ mod tests {
         if let CosmosMsg::Wasm(WasmMsg::Instantiate {
             admin,
             code_id,
-            msg,
+            msg: _,
             send,
             label,
         }) = &res.submessages[0].msg
@@ -485,9 +481,6 @@ mod tests {
             assert_eq!(*code_id, REFLECT_ID);
             assert_eq!(send.len(), 0);
             assert!(label.contains(channel_id));
-            // parse the message - should callback with proper channel_id
-            let rmsg: ReflectInstantiateMsg = from_slice(&msg).unwrap();
-            assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
         } else {
             panic!("invalid return message: {:?}", res.messages[0]);
         }
