@@ -31,7 +31,7 @@ use cosmwasm_vm::{from_slice, Instance};
 use ibc_reflect::contract::{IBC_VERSION, RECEIVE_DISPATCH_ID};
 use ibc_reflect::msg::{
     AccountInfo, AccountResponse, AcknowledgementMsg, DispatchResponse, InstantiateMsg,
-    ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg, ReflectInstantiateMsg,
+    ListAccountsResponse, PacketMsg, QueryMsg, ReflectExecuteMsg,
 };
 
 // This line will test the output of cargo wasm
@@ -144,7 +144,7 @@ fn proper_handshake_flow() {
     if let CosmosMsg::Wasm(WasmMsg::Instantiate {
         admin,
         code_id,
-        msg,
+        msg: _,
         send,
         label,
     }) = &res.submessages[0].msg
@@ -153,9 +153,6 @@ fn proper_handshake_flow() {
         assert_eq!(*code_id, REFLECT_ID);
         assert_eq!(send.len(), 0);
         assert!(label.contains(channel_id));
-        // parse the message - should callback with proper channel_id
-        let rmsg: ReflectInstantiateMsg = from_slice(&msg).unwrap();
-        assert_eq!(rmsg.callback_id, Some(channel_id.to_string()));
     } else {
         panic!("invalid return message: {:?}", res.messages[0]);
     }

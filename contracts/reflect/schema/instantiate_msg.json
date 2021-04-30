@@ -1,14 +1,5 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "InstantiateMsg",
-  "type": "object",
-  "properties": {
-    "callback_id": {
-      "description": "if set, returns CallbackMsg::InstantiateCallback{} to the caller with this contract's address and this id",
-      "type": [
-        "string",
-        "null"
-      ]
-    }
-  }
+  "type": "object"
 }

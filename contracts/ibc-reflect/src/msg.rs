@@ -35,12 +35,6 @@ pub struct AccountInfo {
     pub channel_id: String,
 }
 
-/// This is the message we send to the reflect contract to initialize it
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct ReflectInstantiateMsg {
-    pub callback_id: Option<String>,
-}
-
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ReflectExecuteMsg {
