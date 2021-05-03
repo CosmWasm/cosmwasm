@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.14.0] - 2021-05-03
+
 ### Added
 
 - cosmwasm-crypto: Add `ed25519_batch_verify`, EdDSA ed25519 batch signature
@@ -892,7 +894,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...HEAD
+[0.14.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.14.0
 [0.13.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.0...v0.13.1
 [0.13.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.12.0...v0.13.0
