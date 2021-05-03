@@ -24,12 +24,20 @@ impl Timestamp {
     }
 
     pub const fn plus_seconds(&self, addition: u64) -> Timestamp {
-        let nanos = Uint64::new(self.0.u64() + addition * 1_000_000_000);
-        Timestamp(nanos)
+        self.plus_nanos(addition * 1_000_000_000)
     }
 
     pub const fn plus_nanos(&self, addition: u64) -> Timestamp {
         let nanos = Uint64::new(self.0.u64() + addition);
+        Timestamp(nanos)
+    }
+
+    pub const fn minus_seconds(&self, subtrahend: u64) -> Timestamp {
+        self.minus_nanos(subtrahend * 1_000_000_000)
+    }
+
+    pub const fn minus_nanos(&self, subtrahend: u64) -> Timestamp {
+        let nanos = Uint64::new(self.0.u64() - subtrahend);
         Timestamp(nanos)
     }
 
@@ -81,6 +89,38 @@ mod tests {
         assert_eq!(sum.0.u64(), 126);
         let sum = Timestamp::from_nanos(123).plus_nanos(0);
         assert_eq!(sum.0.u64(), 123);
+    }
+
+    #[test]
+    fn timestamp_minus_seconds() {
+        let earlier = Timestamp::from_seconds(123).minus_seconds(0);
+        assert_eq!(earlier.0.u64(), 123_000_000_000);
+        let earlier = Timestamp::from_seconds(123).minus_seconds(3);
+        assert_eq!(earlier.0.u64(), 120_000_000_000);
+        let earlier = Timestamp::from_seconds(123).minus_seconds(123);
+        assert_eq!(earlier.0.u64(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to subtract with overflow")]
+    fn timestamp_minus_seconds_panics_on_overflow() {
+        let _earlier = Timestamp::from_seconds(100).minus_seconds(101);
+    }
+
+    #[test]
+    fn timestamp_minus_nanos() {
+        let earlier = Timestamp::from_seconds(123).minus_nanos(0);
+        assert_eq!(earlier.0.u64(), 123_000_000_000);
+        let earlier = Timestamp::from_seconds(123).minus_nanos(3);
+        assert_eq!(earlier.0.u64(), 122_999_999_997);
+        let earlier = Timestamp::from_seconds(123).minus_nanos(123_000_000_000);
+        assert_eq!(earlier.0.u64(), 0);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to subtract with overflow")]
+    fn timestamp_minus_nanos_panics_on_overflow() {
+        let _earlier = Timestamp::from_nanos(100).minus_nanos(101);
     }
 
     #[test]
