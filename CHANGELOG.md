@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Add `Timestamp::minus_seconds` and `::minus_nanos`.
+
 ## [0.14.0] - 2021-05-03
 
 ### Added
