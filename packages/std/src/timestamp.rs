@@ -1,5 +1,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use std::fmt;
 
 use crate::math::Uint64;
 
@@ -35,6 +36,14 @@ impl Timestamp {
     /// Returns nanoseconds since epoch
     pub fn nanos(&self) -> u64 {
         self.0.u64()
+    }
+}
+
+impl fmt::Display for Timestamp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        let whole = self.nanos() / 1_000_000_000;
+        let fractional = self.nanos() % 1_000_000_000;
+        write!(f, "{}.{:09}", whole, fractional)
     }
 }
 
@@ -80,5 +89,37 @@ mod tests {
         assert_eq!(sum.nanos(), 123);
         let sum = Timestamp::from_nanos(0);
         assert_eq!(sum.nanos(), 0);
+    }
+
+    #[test]
+    fn timestamp_implements_display() {
+        let embedded = format!("Time: {}", Timestamp::from_nanos(0));
+        assert_eq!(embedded, "Time: 0.000000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(1));
+        assert_eq!(embedded, "Time: 0.000000001");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(10));
+        assert_eq!(embedded, "Time: 0.000000010");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(100));
+        assert_eq!(embedded, "Time: 0.000000100");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(1000));
+        assert_eq!(embedded, "Time: 0.000001000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(10000));
+        assert_eq!(embedded, "Time: 0.000010000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(100000));
+        assert_eq!(embedded, "Time: 0.000100000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(1000000));
+        assert_eq!(embedded, "Time: 0.001000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(1000000));
+        assert_eq!(embedded, "Time: 0.001000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(10000000));
+        assert_eq!(embedded, "Time: 0.010000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(100000000));
+        assert_eq!(embedded, "Time: 0.100000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(1000000000));
+        assert_eq!(embedded, "Time: 1.000000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(10000000000));
+        assert_eq!(embedded, "Time: 10.000000000");
+        let embedded = format!("Time: {}", Timestamp::from_nanos(100000000000));
+        assert_eq!(embedded, "Time: 100.000000000");
     }
 }
