@@ -221,7 +221,7 @@ impl Uint64 {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        // TODO: minimize rounding that takes place (using gcd algorithm)
+        // TODO: avoid overflow in multiplication (https://github.com/CosmWasm/cosmwasm/issues/920)
         let val = self.u64() * numerator / denominator;
         Uint64::from(val)
     }
@@ -400,6 +400,8 @@ mod tests {
         assert_eq!(base.multiply_ratio(1u64, 1u64), Uint64(500));
         assert_eq!(base.multiply_ratio(3u64, 3u64), Uint64(500));
         assert_eq!(base.multiply_ratio(654321u64, 654321u64), Uint64(500));
+        // Reactivate after https://github.com/CosmWasm/cosmwasm/issues/920
+        // assert_eq!(base.multiply_ratio(u64::MAX, u64::MAX), Uint64(500));
 
         // factor 3/2
         assert_eq!(base.multiply_ratio(3u64, 2u64), Uint64(750));

@@ -232,7 +232,7 @@ impl Uint128 {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        // TODO: minimize rounding that takes place (using gcd algorithm)
+        // TODO: avoid overflow in multiplication (https://github.com/CosmWasm/cosmwasm/issues/920)
         let val = self.u128() * numerator / denominator;
         Uint128::from(val)
     }
@@ -414,6 +414,8 @@ mod tests {
         assert_eq!(base.multiply_ratio(1u128, 1u128), Uint128(500));
         assert_eq!(base.multiply_ratio(3u128, 3u128), Uint128(500));
         assert_eq!(base.multiply_ratio(654321u128, 654321u128), Uint128(500));
+        // Reactivate after https://github.com/CosmWasm/cosmwasm/issues/920
+        // assert_eq!(base.multiply_ratio(u128::MAX, u128::MAX), Uint128(500));
 
         // factor 3/2
         assert_eq!(base.multiply_ratio(3u128, 2u128), Uint128(750));
