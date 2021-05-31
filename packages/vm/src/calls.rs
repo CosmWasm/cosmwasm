@@ -11,12 +11,18 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
 
-const MAX_LENGTH_INIT: usize = 100_000;
-const MAX_LENGTH_EXECUTE: usize = 100_000;
-const MAX_LENGTH_MIGRATE: usize = 100_000;
-const MAX_LENGTH_SUDO: usize = 100_000;
-const MAX_LENGTH_SUBCALL_RESPONSE: usize = 100_000;
-const MAX_LENGTH_QUERY: usize = 100_000;
+/// Max length (in bytes) of the result data from an instantiate call.
+const RESULT_LIMIT_INSTANTIATE: usize = 100_000;
+/// Max length (in bytes) of the result data from an execute call.
+const RESULT_LIMIT_EXECUTE: usize = 100_000;
+/// Max length (in bytes) of the result data from a migrate call.
+const RESULT_LIMIT_MIGRATE: usize = 100_000;
+/// Max length (in bytes) of the result data from a sudo call.
+const RESULT_LIMIT_SUDO: usize = 100_000;
+/// Max length (in bytes) of the result data from a reply call.
+const RESULT_LIMIT_REPLY: usize = 100_000;
+/// Max length (in bytes) of the result data from a query call.
+const RESULT_LIMIT_QUERY: usize = 100_000;
 
 pub fn call_instantiate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
@@ -145,7 +151,12 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "instantiate", &[env, info, msg], MAX_LENGTH_INIT)
+    call_raw(
+        instance,
+        "instantiate",
+        &[env, info, msg],
+        RESULT_LIMIT_INSTANTIATE,
+    )
 }
 
 /// Calls Wasm export "execute" and returns raw data from the contract.
@@ -162,7 +173,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "execute", &[env, info, msg], MAX_LENGTH_EXECUTE)
+    call_raw(instance, "execute", &[env, info, msg], RESULT_LIMIT_EXECUTE)
 }
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
@@ -178,7 +189,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "migrate", &[env, msg], MAX_LENGTH_MIGRATE)
+    call_raw(instance, "migrate", &[env, msg], RESULT_LIMIT_MIGRATE)
 }
 
 /// Calls Wasm export "sudo" and returns raw data from the contract.
@@ -194,7 +205,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "sudo", &[env, msg], MAX_LENGTH_SUDO)
+    call_raw(instance, "sudo", &[env, msg], RESULT_LIMIT_SUDO)
 }
 
 /// Calls Wasm export "reply" and returns raw data from the contract.
@@ -210,7 +221,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "reply", &[env, msg], MAX_LENGTH_SUBCALL_RESPONSE)
+    call_raw(instance, "reply", &[env, msg], RESULT_LIMIT_REPLY)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
@@ -226,7 +237,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(true);
-    call_raw(instance, "query", &[env, msg], MAX_LENGTH_QUERY)
+    call_raw(instance, "query", &[env, msg], RESULT_LIMIT_QUERY)
 }
 
 /// Calls a function with the given arguments.
