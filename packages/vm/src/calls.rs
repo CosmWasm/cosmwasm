@@ -27,9 +27,24 @@ const RESULT_LIMIT_SUDO: usize = 100_000;
 const RESULT_LIMIT_REPLY: usize = 100_000;
 /// Max length (in bytes) of the result data from a query call.
 const RESULT_LIMIT_QUERY: usize = 100_000;
-
+/// Max length (in bytes) of the result data from a ibc_channel_open call.
 #[cfg(feature = "stargate")]
-const MAX_LENGTH_IBC: usize = 100_000;
+const RESULT_LIMIT_IBC_CHANNEL_OPEN: usize = 100_000;
+/// Max length (in bytes) of the result data from a ibc_channel_connect call.
+#[cfg(feature = "stargate")]
+const RESULT_LIMIT_IBC_CHANNEL_CONNECT: usize = 100_000;
+/// Max length (in bytes) of the result data from a ibc_channel_close call.
+#[cfg(feature = "stargate")]
+const RESULT_LIMIT_IBC_CHANNEL_CLOSE: usize = 100_000;
+/// Max length (in bytes) of the result data from a ibc_packet_receive call.
+#[cfg(feature = "stargate")]
+const RESULT_LIMIT_IBC_PACKET_RECEIVE: usize = 100_000;
+/// Max length (in bytes) of the result data from a ibc_packet_ack call.
+#[cfg(feature = "stargate")]
+const RESULT_LIMIT_IBC_PACKET_ACK: usize = 100_000;
+/// Max length (in bytes) of the result data from a ibc_packet_timeout call.
+#[cfg(feature = "stargate")]
+const RESULT_LIMIT_IBC_PACKET_TIMEOUT: usize = 100_000;
 
 pub fn call_instantiate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
@@ -376,7 +391,7 @@ where
         instance,
         "ibc_channel_open",
         &[env, channel],
-        MAX_LENGTH_IBC,
+        RESULT_LIMIT_IBC_CHANNEL_OPEN,
     )
 }
 
@@ -396,7 +411,7 @@ where
         instance,
         "ibc_channel_connect",
         &[env, channel],
-        MAX_LENGTH_IBC,
+        RESULT_LIMIT_IBC_CHANNEL_CONNECT,
     )
 }
 
@@ -416,7 +431,7 @@ where
         instance,
         "ibc_channel_close",
         &[env, channel],
-        MAX_LENGTH_IBC,
+        RESULT_LIMIT_IBC_CHANNEL_CLOSE,
     )
 }
 
@@ -436,7 +451,7 @@ where
         instance,
         "ibc_packet_receive",
         &[env, packet],
-        MAX_LENGTH_IBC,
+        RESULT_LIMIT_IBC_PACKET_RECEIVE,
     )
 }
 
@@ -452,7 +467,12 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "ibc_packet_ack", &[env, ack], MAX_LENGTH_IBC)
+    call_raw(
+        instance,
+        "ibc_packet_ack",
+        &[env, ack],
+        RESULT_LIMIT_IBC_PACKET_ACK,
+    )
 }
 
 #[cfg(feature = "stargate")]
@@ -471,7 +491,7 @@ where
         instance,
         "ibc_packet_timeout",
         &[env, packet],
-        MAX_LENGTH_IBC,
+        RESULT_LIMIT_IBC_PACKET_TIMEOUT,
     )
 }
 
