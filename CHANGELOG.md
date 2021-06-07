@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Add `Timestamp::minus_seconds` and `::minus_nanos`.
+- cosmwasm-std: Add `Addr::as_bytes`
 
 ## [0.14.0] - 2021-05-03
 
