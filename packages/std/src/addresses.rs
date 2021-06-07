@@ -53,6 +53,9 @@ impl Addr {
         self.0.as_str()
     }
 
+    /// Returns the UTF-8 encoded address string as a byte array.
+    ///
+    /// This is equivalent to `address.as_str().as_bytes()`.
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
