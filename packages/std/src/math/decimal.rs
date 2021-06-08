@@ -182,6 +182,14 @@ impl ops::Mul<Uint128> for Decimal {
     }
 }
 
+impl ops::Div<Uint128> for Decimal {
+    type Output = Self;
+
+    fn div(self, rhs: Uint128) -> Self::Output {
+        Decimal(self.0 / rhs.u128())
+    }
+}
+
 /// Serializes as a decimal string
 impl Serialize for Decimal {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -551,6 +559,28 @@ mod tests {
         let left = Decimal::one() + Decimal::percent(50); // 1.5
         let right = Uint128(0);
         assert_eq!(left * right, Uint128(0));
+    }
+
+    #[test]
+    // in this test the Decimal is on the left
+    fn decimal_uint128_division() {
+        // a/b
+        let left = Decimal::one() + Decimal::percent(50); // 1.5
+        let right = Uint128(3);
+        assert_eq!(left / right, Decimal::percent(50));
+
+        // 0/a
+        let left = Decimal::zero();
+        let right = Uint128(300);
+        assert_eq!(left * right, Uint128(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to divide by zero")]
+    fn decimal_uint128_divide_by_zero() {
+        let left = Decimal::one() + Decimal::percent(50); // 1.5
+        let right = Uint128(0);
+        let _result = left / right;
     }
 
     #[test]
