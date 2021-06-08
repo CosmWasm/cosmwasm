@@ -150,6 +150,14 @@ impl ops::Add for Decimal {
     }
 }
 
+impl ops::Sub for Decimal {
+    type Output = Self;
+
+    fn sub(self, other: Self) -> Self {
+        Decimal(self.0 - other.0)
+    }
+}
+
 /// Both d*u and u*d with d: Decimal and u: Uint128 returns an Uint128. There is no
 /// specific reason for this decision other than the initial use cases we have. If you
 /// need a Decimal result for the same calculation, use Decimal(d*u) or Decimal(u*d).
@@ -487,6 +495,24 @@ mod tests {
     fn decimal_add() {
         let value = Decimal::one() + Decimal::percent(50); // 1.5
         assert_eq!(value.0, DECIMAL_FRACTIONAL * 3 / 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to add with overflow")]
+    fn decimal_add_overflow_panics() {
+        let _value = Decimal::MAX + Decimal::percent(50);
+    }
+
+    #[test]
+    fn decimal_sub() {
+        let value = Decimal::one() - Decimal::percent(50); // 0.5
+        assert_eq!(value.0, DECIMAL_FRACTIONAL / 2);
+    }
+
+    #[test]
+    #[should_panic(expected = "attempt to subtract with overflow")]
+    fn decimal_sub_overflow_panics() {
+        let _value = Decimal::zero() - Decimal::percent(50);
     }
 
     #[test]

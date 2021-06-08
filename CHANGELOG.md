@@ -10,6 +10,7 @@ and this project adheres to
 
 - cosmwasm-std: Add `Timestamp::minus_seconds` and `::minus_nanos`.
 - cosmwasm-std: Add `Addr::as_bytes`
+- cosmwasm-std: Implement `std::ops::Sub` for `math::Decimal`
 
 ## [0.14.0] - 2021-05-03
 
