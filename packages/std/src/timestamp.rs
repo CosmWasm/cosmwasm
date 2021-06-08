@@ -15,12 +15,12 @@ use crate::math::Uint64;
 /// let ts = Timestamp::from_nanos(1_000_000_202);
 /// assert_eq!(ts.nanos(), 1_000_000_202);
 /// assert_eq!(ts.seconds(), 1);
-/// assert_eq!(ts.subsec_nanos(), (202));
+/// assert_eq!(ts.subsec_nanos(), 202);
 ///
 /// let ts = ts.plus_seconds(2);
 /// assert_eq!(ts.nanos(), 3_000_000_202);
 /// assert_eq!(ts.seconds(), 3);
-/// assert_eq!(ts.subsec_nanos(), (202));
+/// assert_eq!(ts.subsec_nanos(), 202);
 /// ```
 #[derive(
     Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
