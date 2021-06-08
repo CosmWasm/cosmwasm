@@ -506,7 +506,7 @@ mod tests {
     #[test]
     fn decimal_sub() {
         let value = Decimal::one() - Decimal::percent(50); // 0.5
-        assert_eq!(value.0, DECIMAL_FRACTIONAL * 1 / 2);
+        assert_eq!(value.0, DECIMAL_FRACTIONAL / 2);
     }
 
     #[test]
