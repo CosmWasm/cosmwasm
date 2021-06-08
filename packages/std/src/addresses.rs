@@ -52,6 +52,14 @@ impl Addr {
     pub fn as_str(&self) -> &str {
         self.0.as_str()
     }
+
+    /// Returns the UTF-8 encoded address string as a byte array.
+    ///
+    /// This is equivalent to `address.as_str().as_bytes()`.
+    #[inline]
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
 }
 
 impl fmt::Display for Addr {
@@ -285,6 +293,15 @@ mod tests {
     fn addr_as_str_works() {
         let addr = Addr::unchecked("literal-string");
         assert_eq!(addr.as_str(), "literal-string");
+    }
+
+    #[test]
+    fn addr_as_bytes_works() {
+        let addr = Addr::unchecked("literal-string");
+        assert_eq!(
+            addr.as_bytes(),
+            [108, 105, 116, 101, 114, 97, 108, 45, 115, 116, 114, 105, 110, 103]
+        );
     }
 
     #[test]
