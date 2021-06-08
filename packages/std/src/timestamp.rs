@@ -52,6 +52,12 @@ impl Timestamp {
     pub fn seconds(&self) -> u64 {
         self.0.u64() / 1_000_000_000
     }
+
+    /// Returns seconds since epoch (truncate nanoseconds)
+    #[inline]
+    pub fn subsec_nanos(&self) -> u64 {
+        self.0.u64() % 1_000_000_000
+    }
 }
 
 impl fmt::Display for Timestamp {
@@ -136,6 +142,8 @@ mod tests {
         assert_eq!(sum.nanos(), 123);
         let sum = Timestamp::from_nanos(0);
         assert_eq!(sum.nanos(), 0);
+        let sum = Timestamp::from_nanos(987654321000);
+        assert_eq!(sum.nanos(), 987654321000);
     }
 
     #[test]
@@ -144,6 +152,14 @@ mod tests {
         assert_eq!(sum.seconds(), 987);
         let sum = Timestamp::from_seconds(1234567).plus_nanos(8765436);
         assert_eq!(sum.seconds(), 1234567);
+    }
+
+    #[test]
+    fn timestamp_subsec_nanos() {
+        let sum = Timestamp::from_nanos(987654321000);
+        assert_eq!(sum.subsec_nanos(), 654321000);
+        let sum = Timestamp::from_seconds(1234567).plus_nanos(8765436);
+        assert_eq!(sum.subsec_nanos(), 8765436);
     }
 
     #[test]
