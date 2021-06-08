@@ -602,6 +602,14 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "attempt to divide by zero")]
+    fn decimal_uint128_div_assign_by_zero() {
+        // a/0
+        let mut dec = Decimal::percent(50);
+        dec /= Uint128(0);
+    }
+
+    #[test]
     fn decimal_to_string() {
         // Integers
         assert_eq!(Decimal::zero().to_string(), "0");
