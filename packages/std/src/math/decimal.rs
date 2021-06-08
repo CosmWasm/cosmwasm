@@ -562,10 +562,9 @@ mod tests {
     }
 
     #[test]
-    // in this test the Decimal is on the left
     fn decimal_uint128_division() {
         // a/b
-        let left = Decimal::one() + Decimal::percent(50); // 1.5
+        let left = Decimal::percent(150); // 1.5
         let right = Uint128(3);
         assert_eq!(left / right, Decimal::percent(50));
 
@@ -578,7 +577,7 @@ mod tests {
     #[test]
     #[should_panic(expected = "attempt to divide by zero")]
     fn decimal_uint128_divide_by_zero() {
-        let left = Decimal::one() + Decimal::percent(50); // 1.5
+        let left = Decimal::percent(150); // 1.5
         let right = Uint128(0);
         let _result = left / right;
     }
