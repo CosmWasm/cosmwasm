@@ -206,6 +206,22 @@ impl<'a> ops::Add<&'a Uint128> for Uint128 {
     }
 }
 
+impl ops::Sub<Uint128> for Uint128 {
+    type Output = Self;
+
+    fn sub(self, rhs: Self) -> Self {
+        Uint128(self.u128().checked_sub(rhs.u128()).unwrap())
+    }
+}
+
+impl<'a> ops::Sub<&'a Uint128> for Uint128 {
+    type Output = Self;
+
+    fn sub(self, rhs: &'a Uint128) -> Self {
+        Uint128(self.u128().checked_sub(rhs.u128()).unwrap())
+    }
+}
+
 impl ops::AddAssign<Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: Uint128) {
         self.0 = self.0.checked_add(rhs.u128()).unwrap();
@@ -215,6 +231,18 @@ impl ops::AddAssign<Uint128> for Uint128 {
 impl<'a> ops::AddAssign<&'a Uint128> for Uint128 {
     fn add_assign(&mut self, rhs: &'a Uint128) {
         self.0 = self.0.checked_add(rhs.u128()).unwrap();
+    }
+}
+
+impl ops::SubAssign<Uint128> for Uint128 {
+    fn sub_assign(&mut self, rhs: Uint128) {
+        self.0 = self.0.checked_sub(rhs.u128()).unwrap();
+    }
+}
+
+impl<'a> ops::SubAssign<&'a Uint128> for Uint128 {
+    fn sub_assign(&mut self, rhs: &'a Uint128) {
+        self.0 = self.0.checked_sub(rhs.u128()).unwrap();
     }
 }
 
@@ -397,7 +425,8 @@ mod tests {
         assert_eq!(a + &b, Uint128(35801));
 
         // test - with owned and reference right hand side
-        assert_eq!((b.checked_sub(a)).unwrap(), Uint128(11111));
+        assert_eq!(b - a, Uint128(11111));
+        assert_eq!(b - &a, Uint128(11111));
 
         // test += with owned and reference right hand side
         let mut c = Uint128(300000);
@@ -406,6 +435,14 @@ mod tests {
         let mut d = Uint128(300000);
         d += &b;
         assert_eq!(d, Uint128(323456));
+
+        // test -= with owned and reference right hand side
+        let mut c = Uint128(300000);
+        c -= b;
+        assert_eq!(c, Uint128(276544));
+        let mut d = Uint128(300000);
+        d -= &b;
+        assert_eq!(d, Uint128(276544));
 
         // error result on underflow (- would produce negative result)
         let underflow_result = a.checked_sub(b);
@@ -417,10 +454,16 @@ mod tests {
 
     #[test]
     #[should_panic]
-    fn uint128_math_overflow_panics() {
+    fn uint128_add_overflow_panics() {
         // almost_max is 2^128 - 10
         let almost_max = Uint128(340282366920938463463374607431768211446);
         let _ = almost_max + Uint128(12);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_sub_overflow_panics() {
+        let _ = Uint128(1) - Uint128(2);
     }
 
     #[test]
