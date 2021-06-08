@@ -190,6 +190,12 @@ impl ops::Div<Uint128> for Decimal {
     }
 }
 
+impl ops::DivAssign<Uint128> for Decimal {
+    fn div_assign(&mut self, rhs: Uint128) {
+        self.0 /= rhs.u128();
+    }
+}
+
 /// Serializes as a decimal string
 impl Serialize for Decimal {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
@@ -580,6 +586,19 @@ mod tests {
         let left = Decimal::percent(150); // 1.5
         let right = Uint128(0);
         let _result = left / right;
+    }
+
+    #[test]
+    fn decimal_uint128_div_assign() {
+        // a/b
+        let mut dec = Decimal::percent(150); // 1.5
+        dec /= Uint128(3);
+        assert_eq!(dec, Decimal::percent(50));
+
+        // 0/a
+        let mut dec = Decimal::zero();
+        dec /= Uint128(300);
+        assert_eq!(dec, Decimal::zero());
     }
 
     #[test]
