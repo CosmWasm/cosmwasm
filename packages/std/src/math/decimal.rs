@@ -572,7 +572,7 @@ mod tests {
         // 0/a
         let left = Decimal::zero();
         let right = Uint128(300);
-        assert_eq!(left * right, Uint128(0));
+        assert_eq!(left / right, Decimal::zero());
     }
 
     #[test]
