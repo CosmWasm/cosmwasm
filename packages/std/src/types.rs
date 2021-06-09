@@ -36,8 +36,8 @@ pub struct BlockInfo {
     /// # };
     /// # extern crate chrono;
     /// use chrono::NaiveDateTime;
-    /// let seconds = env.block.time.nanos() / 1_000_000_000;
-    /// let nsecs = env.block.time.nanos() % 1_000_000_000;
+    /// let seconds = env.block.time.seconds();
+    /// let nsecs = env.block.time.subsec_nanos();
     /// let dt = NaiveDateTime::from_timestamp(seconds as i64, nsecs as u32);
     /// ```
     ///

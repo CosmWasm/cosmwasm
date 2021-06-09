@@ -7,6 +7,21 @@ use crate::math::Uint64;
 /// A point in time in nanosecond precision.
 ///
 /// This type can represent times from 1970-01-01T00:00:00Z to 2554-07-21T23:34:33Z.
+///
+/// ## Examples
+///
+/// ```
+/// # use cosmwasm_std::Timestamp;
+/// let ts = Timestamp::from_nanos(1_000_000_202);
+/// assert_eq!(ts.nanos(), 1_000_000_202);
+/// assert_eq!(ts.seconds(), 1);
+/// assert_eq!(ts.subsec_nanos(), 202);
+///
+/// let ts = ts.plus_seconds(2);
+/// assert_eq!(ts.nanos(), 3_000_000_202);
+/// assert_eq!(ts.seconds(), 3);
+/// assert_eq!(ts.subsec_nanos(), 202);
+/// ```
 #[derive(
     Serialize, Deserialize, Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema,
 )]
@@ -42,15 +57,29 @@ impl Timestamp {
     }
 
     /// Returns nanoseconds since epoch
+    #[inline]
     pub fn nanos(&self) -> u64 {
         self.0.u64()
+    }
+
+    /// Returns seconds since epoch (truncate nanoseconds)
+    #[inline]
+    pub fn seconds(&self) -> u64 {
+        self.0.u64() / 1_000_000_000
+    }
+
+    /// Returns nanoseconds since the last whole second (the remainder truncated
+    /// by `seconds()`)
+    #[inline]
+    pub fn subsec_nanos(&self) -> u64 {
+        self.0.u64() % 1_000_000_000
     }
 }
 
 impl fmt::Display for Timestamp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let whole = self.nanos() / 1_000_000_000;
-        let fractional = self.nanos() % 1_000_000_000;
+        let whole = self.seconds();
+        let fractional = self.subsec_nanos();
         write!(f, "{}.{:09}", whole, fractional)
     }
 }
@@ -129,6 +158,24 @@ mod tests {
         assert_eq!(sum.nanos(), 123);
         let sum = Timestamp::from_nanos(0);
         assert_eq!(sum.nanos(), 0);
+        let sum = Timestamp::from_nanos(987654321000);
+        assert_eq!(sum.nanos(), 987654321000);
+    }
+
+    #[test]
+    fn timestamp_seconds() {
+        let sum = Timestamp::from_nanos(987654321000);
+        assert_eq!(sum.seconds(), 987);
+        let sum = Timestamp::from_seconds(1234567).plus_nanos(8765436);
+        assert_eq!(sum.seconds(), 1234567);
+    }
+
+    #[test]
+    fn timestamp_subsec_nanos() {
+        let sum = Timestamp::from_nanos(987654321000);
+        assert_eq!(sum.subsec_nanos(), 654321000);
+        let sum = Timestamp::from_seconds(1234567).plus_nanos(8765436);
+        assert_eq!(sum.subsec_nanos(), 8765436);
     }
 
     #[test]
