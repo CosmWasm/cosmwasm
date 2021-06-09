@@ -7,6 +7,7 @@ use std::str::FromStr;
 use crate::errors::StdError;
 
 use super::Fraction;
+use super::Isqrt;
 use super::Uint128;
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -54,6 +55,12 @@ impl Decimal {
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0
+    }
+
+    /// Returns the approximate square root as a Decimal.
+    pub fn sqrt(self) -> Self {
+        // TODO: Should we have better precision here?
+        Decimal(self.0.isqrt() * 1_000_000_000)
     }
 }
 
@@ -607,6 +614,14 @@ mod tests {
         // a/0
         let mut dec = Decimal::percent(50);
         dec /= Uint128(0);
+    }
+
+    #[test]
+    fn decimal_uint128_sqrt() {
+        assert_eq!(Decimal::percent(900).sqrt(), Decimal::percent(300));
+
+        assert!(Decimal::percent(316) < Decimal::percent(1000).sqrt());
+        assert!(Decimal::percent(1000).sqrt() < Decimal::percent(317));
     }
 
     #[test]
