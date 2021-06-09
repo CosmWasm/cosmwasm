@@ -13,8 +13,13 @@ and this project adheres to
 - cosmwasm-std: Implement `std::ops::Sub` for `math::Decimal`
 - cosmwasm-std: Add `Timestamp::seconds` and `Timestamp::subsec_nanos`.
 - cosmwasm-std: Implement division for `Decimal / Uint128`
+
+### Fixed
+
 - cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
   so that internal multiplication cannot cause an unnecessary overflow. ([#920])
+
+[#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
 ## [0.14.0] - 2021-05-03
 
