@@ -1,7 +1,7 @@
 use primitive_types::U256;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
 use std::iter::Sum;
 use std::ops;
@@ -233,7 +233,9 @@ impl Uint128 {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        let val = (self.full_mul(numerator) / denominator).as_u128();
+        let val: u128 = (self.full_mul(numerator) / denominator)
+            .try_into()
+            .expect("multiplication overflow");
         Uint128::from(val)
     }
 
