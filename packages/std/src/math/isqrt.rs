@@ -38,7 +38,7 @@ impl<
 }
 
 #[test]
-fn uint128_sqrts() {
+fn isqrts() {
     // Let's check correctness.
     assert_eq!(0.isqrt(), 0);
     assert_eq!(1.isqrt(), 1);
