@@ -1,5 +1,4 @@
-use num_bigint::BigUint;
-use num_traits::cast::ToPrimitive;
+use primitive_types::U256;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::TryFrom;
@@ -229,16 +228,18 @@ impl Uint128 {
         numerator: A,
         denominator: B,
     ) -> Uint128 {
-        let base: BigUint = self.u128().into();
         let numerator: u128 = numerator.into();
         let denominator: u128 = denominator.into();
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        let val = (base * numerator / denominator)
-            .to_u128()
-            .expect("multiplication overflow");
+        let val = (self.full_mul(numerator) / denominator).as_u128();
         Uint128::from(val)
+    }
+
+    /// Multiplies two u128 values without overflow.
+    fn full_mul(self, rhs: impl Into<u128>) -> U256 {
+        U256::from(self.u128()) * U256::from(rhs.into())
     }
 }
 

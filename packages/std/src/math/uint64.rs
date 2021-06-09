@@ -216,17 +216,21 @@ impl Uint64 {
         numerator: A,
         denominator: B,
     ) -> Uint64 {
-        let base: u128 = self.u64().into();
-        let numerator: u128 = numerator.into().into();
-        let denominator: u128 = denominator.into().into();
+        let numerator = numerator.into();
+        let denominator = denominator.into();
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
 
-        let val: u64 = (base * numerator / denominator)
+        let val: u64 = (self.full_mul(numerator) / denominator as u128)
             .try_into()
             .expect("multiplication overflow");
         Uint64::from(val)
+    }
+
+    /// Multiplies two u64 values without overflow.
+    fn full_mul(self, rhs: impl Into<u64>) -> u128 {
+        self.u64() as u128 * rhs.into() as u128
     }
 }
 
