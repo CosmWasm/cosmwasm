@@ -437,8 +437,8 @@ mod tests {
 
     #[test]
     fn uint128_multiply_ratio_does_not_overflow_when_result_fits() {
-        // Almost max value for Uint64.
-        let base = Uint128(340282366920938463463374607431768211446);
+        // Almost max value for Uint128.
+        let base = Uint128(u128::MAX - 9);
 
         assert_eq!(base.multiply_ratio(2u128, 2u128), base);
     }
@@ -446,8 +446,8 @@ mod tests {
     #[test]
     #[should_panic]
     fn uint128_multiply_ratio_panicks_on_overflow() {
-        // Almost max value for Uint64.
-        let base = Uint128(340282366920938463463374607431768211446);
+        // Almost max value for Uint128.
+        let base = Uint128(u128::MAX - 9);
 
         assert_eq!(base.multiply_ratio(2u128, 1u128), base);
     }

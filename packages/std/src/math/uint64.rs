@@ -426,7 +426,7 @@ mod tests {
     #[test]
     fn uint64_multiply_ratio_does_not_overflow_when_result_fits() {
         // Almost max value for Uint64.
-        let base = Uint64(18446744073709551606);
+        let base = Uint64(u64::MAX - 9);
 
         assert_eq!(base.multiply_ratio(2u64, 2u64), base);
     }
@@ -435,7 +435,7 @@ mod tests {
     #[should_panic]
     fn uint64_multiply_ratio_panicks_on_overflow() {
         // Almost max value for Uint64.
-        let base = Uint64(18446744073709551606);
+        let base = Uint64(u64::MAX - 9);
 
         assert_eq!(base.multiply_ratio(2u64, 1u64), base);
     }
