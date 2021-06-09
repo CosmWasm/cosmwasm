@@ -171,7 +171,7 @@ and this project adheres to
 - contracts: `reflect` contract requires `stargate` feature and supports
   redispatching `Stargate` and `IbcMsg::Transfer` messages ([#692])
 - cosmwasm-std: The arithmetic methods of `Uint128` got a huge overhaul, making
-  them more consistent with the bahaviour of the Rust primitive types. Thank you
+  them more consistent with the behaviour of the Rust primitive types. Thank you
   [@yihuang] for bringing this up and for the great implementation. ([#853])
   1.  `Uint128` got the new functions `checked_add`, `checked_sub`,
       `checked_mul`, `checked_div`, `checked_div_euclid`, `checked_rem`,
@@ -345,7 +345,7 @@ and this project adheres to
 - Add `FfiError::IteratorDoesNotExist`. Looking at this, `FfiError` should
   probably be renamed to something that includes before, on and behind the FFI
   boundary to Go.
-- `MockStorage` now implementes the new `Storage` trait and has an additional
+- `MockStorage` now implements the new `Storage` trait and has an additional
   `MockStorage::all` for getting all elements of an iterator in tests.
 - Remove unused `Extern::change_querier`. If you need this or similar
   functionality, create a new struct with the right querier.
@@ -376,7 +376,7 @@ and this project adheres to
 - Implement `PartialEq` between `Binary` and `Vec<u8>`/`&[u8]`.
 - Add missing `PartialEq` implementations between `HumanAddr` and `str`/`&str`.
 - Add `Binary::to_array`, which allows you to copy binary content into a
-  fixed-length `u8` array. This is espeically useful for creating integers from
+  fixed-length `u8` array. This is especially useful for creating integers from
   binary data.
 
 ## 0.11.1 (2020-10-12)
@@ -436,7 +436,7 @@ and this project adheres to
   argument is unused. Contracts should not need to set this value and usually
   should not make assumptions about the value.
 - The canonical address encoding in `MockApi::canonical_address` and
-  `MockApi::human_address` was changed to an unpredicatable represenation of
+  `MockApi::human_address` was changed to an unpredictable representation of
   non-standard length that aims to destroy most of the input structure.
 
 **cosmwasm-storage**
@@ -459,7 +459,7 @@ and this project adheres to
   deprecated `MockApi::new`, the argument is unused. Contracts should not need
   to set this value and usually should not make assumptions about the value.
 - The canonical address encoding in `MockApi::canonical_address` and
-  `MockApi::human_address` was changed to an unpredicatable represenation of
+  `MockApi::human_address` was changed to an unpredictable representation of
   non-standard length that aims to destroy most of the input structure.
 
 ## 0.10.1 (2020-08-25)
@@ -625,7 +625,7 @@ https://github.com/CosmWasm/cosmwasm/issues/451).
   `humanize_address`. Only invalid inputs should be reported.
 - Move error cases `VmError::RegionLengthTooBig` and `VmError::RegionTooSmall`
   into `CommunicationError`.
-- In the `canonicalize_address` inplementation, invalid UTF-8 inputs now result
+- In the `canonicalize_address` implementation, invalid UTF-8 inputs now result
   in `CommunicationError::InvalidUtf8`, which is not reported back to the
   contract. A standard library should ensure this never happens by correctly
   encoding string input values.
