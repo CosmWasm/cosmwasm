@@ -12,6 +12,7 @@ and this project adheres to
 - cosmwasm-std: Add `Addr::as_bytes`
 - cosmwasm-std: Implement `std::ops::Sub` for `math::Decimal`
 - cosmwasm-std: Add `Timestamp::seconds` and `Timestamp::subsec_nanos`.
+- cosmwasm-std: Implement division for `Decimal / Uint128`
 
 ## [0.14.0] - 2021-05-03
 
