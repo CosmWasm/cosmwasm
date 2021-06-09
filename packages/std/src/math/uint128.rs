@@ -1,4 +1,3 @@
-use primitive_types::U256;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::{TryFrom, TryInto};
@@ -296,6 +295,15 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
         iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
+
+#[allow(clippy::all)]
+mod uints {
+    uint::construct_uint! {
+        pub struct U256(4);
+    }
+}
+
+use uints::U256;
 
 #[cfg(test)]
 mod tests {
