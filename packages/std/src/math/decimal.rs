@@ -620,6 +620,13 @@ mod tests {
     fn decimal_uint128_sqrt() {
         assert_eq!(Decimal::percent(900).sqrt(), Decimal::percent(300));
 
+        // sqrt(2) is an irrational number, i.e. all 18 decimal places should be used.
+        // However due to implementation details the result is truncated after 9 decimal places.
+        assert_eq!(
+            Decimal::from_str("2").unwrap().sqrt(),
+            Decimal::from_str("1.414213562000000000").unwrap()
+        );
+
         assert!(Decimal::percent(316) < Decimal::percent(1000).sqrt());
         assert!(Decimal::percent(1000).sqrt() < Decimal::percent(317));
     }
