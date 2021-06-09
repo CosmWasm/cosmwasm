@@ -1,3 +1,5 @@
+use num_bigint::BigUint;
+use num_traits::cast::ToPrimitive;
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
 use std::convert::TryFrom;
@@ -227,13 +229,15 @@ impl Uint128 {
         numerator: A,
         denominator: B,
     ) -> Uint128 {
+        let base: BigUint = self.u128().into();
         let numerator: u128 = numerator.into();
         let denominator: u128 = denominator.into();
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        // TODO: avoid overflow in multiplication (https://github.com/CosmWasm/cosmwasm/issues/920)
-        let val = self.u128() * numerator / denominator;
+        let val = (base * numerator / denominator)
+            .to_u128()
+            .expect("multiplication overflow");
         Uint128::from(val)
     }
 }
@@ -428,6 +432,23 @@ mod tests {
         // factor 5/6 (integer devision always floors the result)
         assert_eq!(base.multiply_ratio(5u128, 6u128), Uint128(416));
         assert_eq!(base.multiply_ratio(100u128, 120u128), Uint128(416));
+    }
+
+    #[test]
+    fn uint128_multiply_ratio_does_not_overflow_when_result_fits() {
+        // Almost max value for Uint64.
+        let base = Uint128(340282366920938463463374607431768211446);
+
+        assert_eq!(base.multiply_ratio(2u128, 2u128), base);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_multiply_ratio_panicks_on_overflow() {
+        // Almost max value for Uint64.
+        let base = Uint128(340282366920938463463374607431768211446);
+
+        assert_eq!(base.multiply_ratio(2u128, 1u128), base);
     }
 
     #[test]
