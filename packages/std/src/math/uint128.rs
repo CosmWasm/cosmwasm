@@ -296,6 +296,8 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
     }
 }
 
+/// This module is purely a workaround that lets us ignore lints for all the code
+/// the `construct_uint!` macro generates.
 #[allow(clippy::all)]
 mod uints {
     uint::construct_uint! {
@@ -303,6 +305,8 @@ mod uints {
     }
 }
 
+/// Only used internally - namely to store the intermediate result of
+/// multiplying two 128-bit uints.
 use uints::U256;
 
 #[cfg(test)]
