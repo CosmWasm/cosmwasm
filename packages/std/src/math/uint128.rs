@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 use serde::{de, ser, Deserialize, Deserializer, Serialize};
-use std::convert::TryFrom;
+use std::convert::{TryFrom, TryInto};
 use std::fmt::{self};
 use std::iter::Sum;
 use std::ops;
@@ -232,9 +232,15 @@ impl Uint128 {
         if denominator == 0 {
             panic!("Denominator must not be zero");
         }
-        // TODO: avoid overflow in multiplication (https://github.com/CosmWasm/cosmwasm/issues/920)
-        let val = self.u128() * numerator / denominator;
+        let val: u128 = (self.full_mul(numerator) / denominator)
+            .try_into()
+            .expect("multiplication overflow");
         Uint128::from(val)
+    }
+
+    /// Multiplies two u128 values without overflow.
+    fn full_mul(self, rhs: impl Into<u128>) -> U256 {
+        U256::from(self.u128()) * U256::from(rhs.into())
     }
 }
 
@@ -289,6 +295,19 @@ impl<'a> Sum<&'a Uint128> for Uint128 {
         iter.fold(Uint128::zero(), ops::Add::add)
     }
 }
+
+/// This module is purely a workaround that lets us ignore lints for all the code
+/// the `construct_uint!` macro generates.
+#[allow(clippy::all)]
+mod uints {
+    uint::construct_uint! {
+        pub struct U256(4);
+    }
+}
+
+/// Only used internally - namely to store the intermediate result of
+/// multiplying two 128-bit uints.
+use uints::U256;
 
 #[cfg(test)]
 mod tests {
@@ -428,6 +447,23 @@ mod tests {
         // factor 5/6 (integer devision always floors the result)
         assert_eq!(base.multiply_ratio(5u128, 6u128), Uint128(416));
         assert_eq!(base.multiply_ratio(100u128, 120u128), Uint128(416));
+    }
+
+    #[test]
+    fn uint128_multiply_ratio_does_not_overflow_when_result_fits() {
+        // Almost max value for Uint128.
+        let base = Uint128(u128::MAX - 9);
+
+        assert_eq!(base.multiply_ratio(2u128, 2u128), base);
+    }
+
+    #[test]
+    #[should_panic]
+    fn uint128_multiply_ratio_panicks_on_overflow() {
+        // Almost max value for Uint128.
+        let base = Uint128(u128::MAX - 9);
+
+        assert_eq!(base.multiply_ratio(2u128, 1u128), base);
     }
 
     #[test]
