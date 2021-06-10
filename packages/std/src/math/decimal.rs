@@ -58,7 +58,7 @@ impl Decimal {
     }
 
     /// Returns the approximate square root as a Decimal.
-    pub fn sqrt(self) -> Self {
+    pub fn sqrt(&self) -> Self {
         // TODO: Should we have better precision here?
         Decimal(self.0.isqrt() * 1_000_000_000)
     }
