@@ -59,8 +59,14 @@ impl Decimal {
 
     /// Returns the approximate square root as a Decimal.
     pub fn sqrt(&self) -> Self {
-        // TODO: Should we have better precision here?
-        Decimal(self.0.isqrt() * 1_000_000_000)
+        self.sqrt_with_precision(0)
+    }
+
+    /// Lower precision means more aggressive rounding, but less risk of overflow.
+    fn sqrt_with_precision(&self, precision: u32) -> Self {
+        let inner_mul = 100u128.pow(precision);
+        let outer_mul = 10u128.pow(9 - precision);
+        Decimal((self.0 * inner_mul).isqrt() * outer_mul)
     }
 }
 
