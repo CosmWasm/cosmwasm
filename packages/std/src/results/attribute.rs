@@ -31,7 +31,7 @@ mod tests {
         assert_eq!(attr("foo", "42"), expeceted);
         assert_eq!(attr("foo".to_string(), "42"), expeceted);
         assert_eq!(attr("foo", "42".to_string()), expeceted);
-        assert_eq!(attr("foo", Uint128(42)), expeceted);
+        assert_eq!(attr("foo", Uint128::new(42)), expeceted);
         assert_eq!(attr("foo", 42), expeceted);
     }
 }
