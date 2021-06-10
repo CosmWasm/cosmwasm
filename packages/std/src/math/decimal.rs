@@ -77,10 +77,10 @@ impl Decimal {
     /// Returns `None` if the internal multiplication overflows.
     fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = 100u128.pow(precision);
-        let outer_mul = 10u128.pow(9 - precision);
-        self.0
-            .checked_mul(inner_mul)
-            .map(|inner| Decimal(inner.isqrt() * outer_mul))
+        self.0.checked_mul(inner_mul).map(|inner| {
+            let outer_mul = 10u128.pow(9 - precision);
+            Decimal(inner.isqrt() * outer_mul)
+        })
     }
 }
 
