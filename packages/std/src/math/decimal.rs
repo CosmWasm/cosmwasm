@@ -662,6 +662,17 @@ mod tests {
     }
 
     #[test]
+    fn decimal_uint128_sqrt_intermediate_precision_used() {
+        assert_eq!(
+            Decimal::from_str("400001").unwrap().sqrt(),
+            // The last two digits (27) are truncated below due to the algorithm
+            // we use. Larger numbers will cause less precision.
+            // https://www.wolframalpha.com/input/?i=sqrt%28400001%29
+            Decimal::from_str("632.456322602596803200").unwrap()
+        );
+    }
+
+    #[test]
     fn decimal_to_string() {
         // Integers
         assert_eq!(Decimal::zero().to_string(), "0");
