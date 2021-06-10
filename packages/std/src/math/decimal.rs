@@ -632,7 +632,15 @@ mod tests {
     fn decimal_uint128_sqrt_is_precise() {
         assert_eq!(
             Decimal::from_str("2").unwrap().sqrt(),
-            Decimal::from_str("1.414213562373095049").unwrap()
+            Decimal::from_str("1.414213562373095048").unwrap()
+        );
+    }
+
+    #[test]
+    fn decimal_uint128_sqrt_does_not_overflow() {
+        assert_eq!(
+            Decimal::from_str("400").unwrap().sqrt(),
+            Decimal::from_str("20").unwrap()
         );
     }
 
