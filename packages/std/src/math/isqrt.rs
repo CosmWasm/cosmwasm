@@ -46,20 +46,25 @@ impl Unsigned for u32 {}
 impl Unsigned for u64 {}
 impl Unsigned for u128 {}
 
-#[test]
-fn isqrts() {
-    // Let's check correctness.
-    assert_eq!(0u8.isqrt(), 0);
-    assert_eq!(1u8.isqrt(), 1);
-    assert_eq!(24u8.isqrt(), 4);
-    assert_eq!(25u8.isqrt(), 5);
-    assert_eq!(26u8.isqrt(), 5);
-    assert_eq!(36u8.isqrt(), 6);
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    // Let's also check different types.
-    assert_eq!(26u8.isqrt(), 5);
-    assert_eq!(26u16.isqrt(), 5);
-    assert_eq!(26u32.isqrt(), 5);
-    assert_eq!(26u64.isqrt(), 5);
-    assert_eq!(26u128.isqrt(), 5);
+    #[test]
+    fn isqrts() {
+        // Let's check correctness.
+        assert_eq!(0u8.isqrt(), 0);
+        assert_eq!(1u8.isqrt(), 1);
+        assert_eq!(24u8.isqrt(), 4);
+        assert_eq!(25u8.isqrt(), 5);
+        assert_eq!(26u8.isqrt(), 5);
+        assert_eq!(36u8.isqrt(), 6);
+
+        // Let's also check different types.
+        assert_eq!(26u8.isqrt(), 5);
+        assert_eq!(26u16.isqrt(), 5);
+        assert_eq!(26u32.isqrt(), 5);
+        assert_eq!(26u64.isqrt(), 5);
+        assert_eq!(26u128.isqrt(), 5);
+    }
 }
