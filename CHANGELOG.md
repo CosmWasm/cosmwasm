@@ -13,6 +13,7 @@ and this project adheres to
 - cosmwasm-std: Implement `std::ops::Sub` for `math::Decimal`
 - cosmwasm-std: Add `Timestamp::seconds` and `Timestamp::subsec_nanos`.
 - cosmwasm-std: Implement division for `Decimal / Uint128`
+- cosmwasm-std: Add `math::Decimal::sqrt`
 
 ### Fixed
 
