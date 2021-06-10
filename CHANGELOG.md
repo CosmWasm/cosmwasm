@@ -6,6 +6,9 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Removed
+- cosmwasm-std: Remove `results::Context` - deprecated in previous release
+
 ## [0.14.1] - 2021-06-14
 
 ### Added
@@ -19,8 +22,8 @@ and this project adheres to
 
 ### Fixed
 
-- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio` so
-  that internal multiplication cannot cause an unnecessary overflow. ([#920])
+- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
+  so that internal multiplication cannot cause an unnecessary overflow. ([#920])
 
 [#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
