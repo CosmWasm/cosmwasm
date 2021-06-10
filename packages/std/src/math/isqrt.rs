@@ -31,8 +31,6 @@ where
             }
 
             return x0;
-        } else if x0 < 0.into() {
-            panic!("attempt to calculate the integer square root of a negative number");
         }
         self
     }
