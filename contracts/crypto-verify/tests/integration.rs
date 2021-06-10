@@ -225,9 +225,9 @@ fn verify_ethereum_transaction_works() {
     let chain_id = 4; // Rinkeby, see https://github.com/ethereum/EIPs/blob/master/EIPS/eip-155.md#list-of-chain-ids
     let from = "0x0a65766695a712af41b5cfecaad217b1a11cb22a";
     let to = "0xe137f5264b6b528244e1643a2d570b37660b7f14";
-    let gas_limit = Uint128(0x226c8);
-    let gas_price = Uint128(0x3b9aca00);
-    let value = Uint128(0x53177c);
+    let gas_limit = Uint128::new(0x226c8);
+    let gas_price = Uint128::new(0x3b9aca00);
+    let value = Uint128::new(0x53177c);
     let data = hex!("536561726368207478207465737420302e36353930383639313733393634333335");
     let r = hex!("b9299dab50b3cddcaecd64b29bfbd5cd30fac1a1adea1b359a13c4e5171492a6");
     let s = hex!("573059c66d894684488f92e7ce1f91b158ca57b0235485625b576a3b98c480ac");

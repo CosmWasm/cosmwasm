@@ -58,7 +58,7 @@ fn initialization_with_missing_validator() {
         decimals: 9,
         validator: String::from("my-validator"),
         exit_tax: Decimal::percent(2),
-        min_withdrawal: Uint128(50),
+        min_withdrawal: Uint128::new(50),
     };
     let info = mock_info(&creator, &[]);
 
@@ -96,7 +96,7 @@ fn proper_initialization() {
         decimals: 9,
         validator: String::from("my-validator"),
         exit_tax: Decimal::percent(2),
-        min_withdrawal: Uint128(50),
+        min_withdrawal: Uint128::new(50),
     };
     let info = mock_info(&creator, &[]);
 
@@ -121,7 +121,7 @@ fn proper_initialization() {
     )
     .unwrap();
     let bal: BalanceResponse = from_binary(&res).unwrap();
-    assert_eq!(bal.balance, Uint128(0));
+    assert_eq!(bal.balance, Uint128::new(0));
 
     // no claims
     let res = query(
@@ -133,7 +133,7 @@ fn proper_initialization() {
     )
     .unwrap();
     let claim: ClaimsResponse = from_binary(&res).unwrap();
-    assert_eq!(claim.claims, Uint128(0));
+    assert_eq!(claim.claims, Uint128::new(0));
 
     // investment info correct
     let res = query(&mut deps, mock_env(), QueryMsg::Investment {}).unwrap();
@@ -143,7 +143,7 @@ fn proper_initialization() {
     assert_eq!(invest.exit_tax, msg.exit_tax);
     assert_eq!(invest.min_withdrawal, msg.min_withdrawal);
 
-    assert_eq!(invest.token_supply, Uint128(0));
+    assert_eq!(invest.token_supply, Uint128::new(0));
     assert_eq!(invest.staked_tokens, coin(0, "ustake"));
     assert_eq!(invest.nominal_value, Decimal::one());
 }
