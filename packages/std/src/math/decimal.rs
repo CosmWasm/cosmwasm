@@ -61,11 +61,13 @@ impl Decimal {
     ///
     /// This should not overflow or panic.
     pub fn sqrt(&self) -> Self {
+        // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
         // We start with the highest precision possible and lower it until
         // there's no overflow.
         (0..=9)
             .rev()
             .find_map(|i| self.sqrt_with_precision(i))
+            // The last step (i = 0) is guaranteed to succeed because `isqrt(u128::MAX) * 10^9` does not overflow
             .unwrap()
     }
 
@@ -643,14 +645,11 @@ mod tests {
     }
 
     /// sqrt(2) is an irrational number, i.e. all 18 decimal places should be used.
-    /// However due to implementation details the result is truncated after 9
-    /// decimal places, so we disable the test for now.
     #[test]
-    #[ignore]
     fn decimal_uint128_sqrt_is_precise() {
         assert_eq!(
             Decimal::from_str("2").unwrap().sqrt(),
-            Decimal::from_str("1.414213562373095048").unwrap()
+            Decimal::from_str("1.414213562373095048").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
         );
     }
 
