@@ -58,15 +58,27 @@ impl Decimal {
     }
 
     /// Returns the approximate square root as a Decimal.
+    ///
+    /// This should not overflow or panic.
     pub fn sqrt(&self) -> Self {
-        self.sqrt_with_precision(0)
+        // We start with the highest precision possible and lower it until
+        // there's no overflow.
+        (0..=9)
+            .rev()
+            .find_map(|i| self.sqrt_with_precision(i))
+            .unwrap()
     }
 
     /// Lower precision means more aggressive rounding, but less risk of overflow.
-    fn sqrt_with_precision(&self, precision: u32) -> Self {
+    /// Precision *must* be a number between 0 and 9 (inclusive).
+    ///
+    /// Returns `None` if the internal multiplication overflows.
+    fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
         let inner_mul = 100u128.pow(precision);
         let outer_mul = 10u128.pow(9 - precision);
-        Decimal((self.0 * inner_mul).isqrt() * outer_mul)
+        self.0
+            .checked_mul(inner_mul)
+            .map(|inner| Decimal(inner.isqrt() * outer_mul))
     }
 }
 
