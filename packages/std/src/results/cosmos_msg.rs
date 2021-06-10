@@ -120,7 +120,7 @@ pub enum WasmMsg {
         contract_addr: String,
         /// msg is the json-encoded ExecuteMsg struct (as raw Binary)
         msg: Binary,
-        send: Vec<Coin>,
+        funds: Vec<Coin>,
     },
     /// Instantiates a new contracts from previously uploaded Wasm code.
     ///
@@ -131,7 +131,7 @@ pub enum WasmMsg {
         code_id: u64,
         /// msg is the JSON-encoded InstantiateMsg struct (as raw Binary)
         msg: Binary,
-        send: Vec<Coin>,
+        funds: Vec<Coin>,
         /// A human-readbale label for the contract
         label: String,
     },
@@ -166,7 +166,7 @@ pub enum WasmMsg {
 pub fn wasm_instantiate<T>(
     code_id: u64,
     msg: &T,
-    send: Vec<Coin>,
+    funds: Vec<Coin>,
     label: String,
 ) -> StdResult<WasmMsg>
 where
@@ -177,13 +177,13 @@ where
         admin: None,
         code_id,
         msg: payload,
-        send,
+        funds,
         label,
     })
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code
-pub fn wasm_execute<T, U>(contract_addr: T, msg: &U, send: Vec<Coin>) -> StdResult<WasmMsg>
+pub fn wasm_execute<T, U>(contract_addr: T, msg: &U, funds: Vec<Coin>) -> StdResult<WasmMsg>
 where
     T: Into<String>,
     U: Serialize,
@@ -192,7 +192,7 @@ where
     Ok(WasmMsg::Execute {
         contract_addr: contract_addr.into(),
         msg: payload,
-        send,
+        funds,
     })
 }
 
