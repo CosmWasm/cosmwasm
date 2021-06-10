@@ -624,6 +624,18 @@ mod tests {
         assert!(Decimal::percent(1000).sqrt() < Decimal::percent(317));
     }
 
+    /// sqrt(2) is an irrational number, i.e. all 18 decimal places should be used.
+    /// However due to implementation details the result is truncated after 9
+    /// decimal places, so we disable the test for now.
+    #[test]
+    #[ignore]
+    fn decimal_uint128_sqrt_is_precise() {
+        assert_eq!(
+            Decimal::from_str("2").unwrap().sqrt(),
+            Decimal::from_str("1.414213562373095049").unwrap()
+        );
+    }
+
     #[test]
     fn decimal_to_string() {
         // Integers
