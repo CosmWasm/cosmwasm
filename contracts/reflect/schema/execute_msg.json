@@ -572,7 +572,7 @@
       ]
     },
     "SubMsg_for_CustomMsg": {
-      "description": "A sub-message that will guarantee a subcall_response callback on success or error Note on error the subcall will revert any partial state changes due to this message, but not revert any state changes in the calling contract (that must be done in the subcall_response entry point)",
+      "description": "A submessage that will guarantee a `reply` call on success or error, depending on the `reply_on` setting. If you do not need to process the result, use regular messages instead.\n\nNote: On error the submessage execution will revert any partial state changes due to this message, but not revert any state changes in the calling contract. If this is required, it must be done manually in the `reply` entry point.",
       "type": "object",
       "required": [
         "id",
@@ -589,6 +589,7 @@
           "minimum": 0.0
         },
         "id": {
+          "description": "An arbitrary ID chosen by the contract. This is typically used to match `Reply`s in the `reply` entry point to the submessage.",
           "type": "integer",
           "format": "uint64",
           "minimum": 0.0
