@@ -139,8 +139,11 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::I64Extend16S
             | Operator::I64ExtendI32S
             | Operator::I64Extend32S
-            | Operator::I64ExtendI32U
-            | Operator::RefNull { .. }
+            | Operator::I64ExtendI32U => {
+                state.push_operator(operator);
+                Ok(())
+            }
+            Operator::RefNull { .. }
             | Operator::RefIsNull
             | Operator::RefFunc { .. }
             | Operator::ReturnCall { .. }
@@ -150,8 +153,11 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::TableSet { .. }
             | Operator::TableGrow { .. }
             | Operator::TableSize { .. } => {
-                state.push_operator(operator);
-                Ok(())
+                let msg = format!(
+                    "Reference type operation detected: {:?}. Reference types are not supported.",
+                    operator
+                );
+                Err(MiddlewareError::new("Deterministic", msg))
             }
             Operator::MemoryAtomicNotify { .. }
             | Operator::MemoryAtomicWait32 { .. }
