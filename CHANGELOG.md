@@ -7,9 +7,15 @@ and this project adheres to
 ## [Unreleased]
 
 ### Removed
+
 - cosmwasm-std: Remove `results::Context` - deprecated in previous release
 - cosmwasm-std: Remove `HandleResponse`, `InitResponse`, and `MigrateResponse` -
   deprecated in previous release
+
+### Changed
+
+- cosmwasm-std: Rename the `send` function parameter to `funds` in `WasmMsg`
+  for consistency with the wasmd message types.
 
 ## [0.14.1] - 2021-06-14
 
