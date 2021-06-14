@@ -15,36 +15,44 @@ use crate::errors::{VmError, VmResult};
 use crate::instance::Instance;
 use crate::serde::{from_slice, to_vec};
 
-/// Max length (in bytes) of the result data from an instantiate call.
-const RESULT_LIMIT_INSTANTIATE: usize = 100_000;
-/// Max length (in bytes) of the result data from an execute call.
-const RESULT_LIMIT_EXECUTE: usize = 100_000;
-/// Max length (in bytes) of the result data from a migrate call.
-const RESULT_LIMIT_MIGRATE: usize = 100_000;
-/// Max length (in bytes) of the result data from a sudo call.
-const RESULT_LIMIT_SUDO: usize = 100_000;
-/// Max length (in bytes) of the result data from a reply call.
-const RESULT_LIMIT_REPLY: usize = 100_000;
-/// Max length (in bytes) of the result data from a query call.
-const RESULT_LIMIT_QUERY: usize = 100_000;
-/// Max length (in bytes) of the result data from a ibc_channel_open call.
-#[cfg(feature = "stargate")]
-const RESULT_LIMIT_IBC_CHANNEL_OPEN: usize = 100_000;
-/// Max length (in bytes) of the result data from a ibc_channel_connect call.
-#[cfg(feature = "stargate")]
-const RESULT_LIMIT_IBC_CHANNEL_CONNECT: usize = 100_000;
-/// Max length (in bytes) of the result data from a ibc_channel_close call.
-#[cfg(feature = "stargate")]
-const RESULT_LIMIT_IBC_CHANNEL_CLOSE: usize = 100_000;
-/// Max length (in bytes) of the result data from a ibc_packet_receive call.
-#[cfg(feature = "stargate")]
-const RESULT_LIMIT_IBC_PACKET_RECEIVE: usize = 100_000;
-/// Max length (in bytes) of the result data from a ibc_packet_ack call.
-#[cfg(feature = "stargate")]
-const RESULT_LIMIT_IBC_PACKET_ACK: usize = 100_000;
-/// Max length (in bytes) of the result data from a ibc_packet_timeout call.
-#[cfg(feature = "stargate")]
-const RESULT_LIMIT_IBC_PACKET_TIMEOUT: usize = 100_000;
+/// The limits in here protect the host from allocating an unreasonable amount of memory
+/// and copying an unreasonable amount of data.
+///
+/// A JSON deserializer would want to set the limit to a much smaller value because
+/// deserializing JSON is more expensive. As a consequence, any sane contract should hit
+/// the deserializer limit before the read limit.
+mod read_limits {
+    /// Max length (in bytes) of the result data from an instantiate call.
+    pub const RESULT_INSTANTIATE: usize = 100_000;
+    /// Max length (in bytes) of the result data from an execute call.
+    pub const RESULT_EXECUTE: usize = 100_000;
+    /// Max length (in bytes) of the result data from a migrate call.
+    pub const RESULT_MIGRATE: usize = 100_000;
+    /// Max length (in bytes) of the result data from a sudo call.
+    pub const RESULT_SUDO: usize = 100_000;
+    /// Max length (in bytes) of the result data from a reply call.
+    pub const RESULT_REPLY: usize = 100_000;
+    /// Max length (in bytes) of the result data from a query call.
+    pub const RESULT_QUERY: usize = 100_000;
+    /// Max length (in bytes) of the result data from a ibc_channel_open call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_CHANNEL_OPEN: usize = 100_000;
+    /// Max length (in bytes) of the result data from a ibc_channel_connect call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_CHANNEL_CONNECT: usize = 100_000;
+    /// Max length (in bytes) of the result data from a ibc_channel_close call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_CHANNEL_CLOSE: usize = 100_000;
+    /// Max length (in bytes) of the result data from a ibc_packet_receive call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_PACKET_RECEIVE: usize = 100_000;
+    /// Max length (in bytes) of the result data from a ibc_packet_ack call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_PACKET_ACK: usize = 100_000;
+    /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_PACKET_TIMEOUT: usize = 100_000;
+}
 
 pub fn call_instantiate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
@@ -290,7 +298,7 @@ where
         instance,
         "instantiate",
         &[env, info, msg],
-        RESULT_LIMIT_INSTANTIATE,
+        read_limits::RESULT_INSTANTIATE,
     )
 }
 
@@ -308,7 +316,12 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "execute", &[env, info, msg], RESULT_LIMIT_EXECUTE)
+    call_raw(
+        instance,
+        "execute",
+        &[env, info, msg],
+        read_limits::RESULT_EXECUTE,
+    )
 }
 
 /// Calls Wasm export "migrate" and returns raw data from the contract.
@@ -324,7 +337,12 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "migrate", &[env, msg], RESULT_LIMIT_MIGRATE)
+    call_raw(
+        instance,
+        "migrate",
+        &[env, msg],
+        read_limits::RESULT_MIGRATE,
+    )
 }
 
 /// Calls Wasm export "sudo" and returns raw data from the contract.
@@ -340,7 +358,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "sudo", &[env, msg], RESULT_LIMIT_SUDO)
+    call_raw(instance, "sudo", &[env, msg], read_limits::RESULT_SUDO)
 }
 
 /// Calls Wasm export "reply" and returns raw data from the contract.
@@ -356,7 +374,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(false);
-    call_raw(instance, "reply", &[env, msg], RESULT_LIMIT_REPLY)
+    call_raw(instance, "reply", &[env, msg], read_limits::RESULT_REPLY)
 }
 
 /// Calls Wasm export "query" and returns raw data from the contract.
@@ -372,7 +390,7 @@ where
     Q: Querier + 'static,
 {
     instance.set_storage_readonly(true);
-    call_raw(instance, "query", &[env, msg], RESULT_LIMIT_QUERY)
+    call_raw(instance, "query", &[env, msg], read_limits::RESULT_QUERY)
 }
 
 #[cfg(feature = "stargate")]
@@ -391,7 +409,7 @@ where
         instance,
         "ibc_channel_open",
         &[env, channel],
-        RESULT_LIMIT_IBC_CHANNEL_OPEN,
+        read_limits::RESULT_IBC_CHANNEL_OPEN,
     )
 }
 
@@ -411,7 +429,7 @@ where
         instance,
         "ibc_channel_connect",
         &[env, channel],
-        RESULT_LIMIT_IBC_CHANNEL_CONNECT,
+        read_limits::RESULT_IBC_CHANNEL_CONNECT,
     )
 }
 
@@ -431,7 +449,7 @@ where
         instance,
         "ibc_channel_close",
         &[env, channel],
-        RESULT_LIMIT_IBC_CHANNEL_CLOSE,
+        read_limits::RESULT_IBC_CHANNEL_CLOSE,
     )
 }
 
@@ -451,7 +469,7 @@ where
         instance,
         "ibc_packet_receive",
         &[env, packet],
-        RESULT_LIMIT_IBC_PACKET_RECEIVE,
+        read_limits::RESULT_IBC_PACKET_RECEIVE,
     )
 }
 
@@ -471,7 +489,7 @@ where
         instance,
         "ibc_packet_ack",
         &[env, ack],
-        RESULT_LIMIT_IBC_PACKET_ACK,
+        read_limits::RESULT_IBC_PACKET_ACK,
     )
 }
 
@@ -491,7 +509,7 @@ where
         instance,
         "ibc_packet_timeout",
         &[env, packet],
-        RESULT_LIMIT_IBC_PACKET_TIMEOUT,
+        read_limits::RESULT_IBC_PACKET_TIMEOUT,
     )
 }
 
