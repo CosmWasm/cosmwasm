@@ -164,7 +164,7 @@ pub fn ibc_channel_connect(
         admin: None,
         code_id: cfg.reflect_code_id,
         msg: b"{}".into(),
-        send: vec![],
+        funds: vec![],
         label: format!("ibc-reflect-{}", &chan_id),
     };
     let sub_msg = SubMsg {
@@ -477,13 +477,13 @@ mod tests {
             admin,
             code_id,
             msg: _,
-            send,
+            funds,
             label,
         }) = &res.submessages[0].msg
         {
             assert_eq!(*admin, None);
             assert_eq!(*code_id, REFLECT_ID);
-            assert_eq!(send.len(), 0);
+            assert_eq!(funds.len(), 0);
             assert!(label.contains(channel_id));
         } else {
             panic!("invalid return message: {:?}", res.messages[0]);
@@ -576,11 +576,11 @@ mod tests {
         if let CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
             msg,
-            send,
+            funds,
         }) = &res.submessages[0].msg
         {
             assert_eq!(account, contract_addr.as_str());
-            assert_eq!(0, send.len());
+            assert_eq!(0, funds.len());
             // parse the message - should callback with proper channel_id
             let rmsg: ReflectExecuteMsg = from_slice(&msg).unwrap();
             assert_eq!(
