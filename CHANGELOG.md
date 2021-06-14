@@ -14,10 +14,16 @@ and this project adheres to
 - cosmwasm-std: Add `Timestamp::seconds` and `Timestamp::subsec_nanos`.
 - cosmwasm-std: Implement division for `Decimal / Uint128`
 
+### Changed
+
+- cosmwasm-vm: More accurate error messages for op codes related to bulk memory
+  operations, reference types, SIMD and the Threads extension.
+
 ### Fixed
 
 - cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
   so that internal multiplication cannot cause an unnecessary overflow. ([#920])
+- comswasm-vm: Whitelisted the `i64.extend32_s` operation.
 
 [#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
