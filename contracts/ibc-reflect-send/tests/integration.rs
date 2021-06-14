@@ -38,6 +38,8 @@ static WASM: &[u8] =
 
 const CREATOR: &str = "creator";
 
+const DESERIALIZATION_LIMIT: usize = 20_000;
+
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
     let msg = InstantiateMsg {};
@@ -92,7 +94,7 @@ fn who_am_i_response<T: Into<String>>(
 fn instantiate_works() {
     let mut deps = setup();
     let r = query(&mut deps, mock_env(), QueryMsg::Admin {}).unwrap();
-    let admin: AdminResponse = from_slice(&r).unwrap();
+    let admin: AdminResponse = from_slice(&r, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(CREATOR, admin.admin.as_str());
 }
 
@@ -118,7 +120,7 @@ fn get_account(
         channel_id: channel_id.into(),
     };
     let r = query(deps, mock_env(), msg).unwrap();
-    from_slice(&r).unwrap()
+    from_slice(&r, DESERIALIZATION_LIMIT).unwrap()
 }
 
 #[test]

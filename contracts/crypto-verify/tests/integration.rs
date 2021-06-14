@@ -54,6 +54,8 @@ const ED25519_SIGNATURE2_HEX: &str = "92a009a9f0d4cab8720e820b5f642540a2b27b5416
 const ED25519_PUBLIC_KEY2_HEX: &str =
     "3d4017c3e843895a92b70aa74d1b7ebc9c982ccf2ec4968cc0cd55f12af4660c";
 
+const DESERIALIZATION_LIMIT: usize = 20_000;
+
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
     let msg = InstantiateMsg {};
@@ -83,7 +85,7 @@ fn cosmos_signature_verify_works() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -105,7 +107,7 @@ fn cosmos_signature_verify_fails() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
 }
@@ -144,7 +146,7 @@ fn ethereum_signature_verify_works() {
         signer_address: signer_address.into(),
     };
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -164,7 +166,7 @@ fn ethereum_signature_verify_fails_for_corrupted_message() {
         signer_address: signer_address.into(),
     };
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
 }
@@ -185,7 +187,7 @@ fn ethereum_signature_verify_fails_for_corrupted_signature() {
         signer_address: signer_address.into(),
     };
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(res, VerifyResponse { verifies: false });
 
     // Broken signature
@@ -247,7 +249,7 @@ fn verify_ethereum_transaction_works() {
         v,
     };
     let raw = query(&mut deps, mock_env(), msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(res, VerifyResponse { verifies: true });
 }
 
@@ -266,7 +268,7 @@ fn tendermint_signature_verify_works() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -288,7 +290,7 @@ fn tendermint_signature_verify_fails() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
 }
@@ -337,7 +339,7 @@ fn tendermint_signatures_batch_verify_works() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -370,7 +372,7 @@ fn tendermint_signatures_batch_verify_message_multisig_works() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -403,7 +405,7 @@ fn tendermint_signatures_batch_verify_single_public_key_works() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: true });
 }
@@ -434,7 +436,7 @@ fn tendermint_signatures_batch_verify_fails() {
     };
 
     let raw = query(&mut deps, mock_env(), verify_msg).unwrap();
-    let res: VerifyResponse = from_slice(&raw).unwrap();
+    let res: VerifyResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(res, VerifyResponse { verifies: false });
 }
@@ -476,7 +478,7 @@ fn query_works() {
     let query_msg = QueryMsg::ListVerificationSchemes {};
 
     let raw = query(&mut deps, mock_env(), query_msg).unwrap();
-    let res: ListVerificationsResponse = from_slice(&raw).unwrap();
+    let res: ListVerificationsResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
 
     assert_eq!(
         res,
