@@ -8,7 +8,7 @@ and this project adheres to
 
 ### Removed
 
-- cosmwasm-std: Remove `results::Context` - deprecated in previous release
+- cosmwasm-std: Remove `Context` - deprecated in previous release
 - cosmwasm-std: Remove `HandleResponse`, `InitResponse`, and `MigrateResponse` -
   deprecated in previous release
 
@@ -30,8 +30,8 @@ and this project adheres to
 
 ### Fixed
 
-- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
-  so that internal multiplication cannot cause an unnecessary overflow. ([#920])
+- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio` so
+  that internal multiplication cannot cause an unnecessary overflow. ([#920])
 
 [#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
