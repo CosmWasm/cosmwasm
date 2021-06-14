@@ -1,6 +1,6 @@
 [package]
 name = "cosmwasm-std"
-version = "0.14.0"
+version = "0.14.1"
 authors = ["Ethan Frey <ethanfrey@users.noreply.github.com>"]
 edition = "2018"
 description = "Standard library for Wasm based smart contracts on Cosmos blockchains"
@@ -29,7 +29,7 @@ stargate = []
 
 [dependencies]
 base64 = "0.13.0"
-cosmwasm-derive = { path = "../derive", version = "0.14.0" }
+cosmwasm-derive = { path = "../derive", version = "0.14.1" }
 uint = "0.9.0"
 serde-json-wasm = { version = "0.3.1" }
 schemars = "0.8.1"
@@ -37,7 +37,7 @@ serde = { version = "1.0.103", default-features = false, features = ["derive", "
 thiserror = "1.0"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
-cosmwasm-crypto = { path = "../crypto", version = "0.14.0" }
+cosmwasm-crypto = { path = "../crypto", version = "0.14.1" }
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../schema" }

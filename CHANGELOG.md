@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+## [0.14.1] - 2021-06-14
+
 ### Added
 
 - cosmwasm-std: Add `Timestamp::minus_seconds` and `::minus_nanos`.
@@ -17,8 +19,8 @@ and this project adheres to
 
 ### Fixed
 
-- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
-  so that internal multiplication cannot cause an unnecessary overflow. ([#920])
+- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio` so
+  that internal multiplication cannot cause an unnecessary overflow. ([#920])
 
 [#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
@@ -910,7 +912,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.14.0
 [0.13.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.0...v0.13.1
