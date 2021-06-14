@@ -19,6 +19,9 @@ and this project adheres to
 
 - cosmwasm-std: Rename the `send` function parameter to `funds` in `WasmMsg` for
   consistency with the wasmd message types.
+- cosmwasm-vm: Increase read limit of contract execution results from 100,000
+  bytes to 64 MiB. JSON deserializers should have their own limit to protect
+  against large deserializations.
 
 ## [0.14.1] - 2021-06-14
 

@@ -22,36 +22,38 @@ use crate::serde::{from_slice, to_vec};
 /// deserializing JSON is more expensive. As a consequence, any sane contract should hit
 /// the deserializer limit before the read limit.
 mod read_limits {
+    /// A mibi (mega binary)
+    const MI: usize = 1024 * 1024;
     /// Max length (in bytes) of the result data from an instantiate call.
-    pub const RESULT_INSTANTIATE: usize = 100_000;
+    pub const RESULT_INSTANTIATE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from an execute call.
-    pub const RESULT_EXECUTE: usize = 100_000;
+    pub const RESULT_EXECUTE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a migrate call.
-    pub const RESULT_MIGRATE: usize = 100_000;
+    pub const RESULT_MIGRATE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a sudo call.
-    pub const RESULT_SUDO: usize = 100_000;
+    pub const RESULT_SUDO: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a reply call.
-    pub const RESULT_REPLY: usize = 100_000;
+    pub const RESULT_REPLY: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a query call.
-    pub const RESULT_QUERY: usize = 100_000;
+    pub const RESULT_QUERY: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_channel_open call.
     #[cfg(feature = "stargate")]
-    pub const RESULT_IBC_CHANNEL_OPEN: usize = 100_000;
+    pub const RESULT_IBC_CHANNEL_OPEN: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_channel_connect call.
     #[cfg(feature = "stargate")]
-    pub const RESULT_IBC_CHANNEL_CONNECT: usize = 100_000;
+    pub const RESULT_IBC_CHANNEL_CONNECT: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_channel_close call.
     #[cfg(feature = "stargate")]
-    pub const RESULT_IBC_CHANNEL_CLOSE: usize = 100_000;
+    pub const RESULT_IBC_CHANNEL_CLOSE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_receive call.
     #[cfg(feature = "stargate")]
-    pub const RESULT_IBC_PACKET_RECEIVE: usize = 100_000;
+    pub const RESULT_IBC_PACKET_RECEIVE: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_ack call.
     #[cfg(feature = "stargate")]
-    pub const RESULT_IBC_PACKET_ACK: usize = 100_000;
+    pub const RESULT_IBC_PACKET_ACK: usize = 64 * MI;
     /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
     #[cfg(feature = "stargate")]
-    pub const RESULT_IBC_PACKET_TIMEOUT: usize = 100_000;
+    pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
 }
 
 pub fn call_instantiate<A, S, Q, U>(
