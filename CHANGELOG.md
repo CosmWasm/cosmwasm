@@ -17,8 +17,8 @@ and this project adheres to
 
 ### Changed
 
-- cosmwasm-std: Rename the `send` function parameter to `funds` in `WasmMsg`
-  for consistency with the wasmd message types.
+- cosmwasm-std: Rename the `send` function parameter to `funds` in `WasmMsg` for
+  consistency with the wasmd message types.
 
 ## [0.14.1] - 2021-06-14
 
@@ -33,8 +33,8 @@ and this project adheres to
 
 ### Fixed
 
-- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
-  so that internal multiplication cannot cause an unnecessary overflow. ([#920])
+- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio` so
+  that internal multiplication cannot cause an unnecessary overflow. ([#920])
 
 [#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
