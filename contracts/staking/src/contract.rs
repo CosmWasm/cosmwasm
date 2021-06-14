@@ -325,7 +325,7 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
             WasmMsg::Execute {
                 contract_addr: contract_addr.into(),
                 msg,
-                send: vec![],
+                funds: vec![],
             }
             .into(),
         ],
