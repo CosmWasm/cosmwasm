@@ -8,6 +8,8 @@ and this project adheres to
 
 ### Removed
 - cosmwasm-std: Remove `results::Context` - deprecated in previous release
+- cosmwasm-std: Remove `HandleResponse`, `InitResponse`, and `MigrateResponse` -
+  deprecated in previous release
 
 ## [0.14.1] - 2021-06-14
 

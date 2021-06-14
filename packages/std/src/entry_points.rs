@@ -94,14 +94,14 @@ macro_rules! create_entry_points {
 /// This macro is very similar to the `create_entry_points` macro, except it also requires the `migrate` method:
 /// ```
 /// # use cosmwasm_std::{
-/// #     Storage, Api, Querier, DepsMut, Env, StdError, MigrateResponse, MessageInfo,
+/// #     Storage, Api, Querier, DepsMut, Env, StdError, Response, MessageInfo,
 /// # };
 /// # type MigrateMsg = ();
 /// pub fn migrate(
 ///     deps: DepsMut,
 ///     _env: Env,
 ///     msg: MigrateMsg,
-/// ) -> Result<MigrateResponse, StdError> {
+/// ) -> Result<Response, StdError> {
 /// #   Ok(Default::default())
 /// }
 /// ```

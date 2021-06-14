@@ -57,8 +57,6 @@ pub use crate::results::{
 };
 #[cfg(feature = "staking")]
 pub use crate::results::{DistributionMsg, StakingMsg};
-#[allow(deprecated)]
-pub use crate::results::{HandleResponse, InitResponse, MigrateResponse};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};
 pub use crate::storage::MemoryStorage;
 pub use crate::timestamp::Timestamp;
