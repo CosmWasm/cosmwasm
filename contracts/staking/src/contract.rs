@@ -112,10 +112,10 @@ pub fn transfer(
 fn get_bonded<U: Into<String>>(querier: &QuerierWrapper, contract_addr: U) -> StdResult<Uint128> {
     let bonds = querier.query_all_delegations(contract_addr)?;
     if bonds.is_empty() {
-        return Ok(Uint128(0));
+        return Ok(Uint128::new(0));
     }
     let denom = bonds[0].amount.denom.as_str();
-    bonds.iter().fold(Ok(Uint128(0)), |racc, d| {
+    bonds.iter().fold(Ok(Uint128::new(0)), |racc, d| {
         let acc = racc?;
         if d.amount.denom.as_str() != denom {
             Err(StdError::generic_err(format!(
@@ -213,7 +213,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     accounts.update(&sender_raw, |balance| -> StdResult<_> {
         Ok(balance.unwrap_or_default().checked_sub(amount)?)
     })?;
-    if tax > Uint128(0) {
+    if tax > Uint128::new(0) {
         // add tax to the owner
         accounts.update(&owner_raw, |balance: Option<Uint128>| -> StdResult<_> {
             Ok(balance.unwrap_or_default() + tax)
@@ -490,7 +490,7 @@ mod tests {
             decimals: 9,
             validator: String::from(DEFAULT_VALIDATOR),
             exit_tax: Decimal::percent(tax_percent),
-            min_withdrawal: Uint128(min_withdrawal),
+            min_withdrawal: Uint128::new(min_withdrawal),
         }
     }
 
@@ -515,7 +515,7 @@ mod tests {
             decimals: 9,
             validator: String::from("my-validator"),
             exit_tax: Decimal::percent(2),
-            min_withdrawal: Uint128(50),
+            min_withdrawal: Uint128::new(50),
         };
         let info = mock_info(&creator, &[]);
 
@@ -549,7 +549,7 @@ mod tests {
             decimals: 0,
             validator: String::from("my-validator"),
             exit_tax: Decimal::percent(2),
-            min_withdrawal: Uint128(50),
+            min_withdrawal: Uint128::new(50),
         };
         let info = mock_info(&creator, &[]);
 
@@ -564,9 +564,9 @@ mod tests {
         assert_eq!(token.decimals, msg.decimals);
 
         // no balance
-        assert_eq!(get_balance(deps.as_ref(), &creator), Uint128(0));
+        assert_eq!(get_balance(deps.as_ref(), &creator), Uint128::new(0));
         // no claims
-        assert_eq!(get_claims(deps.as_ref(), &creator), Uint128(0));
+        assert_eq!(get_claims(deps.as_ref(), &creator), Uint128::new(0));
 
         // investment info correct
         let invest = query_investment(deps.as_ref()).unwrap();
@@ -575,7 +575,7 @@ mod tests {
         assert_eq!(invest.exit_tax, msg.exit_tax);
         assert_eq!(invest.min_withdrawal, msg.min_withdrawal);
 
-        assert_eq!(invest.token_supply, Uint128(0));
+        assert_eq!(invest.token_supply, Uint128::new(0));
         assert_eq!(invest.staked_tokens, coin(0, "ustake"));
         assert_eq!(invest.nominal_value, Decimal::one());
     }
@@ -611,11 +611,11 @@ mod tests {
         }
 
         // bob got 1000 DRV for 1000 stake at a 1.0 ratio
-        assert_eq!(get_balance(deps.as_ref(), &bob), Uint128(1000));
+        assert_eq!(get_balance(deps.as_ref(), &bob), Uint128::new(1000));
 
         // investment info correct (updated supply)
         let invest = query_investment(deps.as_ref()).unwrap();
-        assert_eq!(invest.token_supply, Uint128(1000));
+        assert_eq!(invest.token_supply, Uint128::new(1000));
         assert_eq!(invest.staked_tokens, coin(1000, "ustake"));
         assert_eq!(invest.nominal_value, Decimal::one());
     }
@@ -655,7 +655,7 @@ mod tests {
 
         // we should now see 1000 issues and 1500 bonded (and a price of 1.5)
         let invest = query_investment(deps.as_ref()).unwrap();
-        assert_eq!(invest.token_supply, Uint128(1000));
+        assert_eq!(invest.token_supply, Uint128::new(1000));
         assert_eq!(invest.staked_tokens, coin(1500, "ustake"));
         let ratio = Decimal::from_str("1.5").unwrap();
         assert_eq!(invest.nominal_value, ratio);
@@ -671,10 +671,10 @@ mod tests {
         set_delegation(&mut deps.querier, 3000, "ustake");
 
         // alice should have gotten 2000 DRV for the 3000 stake, keeping the ratio at 1.5
-        assert_eq!(get_balance(deps.as_ref(), &alice), Uint128(2000));
+        assert_eq!(get_balance(deps.as_ref(), &alice), Uint128::new(2000));
 
         let invest = query_investment(deps.as_ref()).unwrap();
-        assert_eq!(invest.token_supply, Uint128(3000));
+        assert_eq!(invest.token_supply, Uint128::new(3000));
         assert_eq!(invest.staked_tokens, coin(4500, "ustake"));
         assert_eq!(invest.nominal_value, ratio);
     }
@@ -744,7 +744,7 @@ mod tests {
 
         // creator now tries to unbond these tokens - this must fail
         let unbond_msg = ExecuteMsg::Unbond {
-            amount: Uint128(600),
+            amount: Uint128::new(600),
         };
         let info = mock_info(&creator, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, unbond_msg);
@@ -759,11 +759,11 @@ mod tests {
         // 60 are taken and send to the owner
         // 540 are unbonded in exchange for 540 * 1.5 = 810 native tokens
         let unbond_msg = ExecuteMsg::Unbond {
-            amount: Uint128(600),
+            amount: Uint128::new(600),
         };
-        let owner_cut = Uint128(60);
-        let bobs_claim = Uint128(810);
-        let bobs_balance = Uint128(400);
+        let owner_cut = Uint128::new(60);
+        let bobs_claim = Uint128::new(810);
+        let bobs_balance = Uint128::new(400);
         let info = mock_info(&bob, &[]);
         let res = execute(deps.as_mut(), mock_env(), info, unbond_msg).unwrap();
         assert_eq!(1, res.messages.len());

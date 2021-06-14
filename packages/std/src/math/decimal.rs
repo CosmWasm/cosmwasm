@@ -560,19 +560,19 @@ mod tests {
     // in this test the Decimal is on the right
     fn uint128_decimal_multiply() {
         // a*b
-        let left = Uint128(300);
+        let left = Uint128::new(300);
         let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128(450));
+        assert_eq!(left * right, Uint128::new(450));
 
         // a*0
-        let left = Uint128(300);
+        let left = Uint128::new(300);
         let right = Decimal::zero();
-        assert_eq!(left * right, Uint128(0));
+        assert_eq!(left * right, Uint128::new(0));
 
         // 0*a
-        let left = Uint128(0);
+        let left = Uint128::new(0);
         let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128(0));
+        assert_eq!(left * right, Uint128::new(0));
     }
 
     #[test]
@@ -580,30 +580,30 @@ mod tests {
     fn decimal_uint128_multiply() {
         // a*b
         let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128(300);
-        assert_eq!(left * right, Uint128(450));
+        let right = Uint128::new(300);
+        assert_eq!(left * right, Uint128::new(450));
 
         // 0*a
         let left = Decimal::zero();
-        let right = Uint128(300);
-        assert_eq!(left * right, Uint128(0));
+        let right = Uint128::new(300);
+        assert_eq!(left * right, Uint128::new(0));
 
         // a*0
         let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128(0);
-        assert_eq!(left * right, Uint128(0));
+        let right = Uint128::new(0);
+        assert_eq!(left * right, Uint128::new(0));
     }
 
     #[test]
     fn decimal_uint128_division() {
         // a/b
         let left = Decimal::percent(150); // 1.5
-        let right = Uint128(3);
+        let right = Uint128::new(3);
         assert_eq!(left / right, Decimal::percent(50));
 
         // 0/a
         let left = Decimal::zero();
-        let right = Uint128(300);
+        let right = Uint128::new(300);
         assert_eq!(left / right, Decimal::zero());
     }
 
@@ -611,7 +611,7 @@ mod tests {
     #[should_panic(expected = "attempt to divide by zero")]
     fn decimal_uint128_divide_by_zero() {
         let left = Decimal::percent(150); // 1.5
-        let right = Uint128(0);
+        let right = Uint128::new(0);
         let _result = left / right;
     }
 
@@ -619,12 +619,12 @@ mod tests {
     fn decimal_uint128_div_assign() {
         // a/b
         let mut dec = Decimal::percent(150); // 1.5
-        dec /= Uint128(3);
+        dec /= Uint128::new(3);
         assert_eq!(dec, Decimal::percent(50));
 
         // 0/a
         let mut dec = Decimal::zero();
-        dec /= Uint128(300);
+        dec /= Uint128::new(300);
         assert_eq!(dec, Decimal::zero());
     }
 
@@ -633,7 +633,7 @@ mod tests {
     fn decimal_uint128_div_assign_by_zero() {
         // a/0
         let mut dec = Decimal::percent(50);
-        dec /= Uint128(0);
+        dec /= Uint128::new(0);
     }
 
     #[test]

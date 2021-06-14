@@ -27,9 +27,7 @@ use crate::errors::{DivideByZeroError, OverflowError, OverflowOperation, StdErro
 /// assert_eq!(c.u128(), 70);
 /// ```
 #[derive(Copy, Clone, Default, Debug, PartialEq, Eq, PartialOrd, Ord, JsonSchema)]
-pub struct Uint128(
-    #[schemars(with = "String")] pub u128, // Simon thinks this should be private, but does not want to worry about breaking code right now
-);
+pub struct Uint128(#[schemars(with = "String")] u128);
 
 impl Uint128 {
     /// Creates a Uint128(value).
