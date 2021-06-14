@@ -294,6 +294,9 @@ returns `data: None`, it will not modify any previously set data state. If there
 are multiple submessages all setting this, only the last one is used (they all
 overwrite any previous `data` value).
 
+An edge is *empty* data returned with `data: Some(empty)`. We handle this equal
+to `data: None` to avoid unmarshalling issues.
+
 #### Order and Rollback
 
 Submessages (and their replies) are all executed before any `messages`. They
