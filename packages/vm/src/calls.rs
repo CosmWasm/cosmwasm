@@ -56,6 +56,45 @@ mod read_limits {
     pub const RESULT_IBC_PACKET_TIMEOUT: usize = 64 * MI;
 }
 
+/// The limits for the JSON deserialization.
+///
+/// Those limits are not used when the Rust JSON deserializer is bypassed by using the
+/// public `call_*_raw` functions directly.
+mod deserialization_limits {
+    /// A kibi (kilo binary)
+    const KI: usize = 1024;
+    /// Max length (in bytes) of the result data from an instantiate call.
+    pub const RESULT_INSTANTIATE: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from an execute call.
+    pub const RESULT_EXECUTE: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a migrate call.
+    pub const RESULT_MIGRATE: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a sudo call.
+    pub const RESULT_SUDO: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a reply call.
+    pub const RESULT_REPLY: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a query call.
+    pub const RESULT_QUERY: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_channel_open call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_CHANNEL_OPEN: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_channel_connect call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_CHANNEL_CONNECT: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_channel_close call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_CHANNEL_CLOSE: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_packet_receive call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_PACKET_RECEIVE: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_packet_ack call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_PACKET_ACK: usize = 256 * KI;
+    /// Max length (in bytes) of the result data from a ibc_packet_timeout call.
+    #[cfg(feature = "stargate")]
+    pub const RESULT_IBC_PACKET_TIMEOUT: usize = 256 * KI;
+}
+
 pub fn call_instantiate<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
@@ -71,7 +110,8 @@ where
     let env = to_vec(env)?;
     let info = to_vec(info)?;
     let data = call_instantiate_raw(instance, &env, &info, msg)?;
-    let result: ContractResult<Response<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> =
+        from_slice(&data, deserialization_limits::RESULT_INSTANTIATE)?;
     Ok(result)
 }
 
@@ -90,7 +130,8 @@ where
     let env = to_vec(env)?;
     let info = to_vec(info)?;
     let data = call_execute_raw(instance, &env, &info, msg)?;
-    let result: ContractResult<Response<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> =
+        from_slice(&data, deserialization_limits::RESULT_EXECUTE)?;
     Ok(result)
 }
 
@@ -107,7 +148,8 @@ where
 {
     let env = to_vec(env)?;
     let data = call_migrate_raw(instance, &env, msg)?;
-    let result: ContractResult<Response<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> =
+        from_slice(&data, deserialization_limits::RESULT_MIGRATE)?;
     Ok(result)
 }
 
@@ -124,7 +166,8 @@ where
 {
     let env = to_vec(env)?;
     let data = call_sudo_raw(instance, &env, msg)?;
-    let result: ContractResult<Response<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> =
+        from_slice(&data, deserialization_limits::RESULT_SUDO)?;
     Ok(result)
 }
 
@@ -142,7 +185,8 @@ where
     let env = to_vec(env)?;
     let msg = to_vec(msg)?;
     let data = call_reply_raw(instance, &env, &msg)?;
-    let result: ContractResult<Response<U>> = from_slice(&data)?;
+    let result: ContractResult<Response<U>> =
+        from_slice(&data, deserialization_limits::RESULT_REPLY)?;
     Ok(result)
 }
 
@@ -158,7 +202,8 @@ where
 {
     let env = to_vec(env)?;
     let data = call_query_raw(instance, &env, msg)?;
-    let result: ContractResult<QueryResponse> = from_slice(&data)?;
+    let result: ContractResult<QueryResponse> =
+        from_slice(&data, deserialization_limits::RESULT_QUERY)?;
     // Ensure query response is valid JSON
     if let ContractResult::Ok(binary_response) = &result {
         serde_json::from_slice::<serde_json::Value>(binary_response.as_slice()).map_err(|e| {
@@ -183,7 +228,8 @@ where
     let env = to_vec(env)?;
     let channel = to_vec(channel)?;
     let data = call_ibc_channel_open_raw(instance, &env, &channel)?;
-    let result: ContractResult<()> = from_slice(&data)?;
+    let result: ContractResult<()> =
+        from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_OPEN)?;
     Ok(result)
 }
 
@@ -202,7 +248,7 @@ where
     let env = to_vec(env)?;
     let channel = to_vec(channel)?;
     let data = call_ibc_channel_connect_raw(instance, &env, &channel)?;
-    let result = from_slice(&data)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_CONNECT)?;
     Ok(result)
 }
 
@@ -221,7 +267,7 @@ where
     let env = to_vec(env)?;
     let channel = to_vec(channel)?;
     let data = call_ibc_channel_close_raw(instance, &env, &channel)?;
-    let result = from_slice(&data)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_CLOSE)?;
     Ok(result)
 }
 
@@ -240,7 +286,7 @@ where
     let env = to_vec(env)?;
     let packet = to_vec(packet)?;
     let data = call_ibc_packet_receive_raw(instance, &env, &packet)?;
-    let result = from_slice(&data)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
     Ok(result)
 }
 
@@ -259,7 +305,7 @@ where
     let env = to_vec(env)?;
     let ack = to_vec(ack)?;
     let data = call_ibc_packet_ack_raw(instance, &env, &ack)?;
-    let result = from_slice(&data)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_ACK)?;
     Ok(result)
 }
 
@@ -278,7 +324,7 @@ where
     let env = to_vec(env)?;
     let packet = to_vec(packet)?;
     let data = call_ibc_packet_timeout_raw(instance, &env, &packet)?;
-    let result = from_slice(&data)?;
+    let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_TIMEOUT)?;
     Ok(result)
 }
 

@@ -81,6 +81,14 @@ pub enum VmError {
         #[cfg(feature = "backtraces")]
         backtrace: Backtrace,
     },
+    #[error("Data too long for deserialization. Got: {length} bytes; limit: {max_length} bytes")]
+    DeserializationLimitExceeded {
+        /// the target type that was attempted
+        length: usize,
+        max_length: usize,
+        #[cfg(feature = "backtraces")]
+        backtrace: Backtrace,
+    },
     #[error("Error serializing type {source_type}: {msg}")]
     SerializeErr {
         /// the source type that was attempted
@@ -214,6 +222,15 @@ impl VmError {
         VmError::ParseErr {
             target_type: target.into(),
             msg: msg.to_string(),
+            #[cfg(feature = "backtraces")]
+            backtrace: Backtrace::capture(),
+        }
+    }
+
+    pub(crate) fn deserialization_limit_exceeded(length: usize, max_length: usize) -> Self {
+        VmError::DeserializationLimitExceeded {
+            length,
+            max_length,
             #[cfg(feature = "backtraces")]
             backtrace: Backtrace::capture(),
         }
