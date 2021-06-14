@@ -354,6 +354,6 @@ mod tests {
             .unwrap()
             .unwrap();
         let balance: BalanceResponse = from_slice(&raw).unwrap();
-        assert_eq!(balance.amount.amount, Uint128(5));
+        assert_eq!(balance.amount.amount, Uint128::new(5));
     }
 }

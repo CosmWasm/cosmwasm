@@ -35,6 +35,8 @@ use hackatom::state::{State, CONFIG_KEY};
 
 static WASM: &[u8] = include_bytes!("../target/wasm32-unknown-unknown/release/hackatom.wasm");
 
+const DESERIALIZATION_LIMIT: usize = 20_000;
+
 fn make_init_msg() -> (InstantiateMsg, String) {
     let verifier = String::from("verifies");
     let beneficiary = String::from("benefits");
@@ -81,7 +83,7 @@ fn proper_initialization() {
                 .0
                 .expect("error reading db")
                 .expect("no data stored");
-            from_slice(&data)
+            from_slice(&data, DESERIALIZATION_LIMIT)
         })
         .unwrap();
     assert_eq!(state, expected_state);
@@ -296,7 +298,7 @@ fn execute_release_fails_for_wrong_sender() {
                 .expect("no data stored"))
         })
         .unwrap();
-    let state: State = from_slice(&data).unwrap();
+    let state: State = from_slice(&data, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(
         state,
         State {

@@ -55,8 +55,6 @@ pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
     Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubcallResponse, SystemResult, WasmMsg,
 };
-#[allow(deprecated)]
-pub use crate::results::{Context, HandleResponse, InitResponse, MigrateResponse};
 #[cfg(feature = "staking")]
 pub use crate::results::{DistributionMsg, StakingMsg};
 pub use crate::serde::{from_binary, from_slice, to_binary, to_vec};

@@ -6,6 +6,35 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Removed
+
+- cosmwasm-std: Make `Uint128` inner field private ([#905])
+- cosmwasm-std: Remove `Context` - deprecated in previous release
+- cosmwasm-std: Remove `HandleResponse`, `InitResponse`, and `MigrateResponse` -
+  deprecated in previous release
+
+[#905]: https://github.com/CosmWasm/cosmwasm/issues/905
+
+### Changed
+
+- cosmwasm-std: Rename the `send` function parameter to `funds` in `WasmMsg` for
+  consistency with the wasmd message types.
+- cosmwasm-vm: Increase read limit of contract execution results from 100,000
+  bytes to 64 MiB. JSON deserializers should have their own limit to protect
+  against large deserializations.
+- cosmwasm-vm: Create `VmError::DeserializationLimitExceeded`; Add limit
+  argument to `from_slice`; Increase deserialization limit of contract execution
+  results from 100,000 bytes to 256 KiB. This probably only affects internal
+  testing as well as integration tests of smart contracts.
+- cosmwasm-vm: More accurate error messages for op codes related to bulk memory
+  operations, reference types, SIMD and the Threads extension.
+  
+### Fixed
+
+- comswasm-vm: Whitelisted the `i64.extend32_s` operation.
+
+## [0.14.1] - 2021-06-14
+
 ### Added
 
 - cosmwasm-std: Add `Timestamp::minus_seconds` and `::minus_nanos`.
@@ -13,17 +42,12 @@ and this project adheres to
 - cosmwasm-std: Implement `std::ops::Sub` for `math::Decimal`
 - cosmwasm-std: Add `Timestamp::seconds` and `Timestamp::subsec_nanos`.
 - cosmwasm-std: Implement division for `Decimal / Uint128`
-
-### Changed
-
-- cosmwasm-vm: More accurate error messages for op codes related to bulk memory
-  operations, reference types, SIMD and the Threads extension.
+- cosmwasm-std: Add `math::Decimal::sqrt`
 
 ### Fixed
 
-- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio`
-  so that internal multiplication cannot cause an unnecessary overflow. ([#920])
-- comswasm-vm: Whitelisted the `i64.extend32_s` operation.
+- cosmwasm-std: Fix `Uint64::multiply_ratio` and `Uint128::multiply_ratio` so
+  that internal multiplication cannot cause an unnecessary overflow. ([#920])
 
 [#920]: https://github.com/CosmWasm/cosmwasm/issues/920
 
@@ -915,7 +939,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.1...HEAD
+[0.14.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.14.0
 [0.13.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.13.2
 [0.13.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.0...v0.13.1

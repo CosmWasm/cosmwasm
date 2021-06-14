@@ -26,25 +26,31 @@ impl Default for ReplyOn {
     }
 }
 
-/// A sub-message that will guarantee a subcall_response callback on success or error
-/// Note on error the subcall will revert any partial state changes due to this message,
-/// but not revert any state changes in the calling contract (that must be done in the
-/// subcall_response entry point)
+/// A submessage that will guarantee a `reply` call on success or error, depending on
+/// the `reply_on` setting. If you do not need to process the result, use regular messages instead.
+///
+/// Note: On error the submessage execution will revert any partial state changes due to this message,
+/// but not revert any state changes in the calling contract. If this is required, it must be done
+/// manually in the `reply` entry point.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct SubMsg<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
+    /// An arbitrary ID chosen by the contract.
+    /// This is typically used to match `Reply`s in the `reply` entry point to the submessage.
     pub id: u64,
     pub msg: CosmosMsg<T>,
     pub gas_limit: Option<u64>,
     pub reply_on: ReplyOn,
 }
 
-/// The Result object returned to subcall_response. We always get the same id back
-/// and then must handle success and error cases ourselves
+/// The result object returned to `reply`. We always get the ID from the submessage
+/// back and then must handle success and error cases ourselves.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Reply {
+    /// The ID that the contract set when emitting the `SubMsg`.
+    /// Use this to identify which submessage triggered the `reply`.
     pub id: u64,
     pub result: ContractResult<SubcallResponse>,
 }

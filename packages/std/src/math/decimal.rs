@@ -7,6 +7,7 @@ use std::str::FromStr;
 use crate::errors::StdError;
 
 use super::Fraction;
+use super::Isqrt;
 use super::Uint128;
 
 /// A fixed-point decimal value with 18 fractional digits, i.e. Decimal(1_000_000_000_000_000_000) == 1.0
@@ -54,6 +55,32 @@ impl Decimal {
 
     pub fn is_zero(&self) -> bool {
         self.0 == 0
+    }
+
+    /// Returns the approximate square root as a Decimal.
+    ///
+    /// This should not overflow or panic.
+    pub fn sqrt(&self) -> Self {
+        // Algorithm described in https://hackmd.io/@webmaster128/SJThlukj_
+        // We start with the highest precision possible and lower it until
+        // there's no overflow.
+        (0..=9)
+            .rev()
+            .find_map(|i| self.sqrt_with_precision(i))
+            // The last step (i = 0) is guaranteed to succeed because `isqrt(u128::MAX) * 10^9` does not overflow
+            .unwrap()
+    }
+
+    /// Lower precision means more aggressive rounding, but less risk of overflow.
+    /// Precision *must* be a number between 0 and 9 (inclusive).
+    ///
+    /// Returns `None` if the internal multiplication overflows.
+    fn sqrt_with_precision(&self, precision: u32) -> Option<Self> {
+        let inner_mul = 100u128.pow(precision);
+        self.0.checked_mul(inner_mul).map(|inner| {
+            let outer_mul = 10u128.pow(9 - precision);
+            Decimal(inner.isqrt() * outer_mul)
+        })
     }
 }
 
@@ -533,19 +560,19 @@ mod tests {
     // in this test the Decimal is on the right
     fn uint128_decimal_multiply() {
         // a*b
-        let left = Uint128(300);
+        let left = Uint128::new(300);
         let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128(450));
+        assert_eq!(left * right, Uint128::new(450));
 
         // a*0
-        let left = Uint128(300);
+        let left = Uint128::new(300);
         let right = Decimal::zero();
-        assert_eq!(left * right, Uint128(0));
+        assert_eq!(left * right, Uint128::new(0));
 
         // 0*a
-        let left = Uint128(0);
+        let left = Uint128::new(0);
         let right = Decimal::one() + Decimal::percent(50); // 1.5
-        assert_eq!(left * right, Uint128(0));
+        assert_eq!(left * right, Uint128::new(0));
     }
 
     #[test]
@@ -553,30 +580,30 @@ mod tests {
     fn decimal_uint128_multiply() {
         // a*b
         let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128(300);
-        assert_eq!(left * right, Uint128(450));
+        let right = Uint128::new(300);
+        assert_eq!(left * right, Uint128::new(450));
 
         // 0*a
         let left = Decimal::zero();
-        let right = Uint128(300);
-        assert_eq!(left * right, Uint128(0));
+        let right = Uint128::new(300);
+        assert_eq!(left * right, Uint128::new(0));
 
         // a*0
         let left = Decimal::one() + Decimal::percent(50); // 1.5
-        let right = Uint128(0);
-        assert_eq!(left * right, Uint128(0));
+        let right = Uint128::new(0);
+        assert_eq!(left * right, Uint128::new(0));
     }
 
     #[test]
     fn decimal_uint128_division() {
         // a/b
         let left = Decimal::percent(150); // 1.5
-        let right = Uint128(3);
+        let right = Uint128::new(3);
         assert_eq!(left / right, Decimal::percent(50));
 
         // 0/a
         let left = Decimal::zero();
-        let right = Uint128(300);
+        let right = Uint128::new(300);
         assert_eq!(left / right, Decimal::zero());
     }
 
@@ -584,7 +611,7 @@ mod tests {
     #[should_panic(expected = "attempt to divide by zero")]
     fn decimal_uint128_divide_by_zero() {
         let left = Decimal::percent(150); // 1.5
-        let right = Uint128(0);
+        let right = Uint128::new(0);
         let _result = left / right;
     }
 
@@ -592,12 +619,12 @@ mod tests {
     fn decimal_uint128_div_assign() {
         // a/b
         let mut dec = Decimal::percent(150); // 1.5
-        dec /= Uint128(3);
+        dec /= Uint128::new(3);
         assert_eq!(dec, Decimal::percent(50));
 
         // 0/a
         let mut dec = Decimal::zero();
-        dec /= Uint128(300);
+        dec /= Uint128::new(300);
         assert_eq!(dec, Decimal::zero());
     }
 
@@ -606,7 +633,43 @@ mod tests {
     fn decimal_uint128_div_assign_by_zero() {
         // a/0
         let mut dec = Decimal::percent(50);
-        dec /= Uint128(0);
+        dec /= Uint128::new(0);
+    }
+
+    #[test]
+    fn decimal_uint128_sqrt() {
+        assert_eq!(Decimal::percent(900).sqrt(), Decimal::percent(300));
+
+        assert!(Decimal::percent(316) < Decimal::percent(1000).sqrt());
+        assert!(Decimal::percent(1000).sqrt() < Decimal::percent(317));
+    }
+
+    /// sqrt(2) is an irrational number, i.e. all 18 decimal places should be used.
+    #[test]
+    fn decimal_uint128_sqrt_is_precise() {
+        assert_eq!(
+            Decimal::from_str("2").unwrap().sqrt(),
+            Decimal::from_str("1.414213562373095048").unwrap() // https://www.wolframalpha.com/input/?i=sqrt%282%29
+        );
+    }
+
+    #[test]
+    fn decimal_uint128_sqrt_does_not_overflow() {
+        assert_eq!(
+            Decimal::from_str("400").unwrap().sqrt(),
+            Decimal::from_str("20").unwrap()
+        );
+    }
+
+    #[test]
+    fn decimal_uint128_sqrt_intermediate_precision_used() {
+        assert_eq!(
+            Decimal::from_str("400001").unwrap().sqrt(),
+            // The last two digits (27) are truncated below due to the algorithm
+            // we use. Larger numbers will cause less precision.
+            // https://www.wolframalpha.com/input/?i=sqrt%28400001%29
+            Decimal::from_str("632.456322602596803200").unwrap()
+        );
     }
 
     #[test]

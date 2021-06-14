@@ -43,6 +43,8 @@ const REFLECT_ID: u64 = 101;
 // address of first reflect contract instance that we created
 const REFLECT_ADDR: &str = "reflect-acct-1";
 
+const DESERIALIZATION_LIMIT: usize = 20_000;
+
 fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
     let mut deps = mock_instance(WASM, &[]);
     let msg = InstantiateMsg {
@@ -145,13 +147,13 @@ fn proper_handshake_flow() {
         admin,
         code_id,
         msg: _,
-        send,
+        funds,
         label,
     }) = &res.submessages[0].msg
     {
         assert_eq!(*admin, None);
         assert_eq!(*code_id, REFLECT_ID);
-        assert_eq!(send.len(), 0);
+        assert_eq!(funds.len(), 0);
         assert!(label.contains(channel_id));
     } else {
         panic!("invalid return message: {:?}", res.messages[0]);
@@ -159,7 +161,7 @@ fn proper_handshake_flow() {
 
     // no accounts set yet
     let raw = query(&mut deps, mock_env(), QueryMsg::ListAccounts {}).unwrap();
-    let res: ListAccountsResponse = from_slice(&raw).unwrap();
+    let res: ListAccountsResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(0, res.accounts.len());
 
     // we get the callback from reflect
@@ -175,7 +177,7 @@ fn proper_handshake_flow() {
 
     // ensure this is now registered
     let raw = query(&mut deps, mock_env(), QueryMsg::ListAccounts {}).unwrap();
-    let res: ListAccountsResponse = from_slice(&raw).unwrap();
+    let res: ListAccountsResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(1, res.accounts.len());
     assert_eq!(
         &res.accounts[0],
@@ -194,7 +196,7 @@ fn proper_handshake_flow() {
         },
     )
     .unwrap();
-    let res: AccountResponse = from_slice(&raw).unwrap();
+    let res: AccountResponse = from_slice(&raw, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(res.account.unwrap(), REFLECT_ADDR);
 }
 
@@ -219,7 +221,8 @@ fn handle_dispatch_packet() {
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error
-    let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    let ack: AcknowledgementMsg<DispatchResponse> =
+        from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(
         ack.unwrap_err(),
         "invalid packet: cosmwasm_std::addresses::Addr not found"
@@ -237,7 +240,8 @@ fn handle_dispatch_packet() {
     );
 
     // assert app-level success
-    let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    let ack: AcknowledgementMsg<DispatchResponse> =
+        from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
     ack.unwrap();
 
     // and we dispatch the BankMsg
@@ -249,13 +253,13 @@ fn handle_dispatch_packet() {
     if let CosmosMsg::Wasm(WasmMsg::Execute {
         contract_addr,
         msg,
-        send,
+        funds,
     }) = &res.submessages[0].msg
     {
         assert_eq!(account, contract_addr.as_str());
-        assert_eq!(0, send.len());
+        assert_eq!(0, funds.len());
         // parse the message - should callback with proper channel_id
-        let rmsg: ReflectExecuteMsg = from_slice(&msg).unwrap();
+        let rmsg: ReflectExecuteMsg = from_slice(&msg, DESERIALIZATION_LIMIT).unwrap();
         assert_eq!(
             rmsg,
             ReflectExecuteMsg::ReflectMsg {
@@ -275,6 +279,7 @@ fn handle_dispatch_packet() {
     // we didn't dispatch anything
     assert_eq!(0, res.submessages.len());
     // acknowledgement is an error
-    let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
+    let ack: AcknowledgementMsg<DispatchResponse> =
+        from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();
     assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
 }

@@ -138,12 +138,18 @@
               "type": "object",
               "required": [
                 "contract_addr",
-                "msg",
-                "send"
+                "funds",
+                "msg"
               ],
               "properties": {
                 "contract_addr": {
                   "type": "string"
+                },
+                "funds": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
                 },
                 "msg": {
                   "description": "msg is the json-encoded ExecuteMsg struct (as raw Binary)",
@@ -152,12 +158,6 @@
                       "$ref": "#/definitions/Binary"
                     }
                   ]
-                },
-                "send": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Coin"
-                  }
                 }
               }
             }
@@ -175,9 +175,9 @@
               "type": "object",
               "required": [
                 "code_id",
+                "funds",
                 "label",
-                "msg",
-                "send"
+                "msg"
               ],
               "properties": {
                 "admin": {
@@ -191,6 +191,12 @@
                   "format": "uint64",
                   "minimum": 0.0
                 },
+                "funds": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/Coin"
+                  }
+                },
                 "label": {
                   "description": "A human-readbale label for the contract",
                   "type": "string"
@@ -202,12 +208,6 @@
                       "$ref": "#/definitions/Binary"
                     }
                   ]
-                },
-                "send": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/definitions/Coin"
-                  }
                 }
               }
             }

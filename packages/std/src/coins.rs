@@ -13,7 +13,7 @@ pub struct Coin {
 impl Coin {
     pub fn new<S: Into<String>>(amount: u128, denom: S) -> Self {
         Coin {
-            amount: Uint128(amount),
+            amount: Uint128::new(amount),
             denom: denom.into(),
         }
     }
@@ -90,7 +90,7 @@ mod tests {
     #[test]
     fn coin_implements_display() {
         let a = Coin {
-            amount: Uint128(123),
+            amount: Uint128::new(123),
             denom: "ucosm".to_string(),
         };
 
@@ -105,7 +105,7 @@ mod tests {
         assert_eq!(
             a,
             Coin {
-                amount: Uint128(123),
+                amount: Uint128::new(123),
                 denom: "ucosm".to_string()
             }
         );
@@ -114,7 +114,7 @@ mod tests {
         assert_eq!(
             zero,
             Coin {
-                amount: Uint128(0),
+                amount: Uint128::new(0),
                 denom: "ucosm".to_string()
             }
         );
@@ -123,7 +123,7 @@ mod tests {
         assert_eq!(
             string_denom,
             Coin {
-                amount: Uint128(42),
+                amount: Uint128::new(42),
                 denom: "ucosm".to_string()
             }
         );
@@ -135,7 +135,7 @@ mod tests {
         assert_eq!(
             a,
             vec![Coin {
-                amount: Uint128(123),
+                amount: Uint128::new(123),
                 denom: "ucosm".to_string()
             }]
         );
@@ -144,7 +144,7 @@ mod tests {
         assert_eq!(
             zero,
             vec![Coin {
-                amount: Uint128(0),
+                amount: Uint128::new(0),
                 denom: "ucosm".to_string()
             }]
         );
@@ -153,7 +153,7 @@ mod tests {
         assert_eq!(
             string_denom,
             vec![Coin {
-                amount: Uint128(42),
+                amount: Uint128::new(42),
                 denom: "ucosm".to_string()
             }]
         );
