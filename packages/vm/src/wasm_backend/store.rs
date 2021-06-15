@@ -5,7 +5,7 @@ use wasmer::Cranelift;
 #[cfg(not(feature = "cranelift"))]
 use wasmer::Singlepass;
 use wasmer::{
-    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Store, Target, JIT,
+    wasmparser::Operator, BaseTunables, CompilerConfig, Engine, Pages, Store, Target, Universal,
     WASM_PAGE_SIZE,
 };
 use wasmer_middlewares::Metering;
@@ -40,7 +40,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
         let mut config = Cranelift::default();
         config.push_middleware(deterministic);
         config.push_middleware(metering);
-        let engine = JIT::new(config).engine();
+        let engine = Universal::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
     }
 
@@ -49,7 +49,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
         let mut config = Singlepass::default();
         config.push_middleware(deterministic);
         config.push_middleware(metering);
-        let engine = JIT::new(config).engine();
+        let engine = Universal::new(config).engine();
         make_store_with_engine(&engine, memory_limit)
     }
 }
@@ -57,7 +57,7 @@ pub fn make_compile_time_store(memory_limit: Option<Size>) -> Store {
 /// Created a store with no compiler and the given memory limit (in bytes)
 /// If memory_limit is None, no limit is applied.
 pub fn make_runtime_store(memory_limit: Option<Size>) -> Store {
-    let engine = JIT::headless().engine();
+    let engine = Universal::headless().engine();
     make_store_with_engine(&engine, memory_limit)
 }
 
