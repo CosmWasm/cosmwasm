@@ -288,7 +288,7 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::V128Bitselect
             | Operator::I8x16Abs
             | Operator::I8x16Neg
-            | Operator::I8x16AnyTrue
+            | Operator::V128AnyTrue
             | Operator::I8x16AllTrue
             | Operator::I8x16Bitmask
             | Operator::I8x16Shl
@@ -306,7 +306,6 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::I8x16MaxU
             | Operator::I16x8Abs
             | Operator::I16x8Neg
-            | Operator::I16x8AnyTrue
             | Operator::I16x8AllTrue
             | Operator::I16x8Bitmask
             | Operator::I16x8Shl
@@ -325,7 +324,6 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::I16x8MaxU
             | Operator::I32x4Abs
             | Operator::I32x4Neg
-            | Operator::I32x4AnyTrue
             | Operator::I32x4AllTrue
             | Operator::I32x4Bitmask
             | Operator::I32x4Shl
@@ -358,14 +356,14 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::I8x16NarrowI16x8U
             | Operator::I16x8NarrowI32x4S
             | Operator::I16x8NarrowI32x4U
-            | Operator::I16x8WidenLowI8x16S
-            | Operator::I16x8WidenHighI8x16S
-            | Operator::I16x8WidenLowI8x16U
-            | Operator::I16x8WidenHighI8x16U
-            | Operator::I32x4WidenLowI16x8S
-            | Operator::I32x4WidenHighI16x8S
-            | Operator::I32x4WidenLowI16x8U
-            | Operator::I32x4WidenHighI16x8U
+            | Operator::I16x8ExtendLowI8x16S
+            | Operator::I16x8ExtendHighI8x16S
+            | Operator::I16x8ExtendLowI8x16U
+            | Operator::I16x8ExtendHighI8x16U
+            | Operator::I32x4ExtendLowI16x8S
+            | Operator::I32x4ExtendHighI16x8S
+            | Operator::I32x4ExtendLowI16x8U
+            | Operator::I32x4ExtendHighI16x8U
             | Operator::V128Load8x8S { .. }
             | Operator::V128Load8x8U { .. }
             | Operator::V128Load16x4S { .. }
@@ -373,7 +371,52 @@ impl FunctionMiddleware for FunctionDeterministic {
             | Operator::V128Load32x2S { .. }
             | Operator::V128Load32x2U { .. }
             | Operator::I8x16RoundingAverageU
-            | Operator::I16x8RoundingAverageU => {
+            | Operator::I16x8RoundingAverageU
+            | Operator::V128Load8Lane { .. }
+            | Operator::V128Load16Lane { .. }
+            | Operator::V128Load32Lane { .. }
+            | Operator::V128Load64Lane { .. }
+            | Operator::V128Store8Lane { .. }
+            | Operator::V128Store16Lane { .. }
+            | Operator::V128Store32Lane { .. }
+            | Operator::V128Store64Lane { .. }
+            | Operator::I64x2Eq
+            | Operator::I64x2Ne
+            | Operator::I64x2LtS
+            | Operator::I64x2GtS
+            | Operator::I64x2LeS
+            | Operator::I64x2GeS
+            | Operator::I8x16Popcnt
+            | Operator::I16x8ExtAddPairwiseI8x16S
+            | Operator::I16x8ExtAddPairwiseI8x16U
+            | Operator::I16x8Q15MulrSatS
+            | Operator::I16x8ExtMulLowI8x16S
+            | Operator::I16x8ExtMulHighI8x16S
+            | Operator::I16x8ExtMulLowI8x16U
+            | Operator::I16x8ExtMulHighI8x16U
+            | Operator::I32x4ExtAddPairwiseI16x8S
+            | Operator::I32x4ExtAddPairwiseI16x8U
+            | Operator::I32x4ExtMulLowI16x8S
+            | Operator::I32x4ExtMulHighI16x8S
+            | Operator::I32x4ExtMulLowI16x8U
+            | Operator::I32x4ExtMulHighI16x8U
+            | Operator::I64x2Abs
+            | Operator::I64x2AllTrue
+            | Operator::I64x2Bitmask
+            | Operator::I64x2ExtendLowI32x4S
+            | Operator::I64x2ExtendHighI32x4S
+            | Operator::I64x2ExtendLowI32x4U
+            | Operator::I64x2ExtendHighI32x4U
+            | Operator::I64x2ExtMulLowI32x4S
+            | Operator::I64x2ExtMulHighI32x4S
+            | Operator::I64x2ExtMulLowI32x4U
+            | Operator::I64x2ExtMulHighI32x4U
+            | Operator::I32x4TruncSatF64x2SZero
+            | Operator::I32x4TruncSatF64x2UZero
+            | Operator::F64x2ConvertLowI32x4S
+            | Operator::F64x2ConvertLowI32x4U
+            | Operator::F32x4DemoteF64x2Zero
+            | Operator::F64x2PromoteLowF32x4 => {
                 let msg = format!(
                     "SIMD operator detected: {:?}. The Wasm SIMD extension is not supported.",
                     operator
@@ -525,6 +568,19 @@ impl FunctionMiddleware for FunctionDeterministic {
                 );
                 Err(MiddlewareError::new("Deterministic", msg))
             }
+            Operator::Try { .. }
+            | Operator::Catch { .. }
+            | Operator::Throw { .. }
+            | Operator::Rethrow { .. }
+            | Operator::Unwind { .. }
+            | Operator::Delegate { .. }
+            | Operator::CatchAll => {
+                let msg = format!(
+                    "Exception handling operation detected: {:?}. Exception handling is not supported.",
+                    operator
+                );
+                Err(MiddlewareError::new("Deterministic", msg))
+            }
         }
     }
 }
@@ -600,7 +656,7 @@ mod tests {
         let deterministic = Arc::new(Deterministic::new());
         let mut compiler_config = Cranelift::default();
         compiler_config.push_middleware(deterministic);
-        let store = Store::new(&JIT::new(compiler_config).engine());
+        let store = Store::new(&Universal::new(compiler_config).engine());
         let result = Module::new(&store, &wasm);
         assert!(result
             .unwrap_err()
