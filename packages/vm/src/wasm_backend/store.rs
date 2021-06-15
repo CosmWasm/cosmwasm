@@ -10,9 +10,9 @@ use wasmer::{
 };
 use wasmer_middlewares::Metering;
 
-use crate::middleware::Deterministic;
 use crate::size::Size;
 
+use super::deterministic::Deterministic;
 use super::limiting_tunables::LimitingTunables;
 
 /// WebAssembly linear memory objects have sizes measured in pages. Each page
