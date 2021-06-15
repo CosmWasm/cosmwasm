@@ -1,4 +1,5 @@
 mod compile;
+mod deterministic;
 mod limiting_tunables;
 mod store;
 
