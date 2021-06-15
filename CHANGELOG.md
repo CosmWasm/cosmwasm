@@ -26,6 +26,12 @@ and this project adheres to
   argument to `from_slice`; Increase deserialization limit of contract execution
   results from 100,000 bytes to 256 KiB. This probably only affects internal
   testing as well as integration tests of smart contracts.
+- cosmwasm-vm: More accurate error messages for op codes related to bulk memory
+  operations, reference types, SIMD and the Threads extension.
+  
+### Fixed
+
+- comswasm-vm: Whitelisted the `i64.extend32_s` operation.
 
 ## [0.14.1] - 2021-06-14
 
