@@ -18,6 +18,8 @@ pub enum ReplyOn {
     Error,
     /// Only callback if SubMsg was successful, no callback on error case
     Success,
+    /// Never make a callback - this is like the original CosmosMsg semantics
+    Never,
 }
 
 impl Default for ReplyOn {
@@ -43,6 +45,72 @@ where
     pub msg: CosmosMsg<T>,
     pub gas_limit: Option<u64>,
     pub reply_on: ReplyOn,
+}
+
+/// This is used for cases when we use ReplyOn::Never and the id doesn't matter
+pub const UNUSED_MSG_ID: u64 = 123456789;
+
+/// We implement thisas a shortcut so all existing code doesn't break.
+/// Up to 0.14, we could do something like:
+///   let messages = vec![BankMsg::Send { .. }.into()];
+/// In order to construct the response.
+///
+/// With 0.15, we move to requiring SubMsg there, but this allows the same
+/// `.into()` call to convert the BankMsg into a proper SubMsg with no reply.
+impl<T> Into<SubMsg<T>> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn into(self: CosmosMsg<T>) -> SubMsg<T> {
+        SubMsg {
+            id: UNUSED_MSG_ID,
+            msg: self,
+            reply_on: ReplyOn::Never,
+            gas_limit: None,
+        }
+    }
+}
+
+/// call takes eg. BankMsg::Send{} and wraps it into a SubMsg with normal message sematics (no reply)
+pub fn call<M, T>(msg: M) -> SubMsg<T>
+where
+    M: Into<CosmosMsg<T>>,
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    SubMsg {
+        id: UNUSED_MSG_ID,
+        msg: msg.into(),
+        reply_on: ReplyOn::Never,
+        gas_limit: None,
+    }
+}
+
+/// subcall takes eg. BankMsg::Send{} and sets up for a reply. No gas limit is set.
+pub fn subcall<M, T>(msg: M, id: u64, reply_on: ReplyOn) -> SubMsg<T>
+where
+    M: Into<CosmosMsg<T>>,
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    SubMsg {
+        id,
+        msg: msg.into(),
+        reply_on,
+        gas_limit: None,
+    }
+}
+
+/// subcall_with_limit is like subcall but allows setting a gas limit
+pub fn subcall_with_limit<M, T>(msg: M, id: u64, reply_on: ReplyOn, gas_limit: u64) -> SubMsg<T>
+where
+    M: Into<CosmosMsg<T>>,
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    SubMsg {
+        id,
+        msg: msg.into(),
+        reply_on,
+        gas_limit: Some(gas_limit),
+    }
 }
 
 /// The result object returned to `reply`. We always get the ID from the submessage
