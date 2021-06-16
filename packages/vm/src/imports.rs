@@ -7,8 +7,7 @@ use cosmwasm_crypto::{
     ed25519_batch_verify, ed25519_verify, secp256k1_recover_pubkey, secp256k1_verify, CryptoError,
 };
 use cosmwasm_crypto::{
-    BATCH_MAX_LEN, ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN,
-    MESSAGE_HASH_MAX_LEN, MESSAGE_MAX_LEN,
+    ECDSA_PUBKEY_MAX_LEN, ECDSA_SIGNATURE_LEN, EDDSA_PUBKEY_LEN, MESSAGE_HASH_MAX_LEN,
 };
 
 #[cfg(feature = "iterator")]
@@ -42,6 +41,14 @@ const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
 /// Length of a serialized Ed25519  signature
 const MAX_LENGTH_ED25519_SIGNATURE: usize = 64;
+/// Max length of a Ed25519 message in bytes.
+/// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
+/// messages, let us know.
+const MAX_LENGTH_ED25519_MESSAGE: usize = 128 * 1024;
+/// Max number of batch Ed25519 messages / signatures / public_keys.
+/// This is an arbitrary value, for performance / memory contraints. If you need to batch-verify a
+/// larger number of signatures, let us know.
+const MAX_COUNT_ED25519_BATCH: usize = 256;
 
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
@@ -326,9 +333,9 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
-            CryptoError::BatchErr { .. }
-            | CryptoError::InvalidRecoveryParam { .. }
-            | CryptoError::MessageTooLong { .. } => panic!("Error must not happen for this call"),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidRecoveryParam { .. } => {
+                panic!("Error must not happen for this call")
+            }
         },
         |valid| if valid { 0 } else { 1 },
     ))
@@ -360,9 +367,9 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::InvalidRecoveryParam { .. }
             | CryptoError::GenericErr { .. } => Ok(to_high_half(err.code())),
-            CryptoError::BatchErr { .. }
-            | CryptoError::InvalidPubkeyFormat { .. }
-            | CryptoError::MessageTooLong { .. } => panic!("Error must not happen for this call"),
+            CryptoError::BatchErr { .. } | CryptoError::InvalidPubkeyFormat { .. } => {
+                panic!("Error must not happen for this call")
+            }
         },
     }
 }
@@ -373,7 +380,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     signature_ptr: u32,
     pubkey_ptr: u32,
 ) -> VmResult<u32> {
-    let message = read_region(&env.memory(), message_ptr, MESSAGE_MAX_LEN)?;
+    let message = read_region(&env.memory(), message_ptr, MAX_LENGTH_ED25519_MESSAGE)?;
     let signature = read_region(&env.memory(), signature_ptr, MAX_LENGTH_ED25519_SIGNATURE)?;
     let pubkey = read_region(&env.memory(), pubkey_ptr, EDDSA_PUBKEY_LEN)?;
 
@@ -382,8 +389,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     process_gas_info::<A, S, Q>(env, gas_info)?;
     Ok(result.map_or_else(
         |err| match err {
-            CryptoError::MessageTooLong { .. }
-            | CryptoError::InvalidPubkeyFormat { .. }
+            CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
             CryptoError::BatchErr { .. }
@@ -405,17 +411,17 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     let messages = read_region(
         &env.memory(),
         messages_ptr,
-        (MESSAGE_MAX_LEN + 4) * BATCH_MAX_LEN,
+        (MAX_LENGTH_ED25519_MESSAGE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let signatures = read_region(
         &env.memory(),
         signatures_ptr,
-        (MAX_LENGTH_ED25519_SIGNATURE + 4) * BATCH_MAX_LEN,
+        (MAX_LENGTH_ED25519_SIGNATURE + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
     let public_keys = read_region(
         &env.memory(),
         public_keys_ptr,
-        (EDDSA_PUBKEY_LEN + 4) * BATCH_MAX_LEN,
+        (EDDSA_PUBKEY_LEN + 4) * MAX_COUNT_ED25519_BATCH,
     )?;
 
     let messages = decode_sections(&messages);
@@ -433,7 +439,6 @@ fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     Ok(result.map_or_else(
         |err| match err {
             CryptoError::BatchErr { .. }
-            | CryptoError::MessageTooLong { .. }
             | CryptoError::InvalidPubkeyFormat { .. }
             | CryptoError::InvalidSignatureFormat { .. }
             | CryptoError::GenericErr { .. } => err.code(),
@@ -1561,7 +1566,7 @@ mod tests {
 
         let mut msg = hex::decode(EDDSA_MSG_HEX).unwrap();
         // extend / break msg
-        msg.extend_from_slice(&[0x00; MESSAGE_MAX_LEN + 1]);
+        msg.extend_from_slice(&[0x00; MAX_LENGTH_ED25519_MESSAGE + 1]);
         let msg_ptr = write_data(&env, &msg);
         let sig = hex::decode(EDDSA_SIG_HEX).unwrap();
         let sig_ptr = write_data(&env, &sig);

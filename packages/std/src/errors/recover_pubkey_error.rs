@@ -62,7 +62,6 @@ impl PartialEq<RecoverPubkeyError> for RecoverPubkeyError {
 impl From<CryptoError> for RecoverPubkeyError {
     fn from(original: CryptoError) -> Self {
         match original {
-            CryptoError::MessageTooLong { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidHashFormat { .. } => RecoverPubkeyError::InvalidHashFormat,
             CryptoError::InvalidPubkeyFormat { .. } => panic!("Conversion not supported"),
             CryptoError::InvalidSignatureFormat { .. } => {
