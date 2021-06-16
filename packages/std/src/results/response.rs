@@ -73,7 +73,8 @@ where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
     /// Optional list of messages to pass. These will be executed in order.
-    /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
+    /// If the ReplyOn variant matches the result (Always, Success on Ok, Error on Err),
+    /// the runtime will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `call` or `msg.into()` to create messages with the older "fire and forget" semantics.
     pub messages: Vec<SubMsg<T>>,
