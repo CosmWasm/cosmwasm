@@ -35,7 +35,7 @@ and this project adheres to
   testing as well as integration tests of smart contracts.
 - cosmwasm-vm: More accurate error messages for op codes related to bulk memory
   operations, reference types, SIMD and the Threads extension.
-- cosmwasm-vm: Update `wasmer` to `2.0.0-rc2`
+- cosmwasm-vm: Update `wasmer` to `2.0.0`
 - cosmwasm-vm: ED25519 message length and batch length limits are now hardcoded
   in `cosmwasm-vm` itself instead of being imported from `cosmwasm-crypto`.
 
