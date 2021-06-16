@@ -279,7 +279,7 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            2 => Err(VerificationError::MessageTooLong),
+            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
             3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
             4 => Err(VerificationError::InvalidSignatureFormat),
             5 => Err(VerificationError::InvalidPubkeyFormat),
@@ -311,7 +311,7 @@ impl Api for ExternalApi {
         match result {
             0 => Ok(true),
             1 => Ok(false),
-            2 => Err(VerificationError::MessageTooLong),
+            2 => panic!("MessageTooLong must not happen. This is a bug in the VM."),
             3 => panic!("InvalidHashFormat must not happen. This is a bug in the VM."),
             4 => Err(VerificationError::InvalidSignatureFormat),
             5 => Err(VerificationError::InvalidPubkeyFormat),
