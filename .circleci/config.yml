@@ -18,6 +18,7 @@ workflows:
       - contract_reflect
       - contract_staking
       - fmt
+      - fmt_extra
       - clippy
       - benchmarking:
           requires:
@@ -425,7 +426,6 @@ jobs:
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_ibc_reflect-rust:1.51.0-{{ checksum "Cargo.lock" }}
 
-
   contract_ibc_reflect_send:
     docker:
       - image: rust:1.51.0
@@ -674,6 +674,24 @@ jobs:
             - target/debug/build
             - target/debug/deps
           key: cargocache-v2-fmt-rust:1.51.0-{{ checksum "Cargo.lock" }}
+
+  fmt_extra:
+    docker:
+      - image: node:16.3.0-buster
+    steps:
+      - checkout
+      - run:
+          name: Install shfmt
+          command: curl -sS https://webinstall.dev/shfmt | bash
+      - run:
+          name: Validate Markdown files
+          command: devtools/format_md.sh -c
+      - run:
+          name: Validate shell scripts
+          command: PATH="/root/.local/bin:$PATH" devtools/format_sh.sh -c
+      - run:
+          name: Validate YAML files
+          command: devtools/format_yml.sh -c
 
   clippy:
     docker:
