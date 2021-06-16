@@ -426,7 +426,6 @@ jobs:
             - target/wasm32-unknown-unknown/release/deps
           key: cargocache-v2-contract_ibc_reflect-rust:1.51.0-{{ checksum "Cargo.lock" }}
 
-
   contract_ibc_reflect_send:
     docker:
       - image: rust:1.51.0
