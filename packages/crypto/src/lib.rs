@@ -10,9 +10,9 @@ mod identity_digest;
 mod secp256k1;
 
 #[doc(hidden)]
-pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
+pub use crate::ed25519::EDDSA_PUBKEY_LEN;
 #[doc(hidden)]
-pub use crate::ed25519::{BATCH_MAX_LEN, EDDSA_PUBKEY_LEN, MESSAGE_MAX_LEN};
+pub use crate::ed25519::{ed25519_batch_verify, ed25519_verify};
 #[doc(hidden)]
 pub use crate::errors::{CryptoError, CryptoResult};
 #[doc(hidden)]

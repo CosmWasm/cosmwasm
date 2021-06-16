@@ -12,6 +12,9 @@ and this project adheres to
 - cosmwasm-std: Remove `Context` - deprecated in previous release
 - cosmwasm-std: Remove `HandleResponse`, `InitResponse`, and `MigrateResponse` -
   deprecated in previous release
+- cosmwasm-crypto: Remove `ed25519::MESSAGE_MAX_LEN`, `ed25519::BATCH_MAX_LEN`
+  and message length verification as this should not be a concern of
+  `cosmwasm-crypto`.
 
 [#905]: https://github.com/CosmWasm/cosmwasm/issues/905
 
@@ -29,6 +32,8 @@ and this project adheres to
 - cosmwasm-vm: More accurate error messages for op codes related to bulk memory
   operations, reference types, SIMD and the Threads extension.
 - cosmwasm-vm: Update `wasmer` to `2.0.0-rc2`
+- cosmwasm-vm: ED25519 message length and batch length limits are now hardcoded
+  in `cosmwasm-vm` itself instead of being imported from `cosmwasm-crypto`.
 
 ### Fixed
 

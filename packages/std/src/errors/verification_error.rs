@@ -77,7 +77,6 @@ impl PartialEq<VerificationError> for VerificationError {
 impl From<CryptoError> for VerificationError {
     fn from(original: CryptoError) -> Self {
         match original {
-            CryptoError::MessageTooLong { .. } => VerificationError::MessageTooLong,
             CryptoError::InvalidHashFormat { .. } => VerificationError::InvalidHashFormat,
             CryptoError::InvalidPubkeyFormat { .. } => VerificationError::InvalidPubkeyFormat,
             CryptoError::InvalidSignatureFormat { .. } => VerificationError::InvalidSignatureFormat,

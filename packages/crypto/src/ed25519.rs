@@ -5,16 +5,6 @@ use std::convert::TryInto;
 
 use crate::errors::{CryptoError, CryptoResult};
 
-/// Max length of a message for ed25519 verification in bytes.
-/// This is an arbitrary value, for performance / memory contraints. If you need to verify larger
-/// messages, let us know.
-pub const MESSAGE_MAX_LEN: usize = 128 * 1024;
-
-/// Max number of batch messages / signatures / public_keys.
-/// This is an arbitrary value, for performance / memory contraints. If you need to batch-verify a
-/// larger number of signatures, let us know.
-pub const BATCH_MAX_LEN: usize = 256;
-
 /// Length of a serialized public key
 pub const EDDSA_PUBKEY_LEN: usize = 32;
 
@@ -30,7 +20,6 @@ pub const EDDSA_PUBKEY_LEN: usize = 32;
 /// - public key: raw ED25519 public key (32 bytes).
 pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> CryptoResult<bool> {
     // Validation
-    check_message_length(message)?;
     let signature = read_signature(signature)?;
     let pubkey = read_pubkey(public_key)?;
 
@@ -72,7 +61,7 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 /// case.
 ///  - The "one-public key, with zero messages and zero signatures" case, is considered the empty
 /// case.
-///  - The empty case (no messages, no signatures and no public keys) returns true.
+///  - The empty case (no messages, no signatures a   no public keys) returns true.
 pub fn ed25519_batch_verify(
     messages: &[&[u8]],
     signatures: &[&[u8]],
@@ -108,7 +97,6 @@ pub fn ed25519_batch_verify(
         .zip(public_keys.iter())
     {
         // Validation
-        check_message_length(message)?;
         let signature = read_signature(signature)?;
         let pubkey = read_pubkey(public_key)?;
 
@@ -147,28 +135,6 @@ impl From<InvalidEd25519PubkeyFormat> for CryptoError {
 
 fn read_pubkey(data: &[u8]) -> Result<[u8; 32], InvalidEd25519PubkeyFormat> {
     data.try_into().map_err(|_| InvalidEd25519PubkeyFormat)
-}
-
-struct MessageTooLong {
-    limit: usize,
-    actual: usize,
-}
-
-impl From<MessageTooLong> for CryptoError {
-    fn from(original: MessageTooLong) -> Self {
-        CryptoError::message_too_long(original.limit, original.actual)
-    }
-}
-
-fn check_message_length(message: &[u8]) -> Result<(), MessageTooLong> {
-    if message.len() > MESSAGE_MAX_LEN {
-        Err(MessageTooLong {
-            limit: MESSAGE_MAX_LEN,
-            actual: message.len(),
-        })
-    } else {
-        Ok(())
-    }
 }
 
 #[cfg(test)]
