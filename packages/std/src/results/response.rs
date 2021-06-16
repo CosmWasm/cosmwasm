@@ -2,10 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::{Binary, ReplyOn};
+use crate::Binary;
 
-use super::{Attribute, CosmosMsg, Empty};
-use crate::results::SubMsg;
+use super::{Attribute, Empty, SubMsg};
 
 /// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
@@ -74,14 +73,11 @@ pub struct Response<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    /// Optional list of "subcalls" to make. These will be executed in order
-    /// (and this contract's subcall_response entry point invoked)
-    /// *before* any of the "fire and forget" messages get executed.
-    pub submessages: Vec<SubMsg<T>>,
-    /// After any submessages are processed, these are all dispatched in the host blockchain.
-    /// If they all succeed, then the transaction is committed. If any fail, then the transaction
-    /// and any local contract state changes are reverted.
-    pub messages: Vec<CosmosMsg<T>>,
+    /// Optional list of messages to pass. These will be executed in order.
+    /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
+    /// after execution. Otherwise, they act like "fire and forget".
+    /// Use `call` or `msg.into()` to create messages with the older "fire and forget" semantics.
+    pub messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
     pub data: Option<Binary>,
@@ -93,7 +89,6 @@ where
 {
     fn default() -> Self {
         Response {
-            submessages: vec![],
             messages: vec![],
             attributes: vec![],
             data: None,
@@ -116,24 +111,8 @@ where
         });
     }
 
-    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+    pub fn add_message<U: Into<SubMsg<T>>>(&mut self, msg: U) {
         self.messages.push(msg.into());
-    }
-
-    pub fn add_submessage<U: Into<CosmosMsg<T>>>(
-        &mut self,
-        id: u64,
-        msg: U,
-        gas_limit: Option<u64>,
-        reply_on: ReplyOn,
-    ) {
-        let sub = SubMsg {
-            id,
-            msg: msg.into(),
-            gas_limit,
-            reply_on,
-        };
-        self.submessages.push(sub);
     }
 
     pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
@@ -145,26 +124,34 @@ where
 mod tests {
     use super::super::BankMsg;
     use super::*;
+    use crate::results::subcall::{ReplyOn, UNUSED_MSG_ID};
     use crate::{coins, from_slice, to_vec};
 
     #[test]
     fn can_serialize_and_deserialize_init_response() {
         let original = Response {
-            submessages: vec![SubMsg {
-                id: 12,
-                msg: BankMsg::Send {
-                    to_address: String::from("checker"),
-                    amount: coins(888, "moon"),
-                }
-                .into(),
-                gas_limit: Some(12345u64),
-                reply_on: ReplyOn::Always,
-            }],
-            messages: vec![BankMsg::Send {
-                to_address: String::from("you"),
-                amount: coins(1015, "earth"),
-            }
-            .into()],
+            messages: vec![
+                SubMsg {
+                    id: 12,
+                    msg: BankMsg::Send {
+                        to_address: String::from("checker"),
+                        amount: coins(888, "moon"),
+                    }
+                    .into(),
+                    gas_limit: Some(12345u64),
+                    reply_on: ReplyOn::Always,
+                },
+                SubMsg {
+                    id: UNUSED_MSG_ID,
+                    msg: BankMsg::Send {
+                        to_address: String::from("you"),
+                        amount: coins(1015, "earth"),
+                    }
+                    .into(),
+                    gas_limit: None,
+                    reply_on: ReplyOn::Never,
+                },
+            ],
             attributes: vec![Attribute {
                 key: "action".to_string(),
                 value: "release".to_string(),
