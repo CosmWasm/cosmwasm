@@ -61,7 +61,7 @@ pub fn ed25519_verify(message: &[u8], signature: &[u8], public_key: &[u8]) -> Cr
 /// case.
 ///  - The "one-public key, with zero messages and zero signatures" case, is considered the empty
 /// case.
-///  - The empty case (no messages, no signatures a   no public keys) returns true.
+///  - The empty case (no messages, no signatures and no public keys) returns true.
 pub fn ed25519_batch_verify(
     messages: &[&[u8]],
     signatures: &[&[u8]],
