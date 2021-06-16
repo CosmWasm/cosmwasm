@@ -31,7 +31,6 @@ use super::{Attribute, Empty, SubMsg};
 ///     // ...
 ///
 ///     Ok(Response {
-///         submessages: vec![],
 ///         messages: vec![],
 ///         attributes: vec![attr("action", "instantiate")],
 ///         data: None,

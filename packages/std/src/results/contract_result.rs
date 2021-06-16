@@ -18,7 +18,7 @@ use std::fmt;
 /// # use cosmwasm_std::{to_vec, ContractResult, Response};
 /// let response: Response = Response::default();
 /// let result: ContractResult<Response> = ContractResult::Ok(response);
-/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"submessages":[],"messages":[],"attributes":[],"data":null}}"#.to_vec());
+/// assert_eq!(to_vec(&result).unwrap(), br#"{"ok":{"messages":[],"attributes":[],"data":null}}"#.to_vec());
 /// ```
 ///
 /// Failure:

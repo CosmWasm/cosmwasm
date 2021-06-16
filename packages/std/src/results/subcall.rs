@@ -57,17 +57,14 @@ pub const UNUSED_MSG_ID: u64 = 123456789;
 ///
 /// With 0.15, we move to requiring SubMsg there, but this allows the same
 /// `.into()` call to convert the BankMsg into a proper SubMsg with no reply.
-impl<T> Into<SubMsg<T>> for CosmosMsg<T>
+impl<M, T> From<M> for SubMsg<T>
 where
+    M: Into<CosmosMsg<T>>,
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    fn into(self: CosmosMsg<T>) -> SubMsg<T> {
-        SubMsg {
-            id: UNUSED_MSG_ID,
-            msg: self,
-            reply_on: ReplyOn::Never,
-            gas_limit: None,
-        }
+    #[inline]
+    fn from(msg: M) -> SubMsg<T> {
+        call(msg)
     }
 }
 

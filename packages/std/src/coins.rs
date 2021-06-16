@@ -41,10 +41,10 @@ impl fmt::Display for Coin {
 /// let tip = coins(123, "ucosm");
 ///
 /// let mut response: Response = Default::default();
-/// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
+/// response.messages = vec![BankMsg::Send {
 ///   to_address: info.sender.into(),
 ///   amount: tip,
-/// })];
+/// }.into()];
 /// ```
 pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
     vec![coin(amount, denom)]
@@ -55,7 +55,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 /// # Examples
 ///
 /// ```
-/// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, Response};
+/// # use cosmwasm_std::{call, coin, BankMsg, CosmosMsg, Response};
 /// # use cosmwasm_std::testing::{mock_env, mock_info};
 /// # let env = mock_env();
 /// # let info = mock_info("sender", &[]);
@@ -65,7 +65,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 /// ];
 ///
 /// let mut response: Response = Default::default();
-/// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
+/// response.messages = vec![call(BankMsg::Send {
 ///     to_address: info.sender.into(),
 ///     amount: tip,
 /// })];
