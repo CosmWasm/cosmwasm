@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
-    StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    attr, call, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply,
+    Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -103,6 +103,7 @@ fn reflect() {
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
+    let payload: Vec<_> = payload.into_iter().map(call).collect();
     assert_eq!(payload, res.messages);
 }
 
@@ -211,10 +212,9 @@ fn reflect_subcall() {
     };
     let info = mock_info("creator", &[]);
     let mut res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
-    assert_eq!(0, res.messages.len());
-    assert_eq!(1, res.submessages.len());
-    let submsg = res.submessages.pop().expect("must have a submessage");
-    assert_eq!(payload, submsg);
+    assert_eq!(1, res.messages.len());
+    let msg = res.messages.pop().expect("must have a message");
+    assert_eq!(payload, msg);
 }
 
 // this mocks out what happens after reflect_subcall

@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
-    MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
+    attr, call, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut,
+    Env, MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
     SystemResult,
 };
 
@@ -53,9 +53,9 @@ pub fn try_reflect(
     if msgs.is_empty() {
         return Err(ReflectError::MessagesEmpty);
     }
+    let messages = msgs.into_iter().map(call).collect();
     let res = Response {
-        submessages: vec![],
-        messages: msgs,
+        messages,
         attributes: vec![attr("action", "reflect")],
         data: None,
     };
@@ -80,8 +80,7 @@ pub fn try_reflect_subcall(
         return Err(ReflectError::MessagesEmpty);
     }
     let res = Response {
-        submessages: msgs,
-        messages: vec![],
+        messages: msgs,
         attributes: vec![attr("action", "reflect_subcall")],
         data: None,
     };
@@ -217,6 +216,7 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let payload: Vec<_> = payload.into_iter().map(call).collect();
         assert_eq!(payload, res.messages);
     }
 
@@ -289,6 +289,7 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let payload: Vec<_> = payload.into_iter().map(call).collect();
         assert_eq!(payload, res.messages);
     }
 
@@ -420,10 +421,9 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-        assert_eq!(1, res.submessages.len());
-        let submsg = res.submessages.pop().expect("must have a submessage");
-        assert_eq!(payload, submsg);
+        assert_eq!(1, res.messages.len());
+        let msg = res.messages.pop().expect("must have a message");
+        assert_eq!(payload, msg);
     }
 
     // this mocks out what happens after reflect_subcall
