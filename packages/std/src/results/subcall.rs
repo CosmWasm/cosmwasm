@@ -82,31 +82,33 @@ where
     }
 }
 
-/// subcall takes eg. BankMsg::Send{} and sets up for a reply. No gas limit is set.
-pub fn subcall<M, T>(msg: M, id: u64, reply_on: ReplyOn) -> SubMsg<T>
+impl<T> SubMsg<T>
 where
-    M: Into<CosmosMsg<T>>,
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
 {
-    SubMsg {
-        id,
-        msg: msg.into(),
-        reply_on,
-        gas_limit: None,
+    /// new takes eg. BankMsg::Send{} and sets up for a reply. No gas limit is set.
+    pub fn new<M: Into<CosmosMsg<T>>>(msg: M, id: u64, reply_on: ReplyOn) -> Self {
+        SubMsg {
+            id,
+            msg: msg.into(),
+            reply_on,
+            gas_limit: None,
+        }
     }
-}
 
-/// subcall_with_limit is like subcall but allows setting a gas limit
-pub fn subcall_with_limit<M, T>(msg: M, id: u64, reply_on: ReplyOn, gas_limit: u64) -> SubMsg<T>
-where
-    M: Into<CosmosMsg<T>>,
-    T: Clone + fmt::Debug + PartialEq + JsonSchema,
-{
-    SubMsg {
-        id,
-        msg: msg.into(),
-        reply_on,
-        gas_limit: Some(gas_limit),
+    /// new_with_limit is like new but allows setting a gas limit
+    pub fn new_with_limit<M: Into<CosmosMsg<T>>>(
+        msg: M,
+        id: u64,
+        reply_on: ReplyOn,
+        gas_limit: u64,
+    ) -> Self {
+        SubMsg {
+            id,
+            msg: msg.into(),
+            reply_on,
+            gas_limit: Some(gas_limit),
+        }
     }
 }
 
