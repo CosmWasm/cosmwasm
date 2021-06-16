@@ -6,6 +6,10 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Implement `Sub` and `SubAssign` for `Uint128`
+
 ### Removed
 
 - cosmwasm-std: Make `Uint128` inner field private ([#905])
