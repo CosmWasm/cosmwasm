@@ -15,7 +15,12 @@ use crate::size::Size;
 use crate::static_analysis::{deserialize_wasm, has_ibc_entry_points};
 use crate::wasm_backend::{compile, make_runtime_store};
 
+const STATE_DIR: &str = "state";
+// Things related to the state of the blockchain.
 const WASM_DIR: &str = "wasm";
+
+const CACHE_DIR: &str = "cache";
+// Cacheable things.
 const MODULES_DIR: &str = "modules";
 
 #[derive(Debug, Default, Clone, Copy)]
@@ -91,11 +96,24 @@ where
             memory_cache_size,
             instance_memory_limit,
         } = options;
-        let wasm_path = base_dir.join(WASM_DIR);
-        create_dir_all(&wasm_path)
-            .map_err(|e| VmError::cache_err(format!("Error creating Wasm dir for cache: {}", e)))?;
 
-        let fs_cache = FileSystemCache::new(base_dir.join(MODULES_DIR))
+        let state_path = base_dir.join(STATE_DIR);
+        let cache_path = base_dir.join(CACHE_DIR);
+
+        let wasm_path = state_path.join(WASM_DIR);
+
+        // Ensure all the needed directories exist on disk.
+        for path in [&state_path, &cache_path, &wasm_path].iter() {
+            create_dir_all(path).map_err(|e| {
+                VmError::cache_err(format!(
+                    "Error creating directory {}: {}",
+                    path.display(),
+                    e
+                ))
+            })?;
+        }
+
+        let fs_cache = FileSystemCache::new(cache_path.join(MODULES_DIR))
             .map_err(|e| VmError::cache_err(format!("Error file system cache: {}", e)))?;
         Ok(Cache {
             supported_features,
@@ -494,7 +512,11 @@ mod tests {
         let checksum = cache.save_wasm(CONTRACT).unwrap();
 
         // Corrupt cache file
-        let filepath = tmp_dir.path().join(WASM_DIR).join(&checksum.to_hex());
+        let filepath = tmp_dir
+            .path()
+            .join(STATE_DIR)
+            .join(WASM_DIR)
+            .join(&checksum.to_hex());
         let mut file = OpenOptions::new().write(true).open(filepath).unwrap();
         file.write_all(b"broken data").unwrap();
 
