@@ -678,7 +678,7 @@ mod tests {
             mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
         };
         use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
-        use cosmwasm_std::{attr, Empty, Event, IbcOrder, Reply, SubcallResponse};
+        use cosmwasm_std::{attr, Empty, Event, IbcOrder, Reply, ReplyOn, SubcallResponse};
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
         fn setup(
@@ -707,8 +707,9 @@ mod tests {
             )
             .unwrap()
             .unwrap();
-            assert_eq!(1, res.submessages.len());
-            let id = res.submessages[0].id;
+            assert_eq!(1, res.messages.len());
+            assert_eq!(ReplyOn::Success, res.messages[0].reply_on);
+            let id = res.messages[0].id;
             let event = Event {
                 kind: "message".into(),
                 attributes: vec![attr("contract_address", &account)],
