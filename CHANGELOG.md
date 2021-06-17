@@ -38,6 +38,8 @@ and this project adheres to
 - cosmwasm-vm: Update `wasmer` to `2.0.0`
 - cosmwasm-vm: ED25519 message length and batch length limits are now hardcoded
   in `cosmwasm-vm` itself instead of being imported from `cosmwasm-crypto`.
+- cosmwasm-vm: Filesystem storage layout now distinguishes clearly between state
+  and cache.
 
 ### Fixed
 
