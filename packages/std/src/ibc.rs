@@ -205,7 +205,7 @@ where
     /// Optional list of messages to pass. These will be executed in order.
     /// If the ReplyOn member is set, they will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
-    /// Use `call` or `msg.into()` to create messages with the older "fire and forget" semantics.
+    /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
     pub messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
