@@ -62,9 +62,16 @@ pub struct SubcallResponse {
     pub data: Option<Binary>,
 }
 
-/// a full sdk event
+/// A full Cosmos SDK event as documented in
+/// https://docs.cosmos.network/v0.42/core/events.html.
+///
+/// This version uses string attributes (similar to
+/// https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70),
+/// which then get magically converted to bytes for Tendermint somewhere between
+/// the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Event {
+    /// The event type. This is renamed to "kind" because "type" is reserved in Rust. This sucks, we know.
     #[serde(rename = "type")]
     pub kind: String,
     pub attributes: Vec<Attribute>,
