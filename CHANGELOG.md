@@ -40,6 +40,10 @@ and this project adheres to
   in `cosmwasm-vm` itself instead of being imported from `cosmwasm-crypto`.
 - cosmwasm-vm: Filesystem storage layout now distinguishes clearly between state
   and cache.
+- cosmwasm-std: Merge `messages` and `submessages` into one list, using
+  `ReplyOn::Never` to model the "fire and forget" semantics ([#961]).
+
+[#961]: https://github.com/CosmWasm/cosmwasm/issues/961
 
 ### Fixed
 

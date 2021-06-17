@@ -8,6 +8,7 @@ while getopts c option; do
   case "${option}" in
 
   c) op="check" ;;
+  *) ;;
   esac
 done
 
