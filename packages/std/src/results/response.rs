@@ -4,7 +4,7 @@ use std::fmt;
 
 use crate::Binary;
 
-use super::{Attribute, Empty, SubMsg};
+use super::{Attribute, CosmosMsg, Empty, SubMsg};
 
 /// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
@@ -57,10 +57,10 @@ use super::{Attribute, Empty, SubMsg};
 ///     // ...
 ///     response.add_attribute("Let the", "hacking begin");
 ///     // ...
-///     response.add_message(SubMsg::new(BankMsg::Send {
+///     response.add_message(BankMsg::Send {
 ///         to_address: String::from("recipient"),
 ///         amount: coins(128, "uint"),
-///     }));
+///     });
 ///     response.add_attribute("foo", "bar");
 ///     // ...
 ///     response.set_data(Binary::from(b"the result data"));
@@ -111,8 +111,16 @@ where
         });
     }
 
-    pub fn add_message<U: Into<SubMsg<T>>>(&mut self, msg: U) {
-        self.messages.push(msg.into());
+    /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
+    /// and adds it to the list of messages to process.
+    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+        self.messages.push(SubMsg::new(msg));
+    }
+
+    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// and adds it to the list of messages to process.
+    pub fn add_submessage(&mut self, msg: SubMsg<T>) {
+        self.messages.push(msg);
     }
 
     pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
