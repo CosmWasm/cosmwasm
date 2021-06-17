@@ -1,8 +1,8 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary,
-    ContractResult, CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement,
-    IbcBasicResponse, IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order,
-    QueryResponse, Reply, ReplyOn, Response, StdError, StdResult, SubMsg, SubcallResponse, WasmMsg,
+    attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
+    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
+    Response, StdError, StdResult, SubMsg, SubcallResponse, WasmMsg,
 };
 
 use crate::msg::{
@@ -163,7 +163,7 @@ pub fn ibc_channel_connect(
         funds: vec![],
         label: format!("ibc-reflect-{}", &chan_id),
     };
-    let msg = SubMsg::new(msg, INIT_CALLBACK_ID, ReplyOn::Success);
+    let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
 
     // store the channel id for the reply handler
     pending_channel(deps.storage).save(&chan_id)?;
@@ -198,7 +198,7 @@ pub fn ibc_channel_close(
             msgs: vec![bank_msg.into()],
         };
         let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-        vec![wasm_msg.into()]
+        vec![SubMsg::new(wasm_msg)]
     } else {
         vec![]
     };
@@ -306,7 +306,7 @@ fn receive_dispatch(
     let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
 
     // we wrap it in a submessage to properly report errors
-    let msg = SubMsg::new(wasm_msg, RECEIVE_DISPATCH_ID, ReplyOn::Error);
+    let msg = SubMsg::reply_on_error(wasm_msg, RECEIVE_DISPATCH_ID);
 
     Ok(IbcReceiveResponse {
         acknowledgement,
