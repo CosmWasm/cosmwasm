@@ -4,7 +4,64 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.13 -> 0.14 (unreleased)
+## 0.14 -> 0.15 (unreleased)
+
+- Combine `messages` and `submessages` on `Response` obj. The new format uses
+  `messages: Vec<SubMsg<T>>`, so copy `submessages` content, and wrap old
+  messages using `SubMsg::new`. Here is how to change messages:
+
+  ```rust
+  let send = BankMsg::Send{ to_address, amount };
+
+  // before
+  let res = Response {
+    messages: vec![send.into()],
+    ..Response::default()
+  }
+
+  // after
+  let res = Response {
+    messages: vec![SubMsg::new(send)],
+    ..Response::default()
+  }
+
+  // alternate approach
+  let mut res = Response::new();
+  res.add_message(send);
+  ```
+
+  And here is how to change submessages:
+
+  ```rust
+  // before
+  let sub_msg = SubMsg {
+    id: INIT_CALLBACK_ID,
+    msg: msg.into(),
+    gas_limit: None,
+    reply_on: ReplyOn::Success,
+  };
+  let res = Response {
+    submessages: vec![sub_msg],
+    ..Response::default()
+  };
+
+  // after
+  let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
+  let res = Response {
+    messages: vec![msg],
+    ..Response::default()
+  };
+
+  // alternate approach
+  let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
+  let mut res = Response::new();
+  res.add_submessage(msg);
+  ```
+
+  Note that this means you can mix "messages" and "submessages" in any execution
+  order. You are not restricted to doing "submessages" first.
+
+## 0.13 -> 0.14
 
 - The minimum Rust supported version for 0.14 is 1.51.0. Verify your Rust
   version is >= 1.51.0 with: `rustc --version`

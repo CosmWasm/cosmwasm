@@ -42,6 +42,8 @@ and this project adheres to
   and cache.
 - cosmwasm-std: Merge `messages` and `submessages` into one list, using
   `ReplyOn::Never` to model the "fire and forget" semantics ([#961]).
+- cosmwasm-std: Add helpers to create `SubMsg`. `::new()`, `::reply_on_error()`,
+  `reply_on_success()`, `reply_always()` ([#961]).
 
 [#961]: https://github.com/CosmWasm/cosmwasm/issues/961
 
