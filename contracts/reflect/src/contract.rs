@@ -1,6 +1,6 @@
 use cosmwasm_std::{
-    attr, call, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut,
-    Env, MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
+    attr, entry_point, to_binary, to_vec, Binary, ContractResult, CosmosMsg, Deps, DepsMut, Env,
+    MessageInfo, QueryRequest, QueryResponse, Reply, Response, StdError, StdResult, SubMsg,
     SystemResult,
 };
 
@@ -53,7 +53,7 @@ pub fn try_reflect(
     if msgs.is_empty() {
         return Err(ReflectError::MessagesEmpty);
     }
-    let messages = msgs.into_iter().map(call).collect();
+    let messages = msgs.into_iter().map(SubMsg::new).collect();
     let res = Response {
         messages,
         attributes: vec![attr("action", "reflect")],
@@ -216,7 +216,7 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        let payload: Vec<_> = payload.into_iter().map(call).collect();
+        let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
     }
 
@@ -289,7 +289,7 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        let payload: Vec<_> = payload.into_iter().map(call).collect();
+        let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
     }
 

@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, call, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply,
-    Response, StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
+    StakingMsg, SubMsg, SubcallResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -103,7 +103,7 @@ fn reflect() {
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
-    let payload: Vec<_> = payload.into_iter().map(call).collect();
+    let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
     assert_eq!(payload, res.messages);
 }
 
