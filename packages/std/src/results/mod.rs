@@ -17,5 +17,5 @@ pub use cosmos_msg::{DistributionMsg, StakingMsg};
 pub use empty::Empty;
 pub use query::QueryResponse;
 pub use response::Response;
-pub use subcall::{call, Event, Reply, ReplyOn, SubMsg, SubcallResponse};
+pub use subcall::{Event, Reply, ReplyOn, SubMsg, SubcallResponse};
 pub use system_result::SystemResult;

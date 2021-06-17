@@ -41,7 +41,7 @@ use super::{Attribute, Empty, SubMsg};
 /// Mutating:
 ///
 /// ```
-/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo};
+/// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg};
 /// # type InstantiateMsg = ();
 /// # type MyError = ();
 /// #
@@ -57,10 +57,10 @@ use super::{Attribute, Empty, SubMsg};
 ///     // ...
 ///     response.add_attribute("Let the", "hacking begin");
 ///     // ...
-///     response.add_message(BankMsg::Send {
+///     response.add_message(SubMsg::new(BankMsg::Send {
 ///         to_address: String::from("recipient"),
 ///         amount: coins(128, "uint"),
-///     });
+///     }));
 ///     response.add_attribute("foo", "bar");
 ///     // ...
 ///     response.set_data(Binary::from(b"the result data"));
