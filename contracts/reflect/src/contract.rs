@@ -178,7 +178,7 @@ mod tests {
     use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BankMsg, BankQuery, Binary, ContractResult,
-        Event, ReplyOn, StakingMsg, StdError, SubcallResponse,
+        Event, StakingMsg, StdError, SubcallResponse,
     };
 
     #[test]
@@ -405,16 +405,13 @@ mod tests {
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let id = 123u64;
-        let payload = SubMsg {
-            id,
-            gas_limit: None,
-            msg: BankMsg::Send {
+        let payload = SubMsg::reply_always(
+            BankMsg::Send {
                 to_address: String::from("friend"),
                 amount: coins(1, "token"),
-            }
-            .into(),
-            reply_on: ReplyOn::default(),
-        };
+            },
+            id,
+        );
 
         let msg = ExecuteMsg::ReflectSubCall {
             msgs: vec![payload.clone()],

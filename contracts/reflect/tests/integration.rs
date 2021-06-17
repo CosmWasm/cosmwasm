@@ -196,16 +196,13 @@ fn reflect_subcall() {
     let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let id = 123u64;
-    let payload = SubMsg {
-        id,
-        gas_limit: None,
-        msg: BankMsg::Send {
+    let payload = SubMsg::reply_always(
+        BankMsg::Send {
             to_address: String::from("friend"),
             amount: coins(1, "token"),
-        }
-        .into(),
-        reply_on: Default::default(),
-    };
+        },
+        id,
+    );
 
     let msg = ExecuteMsg::ReflectSubCall {
         msgs: vec![payload.clone()],
