@@ -6,12 +6,12 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.14 -> 0.15 (unreleased)
 
-- Combine `messages` and `submessages` on `Response` obj. The new format uses
-  `messages: Vec<SubMsg<T>>`, so copy `submessages` content, and wrap old
+- Combine `messages` and `submessages` on the `Response` object. The new format
+  uses `messages: Vec<SubMsg<T>>`, so copy `submessages` content, and wrap old
   messages using `SubMsg::new`. Here is how to change messages:
 
   ```rust
-  let send = BankMsg::Send{ to_address, amount };
+  let send = BankMsg::Send { to_address, amount };
 
   // before
   let res = Response {
@@ -59,7 +59,7 @@ major releases of `cosmwasm`. Note that you can also view the
   ```
 
   Note that this means you can mix "messages" and "submessages" in any execution
-  order. You are not restricted to doing "submessages" first.
+  order. You are no more restricted to doing "submessages" first.
 
 ## 0.13 -> 0.14
 

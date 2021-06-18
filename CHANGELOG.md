@@ -40,12 +40,15 @@ and this project adheres to
   in `cosmwasm-vm` itself instead of being imported from `cosmwasm-crypto`.
 - cosmwasm-vm: Filesystem storage layout now distinguishes clearly between state
   and cache.
+- cosmwasm-std: Add enum case `ReplyOn::Never`; Remove default implementation of
+  `ReplyOn` as there is no natural default case anymore ([#961]).
 - cosmwasm-std: Merge `messages` and `submessages` into one list, using
   `ReplyOn::Never` to model the "fire and forget" semantics ([#961]).
-- cosmwasm-std: Add helpers to create `SubMsg`. `::new()`, `::reply_on_error()`,
-  `reply_on_success()`, `reply_always()` ([#961]).
+- cosmwasm-std: Add `SubMsg` constructors: `::new()`, `::reply_on_error()`,
+  `::reply_on_success()`, `::reply_always()`; Add `with_gas_limit` to add a gas
+  limit to any those constructors ([#961]).
 
-[#961]: https://github.com/CosmWasm/cosmwasm/issues/961
+[#961]: https://github.com/CosmWasm/cosmwasm/pull/961
 
 ### Fixed
 
