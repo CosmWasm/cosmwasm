@@ -1,10 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Response_for_CustomMsg",
-  "description": "A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.\n\nThis type can be constructed directly at the end of the call. Alternatively a mutable response instance can be created early in the contract's logic and incrementally be updated.\n\n## Examples\n\nDirect:\n\n``` # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo}; # type InstantiateMsg = (); # use cosmwasm_std::{attr, Response, StdResult};\n\npub fn instantiate( deps: DepsMut, _env: Env, _info: MessageInfo, msg: InstantiateMsg, ) -> StdResult<Response> { // ...\n\nOk(Response { messages: vec![], attributes: vec![attr(\"action\", \"instantiate\")], data: None, }) } ```\n\nMutating:\n\n``` # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg}; # type InstantiateMsg = (); # type MyError = (); # use cosmwasm_std::Response;\n\npub fn instantiate( deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg, ) -> Result<Response, MyError> { let mut response = Response::new(); // ... response.add_attribute(\"Let the\", \"hacking begin\"); // ... response.add_message(BankMsg::Send { to_address: String::from(\"recipient\"), amount: coins(128, \"uint\"), }); response.add_attribute(\"foo\", \"bar\"); // ... response.set_data(Binary::from(b\"the result data\")); Ok(response) } ```",
+  "description": "A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.\n\nThis type can be constructed directly at the end of the call. Alternatively a mutable response instance can be created early in the contract's logic and incrementally be updated.\n\n## Examples\n\nDirect:\n\n``` # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo}; # type InstantiateMsg = (); # use cosmwasm_std::{attr, Response, StdResult};\n\npub fn instantiate( deps: DepsMut, _env: Env, _info: MessageInfo, msg: InstantiateMsg, ) -> StdResult<Response> { // ...\n\nOk(Response { messages: vec![], attributes: vec![attr(\"action\", \"instantiate\")], events: vec![], data: None, }) } ```\n\nMutating:\n\n``` # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg}; # type InstantiateMsg = (); # type MyError = (); # use cosmwasm_std::Response;\n\npub fn instantiate( deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg, ) -> Result<Response, MyError> { let mut response = Response::new(); // ... response.add_attribute(\"Let the\", \"hacking begin\"); // ... response.add_message(BankMsg::Send { to_address: String::from(\"recipient\"), amount: coins(128, \"uint\"), }); response.add_attribute(\"foo\", \"bar\"); // ... response.set_data(Binary::from(b\"the result data\")); Ok(response) } ```",
   "type": "object",
   "required": [
     "attributes",
+    "events",
     "messages"
   ],
   "properties": {
@@ -24,6 +25,12 @@
           "type": "null"
         }
       ]
+    },
+    "events": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/Event"
+      }
     },
     "messages": {
       "description": "Optional list of messages to pass. These will be executed in order. If the ReplyOn variant matches the result (Always, Success on Ok, Error on Err), the runtime will invoke this contract's `reply` entry point after execution. Otherwise, they act like \"fire and forget\". Use `SubMsg::new` to create messages with the older \"fire and forget\" semantics.",
@@ -304,6 +311,26 @@
           "additionalProperties": false
         }
       ]
+    },
+    "Event": {
+      "description": "A full Cosmos SDK event as documented in https://docs.cosmos.network/v0.42/core/events.html.\n\nThis version uses string attributes (similar to https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/base/abci/v1beta1/abci.proto#L56-L70), which then get magically converted to bytes for Tendermint somewhere between the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.",
+      "type": "object",
+      "required": [
+        "attributes",
+        "type"
+      ],
+      "properties": {
+        "attributes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Attribute"
+          }
+        },
+        "type": {
+          "description": "The event type. This is renamed to \"kind\" because \"type\" is reserved in Rust. This sucks, we know.",
+          "type": "string"
+        }
+      }
     },
     "IbcMsg": {
       "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",

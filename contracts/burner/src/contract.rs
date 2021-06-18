@@ -42,6 +42,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     Ok(Response {
         messages: vec![SubMsg::new(send)],
         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
+        events: vec![],
         data: Some(data_msg.into()),
     })
 }
