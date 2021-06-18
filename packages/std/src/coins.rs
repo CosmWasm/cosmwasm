@@ -34,14 +34,14 @@ impl fmt::Display for Coin {
 /// # Examples
 ///
 /// ```
-/// # use cosmwasm_std::{coins, BankMsg, CosmosMsg, Response};
+/// # use cosmwasm_std::{coins, BankMsg, CosmosMsg, Response, SubMsg};
 /// # use cosmwasm_std::testing::{mock_env, mock_info};
 /// # let env = mock_env();
 /// # let info = mock_info("sender", &[]);
 /// let tip = coins(123, "ucosm");
 ///
 /// let mut response: Response = Default::default();
-/// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
+/// response.messages = vec![SubMsg::new(BankMsg::Send {
 ///   to_address: info.sender.into(),
 ///   amount: tip,
 /// })];
@@ -55,7 +55,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 /// # Examples
 ///
 /// ```
-/// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, Response};
+/// # use cosmwasm_std::{coin, BankMsg, CosmosMsg, Response, SubMsg};
 /// # use cosmwasm_std::testing::{mock_env, mock_info};
 /// # let env = mock_env();
 /// # let info = mock_info("sender", &[]);
@@ -65,7 +65,7 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 /// ];
 ///
 /// let mut response: Response = Default::default();
-/// response.messages = vec![CosmosMsg::Bank(BankMsg::Send {
+/// response.messages = vec![SubMsg::new(BankMsg::Send {
 ///     to_address: info.sender.into(),
 ///     amount: tip,
 /// })];

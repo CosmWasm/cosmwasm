@@ -285,7 +285,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
-    use cosmwasm_std::{attr, coins, Binary, Storage};
+    use cosmwasm_std::{attr, coins, Binary, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
@@ -394,7 +394,7 @@ mod tests {
         let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
         assert_eq!(1, res.messages.len());
         let msg = res.messages.get(0).expect("no message");
-        assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
+        assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
     }
 
     #[test]
@@ -446,11 +446,10 @@ mod tests {
         let msg = execute_res.messages.get(0).expect("no message");
         assert_eq!(
             msg,
-            &BankMsg::Send {
+            &SubMsg::new(BankMsg::Send {
                 to_address: beneficiary,
                 amount: coins(1000, "earth"),
-            }
-            .into(),
+            }),
         );
         assert_eq!(
             execute_res.attributes,

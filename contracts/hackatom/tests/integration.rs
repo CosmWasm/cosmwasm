@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{
     attr, coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult,
-    Empty, Response,
+    Empty, Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
@@ -173,7 +173,7 @@ fn sudo_can_steal_tokens() {
     let res: Response = sudo(&mut deps, mock_env(), sys_msg).unwrap();
     assert_eq!(1, res.messages.len());
     let msg = res.messages.get(0).expect("no message");
-    assert_eq!(msg, &BankMsg::Send { to_address, amount }.into(),);
+    assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
 }
 
 #[test]
@@ -242,11 +242,10 @@ fn execute_release_works() {
     let msg = execute_res.messages.get(0).expect("no message");
     assert_eq!(
         msg,
-        &BankMsg::Send {
+        &SubMsg::new(BankMsg::Send {
             to_address: beneficiary,
             amount: coins(1000, "earth"),
-        }
-        .into(),
+        }),
     );
     assert_eq!(
         execute_res.attributes,

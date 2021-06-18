@@ -53,9 +53,9 @@ pub fn try_reflect(
     if msgs.is_empty() {
         return Err(ReflectError::MessagesEmpty);
     }
+    let messages = msgs.into_iter().map(SubMsg::new).collect();
     let res = Response {
-        submessages: vec![],
-        messages: msgs,
+        messages,
         attributes: vec![attr("action", "reflect")],
         data: None,
     };
@@ -80,8 +80,7 @@ pub fn try_reflect_subcall(
         return Err(ReflectError::MessagesEmpty);
     }
     let res = Response {
-        submessages: msgs,
-        messages: vec![],
+        messages: msgs,
         attributes: vec![attr("action", "reflect_subcall")],
         data: None,
     };
@@ -179,7 +178,7 @@ mod tests {
     use cosmwasm_std::testing::{mock_env, mock_info, MOCK_CONTRACT_ADDR};
     use cosmwasm_std::{
         coin, coins, from_binary, AllBalanceResponse, BankMsg, BankQuery, Binary, ContractResult,
-        Event, ReplyOn, StakingMsg, StdError, SubcallResponse,
+        Event, StakingMsg, StdError, SubcallResponse,
     };
 
     #[test]
@@ -217,6 +216,7 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
     }
 
@@ -289,6 +289,7 @@ mod tests {
         };
         let info = mock_info("creator", &[]);
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
+        let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
         assert_eq!(payload, res.messages);
     }
 
@@ -404,26 +405,22 @@ mod tests {
         let _res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
 
         let id = 123u64;
-        let payload = SubMsg {
-            id,
-            gas_limit: None,
-            msg: BankMsg::Send {
+        let payload = SubMsg::reply_always(
+            BankMsg::Send {
                 to_address: String::from("friend"),
                 amount: coins(1, "token"),
-            }
-            .into(),
-            reply_on: ReplyOn::default(),
-        };
+            },
+            id,
+        );
 
         let msg = ExecuteMsg::ReflectSubCall {
             msgs: vec![payload.clone()],
         };
         let info = mock_info("creator", &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-        assert_eq!(1, res.submessages.len());
-        let submsg = res.submessages.pop().expect("must have a submessage");
-        assert_eq!(payload, submsg);
+        assert_eq!(1, res.messages.len());
+        let msg = res.messages.pop().expect("must have a message");
+        assert_eq!(payload, msg);
     }
 
     // this mocks out what happens after reflect_subcall

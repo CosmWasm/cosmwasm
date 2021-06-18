@@ -1,6 +1,6 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError, StdResult,
+    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
 use crate::ibc_msg::{
@@ -62,8 +62,7 @@ pub fn ibc_channel_connect(
     };
 
     Ok(IbcBasicResponse {
-        submessages: vec![],
-        messages: vec![msg.into()],
+        messages: vec![SubMsg::new(msg)],
         attributes: vec![
             attr("action", "ibc_connect"),
             attr("channel_id", channel_id),
@@ -83,9 +82,8 @@ pub fn ibc_channel_close(
     accounts(deps.storage).remove(channel_id.as_bytes());
 
     Ok(IbcBasicResponse {
-        submessages: vec![],
-        messages: vec![],
         attributes: vec![attr("action", "ibc_close"), attr("channel_id", channel_id)],
+        messages: vec![],
     })
 }
 
@@ -98,7 +96,6 @@ pub fn ibc_packet_receive(
 ) -> StdResult<IbcReceiveResponse> {
     Ok(IbcReceiveResponse {
         acknowledgement: b"{}".into(),
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
     })
@@ -139,7 +136,6 @@ fn acknowledge_dispatch(
 ) -> StdResult<IbcBasicResponse> {
     // TODO: actually handle success/error?
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_dispatch")],
     })
@@ -157,7 +153,6 @@ fn acknowledge_who_am_i(
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
             return Ok(IbcBasicResponse {
-                submessages: vec![],
                 messages: vec![],
                 attributes: vec![attr("action", "acknowledge_who_am_i"), attr("error", e)],
             })
@@ -178,7 +173,6 @@ fn acknowledge_who_am_i(
     })?;
 
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_who_am_i")],
     })
@@ -196,7 +190,6 @@ fn acknowledge_balances(
         AcknowledgementMsg::Ok(res) => res,
         AcknowledgementMsg::Err(e) => {
             return Ok(IbcBasicResponse {
-                submessages: vec![],
                 messages: vec![],
                 attributes: vec![attr("action", "acknowledge_balances"), attr("error", e)],
             })
@@ -225,7 +218,6 @@ fn acknowledge_balances(
     })?;
 
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_balances")],
     })
@@ -239,7 +231,6 @@ pub fn ibc_packet_timeout(
     _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
     })
@@ -283,7 +274,7 @@ mod tests {
 
         // this should send a WhoAmI request, which is received some blocks later
         assert_eq!(1, res.messages.len());
-        match &res.messages[0] {
+        match &res.messages[0].msg {
             CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id: packet_channel,
                 ..
@@ -376,7 +367,7 @@ mod tests {
         let info = mock_info(CREATOR, &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
         assert_eq!(1, res.messages.len());
-        let packet = match res.messages.swap_remove(0) {
+        let packet = match res.messages.swap_remove(0).msg {
             CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id, data, ..
             }) => {
@@ -435,7 +426,7 @@ mod tests {
         let info = mock_info(CREATOR, &coins(12344, "utrgd"));
         let res = execute(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(1, res.messages.len());
-        match &res.messages[0] {
+        match &res.messages[0].msg {
             CosmosMsg::Ibc(IbcMsg::Transfer {
                 channel_id,
                 to_address,

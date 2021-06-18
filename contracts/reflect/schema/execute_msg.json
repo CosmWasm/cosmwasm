@@ -484,7 +484,8 @@
       "enum": [
         "always",
         "error",
-        "success"
+        "success",
+        "never"
       ]
     },
     "StakingMsg": {

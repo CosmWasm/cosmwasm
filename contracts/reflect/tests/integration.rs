@@ -103,6 +103,7 @@ fn reflect() {
     let res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
 
     // should return payload
+    let payload: Vec<_> = payload.into_iter().map(SubMsg::new).collect();
     assert_eq!(payload, res.messages);
 }
 
@@ -195,26 +196,22 @@ fn reflect_subcall() {
     let _res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
 
     let id = 123u64;
-    let payload = SubMsg {
-        id,
-        gas_limit: None,
-        msg: BankMsg::Send {
+    let payload = SubMsg::reply_always(
+        BankMsg::Send {
             to_address: String::from("friend"),
             amount: coins(1, "token"),
-        }
-        .into(),
-        reply_on: Default::default(),
-    };
+        },
+        id,
+    );
 
     let msg = ExecuteMsg::ReflectSubCall {
         msgs: vec![payload.clone()],
     };
     let info = mock_info("creator", &[]);
     let mut res: Response<CustomMsg> = execute(&mut deps, mock_env(), info, msg).unwrap();
-    assert_eq!(0, res.messages.len());
-    assert_eq!(1, res.submessages.len());
-    let submsg = res.submessages.pop().expect("must have a submessage");
-    assert_eq!(payload, submsg);
+    assert_eq!(1, res.messages.len());
+    let msg = res.messages.pop().expect("must have a message");
+    assert_eq!(payload, msg);
 }
 
 // this mocks out what happens after reflect_subcall

@@ -18,12 +18,8 @@ pub enum ReplyOn {
     Error,
     /// Only callback if SubMsg was successful, no callback on error case
     Success,
-}
-
-impl Default for ReplyOn {
-    fn default() -> Self {
-        ReplyOn::Always
-    }
+    /// Never make a callback - this is like the original CosmosMsg semantics
+    Never,
 }
 
 /// A submessage that will guarantee a `reply` call on success or error, depending on
@@ -43,6 +39,65 @@ where
     pub msg: CosmosMsg<T>,
     pub gas_limit: Option<u64>,
     pub reply_on: ReplyOn,
+}
+
+/// This is used for cases when we use ReplyOn::Never and the id doesn't matter
+pub const UNUSED_MSG_ID: u64 = 0;
+
+impl<T> SubMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    /// new creates a "fire and forget" message with the pre-0.14 semantics
+    pub fn new<M: Into<CosmosMsg<T>>>(msg: M) -> Self {
+        SubMsg {
+            id: UNUSED_MSG_ID,
+            msg: msg.into(),
+            reply_on: ReplyOn::Never,
+            gas_limit: None,
+        }
+    }
+
+    /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Ok`
+    pub fn reply_on_success<M: Into<CosmosMsg<T>>>(msg: M, id: u64) -> Self {
+        Self::reply_on(msg.into(), id, ReplyOn::Success)
+    }
+
+    /// create a `SubMsg` that will provide a `reply` with the given id if the message returns `Err`
+    pub fn reply_on_error<M: Into<CosmosMsg<T>>>(msg: M, id: u64) -> Self {
+        Self::reply_on(msg.into(), id, ReplyOn::Error)
+    }
+
+    /// create a `SubMsg` that will always provide a `reply` with the given id
+    pub fn reply_always<M: Into<CosmosMsg<T>>>(msg: M, id: u64) -> Self {
+        Self::reply_on(msg.into(), id, ReplyOn::Always)
+    }
+
+    /// Add a gas limit to the message.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// # use cosmwasm_std::{coins, BankMsg, ReplyOn, SubMsg};
+    /// # let msg = BankMsg::Send { to_address: String::from("you"), amount: coins(1015, "earth") };
+    /// let sub_msg: SubMsg = SubMsg::reply_always(msg, 1234).with_gas_limit(60_000);
+    /// assert_eq!(sub_msg.id, 1234);
+    /// assert_eq!(sub_msg.gas_limit, Some(60_000));
+    /// assert_eq!(sub_msg.reply_on, ReplyOn::Always);
+    /// ```
+    pub fn with_gas_limit(mut self, limit: u64) -> Self {
+        self.gas_limit = Some(limit);
+        self
+    }
+
+    fn reply_on(msg: CosmosMsg<T>, id: u64, reply_on: ReplyOn) -> Self {
+        SubMsg {
+            id,
+            msg,
+            reply_on,
+            gas_limit: None,
+        }
+    }
 }
 
 /// The result object returned to `reply`. We always get the ID from the submessage

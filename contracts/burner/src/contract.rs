@@ -1,5 +1,6 @@
 use cosmwasm_std::{
     attr, entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
+    SubMsg,
 };
 
 use crate::msg::{InstantiateMsg, MigrateMsg};
@@ -39,8 +40,7 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
     let data_msg = format!("burnt {} keys", count).into_bytes();
 
     Ok(Response {
-        submessages: vec![],
-        messages: vec![send.into()],
+        messages: vec![SubMsg::new(send)],
         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
         data: Some(data_msg.into()),
     })
@@ -90,11 +90,10 @@ mod tests {
         let msg = res.messages.get(0).expect("no message");
         assert_eq!(
             msg,
-            &BankMsg::Send {
+            &SubMsg::new(BankMsg::Send {
                 to_address: payout,
                 amount: coins(123456, "gold"),
-            }
-            .into(),
+            })
         );
 
         // check there is no data in storage

@@ -1,12 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Response_for_CustomMsg",
-  "description": "A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.\n\nThis type can be constructed directly at the end of the call. Alternatively a mutable response instance can be created early in the contract's logic and incrementally be updated.\n\n## Examples\n\nDirect:\n\n``` # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo}; # type InstantiateMsg = (); # use cosmwasm_std::{attr, Response, StdResult};\n\npub fn instantiate( deps: DepsMut, _env: Env, _info: MessageInfo, msg: InstantiateMsg, ) -> StdResult<Response> { // ...\n\nOk(Response { submessages: vec![], messages: vec![], attributes: vec![attr(\"action\", \"instantiate\")], data: None, }) } ```\n\nMutating:\n\n``` # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo}; # type InstantiateMsg = (); # type MyError = (); # use cosmwasm_std::Response;\n\npub fn instantiate( deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg, ) -> Result<Response, MyError> { let mut response = Response::new(); // ... response.add_attribute(\"Let the\", \"hacking begin\"); // ... response.add_message(BankMsg::Send { to_address: String::from(\"recipient\"), amount: coins(128, \"uint\"), }); response.add_attribute(\"foo\", \"bar\"); // ... response.set_data(Binary::from(b\"the result data\")); Ok(response) } ```",
+  "description": "A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.\n\nThis type can be constructed directly at the end of the call. Alternatively a mutable response instance can be created early in the contract's logic and incrementally be updated.\n\n## Examples\n\nDirect:\n\n``` # use cosmwasm_std::{Binary, DepsMut, Env, MessageInfo}; # type InstantiateMsg = (); # use cosmwasm_std::{attr, Response, StdResult};\n\npub fn instantiate( deps: DepsMut, _env: Env, _info: MessageInfo, msg: InstantiateMsg, ) -> StdResult<Response> { // ...\n\nOk(Response { messages: vec![], attributes: vec![attr(\"action\", \"instantiate\")], data: None, }) } ```\n\nMutating:\n\n``` # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg}; # type InstantiateMsg = (); # type MyError = (); # use cosmwasm_std::Response;\n\npub fn instantiate( deps: DepsMut, _env: Env, info: MessageInfo, msg: InstantiateMsg, ) -> Result<Response, MyError> { let mut response = Response::new(); // ... response.add_attribute(\"Let the\", \"hacking begin\"); // ... response.add_message(BankMsg::Send { to_address: String::from(\"recipient\"), amount: coins(128, \"uint\"), }); response.add_attribute(\"foo\", \"bar\"); // ... response.set_data(Binary::from(b\"the result data\")); Ok(response) } ```",
   "type": "object",
   "required": [
     "attributes",
-    "messages",
-    "submessages"
+    "messages"
   ],
   "properties": {
     "attributes": {
@@ -27,14 +26,7 @@
       ]
     },
     "messages": {
-      "description": "After any submessages are processed, these are all dispatched in the host blockchain. If they all succeed, then the transaction is committed. If any fail, then the transaction and any local contract state changes are reverted.",
-      "type": "array",
-      "items": {
-        "$ref": "#/definitions/CosmosMsg_for_CustomMsg"
-      }
-    },
-    "submessages": {
-      "description": "Optional list of \"subcalls\" to make. These will be executed in order (and this contract's subcall_response entry point invoked) *before* any of the \"fire and forget\" messages get executed.",
+      "description": "Optional list of messages to pass. These will be executed in order. If the ReplyOn variant matches the result (Always, Success on Ok, Error on Err), the runtime will invoke this contract's `reply` entry point after execution. Otherwise, they act like \"fire and forget\". Use `SubMsg::new` to create messages with the older \"fire and forget\" semantics.",
       "type": "array",
       "items": {
         "$ref": "#/definitions/SubMsg_for_CustomMsg"
@@ -472,7 +464,8 @@
       "enum": [
         "always",
         "error",
-        "success"
+        "success",
+        "never"
       ]
     },
     "StakingMsg": {

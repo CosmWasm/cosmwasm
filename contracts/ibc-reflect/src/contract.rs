@@ -1,7 +1,7 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
     CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
-    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, ReplyOn,
+    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
     Response, StdError, StdResult, SubMsg, SubcallResponse, WasmMsg,
 };
 
@@ -29,10 +29,8 @@ pub fn instantiate(
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
-        submessages: vec![],
-        messages: vec![],
         attributes: vec![attr("action", "instantiate")],
-        data: None,
+        ..Response::default()
     })
 }
 
@@ -86,10 +84,8 @@ pub fn handle_init_callback(deps: DepsMut, response: SubcallResponse) -> StdResu
     })?;
 
     Ok(Response {
-        submessages: vec![],
-        messages: vec![],
         attributes: vec![attr("action", "execute_init_callback")],
-        data: None,
+        ..Response::default()
     })
 }
 
@@ -167,19 +163,13 @@ pub fn ibc_channel_connect(
         funds: vec![],
         label: format!("ibc-reflect-{}", &chan_id),
     };
-    let sub_msg = SubMsg {
-        id: INIT_CALLBACK_ID,
-        msg: msg.into(),
-        gas_limit: None,
-        reply_on: ReplyOn::Success,
-    };
+    let msg = SubMsg::reply_on_success(msg, INIT_CALLBACK_ID);
 
     // store the channel id for the reply handler
     pending_channel(deps.storage).save(&chan_id)?;
 
     Ok(IbcBasicResponse {
-        messages: vec![],
-        submessages: vec![sub_msg],
+        messages: vec![msg],
         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
     })
 }
@@ -199,7 +189,7 @@ pub fn ibc_channel_close(
 
     // transfer current balance if any (steal the money)
     let amount = deps.querier.query_all_balances(&reflect_addr)?;
-    let messages: Vec<CosmosMsg<Empty>> = if !amount.is_empty() {
+    let messages: Vec<SubMsg<Empty>> = if !amount.is_empty() {
         let bank_msg = BankMsg::Send {
             to_address: env.contract.address.into(),
             amount,
@@ -208,14 +198,13 @@ pub fn ibc_channel_close(
             msgs: vec![bank_msg.into()],
         };
         let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
-        vec![wasm_msg.into()]
+        vec![SubMsg::new(wasm_msg)]
     } else {
         vec![]
     };
     let steal_funds = !messages.is_empty();
 
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages,
         attributes: vec![
             attr("action", "ibc_close"),
@@ -263,7 +252,6 @@ pub fn ibc_packet_receive(
         let acknowledgement = encode_ibc_error(format!("invalid packet: {}", e));
         Ok(IbcReceiveResponse {
             acknowledgement,
-            submessages: vec![],
             messages: vec![],
             attributes: vec![],
         })
@@ -280,7 +268,6 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     // and we are golden
     Ok(IbcReceiveResponse {
         acknowledgement,
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "receive_who_am_i")],
     })
@@ -298,7 +285,6 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
     // and we are golden
     Ok(IbcReceiveResponse {
         acknowledgement,
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "receive_balances")],
     })
@@ -320,17 +306,11 @@ fn receive_dispatch(
     let wasm_msg = wasm_execute(reflect_addr, &reflect_msg, vec![])?;
 
     // we wrap it in a submessage to properly report errors
-    let sub_msg = SubMsg {
-        id: RECEIVE_DISPATCH_ID,
-        msg: wasm_msg.into(),
-        gas_limit: None,
-        reply_on: ReplyOn::Error,
-    };
+    let msg = SubMsg::reply_on_error(wasm_msg, RECEIVE_DISPATCH_ID);
 
     Ok(IbcReceiveResponse {
         acknowledgement,
-        submessages: vec![sub_msg],
-        messages: vec![],
+        messages: vec![msg],
         attributes: vec![attr("action", "receive_dispatch")],
     })
 }
@@ -343,7 +323,6 @@ pub fn ibc_packet_ack(
     _ack: IbcAcknowledgement,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
     })
@@ -357,7 +336,6 @@ pub fn ibc_packet_timeout(
     _packet: IbcPacket,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
-        submessages: vec![],
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
     })
@@ -417,8 +395,8 @@ mod tests {
         // then we connect (with counter-party version set)
         let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
-        assert_eq!(1, res.submessages.len());
-        let id = res.submessages[0].id;
+        assert_eq!(1, res.messages.len());
+        let id = res.messages[0].id;
 
         // fake a reply and ensure this works
         let response = Reply {
@@ -471,15 +449,15 @@ mod tests {
         let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
         // and set up a reflect account
-        assert_eq!(1, res.submessages.len());
-        let id = res.submessages[0].id;
+        assert_eq!(1, res.messages.len());
+        let id = res.messages[0].id;
         if let CosmosMsg::Wasm(WasmMsg::Instantiate {
             admin,
             code_id,
             msg: _,
             funds,
             label,
-        }) = &res.submessages[0].msg
+        }) = &res.messages[0].msg
         {
             assert_eq!(*admin, None);
             assert_eq!(*code_id, REFLECT_ID);
@@ -568,16 +546,15 @@ mod tests {
         ack.unwrap();
 
         // and we dispatch the BankMsg via submessage
-        assert_eq!(0, res.messages.len());
-        assert_eq!(1, res.submessages.len());
-        assert_eq!(RECEIVE_DISPATCH_ID, res.submessages[0].id);
+        assert_eq!(1, res.messages.len());
+        assert_eq!(RECEIVE_DISPATCH_ID, res.messages[0].id);
 
         // parse the output, ensuring it matches
         if let CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr,
             msg,
             funds,
-        }) = &res.submessages[0].msg
+        }) = &res.messages[0].msg
         {
             assert_eq!(account, contract_addr.as_str());
             assert_eq!(0, funds.len());
@@ -600,7 +577,7 @@ mod tests {
         let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet).unwrap();
         // we didn't dispatch anything
-        assert_eq!(0, res.submessages.len());
+        assert_eq!(0, res.messages.len());
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(ack.unwrap_err(), "invalid packet: Error parsing into type ibc_reflect::msg::PacketMsg: unknown variant `reflect_code_id`, expected one of `dispatch`, `who_am_i`, `balances`");
@@ -634,7 +611,7 @@ mod tests {
         assert_eq!(1, res.messages.len());
         if let CosmosMsg::Wasm(WasmMsg::Execute {
             contract_addr, msg, ..
-        }) = &res.messages[0]
+        }) = &res.messages[0].msg
         {
             assert_eq!(contract_addr.as_str(), account);
             let reflect: ReflectExecuteMsg = from_slice(msg).unwrap();

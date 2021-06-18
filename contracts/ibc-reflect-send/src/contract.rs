@@ -23,10 +23,8 @@ pub fn instantiate(
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
-        data: None,
-        submessages: vec![],
-        messages: vec![],
         attributes: vec![attr("action", "instantiate")],
+        ..Response::default()
     })
 }
 
@@ -61,13 +59,11 @@ pub fn handle_update_admin(
     config(deps.storage).save(&cfg)?;
 
     Ok(Response {
-        submessages: vec![],
-        messages: vec![],
         attributes: vec![
             attr("action", "handle_update_admin"),
             attr("new_admin", cfg.admin),
         ],
-        data: None,
+        ..Response::default()
     })
 }
 
@@ -94,12 +90,10 @@ pub fn handle_send_msgs(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    Ok(Response {
-        submessages: vec![],
-        messages: vec![msg.into()],
-        attributes: vec![attr("action", "handle_send_msgs")],
-        data: None,
-    })
+    let mut res = Response::new();
+    res.add_message(msg);
+    res.add_attribute("action", "handle_send_msgs");
+    Ok(res)
 }
 
 pub fn handle_check_remote_balance(
@@ -124,12 +118,10 @@ pub fn handle_check_remote_balance(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    Ok(Response {
-        submessages: vec![],
-        messages: vec![msg.into()],
-        attributes: vec![attr("action", "handle_check_remote_balance")],
-        data: None,
-    })
+    let mut res = Response::new();
+    res.add_message(msg);
+    res.add_attribute("action", "handle_check_remote_balance");
+    Ok(res)
 }
 
 pub fn handle_send_funds(
@@ -174,12 +166,10 @@ pub fn handle_send_funds(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    Ok(Response {
-        submessages: vec![],
-        messages: vec![msg.into()],
-        attributes: vec![attr("action", "handle_send_funds")],
-        data: None,
-    })
+    let mut res = Response::new();
+    res.add_message(msg);
+    res.add_attribute("action", "handle_send_funds");
+    Ok(res)
 }
 
 #[entry_point]

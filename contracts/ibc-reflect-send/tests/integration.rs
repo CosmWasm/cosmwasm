@@ -64,7 +64,7 @@ fn connect(deps: &mut Instance<MockApi, MockStorage, MockQuerier>, channel_id: &
 
     // this should send a WhoAmI request, which is received some blocks later
     assert_eq!(1, res.messages.len());
-    match &res.messages[0] {
+    match &res.messages[0].msg {
         CosmosMsg::Ibc(IbcMsg::SendPacket {
             channel_id: packet_channel,
             ..
@@ -172,7 +172,7 @@ fn dispatch_message_send_and_ack() {
     let info = mock_info(CREATOR, &[]);
     let mut res: Response = execute(&mut deps, mock_env(), info, execute_msg).unwrap();
     assert_eq!(1, res.messages.len());
-    let packet = match res.messages.swap_remove(0) {
+    let packet = match res.messages.swap_remove(0).msg {
         CosmosMsg::Ibc(IbcMsg::SendPacket {
             channel_id, data, ..
         }) => {
@@ -231,7 +231,7 @@ fn send_remote_funds() {
     let info = mock_info(CREATOR, &coins(12344, "utrgd"));
     let res: Response = execute(&mut deps, mock_env(), info, msg).unwrap();
     assert_eq!(1, res.messages.len());
-    match &res.messages[0] {
+    match &res.messages[0].msg {
         CosmosMsg::Ibc(IbcMsg::Transfer {
             channel_id,
             to_address,
