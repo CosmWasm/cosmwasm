@@ -2,7 +2,7 @@ use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
     entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    CanonicalAddr, Deps, DepsMut, Env, MessageInfo, QueryRequest, QueryResponse, Response,
+    CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
     StdError, StdResult, WasmQuery,
 };
 
@@ -93,6 +93,7 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         let mut resp = Response::new();
         resp.add_attribute("action", "release");
         resp.add_attribute("destination", to_addr.clone());
+        resp.add_event(Event::new("hackatom").attr("action", "release"));
         resp.add_message(BankMsg::Send {
             to_address: to_addr.into(),
             amount: balance,
