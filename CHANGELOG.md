@@ -51,6 +51,7 @@ and this project adheres to
 - cosmwasm-std: Change `Event`'s constructor - it no longer takes a vector of
   attributes and instead constructs an empty one
 - cosmwasm-std: Rename `Event.kind` to `Event.ty`.
+- cosmwasm-std: Rename `SubcallResponse` to `SubMsgExecutionResponse`.
 
 [#961]: https://github.com/CosmWasm/cosmwasm/pull/961
 

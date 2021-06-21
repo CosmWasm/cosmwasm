@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{
     coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
-    StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    StakingMsg, SubMsg, SubMsgExecutionResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -226,7 +226,7 @@ fn reply_and_query() {
     let id = 123u64;
     let data = Binary::from(b"foobar");
     let events = vec![Event::new("message").attr("signer", "caller-addr")];
-    let result = ContractResult::Ok(SubcallResponse {
+    let result = ContractResult::Ok(SubMsgExecutionResponse {
         events: events.clone(),
         data: Some(data.clone()),
     });

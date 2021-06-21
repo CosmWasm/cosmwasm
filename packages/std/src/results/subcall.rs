@@ -107,12 +107,12 @@ pub struct Reply {
     /// The ID that the contract set when emitting the `SubMsg`.
     /// Use this to identify which submessage triggered the `reply`.
     pub id: u64,
-    pub result: ContractResult<SubcallResponse>,
+    pub result: ContractResult<SubMsgExecutionResponse>,
 }
 
 /// The information we get back from a successful sub-call, with full sdk events
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct SubcallResponse {
+pub struct SubMsgExecutionResponse {
     pub events: Vec<Event>,
     pub data: Option<Binary>,
 }

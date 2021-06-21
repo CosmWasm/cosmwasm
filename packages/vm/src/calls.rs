@@ -678,7 +678,7 @@ mod tests {
             mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
         };
         use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
-        use cosmwasm_std::{attr, Empty, Event, IbcOrder, Reply, ReplyOn, SubcallResponse};
+        use cosmwasm_std::{attr, Empty, Event, IbcOrder, Reply, ReplyOn, SubMsgExecutionResponse};
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
         fn setup(
@@ -717,7 +717,7 @@ mod tests {
             // which creates a reflect account. here we get the callback
             let response = Reply {
                 id,
-                result: ContractResult::Ok(SubcallResponse {
+                result: ContractResult::Ok(SubMsgExecutionResponse {
                     events: vec![event],
                     data: None,
                 }),

@@ -20,7 +20,7 @@
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_recv};
 use cosmwasm_std::{
     attr, coins, BankMsg, ContractResult, CosmosMsg, Event, IbcBasicResponse, IbcOrder,
-    IbcReceiveResponse, Reply, Response, SubcallResponse, WasmMsg,
+    IbcReceiveResponse, Reply, Response, SubMsgExecutionResponse, WasmMsg,
 };
 use cosmwasm_vm::testing::{
     ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env, mock_info,
@@ -91,7 +91,7 @@ fn connect<T: Into<String>>(
     // fake a reply and ensure this works
     let response = Reply {
         id,
-        result: ContractResult::Ok(SubcallResponse {
+        result: ContractResult::Ok(SubMsgExecutionResponse {
             events: fake_events(&account),
             data: None,
         }),
@@ -167,7 +167,7 @@ fn proper_handshake_flow() {
     // we get the callback from reflect
     let response = Reply {
         id,
-        result: ContractResult::Ok(SubcallResponse {
+        result: ContractResult::Ok(SubMsgExecutionResponse {
             events: fake_events(&REFLECT_ADDR),
             data: None,
         }),

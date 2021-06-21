@@ -53,7 +53,8 @@ pub use crate::query::{
 pub use crate::query::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
-    Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubcallResponse, SystemResult, WasmMsg,
+    Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubMsgExecutionResponse, SystemResult,
+    WasmMsg,
 };
 #[cfg(feature = "staking")]
 pub use crate::results::{DistributionMsg, StakingMsg};
