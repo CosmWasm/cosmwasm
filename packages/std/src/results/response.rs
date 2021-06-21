@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::Binary;
+use crate::{Binary, Event};
 
 use super::{Attribute, CosmosMsg, Empty, SubMsg};
 
@@ -33,6 +33,7 @@ use super::{Attribute, CosmosMsg, Empty, SubMsg};
 ///     Ok(Response {
 ///         messages: vec![],
 ///         attributes: vec![attr("action", "instantiate")],
+///         events: vec![],
 ///         data: None,
 ///     })
 /// }
@@ -80,6 +81,7 @@ where
     pub messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
+    pub events: Vec<Event>,
     pub data: Option<Binary>,
 }
 
@@ -91,6 +93,7 @@ where
         Response {
             messages: vec![],
             attributes: vec![],
+            events: vec![],
             data: None,
         }
     }
@@ -104,6 +107,7 @@ where
         Self::default()
     }
 
+    /// Add an attribute included in the main `wasm` event.
     pub fn add_attribute<K: Into<String>, V: Into<String>>(&mut self, key: K, value: V) {
         self.attributes.push(Attribute {
             key: key.into(),
@@ -121,6 +125,15 @@ where
     /// and adds it to the list of messages to process.
     pub fn add_submessage(&mut self, msg: SubMsg<T>) {
         self.messages.push(msg);
+    }
+
+    /// Adds an extra event to the response, separate from the main `wasm` event
+    /// that is always created.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided type
+    /// of event.
+    pub fn add_event(&mut self, event: Event) {
+        self.events.push(event);
     }
 
     pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
@@ -164,6 +177,7 @@ mod tests {
                 key: "action".to_string(),
                 value: "release".to_string(),
             }],
+            events: vec![],
             data: Some(Binary::from([0xAA, 0xBB])),
         };
         let serialized = to_vec(&original).expect("encode contract result");

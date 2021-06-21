@@ -57,6 +57,7 @@ pub fn try_reflect(
     let res = Response {
         messages,
         attributes: vec![attr("action", "reflect")],
+        events: vec![],
         data: None,
     };
     Ok(res)
@@ -82,6 +83,7 @@ pub fn try_reflect_subcall(
     let res = Response {
         messages: msgs,
         attributes: vec![attr("action", "reflect_subcall")],
+        events: vec![],
         data: None,
     };
     Ok(res)
@@ -434,7 +436,7 @@ mod tests {
 
         let id = 123u64;
         let data = Binary::from(b"foobar");
-        let events = vec![Event::new("message", vec![attr("signer", "caller-addr")])];
+        let events = vec![Event::new("message").attr("signer", "caller-addr")];
         let result = ContractResult::Ok(SubcallResponse {
             events: events.clone(),
             data: Some(data.clone()),

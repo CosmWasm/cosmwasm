@@ -133,10 +133,37 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn new(kind: &str, attributes: Vec<Attribute>) -> Self {
+    /// Create a new event with the given type and an empty list of attributes.
+    pub fn new(kind: impl Into<String>) -> Self {
         Event {
-            kind: kind.to_string(),
-            attributes,
+            kind: kind.into(),
+            attributes: Vec::with_capacity(10),
         }
+    }
+
+    /// Add an attribute to the event.
+    pub fn attr(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute {
+            key: key.into(),
+            value: value.into(),
+        });
+        self
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::attr;
+
+    #[test]
+    fn event_construction() {
+        let event_direct = Event {
+            kind: "test".to_string(),
+            attributes: vec![attr("foo", "bar"), attr("bar", "baz")],
+        };
+        let event_builder = Event::new("test").attr("foo", "bar").attr("bar", "baz");
+
+        assert_eq!(event_direct, event_builder);
     }
 }

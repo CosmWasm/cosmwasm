@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Implement `Sub` and `SubAssign` for `Uint128`
+- cosmwasm-std: Implement custom events for contract execution results
 
 ### Removed
 
@@ -47,6 +48,8 @@ and this project adheres to
 - cosmwasm-std: Add `SubMsg` constructors: `::new()`, `::reply_on_error()`,
   `::reply_on_success()`, `::reply_always()`; Add `with_gas_limit` to add a gas
   limit to any those constructors ([#961]).
+- cosmwasm-std: Change `Event`'s constructor - it no longer takes a vector of
+  attributes and instead constructs an empty one
 
 [#961]: https://github.com/CosmWasm/cosmwasm/pull/961
 

@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
     CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
-    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
-    Response, StdError, StdResult, SubMsg, SubcallResponse, WasmMsg,
+    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response,
+    StdError, StdResult, SubMsg, SubcallResponse, WasmMsg,
 };
 
 use crate::msg::{

@@ -18,7 +18,7 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    attr, coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
+    coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
     StakingMsg, SubMsg, SubcallResponse, SystemResult,
 };
 use cosmwasm_vm::{
@@ -225,7 +225,7 @@ fn reply_and_query() {
 
     let id = 123u64;
     let data = Binary::from(b"foobar");
-    let events = vec![Event::new("message", vec![attr("signer", "caller-addr")])];
+    let events = vec![Event::new("message").attr("signer", "caller-addr")];
     let result = ContractResult::Ok(SubcallResponse {
         events: events.clone(),
         data: Some(data.clone()),

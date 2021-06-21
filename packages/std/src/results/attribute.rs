@@ -9,7 +9,7 @@ pub struct Attribute {
 }
 
 /// Creates a new Attribute.
-pub fn attr<K: ToString, V: ToString>(key: K, value: V) -> Attribute {
+pub fn attr(key: impl ToString, value: impl ToString) -> Attribute {
     Attribute {
         key: key.to_string(),
         value: value.to_string(),
