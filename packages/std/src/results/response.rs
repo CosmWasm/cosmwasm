@@ -129,6 +129,9 @@ where
 
     /// Adds an extra event to the response, separate from the main `wasm` event
     /// that is always created.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided type
+    /// of event.
     pub fn add_event(&mut self, event: Event) {
         self.events.push(event);
     }
