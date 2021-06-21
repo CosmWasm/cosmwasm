@@ -143,7 +143,10 @@ impl Event {
 
     /// Add an attribute to the event.
     pub fn attr(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.attributes.push(crate::attr(key.into(), value.into()));
+        self.attributes.push(Attribute {
+            key: key.into(),
+            value: value.into(),
+        });
         self
     }
 }
