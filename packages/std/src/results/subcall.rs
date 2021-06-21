@@ -133,15 +133,11 @@ pub struct Event {
 }
 
 impl Event {
-    pub fn new(kind: impl Into<String>, attributes: Vec<Attribute>) -> Self {
+    pub fn new(kind: impl Into<String>) -> Self {
         Event {
             kind: kind.into(),
-            attributes,
+            attributes: Vec::with_capacity(10),
         }
-    }
-
-    pub fn empty(kind: impl Into<String>) -> Self {
-        Self::new(kind, vec![])
     }
 
     pub fn attr(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
@@ -157,7 +153,7 @@ mod tests {
 
     #[test]
     fn event_builder_test() {
-        let event = Event::empty("test").attr("foo", "bar").attr("bar", "baz");
+        let event = Event::new("test").attr("foo", "bar").attr("bar", "baz");
 
         assert_eq!(
             event,
