@@ -50,7 +50,7 @@ pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
 fn parse_contract_from_event(events: Vec<Event>) -> Option<String> {
     events
         .into_iter()
-        .find(|e| e.kind == "message")
+        .find(|e| e.ty == "message")
         .and_then(|ev| {
             ev.attributes
                 .into_iter()
@@ -369,7 +369,7 @@ mod tests {
 
     fn fake_events(reflect_addr: &str) -> Vec<Event> {
         let event = Event {
-            kind: "message".into(),
+            ty: "message".into(),
             attributes: vec![
                 attr("module", "wasm"),
                 attr("signer", MOCK_CONTRACT_ADDR),

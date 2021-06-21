@@ -58,7 +58,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 
 fn fake_events(reflect_addr: &str) -> Vec<Event> {
     let event = Event {
-        kind: "message".into(),
+        ty: "message".into(),
         attributes: vec![
             attr("module", "wasm"),
             attr("signer", MOCK_CONTRACT_ADDR),
