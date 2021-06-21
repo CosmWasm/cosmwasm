@@ -14,3 +14,16 @@ pub fn compile(code: &[u8], memory_limit: Option<Size>) -> VmResult<Module> {
     let module = Module::new(&store, code)?;
     Ok(module)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    static CONTRACT: &[u8] = include_bytes!("../../testdata/floaty.wasm");
+
+    #[test]
+    #[should_panic]
+    fn contract_with_floats_fails_check() {
+        compile(CONTRACT, None).unwrap();
+    }
+}
