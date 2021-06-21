@@ -30,7 +30,7 @@ pub fn execute(
 ) -> Result<Response<CustomMsg>, ReflectError> {
     match msg {
         ExecuteMsg::ReflectMsg { msgs } => try_reflect(deps, env, info, msgs),
-        ExecuteMsg::ReflectSubCall { msgs } => try_reflect_subcall(deps, env, info, msgs),
+        ExecuteMsg::ReflectSubMsg { msgs } => try_reflect_subcall(deps, env, info, msgs),
         ExecuteMsg::ChangeOwner { owner } => try_change_owner(deps, env, info, owner),
     }
 }
@@ -126,7 +126,7 @@ pub fn query(deps: Deps, _env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
         QueryMsg::Capitalized { text } => to_binary(&query_capitalized(deps, text)?),
         QueryMsg::Chain { request } => to_binary(&query_chain(deps, &request)?),
         QueryMsg::Raw { contract, key } => to_binary(&query_raw(deps, contract, key)?),
-        QueryMsg::SubCallResult { id } => to_binary(&query_subcall(deps, id)?),
+        QueryMsg::SubMsgResult { id } => to_binary(&query_subcall(deps, id)?),
     }
 }
 
@@ -415,7 +415,7 @@ mod tests {
             id,
         );
 
-        let msg = ExecuteMsg::ReflectSubCall {
+        let msg = ExecuteMsg::ReflectSubMsg {
             msgs: vec![payload.clone()],
         };
         let info = mock_info("creator", &[]);
@@ -449,12 +449,12 @@ mod tests {
         let qres = query(
             deps.as_ref(),
             mock_env(),
-            QueryMsg::SubCallResult { id: 65432 },
+            QueryMsg::SubMsgResult { id: 65432 },
         );
         assert!(qres.is_err());
 
         // query for the real id
-        let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubCallResult { id }).unwrap();
+        let raw = query(deps.as_ref(), mock_env(), QueryMsg::SubMsgResult { id }).unwrap();
         let qres: Reply = from_binary(&raw).unwrap();
         assert_eq!(qres.id, id);
         let result = qres.result.unwrap();

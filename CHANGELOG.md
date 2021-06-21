@@ -52,6 +52,8 @@ and this project adheres to
   attributes and instead constructs an empty one
 - cosmwasm-std: Rename `Event.kind` to `Event.ty`.
 - cosmwasm-std: Rename `SubcallResponse` to `SubMsgExecutionResponse`.
+- contracts: Rename `ReflectSubCall` to `ReflectSubMsg` and `SubCallResult` to
+  `SubCallMsg` in the `reflect` contract.
 
 [#961]: https://github.com/CosmWasm/cosmwasm/pull/961
 
