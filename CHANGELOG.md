@@ -9,6 +9,7 @@ and this project adheres to
 ### Added
 
 - cosmwasm-std: Implement `Sub` and `SubAssign` for `Uint128`
+- cosmwasm-std: Implement custom events for contract execution results
 
 ### Removed
 
