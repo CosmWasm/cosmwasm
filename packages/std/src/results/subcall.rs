@@ -154,15 +154,13 @@ mod tests {
     use crate::attr;
 
     #[test]
-    fn event_builder_test() {
-        let event = Event::new("test").attr("foo", "bar").attr("bar", "baz");
+    fn event_construction() {
+        let event_direct = Event {
+            kind: "test".to_string(),
+            attributes: vec![attr("foo", "bar"), attr("bar", "baz")],
+        };
+        let event_builder = Event::new("test").attr("foo", "bar").attr("bar", "baz");
 
-        assert_eq!(
-            event,
-            Event {
-                kind: "test".to_string(),
-                attributes: vec![attr("foo", "bar"), attr("bar", "baz")],
-            }
-        );
+        assert_eq!(event_direct, event_builder);
     }
 }
