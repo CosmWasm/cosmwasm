@@ -26,6 +26,11 @@ docker run --rm -v "$(pwd)":/code \
   cosmwasm/rust-optimizer:0.11.0 ./contracts/crypto-verify
 
 docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.11.0 ./contracts/floaty
+
+docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source="devcontract_cache_hackatom",target=/code/contracts/hackatom/target \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.11.0 ./contracts/hackatom
