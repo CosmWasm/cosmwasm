@@ -37,7 +37,6 @@ where
     #[cfg(feature = "stargate")]
     Ibc(IbcMsg),
     Wasm(WasmMsg),
-    /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
     #[cfg(feature = "stargate")]
     Gov(GovMsg),
 }
@@ -167,17 +166,18 @@ pub enum WasmMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum GovMsg {
-    Vote { proposal_id: u64, vote: Vote },
+    /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
+    Vote { proposal_id: u64, vote: VoteOption },
 }
 
 #[cfg(feature = "stargate")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 #[serde(rename_all = "snake_case")]
-pub enum Vote {
+pub enum VoteOption {
     Yes,
     No,
     Abstain,
-    Veto,
+    NoWithVeto,
 }
 
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
