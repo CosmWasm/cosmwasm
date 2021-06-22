@@ -18,6 +18,7 @@ pull_request_rules:
       - "status-success=ci/circleci: contract_hackatom"
       - "status-success=ci/circleci: contract_ibc_reflect"
       - "status-success=ci/circleci: contract_ibc_reflect_send"
+      - "status-success=ci/circleci: contract_floaty"
       - "status-success=ci/circleci: contract_queue"
       - "status-success=ci/circleci: contract_reflect"
       - "status-success=ci/circleci: contract_staking"
