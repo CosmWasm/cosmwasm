@@ -19,7 +19,7 @@
 
 use cosmwasm_std::{
     coin, coins, from_binary, BankMsg, Binary, Coin, ContractResult, Event, Reply, Response,
-    StakingMsg, SubMsg, SubcallResponse, SystemResult,
+    StakingMsg, SubMsg, SubMsgExecutionResponse, SystemResult,
 };
 use cosmwasm_vm::{
     testing::{
@@ -204,7 +204,7 @@ fn reflect_subcall() {
         id,
     );
 
-    let msg = ExecuteMsg::ReflectSubCall {
+    let msg = ExecuteMsg::ReflectSubMsg {
         msgs: vec![payload.clone()],
     };
     let info = mock_info("creator", &[]);
@@ -226,7 +226,7 @@ fn reply_and_query() {
     let id = 123u64;
     let data = Binary::from(b"foobar");
     let events = vec![Event::new("message").attr("signer", "caller-addr")];
-    let result = ContractResult::Ok(SubcallResponse {
+    let result = ContractResult::Ok(SubMsgExecutionResponse {
         events: events.clone(),
         data: Some(data.clone()),
     });
@@ -235,11 +235,11 @@ fn reply_and_query() {
     assert_eq!(0, res.messages.len());
 
     // query for a non-existant id
-    let qres = query(&mut deps, mock_env(), QueryMsg::SubCallResult { id: 65432 });
+    let qres = query(&mut deps, mock_env(), QueryMsg::SubMsgResult { id: 65432 });
     assert!(qres.is_err());
 
     // query for the real id
-    let raw = query(&mut deps, mock_env(), QueryMsg::SubCallResult { id }).unwrap();
+    let raw = query(&mut deps, mock_env(), QueryMsg::SubMsgResult { id }).unwrap();
     let qres: Reply = from_binary(&raw).unwrap();
     assert_eq!(qres.id, id);
     let result = qres.result.unwrap();

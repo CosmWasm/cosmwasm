@@ -145,7 +145,7 @@ where
 mod tests {
     use super::super::BankMsg;
     use super::*;
-    use crate::results::subcall::{ReplyOn, UNUSED_MSG_ID};
+    use crate::results::submessages::{ReplyOn, UNUSED_MSG_ID};
     use crate::{coins, from_slice, to_vec};
 
     #[test]

@@ -6,7 +6,7 @@ mod cosmos_msg;
 mod empty;
 mod query;
 mod response;
-mod subcall;
+mod submessages;
 mod system_result;
 
 pub use attribute::{attr, Attribute};
@@ -17,5 +17,5 @@ pub use cosmos_msg::{DistributionMsg, StakingMsg};
 pub use empty::Empty;
 pub use query::QueryResponse;
 pub use response::Response;
-pub use subcall::{Event, Reply, ReplyOn, SubMsg, SubcallResponse};
+pub use submessages::{Event, Reply, ReplyOn, SubMsg, SubMsgExecutionResponse};
 pub use system_result::SystemResult;
