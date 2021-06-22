@@ -1,17 +1,15 @@
 use sha2::{Digest, Sha256};
 
 use cosmwasm_std::{
-    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, Api, BankMsg,
-    CanonicalAddr, Deps, DepsMut, Env, Event, MessageInfo, QueryRequest, QueryResponse, Response,
-    StdError, StdResult, WasmQuery,
+    entry_point, from_slice, to_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Deps, DepsMut,
+    Env, Event, MessageInfo, QueryRequest, QueryResponse, Response, StdError, StdResult, WasmQuery,
 };
 
 use crate::errors::HackError;
-use crate::msg::{
-    ExecuteMsg, InstantiateMsg, MigrateMsg, QueryMsg, RecurseResponse, SudoMsg, VerifierResponse,
-};
+use crate::msg::{ExecuteMsg, InstantiateMsg, QueryMsg, RecurseResponse, VerifierResponse};
 use crate::state::{State, CONFIG_KEY};
 
+#[entry_point]
 pub fn instantiate(
     deps: DepsMut,
     _env: Env,
@@ -35,51 +33,13 @@ pub fn instantiate(
     Ok(resp)
 }
 
-pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
-    let data = deps
-        .storage
-        .get(CONFIG_KEY)
-        .ok_or_else(|| StdError::not_found("State"))?;
-    let mut config: State = from_slice(&data)?;
-    config.verifier = deps.api.addr_validate(&msg.verifier)?;
-    deps.storage.set(CONFIG_KEY, &to_vec(&config)?);
-
-    Ok(Response::default())
-}
-
 #[entry_point]
-pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackError> {
-    match msg {
-        SudoMsg::StealFunds { recipient, amount } => {
-            let msg = BankMsg::Send {
-                to_address: recipient,
-                amount,
-            };
-            let mut response = Response::default();
-            response.add_message(msg);
-            Ok(response)
-        }
-    }
-}
-
 pub fn execute(
     deps: DepsMut,
     env: Env,
     info: MessageInfo,
-    msg: ExecuteMsg,
+    _msg: ExecuteMsg,
 ) -> Result<Response, HackError> {
-    match msg {
-        ExecuteMsg::Release {} => do_release(deps, env, info),
-        ExecuteMsg::CpuLoop {} => do_cpu_loop(),
-        ExecuteMsg::StorageLoop {} => do_storage_loop(deps),
-        ExecuteMsg::MemoryLoop {} => do_memory_loop(),
-        ExecuteMsg::AllocateLargeMemory { pages } => do_allocate_large_memory(pages),
-        ExecuteMsg::Panic {} => do_panic(),
-        ExecuteMsg::UserErrorsInApiCalls {} => do_user_errors_in_api_calls(deps.api),
-    }
-}
-
-fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, HackError> {
     let data = deps
         .storage
         .get(CONFIG_KEY)
@@ -90,13 +50,13 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         let to_addr = state.beneficiary;
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
-        let mut foo = balance[0].amount.u128() as f64;
-        foo *= 0.3;
+        let mut fl = balance[0].amount.u128() as f64;
+        fl *= 0.3;
 
         let mut resp = Response::new();
         resp.add_attribute("action", "release");
         resp.add_attribute("destination", to_addr.clone());
-        resp.add_attribute("foo", foo.to_string());
+        resp.add_attribute("foo", fl.to_string());
         resp.add_event(Event::new("hackatom").attr("action", "release"));
         resp.add_message(BankMsg::Send {
             to_address: to_addr.into(),
@@ -107,128 +67,6 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
     } else {
         Err(HackError::Unauthorized {})
     }
-}
-
-fn do_cpu_loop() -> Result<Response, HackError> {
-    let mut counter = 0u64;
-    loop {
-        counter += 1;
-        if counter >= 9_000_000_000 {
-            counter = 0;
-        }
-    }
-}
-
-fn do_storage_loop(deps: DepsMut) -> Result<Response, HackError> {
-    let mut test_case = 0u64;
-    loop {
-        deps.storage
-            .set(b"test.key", test_case.to_string().as_bytes());
-        test_case += 1;
-    }
-}
-
-fn do_memory_loop() -> Result<Response, HackError> {
-    let mut data = vec![1usize];
-    loop {
-        // add one element
-        data.push((*data.last().expect("must not be empty")) + 1);
-    }
-}
-
-#[allow(unused_variables)]
-fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
-    // We create memory pages explicitely since Rust's default allocator seems to be clever enough
-    // to not grow memory for unused capacity like `Vec::<u8>::with_capacity(100 * 1024 * 1024)`.
-    // Even with std::alloc::alloc the memory did now grow beyond 1.5 MiB.
-
-    #[cfg(target_arch = "wasm32")]
-    {
-        use core::arch::wasm32;
-        let old_size = wasm32::memory_grow(0, pages as usize);
-        if old_size == usize::max_value() {
-            return Err(StdError::generic_err("memory.grow failed").into());
-        }
-        Ok(Response {
-            data: Some((old_size as u32).to_be_bytes().into()),
-            ..Response::default()
-        })
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    Err(StdError::generic_err("Unsupported architecture").into())
-}
-
-fn do_panic() -> Result<Response, HackError> {
-    panic!("This page intentionally faulted");
-}
-
-fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
-    // Canonicalize
-
-    let empty = "";
-    match api.addr_canonicalize(empty).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
-            ))
-            .into())
-        }
-    }
-
-    let invalid_bech32 = "bn93hg934hg08q340g8u4jcau3";
-    match api.addr_canonicalize(invalid_bech32).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
-            ))
-            .into())
-        }
-    }
-
-    // Humanize
-
-    let empty: CanonicalAddr = vec![].into();
-    match api.addr_humanize(&empty).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
-            ))
-            .into())
-        }
-    }
-
-    let too_short: CanonicalAddr = vec![0xAA, 0xBB, 0xCC].into();
-    match api.addr_humanize(&too_short).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
-            ))
-            .into())
-        }
-    }
-
-    let wrong_length: CanonicalAddr = vec![0xA6; 17].into();
-    match api.addr_humanize(&wrong_length).unwrap_err() {
-        StdError::GenericErr { .. } => {}
-        err => {
-            return Err(StdError::generic_err(format!(
-                "Unexpected error in do_user_errors_in_api_calls: {:?}",
-                err
-            ))
-            .into())
-        }
-    }
-
-    Ok(Response::default())
 }
 
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<QueryResponse> {
@@ -289,6 +127,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
+    use cosmwasm_std::Api as _;
     // import trait Storage to get access to read
     use cosmwasm_std::{attr, coins, Binary, Storage, SubMsg};
 
@@ -340,66 +179,6 @@ mod tests {
         // now let's query
         let query_response = query_verifier(deps.as_ref()).unwrap();
         assert_eq!(query_response.verifier, verifier);
-    }
-
-    #[test]
-    fn migrate_verifier() {
-        let mut deps = mock_dependencies(&[]);
-
-        let verifier = String::from("verifies");
-        let beneficiary = String::from("benefits");
-        let creator = String::from("creator");
-        let msg = InstantiateMsg {
-            verifier,
-            beneficiary,
-        };
-        let info = mock_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // check it is 'verifies'
-        let query_response = query(deps.as_ref(), mock_env(), QueryMsg::Verifier {}).unwrap();
-        assert_eq!(query_response.as_slice(), b"{\"verifier\":\"verifies\"}");
-
-        // change the verifier via migrate
-        let new_verifier = String::from("someone else");
-        let msg = MigrateMsg {
-            verifier: new_verifier.clone(),
-        };
-        let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // check it is 'someone else'
-        let query_response = query_verifier(deps.as_ref()).unwrap();
-        assert_eq!(query_response.verifier, new_verifier);
-    }
-
-    #[test]
-    fn sudo_can_steal_tokens() {
-        let mut deps = mock_dependencies(&[]);
-
-        let verifier = String::from("verifies");
-        let beneficiary = String::from("benefits");
-        let creator = String::from("creator");
-        let msg = InstantiateMsg {
-            verifier,
-            beneficiary,
-        };
-        let info = mock_info(&creator, &[]);
-        let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
-
-        // sudo takes any tax it wants
-        let to_address = String::from("community-pool");
-        let amount = coins(700, "gold");
-        let sys_msg = SudoMsg::StealFunds {
-            recipient: to_address.clone(),
-            amount: amount.clone(),
-        };
-        let res = sudo(deps.as_mut(), mock_env(), sys_msg).unwrap();
-        assert_eq!(1, res.messages.len());
-        let msg = res.messages.get(0).expect("no message");
-        assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
     }
 
     #[test]
@@ -458,7 +237,11 @@ mod tests {
         );
         assert_eq!(
             execute_res.attributes,
-            vec![attr("action", "release"), attr("destination", "benefits")],
+            vec![
+                attr("action", "release"),
+                attr("destination", "benefits"),
+                attr("foo", "300")
+            ],
         );
         assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
     }
@@ -505,56 +288,6 @@ mod tests {
                 funder: Addr::unchecked(creator),
             }
         );
-    }
-
-    #[test]
-    #[should_panic(expected = "This page intentionally faulted")]
-    fn execute_panic() {
-        let mut deps = mock_dependencies(&[]);
-
-        // initialize the store
-        let verifier = String::from("verifies");
-        let beneficiary = String::from("benefits");
-        let creator = String::from("creator");
-
-        let instantiate_msg = InstantiateMsg {
-            verifier,
-            beneficiary: beneficiary.clone(),
-        };
-        let init_info = mock_info(&creator, &coins(1000, "earth"));
-        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let execute_info = mock_info(&beneficiary, &[]);
-        // this should panic
-        let _ = execute(
-            deps.as_mut(),
-            mock_env(),
-            execute_info,
-            ExecuteMsg::Panic {},
-        );
-    }
-
-    #[test]
-    fn execute_user_errors_in_api_calls() {
-        let mut deps = mock_dependencies(&[]);
-
-        let instantiate_msg = InstantiateMsg {
-            verifier: String::from("verifies"),
-            beneficiary: String::from("benefits"),
-        };
-        let init_info = mock_info("creator", &coins(1000, "earth"));
-        let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
-        assert_eq!(0, init_res.messages.len());
-
-        let execute_info = mock_info("anyone", &[]);
-        execute(
-            deps.as_mut(),
-            mock_env(),
-            execute_info,
-            ExecuteMsg::UserErrorsInApiCalls {},
-        )
-        .unwrap();
     }
 
     #[test]
