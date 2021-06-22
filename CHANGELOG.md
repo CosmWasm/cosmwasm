@@ -50,6 +50,7 @@ and this project adheres to
   limit to any those constructors ([#961]).
 - cosmwasm-std: Change `Event`'s constructor - it no longer takes a vector of
   attributes and instead constructs an empty one
+- cosmwasm-std: Rename `Event.kind` to `Event.ty`.
 
 [#961]: https://github.com/CosmWasm/cosmwasm/pull/961
 

@@ -711,7 +711,7 @@ mod tests {
             assert_eq!(ReplyOn::Success, res.messages[0].reply_on);
             let id = res.messages[0].id;
             let event = Event {
-                kind: "message".into(),
+                ty: "message".into(),
                 attributes: vec![attr("contract_address", &account)],
             };
             // which creates a reflect account. here we get the callback

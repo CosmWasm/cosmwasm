@@ -126,17 +126,17 @@ pub struct SubcallResponse {
 /// the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct Event {
-    /// The event type. This is renamed to "kind" because "type" is reserved in Rust. This sucks, we know.
+    /// The event type. This is renamed to "ty" because "type" is reserved in Rust. This sucks, we know.
     #[serde(rename = "type")]
-    pub kind: String,
+    pub ty: String,
     pub attributes: Vec<Attribute>,
 }
 
 impl Event {
     /// Create a new event with the given type and an empty list of attributes.
-    pub fn new(kind: impl Into<String>) -> Self {
+    pub fn new(ty: impl Into<String>) -> Self {
         Event {
-            kind: kind.into(),
+            ty: ty.into(),
             attributes: Vec::with_capacity(10),
         }
     }
@@ -159,7 +159,7 @@ mod tests {
     #[test]
     fn event_construction() {
         let event_direct = Event {
-            kind: "test".to_string(),
+            ty: "test".to_string(),
             attributes: vec![attr("foo", "bar"), attr("bar", "baz")],
         };
         let event_builder = Event::new("test").attr("foo", "bar").attr("bar", "baz");
