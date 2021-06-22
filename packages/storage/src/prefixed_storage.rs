@@ -99,7 +99,7 @@ impl<'a> Storage for ReadonlyPrefixedStorage<'a> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
-    fn set(&mut self, _key: &[u8], value: &[u8]) {
+    fn set(&mut self, _key: &[u8], _value: &[u8]) {
         panic!("Unimplemented");
     }
 
