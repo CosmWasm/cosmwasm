@@ -225,6 +225,18 @@
             }
           },
           "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": [
+            "gov"
+          ],
+          "properties": {
+            "gov": {
+              "$ref": "#/definitions/GovMsg"
+            }
+          },
+          "additionalProperties": false
         }
       ]
     },
@@ -280,6 +292,37 @@
     "Empty": {
       "description": "An empty struct that serves as a placeholder in different places, such as contracts that don't set a custom message.\n\nIt is designed to be expressable in correct JSON and JSON Schema but contains no meaningful data. Previously we used enums without cases, but those cannot represented as valid JSON Schema (https://github.com/CosmWasm/cosmwasm/issues/451)",
       "type": "object"
+    },
+    "GovMsg": {
+      "anyOf": [
+        {
+          "description": "This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.",
+          "type": "object",
+          "required": [
+            "vote"
+          ],
+          "properties": {
+            "vote": {
+              "type": "object",
+              "required": [
+                "proposal_id",
+                "vote"
+              ],
+              "properties": {
+                "proposal_id": {
+                  "type": "integer",
+                  "format": "uint64",
+                  "minimum": 0.0
+                },
+                "vote": {
+                  "$ref": "#/definitions/VoteOption"
+                }
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
     },
     "IbcMsg": {
       "description": "These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts (contracts that directly speak the IBC protocol via 6 entry points)",
@@ -533,6 +576,15 @@
     "Uint64": {
       "description": "A thin wrapper around u64 that is using strings for JSON encoding/decoding, such that the full u64 range can be used for clients that convert JSON numbers to floats, like JavaScript and jq.\n\n# Examples\n\nUse `from` to create instances of this and `u64` to get the value out:\n\n``` # use cosmwasm_std::Uint64; let a = Uint64::from(42u64); assert_eq!(a.u64(), 42);\n\nlet b = Uint64::from(70u32); assert_eq!(b.u64(), 70); ```",
       "type": "string"
+    },
+    "VoteOption": {
+      "type": "string",
+      "enum": [
+        "yes",
+        "no",
+        "abstain",
+        "no_with_veto"
+      ]
     },
     "WasmMsg": {
       "description": "The message types of the wasm module.\n\nSee https://github.com/CosmWasm/wasmd/blob/v0.14.0/x/wasm/internal/types/tx.proto",

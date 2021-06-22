@@ -10,6 +10,7 @@ and this project adheres to
 
 - cosmwasm-std: Implement `Sub` and `SubAssign` for `Uint128`
 - cosmwasm-std: Implement custom events for contract execution results
+- cosmwasm-std: Add `CosmosMsg::Gov` for voting on governance proposals.
 
 ### Removed
 
