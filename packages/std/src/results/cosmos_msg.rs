@@ -37,6 +37,9 @@ where
     #[cfg(feature = "stargate")]
     Ibc(IbcMsg),
     Wasm(WasmMsg),
+    /// This maps directly to [MsgVote](https://github.com/cosmos/cosmos-sdk/blob/v0.42.5/proto/cosmos/gov/v1beta1/tx.proto#L46-L56) in the Cosmos SDK with voter set to the contract address.
+    #[cfg(feature = "stargate")]
+    Gov(GovMsg),
 }
 
 /// The message types of the bank module.
@@ -160,6 +163,23 @@ pub enum WasmMsg {
     ClearAdmin { contract_addr: String },
 }
 
+#[cfg(feature = "stargate")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum GovMsg {
+    Vote { proposal_id: u64, vote: Vote },
+}
+
+#[cfg(feature = "stargate")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[serde(rename_all = "snake_case")]
+pub enum Vote {
+    Yes,
+    No,
+    Abstain,
+    Veto,
+}
+
 /// Shortcut helper as the construction of WasmMsg::Instantiate can be quite verbose in contract code.
 ///
 /// When using this, `admin` is always unset. If you need more flexibility, create the message directly.
@@ -241,6 +261,16 @@ where
 {
     fn from(msg: IbcMsg) -> Self {
         CosmosMsg::Ibc(msg)
+    }
+}
+
+#[cfg(feature = "stargate")]
+impl<T> From<GovMsg> for CosmosMsg<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    fn from(msg: GovMsg) -> Self {
+        CosmosMsg::Gov(msg)
     }
 }
 
