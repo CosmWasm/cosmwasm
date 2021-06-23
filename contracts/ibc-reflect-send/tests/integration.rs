@@ -83,7 +83,7 @@ fn who_am_i_response<T: Into<String>>(
         account: account.into(),
     });
     let ack = IbcAcknowledgementWithPacket {
-        acknowledgement: IbcAcknowledgement::new(&response).unwrap(),
+        acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
         original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
     };
     let res: IbcBasicResponse = ibc_packet_ack(deps, mock_env(), ack).unwrap();
@@ -185,7 +185,7 @@ fn dispatch_message_send_and_ack() {
 
     // and handle the ack
     let ack = IbcAcknowledgementWithPacket {
-        acknowledgement: IbcAcknowledgement::new(&AcknowledgementMsg::Ok(())).unwrap(),
+        acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
         original_packet: packet,
     };
     let res: IbcBasicResponse = ibc_packet_ack(&mut deps, mock_env(), ack).unwrap();
