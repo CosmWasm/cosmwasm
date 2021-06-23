@@ -951,12 +951,13 @@ jobs:
           name: Build development contracts
           command: |
             echo "Building all contracts under ./contracts"
-            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.11.0 ./contracts/*/
+            docker run --volumes-from with_code cosmwasm/rust-optimizer:0.11.4 ./contracts/*/
       - run:
           name: Check development contracts
           command: |
             echo "Checking all contracts under ./artifacts"
-            docker run --volumes-from with_code rust:1.51.0 /bin/bash -e -c 'cd ./code/packages/vm; ./examples/check_contract.sh ../../artifacts/*.wasm'
+            docker run --volumes-from with_code rust:1.51.0 \
+              /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; ./examples/check_contract.sh ../../artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
       - run:
           name: Publish artifacts on GitHub
