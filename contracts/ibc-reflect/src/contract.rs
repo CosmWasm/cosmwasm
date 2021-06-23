@@ -1,8 +1,8 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgement, IbcBasicResponse, IbcChannel,
-    IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response,
-    StdError, StdResult, SubMsg, SubMsgExecutionResponse, WasmMsg,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgementWithPacket, IbcBasicResponse,
+    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
+    Response, StdError, StdResult, SubMsg, SubMsgExecutionResponse, WasmMsg,
 };
 
 use crate::msg::{
@@ -323,7 +323,7 @@ fn receive_dispatch(
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
-    _ack: IbcAcknowledgement,
+    _ack: IbcAcknowledgementWithPacket,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
         messages: vec![],

@@ -34,8 +34,8 @@ pub use crate::errors::{
 };
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
-    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcEndpoint, IbcMsg, IbcOrder,
-    IbcPacket, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
+    IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcEndpoint,
+    IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
