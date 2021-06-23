@@ -21,6 +21,7 @@ workflows:
       - fmt
       - fmt_extra
       - clippy
+      - build_and_upload_devcontracts # Testing only. Remove later.
       - benchmarking:
           requires:
             - package_vm
@@ -959,15 +960,15 @@ jobs:
             docker run --volumes-from with_code rust:1.51.0 \
               /bin/bash -e -c 'export GLOBIGNORE="../../artifacts/floaty.wasm"; cd ./code/packages/vm; ./examples/check_contract.sh ../../artifacts/*.wasm'
             docker cp with_code:/code/artifacts .
-      - run:
-          name: Publish artifacts on GitHub
-          command: |
-            TAG="$CIRCLE_TAG"
-            TITLE="$TAG"
-            BODY="Attached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
-            ghr -t "$GITHUB_TOKEN" \
-              -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" \
-              -c "$CIRCLE_SHA1" \
-              -n "$TITLE" -b "$BODY" \
-              -delete \
-              "$TAG" ./artifacts/
+      # - run:
+      #     name: Publish artifacts on GitHub
+      #     command: |
+      #       TAG="$CIRCLE_TAG"
+      #       TITLE="$TAG"
+      #       BODY="Attached there are some build artifacts generated at this tag. Those are for development purposes only! Please use crates.io to find the packages of this release."
+      #       ghr -t "$GITHUB_TOKEN" \
+      #         -u "$CIRCLE_PROJECT_USERNAME" -r "$CIRCLE_PROJECT_REPONAME" \
+      #         -c "$CIRCLE_SHA1" \
+      #         -n "$TITLE" -b "$BODY" \
+      #         -delete \
+      #         "$TAG" ./artifacts/
