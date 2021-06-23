@@ -58,8 +58,15 @@ and this project adheres to
 - cosmwasm-std: Rename the `subcall` module to `submessages`.
 - cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_5` to
   `interface_version_6`.
+- cosmwasm-std: `IbcAcknowledgement` is renamed to
+  `IbcAcknowledgementWithPacket` as it contains both data elements. ([#975])
+- cosmwasm-std: `IbcAcknowledgementWithPacket.acknowledgement` is no longer
+  simply `Binary`, but a new `IbcAcknowledgement` structure, which contains one
+  field - `data: Binary`. This change was made to allow us to handle future
+  changes to IBC in a non-contract-breaking way. ([#975])
 
 [#961]: https://github.com/CosmWasm/cosmwasm/pull/961
+[#975]: https://github.com/CosmWasm/cosmwasm/pull/975
 
 ### Fixed
 
