@@ -678,7 +678,10 @@ mod tests {
             mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
         };
         use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
-        use cosmwasm_std::{attr, Empty, Event, IbcOrder, Reply, ReplyOn, SubMsgExecutionResponse};
+        use cosmwasm_std::{
+            attr, Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn,
+            SubMsgExecutionResponse,
+        };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
         fn setup(
@@ -746,7 +749,9 @@ mod tests {
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
             let ack = IbcAcknowledgementWithPacket {
-                acknowledgement: br#"{}"#.into(),
+                acknowledgement: IbcAcknowledgement {
+                    data: br#"{}"#.into(),
+                },
                 original_packet: packet,
             };
             call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
