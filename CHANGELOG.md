@@ -56,6 +56,8 @@ and this project adheres to
 - contracts: Rename `ReflectSubCall` to `ReflectSubMsg` and `SubCallResult` to
   `SubCallMsg` in the `reflect` contract.
 - cosmwasm-std: Rename the `subcall` module to `submessages`.
+- cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_5` to
+  `interface_version_6`.
 
 [#961]: https://github.com/CosmWasm/cosmwasm/pull/961
 

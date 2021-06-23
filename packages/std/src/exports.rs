@@ -1,6 +1,6 @@
 //! exports exposes the public wasm API
 //!
-//! interface_version_5, allocate and deallocate turn into Wasm exports
+//! interface_version_6, allocate and deallocate turn into Wasm exports
 //! as soon as cosmwasm_std is `use`d in the contract, even privately.
 //!
 //! `do_execute`, `do_instantiate`, `do_migrate`, `do_query`, `do_reply`
@@ -33,7 +33,7 @@ extern "C" fn requires_stargate() -> () {}
 /// They can be checked by cosmwasm_vm.
 /// Update this whenever the Wasm VM interface breaks.
 #[no_mangle]
-extern "C" fn interface_version_5() -> () {}
+extern "C" fn interface_version_6() -> () {}
 
 /// allocate reserves the given number of bytes in wasm memory and returns a pointer
 /// to a Region defining this data. This space is managed by the calling process
