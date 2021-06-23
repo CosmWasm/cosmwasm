@@ -61,6 +61,62 @@ major releases of `cosmwasm`. Note that you can also view the
   Note that this means you can mix "messages" and "submessages" in any execution
   order. You are no more restricted to doing "submessages" first.
 
+- For IBC-enabled contracts only: You need to adapt to the new
+  `IbcAcknowledgementWithPacket` structure and use the embedded `data` field:
+
+  ```rust
+  // before
+  pub fn ibc_packet_ack(
+    deps: DepsMut,
+    env: Env,
+    ack: IbcAcknowledgement,
+  ) -> StdResult<Response> {
+    let res: AcknowledgementMsg = from_slice(&ack.acknowledgement)?;
+    // ...
+  }
+
+  // after
+  pub fn ibc_packet_ack(
+    deps: DepsMut,
+    env: Env,
+    ack: IbcAcknowledgementWithPacket,
+  ) -> StdResult<Response> {
+    let res: AcknowledgementMsg = from_slice(&ack.acknowledgement.data)?;
+    // ...
+  }
+  ```
+
+  You also need to update the constructors in test code. Below we show how to do
+  so both for JSON data as well as any custom binary format:
+
+  ```rust
+  // before (JSON)
+  let ack = IbcAcknowledgement {
+    acknowledgement: to_binary(&AcknowledgementMsg::Ok(())).unwrap()
+    original_packet: packet,
+  };
+
+  // after (JSON)
+  let ack = IbcAcknowledgementWithPacket {
+      acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
+      original_packet: packet,
+  };
+
+  // before (Custom binary data)
+  let acknowledgement = vec![12, 56, 78];
+  let ack = IbcAcknowledgement {
+    acknowledgement: Binary(acknowledgement),
+    original_packet: packet,
+  };
+
+  // after (Custom binary data)
+  let acknowledgement = vec![12, 56, 78];
+  let ack = IbcAcknowledgement {
+    acknowledgement: IbcAcknowledgement::new(acknowledgement),
+    original_packet: packet,
+  };
+  ```
+
 ## 0.13 -> 0.14
 
 - The minimum Rust supported version for 0.14 is 1.51.0. Verify your Rust

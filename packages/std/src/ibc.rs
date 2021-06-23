@@ -9,7 +9,9 @@ use std::fmt;
 
 use crate::binary::Binary;
 use crate::coins::Coin;
+use crate::errors::StdResult;
 use crate::results::{Attribute, Empty, SubMsg};
+use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
 /// These are messages in the IBC lifecycle. Only usable by IBC-enabled contracts
@@ -185,9 +187,28 @@ pub struct IbcPacket {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcAcknowledgement {
-    pub acknowledgement: Binary,
+pub struct IbcAcknowledgementWithPacket {
+    pub acknowledgement: IbcAcknowledgement,
     pub original_packet: IbcPacket,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcAcknowledgement {
+    pub data: Binary,
+    // we may add more info here in the future (meta-data from the acknowledgement)
+    // there have been proposals to extend this type in core ibc for future versions
+}
+
+impl IbcAcknowledgement {
+    pub fn new<T: Into<Binary>>(data: T) -> Self {
+        IbcAcknowledgement { data: data.into() }
+    }
+
+    pub fn encode_json<T: Serialize>(data: &T) -> StdResult<Self> {
+        Ok(IbcAcknowledgement {
+            data: to_binary(data)?,
+        })
+    }
 }
 
 /// This is the return value for the majority of the ibc handlers.

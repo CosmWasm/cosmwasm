@@ -19,8 +19,8 @@
 
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
 use cosmwasm_std::{
-    attr, coin, coins, to_binary, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcBasicResponse,
-    IbcMsg, IbcOrder, Response,
+    attr, coin, coins, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcAcknowledgementWithPacket,
+    IbcBasicResponse, IbcMsg, IbcOrder, Response,
 };
 use cosmwasm_vm::testing::{
     execute, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, instantiate, mock_env,
@@ -82,8 +82,8 @@ fn who_am_i_response<T: Into<String>>(
     let response = AcknowledgementMsg::Ok(WhoAmIResponse {
         account: account.into(),
     });
-    let ack = IbcAcknowledgement {
-        acknowledgement: to_binary(&response).unwrap(),
+    let ack = IbcAcknowledgementWithPacket {
+        acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
         original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
     };
     let res: IbcBasicResponse = ibc_packet_ack(deps, mock_env(), ack).unwrap();
@@ -184,8 +184,8 @@ fn dispatch_message_send_and_ack() {
     };
 
     // and handle the ack
-    let ack = IbcAcknowledgement {
-        acknowledgement: to_binary(&AcknowledgementMsg::Ok(())).unwrap(),
+    let ack = IbcAcknowledgementWithPacket {
+        acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
         original_packet: packet,
     };
     let res: IbcBasicResponse = ibc_packet_ack(&mut deps, mock_env(), ack).unwrap();

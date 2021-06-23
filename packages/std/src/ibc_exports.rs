@@ -12,7 +12,7 @@ use crate::memory::{consume_region, release_buffer, Region};
 use crate::results::ContractResult;
 use crate::serde::{from_slice, to_vec};
 use crate::types::Env;
-use crate::{IbcAcknowledgement, IbcPacket, IbcReceiveResponse};
+use crate::{IbcAcknowledgementWithPacket, IbcPacket, IbcReceiveResponse};
 
 // TODO: replace with https://doc.rust-lang.org/std/ops/trait.Try.html once stabilized
 macro_rules! r#try_into_contract_result {
@@ -177,7 +177,11 @@ where
 /// contract_fn is called when this chain receives an IBC Acknowledgement for a packet
 /// that this contract previously sent
 pub fn do_ibc_packet_ack<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcAcknowledgement) -> Result<IbcBasicResponse<C>, E>,
+    contract_fn: &dyn Fn(
+        DepsMut,
+        Env,
+        IbcAcknowledgementWithPacket,
+    ) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: u32,
     msg_ptr: u32,
 ) -> u32
@@ -191,7 +195,11 @@ where
 }
 
 fn _do_ibc_packet_ack<C, E>(
-    contract_fn: &dyn Fn(DepsMut, Env, IbcAcknowledgement) -> Result<IbcBasicResponse<C>, E>,
+    contract_fn: &dyn Fn(
+        DepsMut,
+        Env,
+        IbcAcknowledgementWithPacket,
+    ) -> Result<IbcBasicResponse<C>, E>,
     env_ptr: *mut Region,
     msg_ptr: *mut Region,
 ) -> ContractResult<IbcBasicResponse<C>>
@@ -203,7 +211,7 @@ where
     let msg: Vec<u8> = unsafe { consume_region(msg_ptr) };
 
     let env: Env = try_into_contract_result!(from_slice(&env));
-    let msg: IbcAcknowledgement = try_into_contract_result!(from_slice(&msg));
+    let msg: IbcAcknowledgementWithPacket = try_into_contract_result!(from_slice(&msg));
 
     let mut deps = make_dependencies();
     contract_fn(deps.as_mut(), env, msg).into()

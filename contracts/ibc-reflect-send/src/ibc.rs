@@ -1,6 +1,7 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError, StdResult, SubMsg,
+    attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcAcknowledgementWithPacket,
+    IbcBasicResponse, IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError,
+    StdResult, SubMsg,
 };
 
 use crate::ibc_msg::{
@@ -105,7 +106,7 @@ pub fn ibc_packet_receive(
 pub fn ibc_packet_ack(
     deps: DepsMut,
     env: Env,
-    ack: IbcAcknowledgement,
+    ack: IbcAcknowledgementWithPacket,
 ) -> StdResult<IbcBasicResponse> {
     // which local channel was this packet send from
     let caller = ack.original_packet.src.channel_id;
@@ -113,15 +114,15 @@ pub fn ibc_packet_ack(
     let msg: PacketMsg = from_slice(&ack.original_packet.data)?;
     match msg {
         PacketMsg::Dispatch { .. } => {
-            let res: AcknowledgementMsg<DispatchResponse> = from_slice(&ack.acknowledgement)?;
+            let res: AcknowledgementMsg<DispatchResponse> = from_slice(&ack.acknowledgement.data)?;
             acknowledge_dispatch(deps, caller, res)
         }
         PacketMsg::WhoAmI {} => {
-            let res: AcknowledgementMsg<WhoAmIResponse> = from_slice(&ack.acknowledgement)?;
+            let res: AcknowledgementMsg<WhoAmIResponse> = from_slice(&ack.acknowledgement.data)?;
             acknowledge_who_am_i(deps, caller, res)
         }
         PacketMsg::Balances {} => {
-            let res: AcknowledgementMsg<BalancesResponse> = from_slice(&ack.acknowledgement)?;
+            let res: AcknowledgementMsg<BalancesResponse> = from_slice(&ack.acknowledgement.data)?;
             acknowledge_balances(deps, env, caller, res)
         }
     }
@@ -246,7 +247,7 @@ mod tests {
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
         MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, OwnedDeps};
+    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, IbcAcknowledgement, OwnedDeps};
 
     const CREATOR: &str = "creator";
 
@@ -288,8 +289,8 @@ mod tests {
         let response = AcknowledgementMsg::Ok(WhoAmIResponse {
             account: account.into(),
         });
-        let ack = IbcAcknowledgement {
-            acknowledgement: to_binary(&response).unwrap(),
+        let ack = IbcAcknowledgementWithPacket {
+            acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
             original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
         };
         let res = ibc_packet_ack(deps, mock_env(), ack).unwrap();
@@ -379,8 +380,8 @@ mod tests {
         };
 
         // and handle the ack
-        let ack = IbcAcknowledgement {
-            acknowledgement: to_binary(&AcknowledgementMsg::Ok(())).unwrap(),
+        let ack = IbcAcknowledgementWithPacket {
+            acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
             original_packet: packet,
         };
         let res = ibc_packet_ack(deps.as_mut(), mock_env(), ack).unwrap();
