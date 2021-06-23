@@ -8,7 +8,7 @@ use std::fmt;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
+    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
 };
 
 use crate::calls::{
@@ -214,7 +214,7 @@ where
 pub fn ibc_packet_ack<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    ack: IbcAcknowledgement,
+    ack: IbcAcknowledgementWithPacket,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,

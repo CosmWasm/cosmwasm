@@ -6,7 +6,7 @@ use wasmer::Val;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcAcknowledgement, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
+    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
@@ -294,7 +294,7 @@ where
 pub fn call_ibc_packet_ack<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    ack: &IbcAcknowledgement,
+    ack: &IbcAcknowledgementWithPacket,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -745,7 +745,7 @@ mod tests {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
-            let ack = IbcAcknowledgement {
+            let ack = IbcAcknowledgementWithPacket {
                 acknowledgement: br#"{}"#.into(),
                 original_packet: packet,
             };
