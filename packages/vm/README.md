@@ -56,6 +56,12 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.11.4 ./contracts/ibc-reflect \
   && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_0.15.wasm
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.11.4 ./contracts/floaty \
+  && cp artifacts/floaty.wasm packages/vm/testdata/floaty.wasm
 ```
 
 ## Testing
