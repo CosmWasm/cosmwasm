@@ -749,9 +749,7 @@ mod tests {
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
             let ack = IbcAcknowledgementWithPacket {
-                acknowledgement: IbcAcknowledgement {
-                    data: br#"{}"#.into(),
-                },
+                acknowledgement: IbcAcknowledgement::new(br#"{}"#),
                 original_packet: packet,
             };
             call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
