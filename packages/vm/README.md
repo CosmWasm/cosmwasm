@@ -32,6 +32,9 @@ compatibility list:
 - Rename the fields from `send` to `funds` in `WasmMsg::Instantiate` and
   `WasmMsg::Execute`.
 - Merge messages and sub-messages.
+- Change JSON representation of IBC acknowledgements ([#975]).
+
+[#975]: https://github.com/CosmWasm/cosmwasm/pull/975
 
 ## Setup
 
