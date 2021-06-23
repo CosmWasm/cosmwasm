@@ -16,6 +16,7 @@ compatibility list:
 
 | cosmwasm-vm | Supported interface versions | cosmwasm-std |
 | ----------- | ---------------------------- | ------------ |
+| 0.15        | `interface_version_6`        | 0.15         |
 | 0.14        | `interface_version_5`        | 0.14         |
 | 0.13        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
 | 0.12        | `cosmwasm_vm_version_4`      | 0.11-0.13    |
@@ -23,6 +24,14 @@ compatibility list:
 | 0.10        | `cosmwasm_vm_version_3`      | 0.10         |
 | 0.9         | `cosmwasm_vm_version_2`      | 0.9          |
 | 0.8         | `cosmwasm_vm_version_1`      | 0.8          |
+
+### Changes between interface versions
+
+**interface_version_5 -> interface_version_6**
+
+- Rename the fields from `send` to `funds` in `WasmMsg::Instantiate` and
+  `WasmMsg::Execute`.
+- Merge messages and sub-messages.
 
 ## Setup
 
@@ -47,6 +56,12 @@ docker run --rm -v "$(pwd)":/code \
   --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
   cosmwasm/rust-optimizer:0.11.4 ./contracts/ibc-reflect \
   && cp artifacts/ibc_reflect.wasm packages/vm/testdata/ibc_reflect_0.15.wasm
+
+docker run --rm -v "$(pwd)":/code \
+  --mount type=volume,source="devcontract_cache_floaty",target=/code/contracts/floaty/target \
+  --mount type=volume,source=registry_cache,target=/usr/local/cargo/registry \
+  cosmwasm/rust-optimizer:0.11.4 ./contracts/floaty \
+  && cp artifacts/floaty.wasm packages/vm/testdata/floaty.wasm
 ```
 
 ## Testing

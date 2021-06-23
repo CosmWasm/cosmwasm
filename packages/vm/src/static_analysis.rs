@@ -124,7 +124,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_5" (func 0))
+                (export "interface_version_6" (func 0))
                 (export "instantiate" (func 0))
                 (export "allocate" (func 0))
                 (export "deallocate" (func 0))
@@ -142,7 +142,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_5" (func 0))
+                (export "interface_version_6" (func 0))
                 (export "instantiate" (func 0))
                 (export "execute" (func 0))
                 (export "allocate" (func 0))
@@ -167,7 +167,7 @@ mod tests {
 
                 (type (func))
                 (func (type 0) nop)
-                (export "interface_version_5" (func 0))
+                (export "interface_version_6" (func 0))
                 (export "instantiate" (func 0))
                 (export "execute" (func 0))
                 (export "allocate" (func 0))
