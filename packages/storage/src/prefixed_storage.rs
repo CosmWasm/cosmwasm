@@ -1,5 +1,3 @@
-use core::panic;
-
 use cosmwasm_std::Storage;
 #[cfg(feature = "iterator")]
 use cosmwasm_std::{Order, Pair};
