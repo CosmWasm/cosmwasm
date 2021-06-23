@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-storage: Implement `Storage` for `PrefixedStorage` and `ReadonlyPrefixedStorage`.
+  - NOTE: Calling `set` or `remove` on `ReadonlyPrefixedStorage` will panic!
+
 ## [0.14.1] - 2021-06-14
 
 ### Added
