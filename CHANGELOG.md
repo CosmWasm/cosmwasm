@@ -11,6 +11,9 @@ and this project adheres to
 - cosmwasm-std: Implement `Sub` and `SubAssign` for `Uint128`
 - cosmwasm-std: Implement custom events for contract execution results
 - cosmwasm-std: Add `CosmosMsg::Gov` for voting on governance proposals.
+- cosmwasm-storage: Implement `Storage` for `PrefixedStorage` and
+  `ReadonlyPrefixedStorage`. NOTE: Calling `set` or `remove` on
+  `ReadonlyPrefixedStorage` will panic!
 
 ### Removed
 
