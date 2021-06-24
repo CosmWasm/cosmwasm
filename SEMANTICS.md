@@ -292,7 +292,9 @@ to the caller of `execute` (either the client or another transaction), just as
 if the original `execute` and returned `data: Some(b"better idea")`. If `reply`
 returns `data: None`, it will not modify any previously set data state. If there
 are multiple submessages all setting this, only the last one is used (they all
-overwrite any previous `data` value).
+overwrite any previous `data` value). As a consequence, you can use
+`data: Some(b"")` to clear previously set data. This will be represented as a
+JSON string instead of `null` and handled as any other `Some` value.
 
 #### Order and Rollback
 
