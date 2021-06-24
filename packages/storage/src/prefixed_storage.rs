@@ -41,23 +41,25 @@ impl<'a> PrefixedStorage<'a> {
             prefix: to_length_prefixed_nested(namespaces),
         }
     }
+}
 
-    pub fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+impl<'a> Storage for PrefixedStorage<'a> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
     }
 
-    pub fn set(&mut self, key: &[u8], value: &[u8]) {
+    fn set(&mut self, key: &[u8], value: &[u8]) {
         set_with_prefix(self.storage, &self.prefix, key, value);
     }
 
-    pub fn remove(&mut self, key: &[u8]) {
+    fn remove(&mut self, key: &[u8]) {
         remove_with_prefix(self.storage, &self.prefix, key);
     }
 
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
     /// uses standard rust range notation, and eg db.range(b"foo"..b"bar") also works reverse
-    pub fn range<'b>(
+    fn range<'b>(
         &'b self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
@@ -88,14 +90,24 @@ impl<'a> ReadonlyPrefixedStorage<'a> {
             prefix: to_length_prefixed_nested(namespaces),
         }
     }
+}
 
-    pub fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
+impl<'a> Storage for ReadonlyPrefixedStorage<'a> {
+    fn get(&self, key: &[u8]) -> Option<Vec<u8>> {
         get_with_prefix(self.storage, &self.prefix, key)
+    }
+
+    fn set(&mut self, _key: &[u8], _value: &[u8]) {
+        unimplemented!();
+    }
+
+    fn remove(&mut self, _key: &[u8]) {
+        unimplemented!();
     }
 
     #[cfg(feature = "iterator")]
     /// range allows iteration over a set of keys, either forwards or backwards
-    pub fn range<'b>(
+    fn range<'b>(
         &'b self,
         start: Option<&[u8]>,
         end: Option<&[u8]>,
