@@ -61,6 +61,45 @@ major releases of `cosmwasm`. Note that you can also view the
   Note that this means you can mix "messages" and "submessages" in any execution
   order. You are no more restricted to doing "submessages" first.
 
+- Rename the `send` field to `funds` whenever constructing a `WasmMsg::Execute`
+  or `WasmMsg::Instantiate` value.
+
+  ```diff
+    let exec = WasmMsg::Execute {
+        contract_addr: coin.address.into(),
+        msg: to_binary(&msg)?,
+  -     send: vec![],
+  +     funds: vec![],
+    };
+  ```
+
+- `Uint128` field can no longer be constructed using a struct literal. Call
+  `Uint128::new` (or `Uint128::zero`) instead.
+
+  ```diff
+  - const TOKENS_PER_WEIGHT: Uint128 = Uint128(1_000);
+  - const MIN_BOND: Uint128 = Uint128(5_000);
+  + const TOKENS_PER_WEIGHT: Uint128 = Uint128::new(1_000);
+  + const MIN_BOND: Uint128 = Uint128::new(5_000);
+  ```
+
+  ```diff
+  - assert_eq!(escrow_balance, Uint128(0));
+  + assert_eq!(escrow_balance, Uint128::zero());
+  ```
+
+- If constructing a `Response` using struct literal syntax, add the `events`
+  field.
+
+  ```diff
+    Ok(Response {
+        messages: vec![],
+        attributes,
+  +     events: vec![],
+        data: None,
+    })
+  ```
+
 - For IBC-enabled contracts only: You need to adapt to the new
   `IbcAcknowledgementWithPacket` structure and use the embedded `data` field:
 
