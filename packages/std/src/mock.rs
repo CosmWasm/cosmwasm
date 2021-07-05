@@ -68,7 +68,7 @@ pub struct MockApi {
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
-            canonical_length: 24,
+            canonical_length: 64,
         }
     }
 }
@@ -100,7 +100,7 @@ impl Api for MockApi {
         // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
         let rotate_by = digit_sum(&out) % self.canonical_length;
         out.rotate_left(rotate_by);
-        for _ in 0..18 {
+        for _ in 0..5 {
             out = riffle_shuffle(&out);
         }
         Ok(out.into())
@@ -115,7 +115,7 @@ impl Api for MockApi {
 
         let mut tmp: Vec<u8> = canonical.clone().into();
         // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..2 {
+        for _ in 0..1 {
             tmp = riffle_shuffle(&tmp);
         }
         // Rotate back
