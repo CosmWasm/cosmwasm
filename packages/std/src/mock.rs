@@ -508,6 +508,49 @@ impl StakingQuerier {
 ///
 /// https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles
 /// https://en.wikipedia.org/wiki/In_shuffle
+///
+/// The number of shuffles required to restore the original order are listed in
+/// https://oeis.org/A002326, e.g.:
+///
+/// ```ignore
+/// 2: 2
+/// 4: 4
+/// 6: 3
+/// 8: 6
+/// 10: 10
+/// 12: 12
+/// 14: 4
+/// 16: 8
+/// 18: 18
+/// 20: 6
+/// 22: 11
+/// 24: 20
+/// 26: 18
+/// 28: 28
+/// 30: 5
+/// 32: 10
+/// 34: 12
+/// 36: 36
+/// 38: 12
+/// 40: 20
+/// 42: 14
+/// 44: 12
+/// 46: 23
+/// 48: 21
+/// 50: 8
+/// 52: 52
+/// 54: 20
+/// 56: 18
+/// 58: 58
+/// 60: 60
+/// 62: 6
+/// 64: 12
+/// 66: 66
+/// 68: 22
+/// 70: 35
+/// 72: 9
+/// 74: 20
+/// ```
 pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
     assert!(
         input.len() % 2 == 0,
