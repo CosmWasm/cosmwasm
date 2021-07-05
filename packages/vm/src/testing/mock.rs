@@ -118,7 +118,20 @@ impl BackendApi for MockApi {
 
         let mut tmp: Vec<u8> = canonical.into();
         // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..2 {
+        // or 12 times which restores original value for a 44 character long address
+        let shuffle_reverse_amount;
+        match self.canonical_length {
+            24 => shuffle_reverse_amount = 2,
+            44 => shuffle_reverse_amount = 12,
+            _ => return (
+                Err(BackendError::user_err(
+                 "Invalid input: canonical address length not correct",
+                )),
+                gas_info,
+            )
+        }
+
+        for _ in 0..shuffle_reverse_amount {
             tmp = riffle_shuffle(&tmp);
         }
         // Rotate back
