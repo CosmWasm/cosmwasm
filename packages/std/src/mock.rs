@@ -115,17 +115,7 @@ impl Api for MockApi {
 
         let mut tmp: Vec<u8> = canonical.clone().into();
         // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        // or 12 times which restores original value for a 44 character long address
-        let shuffle_reverse_amount;
-        match self.canonical_length {
-            24 => shuffle_reverse_amount = 2,
-            44 => shuffle_reverse_amount = 12,
-            _ => return Err(StdError::generic_err(
-                "Invalid input: canonical address length not correct",
-            ))
-        }
-
-        for _ in 0..shuffle_reverse_amount {
+        for _ in 0..2 {
             tmp = riffle_shuffle(&tmp);
         }
         // Rotate back
@@ -523,7 +513,6 @@ pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
         input.len() % 2 == 0,
         "Method only defined for even number of elements"
     );
-    // 12 for normal address, 22 for Terra addresses
     let mid = input.len() / 2;
     let (left, right) = input.split_at(mid);
     let mut out = Vec::<T>::with_capacity(input.len());
