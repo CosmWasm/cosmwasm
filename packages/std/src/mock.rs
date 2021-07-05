@@ -566,7 +566,7 @@ mod tests {
 
         let original = String::from("shorty");
         let canonical = api.addr_canonicalize(&original).unwrap();
-        let recovered = api.addr_humanize(&canonical).unwrap();
+        let recovered = String::from(api.addr_humanize(&canonical).unwrap());
         assert_eq!(recovered, original);
     }
 
@@ -582,7 +582,7 @@ mod tests {
     #[should_panic(expected = "address too long")]
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
-        let human = String::from("some-extremely-long-address-not-supported-by-this-api");
+        let human = String::from("some-extremely-long-address-not-supported-by-this-api-even-longer-than-64");
         let _ = api.addr_canonicalize(&human).unwrap();
     }
 
