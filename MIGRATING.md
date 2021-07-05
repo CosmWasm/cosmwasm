@@ -4,7 +4,7 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.14 -> 0.15 (unreleased)
+## 0.14 -> 0.15
 
 - Combine `messages` and `submessages` on the `Response` object. The new format
   uses `messages: Vec<SubMsg<T>>`, so copy `submessages` content, and wrap old
