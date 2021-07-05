@@ -212,7 +212,7 @@ pub fn ibc_channel_close(
         attributes: vec![
             attr("action", "ibc_close"),
             attr("channel_id", channel_id),
-            attr("steal_funds", steal_funds),
+            attr("steal_funds", steal_funds.to_string()),
         ],
     })
 }
