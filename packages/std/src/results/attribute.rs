@@ -9,10 +9,10 @@ pub struct Attribute {
 }
 
 /// Creates a new Attribute.
-pub fn attr(key: impl ToString, value: impl ToString) -> Attribute {
+pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
     Attribute {
-        key: key.to_string(),
-        value: value.to_string(),
+        key: key.into(),
+        value: value.into(),
     }
 }
 
@@ -23,15 +23,15 @@ mod tests {
 
     #[test]
     fn attr_works_for_different_types() {
-        let expeceted = Attribute {
+        let expected = Attribute {
             key: "foo".to_string(),
             value: "42".to_string(),
         };
 
-        assert_eq!(attr("foo", "42"), expeceted);
-        assert_eq!(attr("foo".to_string(), "42"), expeceted);
-        assert_eq!(attr("foo", "42".to_string()), expeceted);
-        assert_eq!(attr("foo", Uint128::new(42)), expeceted);
-        assert_eq!(attr("foo", 42), expeceted);
+        assert_eq!(attr("foo", "42"), expected);
+        assert_eq!(attr("foo".to_string(), "42"), expected);
+        assert_eq!(attr("foo", "42".to_string()), expected);
+        assert_eq!(attr("foo", Uint128::new(42)), expected);
+        assert_eq!(attr("foo", 42.to_string()), expected);
     }
 }

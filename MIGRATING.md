@@ -4,6 +4,22 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
+## 0.15 -> 1.0
+
+- The `attr` function now accepts arguments that implement `Into<String>` rather
+  than `ToString`. This means that "stringly" types like `&str` are still
+  accepted, but others (like numbers or booleans) have to be explicitly
+  converted to strings; you can use the `to_string` method (from the
+  `std::string::ToString` trait) for that.
+
+  ```diff
+    let steal_funds = true;
+  - attr("steal_funds", steal_funds),
+  + attr("steal_funds", steal_funds.to_string()),
+  ```
+
+  It also means that `&&str` is no longer accepted.
+
 ## 0.14 -> 0.15
 
 - Combine `messages` and `submessages` on the `Response` object. The new format

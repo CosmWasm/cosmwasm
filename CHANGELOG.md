@@ -6,6 +6,11 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Changed
+
+- cosmwasm-std: The `attr` function now accepts types that implement
+  `Into<String>` rather than `ToString`.
+
 ## [0.15.0] - 2021-06-24
 
 ### Added
