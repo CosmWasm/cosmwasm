@@ -55,6 +55,14 @@ pub fn mock_dependencies_with_balances(
 // We can later make simplifications here if needed
 pub type MockStorage = MemoryStorage;
 
+/// Length of canonical addresses created with this API. Contracts should not make any assumtions
+/// what this value is.
+/// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
+const CANONICAL_LENGTH: usize = 24;
+
+const SHUFFLES_ENCODE: usize = 18;
+const SHUFFLES_DECODE: usize = 2;
+
 // MockPrecompiles zero pads all human addresses to make them fit the canonical_length
 // it trims off zeros for the reverse operation.
 // not really smart, but allows us to see a difference (and consistent length for canonical adddresses)
@@ -62,13 +70,13 @@ pub type MockStorage = MemoryStorage;
 pub struct MockApi {
     /// Length of canonical addresses created with this API. Contracts should not make any assumtions
     /// what this value is.
-    pub canonical_length: usize,
+    canonical_length: usize,
 }
 
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
-            canonical_length: 24,
+            canonical_length: CANONICAL_LENGTH,
         }
     }
 }
@@ -100,7 +108,7 @@ impl Api for MockApi {
         // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
         let rotate_by = digit_sum(&out) % self.canonical_length;
         out.rotate_left(rotate_by);
-        for _ in 0..18 {
+        for _ in 0..SHUFFLES_ENCODE {
             out = riffle_shuffle(&out);
         }
         Ok(out.into())
@@ -115,7 +123,7 @@ impl Api for MockApi {
 
         let mut tmp: Vec<u8> = canonical.clone().into();
         // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..2 {
+        for _ in 0..SHUFFLES_DECODE {
             tmp = riffle_shuffle(&tmp);
         }
         // Rotate back
@@ -508,6 +516,49 @@ impl StakingQuerier {
 ///
 /// https://en.wikipedia.org/wiki/Riffle_shuffle_permutation#Perfect_shuffles
 /// https://en.wikipedia.org/wiki/In_shuffle
+///
+/// The number of shuffles required to restore the original order are listed in
+/// https://oeis.org/A002326, e.g.:
+///
+/// ```ignore
+/// 2: 2
+/// 4: 4
+/// 6: 3
+/// 8: 6
+/// 10: 10
+/// 12: 12
+/// 14: 4
+/// 16: 8
+/// 18: 18
+/// 20: 6
+/// 22: 11
+/// 24: 20
+/// 26: 18
+/// 28: 28
+/// 30: 5
+/// 32: 10
+/// 34: 12
+/// 36: 36
+/// 38: 12
+/// 40: 20
+/// 42: 14
+/// 44: 12
+/// 46: 23
+/// 48: 21
+/// 50: 8
+/// 52: 52
+/// 54: 20
+/// 56: 18
+/// 58: 58
+/// 60: 60
+/// 62: 6
+/// 64: 12
+/// 66: 66
+/// 68: 22
+/// 70: 35
+/// 72: 9
+/// 74: 20
+/// ```
 pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
     assert!(
         input.len() % 2 == 0,

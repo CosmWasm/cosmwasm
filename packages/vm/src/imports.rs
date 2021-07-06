@@ -1021,7 +1021,7 @@ mod tests {
         let api = MockApi::default();
 
         let source_ptr = write_data(&env, b"foo");
-        let dest_ptr = create_empty(&mut instance, api.canonical_length as u32);
+        let dest_ptr = create_empty(&mut instance, api.canonical_length() as u32);
 
         leave_default_data(&env);
 
@@ -1029,7 +1029,7 @@ mod tests {
         let res = do_addr_canonicalize(&env, source_ptr, dest_ptr).unwrap();
         assert_eq!(res, 0);
         let data = force_read(&env, dest_ptr);
-        assert_eq!(data.len(), api.canonical_length);
+        assert_eq!(data.len(), api.canonical_length());
     }
 
     #[test]
@@ -1125,7 +1125,7 @@ mod tests {
                 ..
             } => {
                 assert_eq!(size, 7);
-                assert_eq!(required, api.canonical_length);
+                assert_eq!(required, api.canonical_length());
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
@@ -1137,7 +1137,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
         let api = MockApi::default();
 
-        let source_data = vec![0x22; api.canonical_length];
+        let source_data = vec![0x22; api.canonical_length()];
         let source_ptr = write_data(&env, &source_data);
         let dest_ptr = create_empty(&mut instance, 50);
 
@@ -1216,7 +1216,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
         let api = MockApi::default();
 
-        let source_data = vec![0x22; api.canonical_length];
+        let source_data = vec![0x22; api.canonical_length()];
         let source_ptr = write_data(&env, &source_data);
         let dest_ptr = create_empty(&mut instance, 2);
 
@@ -1229,7 +1229,7 @@ mod tests {
                 ..
             } => {
                 assert_eq!(size, 2);
-                assert_eq!(required, api.canonical_length);
+                assert_eq!(required, api.canonical_length());
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }

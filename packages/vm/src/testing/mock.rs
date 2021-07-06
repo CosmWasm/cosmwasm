@@ -31,6 +31,14 @@ pub fn mock_backend_with_balances(
     }
 }
 
+/// Length of canonical addresses created with this API. Contracts should not make any assumtions
+/// what this value is.
+/// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
+const CANONICAL_LENGTH: usize = 24;
+
+const SHUFFLES_ENCODE: usize = 18;
+const SHUFFLES_DECODE: usize = 2;
+
 /// Zero-pads all human addresses to make them fit the canonical_length and
 /// trims off zeros for the reverse operation.
 /// This is not really smart, but allows us to see a difference (and consistent length for canonical adddresses).
@@ -38,12 +46,17 @@ pub fn mock_backend_with_balances(
 pub struct MockApi {
     /// Length of canonical addresses created with this API. Contracts should not make any assumtions
     /// what this value is.
-    pub canonical_length: usize,
+    canonical_length: usize,
     /// When set, all calls to the API fail with BackendError::Unknown containing this message
     backend_error: Option<&'static str>,
 }
 
 impl MockApi {
+    /// Read-only getter for `canonical_length`, which must not be changed by the caller.
+    pub fn canonical_length(&self) -> usize {
+        self.canonical_length
+    }
+
     pub fn new_failing(backend_error: &'static str) -> Self {
         MockApi {
             backend_error: Some(backend_error),
@@ -55,7 +68,7 @@ impl MockApi {
 impl Default for MockApi {
     fn default() -> Self {
         MockApi {
-            canonical_length: 24,
+            canonical_length: CANONICAL_LENGTH,
             backend_error: None,
         }
     }
@@ -94,7 +107,7 @@ impl BackendApi for MockApi {
         // the most obvious structure (https://github.com/CosmWasm/cosmwasm/issues/552)
         let rotate_by = digit_sum(&out) % self.canonical_length;
         out.rotate_left(rotate_by);
-        for _ in 0..18 {
+        for _ in 0..SHUFFLES_ENCODE {
             out = riffle_shuffle(&out);
         }
         (Ok(out), gas_info)
@@ -118,7 +131,7 @@ impl BackendApi for MockApi {
 
         let mut tmp: Vec<u8> = canonical.into();
         // Shuffle two more times which restored the original value (24 elements are back to original after 20 rounds)
-        for _ in 0..2 {
+        for _ in 0..SHUFFLES_DECODE {
             tmp = riffle_shuffle(&tmp);
         }
         // Rotate back
