@@ -35,7 +35,7 @@ const MAX_LENGTH_DB_KEY: usize = 64 * KI;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory)
 const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
 /// Typically 20 (Cosmos SDK, Ethereum) or 32 (Nano, Substrate)
-const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
+const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
