@@ -4,7 +4,7 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.15 -> 1.0
+## 0.15 -> 1.0 (unreleased)
 
 - The `attr` function now accepts arguments that implement `Into<String>` rather
   than `ToString`. This means that "stringly" types like `&str` are still
@@ -19,6 +19,18 @@ major releases of `cosmwasm`. Note that you can also view the
   ```
 
   It also means that `&&str` is no longer accepted.
+
+- The `iterator` feature in `cosmwasm-std`, `cosmwasm-vm` and `cosmwasm-storage`
+  is now enabled by default. If you want to use it, you don't have to explicitly
+  enable it anymore.
+
+  If you don't want to use it, you **have to** disable default features when
+  depending on `cosmwasm-std`. Example:
+
+  ```diff
+  - cosmwasm-std = { version = "0.15.0" }
+  + cosmwasm-std = { version = "0.15.0", default-features = false }
+  ```
 
 ## 0.14 -> 0.15
 

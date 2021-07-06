@@ -8,7 +8,7 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
 
 [features]
-default = ["staking"]
+default = ["staking", "iterator"]
 # backtraces provides much better context at runtime errors (in non-wasm code)
 # at the cost of a bit of code size and performance.
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
@@ -36,7 +36,7 @@ required-features = ["iterator"]
 [dependencies]
 clru = "0.4.0"
 # Uses the path when built locally; uses the given version from crates.io when published
-cosmwasm-std = { path = "../std", version = "0.15.0" }
+cosmwasm-std = { path = "../std", version = "0.15.0", default-features = false }
 cosmwasm-crypto = { path = "../crypto", version = "0.15.0" }
 hex = "0.4"
 parity-wasm = "0.42"
