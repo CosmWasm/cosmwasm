@@ -8,7 +8,7 @@ repository = "https://github.com/CosmWasm/cosmwasm/tree/main/packages/vm"
 license = "Apache-2.0"
 
 [features]
-default = ["staking"]
+default = ["staking", "iterator"]
 # backtraces provides much better context at runtime errors (in non-wasm code)
 # at the cost of a bit of code size and performance.
 # This feature requires Rust nightly because it depends on the unstable backtrace feature.
