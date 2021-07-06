@@ -10,8 +10,8 @@ and this project adheres to
 
 - cosmwasm-std: The `attr` function now accepts types that implement
   `Into<String>` rather than `ToString`.
-- cosmwasm-std, cosmwasm-vm, cosmwasm-storage: The `iterator` feature is now enabled by
-  default.
+- cosmwasm-std, cosmwasm-vm, cosmwasm-storage: The `iterator` feature is now
+  enabled by default.
 
 ## [0.15.0] - 2021-06-24
 

@@ -20,8 +20,9 @@ major releases of `cosmwasm`. Note that you can also view the
 
   It also means that `&&str` is no longer accepted.
 
-- The `iterator` feature in `cosmwasm-std`, `cosmwasm-vm` and `cosmwasm-storage` is now enabled by default. If you want to use it, you don't
-  have to explicitly enable it anymore.
+- The `iterator` feature in `cosmwasm-std`, `cosmwasm-vm` and `cosmwasm-storage`
+  is now enabled by default. If you want to use it, you don't have to explicitly
+  enable it anymore.
 
   If you don't want to use it, you **have to** disable default features when
   depending on `cosmwasm-std`. Example:
