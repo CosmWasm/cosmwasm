@@ -30,7 +30,7 @@ cranelift = ["cosmwasm-vm/cranelift"]
 backtraces = ["cosmwasm-std/backtraces", "cosmwasm-vm/backtraces"]
 
 [dependencies]
-cosmwasm-std = { path = "../../packages/std" }
+cosmwasm-std = { path = "../../packages/std", default-features = false }
 schemars = "0.8.1"
 serde = { version = "1.0.103", default-features = false, features = ["derive"] }
 sha2 = "0.9.1"
@@ -38,5 +38,5 @@ thiserror = "1.0"
 
 [dev-dependencies]
 cosmwasm-schema = { path = "../../packages/schema" }
-cosmwasm-storage = { path = "../../packages/storage" }
+cosmwasm-storage = { path = "../../packages/storage", default-features = false }
 cosmwasm-vm = { path = "../../packages/vm", default-features = false }
