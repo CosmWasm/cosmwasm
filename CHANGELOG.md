@@ -12,6 +12,8 @@ and this project adheres to
   `Into<String>` rather than `ToString`.
 - cosmwasm-std, cosmwasm-vm, cosmwasm-storage: The `iterator` feature is now
   enabled by default.
+- cosmwasm-std: Make `MockApi::canonical_length` private.
+- cosmwasm-vm: Make `MockApi::canonical_length` private.
 
 ## [0.15.0] - 2021-06-24
 
