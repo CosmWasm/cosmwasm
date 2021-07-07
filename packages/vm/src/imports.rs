@@ -948,7 +948,7 @@ mod tests {
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
-        let source_ptr3 = write_data(&env, b"addressexceedingaddressspace"); // too long
+        let source_ptr3 = write_data(&env, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
 
         leave_default_data(&env);
 
@@ -1039,8 +1039,8 @@ mod tests {
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
-        let source_ptr3 = write_data(&env, b"addressexceedingaddressspace"); // too long
-        let dest_ptr = create_empty(&mut instance, 8);
+        let source_ptr3 = write_data(&env, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
