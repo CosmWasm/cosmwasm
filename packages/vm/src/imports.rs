@@ -1139,7 +1139,7 @@ mod tests {
 
         let source_data = vec![0x22; api.canonical_length()];
         let source_ptr = write_data(&env, &source_data);
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1154,7 +1154,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo"); // too short
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1170,7 +1170,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo\0\0\0\0\0");
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1190,7 +1190,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
 
         let source_ptr = write_data(&env, &[61; 33]);
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
