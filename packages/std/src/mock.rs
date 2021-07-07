@@ -633,7 +633,8 @@ mod tests {
     #[should_panic(expected = "address too long")]
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
-        let human = String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
+        let human =
+            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
         let _ = api.addr_canonicalize(&human).unwrap();
     }
 
