@@ -174,7 +174,7 @@ fn do_user_errors_in_api_calls(api: &dyn Api) -> Result<Response, HackError> {
         }
     }
 
-    let invalid_bech32 = "bn93hg934hg08q340g8u4jcau3";
+    let invalid_bech32 = "bn9hhssomeltvhzgvuqkwjkpwxojfuigltwedayzxljucefikuieillowaticksoistqoynmgcnjfqtxghvhpeqhekzvwapcdjytt";
     match api.addr_canonicalize(invalid_bech32).unwrap_err() {
         StdError::GenericErr { .. } => {}
         err => {

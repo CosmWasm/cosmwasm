@@ -1189,7 +1189,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 33]);
+        let source_ptr = write_data(&env, &[61; 100]); 
         let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
