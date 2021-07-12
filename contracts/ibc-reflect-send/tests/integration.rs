@@ -20,7 +20,7 @@
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
 use cosmwasm_std::{
     attr, coin, coins, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcAcknowledgementWithPacket,
-    IbcBasicResponse, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg, IbcMsg, IbcOrder,
+    IbcBasicResponse, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
     Response,
 };
 use cosmwasm_vm::testing::{
