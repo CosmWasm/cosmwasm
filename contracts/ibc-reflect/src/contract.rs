@@ -1,8 +1,9 @@
 use cosmwasm_std::{
     attr, entry_point, from_slice, to_binary, wasm_execute, BankMsg, Binary, ContractResult,
-    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcAcknowledgementWithPacket, IbcBasicResponse,
-    IbcChannel, IbcOrder, IbcPacket, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply,
-    Response, StdError, StdResult, SubMsg, SubMsgExecutionResponse, WasmMsg,
+    CosmosMsg, Deps, DepsMut, Empty, Env, Event, IbcBasicResponse, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcOrder, IbcPacketAckMsg, IbcPacketReceiveMsg,
+    IbcPacketTimeoutMsg, IbcReceiveResponse, MessageInfo, Order, QueryResponse, Reply, Response,
+    StdError, StdResult, SubMsg, SubMsgExecutionResponse, WasmMsg,
 };
 
 use crate::msg::{
@@ -125,7 +126,9 @@ pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 
 #[entry_point]
 /// enforces ordering and versioing constraints
-pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
+pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
+    let channel = msg.channel;
+
     if channel.order != IbcOrder::Ordered {
         return Err(StdError::generic_err("Only supports ordered channels"));
     }
@@ -154,8 +157,9 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdRe
 pub fn ibc_channel_connect(
     deps: DepsMut,
     _env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let channel = msg.channel;
     let cfg = config(deps.storage).load()?;
     let chan_id = channel.endpoint.channel_id;
 
@@ -183,8 +187,9 @@ pub fn ibc_channel_connect(
 pub fn ibc_channel_close(
     deps: DepsMut,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let channel = msg.channel;
     // get contract address and remove lookup
     let channel_id = channel.endpoint.channel_id.as_str();
     let reflect_addr = accounts(deps.storage).load(channel_id.as_bytes())?;
@@ -236,10 +241,11 @@ fn encode_ibc_error<T: Into<String>>(msg: T) -> Binary {
 pub fn ibc_packet_receive(
     deps: DepsMut,
     _env: Env,
-    packet: IbcPacket,
+    msg: IbcPacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
     // put this in a closure so we can convert all error responses into acknowledgements
     (|| {
+        let packet = msg.packet;
         // which local channel did this packet come on
         let caller = packet.dest.channel_id;
         let msg: PacketMsg = from_slice(&packet.data)?;
@@ -323,7 +329,7 @@ fn receive_dispatch(
 pub fn ibc_packet_ack(
     _deps: DepsMut,
     _env: Env,
-    _ack: IbcAcknowledgementWithPacket,
+    _msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
         messages: vec![],
@@ -336,7 +342,7 @@ pub fn ibc_packet_ack(
 pub fn ibc_packet_timeout(
     _deps: DepsMut,
     _env: Env,
-    _packet: IbcPacket,
+    _msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
         messages: vec![],
@@ -390,13 +396,15 @@ mod tests {
 
         // open packet has no counterparty versin, connect does
         // TODO: validate this with alpe
-        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.counterparty_version = None;
+        let mut handshake_open =
+            IbcChannelOpenMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+        handshake_open.channel.counterparty_version = None;
         // first we try to open with a valid handshake
         ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
-        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let handshake_connect =
+            IbcChannelConnectMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
         assert_eq!(1, res.messages.len());
         let id = res.messages[0].id;
@@ -428,13 +436,22 @@ mod tests {
     fn enforce_version_in_handshake() {
         let mut deps = setup();
 
-        let wrong_order = mock_ibc_channel("channel-12", IbcOrder::Unordered, IBC_VERSION);
+        let wrong_order = IbcChannelOpenMsg::new(mock_ibc_channel(
+            "channel-12",
+            IbcOrder::Unordered,
+            IBC_VERSION,
+        ));
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_order).unwrap_err();
 
-        let wrong_version = mock_ibc_channel("channel-12", IbcOrder::Ordered, "reflect");
+        let wrong_version =
+            IbcChannelOpenMsg::new(mock_ibc_channel("channel-12", IbcOrder::Ordered, "reflect"));
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_version).unwrap_err();
 
-        let valid_handshake = mock_ibc_channel("channel-12", IbcOrder::Ordered, IBC_VERSION);
+        let valid_handshake = IbcChannelOpenMsg::new(mock_ibc_channel(
+            "channel-12",
+            IbcOrder::Ordered,
+            IBC_VERSION,
+        ));
         ibc_channel_open(deps.as_mut(), mock_env(), valid_handshake).unwrap();
     }
 
@@ -444,12 +461,14 @@ mod tests {
         let channel_id = "channel-1234";
 
         // first we try to open with a valid handshake
-        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.counterparty_version = None;
+        let mut handshake_open =
+            IbcChannelOpenMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+        handshake_open.channel.counterparty_version = None;
         ibc_channel_open(deps.as_mut(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
-        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let handshake_connect =
+            IbcChannelConnectMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
         let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
         // and set up a reflect account
         assert_eq!(1, res.messages.len());
@@ -526,7 +545,7 @@ mod tests {
         let ibc_msg = PacketMsg::Dispatch {
             msgs: msgs_to_dispatch.clone(),
         };
-        let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+        let packet = IbcPacketReceiveMsg::new(mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap());
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
@@ -541,7 +560,7 @@ mod tests {
         connect(deps.as_mut(), channel_id, account);
 
         // receive a packet for an unregistered channel returns app-level error (not Result::Err)
-        let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
+        let packet = IbcPacketReceiveMsg::new(mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap());
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet).unwrap();
 
         // assert app-level success
@@ -577,7 +596,7 @@ mod tests {
         let bad_data = InstantiateMsg {
             reflect_code_id: 12345,
         };
-        let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
+        let packet = IbcPacketReceiveMsg::new(mock_ibc_packet_recv(channel_id, &bad_data).unwrap());
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), packet).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
@@ -607,7 +626,8 @@ mod tests {
         assert_eq!(funds, balance);
 
         // close the channel
-        let channel = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let channel =
+            IbcChannelCloseMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
         let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
 
         // it pulls out all money from the reflect contract

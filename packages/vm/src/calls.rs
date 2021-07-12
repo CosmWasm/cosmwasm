@@ -6,7 +6,8 @@ use wasmer::Val;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
+    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcPacket, IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
@@ -218,7 +219,7 @@ where
 pub fn call_ibc_channel_open<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    channel: &IbcChannel,
+    msg: &IbcChannelOpenMsg,
 ) -> VmResult<ContractResult<()>>
 where
     A: BackendApi + 'static,
@@ -226,8 +227,8 @@ where
     Q: Querier + 'static,
 {
     let env = to_vec(env)?;
-    let channel = to_vec(channel)?;
-    let data = call_ibc_channel_open_raw(instance, &env, &channel)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_channel_open_raw(instance, &env, &msg)?;
     let result: ContractResult<()> =
         from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_OPEN)?;
     Ok(result)
@@ -237,7 +238,7 @@ where
 pub fn call_ibc_channel_connect<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    channel: &IbcChannel,
+    msg: &IbcChannelConnectMsg,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -246,8 +247,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let channel = to_vec(channel)?;
-    let data = call_ibc_channel_connect_raw(instance, &env, &channel)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_channel_connect_raw(instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_CONNECT)?;
     Ok(result)
 }
@@ -256,7 +257,7 @@ where
 pub fn call_ibc_channel_close<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    channel: &IbcChannel,
+    msg: &IbcChannelCloseMsg,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -265,8 +266,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let channel = to_vec(channel)?;
-    let data = call_ibc_channel_close_raw(instance, &env, &channel)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_channel_close_raw(instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_CHANNEL_CLOSE)?;
     Ok(result)
 }
@@ -445,7 +446,7 @@ where
 pub fn call_ibc_channel_open_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    channel: &[u8],
+    msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
     A: BackendApi + 'static,
@@ -456,7 +457,7 @@ where
     call_raw(
         instance,
         "ibc_channel_open",
-        &[env, channel],
+        &[env, msg],
         read_limits::RESULT_IBC_CHANNEL_OPEN,
     )
 }
@@ -465,7 +466,7 @@ where
 pub fn call_ibc_channel_connect_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    channel: &[u8],
+    msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
     A: BackendApi + 'static,
@@ -476,7 +477,7 @@ where
     call_raw(
         instance,
         "ibc_channel_connect",
-        &[env, channel],
+        &[env, msg],
         read_limits::RESULT_IBC_CHANNEL_CONNECT,
     )
 }
@@ -485,7 +486,7 @@ where
 pub fn call_ibc_channel_close_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    channel: &[u8],
+    msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
     A: BackendApi + 'static,
@@ -496,7 +497,7 @@ where
     call_raw(
         instance,
         "ibc_channel_close",
-        &[env, channel],
+        &[env, msg],
         read_limits::RESULT_IBC_CHANNEL_CLOSE,
     )
 }
@@ -696,13 +697,21 @@ mod tests {
                 .unwrap()
                 .unwrap();
             // first we try to open with a valid handshake
-            let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-            handshake_open.counterparty_version = None;
+            let mut handshake_open = IbcChannelOpenMsg::new(mock_ibc_channel(
+                channel_id,
+                IbcOrder::Ordered,
+                IBC_VERSION,
+            ));
+            handshake_open.channel.counterparty_version = None;
             call_ibc_channel_open(instance, &mock_env(), &handshake_open)
                 .unwrap()
                 .unwrap();
             // then we connect (with counter-party version set)
-            let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+            let handshake_connect = IbcChannelConnectMsg::new(mock_ibc_channel(
+                channel_id,
+                IbcOrder::Ordered,
+                IBC_VERSION,
+            ));
             let res: IbcBasicResponse = call_ibc_channel_connect::<_, _, _, Empty>(
                 instance,
                 &mock_env(),
@@ -738,7 +747,11 @@ mod tests {
         fn call_ibc_channel_close_works() {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
-            let handshake_close = mock_ibc_channel(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
+            let handshake_close = IbcChannelCloseMsg::new(mock_ibc_channel(
+                CHANNEL_ID,
+                IbcOrder::Ordered,
+                IBC_VERSION,
+            ));
             call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
                 .unwrap()
                 .unwrap();

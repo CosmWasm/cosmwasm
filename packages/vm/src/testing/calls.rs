@@ -8,7 +8,8 @@ use std::fmt;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
+    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcPacket, IbcReceiveResponse,
 };
 
 use crate::calls::{
@@ -143,14 +144,14 @@ where
 pub fn ibc_channel_open<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelOpenMsg,
 ) -> ContractResult<()>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
-    call_ibc_channel_open(instance, &env, &channel).expect("VM error")
+    call_ibc_channel_open(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_channel_connect mimicks the call signature of the smart contracts.
@@ -160,7 +161,7 @@ where
 pub fn ibc_channel_connect<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelConnectMsg,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,
@@ -168,7 +169,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_channel_connect(instance, &env, &channel).expect("VM error")
+    call_ibc_channel_connect(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_channel_close mimicks the call signature of the smart contracts.
@@ -178,7 +179,7 @@ where
 pub fn ibc_channel_close<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelCloseMsg,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,
@@ -186,7 +187,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_channel_close(instance, &env, &channel).expect("VM error")
+    call_ibc_channel_close(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_packet_receive mimicks the call signature of the smart contracts.
