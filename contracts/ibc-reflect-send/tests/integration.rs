@@ -20,7 +20,8 @@
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
 use cosmwasm_std::{
     attr, coin, coins, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcAcknowledgementWithPacket,
-    IbcBasicResponse, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, Response,
+    IbcBasicResponse, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg, IbcMsg, IbcOrder,
+    Response,
 };
 use cosmwasm_vm::testing::{
     execute, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, instantiate, mock_env,
@@ -88,7 +89,8 @@ fn who_am_i_response<T: Into<String>>(
         acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
         original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
     };
-    let res: IbcBasicResponse = ibc_packet_ack(deps, mock_env(), ack).unwrap();
+    let msg = IbcPacketAckMsg::new(ack);
+    let res: IbcBasicResponse = ibc_packet_ack(deps, mock_env(), msg).unwrap();
     assert_eq!(0, res.messages.len());
 }
 
@@ -199,7 +201,8 @@ fn dispatch_message_send_and_ack() {
         acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
         original_packet: packet,
     };
-    let res: IbcBasicResponse = ibc_packet_ack(&mut deps, mock_env(), ack).unwrap();
+    let msg = IbcPacketAckMsg::new(ack);
+    let res: IbcBasicResponse = ibc_packet_ack(&mut deps, mock_env(), msg).unwrap();
     // no actions expected, but let's check the events to see it was dispatched properly
     assert_eq!(0, res.messages.len());
     assert_eq!(vec![attr("action", "acknowledge_dispatch")], res.attributes)

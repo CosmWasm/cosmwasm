@@ -20,8 +20,8 @@
 use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_recv};
 use cosmwasm_std::{
     attr, coins, BankMsg, ContractResult, CosmosMsg, Event, IbcBasicResponse, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcOrder, IbcReceiveResponse, Reply, Response, SubMsgExecutionResponse,
-    WasmMsg,
+    IbcChannelOpenMsg, IbcOrder, IbcPacketReceiveMsg, IbcReceiveResponse, Reply, Response,
+    SubMsgExecutionResponse, WasmMsg,
 };
 use cosmwasm_vm::testing::{
     ibc_channel_connect, ibc_channel_open, ibc_packet_receive, instantiate, mock_env, mock_info,
@@ -234,7 +234,8 @@ fn handle_dispatch_packet() {
         msgs: msgs_to_dispatch.clone(),
     };
     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
+    let msg = IbcPacketReceiveMsg::new(packet);
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error
@@ -250,7 +251,8 @@ fn handle_dispatch_packet() {
 
     // receive a packet for an unregistered channel returns app-level error (not Result::Err)
     let packet = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
+    let msg = IbcPacketReceiveMsg::new(packet);
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
 
     // assert app-level success
     let ack: AcknowledgementMsg<DispatchResponse> =
@@ -287,7 +289,8 @@ fn handle_dispatch_packet() {
         reflect_code_id: 12345,
     };
     let packet = mock_ibc_packet_recv(channel_id, &bad_data).unwrap();
-    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), packet).unwrap();
+    let msg = IbcPacketReceiveMsg::new(packet);
+    let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
     // acknowledgement is an error

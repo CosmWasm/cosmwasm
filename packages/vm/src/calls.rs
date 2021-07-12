@@ -6,8 +6,9 @@ use wasmer::Val;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcPacket, IbcReceiveResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
+    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
@@ -276,7 +277,7 @@ where
 pub fn call_ibc_packet_receive<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    packet: &IbcPacket,
+    msg: &IbcPacketReceiveMsg,
 ) -> VmResult<ContractResult<IbcReceiveResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -285,8 +286,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let packet = to_vec(packet)?;
-    let data = call_ibc_packet_receive_raw(instance, &env, &packet)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_packet_receive_raw(instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_RECEIVE)?;
     Ok(result)
 }
@@ -295,7 +296,7 @@ where
 pub fn call_ibc_packet_ack<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    ack: &IbcAcknowledgementWithPacket,
+    msg: &IbcPacketAckMsg,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -304,8 +305,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let ack = to_vec(ack)?;
-    let data = call_ibc_packet_ack_raw(instance, &env, &ack)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_packet_ack_raw(instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_ACK)?;
     Ok(result)
 }
@@ -314,7 +315,7 @@ where
 pub fn call_ibc_packet_timeout<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: &Env,
-    packet: &IbcPacket,
+    msg: &IbcPacketTimeoutMsg,
 ) -> VmResult<ContractResult<IbcBasicResponse<U>>>
 where
     A: BackendApi + 'static,
@@ -323,8 +324,8 @@ where
     U: DeserializeOwned + Clone + fmt::Debug + JsonSchema + PartialEq,
 {
     let env = to_vec(env)?;
-    let packet = to_vec(packet)?;
-    let data = call_ibc_packet_timeout_raw(instance, &env, &packet)?;
+    let msg = to_vec(msg)?;
+    let data = call_ibc_packet_timeout_raw(instance, &env, &msg)?;
     let result = from_slice(&data, deserialization_limits::RESULT_IBC_PACKET_TIMEOUT)?;
     Ok(result)
 }
@@ -506,7 +507,7 @@ where
 pub fn call_ibc_packet_receive_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    packet: &[u8],
+    msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
     A: BackendApi + 'static,
@@ -517,7 +518,7 @@ where
     call_raw(
         instance,
         "ibc_packet_receive",
-        &[env, packet],
+        &[env, msg],
         read_limits::RESULT_IBC_PACKET_RECEIVE,
     )
 }
@@ -526,7 +527,7 @@ where
 pub fn call_ibc_packet_ack_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    ack: &[u8],
+    msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
     A: BackendApi + 'static,
@@ -537,7 +538,7 @@ where
     call_raw(
         instance,
         "ibc_packet_ack",
-        &[env, ack],
+        &[env, msg],
         read_limits::RESULT_IBC_PACKET_ACK,
     )
 }
@@ -546,7 +547,7 @@ where
 pub fn call_ibc_packet_timeout_raw<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: &[u8],
-    packet: &[u8],
+    msg: &[u8],
 ) -> VmResult<Vec<u8>>
 where
     A: BackendApi + 'static,
@@ -557,7 +558,7 @@ where
     call_raw(
         instance,
         "ibc_packet_timeout",
-        &[env, packet],
+        &[env, msg],
         read_limits::RESULT_IBC_PACKET_TIMEOUT,
     )
 }
