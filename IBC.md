@@ -517,7 +517,7 @@ The
 contains both the original packet that was sent as well as the acknowledgement
 bytes returned from executing the remote contract. You can use the
 `original_packet` to
-[map it the proper handler](https://github.com/CosmWasm/cosmwasm/blob/update-ibc-types/contracts/ibc-reflect-send/src/ibc.rs#L111-L136)
+[map it the proper handler](https://github.com/CosmWasm/cosmwasm/blob/378b029707ebaed4505b3666c620bed69ff9a682/contracts/ibc-reflect-send/src/ibc.rs#L111-L136)
 (after parsing your custom data format), and parse the `acknowledgement` there,
 to determine how to respond:
 
