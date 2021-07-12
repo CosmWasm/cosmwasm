@@ -6,9 +6,8 @@ use wasmer::Val;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg,
-    IbcChannelOpenMsg, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
-    IbcReceiveResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
 use crate::backend::{BackendApi, Querier, Storage};
@@ -681,8 +680,8 @@ mod tests {
         };
         use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
         use cosmwasm_std::{
-            attr, Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn,
-            SubMsgExecutionResponse,
+            attr, Empty, Event, IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcOrder, Reply,
+            ReplyOn, SubMsgExecutionResponse,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
@@ -766,7 +765,8 @@ mod tests {
                 acknowledgement: IbcAcknowledgement::new(br#"{}"#),
                 original_packet: packet,
             };
-            call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &ack)
+            let msg = IbcPacketAckMsg::new(ack);
+            call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -775,7 +775,8 @@ mod tests {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
-            call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
+            let msg = IbcPacketTimeoutMsg::new(packet);
+            call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
@@ -785,7 +786,8 @@ mod tests {
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
             let packet = mock_ibc_packet_ack(CHANNEL_ID, who_am_i).unwrap();
-            call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &packet)
+            let msg = IbcPacketReceiveMsg::new(packet);
+            call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
         }
