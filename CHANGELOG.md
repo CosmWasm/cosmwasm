@@ -6,6 +6,12 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Added the `IbcChannelOpenMsg`, `IbcChannelConnectMsg`,
+  `IbcChannelCloseMsg`, `IbcPacketReceiveMsg`, `IbcPacketAckMsg`, and
+  `IbcPacketTimeoutMsg` types for use with corresponding IBC entrypoints.
+
 ### Changed
 
 - cosmwasm-std: The `attr` function now accepts types that implement
@@ -14,6 +20,12 @@ and this project adheres to
   enabled by default.
 - cosmwasm-std: Make `MockApi::canonical_length` private.
 - cosmwasm-vm: Make `MockApi::canonical_length` private.
+- cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_6` to
+  `interface_version_7`.
+- cosmwasm-std, cosmwasm-vm: Entrypoints `ibc_channel_open`,
+  `ibc_channel_connect`, `ibc_channel_close`, `ibc_packet_receive`,
+  `ibc_packet_ack`, `ibc_packet_timeout` now each accept a corresponding `Msg`
+  value that wrap around channels, packets and acknowledgements.
 
 ## [0.15.0] - 2021-06-24
 
