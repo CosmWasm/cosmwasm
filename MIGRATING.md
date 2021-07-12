@@ -29,7 +29,92 @@ major releases of `cosmwasm`. Note that you can also view the
 
   ```diff
   - cosmwasm-std = { version = "0.15.0" }
-  + cosmwasm-std = { version = "0.15.0", default-features = false }
+  + cosmwasm-std = { version = "1.0.0", default-features = false }
+  ```
+
+- For IBC-enabled contracts only: IBC entry points have different signatures.
+  Instead of accepting bare packets, channels and acknowledgements, all of those
+  are wrapped in a `Msg` type specific to the given entry point. Channels,
+  packets and acknowledgements have to be unpacked from those.
+
+  ```diff
+    #[entry_point]
+  - pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
+  + pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
+  +     let channel = msg.channel;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_channel_connect(
+        deps: DepsMut,
+        env: Env,
+  -     channel: IbcChannel,
+  +     msg: IbcChannelConnectMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let channel = msg.channel;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_channel_close(
+        deps: DepsMut,
+        env: Env,
+  -     channel: IbcChannel,
+  +     msg: IbcChannelCloseMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let channel = msg.channel;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_packet_receive(
+        deps: DepsMut,
+        env: Env,
+  -     packet: IbcPacket,
+  +     msg: IbcPacketReceiveMsg,
+    ) -> StdResult<IbcReceiveResponse> {
+  +     let packet = msg.packet;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_packet_receive(
+        deps: DepsMut,
+        env: Env,
+  -     ack: IbcAcknowledgementWithPacket,
+  +     msg: IbcPacketReceiveMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let ack = msg.ack;
+
+        // do things
+    }
+  ```
+
+  ```diff
+    #[entry_point]
+    pub fn ibc_packet_timeout(
+        deps: DepsMut,
+        env: Env,
+  -     packet: IbcPacket,
+  +     msg: IbcPacketTimeoutMsg,
+    ) -> StdResult<IbcBasicResponse> {
+  +     let packet = msg.packet;
+
+        // do things
+    }
   ```
 
 ## 0.14 -> 0.15
