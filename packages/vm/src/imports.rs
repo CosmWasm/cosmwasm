@@ -994,7 +994,7 @@ mod tests {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 33]);
+        let source_ptr = write_data(&env, &[61; 100]);
 
         leave_default_data(&env);
 
@@ -1087,7 +1087,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 33]);
+        let source_ptr = write_data(&env, &[61; 100]);
         let dest_ptr = create_empty(&mut instance, 8);
 
         leave_default_data(&env);
@@ -1189,7 +1189,7 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 33]);
+        let source_ptr = write_data(&env, &[61; 65]);
         let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
@@ -1203,8 +1203,8 @@ mod tests {
                     },
                 ..
             } => {
-                assert_eq!(length, 33);
-                assert_eq!(max_length, 32);
+                assert_eq!(length, 65);
+                assert_eq!(max_length, 64);
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
