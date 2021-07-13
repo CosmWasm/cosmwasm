@@ -17,10 +17,10 @@
 //!      });
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
-use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
+use cosmwasm_std::testing::{mock_ibc_channel_connect, mock_ibc_channel_open, mock_ibc_packet_ack};
 use cosmwasm_std::{
-    attr, coin, coins, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcBasicResponse,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, Response,
+    attr, coin, coins, BankMsg, CosmosMsg, Empty, IbcAcknowledgement, IbcBasicResponse, IbcMsg,
+    IbcOrder, Response,
 };
 use cosmwasm_vm::testing::{
     execute, ibc_channel_connect, ibc_channel_open, ibc_packet_ack, instantiate, mock_env,
@@ -53,15 +53,13 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 // save the account (tested in detail in `proper_handshake_flow`)
 fn connect(deps: &mut Instance<MockApi, MockStorage, MockQuerier>, channel_id: &str) {
     // open packet has no counterparty version, connect does
-    let mut handshake_open =
-        IbcChannelOpenMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+    let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
     handshake_open.channel.counterparty_version = None;
     // first we try to open with a valid handshake
     ibc_channel_open(deps, mock_env(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)
-    let handshake_connect =
-        IbcChannelConnectMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+    let handshake_connect = mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
     let res: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
 
     // this should send a WhoAmI request, which is received some blocks later
@@ -102,22 +100,13 @@ fn instantiate_works() {
 fn enforce_version_in_handshake() {
     let mut deps = setup();
 
-    let wrong_order = IbcChannelOpenMsg::new(mock_ibc_channel(
-        "channel-12",
-        IbcOrder::Unordered,
-        IBC_VERSION,
-    ));
+    let wrong_order = mock_ibc_channel_open("channel-12", IbcOrder::Unordered, IBC_VERSION);
     ibc_channel_open(&mut deps, mock_env(), wrong_order).unwrap_err();
 
-    let wrong_version =
-        IbcChannelOpenMsg::new(mock_ibc_channel("channel-12", IbcOrder::Ordered, "reflect"));
+    let wrong_version = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, "reflect");
     ibc_channel_open(&mut deps, mock_env(), wrong_version).unwrap_err();
 
-    let valid_handshake = IbcChannelOpenMsg::new(mock_ibc_channel(
-        "channel-12",
-        IbcOrder::Ordered,
-        IBC_VERSION,
-    ));
+    let valid_handshake = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, IBC_VERSION);
     ibc_channel_open(&mut deps, mock_env(), valid_handshake).unwrap();
 }
 

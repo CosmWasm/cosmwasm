@@ -354,8 +354,9 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_recv, mock_info, MockApi,
-        MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_env, mock_ibc_channel_close, mock_ibc_channel_connect,
+        mock_ibc_channel_open, mock_ibc_packet_recv, mock_info, MockApi, MockQuerier, MockStorage,
+        MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
@@ -396,15 +397,14 @@ mod tests {
 
         // open packet has no counterparty versin, connect does
         // TODO: validate this with alpe
-        let mut handshake_open =
-            IbcChannelOpenMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+        let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
         handshake_open.channel.counterparty_version = None;
         // first we try to open with a valid handshake
         ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
         let handshake_connect =
-            IbcChannelConnectMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+            mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
         assert_eq!(1, res.messages.len());
         let id = res.messages[0].id;
@@ -436,22 +436,13 @@ mod tests {
     fn enforce_version_in_handshake() {
         let mut deps = setup();
 
-        let wrong_order = IbcChannelOpenMsg::new(mock_ibc_channel(
-            "channel-12",
-            IbcOrder::Unordered,
-            IBC_VERSION,
-        ));
+        let wrong_order = mock_ibc_channel_open("channel-12", IbcOrder::Unordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_order).unwrap_err();
 
-        let wrong_version =
-            IbcChannelOpenMsg::new(mock_ibc_channel("channel-12", IbcOrder::Ordered, "reflect"));
+        let wrong_version = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, "reflect");
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_version).unwrap_err();
 
-        let valid_handshake = IbcChannelOpenMsg::new(mock_ibc_channel(
-            "channel-12",
-            IbcOrder::Ordered,
-            IBC_VERSION,
-        ));
+        let valid_handshake = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), valid_handshake).unwrap();
     }
 
@@ -461,14 +452,13 @@ mod tests {
         let channel_id = "channel-1234";
 
         // first we try to open with a valid handshake
-        let mut handshake_open =
-            IbcChannelOpenMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+        let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
         handshake_open.channel.counterparty_version = None;
         ibc_channel_open(deps.as_mut(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
         let handshake_connect =
-            IbcChannelConnectMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+            mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
         // and set up a reflect account
         assert_eq!(1, res.messages.len());
@@ -626,8 +616,7 @@ mod tests {
         assert_eq!(funds, balance);
 
         // close the channel
-        let channel =
-            IbcChannelCloseMsg::new(mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION));
+        let channel = mock_ibc_channel_close(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
 
         // it pulls out all money from the reflect contract
