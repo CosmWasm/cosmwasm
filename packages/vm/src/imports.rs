@@ -67,7 +67,7 @@ pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
 
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
-pub fn native_debug<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
@@ -102,7 +102,7 @@ fn do_read<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-pub fn do_write<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_write<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
     value_ptr: u32,
@@ -122,7 +122,7 @@ pub fn do_write<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
-pub fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_remove<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<()> {
@@ -382,7 +382,7 @@ pub fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_scan<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     start_ptr: u32,
     end_ptr: u32,
@@ -403,7 +403,7 @@ pub fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-pub fn do_next<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_next<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     iterator_id: u32,
 ) -> VmResult<u32> {
@@ -599,7 +599,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_works() {
+    fn do_db_write_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -608,7 +608,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        do_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(&env, key_ptr, value_ptr).unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -622,7 +622,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_can_override() {
+    fn do_db_write_can_override() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -631,7 +631,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        do_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(&env, key_ptr, value_ptr).unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -642,7 +642,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_works_for_empty_value() {
+    fn do_db_write_works_for_empty_value() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -651,7 +651,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        do_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(&env, key_ptr, value_ptr).unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -665,7 +665,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_fails_for_large_key() {
+    fn do_db_write_fails_for_large_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -674,7 +674,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(&env, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -691,7 +691,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_fails_for_large_value() {
+    fn do_db_write_fails_for_large_value() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -700,7 +700,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(&env, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -717,7 +717,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_is_prohibited_in_readonly_contexts() {
+    fn do_db_write_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -727,7 +727,7 @@ mod tests {
         leave_default_data(&env);
         env.set_storage_readonly(true);
 
-        let result = do_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(&env, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -735,7 +735,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_works() {
+    fn do_db_remove_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -750,7 +750,7 @@ mod tests {
         })
         .unwrap();
 
-        do_remove(&env, key_ptr).unwrap();
+        do_db_remove(&env, key_ptr).unwrap();
 
         env.with_storage_from_context::<_, _>(|store| {
             println!("{:?}", store);
@@ -767,7 +767,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_works_for_non_existent_key() {
+    fn do_db_remove_works_for_non_existent_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -777,7 +777,7 @@ mod tests {
         leave_default_data(&env);
 
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        do_remove(&env, key_ptr).unwrap();
+        do_db_remove(&env, key_ptr).unwrap();
 
         let value = env
             .with_storage_from_context::<_, _>(|store| {
@@ -788,7 +788,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_fails_for_large_key() {
+    fn do_db_remove_fails_for_large_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -796,7 +796,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_remove(&env, key_ptr);
+        let result = do_db_remove(&env, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -813,7 +813,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_is_prohibited_in_readonly_contexts() {
+    fn do_db_remove_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -822,7 +822,7 @@ mod tests {
         leave_default_data(&env);
         env.set_storage_readonly(true);
 
-        let result = do_remove(&env, key_ptr);
+        let result = do_db_remove(&env, key_ptr);
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -1726,13 +1726,13 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_unbound_works() {
+    fn do_db_scan_unbound_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let id = do_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
         assert_eq!(1, id);
 
         let item = env
@@ -1753,13 +1753,13 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_unbound_descending_works() {
+    fn do_db_scan_unbound_descending_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let id = do_scan(&env, 0, 0, Order::Descending.into()).unwrap();
+        let id = do_db_scan(&env, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(1, id);
 
         let item = env
@@ -1780,7 +1780,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_bound_works() {
+    fn do_db_scan_bound_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -1789,7 +1789,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let id = do_scan(&env, start, end, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(&env, start, end, Order::Ascending.into()).unwrap();
 
         let item = env
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
@@ -1804,14 +1804,14 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_multiple_iterators() {
+    fn do_db_scan_multiple_iterators() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // unbounded, ascending and descending
-        let id1 = do_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
-        let id2 = do_scan(&env, 0, 0, Order::Descending.into()).unwrap();
+        let id1 = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id2 = do_db_scan(&env, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
@@ -1848,13 +1848,13 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_errors_for_invalid_order_value() {
+    fn do_db_scan_errors_for_invalid_order_value() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let result = do_scan(&env, 0, 0, 42);
+        let result = do_db_scan(&env, 0, 0, 42);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::InvalidOrder { .. },
@@ -1866,44 +1866,44 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_next_works() {
+    fn do_db_next_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
         leave_default_data(&env);
 
-        let id = do_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
 
         // Entry 1
-        let kv_region_ptr = do_next(&env, id).unwrap();
+        let kv_region_ptr = do_db_next(&env, id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
             [KEY1, b"\0\0\0\x03", VALUE1, b"\0\0\0\x06"].concat()
         );
 
         // Entry 2
-        let kv_region_ptr = do_next(&env, id).unwrap();
+        let kv_region_ptr = do_db_next(&env, id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
             [KEY2, b"\0\0\0\x04", VALUE2, b"\0\0\0\x05"].concat()
         );
 
         // End
-        let kv_region_ptr = do_next(&env, id).unwrap();
+        let kv_region_ptr = do_db_next(&env, id).unwrap();
         assert_eq!(force_read(&env, kv_region_ptr), b"\0\0\0\0\0\0\0\0");
         // API makes no guarantees for value_ptr in this case
     }
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_next_fails_for_non_existent_id() {
+    fn do_db_next_fails_for_non_existent_id() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
         leave_default_data(&env);
 
         let non_existent_id = 42u32;
-        let result = do_next(&env, non_existent_id);
+        let result = do_db_next(&env, non_existent_id);
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::IteratorDoesNotExist { id, .. },

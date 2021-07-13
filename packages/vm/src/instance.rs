@@ -9,12 +9,12 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    do_write, do_remove, do_addr_validate, do_addr_canonicalize,
-    do_addr_humanize, do_secp256k1_verify, native_debug, do_secp256k1_recover_pubkey,
-    do_ed25519_verify, do_ed25519_batch_verify, do_query_chain,
-    do_scan, do_next, native_db_read
+    do_addr_canonicalize, do_addr_humanize, do_addr_validate, do_db_remove, do_db_write, do_debug,
+    do_ed25519_batch_verify, do_ed25519_verify, do_query_chain, do_secp256k1_recover_pubkey,
+    do_secp256k1_verify, native_db_read,
 };
 #[cfg(feature = "iterator")]
+use crate::imports::{do_db_next, do_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::compile;
@@ -93,7 +93,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "db_write",
-            Function::new_native_with_env(store, env.clone(), do_write),
+            Function::new_native_with_env(store, env.clone(), do_db_write),
         );
 
         // Removes the value at the given key. Different than writing &[] as future
@@ -102,7 +102,7 @@ where
         // Ownership of both key pointer is not transferred to the host.
         env_imports.insert(
             "db_remove",
-            Function::new_native_with_env(store, env.clone(), do_remove),
+            Function::new_native_with_env(store, env.clone(), do_db_remove),
         );
 
         // Reads human address from source_ptr and checks if it is valid.
@@ -168,7 +168,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "debug",
-            Function::new_native_with_env(store, env.clone(), native_debug),
+            Function::new_native_with_env(store, env.clone(), do_debug),
         );
 
         env_imports.insert(
@@ -185,7 +185,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_scan",
-            Function::new_native_with_env(store, env.clone(), do_scan),
+            Function::new_native_with_env(store, env.clone(), do_db_scan),
         );
 
         // Get next element of iterator with ID `iterator_id`.
@@ -196,7 +196,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next",
-            Function::new_native_with_env(store, env.clone(), do_next),
+            Function::new_native_with_env(store, env.clone(), do_db_next),
         );
 
         import_obj.register("env", env_imports);
