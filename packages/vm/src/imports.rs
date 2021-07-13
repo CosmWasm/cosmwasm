@@ -65,105 +65,6 @@ pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
     Ok(ptr)
 }
 
-pub fn native_db_write<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    key_ptr: u32,
-    value_ptr: u32,
-) -> VmResult<()> {
-    do_write(env, key_ptr, value_ptr)
-}
-
-pub fn native_db_remove<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    key_ptr: u32,
-) -> VmResult<()> {
-    do_remove(env, key_ptr)
-}
-
-pub fn native_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    source_ptr: u32,
-) -> VmResult<u32> {
-    do_addr_validate(&env, source_ptr)
-}
-
-pub fn native_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    source_ptr: u32,
-    destination_ptr: u32,
-) -> VmResult<u32> {
-    do_addr_canonicalize(&env, source_ptr, destination_ptr)
-}
-
-pub fn native_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    source_ptr: u32,
-    destination_ptr: u32,
-) -> VmResult<u32> {
-    do_addr_humanize(&env, source_ptr, destination_ptr)
-}
-
-pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    hash_ptr: u32,
-    signature_ptr: u32,
-    pubkey_ptr: u32,
-) -> VmResult<u32> {
-    do_secp256k1_verify(env, hash_ptr, signature_ptr, pubkey_ptr)
-}
-
-pub fn native_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    hash_ptr: u32,
-    signature_ptr: u32,
-    recovery_param: u32,
-) -> VmResult<u64> {
-    do_secp256k1_recover_pubkey(env, hash_ptr, signature_ptr, recovery_param)
-}
-
-pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    message_ptr: u32,
-    signature_ptr: u32,
-    pubkey_ptr: u32,
-) -> VmResult<u32> {
-    do_ed25519_verify(env, message_ptr, signature_ptr, pubkey_ptr)
-}
-
-pub fn native_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    messages_ptr: u32,
-    signatures_ptr: u32,
-    pubkeys_ptr: u32,
-) -> VmResult<u32> {
-    do_ed25519_batch_verify(env, messages_ptr, signatures_ptr, pubkeys_ptr)
-}
-
-pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    request_ptr: u32,
-) -> VmResult<u32> {
-    do_query_chain(env, request_ptr)
-}
-
-#[cfg(feature = "iterator")]
-pub fn native_db_scan<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    start_ptr: u32,
-    end_ptr: u32,
-    order: i32,
-) -> VmResult<u32> {
-    do_scan(env, start_ptr, end_ptr, order)
-}
-
-#[cfg(feature = "iterator")]
-pub fn native_db_next<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    iterator_id: u32,
-) -> VmResult<u32> {
-    do_next(env, iterator_id)
-}
-
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
 pub fn native_debug<A: BackendApi, S: Storage, Q: Querier>(
@@ -201,7 +102,7 @@ fn do_read<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-fn do_write<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_write<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
     value_ptr: u32,
@@ -221,7 +122,7 @@ fn do_write<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<()> {
@@ -239,7 +140,7 @@ fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
 ) -> VmResult<u32> {
@@ -264,7 +165,7 @@ fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -293,7 +194,7 @@ fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -314,7 +215,7 @@ fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,
@@ -341,7 +242,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     ))
 }
 
-fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,
@@ -374,7 +275,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
     signature_ptr: u32,
@@ -402,7 +303,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     ))
 }
 
-fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     messages_ptr: u32,
     signatures_ptr: u32,
@@ -465,7 +366,7 @@ fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
     Ok(target_ptr)
 }
 
-fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
@@ -481,7 +382,7 @@ fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     start_ptr: u32,
     end_ptr: u32,
@@ -502,7 +403,7 @@ fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_next<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_next<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     iterator_id: u32,
 ) -> VmResult<u32> {

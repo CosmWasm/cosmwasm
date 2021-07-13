@@ -9,13 +9,12 @@ use crate::environment::Environment;
 use crate::errors::{CommunicationError, VmError, VmResult};
 use crate::features::required_features_from_wasmer_instance;
 use crate::imports::{
-    native_addr_canonicalize, native_addr_humanize, native_addr_validate, native_db_read,
-    native_db_remove, native_db_write, native_debug, native_ed25519_batch_verify,
-    native_ed25519_verify, native_query_chain, native_secp256k1_recover_pubkey,
-    native_secp256k1_verify,
+    do_write, do_remove, do_addr_validate, do_addr_canonicalize,
+    do_addr_humanize, do_secp256k1_verify, native_debug, do_secp256k1_recover_pubkey,
+    do_ed25519_verify, do_ed25519_batch_verify, do_query_chain,
+    do_scan, do_next, native_db_read
 };
 #[cfg(feature = "iterator")]
-use crate::imports::{native_db_next, native_db_scan};
 use crate::memory::{read_region, write_region};
 use crate::size::Size;
 use crate::wasm_backend::compile;
@@ -94,7 +93,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "db_write",
-            Function::new_native_with_env(store, env.clone(), native_db_write),
+            Function::new_native_with_env(store, env.clone(), do_write),
         );
 
         // Removes the value at the given key. Different than writing &[] as future
@@ -103,7 +102,7 @@ where
         // Ownership of both key pointer is not transferred to the host.
         env_imports.insert(
             "db_remove",
-            Function::new_native_with_env(store, env.clone(), native_db_remove),
+            Function::new_native_with_env(store, env.clone(), do_remove),
         );
 
         // Reads human address from source_ptr and checks if it is valid.
@@ -111,7 +110,7 @@ where
         // Ownership of the input pointer is not transferred to the host.
         env_imports.insert(
             "addr_validate",
-            Function::new_native_with_env(store, env.clone(), native_addr_validate),
+            Function::new_native_with_env(store, env.clone(), do_addr_validate),
         );
 
         // Reads human address from source_ptr and writes canonicalized representation to destination_ptr.
@@ -120,7 +119,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "addr_canonicalize",
-            Function::new_native_with_env(store, env.clone(), native_addr_canonicalize),
+            Function::new_native_with_env(store, env.clone(), do_addr_canonicalize),
         );
 
         // Reads canonical address from source_ptr and writes humanized representation to destination_ptr.
@@ -129,7 +128,7 @@ where
         // Ownership of both input and output pointer is not transferred to the host.
         env_imports.insert(
             "addr_humanize",
-            Function::new_native_with_env(store, env.clone(), native_addr_humanize),
+            Function::new_native_with_env(store, env.clone(), do_addr_humanize),
         );
 
         // Verifies message hashes against a signature with a public key, using the secp256k1 ECDSA parametrization.
@@ -137,12 +136,12 @@ where
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "secp256k1_verify",
-            Function::new_native_with_env(store, env.clone(), native_secp256k1_verify),
+            Function::new_native_with_env(store, env.clone(), do_secp256k1_verify),
         );
 
         env_imports.insert(
             "secp256k1_recover_pubkey",
-            Function::new_native_with_env(store, env.clone(), native_secp256k1_recover_pubkey),
+            Function::new_native_with_env(store, env.clone(), do_secp256k1_recover_pubkey),
         );
 
         // Verifies a message against a signature with a public key, using the ed25519 EdDSA scheme.
@@ -150,7 +149,7 @@ where
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "ed25519_verify",
-            Function::new_native_with_env(store, env.clone(), native_ed25519_verify),
+            Function::new_native_with_env(store, env.clone(), do_ed25519_verify),
         );
 
         // Verifies a batch of messages against a batch of signatures with a batch of public keys,
@@ -160,7 +159,7 @@ where
         // Ownership of input pointers is not transferred to the host.
         env_imports.insert(
             "ed25519_batch_verify",
-            Function::new_native_with_env(store, env.clone(), native_ed25519_batch_verify),
+            Function::new_native_with_env(store, env.clone(), do_ed25519_batch_verify),
         );
 
         // Allows the contract to emit debug logs that the host can either process or ignore.
@@ -174,7 +173,7 @@ where
 
         env_imports.insert(
             "query_chain",
-            Function::new_native_with_env(store, env.clone(), native_query_chain),
+            Function::new_native_with_env(store, env.clone(), do_query_chain),
         );
 
         // Creates an iterator that will go from start to end.
@@ -186,7 +185,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_scan",
-            Function::new_native_with_env(store, env.clone(), native_db_scan),
+            Function::new_native_with_env(store, env.clone(), do_scan),
         );
 
         // Get next element of iterator with ID `iterator_id`.
@@ -197,7 +196,7 @@ where
         #[cfg(feature = "iterator")]
         env_imports.insert(
             "db_next",
-            Function::new_native_with_env(store, env.clone(), native_db_next),
+            Function::new_native_with_env(store, env.clone(), do_next),
         );
 
         import_obj.register("env", env_imports);
