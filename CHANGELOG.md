@@ -20,6 +20,8 @@ and this project adheres to
   representation. This allows you to insert typical bech32 addresses in tests.
   ([#995])
 
+[#995]: https://github.com/CosmWasm/cosmwasm/pull/995
+
 ## [0.15.0] - 2021-06-24
 
 ### Added
