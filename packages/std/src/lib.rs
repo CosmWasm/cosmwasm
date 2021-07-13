@@ -103,7 +103,10 @@ pub mod testing {
         MockStorage, MOCK_CONTRACT_ADDR,
     };
     #[cfg(feature = "stargate")]
-    pub use crate::mock::{mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv};
+    pub use crate::mock::{
+        mock_ibc_channel, mock_ibc_channel_close, mock_ibc_channel_connect, mock_ibc_channel_open,
+        mock_ibc_packet, mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
+    };
 }
 
 // Re-exports

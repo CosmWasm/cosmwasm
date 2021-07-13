@@ -254,10 +254,7 @@ mod tests {
         mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
         MockQuerier, MockStorage,
     };
-    use cosmwasm_std::{
-        coin, coins, BankMsg, CosmosMsg, IbcAcknowledgement, IbcAcknowledgementWithPacket,
-        OwnedDeps,
-    };
+    use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, IbcAcknowledgement, OwnedDeps};
 
     const CREATOR: &str = "creator";
 
@@ -301,11 +298,8 @@ mod tests {
         let response = AcknowledgementMsg::Ok(WhoAmIResponse {
             account: account.into(),
         });
-        let ack = IbcAcknowledgementWithPacket {
-            acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
-            original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
-        };
-        let msg = IbcPacketAckMsg::new(ack);
+        let ack = IbcAcknowledgement::encode_json(&response).unwrap();
+        let msg = mock_ibc_packet_ack(channel_id, &packet, ack).unwrap();
         let res = ibc_packet_ack(deps, mock_env(), msg).unwrap();
         assert_eq!(0, res.messages.len());
     }
@@ -390,23 +384,17 @@ mod tests {
         let info = mock_info(CREATOR, &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
         assert_eq!(1, res.messages.len());
-        let packet = match res.messages.swap_remove(0).msg {
+        let msg = match res.messages.swap_remove(0).msg {
             CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id, data, ..
             }) => {
-                let mut packet = mock_ibc_packet_ack(&channel_id, &1).unwrap();
-                packet.data = data;
-                packet
+                let ack = IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap();
+                let mut msg = mock_ibc_packet_ack(&channel_id, &1, ack).unwrap();
+                msg.ack.original_packet.data = data;
+                msg
             }
             o => panic!("Unexpected message: {:?}", o),
         };
-
-        // and handle the ack
-        let ack = IbcAcknowledgementWithPacket {
-            acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
-            original_packet: packet,
-        };
-        let msg = IbcPacketAckMsg::new(ack);
         let res = ibc_packet_ack(deps.as_mut(), mock_env(), msg).unwrap();
         // no actions expected, but let's check the events to see it was dispatched properly
         assert_eq!(0, res.messages.len());

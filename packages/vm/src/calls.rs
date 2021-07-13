@@ -678,10 +678,12 @@ mod tests {
         use crate::testing::{
             mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
         };
-        use cosmwasm_std::testing::{mock_ibc_channel, mock_ibc_packet_ack};
+        use cosmwasm_std::testing::{
+            mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
+        };
         use cosmwasm_std::{
-            attr, Empty, Event, IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcOrder, Reply,
-            ReplyOn, SubMsgExecutionResponse,
+            attr, Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn,
+            SubMsgExecutionResponse,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
@@ -760,12 +762,8 @@ mod tests {
         fn call_ibc_packet_ack_works() {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
-            let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
-            let ack = IbcAcknowledgementWithPacket {
-                acknowledgement: IbcAcknowledgement::new(br#"{}"#),
-                original_packet: packet,
-            };
-            let msg = IbcPacketAckMsg::new(ack);
+            let ack = IbcAcknowledgement::new(br#"{}"#);
+            let msg = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#, ack).unwrap();
             call_ibc_packet_ack::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
@@ -774,8 +772,7 @@ mod tests {
         fn call_ibc_packet_timeout_works() {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
-            let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#).unwrap();
-            let msg = IbcPacketTimeoutMsg::new(packet);
+            let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#).unwrap();
             call_ibc_packet_timeout::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
@@ -785,8 +782,7 @@ mod tests {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let who_am_i = br#"{"who_am_i":{}}"#;
-            let packet = mock_ibc_packet_ack(CHANNEL_ID, who_am_i).unwrap();
-            let msg = IbcPacketReceiveMsg::new(packet);
+            let msg = mock_ibc_packet_recv(CHANNEL_ID, who_am_i).unwrap();
             call_ibc_packet_receive::<_, _, _, Empty>(&mut instance, &mock_env(), &msg)
                 .unwrap()
                 .unwrap();
