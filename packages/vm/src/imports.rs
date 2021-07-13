@@ -53,10 +53,6 @@ const MAX_COUNT_ED25519_BATCH: usize = 256;
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
-// The block of native_* prefixed functions is tailored for Wasmer's
-// Function::new_native_with_env interface. Those require an env in the first
-// argument and cannot capiture other variables such as the Api.
-
 pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
@@ -65,23 +61,12 @@ pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
     Ok(ptr)
 }
 
-/// Prints a debug message to console.
-/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
-pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    message_ptr: u32,
-) -> VmResult<()> {
-    if env.print_debug {
-        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
-        let msg = String::from_utf8_lossy(&message_data);
-        println!("{}", msg);
-    }
-    Ok(())
-}
-
-//
 // Import implementations
 //
+// This block of do_* prefixed functions is tailored for Wasmer's
+// Function::new_native_with_env interface. Those require an env in the first
+// argument and cannot capture other variables. Thus everything is accessed
+// through the env.
 
 /// Reads a storage entry from the VM's storage into Wasm memory
 fn do_read<A: BackendApi, S: Storage, Q: Querier>(
@@ -349,6 +334,20 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
         },
         |valid| (!valid).into(),
     ))
+}
+
+/// Prints a debug message to console.
+/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
+pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+) -> VmResult<()> {
+    if env.print_debug {
+        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+        let msg = String::from_utf8_lossy(&message_data);
+        println!("{}", msg);
+    }
+    Ok(())
 }
 
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
