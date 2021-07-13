@@ -25,12 +25,12 @@ and this project adheres to
   enabled by default.
 - cosmwasm-std: Make `MockApi::canonical_length` private.
 - cosmwasm-vm: Make `MockApi::canonical_length` private.
-- cosmwasm-vm: Bump required marker export `cosmwasm_vm_version_6` to
+- cosmwasm-vm: Bump required marker export `interface_version_6` to
   `interface_version_7`.
 - cosmwasm-std, cosmwasm-vm: Entrypoints `ibc_channel_open`,
   `ibc_channel_connect`, `ibc_channel_close`, `ibc_packet_receive`,
   `ibc_packet_ack`, `ibc_packet_timeout` now each accept a corresponding `Msg`
-  value that wrap around channels, packets and acknowledgements.
+  value that wraps around channels, packets and acknowledgements.
 - cosmwasm-std/cosmwasm-vm: Increase canonical address lengths up to 64 bytes.
 - cosmwasm-std/cosmwasm-vm: In `MockApi`, increase max length of supported human
   addresses from 24 bytes to 54 bytes by using a longer canonical
