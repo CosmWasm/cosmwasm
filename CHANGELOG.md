@@ -26,6 +26,13 @@ and this project adheres to
   `ibc_channel_connect`, `ibc_channel_close`, `ibc_packet_receive`,
   `ibc_packet_ack`, `ibc_packet_timeout` now each accept a corresponding `Msg`
   value that wrap around channels, packets and acknowledgements.
+- cosmwasm-std/cosmwasm-vm: Increase canonical address lengths up to 64 bytes.
+- cosmwasm-std/cosmwasm-vm: In `MockApi`, increase max length of supported human
+  addresses from 24 bytes to 54 bytes by using a longer canonical
+  representation. This allows you to insert typical bech32 addresses in tests.
+  ([#995])
+
+[#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
 ## [0.15.0] - 2021-06-24
 

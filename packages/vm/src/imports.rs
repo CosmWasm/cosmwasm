@@ -34,8 +34,8 @@ const MI: usize = 1024 * 1024;
 const MAX_LENGTH_DB_KEY: usize = 64 * KI;
 /// Max key length for db_write (i.e. when VM reads from Wasm memory)
 const MAX_LENGTH_DB_VALUE: usize = 128 * KI;
-/// Typically 20 (Cosmos SDK, Ethereum) or 32 (Nano, Substrate)
-const MAX_LENGTH_CANONICAL_ADDRESS: usize = 32;
+/// Typically 20 (Cosmos SDK, Ethereum), 32 (Nano, Substrate) or 54 (MockApi)
+const MAX_LENGTH_CANONICAL_ADDRESS: usize = 64;
 /// The maximum allowed size for bech32 (https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki#bech32)
 const MAX_LENGTH_HUMAN_ADDRESS: usize = 90;
 const MAX_LENGTH_QUERY_CHAIN_REQUEST: usize = 64 * KI;
@@ -65,108 +65,9 @@ pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
     Ok(ptr)
 }
 
-pub fn native_db_write<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    key_ptr: u32,
-    value_ptr: u32,
-) -> VmResult<()> {
-    do_write(env, key_ptr, value_ptr)
-}
-
-pub fn native_db_remove<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    key_ptr: u32,
-) -> VmResult<()> {
-    do_remove(env, key_ptr)
-}
-
-pub fn native_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    source_ptr: u32,
-) -> VmResult<u32> {
-    do_addr_validate(&env, source_ptr)
-}
-
-pub fn native_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    source_ptr: u32,
-    destination_ptr: u32,
-) -> VmResult<u32> {
-    do_addr_canonicalize(&env, source_ptr, destination_ptr)
-}
-
-pub fn native_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    source_ptr: u32,
-    destination_ptr: u32,
-) -> VmResult<u32> {
-    do_addr_humanize(&env, source_ptr, destination_ptr)
-}
-
-pub fn native_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    hash_ptr: u32,
-    signature_ptr: u32,
-    pubkey_ptr: u32,
-) -> VmResult<u32> {
-    do_secp256k1_verify(env, hash_ptr, signature_ptr, pubkey_ptr)
-}
-
-pub fn native_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    hash_ptr: u32,
-    signature_ptr: u32,
-    recovery_param: u32,
-) -> VmResult<u64> {
-    do_secp256k1_recover_pubkey(env, hash_ptr, signature_ptr, recovery_param)
-}
-
-pub fn native_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    message_ptr: u32,
-    signature_ptr: u32,
-    pubkey_ptr: u32,
-) -> VmResult<u32> {
-    do_ed25519_verify(env, message_ptr, signature_ptr, pubkey_ptr)
-}
-
-pub fn native_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    messages_ptr: u32,
-    signatures_ptr: u32,
-    pubkeys_ptr: u32,
-) -> VmResult<u32> {
-    do_ed25519_batch_verify(env, messages_ptr, signatures_ptr, pubkeys_ptr)
-}
-
-pub fn native_query_chain<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    request_ptr: u32,
-) -> VmResult<u32> {
-    do_query_chain(env, request_ptr)
-}
-
-#[cfg(feature = "iterator")]
-pub fn native_db_scan<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    start_ptr: u32,
-    end_ptr: u32,
-    order: i32,
-) -> VmResult<u32> {
-    do_scan(env, start_ptr, end_ptr, order)
-}
-
-#[cfg(feature = "iterator")]
-pub fn native_db_next<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    iterator_id: u32,
-) -> VmResult<u32> {
-    do_next(env, iterator_id)
-}
-
 /// Prints a debug message to console.
 /// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
-pub fn native_debug<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
 ) -> VmResult<()> {
@@ -201,7 +102,7 @@ fn do_read<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 /// Writes a storage entry from Wasm memory into the VM's storage
-fn do_write<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_write<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
     value_ptr: u32,
@@ -221,7 +122,7 @@ fn do_write<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_remove<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<()> {
@@ -239,7 +140,7 @@ fn do_remove<A: BackendApi, S: Storage, Q: Querier>(
     Ok(())
 }
 
-fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
 ) -> VmResult<u32> {
@@ -264,7 +165,7 @@ fn do_addr_validate<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -293,7 +194,7 @@ fn do_addr_canonicalize<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     source_ptr: u32,
     destination_ptr: u32,
@@ -314,7 +215,7 @@ fn do_addr_humanize<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,
@@ -341,7 +242,7 @@ fn do_secp256k1_verify<A: BackendApi, S: Storage, Q: Querier>(
     ))
 }
 
-fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     hash_ptr: u32,
     signature_ptr: u32,
@@ -374,7 +275,7 @@ fn do_secp256k1_recover_pubkey<A: BackendApi, S: Storage, Q: Querier>(
     }
 }
 
-fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     message_ptr: u32,
     signature_ptr: u32,
@@ -402,7 +303,7 @@ fn do_ed25519_verify<A: BackendApi, S: Storage, Q: Querier>(
     ))
 }
 
-fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     messages_ptr: u32,
     signatures_ptr: u32,
@@ -465,7 +366,7 @@ fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
     Ok(target_ptr)
 }
 
-fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     request_ptr: u32,
 ) -> VmResult<u32> {
@@ -481,7 +382,7 @@ fn do_query_chain<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_scan<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     start_ptr: u32,
     end_ptr: u32,
@@ -502,7 +403,7 @@ fn do_scan<A: BackendApi, S: Storage, Q: Querier>(
 }
 
 #[cfg(feature = "iterator")]
-fn do_next<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_next<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     iterator_id: u32,
 ) -> VmResult<u32> {
@@ -698,7 +599,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_works() {
+    fn do_db_write_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -707,7 +608,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        do_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(&env, key_ptr, value_ptr).unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -721,7 +622,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_can_override() {
+    fn do_db_write_can_override() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -730,7 +631,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        do_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(&env, key_ptr, value_ptr).unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -741,7 +642,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_works_for_empty_value() {
+    fn do_db_write_works_for_empty_value() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -750,7 +651,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        do_write(&env, key_ptr, value_ptr).unwrap();
+        do_db_write(&env, key_ptr, value_ptr).unwrap();
 
         let val = env
             .with_storage_from_context::<_, _>(|store| {
@@ -764,7 +665,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_fails_for_large_key() {
+    fn do_db_write_fails_for_large_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -773,7 +674,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(&env, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -790,7 +691,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_fails_for_large_value() {
+    fn do_db_write_fails_for_large_value() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -799,7 +700,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(&env, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -816,7 +717,7 @@ mod tests {
     }
 
     #[test]
-    fn do_write_is_prohibited_in_readonly_contexts() {
+    fn do_db_write_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -826,7 +727,7 @@ mod tests {
         leave_default_data(&env);
         env.set_storage_readonly(true);
 
-        let result = do_write(&env, key_ptr, value_ptr);
+        let result = do_db_write(&env, key_ptr, value_ptr);
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -834,7 +735,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_works() {
+    fn do_db_remove_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -849,7 +750,7 @@ mod tests {
         })
         .unwrap();
 
-        do_remove(&env, key_ptr).unwrap();
+        do_db_remove(&env, key_ptr).unwrap();
 
         env.with_storage_from_context::<_, _>(|store| {
             println!("{:?}", store);
@@ -866,7 +767,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_works_for_non_existent_key() {
+    fn do_db_remove_works_for_non_existent_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -876,7 +777,7 @@ mod tests {
         leave_default_data(&env);
 
         // Note: right now we cannot differnetiate between an existent and a non-existent key
-        do_remove(&env, key_ptr).unwrap();
+        do_db_remove(&env, key_ptr).unwrap();
 
         let value = env
             .with_storage_from_context::<_, _>(|store| {
@@ -887,7 +788,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_fails_for_large_key() {
+    fn do_db_remove_fails_for_large_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -895,7 +796,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let result = do_remove(&env, key_ptr);
+        let result = do_db_remove(&env, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source:
@@ -912,7 +813,7 @@ mod tests {
     }
 
     #[test]
-    fn do_remove_is_prohibited_in_readonly_contexts() {
+    fn do_db_remove_is_prohibited_in_readonly_contexts() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -921,7 +822,7 @@ mod tests {
         leave_default_data(&env);
         env.set_storage_readonly(true);
 
-        let result = do_remove(&env, key_ptr);
+        let result = do_db_remove(&env, key_ptr);
         match result.unwrap_err() {
             VmError::WriteAccessDenied { .. } => {}
             e => panic!("Unexpected error: {:?}", e),
@@ -948,7 +849,7 @@ mod tests {
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
-        let source_ptr3 = write_data(&env, b"addressexceedingaddressspace"); // too long
+        let source_ptr3 = write_data(&env, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
 
         leave_default_data(&env);
 
@@ -1039,8 +940,8 @@ mod tests {
 
         let source_ptr1 = write_data(&env, b"fo\x80o"); // invalid UTF-8 (fo�o)
         let source_ptr2 = write_data(&env, b""); // empty
-        let source_ptr3 = write_data(&env, b"addressexceedingaddressspace"); // too long
-        let dest_ptr = create_empty(&mut instance, 8);
+        let source_ptr3 = write_data(&env, b"addressexceedingaddressspacesuperlongreallylongiamensuringthatitislongerthaneverything"); // too long
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1139,7 +1040,7 @@ mod tests {
 
         let source_data = vec![0x22; api.canonical_length()];
         let source_ptr = write_data(&env, &source_data);
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1154,7 +1055,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo"); // too short
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1170,7 +1071,7 @@ mod tests {
         let (env, mut instance) = make_instance(api);
 
         let source_ptr = write_data(&env, b"foo\0\0\0\0\0");
-        let dest_ptr = create_empty(&mut instance, 50);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1189,8 +1090,8 @@ mod tests {
         let api = MockApi::default();
         let (env, mut instance) = make_instance(api);
 
-        let source_ptr = write_data(&env, &[61; 33]);
-        let dest_ptr = create_empty(&mut instance, 50);
+        let source_ptr = write_data(&env, &[61; 65]);
+        let dest_ptr = create_empty(&mut instance, 70);
 
         leave_default_data(&env);
 
@@ -1203,8 +1104,8 @@ mod tests {
                     },
                 ..
             } => {
-                assert_eq!(length, 33);
-                assert_eq!(max_length, 32);
+                assert_eq!(length, 65);
+                assert_eq!(max_length, 64);
             }
             err => panic!("Incorrect error returned: {:?}", err),
         }
@@ -1825,13 +1726,13 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_unbound_works() {
+    fn do_db_scan_unbound_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let id = do_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
         assert_eq!(1, id);
 
         let item = env
@@ -1852,13 +1753,13 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_unbound_descending_works() {
+    fn do_db_scan_unbound_descending_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let id = do_scan(&env, 0, 0, Order::Descending.into()).unwrap();
+        let id = do_db_scan(&env, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(1, id);
 
         let item = env
@@ -1879,7 +1780,7 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_bound_works() {
+    fn do_db_scan_bound_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
@@ -1888,7 +1789,7 @@ mod tests {
 
         leave_default_data(&env);
 
-        let id = do_scan(&env, start, end, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(&env, start, end, Order::Ascending.into()).unwrap();
 
         let item = env
             .with_storage_from_context::<_, _>(|store| Ok(store.next(id)))
@@ -1903,14 +1804,14 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_multiple_iterators() {
+    fn do_db_scan_multiple_iterators() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // unbounded, ascending and descending
-        let id1 = do_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
-        let id2 = do_scan(&env, 0, 0, Order::Descending.into()).unwrap();
+        let id1 = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id2 = do_db_scan(&env, 0, 0, Order::Descending.into()).unwrap();
         assert_eq!(id1, 1);
         assert_eq!(id2, 2);
 
@@ -1947,13 +1848,13 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_scan_errors_for_invalid_order_value() {
+    fn do_db_scan_errors_for_invalid_order_value() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         // set up iterator over all space
-        let result = do_scan(&env, 0, 0, 42);
+        let result = do_db_scan(&env, 0, 0, 42);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::InvalidOrder { .. },
@@ -1965,44 +1866,44 @@ mod tests {
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_next_works() {
+    fn do_db_next_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
         leave_default_data(&env);
 
-        let id = do_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
+        let id = do_db_scan(&env, 0, 0, Order::Ascending.into()).unwrap();
 
         // Entry 1
-        let kv_region_ptr = do_next(&env, id).unwrap();
+        let kv_region_ptr = do_db_next(&env, id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
             [KEY1, b"\0\0\0\x03", VALUE1, b"\0\0\0\x06"].concat()
         );
 
         // Entry 2
-        let kv_region_ptr = do_next(&env, id).unwrap();
+        let kv_region_ptr = do_db_next(&env, id).unwrap();
         assert_eq!(
             force_read(&env, kv_region_ptr),
             [KEY2, b"\0\0\0\x04", VALUE2, b"\0\0\0\x05"].concat()
         );
 
         // End
-        let kv_region_ptr = do_next(&env, id).unwrap();
+        let kv_region_ptr = do_db_next(&env, id).unwrap();
         assert_eq!(force_read(&env, kv_region_ptr), b"\0\0\0\0\0\0\0\0");
         // API makes no guarantees for value_ptr in this case
     }
 
     #[test]
     #[cfg(feature = "iterator")]
-    fn do_next_fails_for_non_existent_id() {
+    fn do_db_next_fails_for_non_existent_id() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
 
         leave_default_data(&env);
 
         let non_existent_id = 42u32;
-        let result = do_next(&env, non_existent_id);
+        let result = do_db_next(&env, non_existent_id);
         match result.unwrap_err() {
             VmError::BackendErr {
                 source: BackendError::IteratorDoesNotExist { id, .. },

@@ -62,7 +62,7 @@ pub type MockStorage = MemoryStorage;
 /// Length of canonical addresses created with this API. Contracts should not make any assumtions
 /// what this value is.
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-const CANONICAL_LENGTH: usize = 24;
+const CANONICAL_LENGTH: usize = 54;
 
 const SHUFFLES_ENCODE: usize = 18;
 const SHUFFLES_DECODE: usize = 2;
@@ -698,7 +698,8 @@ mod tests {
     #[should_panic(expected = "address too long")]
     fn addr_canonicalize_max_input_length() {
         let api = MockApi::default();
-        let human = String::from("some-extremely-long-address-not-supported-by-this-api");
+        let human =
+            String::from("some-extremely-long-address-not-supported-by-this-api-longer-than-54");
         let _ = api.addr_canonicalize(&human).unwrap();
     }
 

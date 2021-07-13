@@ -34,7 +34,7 @@ pub fn mock_backend_with_balances(
 /// Length of canonical addresses created with this API. Contracts should not make any assumtions
 /// what this value is.
 /// The value here must be restorable with `SHUFFLES_ENCODE` + `SHUFFLES_DECODE` in-shuffles.
-const CANONICAL_LENGTH: usize = 24;
+const CANONICAL_LENGTH: usize = 54;
 
 const SHUFFLES_ENCODE: usize = 18;
 const SHUFFLES_DECODE: usize = 2;
@@ -230,7 +230,7 @@ mod tests {
     #[test]
     fn canonical_address_max_input_length() {
         let api = MockApi::default();
-        let human = "longer-than-the-address-length-supported-by-this-api";
+        let human = "longer-than-the-address-length-supported-by-this-api-longer-than-54";
         match api.canonical_address(human).0.unwrap_err() {
             BackendError::UserErr { .. } => {}
             err => panic!("Unexpected error: {:?}", err),
