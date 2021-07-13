@@ -14,6 +14,13 @@ and this project adheres to
   enabled by default.
 - cosmwasm-std: Make `MockApi::canonical_length` private.
 - cosmwasm-vm: Make `MockApi::canonical_length` private.
+- cosmwasm-std/cosmwasm-vm: Increase canonical address lengths up to 64 bytes.
+- cosmwasm-std/cosmwasm-vm: In `MockApi`, increase max length of supported human
+  addresses from 24 bytes to 54 bytes by using a longer canonical
+  representation. This allows you to insert typical bech32 addresses in tests.
+  ([#995])
+
+[#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
 ## [0.15.0] - 2021-06-24
 
