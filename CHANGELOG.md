@@ -39,7 +39,8 @@ and this project adheres to
 - cosmwasm-std::testing: `mock_ibc_packet_recv` now returns an
   `IbcPacketReceiveMsg`, `mock_ibc_packet_ack` requires an acknowledgement to be
   passed and returns an `IbcPacketAckMsg`.
-- cosmwasm-std: `IbcBasicResponse` and `IbcReceiveResponse` now both support custom events via the `events` field.
+- cosmwasm-std: `IbcBasicResponse` and `IbcReceiveResponse` now both support
+  custom events via the `events` field.
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 

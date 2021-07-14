@@ -178,6 +178,7 @@ pub fn ibc_channel_connect(
     Ok(IbcBasicResponse {
         messages: vec![msg],
         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -219,6 +220,7 @@ pub fn ibc_channel_close(
             attr("channel_id", channel_id),
             attr("steal_funds", steal_funds.to_string()),
         ],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -263,6 +265,7 @@ pub fn ibc_packet_receive(
             acknowledgement,
             messages: vec![],
             attributes: vec![],
+            ..IbcReceiveResponse::default()
         })
     })
 }
@@ -279,6 +282,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
         acknowledgement,
         messages: vec![],
         attributes: vec![attr("action", "receive_who_am_i")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -296,6 +300,7 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
         acknowledgement,
         messages: vec![],
         attributes: vec![attr("action", "receive_balances")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -321,6 +326,7 @@ fn receive_dispatch(
         acknowledgement,
         messages: vec![msg],
         attributes: vec![attr("action", "receive_dispatch")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -334,6 +340,7 @@ pub fn ibc_packet_ack(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -347,6 +354,7 @@ pub fn ibc_packet_timeout(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
+        ..IbcBasicResponse::default()
     })
 }
 
