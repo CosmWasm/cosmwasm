@@ -161,7 +161,7 @@ second step of the handshake, which is equivalent to `ChanOpenAck` and
 pub fn ibc_channel_connect(
     deps: DepsMut,
     env: Env,
-    channel: IbcChannelConnectMsg,
+    msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> { }
 ```
 
