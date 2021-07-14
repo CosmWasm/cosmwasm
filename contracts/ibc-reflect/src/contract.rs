@@ -178,7 +178,7 @@ pub fn ibc_channel_connect(
     Ok(IbcBasicResponse {
         messages: vec![msg],
         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
-        ..IbcBasicResponse::default()
+        events: vec![Event::new("ibc").attr("channel", "connect")],
     })
 }
 
@@ -265,7 +265,7 @@ pub fn ibc_packet_receive(
             acknowledgement,
             messages: vec![],
             attributes: vec![],
-            ..IbcReceiveResponse::default()
+            events: vec![Event::new("ibc").attr("packet", "receive")],
         })
     })
 }
@@ -415,6 +415,8 @@ mod tests {
             mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
         assert_eq!(1, res.messages.len());
+        assert_eq!(1, res.events.len());
+        assert_eq!(Event::new("ibc").attr("channel", "connect"), res.events[0]);
         let id = res.messages[0].id;
 
         // fake a reply and ensure this works
@@ -547,6 +549,8 @@ mod tests {
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
+        assert_eq!(1, res.events.len());
+        assert_eq!(Event::new("ibc").attr("packet", "receive"), res.events[0]);
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(
