@@ -6,6 +6,20 @@ major releases of `cosmwasm`. Note that you can also view the
 
 ## 0.15 -> 0.16 (unreleased)
 
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.16.0"
+  cosmwasm-storage = "0.16.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.16.0"
+  cosmwasm-vm = "0.16.0"
+  # ...
+  ```
+
 - The `attr` function now accepts arguments that implement `Into<String>` rather
   than `ToString`. This means that "stringly" types like `&str` are still
   accepted, but others (like numbers or booleans) have to be explicitly
@@ -175,6 +189,20 @@ major releases of `cosmwasm`. Note that you can also view the
   ```
 
 ## 0.14 -> 0.15
+
+- Update CosmWasm dependencies in Cargo.toml (skip the ones you don't use):
+
+  ```
+  [dependencies]
+  cosmwasm-std = "0.15.0"
+  cosmwasm-storage = "0.15.0"
+  # ...
+
+  [dev-dependencies]
+  cosmwasm-schema = "0.15.0"
+  cosmwasm-vm = "0.15.0"
+  # ...
+  ```
 
 - Combine `messages` and `submessages` on the `Response` object. The new format
   uses `messages: Vec<SubMsg<T>>`, so copy `submessages` content, and wrap old
