@@ -53,38 +53,15 @@ const MAX_COUNT_ED25519_BATCH: usize = 256;
 /// Max length for a debug message
 const MAX_LENGTH_DEBUG: usize = 2 * MI;
 
-// The block of native_* prefixed functions is tailored for Wasmer's
-// Function::new_native_with_env interface. Those require an env in the first
-// argument and cannot capiture other variables such as the Api.
-
-pub fn native_db_read<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    key_ptr: u32,
-) -> VmResult<u32> {
-    let ptr = do_read::<A, S, Q>(env, key_ptr)?;
-    Ok(ptr)
-}
-
-/// Prints a debug message to console.
-/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
-pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
-    env: &Environment<A, S, Q>,
-    message_ptr: u32,
-) -> VmResult<()> {
-    if env.print_debug {
-        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
-        let msg = String::from_utf8_lossy(&message_data);
-        println!("{}", msg);
-    }
-    Ok(())
-}
-
-//
 // Import implementations
 //
+// This block of do_* prefixed functions is tailored for Wasmer's
+// Function::new_native_with_env interface. Those require an env in the first
+// argument and cannot capture other variables. Thus everything is accessed
+// through the env.
 
 /// Reads a storage entry from the VM's storage into Wasm memory
-fn do_read<A: BackendApi, S: Storage, Q: Querier>(
+pub fn do_db_read<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
     key_ptr: u32,
 ) -> VmResult<u32> {
@@ -351,6 +328,20 @@ pub fn do_ed25519_batch_verify<A: BackendApi, S: Storage, Q: Querier>(
     ))
 }
 
+/// Prints a debug message to console.
+/// This does not charge gas, so debug printing should be disabled when used in a blockchain module.
+pub fn do_debug<A: BackendApi, S: Storage, Q: Querier>(
+    env: &Environment<A, S, Q>,
+    message_ptr: u32,
+) -> VmResult<()> {
+    if env.print_debug {
+        let message_data = read_region(&env.memory(), message_ptr, MAX_LENGTH_DEBUG)?;
+        let msg = String::from_utf8_lossy(&message_data);
+        println!("{}", msg);
+    }
+    Ok(())
+}
+
 /// Creates a Region in the contract, writes the given data to it and returns the memory location
 fn write_to_contract<A: BackendApi, S: Storage, Q: Querier>(
     env: &Environment<A, S, Q>,
@@ -558,37 +549,37 @@ mod tests {
     }
 
     #[test]
-    fn do_read_works() {
+    fn do_db_read_works() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, KEY1);
-        let result = do_read(&env, key_ptr);
+        let result = do_db_read(&env, key_ptr);
         let value_ptr = result.unwrap();
         assert!(value_ptr > 0);
         assert_eq!(force_read(&env, value_ptr as u32), VALUE1);
     }
 
     #[test]
-    fn do_read_works_for_non_existent_key() {
+    fn do_db_read_works_for_non_existent_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, b"I do not exist in storage");
-        let result = do_read(&env, key_ptr);
+        let result = do_db_read(&env, key_ptr);
         assert_eq!(result.unwrap(), 0);
     }
 
     #[test]
-    fn do_read_fails_for_large_key() {
+    fn do_db_read_fails_for_large_key() {
         let api = MockApi::default();
         let (env, _instance) = make_instance(api);
         leave_default_data(&env);
 
         let key_ptr = write_data(&env, &vec![7u8; 300 * 1024]);
-        let result = do_read(&env, key_ptr);
+        let result = do_db_read(&env, key_ptr);
         match result.unwrap_err() {
             VmError::CommunicationErr {
                 source: CommunicationError::RegionLengthTooBig { length, .. },
