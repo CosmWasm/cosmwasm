@@ -1,7 +1,7 @@
 use cosmwasm_std::{
-    attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcAcknowledgementWithPacket,
-    IbcBasicResponse, IbcChannel, IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, StdError,
-    StdResult, SubMsg,
+    attr, entry_point, from_slice, to_binary, DepsMut, Env, IbcBasicResponse, IbcChannelCloseMsg,
+    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcMsg, IbcOrder, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse, StdError, StdResult, SubMsg,
 };
 
 use crate::ibc_msg::{
@@ -17,7 +17,9 @@ pub const PACKET_LIFETIME: u64 = 60 * 60;
 
 #[entry_point]
 /// enforces ordering and versioing constraints
-pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
+pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
+    let channel = msg.channel;
+
     if channel.order != IbcOrder::Ordered {
         return Err(StdError::generic_err("Only supports ordered channels"));
     }
@@ -46,8 +48,10 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdRe
 pub fn ibc_channel_connect(
     deps: DepsMut,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let channel = msg.channel;
+
     let channel_id = channel.endpoint.channel_id;
 
     // create an account holder the channel exists (not found if not registered)
@@ -76,8 +80,10 @@ pub fn ibc_channel_connect(
 pub fn ibc_channel_close(
     deps: DepsMut,
     _env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let channel = msg.channel;
+
     // remove the channel
     let channel_id = channel.endpoint.channel_id;
     accounts(deps.storage).remove(channel_id.as_bytes());
@@ -93,7 +99,7 @@ pub fn ibc_channel_close(
 pub fn ibc_packet_receive(
     _deps: DepsMut,
     _env: Env,
-    _packet: IbcPacket,
+    _packet: IbcPacketReceiveMsg,
 ) -> StdResult<IbcReceiveResponse> {
     Ok(IbcReceiveResponse {
         acknowledgement: b"{}".into(),
@@ -106,8 +112,9 @@ pub fn ibc_packet_receive(
 pub fn ibc_packet_ack(
     deps: DepsMut,
     env: Env,
-    ack: IbcAcknowledgementWithPacket,
+    msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
+    let ack = msg.ack;
     // which local channel was this packet send from
     let caller = ack.original_packet.src.channel_id;
     // we need to parse the ack based on our request
@@ -229,7 +236,7 @@ fn acknowledge_balances(
 pub fn ibc_packet_timeout(
     _deps: DepsMut,
     _env: Env,
-    _packet: IbcPacket,
+    _msg: IbcPacketTimeoutMsg,
 ) -> StdResult<IbcBasicResponse> {
     Ok(IbcBasicResponse {
         messages: vec![],
@@ -244,8 +251,8 @@ mod tests {
     use crate::msg::{AccountResponse, ExecuteMsg, InstantiateMsg, QueryMsg};
 
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel, mock_ibc_packet_ack, mock_info, MockApi,
-        MockQuerier, MockStorage,
+        mock_dependencies, mock_env, mock_ibc_channel_connect, mock_ibc_channel_open,
+        mock_ibc_packet_ack, mock_info, MockApi, MockQuerier, MockStorage,
     };
     use cosmwasm_std::{coin, coins, BankMsg, CosmosMsg, IbcAcknowledgement, OwnedDeps};
 
@@ -264,13 +271,14 @@ mod tests {
     // save the account (tested in detail in `proper_handshake_flow`)
     fn connect(mut deps: DepsMut, channel_id: &str) {
         // open packet has no counterparty version, connect does
-        let mut handshake_open = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.counterparty_version = None;
+        let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        handshake_open.channel.counterparty_version = None;
         // first we try to open with a valid handshake
         ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
-        let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let handshake_connect =
+            mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
 
         // this should send a WhoAmI request, which is received some blocks later
@@ -289,11 +297,9 @@ mod tests {
         let response = AcknowledgementMsg::Ok(WhoAmIResponse {
             account: account.into(),
         });
-        let ack = IbcAcknowledgementWithPacket {
-            acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
-            original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
-        };
-        let res = ibc_packet_ack(deps, mock_env(), ack).unwrap();
+        let ack = IbcAcknowledgement::encode_json(&response).unwrap();
+        let msg = mock_ibc_packet_ack(channel_id, &packet, ack).unwrap();
+        let res = ibc_packet_ack(deps, mock_env(), msg).unwrap();
         assert_eq!(0, res.messages.len());
     }
 
@@ -301,13 +307,13 @@ mod tests {
     fn enforce_version_in_handshake() {
         let mut deps = setup();
 
-        let wrong_order = mock_ibc_channel("channel-12", IbcOrder::Unordered, IBC_VERSION);
+        let wrong_order = mock_ibc_channel_open("channel-12", IbcOrder::Unordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_order).unwrap_err();
 
-        let wrong_version = mock_ibc_channel("channel-12", IbcOrder::Ordered, "reflect");
+        let wrong_version = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, "reflect");
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_version).unwrap_err();
 
-        let valid_handshake = mock_ibc_channel("channel-12", IbcOrder::Ordered, IBC_VERSION);
+        let valid_handshake = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), valid_handshake).unwrap();
     }
 
@@ -368,23 +374,18 @@ mod tests {
         let info = mock_info(CREATOR, &[]);
         let mut res = execute(deps.as_mut(), mock_env(), info, handle_msg).unwrap();
         assert_eq!(1, res.messages.len());
-        let packet = match res.messages.swap_remove(0).msg {
+        let msg = match res.messages.swap_remove(0).msg {
             CosmosMsg::Ibc(IbcMsg::SendPacket {
                 channel_id, data, ..
             }) => {
-                let mut packet = mock_ibc_packet_ack(&channel_id, &1).unwrap();
-                packet.data = data;
-                packet
+                let ack = IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap();
+                let mut msg = mock_ibc_packet_ack(&channel_id, &1, ack).unwrap();
+                msg.ack.original_packet.data = data;
+                msg
             }
             o => panic!("Unexpected message: {:?}", o),
         };
-
-        // and handle the ack
-        let ack = IbcAcknowledgementWithPacket {
-            acknowledgement: IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap(),
-            original_packet: packet,
-        };
-        let res = ibc_packet_ack(deps.as_mut(), mock_env(), ack).unwrap();
+        let res = ibc_packet_ack(deps.as_mut(), mock_env(), msg).unwrap();
         // no actions expected, but let's check the events to see it was dispatched properly
         assert_eq!(0, res.messages.len());
         assert_eq!(vec![attr("action", "acknowledge_dispatch")], res.attributes)

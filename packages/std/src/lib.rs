@@ -34,8 +34,10 @@ pub use crate::errors::{
 };
 #[cfg(feature = "stargate")]
 pub use crate::ibc::{
-    IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcEndpoint,
-    IbcMsg, IbcOrder, IbcPacket, IbcReceiveResponse, IbcTimeout, IbcTimeoutBlock,
+    IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel,
+    IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcMsg, IbcOrder,
+    IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
+    IbcTimeout, IbcTimeoutBlock,
 };
 #[cfg(feature = "iterator")]
 #[allow(deprecated)]
@@ -101,7 +103,10 @@ pub mod testing {
         MockStorage, MOCK_CONTRACT_ADDR,
     };
     #[cfg(feature = "stargate")]
-    pub use crate::mock::{mock_ibc_channel, mock_ibc_packet_ack, mock_ibc_packet_recv};
+    pub use crate::mock::{
+        mock_ibc_channel_close, mock_ibc_channel_connect, mock_ibc_channel_open,
+        mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
+    };
 }
 
 // Re-exports

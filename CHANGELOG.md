@@ -6,6 +6,17 @@ and this project adheres to
 
 ## [Unreleased]
 
+### Added
+
+- cosmwasm-std: Added the `IbcChannelOpenMsg`, `IbcChannelConnectMsg`,
+  `IbcChannelCloseMsg`, `IbcPacketReceiveMsg`, `IbcPacketAckMsg`, and
+  `IbcPacketTimeoutMsg` types for use with corresponding IBC entrypoints.
+- cosmwasm-std::testing: New mocking helpers for IBC channel msg types:
+  `mock_ibc_channel_open`, `mock_ibc_channel_connect`, `mock_ibc_channel_close`.
+- cosmwasm-std::testing: Added `mock_ibc_packet_timeout` since
+  `mock_ibc_packet_ack` is no longer usable for creating mock data for
+  `ibc_packet_timeout`.
+
 ### Changed
 
 - cosmwasm-std: The `attr` function now accepts types that implement
@@ -14,13 +25,28 @@ and this project adheres to
   enabled by default.
 - cosmwasm-std: Make `MockApi::canonical_length` private.
 - cosmwasm-vm: Make `MockApi::canonical_length` private.
+- cosmwasm-vm: Bump required marker export `interface_version_6` to
+  `interface_version_7`.
+- cosmwasm-std, cosmwasm-vm: Entrypoints `ibc_channel_open`,
+  `ibc_channel_connect`, `ibc_channel_close`, `ibc_packet_receive`,
+  `ibc_packet_ack`, `ibc_packet_timeout` now each accept a corresponding `Msg`
+  value that wraps around channels, packets and acknowledgements.
 - cosmwasm-std/cosmwasm-vm: Increase canonical address lengths up to 64 bytes.
 - cosmwasm-std/cosmwasm-vm: In `MockApi`, increase max length of supported human
   addresses from 24 bytes to 54 bytes by using a longer canonical
   representation. This allows you to insert typical bech32 addresses in tests.
   ([#995])
+- cosmwasm-std::testing: `mock_ibc_packet_recv` now returns an
+  `IbcPacketReceiveMsg`, `mock_ibc_packet_ack` requires an acknowledgement to be
+  passed and returns an `IbcPacketAckMsg`.
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
+
+### Removed
+
+- cosmwasm-std::testing: `mock_ibc_channel` is now private. Use
+  `mock_ibc_channel_open`, `mock_ibc_channel_connect`, or
+  `mock_ibc_channel_close` instead.
 
 ## [0.15.0] - 2021-06-24
 

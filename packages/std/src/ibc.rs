@@ -211,6 +211,78 @@ impl IbcAcknowledgement {
     }
 }
 
+/// The message that is passed into `ibc_channel_open`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcChannelOpenMsg {
+    pub channel: IbcChannel,
+}
+
+impl IbcChannelOpenMsg {
+    pub fn new(channel: IbcChannel) -> Self {
+        Self { channel }
+    }
+}
+
+/// The message that is passed into `ibc_channel_connect`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcChannelConnectMsg {
+    pub channel: IbcChannel,
+}
+
+impl IbcChannelConnectMsg {
+    pub fn new(channel: IbcChannel) -> Self {
+        Self { channel }
+    }
+}
+
+/// The message that is passed into `ibc_channel_close`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcChannelCloseMsg {
+    pub channel: IbcChannel,
+}
+
+impl IbcChannelCloseMsg {
+    pub fn new(channel: IbcChannel) -> Self {
+        Self { channel }
+    }
+}
+
+/// The message that is passed into `ibc_packet_receive`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcPacketReceiveMsg {
+    pub packet: IbcPacket,
+}
+
+impl IbcPacketReceiveMsg {
+    pub fn new(packet: IbcPacket) -> Self {
+        Self { packet }
+    }
+}
+
+/// The message that is passed into `ibc_packet_ack`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcPacketAckMsg {
+    pub ack: IbcAcknowledgementWithPacket,
+}
+
+impl IbcPacketAckMsg {
+    pub fn new(ack: IbcAcknowledgementWithPacket) -> Self {
+        Self { ack }
+    }
+}
+
+/// The message that is passed into `ibc_packet_timeout`
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcPacketTimeoutMsg {
+    pub packet: IbcPacket,
+}
+
+impl IbcPacketTimeoutMsg {
+    pub fn new(packet: IbcPacket) -> Self {
+        Self { packet }
+    }
+}
+
 /// This is the return value for the majority of the ibc handlers.
 /// That are able to dispatch messages / events on their own,
 /// but have no meaningful return value to the calling code.

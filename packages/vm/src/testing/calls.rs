@@ -8,7 +8,8 @@ use std::fmt;
 use cosmwasm_std::{ContractResult, Env, MessageInfo, QueryResponse, Reply, Response};
 #[cfg(feature = "stargate")]
 use cosmwasm_std::{
-    IbcAcknowledgementWithPacket, IbcBasicResponse, IbcChannel, IbcPacket, IbcReceiveResponse,
+    IbcBasicResponse, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg, IbcPacketAckMsg,
+    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcReceiveResponse,
 };
 
 use crate::calls::{
@@ -143,14 +144,14 @@ where
 pub fn ibc_channel_open<A, S, Q>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelOpenMsg,
 ) -> ContractResult<()>
 where
     A: BackendApi + 'static,
     S: Storage + 'static,
     Q: Querier + 'static,
 {
-    call_ibc_channel_open(instance, &env, &channel).expect("VM error")
+    call_ibc_channel_open(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_channel_connect mimicks the call signature of the smart contracts.
@@ -160,7 +161,7 @@ where
 pub fn ibc_channel_connect<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelConnectMsg,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,
@@ -168,7 +169,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_channel_connect(instance, &env, &channel).expect("VM error")
+    call_ibc_channel_connect(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_channel_close mimicks the call signature of the smart contracts.
@@ -178,7 +179,7 @@ where
 pub fn ibc_channel_close<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    channel: IbcChannel,
+    msg: IbcChannelCloseMsg,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,
@@ -186,7 +187,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_channel_close(instance, &env, &channel).expect("VM error")
+    call_ibc_channel_close(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_packet_receive mimicks the call signature of the smart contracts.
@@ -196,7 +197,7 @@ where
 pub fn ibc_packet_receive<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    packet: IbcPacket,
+    msg: IbcPacketReceiveMsg,
 ) -> ContractResult<IbcReceiveResponse<U>>
 where
     A: BackendApi + 'static,
@@ -204,7 +205,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_packet_receive(instance, &env, &packet).expect("VM error")
+    call_ibc_packet_receive(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_packet_ack mimicks the call signature of the smart contracts.
@@ -214,7 +215,7 @@ where
 pub fn ibc_packet_ack<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    ack: IbcAcknowledgementWithPacket,
+    msg: IbcPacketAckMsg,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,
@@ -222,7 +223,7 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_packet_ack(instance, &env, &ack).expect("VM error")
+    call_ibc_packet_ack(instance, &env, &msg).expect("VM error")
 }
 
 // ibc_packet_timeout mimicks the call signature of the smart contracts.
@@ -232,7 +233,7 @@ where
 pub fn ibc_packet_timeout<A, S, Q, U>(
     instance: &mut Instance<A, S, Q>,
     env: Env,
-    packet: IbcPacket,
+    msg: IbcPacketTimeoutMsg,
 ) -> ContractResult<IbcBasicResponse<U>>
 where
     A: BackendApi + 'static,
@@ -240,5 +241,5 @@ where
     Q: Querier + 'static,
     U: DeserializeOwned + Clone + PartialEq + JsonSchema + fmt::Debug,
 {
-    call_ibc_packet_timeout(instance, &env, &packet).expect("VM error")
+    call_ibc_packet_timeout(instance, &env, &msg).expect("VM error")
 }
