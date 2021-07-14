@@ -16,6 +16,8 @@ and this project adheres to
 - cosmwasm-std::testing: Added `mock_ibc_packet_timeout` since
   `mock_ibc_packet_ack` is no longer usable for creating mock data for
   `ibc_packet_timeout`.
+- cosmwasm-std: New `Attribute::new` constructor that does the same thing as
+  `attr`.
 
 ### Changed
 
@@ -41,6 +43,9 @@ and this project adheres to
   passed and returns an `IbcPacketAckMsg`.
 - cosmwasm-std: `IbcBasicResponse` and `IbcReceiveResponse` now both support
   custom events via the `events` field.
+- cosmwasm-std: `attr` (and `Attribute::new`) will now panic in debug builds if
+  the attribute's key starts with an underscore. These names are reserved and
+  could cause problems further down the line.
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 

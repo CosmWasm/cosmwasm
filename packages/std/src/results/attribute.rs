@@ -8,12 +8,30 @@ pub struct Attribute {
     pub value: String,
 }
 
-/// Creates a new Attribute.
-pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
-    Attribute {
-        key: key.into(),
-        value: value.into(),
+impl Attribute {
+    /// Creates a new Attribute. `attr` is just an alias for this.
+    pub fn new(key: impl Into<String>, value: impl Into<String>) -> Self {
+        let key = key.into();
+
+        #[cfg(debug_assertions)]
+        if key.starts_with('_') {
+            panic!(
+                "attribute `{}` is invalid - attributes starting with an underscore are reserved",
+                key
+            );
+        }
+
+        Self {
+            key,
+            value: value.into(),
+        }
     }
+}
+
+/// Creates a new Attribute. `Attribute::new` is an alias for this.
+#[inline]
+pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
+    Attribute::new(key, value)
 }
 
 #[cfg(test)]
@@ -33,5 +51,17 @@ mod tests {
         assert_eq!(attr("foo", "42".to_string()), expected);
         assert_eq!(attr("foo", Uint128::new(42)), expected);
         assert_eq!(attr("foo", 42.to_string()), expected);
+    }
+
+    #[test]
+    #[should_panic]
+    fn reserved_attr_key_panicks() {
+        Attribute::new("_invalid", "value");
+    }
+
+    #[test]
+    #[should_panic]
+    fn reserved_attr_key_panicks2() {
+        Attribute::new("_", "value");
     }
 }
