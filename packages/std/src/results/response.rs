@@ -2,9 +2,9 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-use crate::{Binary, Event};
+use crate::Binary;
 
-use super::{Attribute, CosmosMsg, Empty, SubMsg};
+use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 
 /// A response of a contract entry point, such as `instantiate`, `execute` or `migrate`.
 ///
