@@ -42,6 +42,12 @@ and this project adheres to
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
+### Removed
+
+- cosmwasm-std::testing: `mock_ibc_channel` is now private. Use
+  `mock_ibc_channel_open`, `mock_ibc_channel_connect`, or
+  `mock_ibc_channel_close` instead.
+
 ## [0.15.0] - 2021-06-24
 
 ### Added

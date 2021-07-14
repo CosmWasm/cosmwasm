@@ -223,7 +223,7 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
 #[cfg(feature = "stargate")]
 /// Creates an IbcChannel for testing. You set a few key parameters for handshaking,
 /// If you want to set more, use this as a default and mutate other fields
-pub fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
+fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
     IbcChannel {
         endpoint: IbcEndpoint {
             port_id: "my_port".to_string(),
@@ -300,7 +300,7 @@ pub fn mock_ibc_packet_recv<T: Serialize>(
 /// Creates a IbcPacket for testing ibc_packet_{ack,timeout}. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
-pub fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
+fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
     Ok(IbcPacket {
         data: to_binary(data)?,
         src: IbcEndpoint {
