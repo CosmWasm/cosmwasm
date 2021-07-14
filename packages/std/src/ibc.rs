@@ -10,7 +10,7 @@ use std::fmt;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
-use crate::results::{Attribute, Empty, SubMsg};
+use crate::results::{Attribute, Empty, Event, SubMsg};
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
@@ -300,8 +300,11 @@ where
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
     pub messages: Vec<SubMsg<T>>,
-    /// The attributes that will be emitted as part of a "wasm" event
+    /// The attributes that will be emitted as part of a `wasm` event.
     pub attributes: Vec<Attribute>,
+    /// Extra, custom events separate from the main `wasm` one. These will have
+    /// `wasm-` prepended to the type.
+    pub events: Vec<Event>,
 }
 
 impl<T> Default for IbcBasicResponse<T>
@@ -312,6 +315,7 @@ where
         IbcBasicResponse {
             messages: vec![],
             attributes: vec![],
+            events: vec![],
         }
     }
 }
@@ -336,6 +340,9 @@ where
     pub messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
     pub attributes: Vec<Attribute>,
+    /// Extra, custom events separate from the main `wasm` one. These will have
+    /// `wasm-` prepended to the type.
+    pub events: Vec<Event>,
 }
 
 impl<T> Default for IbcReceiveResponse<T>
@@ -347,6 +354,7 @@ where
             acknowledgement: Binary(vec![]),
             messages: vec![],
             attributes: vec![],
+            events: vec![],
         }
     }
 }
