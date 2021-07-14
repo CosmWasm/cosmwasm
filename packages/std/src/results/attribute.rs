@@ -16,7 +16,7 @@ impl Attribute {
         #[cfg(debug_assertions)]
         if key.starts_with('_') {
             panic!(
-                "attribute `{}` is invalid - attributes starting with an underscore are reserved",
+                "attribute key `{}` is invalid - keys starting with an underscore are reserved",
                 key
             );
         }
