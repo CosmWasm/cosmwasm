@@ -717,6 +717,8 @@ mod tests {
             .unwrap()
             .unwrap();
             assert_eq!(1, res.messages.len());
+            assert_eq!(1, res.events.len());
+            assert_eq!(Event::new("ibc").attr("channel", "connect"), res.events[0]);
             assert_eq!(ReplyOn::Success, res.messages[0].reply_on);
             let id = res.messages[0].id;
             let event = Event {

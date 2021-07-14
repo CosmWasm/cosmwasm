@@ -72,6 +72,7 @@ pub fn ibc_channel_connect(
             attr("action", "ibc_connect"),
             attr("channel_id", channel_id),
         ],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -91,6 +92,7 @@ pub fn ibc_channel_close(
     Ok(IbcBasicResponse {
         attributes: vec![attr("action", "ibc_close"), attr("channel_id", channel_id)],
         messages: vec![],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -105,6 +107,7 @@ pub fn ibc_packet_receive(
         acknowledgement: b"{}".into(),
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -146,6 +149,7 @@ fn acknowledge_dispatch(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_dispatch")],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -163,6 +167,7 @@ fn acknowledge_who_am_i(
             return Ok(IbcBasicResponse {
                 messages: vec![],
                 attributes: vec![attr("action", "acknowledge_who_am_i"), attr("error", e)],
+                ..IbcBasicResponse::default()
             })
         }
     };
@@ -183,6 +188,7 @@ fn acknowledge_who_am_i(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_who_am_i")],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -200,6 +206,7 @@ fn acknowledge_balances(
             return Ok(IbcBasicResponse {
                 messages: vec![],
                 attributes: vec![attr("action", "acknowledge_balances"), attr("error", e)],
+                ..IbcBasicResponse::default()
             })
         }
     };
@@ -228,6 +235,7 @@ fn acknowledge_balances(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "acknowledge_balances")],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -241,6 +249,7 @@ pub fn ibc_packet_timeout(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
+        ..IbcBasicResponse::default()
     })
 }
 

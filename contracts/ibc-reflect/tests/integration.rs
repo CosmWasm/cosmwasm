@@ -88,6 +88,8 @@ fn connect<T: Into<String>>(
     let handshake_connect = mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
     let res: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
     assert_eq!(1, res.messages.len());
+    assert_eq!(1, res.events.len());
+    assert_eq!(Event::new("ibc").attr("channel", "connect"), res.events[0]);
     let id = res.messages[0].id;
 
     // fake a reply and ensure this works
@@ -222,6 +224,8 @@ fn handle_dispatch_packet() {
     let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
     // we didn't dispatch anything
     assert_eq!(0, res.messages.len());
+    assert_eq!(1, res.events.len());
+    assert_eq!(Event::new("ibc").attr("packet", "receive"), res.events[0]);
     // acknowledgement is an error
     let ack: AcknowledgementMsg<DispatchResponse> =
         from_slice(&res.acknowledgement, DESERIALIZATION_LIMIT).unwrap();

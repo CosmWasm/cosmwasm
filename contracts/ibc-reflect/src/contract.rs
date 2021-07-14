@@ -178,6 +178,7 @@ pub fn ibc_channel_connect(
     Ok(IbcBasicResponse {
         messages: vec![msg],
         attributes: vec![attr("action", "ibc_connect"), attr("channel_id", chan_id)],
+        events: vec![Event::new("ibc").attr("channel", "connect")],
     })
 }
 
@@ -219,6 +220,7 @@ pub fn ibc_channel_close(
             attr("channel_id", channel_id),
             attr("steal_funds", steal_funds.to_string()),
         ],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -263,6 +265,7 @@ pub fn ibc_packet_receive(
             acknowledgement,
             messages: vec![],
             attributes: vec![],
+            events: vec![Event::new("ibc").attr("packet", "receive")],
         })
     })
 }
@@ -279,6 +282,7 @@ fn receive_who_am_i(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
         acknowledgement,
         messages: vec![],
         attributes: vec![attr("action", "receive_who_am_i")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -296,6 +300,7 @@ fn receive_balances(deps: DepsMut, caller: String) -> StdResult<IbcReceiveRespon
         acknowledgement,
         messages: vec![],
         attributes: vec![attr("action", "receive_balances")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -321,6 +326,7 @@ fn receive_dispatch(
         acknowledgement,
         messages: vec![msg],
         attributes: vec![attr("action", "receive_dispatch")],
+        ..IbcReceiveResponse::default()
     })
 }
 
@@ -334,6 +340,7 @@ pub fn ibc_packet_ack(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_ack")],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -347,6 +354,7 @@ pub fn ibc_packet_timeout(
     Ok(IbcBasicResponse {
         messages: vec![],
         attributes: vec![attr("action", "ibc_packet_timeout")],
+        ..IbcBasicResponse::default()
     })
 }
 
@@ -407,6 +415,8 @@ mod tests {
             mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
         assert_eq!(1, res.messages.len());
+        assert_eq!(1, res.events.len());
+        assert_eq!(Event::new("ibc").attr("channel", "connect"), res.events[0]);
         let id = res.messages[0].id;
 
         // fake a reply and ensure this works
@@ -539,6 +549,8 @@ mod tests {
         let res = ibc_packet_receive(deps.as_mut(), mock_env(), msg).unwrap();
         // we didn't dispatch anything
         assert_eq!(0, res.messages.len());
+        assert_eq!(1, res.events.len());
+        assert_eq!(Event::new("ibc").attr("packet", "receive"), res.events[0]);
         // acknowledgement is an error
         let ack: AcknowledgementMsg<DispatchResponse> = from_slice(&res.acknowledgement).unwrap();
         assert_eq!(
