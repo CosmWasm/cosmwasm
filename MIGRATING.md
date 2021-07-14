@@ -4,7 +4,7 @@ This guide explains what is needed to upgrade contracts when migrating over
 major releases of `cosmwasm`. Note that you can also view the
 [complete CHANGELOG](./CHANGELOG.md) to understand the differences.
 
-## 0.15 -> 1.0 (unreleased)
+## 0.15 -> 0.16 (unreleased)
 
 - The `attr` function now accepts arguments that implement `Into<String>` rather
   than `ToString`. This means that "stringly" types like `&str` are still
@@ -29,7 +29,7 @@ major releases of `cosmwasm`. Note that you can also view the
 
   ```diff
   - cosmwasm-std = { version = "0.15.0" }
-  + cosmwasm-std = { version = "1.0.0", default-features = false }
+  + cosmwasm-std = { version = "0.16.0", default-features = false }
   ```
 
 - For IBC-enabled contracts only: IBC entry points have different signatures.
