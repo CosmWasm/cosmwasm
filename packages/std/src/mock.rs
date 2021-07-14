@@ -235,7 +235,6 @@ fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcC
         },
         order,
         version: version.to_string(),
-        counterparty_version: Some(version.to_string()),
         connection_id: "connection-2".to_string(),
     }
 }
@@ -248,6 +247,7 @@ pub fn mock_ibc_channel_open(
     version: &str,
 ) -> IbcChannelOpenMsg {
     IbcChannelOpenMsg::new(mock_ibc_channel(my_channel_id, order, version))
+        .counterparty_version(version)
 }
 
 #[cfg(feature = "stargate")]

@@ -54,7 +54,7 @@ fn setup() -> Instance<MockApi, MockStorage, MockQuerier> {
 fn connect(deps: &mut Instance<MockApi, MockStorage, MockQuerier>, channel_id: &str) {
     // open packet has no counterparty version, connect does
     let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    handshake_open.channel.counterparty_version = None;
+    handshake_open.counterparty_version = None;
     // first we try to open with a valid handshake
     ibc_channel_open(deps, mock_env(), handshake_open).unwrap();
 

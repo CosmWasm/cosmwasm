@@ -120,8 +120,6 @@ pub struct IbcChannel {
     pub counterparty_endpoint: IbcEndpoint,
     pub order: IbcOrder,
     pub version: String,
-    /// CounterpartyVersion can be None when not known this context, yet
-    pub counterparty_version: Option<String>,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
     pub connection_id: String,
@@ -215,11 +213,21 @@ impl IbcAcknowledgement {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelOpenMsg {
     pub channel: IbcChannel,
+    /// CounterpartyVersion can be None when not known this context, yet
+    pub counterparty_version: Option<String>,
 }
 
 impl IbcChannelOpenMsg {
     pub fn new(channel: IbcChannel) -> Self {
-        Self { channel }
+        Self {
+            channel,
+            counterparty_version: None,
+        }
+    }
+
+    pub fn counterparty_version(mut self, counterparty_version: impl Into<String>) -> Self {
+        self.counterparty_version = Some(counterparty_version.into());
+        self
     }
 }
 

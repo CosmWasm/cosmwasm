@@ -702,7 +702,7 @@ mod tests {
             // first we try to open with a valid handshake
             let mut handshake_open =
                 mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-            handshake_open.channel.counterparty_version = None;
+            handshake_open.counterparty_version = None;
             call_ibc_channel_open(instance, &mock_env(), &handshake_open)
                 .unwrap()
                 .unwrap();

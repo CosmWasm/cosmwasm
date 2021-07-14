@@ -81,7 +81,7 @@ fn connect<T: Into<String>>(
     let account: String = account.into();
     // first we try to open with a valid handshake
     let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    handshake_open.channel.counterparty_version = None;
+    handshake_open.counterparty_version = None;
     ibc_channel_open(deps, mock_env(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)
@@ -137,7 +137,7 @@ fn proper_handshake_flow() {
 
     // first we try to open with a valid handshake
     let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    handshake_open.channel.counterparty_version = None;
+    handshake_open.counterparty_version = None;
     ibc_channel_open(&mut deps, mock_env(), handshake_open).unwrap();
 
     // then we connect (with counter-party version set)

@@ -140,7 +140,7 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
     }
     // TODO: do we need to check counterparty version as well?
     // This flow needs to be well documented
-    if let Some(counter_version) = channel.counterparty_version {
+    if let Some(counter_version) = msg.counterparty_version {
         if counter_version.as_str() != IBC_VERSION {
             return Err(StdError::generic_err(format!(
                 "Counterparty version must be `{}`",
@@ -406,7 +406,7 @@ mod tests {
         // open packet has no counterparty versin, connect does
         // TODO: validate this with alpe
         let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.channel.counterparty_version = None;
+        handshake_open.counterparty_version = None;
         // first we try to open with a valid handshake
         ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
 
@@ -463,7 +463,7 @@ mod tests {
 
         // first we try to open with a valid handshake
         let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.channel.counterparty_version = None;
+        handshake_open.counterparty_version = None;
         ibc_channel_open(deps.as_mut(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
