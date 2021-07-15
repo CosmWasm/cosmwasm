@@ -155,8 +155,8 @@ fn check_pubkey(data: &[u8]) -> Result<(), InvalidSecp256k1PubkeyFormat> {
 mod tests {
     use super::*;
 
+    use elliptic_curve::rand_core::OsRng;
     use elliptic_curve::sec1::ToEncodedPoint;
-    use rand_core::OsRng;
 
     use hex_literal::hex;
     use k256::{
@@ -316,7 +316,7 @@ mod tests {
                 hex!("3c9229289a6125f7fdf1885a77bb12c37a8d3b4962d936f7e3084dece32a3ca1");
             let expected = SigningKey::from_bytes(&private_key)
                 .unwrap()
-                .verify_key()
+                .verifying_key()
                 .to_encoded_point(false)
                 .as_bytes()
                 .to_vec();
