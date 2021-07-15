@@ -240,34 +240,63 @@ fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcC
 }
 
 #[cfg(feature = "stargate")]
-/// Creates a IbcChannelOpenMsg for testing ibc_channel_open.
-pub fn mock_ibc_channel_open(
+/// Creates a IbcChannelOpenMsg::OpenInit for testing ibc_channel_open.
+pub fn mock_ibc_channel_open_init(
     my_channel_id: &str,
     order: IbcOrder,
     version: &str,
 ) -> IbcChannelOpenMsg {
-    IbcChannelOpenMsg::new(mock_ibc_channel(my_channel_id, order, version))
-        .counterparty_version(version)
+    IbcChannelOpenMsg::new_init(mock_ibc_channel(my_channel_id, order, version))
+}
+
+#[cfg(feature = "stargate")]
+/// Creates a IbcChannelOpenMsg::OpenTry for testing ibc_channel_open.
+pub fn mock_ibc_channel_open_try(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelOpenMsg {
+    IbcChannelOpenMsg::new_try(mock_ibc_channel(my_channel_id, order, version), version)
 }
 
 #[cfg(feature = "stargate")]
 /// Creates a IbcChannelConnectMsg for testing ibc_channel_connect.
-pub fn mock_ibc_channel_connect(
+pub fn mock_ibc_channel_connect_ack(
     my_channel_id: &str,
     order: IbcOrder,
     version: &str,
 ) -> IbcChannelConnectMsg {
-    IbcChannelConnectMsg::new(mock_ibc_channel(my_channel_id, order, version))
+    IbcChannelConnectMsg::new_ack(mock_ibc_channel(my_channel_id, order, version), version)
+}
+
+#[cfg(feature = "stargate")]
+/// Creates a IbcChannelConnectMsg for testing ibc_channel_connect.
+pub fn mock_ibc_channel_connect_confirm(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelConnectMsg {
+    IbcChannelConnectMsg::new_confirm(mock_ibc_channel(my_channel_id, order, version))
 }
 
 #[cfg(feature = "stargate")]
 /// Creates a IbcChannelCloseMsg for testing ibc_channel_close.
-pub fn mock_ibc_channel_close(
+pub fn mock_ibc_channel_close_init(
     my_channel_id: &str,
     order: IbcOrder,
     version: &str,
 ) -> IbcChannelCloseMsg {
-    IbcChannelCloseMsg::new(mock_ibc_channel(my_channel_id, order, version))
+    IbcChannelCloseMsg::new_init(mock_ibc_channel(my_channel_id, order, version))
+}
+
+#[cfg(feature = "stargate")]
+/// Creates a IbcChannelCloseMsg for testing ibc_channel_close.
+pub fn mock_ibc_channel_close_confirm(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelCloseMsg {
+    IbcChannelCloseMsg::new_confirm(mock_ibc_channel(my_channel_id, order, version))
 }
 
 #[cfg(feature = "stargate")]

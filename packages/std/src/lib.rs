@@ -104,7 +104,8 @@ pub mod testing {
     };
     #[cfg(feature = "stargate")]
     pub use crate::mock::{
-        mock_ibc_channel_close, mock_ibc_channel_connect, mock_ibc_channel_open,
+        mock_ibc_channel_close_confirm, mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
+        mock_ibc_channel_connect_confirm, mock_ibc_channel_open_init, mock_ibc_channel_open_try,
         mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
     };
 }
