@@ -209,6 +209,19 @@ impl IbcAcknowledgement {
     }
 }
 
+// Another approach inspired by Simon
+#[serde(rename_all = "snake_case")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum IbcChannelOpenMsg2 {
+    Init {
+        channel: IbcChannel,
+        counterparty_version: String,
+    },
+    Try {
+        channel: IbcChannel,
+    },
+}
+
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelOpenMsg {
