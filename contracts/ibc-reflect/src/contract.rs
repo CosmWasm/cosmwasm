@@ -127,7 +127,7 @@ pub fn query_list_accounts(deps: Deps) -> StdResult<ListAccountsResponse> {
 #[entry_point]
 /// enforces ordering and versioing constraints
 pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
-    let channel = msg.channel;
+    let channel = msg.channel();
 
     if channel.order != IbcOrder::Ordered {
         return Err(StdError::generic_err("Only supports ordered channels"));
@@ -138,10 +138,9 @@ pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> St
             IBC_VERSION
         )));
     }
-    // TODO: do we need to check counterparty version as well?
-    // This flow needs to be well documented
-    if let Some(counter_version) = msg.counterparty_version {
-        if counter_version.as_str() != IBC_VERSION {
+
+    if let Some(counter_version) = msg.counterparty_version() {
+        if counter_version != IBC_VERSION {
             return Err(StdError::generic_err(format!(
                 "Counterparty version must be `{}`",
                 IBC_VERSION
@@ -159,9 +158,9 @@ pub fn ibc_channel_connect(
     _env: Env,
     msg: IbcChannelConnectMsg,
 ) -> StdResult<IbcBasicResponse> {
-    let channel = msg.channel;
+    let channel = msg.channel();
     let cfg = config(deps.storage).load()?;
-    let chan_id = channel.endpoint.channel_id;
+    let chan_id = &channel.endpoint.channel_id;
 
     let msg = WasmMsg::Instantiate {
         admin: None,
@@ -190,7 +189,7 @@ pub fn ibc_channel_close(
     env: Env,
     msg: IbcChannelCloseMsg,
 ) -> StdResult<IbcBasicResponse> {
-    let channel = msg.channel;
+    let channel = msg.channel();
     // get contract address and remove lookup
     let channel_id = channel.endpoint.channel_id.as_str();
     let reflect_addr = accounts(deps.storage).load(channel_id.as_bytes())?;
@@ -362,9 +361,9 @@ pub fn ibc_packet_timeout(
 mod tests {
     use super::*;
     use cosmwasm_std::testing::{
-        mock_dependencies, mock_env, mock_ibc_channel_close, mock_ibc_channel_connect,
-        mock_ibc_channel_open, mock_ibc_packet_recv, mock_info, MockApi, MockQuerier, MockStorage,
-        MOCK_CONTRACT_ADDR,
+        mock_dependencies, mock_env, mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
+        mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
+        MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
@@ -403,16 +402,13 @@ mod tests {
     fn connect<T: Into<String>>(mut deps: DepsMut, channel_id: &str, account: T) {
         let account: String = account.into();
 
-        // open packet has no counterparty versin, connect does
-        // TODO: validate this with alpe
-        let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.counterparty_version = None;
+        let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
         // first we try to open with a valid handshake
         ibc_channel_open(deps.branch(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
         let handshake_connect =
-            mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
+            mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.branch(), mock_env(), handshake_connect).unwrap();
         assert_eq!(1, res.messages.len());
         assert_eq!(1, res.events.len());
@@ -446,13 +442,14 @@ mod tests {
     fn enforce_version_in_handshake() {
         let mut deps = setup();
 
-        let wrong_order = mock_ibc_channel_open("channel-12", IbcOrder::Unordered, IBC_VERSION);
+        let wrong_order = mock_ibc_channel_open_try("channel-12", IbcOrder::Unordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_order).unwrap_err();
 
-        let wrong_version = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, "reflect");
+        let wrong_version = mock_ibc_channel_open_try("channel-12", IbcOrder::Ordered, "reflect");
         ibc_channel_open(deps.as_mut(), mock_env(), wrong_version).unwrap_err();
 
-        let valid_handshake = mock_ibc_channel_open("channel-12", IbcOrder::Ordered, IBC_VERSION);
+        let valid_handshake =
+            mock_ibc_channel_open_try("channel-12", IbcOrder::Ordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), valid_handshake).unwrap();
     }
 
@@ -462,13 +459,12 @@ mod tests {
         let channel_id = "channel-1234";
 
         // first we try to open with a valid handshake
-        let mut handshake_open = mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-        handshake_open.counterparty_version = None;
+        let handshake_open = mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
         ibc_channel_open(deps.as_mut(), mock_env(), handshake_open).unwrap();
 
         // then we connect (with counter-party version set)
         let handshake_connect =
-            mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
+            mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_connect(deps.as_mut(), mock_env(), handshake_connect).unwrap();
         // and set up a reflect account
         assert_eq!(1, res.messages.len());
@@ -628,7 +624,7 @@ mod tests {
         assert_eq!(funds, balance);
 
         // close the channel
-        let channel = mock_ibc_channel_close(channel_id, IbcOrder::Ordered, IBC_VERSION);
+        let channel = mock_ibc_channel_close_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
         let res = ibc_channel_close(deps.as_mut(), mock_env(), channel).unwrap();
 
         // it pulls out all money from the reflect contract

@@ -239,6 +239,16 @@ impl IbcChannelOpenMsg {
             Self::OpenTry { channel, .. } => channel,
         }
     }
+
+    pub fn counterparty_version(&self) -> Option<&str> {
+        match self {
+            Self::OpenTry {
+                counterparty_version,
+                ..
+            } => Some(counterparty_version),
+            _ => None,
+        }
+    }
 }
 
 impl From<IbcChannelOpenMsg> for IbcChannel {
@@ -278,6 +288,16 @@ impl IbcChannelConnectMsg {
         match self {
             Self::OpenAck { channel, .. } => channel,
             Self::OpenConfirm { channel } => channel,
+        }
+    }
+
+    pub fn counterparty_version(&self) -> Option<&str> {
+        match self {
+            Self::OpenAck {
+                counterparty_version,
+                ..
+            } => Some(counterparty_version),
+            _ => None,
         }
     }
 }

@@ -679,7 +679,7 @@ mod tests {
             mock_env, mock_info, mock_instance, MockApi, MockQuerier, MockStorage,
         };
         use cosmwasm_std::testing::{
-            mock_ibc_channel_close, mock_ibc_channel_connect, mock_ibc_channel_open,
+            mock_ibc_channel_close_init, mock_ibc_channel_connect_ack, mock_ibc_channel_open_init,
             mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
         };
         use cosmwasm_std::{
@@ -700,15 +700,14 @@ mod tests {
                 .unwrap()
                 .unwrap();
             // first we try to open with a valid handshake
-            let mut handshake_open =
-                mock_ibc_channel_open(channel_id, IbcOrder::Ordered, IBC_VERSION);
-            handshake_open.counterparty_version = None;
+            let handshake_open =
+                mock_ibc_channel_open_init(channel_id, IbcOrder::Ordered, IBC_VERSION);
             call_ibc_channel_open(instance, &mock_env(), &handshake_open)
                 .unwrap()
                 .unwrap();
             // then we connect (with counter-party version set)
             let handshake_connect =
-                mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
+                mock_ibc_channel_connect_ack(channel_id, IbcOrder::Ordered, IBC_VERSION);
             let res: IbcBasicResponse = call_ibc_channel_connect::<_, _, _, Empty>(
                 instance,
                 &mock_env(),
@@ -747,7 +746,7 @@ mod tests {
             let mut instance = mock_instance(&CONTRACT, &[]);
             setup(&mut instance, CHANNEL_ID, ACCOUNT);
             let handshake_close =
-                mock_ibc_channel_close(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
+                mock_ibc_channel_close_init(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
             call_ibc_channel_close::<_, _, _, Empty>(&mut instance, &mock_env(), &handshake_close)
                 .unwrap()
                 .unwrap();
