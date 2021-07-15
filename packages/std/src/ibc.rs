@@ -221,9 +221,7 @@ pub struct IbcChannelOpenMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelOpenVariant {
     Open {},
-    Try {
-        counterparty_version: Option<String>,
-    },
+    Try { counterparty_version: String },
 }
 
 impl IbcChannelOpenMsg {
@@ -249,9 +247,7 @@ impl IbcChannelConnectMsg {
 #[serde(rename_all = "snake_case")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelConnectVariant {
-    Ack {
-        counterparty_version: Option<String>,
-    },
+    Ack { counterparty_version: String },
     Confirm {},
 }
 
