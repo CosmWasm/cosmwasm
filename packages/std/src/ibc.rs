@@ -222,6 +222,15 @@ pub enum IbcChannelOpenMsg2 {
     },
 }
 
+impl IbcChannelOpenMsg2 {
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            IbcChannelOpenMsg2::Init { channel, .. } => &channel,
+            IbcChannelOpenMsg2::Try { channel } => &channel,
+        }
+    }
+}
+
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelOpenMsg {
