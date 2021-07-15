@@ -216,11 +216,11 @@ pub struct IbcChannelOpenMsg {
     pub variant: IbcChannelOpenVariant,
 }
 
-/// This differentiates between IbcChannelOpen and IbcChannelTry
+/// This differentiates between IbcChannelOpenInit and IbcChannelOpenTry
 #[serde(rename_all = "snake_case")]
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelOpenVariant {
-    Open {},
+    Init {},
     Try { counterparty_version: String },
 }
 
