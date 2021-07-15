@@ -125,6 +125,20 @@ pub struct IbcChannel {
     pub connection_id: String,
 }
 
+/// IbcChannel defines all information on a channel.
+/// This is generally used in the hand-shake process, but can be queried directly.
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub struct IbcChannelUninitialized {
+    pub endpoint: IbcEndpoint,
+    // we don't have the channel info yet, so no IbcEndpoint
+    pub counterparty_port_id: String,
+    pub order: IbcOrder,
+    pub version: String,
+    /// The connection upon which this channel was created. If this is a multi-hop
+    /// channel, we only expose the first hop.
+    pub connection_id: String,
+}
+
 /// IbcOrder defines if a channel is ORDERED or UNORDERED
 /// Values come from https://github.com/cosmos/cosmos-sdk/blob/v0.40.0/proto/ibc/core/channel/v1/channel.proto#L69-L80
 /// Naming comes from the protobuf files and go translations.
@@ -212,7 +226,7 @@ impl IbcAcknowledgement {
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelOpenMsg {
-    pub channel: IbcChannel,
+    pub channel: IbcChannelUninitialized,
     pub variant: IbcChannelOpenVariant,
 }
 
@@ -221,7 +235,10 @@ pub struct IbcChannelOpenMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelOpenVariant {
     Open {},
-    Try { counterparty_version: String },
+    Try {
+        counterparty_version: String,
+        counterparty_channel_id: String,
+    },
 }
 
 impl IbcChannelOpenMsg {
