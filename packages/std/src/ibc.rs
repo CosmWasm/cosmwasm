@@ -120,8 +120,6 @@ pub struct IbcChannel {
     pub counterparty_endpoint: IbcEndpoint,
     pub order: IbcOrder,
     pub version: String,
-    /// CounterpartyVersion can be None when not known this context, yet
-    pub counterparty_version: Option<String>,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
     pub connection_id: String,
@@ -211,10 +209,41 @@ impl IbcAcknowledgement {
     }
 }
 
+// Another approach inspired by Simon
+#[serde(rename_all = "snake_case")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum IbcChannelOpenMsg2 {
+    Init {
+        channel: IbcChannel,
+        counterparty_version: String,
+    },
+    Try {
+        channel: IbcChannel,
+    },
+}
+
+impl IbcChannelOpenMsg2 {
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            IbcChannelOpenMsg2::Init { channel, .. } => &channel,
+            IbcChannelOpenMsg2::Try { channel } => &channel,
+        }
+    }
+}
+
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelOpenMsg {
     pub channel: IbcChannel,
+    pub variant: IbcChannelOpenVariant,
+}
+
+/// This differentiates between IbcChannelOpenInit and IbcChannelOpenTry
+#[serde(rename_all = "snake_case")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum IbcChannelOpenVariant {
+    Init {},
+    Try { counterparty_version: String },
 }
 
 impl IbcChannelOpenMsg {
@@ -227,6 +256,7 @@ impl IbcChannelOpenMsg {
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelConnectMsg {
     pub channel: IbcChannel,
+    pub variant: IbcChannelConnectVariant,
 }
 
 impl IbcChannelConnectMsg {
@@ -235,16 +265,33 @@ impl IbcChannelConnectMsg {
     }
 }
 
+/// This differentiates between IbcChannelAck and IbcChannelTry
+#[serde(rename_all = "snake_case")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum IbcChannelConnectVariant {
+    Ack { counterparty_version: String },
+    Confirm {},
+}
+
 /// The message that is passed into `ibc_channel_close`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcChannelCloseMsg {
     pub channel: IbcChannel,
+    pub variant: IbcChannelCloseVariant,
 }
 
 impl IbcChannelCloseMsg {
     pub fn new(channel: IbcChannel) -> Self {
         Self { channel }
     }
+}
+
+/// This differentiates between IbcCloseInit and IbcCloseConfirm
+#[serde(rename_all = "snake_case")]
+#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+pub enum IbcChannelCloseVariant {
+    Init {},
+    Confirm {},
 }
 
 /// The message that is passed into `ibc_packet_receive`
