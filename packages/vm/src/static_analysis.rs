@@ -132,7 +132,7 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        assert_eq!(has_ibc_entry_points(&module), false);
+        assert!(!has_ibc_entry_points(&module));
 
         // IBC contract
         let wasm = wat::parse_str(
@@ -157,7 +157,7 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        assert_eq!(has_ibc_entry_points(&module), true);
+        assert!(has_ibc_entry_points(&module));
 
         // Missing packet ack
         let wasm = wat::parse_str(
@@ -181,6 +181,6 @@ mod tests {
         )
         .unwrap();
         let module = deserialize_wasm(&wasm).unwrap();
-        assert_eq!(has_ibc_entry_points(&module), false);
+        assert!(!has_ibc_entry_points(&module));
     }
 }

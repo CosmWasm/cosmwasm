@@ -167,7 +167,7 @@ mod tests {
             &api, from, to, nonce, gas_limit, gas_price, value, &data, chain_id, &r, &s, v,
         )
         .unwrap();
-        assert_eq!(valid, true);
+        assert!(valid);
     }
 
     #[test]

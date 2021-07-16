@@ -617,16 +617,16 @@ mod tests {
     fn set_storage_readonly_works() {
         let mut instance = mock_instance(&CONTRACT, &[]);
 
-        assert_eq!(instance.env.is_storage_readonly(), true);
+        assert!(instance.env.is_storage_readonly());
 
         instance.set_storage_readonly(false);
-        assert_eq!(instance.env.is_storage_readonly(), false);
+        assert!(!instance.env.is_storage_readonly());
 
         instance.set_storage_readonly(false);
-        assert_eq!(instance.env.is_storage_readonly(), false);
+        assert!(!instance.env.is_storage_readonly());
 
         instance.set_storage_readonly(true);
-        assert_eq!(instance.env.is_storage_readonly(), true);
+        assert!(instance.env.is_storage_readonly());
     }
 
     #[test]

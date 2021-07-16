@@ -336,11 +336,11 @@ mod tests {
 
     #[test]
     fn uint64_is_zero_works() {
-        assert_eq!(Uint64::zero().is_zero(), true);
-        assert_eq!(Uint64(0).is_zero(), true);
+        assert!(Uint64::zero().is_zero());
+        assert!(Uint64(0).is_zero());
 
-        assert_eq!(Uint64(1).is_zero(), false);
-        assert_eq!(Uint64(123).is_zero(), false);
+        assert!(!Uint64(1).is_zero());
+        assert!(!Uint64(123).is_zero());
     }
 
     #[test]

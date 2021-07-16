@@ -468,13 +468,13 @@ mod tests {
 
     #[test]
     fn decimal_is_zero_works() {
-        assert_eq!(Decimal::zero().is_zero(), true);
-        assert_eq!(Decimal::percent(0).is_zero(), true);
-        assert_eq!(Decimal::permille(0).is_zero(), true);
+        assert!(Decimal::zero().is_zero());
+        assert!(Decimal::percent(0).is_zero());
+        assert!(Decimal::permille(0).is_zero());
 
-        assert_eq!(Decimal::one().is_zero(), false);
-        assert_eq!(Decimal::percent(123).is_zero(), false);
-        assert_eq!(Decimal::permille(1234).is_zero(), false);
+        assert!(!Decimal::one().is_zero());
+        assert!(!Decimal::percent(123).is_zero());
+        assert!(!Decimal::permille(1234).is_zero());
     }
 
     #[test]
