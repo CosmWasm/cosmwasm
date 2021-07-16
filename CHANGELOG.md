@@ -21,6 +21,8 @@ and this project adheres to
 
 ### Changed
 
+- cosmwasm-vm: The `Checksum::to_hex` function signature was changed from
+  `to_hex(&self) -> String` to `to_hex(self) -> String`.
 - cosmwasm-std: The `attr` function now accepts types that implement
   `Into<String>` rather than `ToString`.
 - cosmwasm-std, cosmwasm-vm, cosmwasm-storage: The `iterator` feature is now
