@@ -19,7 +19,7 @@ impl Checksum {
     }
 
     /// Creates a lowercase hex encoded copy of this checksum
-    pub fn to_hex(&self) -> String {
+    pub fn to_hex(self) -> String {
         self.to_string()
     }
 }

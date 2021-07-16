@@ -639,7 +639,7 @@ mod tests {
         let (env, _instance) = make_instance(TESTING_GAS_LIMIT);
         leave_default_data(&env);
 
-        assert_eq!(env.is_storage_readonly(), true);
+        assert!(env.is_storage_readonly());
     }
 
     #[test]
@@ -649,15 +649,15 @@ mod tests {
 
         // change
         env.set_storage_readonly(false);
-        assert_eq!(env.is_storage_readonly(), false);
+        assert!(!env.is_storage_readonly());
 
         // still false
         env.set_storage_readonly(false);
-        assert_eq!(env.is_storage_readonly(), false);
+        assert!(!env.is_storage_readonly());
 
         // change back
         env.set_storage_readonly(true);
-        assert_eq!(env.is_storage_readonly(), true);
+        assert!(env.is_storage_readonly());
     }
 
     #[test]
