@@ -12,7 +12,9 @@ and this project adheres to
   `IbcChannelCloseMsg`, `IbcPacketReceiveMsg`, `IbcPacketAckMsg`, and
   `IbcPacketTimeoutMsg` types for use with corresponding IBC entrypoints.
 - cosmwasm-std::testing: New mocking helpers for IBC channel msg types:
-  `mock_ibc_channel_open`, `mock_ibc_channel_connect`, `mock_ibc_channel_close`.
+  `mock_ibc_channel_open_init`, `mock_ibc_channel_open_try`,
+  `mock_ibc_channel_connect_ack`, `mock_ibc_channel_connect_confirm`,
+  `mock_ibc_channel_close_init`, `mock_ibc_channel_close_confirm`.
 - cosmwasm-std::testing: Added `mock_ibc_packet_timeout` since
   `mock_ibc_packet_ack` is no longer usable for creating mock data for
   `ibc_packet_timeout`.
@@ -38,7 +40,7 @@ and this project adheres to
   addresses from 24 bytes to 54 bytes by using a longer canonical
   representation. This allows you to insert typical bech32 addresses in tests.
   ([#995])
-- cosmwasm-std::testing: `mock_ibc_packet_recv` now returns an
+- cosmwasm-std::testing: `mock_ibc_packet_recv` functions now return an
   `IbcPacketReceiveMsg`, `mock_ibc_packet_ack` requires an acknowledgement to be
   passed and returns an `IbcPacketAckMsg`.
 - cosmwasm-std: `IbcBasicResponse` and `IbcReceiveResponse` now both support
