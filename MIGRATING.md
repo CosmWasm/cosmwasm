@@ -55,7 +55,7 @@ major releases of `cosmwasm`. Note that you can also view the
     #[entry_point]
   - pub fn ibc_channel_open(_deps: DepsMut, _env: Env, channel: IbcChannel) -> StdResult<()> {
   + pub fn ibc_channel_open(_deps: DepsMut, _env: Env, msg: IbcChannelOpenMsg) -> StdResult<()> {
-  +     let channel = msg.channel;
+  +     let channel = msg.channel();
 
         // do things
     }
@@ -69,7 +69,7 @@ major releases of `cosmwasm`. Note that you can also view the
   -     channel: IbcChannel,
   +     msg: IbcChannelConnectMsg,
     ) -> StdResult<IbcBasicResponse> {
-  +     let channel = msg.channel;
+  +     let channel = msg.channel();
 
         // do things
     }
@@ -83,7 +83,7 @@ major releases of `cosmwasm`. Note that you can also view the
   -     channel: IbcChannel,
   +     msg: IbcChannelCloseMsg,
     ) -> StdResult<IbcBasicResponse> {
-  +     let channel = msg.channel;
+  +     let channel = msg.channel();
 
         // do things
     }
@@ -129,63 +129,6 @@ major releases of `cosmwasm`. Note that you can also view the
 
         // do things
     }
-  ```
-
-- IBC-related mocking functions have changed somewhat to accomodate creating the
-  new entry-point-specific `Msg` types, rather than just channels, packets and
-  acknowledgements.
-
-  For the channel ones, we now have three distinct helpers.
-
-  ```diff
-  - let wrong_order = mock_ibc_channel("channel-12", IbcOrder::Unordered, IBC_VERSION);
-  + let wrong_order = mock_ibc_channel_open("channel-12", IbcOrder::Unordered, IBC_VERSION);
-    ibc_channel_open(&mut deps, mock_env(), wrong_order).unwrap_err();
-  ```
-
-  ```diff
-  - let handshake_connect = mock_ibc_channel(channel_id, IbcOrder::Ordered, IBC_VERSION);
-  + let handshake_connect = mock_ibc_channel_connect(channel_id, IbcOrder::Ordered, IBC_VERSION);
-    let res: IbcBasicResponse = ibc_channel_connect(deps, mock_env(), handshake_connect).unwrap();
-  ```
-
-  ```diff
-  - let handshake_close = mock_ibc_channel(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
-  + let handshake_close = mock_ibc_channel_close(CHANNEL_ID, IbcOrder::Ordered, IBC_VERSION);
-    ibc_channel_close(deps, mock_env(), handshake_close).unwrap();
-  ```
-
-  When testing against `ibc_packet_receive`, in most cases no change should be
-  necessary - `mock_ibc_packet_recv` now returns the `IbcPacketReceiveMsg`,
-  which is exactly what `ibc_packet_receive` now expects.
-
-  ```rust
-  let msg = mock_ibc_packet_recv(channel_id, &ibc_msg).unwrap();
-  let res: IbcReceiveResponse = ibc_packet_receive(&mut deps, mock_env(), msg).unwrap();
-  ```
-
-  `mock_ibc_packet_ack` is now only usable for `ibc_packet_ack` and requires an
-  `Acknowledgement`. It will internally construct an
-  `IbcAcknowledgementWithPacket` so that you no longer have to do it yourself.
-
-  ```diff
-  - let ack = IbcAcknowledgementWithPacket {
-  -     acknowledgement: IbcAcknowledgement::encode_json(&response).unwrap(),
-  -     original_packet: mock_ibc_packet_ack(channel_id, &packet).unwrap(),
-  - };
-  - let res: IbcBasicResponse = ibc_packet_ack(deps, mock_env(), ack).unwrap();
-  + let ack = IbcAcknowledgement::encode_json(&response).unwrap();
-  + let msg = mock_ibc_packet_ack(channel_id, &packet, ack).unwrap();
-  + let res: IbcBasicResponse = ibc_packet_ack(deps, mock_env(), msg).unwrap();
-  ```
-
-  For `ibc_packet_timeout`, use the new `mock_ibc_packet_timeout` helper:
-
-  ```diff
-  - let packet = mock_ibc_packet_ack(CHANNEL_ID, br#"{}"#)?;
-  - ibc_packet_timeout(deps, mock_env(), packet)?;
-  + let msg = mock_ibc_packet_timeout(CHANNEL_ID, br#"{}"#)?;
-  + ibc_packet_timeout(deps, mock_env(), msg)?;
   ```
 
 ## 0.14 -> 0.15

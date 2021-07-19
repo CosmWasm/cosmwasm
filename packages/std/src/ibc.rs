@@ -120,8 +120,6 @@ pub struct IbcChannel {
     pub counterparty_endpoint: IbcEndpoint,
     pub order: IbcOrder,
     pub version: String,
-    /// CounterpartyVersion can be None when not known this context, yet
-    pub counterparty_version: Option<String>,
     /// The connection upon which this channel was created. If this is a multi-hop
     /// channel, we only expose the first hop.
     pub connection_id: String,
@@ -213,37 +211,138 @@ impl IbcAcknowledgement {
 
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcChannelOpenMsg {
-    pub channel: IbcChannel,
+pub enum IbcChannelOpenMsg {
+    /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenInit { channel: IbcChannel },
+    /// The ChanOpenTry step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenTry {
+        channel: IbcChannel,
+        counterparty_version: String,
+    },
 }
 
 impl IbcChannelOpenMsg {
-    pub fn new(channel: IbcChannel) -> Self {
-        Self { channel }
+    pub fn new_init(channel: IbcChannel) -> Self {
+        Self::OpenInit { channel }
+    }
+
+    pub fn new_try(channel: IbcChannel, counterparty_version: impl Into<String>) -> Self {
+        Self::OpenTry {
+            channel,
+            counterparty_version: counterparty_version.into(),
+        }
+    }
+
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            Self::OpenInit { channel } => channel,
+            Self::OpenTry { channel, .. } => channel,
+        }
+    }
+
+    pub fn counterparty_version(&self) -> Option<&str> {
+        match self {
+            Self::OpenTry {
+                counterparty_version,
+                ..
+            } => Some(counterparty_version),
+            _ => None,
+        }
+    }
+}
+
+impl From<IbcChannelOpenMsg> for IbcChannel {
+    fn from(msg: IbcChannelOpenMsg) -> IbcChannel {
+        match msg {
+            IbcChannelOpenMsg::OpenInit { channel } => channel,
+            IbcChannelOpenMsg::OpenTry { channel, .. } => channel,
+        }
     }
 }
 
 /// The message that is passed into `ibc_channel_connect`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcChannelConnectMsg {
-    pub channel: IbcChannel,
+pub enum IbcChannelConnectMsg {
+    /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenAck {
+        channel: IbcChannel,
+        counterparty_version: String,
+    },
+    /// The ChanOpenConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenConfirm { channel: IbcChannel },
 }
 
 impl IbcChannelConnectMsg {
-    pub fn new(channel: IbcChannel) -> Self {
-        Self { channel }
+    pub fn new_ack(channel: IbcChannel, counterparty_version: impl Into<String>) -> Self {
+        Self::OpenAck {
+            channel,
+            counterparty_version: counterparty_version.into(),
+        }
+    }
+
+    pub fn new_confirm(channel: IbcChannel) -> Self {
+        Self::OpenConfirm { channel }
+    }
+
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            Self::OpenAck { channel, .. } => channel,
+            Self::OpenConfirm { channel } => channel,
+        }
+    }
+
+    pub fn counterparty_version(&self) -> Option<&str> {
+        match self {
+            Self::OpenAck {
+                counterparty_version,
+                ..
+            } => Some(counterparty_version),
+            _ => None,
+        }
+    }
+}
+
+impl From<IbcChannelConnectMsg> for IbcChannel {
+    fn from(msg: IbcChannelConnectMsg) -> IbcChannel {
+        match msg {
+            IbcChannelConnectMsg::OpenAck { channel, .. } => channel,
+            IbcChannelConnectMsg::OpenConfirm { channel } => channel,
+        }
     }
 }
 
 /// The message that is passed into `ibc_channel_close`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcChannelCloseMsg {
-    pub channel: IbcChannel,
+pub enum IbcChannelCloseMsg {
+    /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    CloseInit { channel: IbcChannel },
+    /// The ChanCloseConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    CloseConfirm { channel: IbcChannel }, // pub channel: IbcChannel,
 }
 
 impl IbcChannelCloseMsg {
-    pub fn new(channel: IbcChannel) -> Self {
-        Self { channel }
+    pub fn new_init(channel: IbcChannel) -> Self {
+        Self::CloseInit { channel }
+    }
+
+    pub fn new_confirm(channel: IbcChannel) -> Self {
+        Self::CloseConfirm { channel }
+    }
+
+    pub fn channel(&self) -> &IbcChannel {
+        match self {
+            Self::CloseInit { channel } => channel,
+            Self::CloseConfirm { channel } => channel,
+        }
+    }
+}
+
+impl From<IbcChannelCloseMsg> for IbcChannel {
+    fn from(msg: IbcChannelCloseMsg) -> IbcChannel {
+        match msg {
+            IbcChannelCloseMsg::CloseInit { channel } => channel,
+            IbcChannelCloseMsg::CloseConfirm { channel } => channel,
+        }
     }
 }
 

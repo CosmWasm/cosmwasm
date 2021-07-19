@@ -133,7 +133,9 @@ pub struct IbcEndpoint {
 This `IbcChannel` value has to be wrapped in the `IbcChannelOpenMsg` type.
 
 ```rust
-let msg = IbcChannelOpenMsg::new(channel);
+let msg = IbcChannelOpenMsg::new_init(channel);
+// or
+let msg = IbcChannelOpenMsg::new_try(channel, counterparty_version);
 ```
 
 Note that neither `counterparty_version` nor `counterparty_endpoint` is set in

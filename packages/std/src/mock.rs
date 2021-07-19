@@ -220,9 +220,9 @@ pub fn mock_info(sender: &str, funds: &[Coin]) -> MessageInfo {
     }
 }
 
-#[cfg(feature = "stargate")]
 /// Creates an IbcChannel for testing. You set a few key parameters for handshaking,
 /// If you want to set more, use this as a default and mutate other fields
+#[cfg(feature = "stargate")]
 fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcChannel {
     IbcChannel {
         endpoint: IbcEndpoint {
@@ -235,44 +235,73 @@ fn mock_ibc_channel(my_channel_id: &str, order: IbcOrder, version: &str) -> IbcC
         },
         order,
         version: version.to_string(),
-        counterparty_version: Some(version.to_string()),
         connection_id: "connection-2".to_string(),
     }
 }
 
+/// Creates a IbcChannelOpenMsg::OpenInit for testing ibc_channel_open.
 #[cfg(feature = "stargate")]
-/// Creates a IbcChannelOpenMsg for testing ibc_channel_open.
-pub fn mock_ibc_channel_open(
+pub fn mock_ibc_channel_open_init(
     my_channel_id: &str,
     order: IbcOrder,
     version: &str,
 ) -> IbcChannelOpenMsg {
-    IbcChannelOpenMsg::new(mock_ibc_channel(my_channel_id, order, version))
+    IbcChannelOpenMsg::new_init(mock_ibc_channel(my_channel_id, order, version))
 }
 
+/// Creates a IbcChannelOpenMsg::OpenTry for testing ibc_channel_open.
 #[cfg(feature = "stargate")]
-/// Creates a IbcChannelConnectMsg for testing ibc_channel_connect.
-pub fn mock_ibc_channel_connect(
+pub fn mock_ibc_channel_open_try(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelOpenMsg {
+    IbcChannelOpenMsg::new_try(mock_ibc_channel(my_channel_id, order, version), version)
+}
+
+/// Creates a IbcChannelConnectMsg::ConnectAck for testing ibc_channel_connect.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_connect_ack(
     my_channel_id: &str,
     order: IbcOrder,
     version: &str,
 ) -> IbcChannelConnectMsg {
-    IbcChannelConnectMsg::new(mock_ibc_channel(my_channel_id, order, version))
+    IbcChannelConnectMsg::new_ack(mock_ibc_channel(my_channel_id, order, version), version)
 }
 
+/// Creates a IbcChannelConnectMsg::ConnectConfirm for testing ibc_channel_connect.
 #[cfg(feature = "stargate")]
-/// Creates a IbcChannelCloseMsg for testing ibc_channel_close.
-pub fn mock_ibc_channel_close(
+pub fn mock_ibc_channel_connect_confirm(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelConnectMsg {
+    IbcChannelConnectMsg::new_confirm(mock_ibc_channel(my_channel_id, order, version))
+}
+
+/// Creates a IbcChannelCloseMsg::CloseInit for testing ibc_channel_close.
+#[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_close_init(
     my_channel_id: &str,
     order: IbcOrder,
     version: &str,
 ) -> IbcChannelCloseMsg {
-    IbcChannelCloseMsg::new(mock_ibc_channel(my_channel_id, order, version))
+    IbcChannelCloseMsg::new_init(mock_ibc_channel(my_channel_id, order, version))
 }
 
+/// Creates a IbcChannelCloseMsg::CloseConfirm for testing ibc_channel_close.
 #[cfg(feature = "stargate")]
+pub fn mock_ibc_channel_close_confirm(
+    my_channel_id: &str,
+    order: IbcOrder,
+    version: &str,
+) -> IbcChannelCloseMsg {
+    IbcChannelCloseMsg::new_confirm(mock_ibc_channel(my_channel_id, order, version))
+}
+
 /// Creates a IbcPacketReceiveMsg for testing ibc_packet_receive. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields
+#[cfg(feature = "stargate")]
 pub fn mock_ibc_packet_recv<T: Serialize>(
     my_channel_id: &str,
     data: &T,
@@ -296,10 +325,10 @@ pub fn mock_ibc_packet_recv<T: Serialize>(
     }))
 }
 
-#[cfg(feature = "stargate")]
 /// Creates a IbcPacket for testing ibc_packet_{ack,timeout}. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+#[cfg(feature = "stargate")]
 fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<IbcPacket> {
     Ok(IbcPacket {
         data: to_binary(data)?,
@@ -320,10 +349,10 @@ fn mock_ibc_packet<T: Serialize>(my_channel_id: &str, data: &T) -> StdResult<Ibc
     })
 }
 
-#[cfg(feature = "stargate")]
 /// Creates a IbcPacketAckMsg for testing ibc_packet_ack. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest.
+#[cfg(feature = "stargate")]
 pub fn mock_ibc_packet_ack<T: Serialize>(
     my_channel_id: &str,
     data: &T,
@@ -337,10 +366,10 @@ pub fn mock_ibc_packet_ack<T: Serialize>(
     }))
 }
 
-#[cfg(feature = "stargate")]
 /// Creates a IbcPacketTimeoutMsg for testing ibc_packet_timeout. You set a few key parameters that are
 /// often parsed. If you want to set more, use this as a default and mutate other fields.
 /// The difference from mock_ibc_packet_recv is if `my_channel_id` is src or dest./
+#[cfg(feature = "stargate")]
 pub fn mock_ibc_packet_timeout<T: Serialize>(
     my_channel_id: &str,
     data: &T,
