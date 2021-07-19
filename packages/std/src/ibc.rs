@@ -212,9 +212,9 @@ impl IbcAcknowledgement {
 /// The message that is passed into `ibc_channel_open`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelOpenMsg {
-    OpenInit {
-        channel: IbcChannel,
-    },
+    /// The ChanOpenInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenInit { channel: IbcChannel },
+    /// The ChanOpenTry step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     OpenTry {
         channel: IbcChannel,
         counterparty_version: String,
@@ -263,13 +263,13 @@ impl From<IbcChannelOpenMsg> for IbcChannel {
 /// The message that is passed into `ibc_channel_connect`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelConnectMsg {
+    /// The ChanOpenAck step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     OpenAck {
         channel: IbcChannel,
         counterparty_version: String,
     },
-    OpenConfirm {
-        channel: IbcChannel,
-    },
+    /// The ChanOpenConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
+    OpenConfirm { channel: IbcChannel },
 }
 
 impl IbcChannelConnectMsg {
@@ -314,7 +314,9 @@ impl From<IbcChannelConnectMsg> for IbcChannel {
 /// The message that is passed into `ibc_channel_close`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub enum IbcChannelCloseMsg {
+    /// The ChanCloseInit step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     CloseInit { channel: IbcChannel },
+    /// The ChanCloseConfirm step from https://github.com/cosmos/ibc/tree/master/spec/core/ics-004-channel-and-packet-semantics#channel-lifecycle-management
     CloseConfirm { channel: IbcChannel }, // pub channel: IbcChannel,
 }
 
