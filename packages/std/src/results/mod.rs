@@ -10,6 +10,8 @@ mod submessages;
 mod system_result;
 
 pub use contract_result::ContractResult;
+#[cfg(feature = "stargate")]
+pub use cosmos_msg::GovMsg;
 pub use cosmos_msg::{wasm_execute, wasm_instantiate, BankMsg, CosmosMsg, WasmMsg};
 #[cfg(feature = "staking")]
 pub use cosmos_msg::{DistributionMsg, StakingMsg};

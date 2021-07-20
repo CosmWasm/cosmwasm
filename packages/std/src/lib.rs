@@ -53,6 +53,8 @@ pub use crate::query::{
 };
 #[cfg(feature = "stargate")]
 pub use crate::query::{ChannelResponse, IbcQuery, ListChannelsResponse, PortIdResponse};
+#[cfg(feature = "stargate")]
+pub use crate::results::GovMsg;
 pub use crate::results::{
     attr, wasm_execute, wasm_instantiate, Attribute, BankMsg, ContractResult, CosmosMsg, Empty,
     Event, QueryResponse, Reply, ReplyOn, Response, SubMsg, SubMsgExecutionResponse, SystemResult,

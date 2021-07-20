@@ -59,6 +59,12 @@ and this project adheres to
   `mock_ibc_channel_open`, `mock_ibc_channel_connect`, or
   `mock_ibc_channel_close` instead.
 
+## [0.15.1] - 2021-07-20
+
+### Fixed
+
+- cosmwasm-std: Export `GovMsg` as a top-level type of the crate.
+
 ## [0.15.0] - 2021-06-24
 
 ### Added
@@ -1036,7 +1042,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.0...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.1...HEAD
+[0.15.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...v0.14.1
 [0.14.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.13.1...v0.14.0
