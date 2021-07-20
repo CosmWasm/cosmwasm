@@ -6,6 +6,8 @@ and this project adheres to
 
 ## [Unreleased]
 
+- cosmwasm-std: Export `GovMsg` as a top-level type of the crate.
+
 ## [0.15.0] - 2021-06-24
 
 ### Added
