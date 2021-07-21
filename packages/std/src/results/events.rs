@@ -62,12 +62,6 @@ impl Attribute {
     }
 }
 
-impl<K: Into<String>, V: Into<String>> From<(K, V)> for Attribute {
-    fn from((k, v): (K, V)) -> Self {
-        Attribute::new(k, v)
-    }
-}
-
 /// Creates a new Attribute. `Attribute::new` is an alias for this.
 #[inline]
 pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
