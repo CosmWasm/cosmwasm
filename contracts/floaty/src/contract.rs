@@ -28,8 +28,7 @@ pub fn instantiate(
     );
 
     // This adds some unrelated event attribute for testing purposes
-    let mut resp = Response::new();
-    resp.add_attribute("Let the", "hacking begin");
+    let resp = Response::new().with_attribute(("Let the", "hacking begin"));
     Ok(resp)
 }
 
@@ -53,16 +52,16 @@ pub fn execute(
         let mut fl = balance[0].amount.u128() as f64;
         fl *= 0.3;
 
-        let mut resp = Response::new();
-        resp.add_attribute("action", "release");
-        resp.add_attribute("destination", to_addr.clone());
-        resp.add_attribute("foo", fl.to_string());
-        resp.add_event(Event::new("hackatom").attr("action", "release"));
-        resp.add_message(BankMsg::Send {
-            to_address: to_addr.into(),
-            amount: balance,
-        });
-        resp.set_data(&[0xF0, 0x0B, 0xAA]);
+        let resp = Response::new()
+            .with_attribute(("action", "release"))
+            .with_attribute(("destination", to_addr.clone()))
+            .with_attribute(("foo", fl.to_string()))
+            .with_event(Event::new("hackatom").attr("action", "release"))
+            .with_message(BankMsg::Send {
+                to_address: to_addr.into(),
+                amount: balance,
+            })
+            .with_data(&[0xF0, 0x0B, 0xAA]);
         Ok(resp)
     } else {
         Err(HackError::Unauthorized {})
