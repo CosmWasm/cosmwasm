@@ -90,10 +90,9 @@ pub fn handle_send_msgs(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    let mut res = Response::new();
-    res.add_message(msg);
-    res.add_attribute("action", "handle_send_msgs");
-    Ok(res)
+    Ok(Response::new()
+        .with_message(msg)
+        .with_attribute(("action", "handle_send_msgs")))
 }
 
 pub fn handle_check_remote_balance(
@@ -118,10 +117,9 @@ pub fn handle_check_remote_balance(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    let mut res = Response::new();
-    res.add_message(msg);
-    res.add_attribute("action", "handle_check_remote_balance");
-    Ok(res)
+    Ok(Response::new()
+        .with_message(msg)
+        .with_attribute(("action", "handle_check_remote_balance")))
 }
 
 pub fn handle_send_funds(
@@ -166,10 +164,9 @@ pub fn handle_send_funds(
         timeout: env.block.time.plus_seconds(PACKET_LIFETIME).into(),
     };
 
-    let mut res = Response::new();
-    res.add_message(msg);
-    res.add_attribute("action", "handle_send_funds");
-    Ok(res)
+    Ok(Response::new()
+        .with_message(msg)
+        .with_attribute(("action", "handle_send_funds")))
 }
 
 #[entry_point]

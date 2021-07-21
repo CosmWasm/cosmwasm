@@ -30,9 +30,7 @@ pub fn instantiate(
     );
 
     // This adds some unrelated event attribute for testing purposes
-    let mut resp = Response::new();
-    resp.add_attribute("Let the", "hacking begin");
-    Ok(resp)
+    Ok(Response::new().with_attribute(("Let the", "hacking begin")))
 }
 
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
@@ -55,9 +53,7 @@ pub fn sudo(_deps: DepsMut, _env: Env, msg: SudoMsg) -> Result<Response, HackErr
                 to_address: recipient,
                 amount,
             };
-            let mut response = Response::default();
-            response.add_message(msg);
-            Ok(response)
+            Ok(Response::new().with_message(msg))
         }
     }
 }
@@ -90,16 +86,15 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         let to_addr = state.beneficiary;
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
-        let mut resp = Response::new();
-        resp.add_attribute("action", "release");
-        resp.add_attribute("destination", to_addr.clone());
-        resp.add_event(Event::new("hackatom").attr("action", "release"));
-        resp.add_message(BankMsg::Send {
-            to_address: to_addr.into(),
-            amount: balance,
-        });
-        resp.set_data(&[0xF0, 0x0B, 0xAA]);
-        Ok(resp)
+        Ok(Response::new()
+            .with_attribute(("action", "release"))
+            .with_attribute(("destination", to_addr.clone()))
+            .with_event(Event::new("hackatom").attr("action", "release"))
+            .with_message(BankMsg::Send {
+                to_address: to_addr.into(),
+                amount: balance,
+            })
+            .with_data(&[0xF0, 0x0B, 0xAA]))
     } else {
         Err(HackError::Unauthorized {})
     }

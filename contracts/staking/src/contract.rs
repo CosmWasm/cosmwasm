@@ -172,20 +172,15 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
     })?;
 
     // bond them to the validator
-    let mut res = Response {
-        attributes: vec![
-            attr("action", "bond"),
-            attr("from", info.sender),
-            attr("bonded", payment.amount),
-            attr("minted", to_mint),
-        ],
-        ..Response::default()
-    };
-    res.add_message(StakingMsg::Delegate {
-        validator: invest.validator,
-        amount: payment.clone(),
-    });
-    Ok(res)
+    Ok(Response::new()
+        .with_attribute(("action", "bond"))
+        .with_attribute(("from", info.sender))
+        .with_attribute(("bonded", payment.amount))
+        .with_attribute(("minted", to_mint))
+        .with_message(StakingMsg::Delegate {
+            validator: invest.validator,
+            amount: payment.clone(),
+        }))
 }
 
 pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> StdResult<Response> {
@@ -238,7 +233,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
     })?;
 
     // unbond them
-    let mut res = Response {
+    let res = Response {
         attributes: vec![
             attr("action", "unbond"),
             attr("to", info.sender),
@@ -247,7 +242,7 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
         ],
         ..Response::default()
     };
-    res.add_message(StakingMsg::Undelegate {
+    let res = res.with_message(StakingMsg::Undelegate {
         validator: invest.validator,
         amount: coin(unbond.u128(), &invest.bond_denom),
     });
@@ -283,7 +278,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
 
     // transfer tokens to the sender
     balance.amount = to_send;
-    let mut res = Response {
+    let res = Response {
         attributes: vec![
             attr("action", "claim"),
             attr("from", &info.sender),
@@ -291,7 +286,7 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
         ],
         ..Response::default()
     };
-    res.add_message(BankMsg::Send {
+    let res = res.with_message(BankMsg::Send {
         to_address: info.sender.into(),
         amount: vec![balance],
     });
@@ -307,11 +302,11 @@ pub fn reinvest(deps: DepsMut, env: Env, _info: MessageInfo) -> StdResult<Respon
     let msg = to_binary(&ExecuteMsg::_BondAllTokens {})?;
 
     // and bond them to the validator
-    let mut res = Response::new();
-    res.add_message(DistributionMsg::WithdrawDelegatorReward {
+    let res = Response::new();
+    let res = res.with_message(DistributionMsg::WithdrawDelegatorReward {
         validator: invest.validator,
     });
-    res.add_message(WasmMsg::Execute {
+    let res = res.with_message(WasmMsg::Execute {
         contract_addr: contract_addr.into(),
         msg,
         funds: vec![],
@@ -351,11 +346,11 @@ pub fn _bond_all_tokens(
     }
 
     // and bond them to the validator
-    let mut res = Response {
+    let res = Response {
         attributes: vec![attr("action", "reinvest"), attr("bonded", balance.amount)],
         ..Response::default()
     };
-    res.add_message(StakingMsg::Delegate {
+    let res = res.with_message(StakingMsg::Delegate {
         validator: invest.validator,
         amount: balance,
     });
