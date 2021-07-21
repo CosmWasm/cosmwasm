@@ -149,10 +149,10 @@ mod tests {
         };
         let info = mock_info(creator.as_str(), &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(res.messages.len(), 0);
-        assert_eq!(res.attributes.len(), 1);
-        assert_eq!(res.attributes[0].key, "Let the");
-        assert_eq!(res.attributes[0].value, "hacking begin");
+        assert_eq!(res.messages().count(), 0);
+        assert_eq!(res.attributes().count(), 1);
+        let attr = res.attributes().next().unwrap();
+        assert_eq!(attr, ("Let the", "hacking begin"));
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
@@ -173,7 +173,7 @@ mod tests {
         };
         let info = mock_info(&creator, &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
-        assert_eq!(0, res.messages.len());
+        assert_eq!(0, res.messages().count());
 
         // now let's query
         let query_response = query_verifier(deps.as_ref()).unwrap();
@@ -211,7 +211,7 @@ mod tests {
         let init_amount = coins(1000, "earth");
         let init_info = mock_info(&creator, &init_amount);
         let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
-        assert_eq!(init_res.messages.len(), 0);
+        assert_eq!(init_res.messages().count(), 0);
 
         // balance changed in init
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);
@@ -225,8 +225,8 @@ mod tests {
             ExecuteMsg::Release {},
         )
         .unwrap();
-        assert_eq!(execute_res.messages.len(), 1);
-        let msg = execute_res.messages.get(0).expect("no message");
+        assert_eq!(execute_res.messages().count(), 1);
+        let msg = execute_res.messages().next().expect("no message");
         assert_eq!(
             msg,
             &SubMsg::new(BankMsg::Send {
@@ -235,14 +235,14 @@ mod tests {
             }),
         );
         assert_eq!(
-            execute_res.attributes,
+            execute_res.attributes().collect::<Vec<_>>(),
             vec![
                 attr("action", "release"),
                 attr("destination", "benefits"),
                 attr("foo", "300")
             ],
         );
-        assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
+        assert_eq!(execute_res.data_bytes(), Some(&[0xF0, 0x0B, 0xAA][..]));
     }
 
     #[test]
@@ -261,7 +261,7 @@ mod tests {
         let init_amount = coins(1000, "earth");
         let init_info = mock_info(&creator, &init_amount);
         let init_res = instantiate(deps.as_mut(), mock_env(), init_info, instantiate_msg).unwrap();
-        assert_eq!(init_res.messages.len(), 0);
+        assert_eq!(init_res.messages().count(), 0);
 
         // balance changed in init
         deps.querier.update_balance(MOCK_CONTRACT_ADDR, init_amount);

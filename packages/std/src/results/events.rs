@@ -68,6 +68,42 @@ impl<K: Into<String>, V: Into<String>> From<(K, V)> for Attribute {
     }
 }
 
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<(K, V)> for Attribute {
+    fn eq(&self, (k, v): &(K, V)) -> bool {
+        (self.key.as_str(), self.value.as_str()) == (k.as_ref(), v.as_ref())
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<Attribute> for (K, V) {
+    fn eq(&self, attr: &Attribute) -> bool {
+        attr == self
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<(K, V)> for &Attribute {
+    fn eq(&self, (k, v): &(K, V)) -> bool {
+        (self.key.as_str(), self.value.as_str()) == (k.as_ref(), v.as_ref())
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<&Attribute> for (K, V) {
+    fn eq(&self, attr: &&Attribute) -> bool {
+        attr == self
+    }
+}
+
+impl PartialEq<Attribute> for &Attribute {
+    fn eq(&self, rhs: &Attribute) -> bool {
+        *self == rhs
+    }
+}
+
+impl PartialEq<&Attribute> for Attribute {
+    fn eq(&self, rhs: &&Attribute) -> bool {
+        self == *rhs
+    }
+}
+
 /// Creates a new Attribute. `Attribute::new` is an alias for this.
 #[inline]
 pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {

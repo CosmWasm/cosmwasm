@@ -70,10 +70,12 @@ fn proper_initialization() {
     };
     let info = mock_info(&creator, &coins(1000, "earth"));
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
-    assert_eq!(res.messages.len(), 0);
-    assert_eq!(res.attributes.len(), 1);
-    assert_eq!(res.attributes[0].key, "Let the");
-    assert_eq!(res.attributes[0].value, "hacking begin");
+    assert_eq!(res.messages().count(), 0);
+    assert_eq!(res.attributes().count(), 1);
+    assert_eq!(
+        res.attributes().next().unwrap(),
+        ("Let the", "hacking begin")
+    );
 
     // it worked, let's check the state
     let state: State = deps
@@ -102,7 +104,7 @@ fn instantiate_and_query() {
     };
     let info = mock_info(&creator, &coins(1000, "earth"));
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
-    assert_eq!(0, res.messages.len());
+    assert_eq!(0, res.messages().count());
 
     // now let's query
     let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
@@ -127,7 +129,7 @@ fn migrate_verifier() {
     };
     let info = mock_info(&creator, &[]);
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
-    assert_eq!(0, res.messages.len());
+    assert_eq!(0, res.messages().count());
 
     // check it is 'verifies'
     let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
@@ -138,7 +140,7 @@ fn migrate_verifier() {
         verifier: String::from("someone else"),
     };
     let res: Response = migrate(&mut deps, mock_env(), msg).unwrap();
-    assert_eq!(0, res.messages.len());
+    assert_eq!(0, res.messages().count());
 
     // check it is 'someone else'
     let query_response = query(&mut deps, mock_env(), QueryMsg::Verifier {}).unwrap();
@@ -161,7 +163,7 @@ fn sudo_can_steal_tokens() {
     };
     let info = mock_info(&creator, &[]);
     let res: Response = instantiate(&mut deps, mock_env(), info, msg).unwrap();
-    assert_eq!(0, res.messages.len());
+    assert_eq!(0, res.messages().count());
 
     // sudo takes any tax it wants
     let to_address = String::from("community-pool");
@@ -171,8 +173,8 @@ fn sudo_can_steal_tokens() {
         amount: amount.clone(),
     };
     let res: Response = sudo(&mut deps, mock_env(), sys_msg).unwrap();
-    assert_eq!(1, res.messages.len());
-    let msg = res.messages.get(0).expect("no message");
+    assert_eq!(1, res.messages().count());
+    let msg = res.messages().next().expect("no message");
     assert_eq!(msg, &SubMsg::new(BankMsg::Send { to_address, amount }));
 }
 
@@ -225,7 +227,7 @@ fn execute_release_works() {
     let init_info = mock_info(&creator, &init_amount);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(init_res.messages.len(), 0);
+    assert_eq!(init_res.messages().count(), 0);
 
     // balance changed in init
     deps.with_querier(|querier| {
@@ -238,8 +240,8 @@ fn execute_release_works() {
     let execute_info = mock_info(&verifier, &[]);
     let execute_res: Response =
         execute(&mut deps, mock_env(), execute_info, ExecuteMsg::Release {}).unwrap();
-    assert_eq!(execute_res.messages.len(), 1);
-    let msg = execute_res.messages.get(0).expect("no message");
+    assert_eq!(execute_res.messages().count(), 1);
+    let msg = execute_res.messages().next().expect("no message");
     assert_eq!(
         msg,
         &SubMsg::new(BankMsg::Send {
@@ -248,10 +250,10 @@ fn execute_release_works() {
         }),
     );
     assert_eq!(
-        execute_res.attributes,
+        execute_res.attributes().collect::<Vec<_>>(),
         vec![attr("action", "release"), attr("destination", "benefits")],
     );
-    assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
+    assert_eq!(execute_res.data_bytes(), Some(&[0xF0, 0x0B, 0xAA][..]));
 }
 
 #[test]
@@ -271,7 +273,7 @@ fn execute_release_fails_for_wrong_sender() {
     let init_info = mock_info(&creator, &init_amount);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(init_res.messages.len(), 0);
+    assert_eq!(init_res.messages().count(), 0);
 
     // balance changed in init
     deps.with_querier(|querier| {
@@ -316,7 +318,7 @@ fn execute_cpu_loop() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(0, init_res.messages().count());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
@@ -338,7 +340,7 @@ fn execute_storage_loop() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(0, init_res.messages().count());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
@@ -360,7 +362,7 @@ fn execute_memory_loop() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(0, init_res.messages().count());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // Note: we need to use the production-call, not the testing call (which unwraps any vm error)
@@ -385,7 +387,7 @@ fn execute_allocate_large_memory() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(0, init_res.messages().count());
     let mut pages_before = deps.memory_pages();
     assert_eq!(pages_before, 18);
 
@@ -400,7 +402,7 @@ fn execute_allocate_large_memory() {
     )
     .unwrap();
     assert_eq!(
-        execute_res.data.unwrap(),
+        *execute_res.data().unwrap(),
         Binary::from((pages_before as u32).to_be_bytes())
     );
     let gas_used = gas_before - deps.get_gas_left();
@@ -443,7 +445,7 @@ fn execute_panic() {
     let init_info = mock_info(creator.as_str(), &[]);
     let init_res: Response =
         instantiate(&mut deps, mock_env(), init_info, instantiate_msg).unwrap();
-    assert_eq!(0, init_res.messages.len());
+    assert_eq!(0, init_res.messages().count());
 
     let execute_info = mock_info(creator.as_str(), &[]);
     // panic inside contract should not panic out here

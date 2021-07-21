@@ -623,10 +623,11 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res =
-                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-            let msgs = res.unwrap().messages;
-            assert_eq!(msgs.len(), 0);
+            let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            let msgs = res.messages();
+            assert_eq!(msgs.count(), 0);
         }
 
         // from memory
@@ -642,10 +643,11 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res =
-                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-            let msgs = res.unwrap().messages;
-            assert_eq!(msgs.len(), 0);
+            let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            let msgs = res.messages();
+            assert_eq!(msgs.count(), 0);
         }
 
         // from pinned memory
@@ -663,10 +665,11 @@ mod tests {
             // init
             let info = mock_info("creator", &coins(1000, "earth"));
             let msg = br#"{"verifier": "verifies", "beneficiary": "benefits"}"#;
-            let res =
-                call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-            let msgs = res.unwrap().messages;
-            assert_eq!(msgs.len(), 0);
+            let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+                .unwrap()
+                .unwrap();
+            let msgs = res.messages();
+            assert_eq!(msgs.count(), 0);
         }
     }
 
@@ -692,7 +695,7 @@ mod tests {
                 call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                     .unwrap()
                     .unwrap();
-            assert_eq!(response.messages.len(), 0);
+            assert_eq!(response.messages().count(), 0);
 
             // execute
             let info = mock_info("verifies", &coins(15, "earth"));
@@ -700,7 +703,7 @@ mod tests {
             let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
-            assert_eq!(response.messages.len(), 1);
+            assert_eq!(response.messages().count(), 1);
         }
 
         // from memory
@@ -720,7 +723,7 @@ mod tests {
                 call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                     .unwrap()
                     .unwrap();
-            assert_eq!(response.messages.len(), 0);
+            assert_eq!(response.messages().count(), 0);
 
             // execute
             let info = mock_info("verifies", &coins(15, "earth"));
@@ -728,7 +731,7 @@ mod tests {
             let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
-            assert_eq!(response.messages.len(), 1);
+            assert_eq!(response.messages().count(), 1);
         }
 
         // from pinned memory
@@ -750,7 +753,7 @@ mod tests {
                 call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                     .unwrap()
                     .unwrap();
-            assert_eq!(response.messages.len(), 0);
+            assert_eq!(response.messages().count(), 0);
 
             // execute
             let info = mock_info("verifies", &coins(15, "earth"));
@@ -758,7 +761,7 @@ mod tests {
             let response = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
                 .unwrap()
                 .unwrap();
-            assert_eq!(response.messages.len(), 1);
+            assert_eq!(response.messages().count(), 1);
         }
     }
 
@@ -777,10 +780,11 @@ mod tests {
             .unwrap();
         let info = mock_info("owner1", &coins(1000, "earth"));
         let msg = br#"{"verifier": "sue", "beneficiary": "mary"}"#;
-        let res =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(msgs.len(), 0);
+        let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        let msgs = res.messages();
+        assert_eq!(msgs.count(), 0);
         let backend1 = instance.recycle().unwrap();
 
         // init instance 2
@@ -789,10 +793,11 @@ mod tests {
             .unwrap();
         let info = mock_info("owner2", &coins(500, "earth"));
         let msg = br#"{"verifier": "bob", "beneficiary": "john"}"#;
-        let res =
-            call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(msgs.len(), 0);
+        let res = call_instantiate::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        let msgs = res.messages();
+        assert_eq!(msgs.count(), 0);
         let backend2 = instance.recycle().unwrap();
 
         // run contract 2 - just sanity check - results validate in contract unit tests
@@ -801,9 +806,11 @@ mod tests {
             .unwrap();
         let info = mock_info("bob", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(1, msgs.len());
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        let msgs = res.messages();
+        assert_eq!(1, msgs.count());
 
         // run contract 1 - just sanity check - results validate in contract unit tests
         let mut instance = cache
@@ -811,9 +818,11 @@ mod tests {
             .unwrap();
         let info = mock_info("sue", &coins(15, "earth"));
         let msg = br#"{"release":{}}"#;
-        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg).unwrap();
-        let msgs = res.unwrap().messages;
-        assert_eq!(1, msgs.len());
+        let res = call_execute::<_, _, _, Empty>(&mut instance, &mock_env(), &info, msg)
+            .unwrap()
+            .unwrap();
+        let msgs = res.messages();
+        assert_eq!(1, msgs.count());
     }
 
     #[test]

@@ -30,12 +30,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
-///     Ok(Response {
-///         messages: vec![],
-///         attributes: vec![attr("action", "instantiate")],
-///         events: vec![],
-///         data: None,
-///     })
+///     Ok(Response::new().with_attribute(("action", "instantiate")))
 /// }
 /// ```
 ///
@@ -75,11 +70,11 @@ where
     /// the runtime will invoke this contract's `reply` entry point
     /// after execution. Otherwise, they act like "fire and forget".
     /// Use `SubMsg::new` to create messages with the older "fire and forget" semantics.
-    pub messages: Vec<SubMsg<T>>,
+    messages: Vec<SubMsg<T>>,
     /// The attributes that will be emitted as part of a "wasm" event
-    pub attributes: Vec<Attribute>,
-    pub events: Vec<Event>,
-    pub data: Option<Binary>,
+    attributes: Vec<Attribute>,
+    events: Vec<Event>,
+    data: Option<Binary>,
 }
 
 impl<T> Default for Response<T>
@@ -111,16 +106,16 @@ where
         self
     }
 
-    /// Add an attribute included in the main `wasm` event.
-    pub fn with_attribute(mut self, attr: impl Into<Attribute>) -> Self {
-        self.attributes.push(attr.into());
-        self
-    }
-
     /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
     /// and adds it to the list of messages to process.
     pub fn with_submessage(mut self, msg: SubMsg<T>) -> Self {
         self.messages.push(msg);
+        self
+    }
+
+    /// Add an attribute included in the main `wasm` event.
+    pub fn with_attribute(mut self, attr: impl Into<Attribute>) -> Self {
+        self.attributes.push(attr.into());
         self
     }
 
@@ -153,6 +148,10 @@ where
 
     pub fn data(&self) -> Option<&Binary> {
         self.data.as_ref()
+    }
+
+    pub fn data_bytes(&self) -> Option<&[u8]> {
+        self.data.as_ref().map(|d| d.as_slice())
     }
 }
 

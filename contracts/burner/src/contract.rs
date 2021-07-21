@@ -1,6 +1,5 @@
 use cosmwasm_std::{
-    attr, entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult,
-    SubMsg,
+    entry_point, BankMsg, DepsMut, Env, MessageInfo, Order, Response, StdError, StdResult, SubMsg,
 };
 
 use crate::msg::{InstantiateMsg, MigrateMsg};
@@ -39,12 +38,11 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
 
     let data_msg = format!("burnt {} keys", count).into_bytes();
 
-    Ok(Response {
-        messages: vec![SubMsg::new(send)],
-        attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
-        events: vec![],
-        data: Some(data_msg.into()),
-    })
+    Ok(Response::new()
+        .with_submessage(SubMsg::new(send))
+        .with_attribute(("action", "burn"))
+        .with_attribute(("payout", msg.payout))
+        .with_data(data_msg))
 }
 
 #[cfg(test)]
@@ -87,8 +85,8 @@ mod tests {
         };
         let res = migrate(deps.as_mut(), mock_env(), msg).unwrap();
         // check payout
-        assert_eq!(1, res.messages.len());
-        let msg = res.messages.get(0).expect("no message");
+        assert_eq!(1, res.messages().count());
+        let msg = res.messages().next().expect("no message");
         assert_eq!(
             msg,
             &SubMsg::new(BankMsg::Send {

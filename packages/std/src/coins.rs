@@ -40,11 +40,11 @@ impl fmt::Display for Coin {
 /// # let info = mock_info("sender", &[]);
 /// let tip = coins(123, "ucosm");
 ///
-/// let mut response: Response = Default::default();
-/// response.messages = vec![SubMsg::new(BankMsg::Send {
-///   to_address: info.sender.into(),
-///   amount: tip,
-/// })];
+/// let response: Response = Response::new()
+///     .with_message(BankMsg::Send {
+///         to_address: info.sender.into(),
+///         amount: tip,
+///     });
 /// ```
 pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
     vec![coin(amount, denom)]
@@ -64,11 +64,11 @@ pub fn coins<S: Into<String>>(amount: u128, denom: S) -> Vec<Coin> {
 ///     coin(24, "ustake"),
 /// ];
 ///
-/// let mut response: Response = Default::default();
-/// response.messages = vec![SubMsg::new(BankMsg::Send {
-///     to_address: info.sender.into(),
-///     amount: tip,
-/// })];
+/// let response: Response = Response::new()
+///     .with_message(BankMsg::Send {
+///         to_address: info.sender.into(),
+///         amount: tip,
+///     });
 /// ```
 pub fn coin<S: Into<String>>(amount: u128, denom: S) -> Coin {
     Coin::new(amount, denom)
