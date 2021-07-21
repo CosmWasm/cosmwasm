@@ -140,10 +140,7 @@ fn do_allocate_large_memory(pages: u32) -> Result<Response, HackError> {
         if old_size == usize::max_value() {
             return Err(StdError::generic_err("memory.grow failed").into());
         }
-        Ok(Response {
-            data: Some((old_size as u32).to_be_bytes().into()),
-            ..Response::default()
-        })
+        Ok(Response::new().with_data((old_size as u32).to_be_bytes()))
     }
 
     #[cfg(not(target_arch = "wasm32"))]
