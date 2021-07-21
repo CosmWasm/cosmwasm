@@ -39,7 +39,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// }
 /// ```
 ///
-/// Mutating:
+/// Builder-esque:
 ///
 /// ```
 /// # use cosmwasm_std::{coins, BankMsg, Binary, DepsMut, Env, MessageInfo, SubMsg};
@@ -54,17 +54,14 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     info: MessageInfo,
 ///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
-///     let mut response = Response::new();
-///     // ...
-///     response.add_attribute("Let the", "hacking begin");
-///     // ...
-///     response.add_message(BankMsg::Send {
-///         to_address: String::from("recipient"),
-///         amount: coins(128, "uint"),
-///     });
-///     response.add_attribute("foo", "bar");
-///     // ...
-///     response.set_data(Binary::from(b"the result data"));
+///     let response = Response::new()
+///         .with_attribute(("Let the", "hacking begin"))
+///         .with_message(BankMsg::Send {
+///             to_address: String::from("recipient"),
+///             amount: coins(128, "uint"),
+///         })
+///         .with_attribute(("foo", "bar"))
+///         .with_data(b"the result data" );
 ///     Ok(response)
 /// }
 /// ```
@@ -107,24 +104,24 @@ where
         Self::default()
     }
 
-    /// Add an attribute included in the main `wasm` event.
-    pub fn add_attribute<K: Into<String>, V: Into<String>>(&mut self, key: K, value: V) {
-        self.attributes.push(Attribute {
-            key: key.into(),
-            value: value.into(),
-        });
-    }
-
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+    pub fn with_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
         self.messages.push(SubMsg::new(msg));
+        self
+    }
+
+    /// Add an attribute included in the main `wasm` event.
+    pub fn with_attribute(mut self, attr: impl Into<Attribute>) -> Self {
+        self.attributes.push(attr.into());
+        self
     }
 
     /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
     /// and adds it to the list of messages to process.
-    pub fn add_submessage(&mut self, msg: SubMsg<T>) {
+    pub fn with_submessage(mut self, msg: SubMsg<T>) -> Self {
         self.messages.push(msg);
+        self
     }
 
     /// Adds an extra event to the response, separate from the main `wasm` event
@@ -132,12 +129,30 @@ where
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided type
     /// of event.
-    pub fn add_event(&mut self, event: Event) {
+    pub fn with_event(mut self, event: Event) -> Self {
         self.events.push(event);
+        self
     }
 
-    pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
+    pub fn with_data(mut self, data: impl Into<Binary>) -> Self {
         self.data = Some(data.into());
+        self
+    }
+
+    pub fn messages(&self) -> impl Iterator<Item = &SubMsg<T>> {
+        self.messages.iter()
+    }
+
+    pub fn attributes(&self) -> impl Iterator<Item = &Attribute> {
+        self.attributes.iter()
+    }
+
+    pub fn events(&self) -> impl Iterator<Item = &Event> {
+        self.events.iter()
+    }
+
+    pub fn data(&self) -> Option<&Binary> {
+        self.data.as_ref()
     }
 }
 
