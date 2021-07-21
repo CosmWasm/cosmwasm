@@ -58,6 +58,11 @@ and this project adheres to
 - cosmwasm-std::testing: `mock_ibc_channel` is now private. Use
   `mock_ibc_channel_open`, `mock_ibc_channel_connect`, or
   `mock_ibc_channel_close` instead.
+## [0.15.2] - 2021-07-21
+
+### Fixed
+
+- cosmwasm-std: Export `VoteOption` as a top-level type.
 
 ## [0.15.1] - 2021-07-20
 
@@ -1042,7 +1047,8 @@ Some main points:
 
 All future Changelog entries will reference this base
 
-[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.1...HEAD
+[unreleased]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.2...HEAD
+[0.15.2]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.1...v0.15.2
 [0.15.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.15.0...v0.15.1
 [0.15.0]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.1...v0.15.0
 [0.14.1]: https://github.com/CosmWasm/cosmwasm/compare/v0.14.0...v0.14.1
