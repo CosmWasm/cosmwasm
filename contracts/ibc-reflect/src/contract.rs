@@ -55,7 +55,7 @@ fn parse_contract_from_event(events: Vec<Event>) -> Option<String> {
         .and_then(|ev| {
             ev.attributes
                 .into_iter()
-                .find(|a| a.key == "contract_address")
+                .find(|a| a.key == "_contract_address")
         })
         .map(|a| a.value)
 }
@@ -72,7 +72,7 @@ pub fn handle_init_callback(
     let contract_addr = match parse_contract_from_event(response.events) {
         Some(addr) => deps.api.addr_validate(&addr),
         None => Err(StdError::generic_err(
-            "No contract_address found in callback events",
+            "No _contract_address found in callback events",
         )),
     }?;
 
@@ -363,7 +363,7 @@ mod tests {
     use cosmwasm_std::testing::{
         mock_dependencies, mock_env, mock_ibc_channel_close_init, mock_ibc_channel_connect_ack,
         mock_ibc_channel_open_init, mock_ibc_channel_open_try, mock_ibc_packet_recv, mock_info,
-        MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
+        mock_wasmd_attr, MockApi, MockQuerier, MockStorage, MOCK_CONTRACT_ADDR,
     };
     use cosmwasm_std::{coin, coins, from_slice, BankMsg, OwnedDeps, WasmMsg};
 
@@ -391,7 +391,8 @@ mod tests {
                 attr("module", "wasm"),
                 attr("signer", MOCK_CONTRACT_ADDR),
                 attr("code_id", "17"),
-                attr("contract_address", reflect_addr),
+                // We have to force this one to avoid the debug assertion against _
+                mock_wasmd_attr("_contract_address", reflect_addr),
             ],
         };
         vec![event]

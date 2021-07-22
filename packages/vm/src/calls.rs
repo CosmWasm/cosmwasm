@@ -680,11 +680,10 @@ mod tests {
         };
         use cosmwasm_std::testing::{
             mock_ibc_channel_close_init, mock_ibc_channel_connect_ack, mock_ibc_channel_open_init,
-            mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
+            mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout, mock_wasmd_attr,
         };
         use cosmwasm_std::{
-            attr, Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn,
-            SubMsgExecutionResponse,
+            Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn, SubMsgExecutionResponse,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");
         const IBC_VERSION: &str = "ibc-reflect-v1";
@@ -722,7 +721,10 @@ mod tests {
             let id = res.messages[0].id;
             let event = Event {
                 ty: "message".into(),
-                attributes: vec![attr("contract_address", account)],
+                attributes: vec![
+                    // We have to force this one to avoid the debug assertion against _
+                    mock_wasmd_attr("_contract_address", account),
+                ],
             };
             // which creates a reflect account. here we get the callback
             let response = Reply {
