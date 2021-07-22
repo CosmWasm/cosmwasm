@@ -62,6 +62,48 @@ impl Attribute {
     }
 }
 
+impl<K: Into<String>, V: Into<String>> From<(K, V)> for Attribute {
+    fn from((k, v): (K, V)) -> Self {
+        Attribute::new(k, v)
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<(K, V)> for Attribute {
+    fn eq(&self, (k, v): &(K, V)) -> bool {
+        (self.key.as_str(), self.value.as_str()) == (k.as_ref(), v.as_ref())
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<Attribute> for (K, V) {
+    fn eq(&self, attr: &Attribute) -> bool {
+        attr == self
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<(K, V)> for &Attribute {
+    fn eq(&self, (k, v): &(K, V)) -> bool {
+        (self.key.as_str(), self.value.as_str()) == (k.as_ref(), v.as_ref())
+    }
+}
+
+impl<K: AsRef<str>, V: AsRef<str>> PartialEq<&Attribute> for (K, V) {
+    fn eq(&self, attr: &&Attribute) -> bool {
+        attr == self
+    }
+}
+
+impl PartialEq<Attribute> for &Attribute {
+    fn eq(&self, rhs: &Attribute) -> bool {
+        *self == rhs
+    }
+}
+
+impl PartialEq<&Attribute> for Attribute {
+    fn eq(&self, rhs: &&Attribute) -> bool {
+        self == *rhs
+    }
+}
+
 /// Creates a new Attribute. `Attribute::new` is an alias for this.
 #[inline]
 pub fn attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
@@ -98,15 +140,11 @@ mod tests {
 
     #[test]
     fn attr_works_for_different_types() {
-        let expected = Attribute {
-            key: "foo".to_string(),
-            value: "42".to_string(),
-        };
+        let expected = ("foo", "42");
 
         assert_eq!(attr("foo", "42"), expected);
-        assert_eq!(attr("foo".to_string(), "42"), expected);
-        assert_eq!(attr("foo", "42".to_string()), expected);
+        assert_eq!(attr("foo", "42"), expected);
+        assert_eq!(attr("foo", "42"), expected);
         assert_eq!(attr("foo", Uint128::new(42)), expected);
-        assert_eq!(attr("foo", 42.to_string()), expected);
     }
 }

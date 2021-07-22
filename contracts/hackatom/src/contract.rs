@@ -280,7 +280,7 @@ mod tests {
         mock_dependencies, mock_dependencies_with_balances, mock_env, mock_info, MOCK_CONTRACT_ADDR,
     };
     // import trait Storage to get access to read
-    use cosmwasm_std::{attr, coins, Binary, Storage, SubMsg};
+    use cosmwasm_std::{coins, Binary, Storage, SubMsg};
 
     #[test]
     fn proper_initialization() {
@@ -302,9 +302,7 @@ mod tests {
         let info = mock_info(creator.as_str(), &[]);
         let res = instantiate(deps.as_mut(), mock_env(), info, msg).unwrap();
         assert_eq!(res.messages.len(), 0);
-        assert_eq!(res.attributes.len(), 1);
-        assert_eq!(res.attributes[0].key, "Let the");
-        assert_eq!(res.attributes[0].value, "hacking begin");
+        assert_eq!(res.attributes, [("Let the", "hacking begin")]);
 
         // it worked, let's check the state
         let data = deps.storage.get(CONFIG_KEY).expect("no data stored");
@@ -448,7 +446,7 @@ mod tests {
         );
         assert_eq!(
             execute_res.attributes,
-            vec![attr("action", "release"), attr("destination", "benefits")],
+            vec![("action", "release"), ("destination", "benefits")],
         );
         assert_eq!(execute_res.data, Some(vec![0xF0, 0x0B, 0xAA].into()));
     }
