@@ -30,12 +30,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
-///     Ok(Response {
-///         messages: vec![],
-///         attributes: vec![attr("action", "instantiate")],
-///         events: vec![],
-///         data: None,
-///     })
+///     Ok(Response::new().add_attribute("action", "instantiate"))
 /// }
 /// ```
 ///
@@ -54,21 +49,19 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     info: MessageInfo,
 ///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
-///     let mut response = Response::new();
-///     // ...
-///     response.add_attribute("Let the", "hacking begin");
-///     // ...
-///     response.add_message(BankMsg::Send {
-///         to_address: String::from("recipient"),
-///         amount: coins(128, "uint"),
-///     });
-///     response.add_attribute("foo", "bar");
-///     // ...
-///     response.set_data(Binary::from(b"the result data"));
+///     let mut response = Response::new()
+///         .add_attribute("Let the", "hacking begin")
+///         .add_message(BankMsg::Send {
+///             to_address: String::from("recipient"),
+///             amount: coins(128, "uint"),
+///         })
+///         .add_attribute("foo", "bar")
+///         .set_data(Binary::from(b"the result data"));
 ///     Ok(response)
 /// }
 /// ```
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct Response<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -108,23 +101,23 @@ where
     }
 
     /// Add an attribute included in the main `wasm` event.
-    pub fn add_attribute<K: Into<String>, V: Into<String>>(&mut self, key: K, value: V) {
-        self.attributes.push(Attribute {
-            key: key.into(),
-            value: value.into(),
-        });
+    pub fn add_attribute<K: Into<String>, V: Into<String>>(mut self, key: K, value: V) -> Self {
+        self.attributes.push(Attribute::new(key, value));
+        self
     }
 
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message<U: Into<CosmosMsg<T>>>(&mut self, msg: U) {
+    pub fn add_message<U: Into<CosmosMsg<T>>>(mut self, msg: U) -> Self {
         self.messages.push(SubMsg::new(msg));
+        self
     }
 
     /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
     /// and adds it to the list of messages to process.
-    pub fn add_submessage(&mut self, msg: SubMsg<T>) {
+    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
         self.messages.push(msg);
+        self
     }
 
     /// Adds an extra event to the response, separate from the main `wasm` event
@@ -132,12 +125,14 @@ where
     ///
     /// The `wasm-` prefix will be appended by the runtime to the provided type
     /// of event.
-    pub fn add_event(&mut self, event: Event) {
+    pub fn add_event(mut self, event: Event) -> Self {
         self.events.push(event);
+        self
     }
 
-    pub fn set_data<U: Into<Binary>>(&mut self, data: U) {
+    pub fn set_data<U: Into<Binary>>(mut self, data: U) -> Self {
         self.data = Some(data.into());
+        self
     }
 }
 
