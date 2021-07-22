@@ -28,6 +28,7 @@ use crate::storage::MemoryStorage;
 use crate::timestamp::Timestamp;
 use crate::traits::{Api, Querier, QuerierResult};
 use crate::types::{BlockInfo, ContractInfo, Env, MessageInfo};
+use crate::Attribute;
 
 pub const MOCK_CONTRACT_ADDR: &str = "cosmos2contract";
 
@@ -670,6 +671,15 @@ pub fn riffle_shuffle<T: Clone>(input: &[T]) -> Vec<T> {
 
 pub fn digit_sum(input: &[u8]) -> usize {
     input.iter().fold(0, |sum, val| sum + (*val as usize))
+}
+
+/// Only for test code. This bypasses assertions in new, allowing us to create _*
+/// Attributes to simulate responses from the blockchain
+pub fn mock_wasmd_attr(key: impl Into<String>, value: impl Into<String>) -> Attribute {
+    Attribute {
+        key: key.into(),
+        value: value.into(),
+    }
 }
 
 #[cfg(test)]
