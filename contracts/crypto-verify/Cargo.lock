@@ -102,7 +102,7 @@ checksum = "44c32f031ea41b4291d695026c023b95d59db2d8a2c7640800ed56bc8f510f22"
 
 [[package]]
 name = "cosmwasm-crypto"
-version = "0.16.0-rc3"
+version = "0.16.0-rc4"
 dependencies = [
  "digest",
  "ed25519-zebra",
@@ -113,14 +113,14 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-derive"
-version = "0.16.0-rc3"
+version = "0.16.0-rc4"
 dependencies = [
  "syn",
 ]
 
 [[package]]
 name = "cosmwasm-schema"
-version = "0.16.0-rc3"
+version = "0.16.0-rc4"
 dependencies = [
  "schemars",
  "serde_json",
@@ -128,7 +128,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-std"
-version = "0.16.0-rc3"
+version = "0.16.0-rc4"
 dependencies = [
  "base64",
  "cosmwasm-crypto",
@@ -142,7 +142,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-storage"
-version = "0.16.0-rc3"
+version = "0.16.0-rc4"
 dependencies = [
  "cosmwasm-std",
  "serde",
@@ -150,7 +150,7 @@ dependencies = [
 
 [[package]]
 name = "cosmwasm-vm"
-version = "0.16.0-rc3"
+version = "0.16.0-rc4"
 dependencies = [
  "clru",
  "cosmwasm-crypto",
