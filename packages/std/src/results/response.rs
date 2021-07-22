@@ -30,7 +30,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
-///     Ok(Response::new().add_attribute("action", "instantiate"))
+///     Ok(Response::new().add_attribute(("action", "instantiate")))
 /// }
 /// ```
 ///
@@ -50,13 +50,13 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
 ///     let mut response = Response::new()
-///         .add_attribute("Let the", "hacking begin")
+///         .add_attribute(("Let the", "hacking begin"))
 ///         .add_message(BankMsg::Send {
 ///             to_address: String::from("recipient"),
 ///             amount: coins(128, "uint"),
 ///         })
-///         .add_attribute("foo", "bar")
-///         .set_data(Binary::from(b"the result data"));
+///         .add_attribute(("foo", "bar"))
+///         .set_data(b"the result data");
 ///     Ok(response)
 /// }
 /// ```
@@ -101,14 +101,14 @@ where
     }
 
     /// Add an attribute included in the main `wasm` event.
-    pub fn add_attribute<K: Into<String>, V: Into<String>>(mut self, key: K, value: V) -> Self {
-        self.attributes.push(Attribute::new(key, value));
+    pub fn add_attribute(mut self, attr: impl Into<Attribute>) -> Self {
+        self.attributes.push(attr.into());
         self
     }
 
     /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
     /// and adds it to the list of messages to process.
-    pub fn add_message<U: Into<CosmosMsg<T>>>(mut self, msg: U) -> Self {
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
         self.messages.push(SubMsg::new(msg));
         self
     }
@@ -130,7 +130,7 @@ where
         self
     }
 
-    pub fn set_data<U: Into<Binary>>(mut self, data: U) -> Self {
+    pub fn set_data(mut self, data: impl Into<Binary>) -> Self {
         self.data = Some(data.into());
         self
     }
