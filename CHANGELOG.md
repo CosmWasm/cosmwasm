@@ -20,6 +20,10 @@ and this project adheres to
   `ibc_packet_timeout`.
 - cosmwasm-std: New `Attribute::new` constructor that does the same thing as
   `attr`.
+- cosmwasm-std::testing: Added `mock_wasm_attr` when you really need to create
+  an `Attribute` with a key starting with `_` in test code.
+- cosmwasm-std: Renamed `IBCAcknowledgementWithPacket` -> `IbcPacketAckMsg` to
+  remove an unneeded level of indirection.
 
 ### Changed
 
