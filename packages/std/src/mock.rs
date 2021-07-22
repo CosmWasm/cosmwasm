@@ -10,9 +10,9 @@ use crate::deps::OwnedDeps;
 use crate::errors::{RecoverPubkeyError, StdError, StdResult, SystemError, VerificationError};
 #[cfg(feature = "stargate")]
 use crate::ibc::{
-    IbcAcknowledgement, IbcAcknowledgementWithPacket, IbcChannel, IbcChannelCloseMsg,
-    IbcChannelConnectMsg, IbcChannelOpenMsg, IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg,
-    IbcPacketReceiveMsg, IbcPacketTimeoutMsg, IbcTimeoutBlock,
+    IbcAcknowledgement, IbcChannel, IbcChannelCloseMsg, IbcChannelConnectMsg, IbcChannelOpenMsg,
+    IbcEndpoint, IbcOrder, IbcPacket, IbcPacketAckMsg, IbcPacketReceiveMsg, IbcPacketTimeoutMsg,
+    IbcTimeoutBlock,
 };
 use crate::query::{
     AllBalanceResponse, BalanceResponse, BankQuery, CustomQuery, QueryRequest, WasmQuery,
@@ -361,10 +361,7 @@ pub fn mock_ibc_packet_ack<T: Serialize>(
 ) -> StdResult<IbcPacketAckMsg> {
     let packet = mock_ibc_packet(my_channel_id, data)?;
 
-    Ok(IbcPacketAckMsg::new(IbcAcknowledgementWithPacket {
-        acknowledgement: ack,
-        original_packet: packet,
-    }))
+    Ok(IbcPacketAckMsg::new(ack, packet))
 }
 
 /// Creates a IbcPacketTimeoutMsg for testing ibc_packet_timeout. You set a few key parameters that are
