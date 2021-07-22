@@ -683,7 +683,7 @@ mod tests {
             mock_ibc_packet_ack, mock_ibc_packet_recv, mock_ibc_packet_timeout,
         };
         use cosmwasm_std::{
-            attr, Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn,
+            Attribute, Empty, Event, IbcAcknowledgement, IbcOrder, Reply, ReplyOn,
             SubMsgExecutionResponse,
         };
         static CONTRACT: &[u8] = include_bytes!("../testdata/ibc_reflect.wasm");

@@ -718,6 +718,7 @@ mod tests {
                 function_name,
                 expected,
                 actual,
+                ..
             } => {
                 assert_eq!(function_name, "allocate");
                 assert_eq!(expected, 0);
@@ -752,6 +753,7 @@ mod tests {
                 function_name,
                 expected,
                 actual,
+                ..
             } => {
                 assert_eq!(function_name, "deallocate");
                 assert_eq!(expected, 1);
