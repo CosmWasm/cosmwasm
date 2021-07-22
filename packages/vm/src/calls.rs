@@ -722,7 +722,10 @@ mod tests {
             let id = res.messages[0].id;
             let event = Event {
                 ty: "message".into(),
-                attributes: vec![attr("contract_address", account)],
+                attributes: vec![Attribute {
+                    key: "_contract_address".to_string(),
+                    value: account.into(),
+                }],
             };
             // which creates a reflect account. here we get the callback
             let response = Reply {
