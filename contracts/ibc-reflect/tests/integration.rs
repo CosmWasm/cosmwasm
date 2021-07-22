@@ -22,7 +22,7 @@ use cosmwasm_std::testing::{
     mock_ibc_packet_recv,
 };
 use cosmwasm_std::{
-    attr, coins, BankMsg, ContractResult, CosmosMsg, Event, IbcBasicResponse, IbcOrder,
+    attr, coins, Attribute, BankMsg, ContractResult, CosmosMsg, Event, IbcBasicResponse, IbcOrder,
     IbcReceiveResponse, Reply, Response, SubMsgExecutionResponse, WasmMsg,
 };
 use cosmwasm_vm::testing::{
@@ -66,7 +66,11 @@ fn fake_events(reflect_addr: &str) -> Vec<Event> {
             attr("module", "wasm"),
             attr("signer", MOCK_CONTRACT_ADDR),
             attr("code_id", "17"),
-            attr("contract_address", reflect_addr),
+            // We have to force this one to avoid the debug assertion against _
+            Attribute {
+                key: "_contract_address".to_string(),
+                value: reflect_addr.to_string(),
+            },
         ],
     };
     vec![event]
