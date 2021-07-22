@@ -185,12 +185,6 @@ pub struct IbcPacket {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
-pub struct IbcAcknowledgementWithPacket {
-    pub acknowledgement: IbcAcknowledgement,
-    pub original_packet: IbcPacket,
-}
-
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcAcknowledgement {
     pub data: Binary,
     // we may add more info here in the future (meta-data from the acknowledgement)
@@ -364,12 +358,16 @@ impl IbcPacketReceiveMsg {
 /// The message that is passed into `ibc_packet_ack`
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
 pub struct IbcPacketAckMsg {
-    pub ack: IbcAcknowledgementWithPacket,
+    pub acknowledgement: IbcAcknowledgement,
+    pub original_packet: IbcPacket,
 }
 
 impl IbcPacketAckMsg {
-    pub fn new(ack: IbcAcknowledgementWithPacket) -> Self {
-        Self { ack }
+    pub fn new(acknowledgement: IbcAcknowledgement, original_packet: IbcPacket) -> Self {
+        Self {
+            acknowledgement,
+            original_packet,
+        }
     }
 }
 

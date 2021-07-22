@@ -111,7 +111,8 @@ major releases of `cosmwasm`. Note that you can also view the
   -     ack: IbcAcknowledgementWithPacket,
   +     msg: IbcPacketReceiveMsg,
     ) -> StdResult<IbcBasicResponse> {
-  +     let ack = msg.ack;
+        // They are the same struct just a different name
+        let ack = msg;
 
         // do things
     }

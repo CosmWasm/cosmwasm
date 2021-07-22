@@ -116,22 +116,21 @@ pub fn ibc_packet_ack(
     env: Env,
     msg: IbcPacketAckMsg,
 ) -> StdResult<IbcBasicResponse> {
-    let ack = msg.ack;
     // which local channel was this packet send from
-    let caller = ack.original_packet.src.channel_id;
+    let caller = msg.original_packet.src.channel_id;
     // we need to parse the ack based on our request
-    let msg: PacketMsg = from_slice(&ack.original_packet.data)?;
-    match msg {
+    let packet: PacketMsg = from_slice(&msg.original_packet.data)?;
+    match packet {
         PacketMsg::Dispatch { .. } => {
-            let res: AcknowledgementMsg<DispatchResponse> = from_slice(&ack.acknowledgement.data)?;
+            let res: AcknowledgementMsg<DispatchResponse> = from_slice(&msg.acknowledgement.data)?;
             acknowledge_dispatch(deps, caller, res)
         }
         PacketMsg::WhoAmI {} => {
-            let res: AcknowledgementMsg<WhoAmIResponse> = from_slice(&ack.acknowledgement.data)?;
+            let res: AcknowledgementMsg<WhoAmIResponse> = from_slice(&msg.acknowledgement.data)?;
             acknowledge_who_am_i(deps, caller, res)
         }
         PacketMsg::Balances {} => {
-            let res: AcknowledgementMsg<BalancesResponse> = from_slice(&ack.acknowledgement.data)?;
+            let res: AcknowledgementMsg<BalancesResponse> = from_slice(&msg.acknowledgement.data)?;
             acknowledge_balances(deps, env, caller, res)
         }
     }
@@ -388,7 +387,7 @@ mod tests {
             }) => {
                 let ack = IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap();
                 let mut msg = mock_ibc_packet_ack(&channel_id, &1, ack).unwrap();
-                msg.ack.original_packet.data = data;
+                msg.original_packet.data = data;
                 msg
             }
             o => panic!("Unexpected message: {:?}", o),
