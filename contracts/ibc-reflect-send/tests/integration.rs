@@ -179,7 +179,7 @@ fn dispatch_message_send_and_ack() {
         }) => {
             let ack = IbcAcknowledgement::encode_json(&AcknowledgementMsg::Ok(())).unwrap();
             let mut msg = mock_ibc_packet_ack(&channel_id, &1, ack).unwrap();
-            msg.ack.original_packet.data = data;
+            msg.original_packet.data = data;
             msg
         }
         o => panic!("Unexpected message: {:?}", o),
