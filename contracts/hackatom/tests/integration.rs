@@ -18,8 +18,8 @@
 //! 4. Anywhere you see query(&deps, ...) you must replace it with query(&mut deps, ...)
 
 use cosmwasm_std::{
-    coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult,
-    Empty, Response, SubMsg,
+    coins, from_binary, to_vec, Addr, AllBalanceResponse, BankMsg, Binary, ContractResult, Empty,
+    Response, SubMsg,
 };
 use cosmwasm_vm::{
     call_execute, from_slice,
