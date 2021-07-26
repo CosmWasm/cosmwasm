@@ -54,9 +54,10 @@ and this project adheres to
 - cosmwasm-std: `attr` (and `Attribute::new`) will now panic in debug builds if
   the attribute's key starts with an underscore. These names are reserved and
   could cause problems further down the line.
-- cosmwasm-std: `Response` can no longer be constructed using a struct literal.
-  Use `Response::new()` and appropriate builder-style functions instead
-  (`response.add_message`, `response.set_data`, etc).
+- cosmwasm-std: `Response`, `IbcBasicResponse` and `IbcReceiveResponse` can no
+  longer be constructed using struct literals. Use constructors like
+  `Response::new` to construct empty structs and appropriate builder-style
+  methods to set fields (`response.add_message`, `response.set_data`, etc).
 
 [#995]: https://github.com/CosmWasm/cosmwasm/pull/995
 
