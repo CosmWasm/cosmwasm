@@ -185,6 +185,7 @@ pub struct IbcPacket {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcAcknowledgement {
     pub data: Binary,
     // we may add more info here in the future (meta-data from the acknowledgement)
