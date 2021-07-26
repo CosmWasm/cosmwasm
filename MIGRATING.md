@@ -46,6 +46,59 @@ major releases of `cosmwasm`. Note that you can also view the
   + cosmwasm-std = { version = "0.16.0", default-features = false }
   ```
 
+- `Response` can no longer be built using a struct literal. Please use
+  `Response::new` as well as relevant
+  [builder-style setters](https://github.com/CosmWasm/cosmwasm/blob/402e3281ff5bc1cd7b4b3e36c2bb9914f07eaaf6/packages/std/src/results/response.rs#L103-L167)
+  to set the data.
+
+  This is a step toward better API stability.
+
+  ```diff
+    #[entry_point]
+    pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {
+        // ...
+
+        let send = BankMsg::Send {
+            to_address: msg.payout.clone(),
+            amount: balance,
+        };
+        let data_msg = format!("burnt {} keys", count).into_bytes();
+
+  -     Ok(Response {
+  -         messages: vec![SubMsg::new(send)],
+  -         attributes: vec![attr("action", "burn"), attr("payout", msg.payout)],
+  -         events: vec![],
+  -         data: Some(data_msg.into()),
+  -     })
+  +     Ok(Response::new()
+  +         .add_message(send)
+  +         .add_attribute(("action", "burn"))
+  +         .add_attribute(("payout", msg.payout))
+  +         .set_data(data_msg))
+    }
+  ```
+
+  ```diff
+  - Ok(Response {
+  -     data: Some((old_size as u32).to_be_bytes().into()),
+  -     ..Response::default()
+  - })
+  + Ok(Response::new().set_data((old_size as u32).to_be_bytes()))
+  ```
+
+  ```diff
+  - let res = Response {
+  -     messages: msgs,
+  -     attributes: vec![attr("action", "reflect_subcall")],
+  -     events: vec![],
+  -     data: None,
+  - };
+  - Ok(res)
+  + Ok(Response::new()
+  +     .add_attribute(("action", "reflect_subcall"))
+  +     .add_submessages(msgs))
+  ```
+
 - For IBC-enabled contracts only: IBC entry points have different signatures.
   Instead of accepting bare packets, channels and acknowledgements, all of those
   are wrapped in a `Msg` type specific to the given entry point. Channels,
