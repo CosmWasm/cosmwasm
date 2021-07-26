@@ -130,6 +130,37 @@ where
         self
     }
 
+    /// Bulk add attributes included in the main `wasm` event.
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
+        self
+    }
+
+    /// Bulk add "fire and forget" messages to the list of messages to process.
+    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+        self.add_submessages(msgs.into_iter().map(SubMsg::new))
+    }
+
+    /// Bulk add explicit SubMsg structs to the list of messages to process.
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+        self.messages.extend(msgs.into_iter());
+        self
+    }
+
+    /// Bulk add custom events to the response. These are separate from the main
+    /// `wasm` event.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided types
+    /// of events.
+    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
+        self.events.extend(events.into_iter());
+        self
+    }
+
+    /// Set the binary data included in the response.
     pub fn set_data(mut self, data: impl Into<Binary>) -> Self {
         self.data = Some(data.into());
         self
