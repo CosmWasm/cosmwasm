@@ -29,19 +29,15 @@ pub fn instantiate(
     };
     config(deps.storage).save(&cfg)?;
 
-    Ok(Response {
-        attributes: vec![attr("action", "instantiate")],
-        ..Response::default()
-    })
+    Ok(Response::new().add_attribute(("action", "instantiate")))
 }
 
 #[entry_point]
 pub fn reply(deps: DepsMut, _env: Env, reply: Reply) -> StdResult<Response> {
     match (reply.id, reply.result) {
-        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => Ok(Response {
-            data: Some(encode_ibc_error(err)),
-            ..Response::default()
-        }),
+        (RECEIVE_DISPATCH_ID, ContractResult::Err(err)) => {
+            Ok(Response::new().set_data(encode_ibc_error(err)))
+        }
         (INIT_CALLBACK_ID, ContractResult::Ok(response)) => handle_init_callback(deps, response),
         _ => Err(StdError::generic_err("invalid reply id or result")),
     }
@@ -87,10 +83,7 @@ pub fn handle_init_callback(
         }
     })?;
 
-    Ok(Response {
-        attributes: vec![attr("action", "execute_init_callback")],
-        ..Response::default()
-    })
+    Ok(Response::new().add_attribute(("action", "execute_init_callback")))
 }
 
 #[entry_point]
