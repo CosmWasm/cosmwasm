@@ -10,7 +10,7 @@ use std::fmt;
 use crate::binary::Binary;
 use crate::coins::Coin;
 use crate::errors::StdResult;
-use crate::results::{Attribute, Empty, Event, SubMsg};
+use crate::results::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 use crate::serde::to_binary;
 use crate::timestamp::Timestamp;
 
@@ -391,6 +391,7 @@ impl IbcPacketTimeoutMsg {
 /// or that cannot redispatch messages (like the handshake callbacks)
 /// will use other Response types
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcBasicResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -420,12 +421,119 @@ where
     }
 }
 
+impl<T> IbcBasicResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Add an attribute included in the main `wasm` event.
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute::new(key, value));
+        self
+    }
+
+    /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
+    /// and adds it to the list of messages to process.
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+        self.messages.push(SubMsg::new(msg));
+        self
+    }
+
+    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// and adds it to the list of messages to process.
+    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+        self.messages.push(msg);
+        self
+    }
+
+    /// Adds an extra event to the response, separate from the main `wasm` event
+    /// that is always created.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided type
+    /// of event.
+    pub fn add_event(mut self, event: Event) -> Self {
+        self.events.push(event);
+        self
+    }
+
+    /// Bulk add attributes included in the main `wasm` event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{attr, IbcBasicResponse};
+    ///
+    /// let attrs = vec![
+    ///     ("action", "reaction"),
+    ///     ("answer", "42"),
+    ///     ("another", "attribute"),
+    /// ];
+    /// let res: IbcBasicResponse = IbcBasicResponse::new().add_attributes(attrs.clone());
+    /// assert_eq!(res.attributes, attrs);
+    /// ```
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
+        self
+    }
+
+    /// Bulk add "fire and forget" messages to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{CosmosMsg, IbcBasicResponse};
+    ///
+    /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcBasicResponse {
+    ///     IbcBasicResponse::new().add_messages(msgs)
+    /// }
+    /// ```
+    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+        self.add_submessages(msgs.into_iter().map(SubMsg::new))
+    }
+
+    /// Bulk add explicit SubMsg structs to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{SubMsg, IbcBasicResponse};
+    ///
+    /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcBasicResponse {
+    ///     IbcBasicResponse::new().add_submessages(msgs)
+    /// }
+    /// ```
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+        self.messages.extend(msgs.into_iter());
+        self
+    }
+
+    /// Bulk add custom events to the response. These are separate from the main
+    /// `wasm` event.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided types
+    /// of events.
+    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
+        self.events.extend(events.into_iter());
+        self
+    }
+}
+
 // This defines the return value on packet response processing.
 // This "success" case should be returned even in application-level errors,
 // Where the acknowledgement bytes contain an encoded error message to be returned to
 // the calling chain. (Returning ContractResult::Err will abort processing of this packet
 // and not inform the calling chain).
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcReceiveResponse<T = Empty>
 where
     T: Clone + fmt::Debug + PartialEq + JsonSchema,
@@ -456,6 +564,118 @@ where
             attributes: vec![],
             events: vec![],
         }
+    }
+}
+
+impl<T> IbcReceiveResponse<T>
+where
+    T: Clone + fmt::Debug + PartialEq + JsonSchema,
+{
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Set the acknowledgement for this response.
+    pub fn set_ack(mut self, ack: impl Into<Binary>) -> Self {
+        self.acknowledgement = ack.into();
+        self
+    }
+
+    /// Add an attribute included in the main `wasm` event.
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute::new(key, value));
+        self
+    }
+
+    /// This creates a "fire and forget" message, by using `SubMsg::new()` to wrap it,
+    /// and adds it to the list of messages to process.
+    pub fn add_message(mut self, msg: impl Into<CosmosMsg<T>>) -> Self {
+        self.messages.push(SubMsg::new(msg));
+        self
+    }
+
+    /// This takes an explicit SubMsg (creates via eg. `reply_on_error`)
+    /// and adds it to the list of messages to process.
+    pub fn add_submessage(mut self, msg: SubMsg<T>) -> Self {
+        self.messages.push(msg);
+        self
+    }
+
+    /// Adds an extra event to the response, separate from the main `wasm` event
+    /// that is always created.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided type
+    /// of event.
+    pub fn add_event(mut self, event: Event) -> Self {
+        self.events.push(event);
+        self
+    }
+
+    /// Bulk add attributes included in the main `wasm` event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{attr, IbcReceiveResponse};
+    ///
+    /// let attrs = vec![
+    ///     ("action", "reaction"),
+    ///     ("answer", "42"),
+    ///     ("another", "attribute"),
+    /// ];
+    /// let res: IbcReceiveResponse = IbcReceiveResponse::new().add_attributes(attrs.clone());
+    /// assert_eq!(res.attributes, attrs);
+    /// ```
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
+        self
+    }
+
+    /// Bulk add "fire and forget" messages to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{CosmosMsg, IbcReceiveResponse};
+    ///
+    /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> IbcReceiveResponse {
+    ///     IbcReceiveResponse::new().add_messages(msgs)
+    /// }
+    /// ```
+    pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
+        self.add_submessages(msgs.into_iter().map(SubMsg::new))
+    }
+
+    /// Bulk add explicit SubMsg structs to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{SubMsg, IbcReceiveResponse};
+    ///
+    /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> IbcReceiveResponse {
+    ///     IbcReceiveResponse::new().add_submessages(msgs)
+    /// }
+    /// ```
+    pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
+        self.messages.extend(msgs.into_iter());
+        self
+    }
+
+    /// Bulk add custom events to the response. These are separate from the main
+    /// `wasm` event.
+    ///
+    /// The `wasm-` prefix will be appended by the runtime to the provided types
+    /// of events.
+    pub fn add_events(mut self, events: impl IntoIterator<Item = Event>) -> Self {
+        self.events.extend(events.into_iter());
+        self
     }
 }
 
