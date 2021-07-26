@@ -131,6 +131,23 @@ where
     }
 
     /// Bulk add attributes included in the main `wasm` event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{attr, Response};
+    ///
+    /// let attrs = vec![
+    ///     ("action", "reaction"),
+    ///     ("answer", "42"),
+    ///     ("another", "attribute"),
+    /// ];
+    /// let res: Response = Response::new().add_attributes(attrs.clone());
+    /// assert_eq!(res.attributes, attrs);
+    /// ```
     pub fn add_attributes<A: Into<Attribute>>(
         mut self,
         attrs: impl IntoIterator<Item = A>,
@@ -140,11 +157,33 @@ where
     }
 
     /// Bulk add "fire and forget" messages to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{CosmosMsg, Response};
+    ///
+    /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> Response {
+    ///     Response::new()
+    ///         .add_messages(msgs)
+    /// }
+    /// ```
     pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
         self.add_submessages(msgs.into_iter().map(SubMsg::new))
     }
 
     /// Bulk add explicit SubMsg structs to the list of messages to process.
+    ///
+    /// ## Examples
+    ///
+    /// ```
+    /// use cosmwasm_std::{SubMsg, Response};
+    ///
+    /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> Response {
+    ///     Response::new()
+    ///         .add_submessages(msgs)
+    /// }
+    /// ```
     pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
         self.messages.extend(msgs.into_iter());
         self
