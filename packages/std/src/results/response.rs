@@ -164,8 +164,7 @@ where
     /// use cosmwasm_std::{CosmosMsg, Response};
     ///
     /// fn make_response_with_msgs(msgs: Vec<CosmosMsg>) -> Response {
-    ///     Response::new()
-    ///         .add_messages(msgs)
+    ///     Response::new().add_messages(msgs)
     /// }
     /// ```
     pub fn add_messages<M: Into<CosmosMsg<T>>>(self, msgs: impl IntoIterator<Item = M>) -> Self {
@@ -180,8 +179,7 @@ where
     /// use cosmwasm_std::{SubMsg, Response};
     ///
     /// fn make_response_with_submsgs(msgs: Vec<SubMsg>) -> Response {
-    ///     Response::new()
-    ///         .add_submessages(msgs)
+    ///     Response::new().add_submessages(msgs)
     /// }
     /// ```
     pub fn add_submessages(mut self, msgs: impl IntoIterator<Item = SubMsg<T>>) -> Self {
