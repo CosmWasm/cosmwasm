@@ -115,6 +115,7 @@ impl From<IbcTimeoutBlock> for IbcTimeout {
 /// IbcChannel defines all information on a channel.
 /// This is generally used in the hand-shake process, but can be queried directly.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcChannel {
     pub endpoint: IbcEndpoint,
     pub counterparty_endpoint: IbcEndpoint,
@@ -172,6 +173,7 @@ impl Ord for IbcTimeoutBlock {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct IbcPacket {
     /// The raw data send from the other side in the packet
     pub data: Binary,
