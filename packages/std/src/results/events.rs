@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 /// which then get magically converted to bytes for Tendermint somewhere between
 /// the Rust-Go interface, JSON deserialization and the `NewEvent` call in Cosmos SDK.
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq, JsonSchema)]
+#[non_exhaustive]
 pub struct Event {
     /// The event type. This is renamed to "ty" because "type" is reserved in Rust. This sucks, we know.
     #[serde(rename = "type")]
@@ -26,11 +27,23 @@ impl Event {
     }
 
     /// Add an attribute to the event.
-    pub fn attr(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
         self.attributes.push(Attribute {
             key: key.into(),
             value: value.into(),
         });
+        self
+    }
+
+    /// Bulk add attributes to the event.
+    ///
+    /// Anything that can be turned into an iterator and yields something
+    /// that can be converted into an `Attribute` is accepted.
+    pub fn add_attributes<A: Into<Attribute>>(
+        mut self,
+        attrs: impl IntoIterator<Item = A>,
+    ) -> Self {
+        self.attributes.extend(attrs.into_iter().map(A::into));
         self
     }
 }
@@ -121,7 +134,9 @@ mod tests {
             ty: "test".to_string(),
             attributes: vec![attr("foo", "bar"), attr("bar", "baz")],
         };
-        let event_builder = Event::new("test").attr("foo", "bar").attr("bar", "baz");
+        let event_builder = Event::new("test")
+            .add_attribute("foo", "bar")
+            .add_attribute("bar", "baz");
 
         assert_eq!(event_direct, event_builder);
     }

@@ -55,7 +55,7 @@ pub fn execute(
             .add_attribute("action", "release")
             .add_attribute("destination", to_addr.clone())
             .add_attribute("foo", fl.to_string())
-            .add_event(Event::new("hackatom").attr("action", "release"))
+            .add_event(Event::new("hackatom").add_attribute("action", "release"))
             .add_message(BankMsg::Send {
                 to_address: to_addr.into(),
                 amount: balance,
