@@ -30,7 +30,7 @@ pub fn instantiate(
     );
 
     // This adds some unrelated event attribute for testing purposes
-    Ok(Response::new().add_attribute(("Let the", "hacking begin")))
+    Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
 pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> Result<Response, HackError> {
@@ -87,8 +87,8 @@ fn do_release(deps: DepsMut, env: Env, info: MessageInfo) -> Result<Response, Ha
         let balance = deps.querier.query_all_balances(env.contract.address)?;
 
         let resp = Response::new()
-            .add_attribute(("action", "release"))
-            .add_attribute(("destination", to_addr.clone()))
+            .add_attribute("action", "release")
+            .add_attribute("destination", to_addr.clone())
             .add_event(Event::new("hackatom").attr("action", "release"))
             .add_message(BankMsg::Send {
                 to_address: to_addr.into(),

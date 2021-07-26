@@ -28,7 +28,7 @@ pub fn instantiate(
     );
 
     // This adds some unrelated event attribute for testing purposes
-    Ok(Response::new().add_attribute(("Let the", "hacking begin")))
+    Ok(Response::new().add_attribute("Let the", "hacking begin"))
 }
 
 #[entry_point]
@@ -52,9 +52,9 @@ pub fn execute(
         fl *= 0.3;
 
         let resp = Response::new()
-            .add_attribute(("action", "release"))
-            .add_attribute(("destination", to_addr.clone()))
-            .add_attribute(("foo", fl.to_string()))
+            .add_attribute("action", "release")
+            .add_attribute("destination", to_addr.clone())
+            .add_attribute("foo", fl.to_string())
             .add_event(Event::new("hackatom").attr("action", "release"))
             .add_message(BankMsg::Send {
                 to_address: to_addr.into(),

@@ -29,7 +29,7 @@ pub fn instantiate(
     };
     config(deps.storage).save(&cfg)?;
 
-    Ok(Response::new().add_attribute(("action", "instantiate")))
+    Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
 #[entry_point]
@@ -83,7 +83,7 @@ pub fn handle_init_callback(
         }
     })?;
 
-    Ok(Response::new().add_attribute(("action", "execute_init_callback")))
+    Ok(Response::new().add_attribute("action", "execute_init_callback"))
 }
 
 #[entry_point]

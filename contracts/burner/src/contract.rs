@@ -40,8 +40,8 @@ pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> 
 
     Ok(Response::new()
         .add_message(send)
-        .add_attribute(("action", "burn"))
-        .add_attribute(("payout", msg.payout))
+        .add_attribute("action", "burn")
+        .add_attribute("payout", msg.payout)
         .set_data(data_msg))
 }
 

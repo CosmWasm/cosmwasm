@@ -22,7 +22,7 @@ pub fn instantiate(
     let cfg = Config { admin: info.sender };
     config(deps.storage).save(&cfg)?;
 
-    Ok(Response::new().add_attribute(("action", "instantiate")))
+    Ok(Response::new().add_attribute("action", "instantiate"))
 }
 
 #[entry_point]
@@ -56,8 +56,8 @@ pub fn handle_update_admin(
     config(deps.storage).save(&cfg)?;
 
     Ok(Response::new()
-        .add_attribute(("action", "handle_update_admin"))
-        .add_attribute(("new_admin", cfg.admin)))
+        .add_attribute("action", "handle_update_admin")
+        .add_attribute("new_admin", cfg.admin))
 }
 
 pub fn handle_send_msgs(
@@ -85,7 +85,7 @@ pub fn handle_send_msgs(
 
     let res = Response::new()
         .add_message(msg)
-        .add_attribute(("action", "handle_send_msgs"));
+        .add_attribute("action", "handle_send_msgs");
     Ok(res)
 }
 
@@ -113,7 +113,7 @@ pub fn handle_check_remote_balance(
 
     let res = Response::new()
         .add_message(msg)
-        .add_attribute(("action", "handle_check_remote_balance"));
+        .add_attribute("action", "handle_check_remote_balance");
     Ok(res)
 }
 
@@ -161,7 +161,7 @@ pub fn handle_send_funds(
 
     let res = Response::new()
         .add_message(msg)
-        .add_attribute(("action", "handle_send_funds"));
+        .add_attribute("action", "handle_send_funds");
     Ok(res)
 }
 

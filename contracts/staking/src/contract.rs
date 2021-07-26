@@ -94,10 +94,10 @@ pub fn transfer(
     })?;
 
     let res = Response::new()
-        .add_attribute(("action", "transfer"))
-        .add_attribute(("from", info.sender))
-        .add_attribute(("to", recipient))
-        .add_attribute(("amount", send.to_string()));
+        .add_attribute("action", "transfer")
+        .add_attribute("from", info.sender)
+        .add_attribute("to", recipient)
+        .add_attribute("amount", send.to_string());
     Ok(res)
 }
 
@@ -169,10 +169,10 @@ pub fn bond(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> {
 
     // bond them to the validator
     let res = Response::new()
-        .add_attribute(("action", "bond"))
-        .add_attribute(("from", info.sender))
-        .add_attribute(("bonded", payment.amount))
-        .add_attribute(("minted", to_mint))
+        .add_attribute("action", "bond")
+        .add_attribute("from", info.sender)
+        .add_attribute("bonded", payment.amount)
+        .add_attribute("minted", to_mint)
         .add_message(StakingMsg::Delegate {
             validator: invest.validator,
             amount: payment.clone(),
@@ -231,10 +231,10 @@ pub fn unbond(deps: DepsMut, env: Env, info: MessageInfo, amount: Uint128) -> St
 
     // unbond them
     let res = Response::new()
-        .add_attribute(("action", "unbond"))
-        .add_attribute(("to", info.sender))
-        .add_attribute(("unbonded", unbond))
-        .add_attribute(("burnt", amount))
+        .add_attribute("action", "unbond")
+        .add_attribute("to", info.sender)
+        .add_attribute("unbonded", unbond)
+        .add_attribute("burnt", amount)
         .add_message(StakingMsg::Undelegate {
             validator: invest.validator,
             amount: coin(unbond.u128(), &invest.bond_denom),
@@ -272,9 +272,9 @@ pub fn claim(deps: DepsMut, env: Env, info: MessageInfo) -> StdResult<Response> 
     // transfer tokens to the sender
     balance.amount = to_send;
     let res = Response::new()
-        .add_attribute(("action", "claim"))
-        .add_attribute(("from", &info.sender))
-        .add_attribute(("amount", to_send))
+        .add_attribute("action", "claim")
+        .add_attribute("from", &info.sender)
+        .add_attribute("amount", to_send)
         .add_message(BankMsg::Send {
             to_address: info.sender.into(),
             amount: vec![balance],
@@ -336,8 +336,8 @@ pub fn _bond_all_tokens(
 
     // and bond them to the validator
     let res = Response::new()
-        .add_attribute(("action", "reinvest"))
-        .add_attribute(("bonded", balance.amount))
+        .add_attribute("action", "reinvest")
+        .add_attribute("bonded", balance.amount)
         .add_message(StakingMsg::Delegate {
             validator: invest.validator,
             amount: balance,

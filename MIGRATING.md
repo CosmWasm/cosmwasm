@@ -72,8 +72,8 @@ major releases of `cosmwasm`. Note that you can also view the
   -     })
   +     Ok(Response::new()
   +         .add_message(send)
-  +         .add_attribute(("action", "burn"))
-  +         .add_attribute(("payout", msg.payout))
+  +         .add_attribute("action", "burn")
+  +         .add_attribute("payout", msg.payout)
   +         .set_data(data_msg))
     }
   ```
@@ -95,7 +95,7 @@ major releases of `cosmwasm`. Note that you can also view the
   - };
   - Ok(res)
   + Ok(Response::new()
-  +     .add_attribute(("action", "reflect_subcall"))
+  +     .add_attribute("action", "reflect_subcall")
   +     .add_submessages(msgs))
   ```
 

@@ -55,7 +55,7 @@ pub fn try_reflect(
     }
 
     Ok(Response::new()
-        .add_attribute(("action", "reflect"))
+        .add_attribute("action", "reflect")
         .add_messages(msgs))
 }
 
@@ -78,7 +78,7 @@ pub fn try_reflect_subcall(
     }
 
     Ok(Response::new()
-        .add_attribute(("action", "reflect_subcall"))
+        .add_attribute("action", "reflect_subcall")
         .add_submessages(msgs))
 }
 
@@ -100,8 +100,8 @@ pub fn try_change_owner(
         Ok(state)
     })?;
     Ok(Response::new()
-        .add_attribute(("action", "change_owner"))
-        .add_attribute(("owner", new_owner)))
+        .add_attribute("action", "change_owner")
+        .add_attribute("owner", new_owner))
 }
 
 /// This just stores the result for future query

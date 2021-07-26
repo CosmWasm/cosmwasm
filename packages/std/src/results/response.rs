@@ -30,7 +30,7 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 /// ) -> StdResult<Response> {
 ///     // ...
 ///
-///     Ok(Response::new().add_attribute(("action", "instantiate")))
+///     Ok(Response::new().add_attribute("action", "instantiate"))
 /// }
 /// ```
 ///
@@ -50,12 +50,12 @@ use super::{Attribute, CosmosMsg, Empty, Event, SubMsg};
 ///     msg: InstantiateMsg,
 /// ) -> Result<Response, MyError> {
 ///     let mut response = Response::new()
-///         .add_attribute(("Let the", "hacking begin"))
+///         .add_attribute("Let the", "hacking begin")
 ///         .add_message(BankMsg::Send {
 ///             to_address: String::from("recipient"),
 ///             amount: coins(128, "uint"),
 ///         })
-///         .add_attribute(("foo", "bar"))
+///         .add_attribute("foo", "bar")
 ///         .set_data(b"the result data");
 ///     Ok(response)
 /// }
@@ -101,8 +101,8 @@ where
     }
 
     /// Add an attribute included in the main `wasm` event.
-    pub fn add_attribute(mut self, attr: impl Into<Attribute>) -> Self {
-        self.attributes.push(attr.into());
+    pub fn add_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.attributes.push(Attribute::new(key, value));
         self
     }
 
